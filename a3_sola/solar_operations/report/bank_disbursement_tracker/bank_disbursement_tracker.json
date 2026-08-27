@@ -1,0 +1,32 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2026-08-25 13:00:00.000000",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Bank Disbursement Tracker",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Loan Application",
+ "report_name": "Bank Disbursement Tracker",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Solar Operations Manager"
+  },
+  {
+   "role": "Solar Operations Executive"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
+}

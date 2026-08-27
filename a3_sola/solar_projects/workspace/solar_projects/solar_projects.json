@@ -1,0 +1,405 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"prj-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Projects</span>\", \"col\": 12}}, {\"id\": \"prj-s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project\", \"col\": 3}}, {\"id\": \"prj-s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Profitability\", \"col\": 3}}, {\"id\": \"prj-s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Billing\", \"col\": 3}}, {\"id\": \"prj-s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"SLA\", \"col\": 3}}, {\"id\": \"prj-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Delivery & Costing\", \"col\": 4}}, {\"id\": \"prj-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Billing & Recovery\", \"col\": 4}}, {\"id\": \"prj-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Operations & Maintenance\", \"col\": 4}}, {\"id\": \"prj-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"O&M Reports\", \"col\": 4}}, {\"id\": \"prj-c5\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance & Renewal\", \"col\": 4}}]",
+ "creation": "2026-08-25 13:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "money-coins-1",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Solar Projects",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delivery & Costing",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project",
+   "link_count": 0,
+   "link_to": "Project",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project Cost Entry",
+   "link_count": 0,
+   "link_to": "Project Cost Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cost Category Config",
+   "link_count": 0,
+   "link_to": "Cost Category Config",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Project Profitability",
+   "link_count": 0,
+   "link_to": "Project Profitability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Cost Overrun Analysis",
+   "link_count": 0,
+   "link_to": "Cost Overrun Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing & Recovery",
+   "link_count": 7,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Billing Plan",
+   "link_count": 0,
+   "link_to": "Solar Billing Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing Milestone Template",
+   "link_count": 0,
+   "link_to": "Billing Milestone Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Statutory Fee Recovery",
+   "link_count": 0,
+   "link_to": "Statutory Fee Recovery",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar GST Valuation Rule",
+   "link_count": 0,
+   "link_to": "Solar GST Valuation Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Billing vs Collection",
+   "link_count": 0,
+   "link_to": "Billing vs Collection",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Subsidy Receivable Ageing",
+   "link_count": 0,
+   "link_to": "Subsidy Receivable Ageing",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Statutory Recovery Register",
+   "link_count": 0,
+   "link_to": "Statutory Recovery Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Operations & Maintenance",
+   "link_count": 6,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar OM Contract",
+   "link_count": 0,
+   "link_to": "Solar OM Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar OM Visit",
+   "link_count": 0,
+   "link_to": "Solar OM Visit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Ticket",
+   "link_count": 0,
+   "link_to": "Service Ticket",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Warranty Claim",
+   "link_count": 0,
+   "link_to": "Solar Warranty Claim",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Generation Reading",
+   "link_count": 0,
+   "link_to": "Generation Reading",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar OM Coverage Item",
+   "link_count": 0,
+   "link_to": "Solar OM Coverage Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "O&M Reports",
+   "link_count": 7,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Solar OM Contract Register",
+   "link_count": 0,
+   "link_to": "Solar OM Contract Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Preventive Visit Compliance",
+   "link_count": 0,
+   "link_to": "Preventive Visit Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Service Ticket SLA Compliance",
+   "link_count": 0,
+   "link_to": "Service Ticket SLA Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Root Cause Analysis",
+   "link_count": 0,
+   "link_to": "Root Cause Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "System Performance Ranking",
+   "link_count": 0,
+   "link_to": "System Performance Ranking",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Warranty Claim Register",
+   "link_count": 0,
+   "link_to": "Warranty Claim Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Solar OM Provision Movement",
+   "link_count": 0,
+   "link_to": "Solar OM Provision Movement",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Compliance & Renewal",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Scheme Obligation Compliance",
+   "link_count": 0,
+   "link_to": "Scheme Obligation Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Renewal Pipeline",
+   "link_count": 0,
+   "link_to": "Renewal Pipeline",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "A3 Sola Settings",
+   "link_count": 0,
+   "link_to": "A3 Sola Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar Projects",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "A3 Sola",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 33.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Project",
+   "link_to": "Project",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "label": "Profitability",
+   "link_to": "Project Profitability",
+   "type": "Report",
+   "is_query_report": 1
+  },
+  {
+   "color": "Orange",
+   "label": "Billing",
+   "link_to": "Billing vs Collection",
+   "type": "Report",
+   "is_query_report": 1
+  },
+  {
+   "color": "Red",
+   "label": "SLA",
+   "link_to": "Service Ticket SLA Compliance",
+   "type": "Report",
+   "is_query_report": 1
+  }
+ ],
+ "title": "Solar Projects"
+}

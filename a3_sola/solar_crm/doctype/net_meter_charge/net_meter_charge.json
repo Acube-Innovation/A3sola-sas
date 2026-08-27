@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "connection_type",
+  "supply_mode",
+  "charge_amount",
+  "monthly_rental",
+  "allocation_lead_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supply_mode",
+   "fieldtype": "Select",
+   "label": "Supply Mode",
+   "options": "Purchased by Customer\nAvailed from DISCOM on Rental",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "charge_amount",
+   "fieldtype": "Currency",
+   "label": "Charge",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "monthly_rental",
+   "fieldtype": "Currency",
+   "label": "Monthly Rental",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "allocation_lead_days",
+   "fieldtype": "Int",
+   "label": "Allocation Lead Days",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Net Meter Charge",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

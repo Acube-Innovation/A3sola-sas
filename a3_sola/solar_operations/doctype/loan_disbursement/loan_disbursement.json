@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tranche",
+  "disbursement_date",
+  "amount",
+  "cb_1",
+  "utr_or_reference",
+  "credited_to",
+  "bank_advice",
+  "covering_letter",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "tranche",
+   "fieldtype": "Select",
+   "label": "Tranche",
+   "options": "Advance\nBalance\nOther",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disbursement_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "utr_or_reference",
+   "fieldtype": "Data",
+   "label": "UTR / Reference",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "credited_to",
+   "fieldtype": "Select",
+   "label": "Credited To",
+   "options": "EPC Account\nRegistered Vendor Account\nConsumer Account",
+   "default": "EPC Account"
+  },
+  {
+   "fieldname": "bank_advice",
+   "fieldtype": "Attach",
+   "label": "Bank Advice"
+  },
+  {
+   "fieldname": "covering_letter",
+   "fieldtype": "Attach",
+   "label": "Covering Letter",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Loan Disbursement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

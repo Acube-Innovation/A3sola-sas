@@ -1,0 +1,136 @@
+{#- The pricing block, shared by the homepage and the standalone pricing page, so the two
+    can never disagree about what anything costs. -#}
+<div class="a3s-head a3s-head--center a3s-reveal">
+	<span class="a3s-eyebrow">Pricing</span>
+	<h2 id="pricing-heading">Plans that grow with your order book</h2>
+	<p class="a3s-lead">
+		Every plan includes the ERPNext backbone, unlimited installations and free updates.
+		Pay annually and two months are on us, with the implementation fee waived.
+	</p>
+	<div class="a3s-cycle" data-cycle-toggle role="group" aria-label="Billing cycle">
+		<button type="button" data-cycle="monthly" class="is-active" aria-pressed="true">Monthly</button>
+		<button type="button" data-cycle="annual" aria-pressed="false">
+			Annual <span class="a3s-badge">2 months free</span>
+		</button>
+	</div>
+</div>
+
+<div class="a3s-grid a3s-grid--3 a3s-plans">
+	{%- for plan in plans %}
+	<div class="a3s-card a3s-plan {% if plan.is_popular %}a3s-plan--popular{% endif %} a3s-reveal">
+		{%- if plan.is_popular %}
+		<span class="a3s-plan__flag">Most popular</span>
+		{%- endif %}
+		<h3 class="a3s-plan__name">{{ plan.plan_name }}</h3>
+		<p class="a3s-card__text">{{ plan.tagline or "" }}</p>
+
+		<p class="a3s-plan__price">
+			{%- if plan.is_custom_pricing %}
+			<span class="a3s-plan__amount">Custom</span>
+			{%- else %}
+			<span class="a3s-plan__amount"
+				data-price-monthly="{{ frappe.utils.fmt_money(plan.monthly_price, currency=plan.currency) }}"
+				data-price-annual="{{ frappe.utils.fmt_money(plan.annual_price, currency=plan.currency) }}"
+			>{{ frappe.utils.fmt_money(plan.monthly_price, currency=plan.currency) }}</span>
+			<span class="a3s-plan__suffix" data-suffix>/month</span>
+			{%- endif %}
+		</p>
+
+		{%- if not plan.is_custom_pricing %}
+		<p class="a3s-small a3s-muted"
+			data-subline-monthly="or {{ frappe.utils.fmt_money(plan.annual_price, currency=plan.currency) }} a year - {{ plan.months_free }} months free"
+			data-subline-annual="{{ frappe.utils.fmt_money(plan.annual_effective_monthly, currency=plan.currency) }} a month, billed annually"
+		>or {{ frappe.utils.fmt_money(plan.annual_price, currency=plan.currency) }} a year - {{ plan.months_free }} months free</p>
+
+		<p class="a3s-small a3s-muted a3s-plan__impl"
+			data-impl-monthly="{{ frappe.utils.fmt_money(plan.implementation_fee, currency=plan.currency) }} one-time implementation"
+			data-impl-annual="Implementation waived on annual"
+		>{{ frappe.utils.fmt_money(plan.implementation_fee, currency=plan.currency) }} one-time implementation</p>
+
+		<p class="a3s-small a3s-muted">
+			{{ plan.included_users }} users included{% if plan.max_users %}, up to {{ plan.max_users }}{% endif %}
+		</p>
+		{%- else %}
+		<p class="a3s-small a3s-muted a3s-plan__impl">Priced against what you actually need.</p>
+		<p class="a3s-small a3s-muted">Unlimited users and companies</p>
+		{%- endif %}
+
+		{%- if plan.inherits_from_name %}
+		<p class="a3s-plan__inherits">Everything in {{ plan.inherits_from_name }}, plus:</p>
+		{%- endif %}
+
+		<ul class="a3s-plan__features">
+			{%- for feature in plan.features %}
+			<li class="{% if not feature.included %}is-excluded{% endif %}">
+				<span aria-hidden="true">{% if feature.included %}✓{% else %}—{% endif %}</span>
+				<span>{{ feature.text }}</span>
+			</li>
+			{%- endfor %}
+		</ul>
+
+		{%- if plan.is_custom_pricing %}
+		<a class="a3s-btn a3s-btn--secondary a3s-btn--block a3s-plan__cta"
+			href="{{ home_prefix }}#contact"
+			data-analytics="plan_selected" data-analytics-source="pricing">{{ plan.cta_text or "Talk to us" }}</a>
+		{%- else %}
+		<a class="a3s-btn {% if plan.is_popular %}a3s-btn--primary{% else %}a3s-btn--secondary{% endif %} a3s-btn--block a3s-plan__cta"
+			href="/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
+			data-cta-plan="{{ plan.plan_code }}"
+			data-analytics="plan_selected" data-analytics-source="pricing">{{ plan.cta_text or "Get started" }}</a>
+		{%- endif %}
+	</div>
+	{%- endfor %}
+</div>
+
+{#- The comparison table. On mobile it becomes stacked cards rather than a scroll. -#}
+<div class="a3s-compare a3s-reveal">
+	<table class="a3s-table">
+		<caption class="a3s-sr">Plan comparison</caption>
+		<thead>
+			<tr>
+				<th scope="col">Package</th>
+				<th scope="col">Monthly</th>
+				<th scope="col">Annual</th>
+				<th scope="col">Additional user</th>
+				<th scope="col">Assisted implementation</th>
+				<th scope="col"><span class="a3s-sr">Action</span></th>
+			</tr>
+		</thead>
+		<tbody>
+			{%- for plan in plans %}
+			<tr>
+				<th scope="row" data-label="Package">{{ plan.plan_name }}</th>
+				<td data-label="Monthly">
+					{%- if plan.is_custom_pricing %}Custom{% else %}{{ frappe.utils.fmt_money(plan.monthly_price, currency=plan.currency) }}{% endif %}
+				</td>
+				<td data-label="Annual">
+					{%- if plan.is_custom_pricing %}Custom{% else %}{{ frappe.utils.fmt_money(plan.annual_price, currency=plan.currency) }}{% endif %}
+				</td>
+				<td data-label="Additional user">
+					{%- if plan.is_custom_pricing %}Included{% else %}
+					<span data-price-monthly="{{ frappe.utils.fmt_money(plan.additional_user_price_monthly, currency=plan.currency) }}/mo"
+						data-price-annual="{{ frappe.utils.fmt_money(plan.additional_user_price_annual, currency=plan.currency) }}/yr"
+					>{{ frappe.utils.fmt_money(plan.additional_user_price_monthly, currency=plan.currency) }}/mo</span>
+					{%- endif %}
+				</td>
+				<td data-label="Assisted implementation">
+					{%- if plan.is_custom_pricing %}Scoped with you{% else %}
+					<span data-price-monthly="{{ frappe.utils.fmt_money(plan.implementation_fee, currency=plan.currency) }}"
+						data-price-annual="Waived"
+					>{{ frappe.utils.fmt_money(plan.implementation_fee, currency=plan.currency) }}</span>
+					{%- endif %}
+				</td>
+				<td data-label="">
+					{%- if plan.is_custom_pricing %}
+					<a class="a3s-btn a3s-btn--secondary" href="{{ home_prefix }}#contact">Talk to us</a>
+					{%- else %}
+					<a class="a3s-btn a3s-btn--secondary"
+						href="/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
+						data-cta-plan="{{ plan.plan_code }}">Choose</a>
+					{%- endif %}
+				</td>
+			</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+</div>

@@ -1,0 +1,563 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "customer",
+  "cb_2",
+  "quotation",
+  "capacity_kw",
+  "project_cost_all_inclusive",
+  "company",
+  "amended_from",
+  "sb_3",
+  "lender",
+  "lender_branch",
+  "branch_address",
+  "cb_4",
+  "relationship_manager",
+  "contact_number",
+  "loan_scheme",
+  "sb_5",
+  "jan_samarth_id",
+  "loan_application_no",
+  "loan_sanction_no",
+  "cb_6",
+  "national_portal_application_id",
+  "discom_consumer_id",
+  "discom_id",
+  "sb_7",
+  "status",
+  "applied_on",
+  "sanctioned_on",
+  "cb_8",
+  "sanctioned_amount",
+  "interest_rate",
+  "tenure_months",
+  "rejection_reason",
+  "sb_9",
+  "ehs_note",
+  "feasibility_status",
+  "capacity_applied_kw",
+  "capacity_installable_kw",
+  "cb_11",
+  "ehs_overall_status",
+  "ehs_conditions",
+  "structural_certificate_on_file",
+  "sb_12",
+  "payee_note",
+  "payee_legal_name",
+  "payee_bank_name",
+  "cb_14",
+  "payee_bank_account_no",
+  "payee_bank_branch",
+  "payee_bank_ifsc",
+  "sb_15",
+  "disbursements",
+  "total_disbursed",
+  "outstanding",
+  "cb_16",
+  "advance_received_on",
+  "balance_received_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "fetch_from": "solar_installation.customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "quotation",
+   "fieldtype": "Link",
+   "label": "Quotation",
+   "options": "Quotation"
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "fetch_from": "solar_installation.capacity_kw",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "project_cost_all_inclusive",
+   "fieldtype": "Currency",
+   "label": "Project Cost (all inclusive)",
+   "permlevel": 1,
+   "description": "The figure the lender's feasibility report asks for."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Loan Application",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Lender"
+  },
+  {
+   "fieldname": "lender",
+   "fieldtype": "Data",
+   "label": "Lender",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "lender_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "branch_address",
+   "fieldtype": "Small Text",
+   "label": "Branch Address"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "relationship_manager",
+   "fieldtype": "Data",
+   "label": "Relationship Manager"
+  },
+  {
+   "fieldname": "contact_number",
+   "fieldtype": "Data",
+   "label": "Contact Number"
+  },
+  {
+   "fieldname": "loan_scheme",
+   "fieldtype": "Select",
+   "label": "Loan Scheme",
+   "options": "PM Surya Ghar via Jan Samarth\nBank Own Scheme\nOther",
+   "default": "PM Surya Ghar via Jan Samarth"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Identifiers"
+  },
+  {
+   "fieldname": "jan_samarth_id",
+   "fieldtype": "Data",
+   "label": "Jan Samarth ID",
+   "description": "Shape ANS-SOLAR-<digits>-<digits>."
+  },
+  {
+   "fieldname": "loan_application_no",
+   "fieldtype": "Data",
+   "label": "Loan Application No"
+  },
+  {
+   "fieldname": "loan_sanction_no",
+   "fieldtype": "Data",
+   "label": "Loan Sanction No",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "national_portal_application_id",
+   "fieldtype": "Data",
+   "label": "Portal ID",
+   "fetch_from": "solar_installation.national_portal_application_id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discom_consumer_id",
+   "fieldtype": "Data",
+   "label": "DISCOM Consumer ID"
+  },
+  {
+   "fieldname": "discom_id",
+   "fieldtype": "Data",
+   "label": "DISCOM ID"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Application"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Applied\nDocuments Submitted\nUnder Review\nQuery Raised\nSanctioned\nRejected\nDisbursed (Advance)\nDisbursed (Full)\nClosed",
+   "reqd": 1,
+   "default": "Not Applied",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "applied_on",
+   "fieldtype": "Date",
+   "label": "Applied On"
+  },
+  {
+   "fieldname": "sanctioned_on",
+   "fieldtype": "Date",
+   "label": "Sanctioned On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sanctioned_amount",
+   "fieldtype": "Currency",
+   "label": "Sanctioned Amount",
+   "allow_on_submit": 1,
+   "permlevel": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "interest_rate",
+   "fieldtype": "Float",
+   "label": "Interest Rate",
+   "precision": 2
+  },
+  {
+   "fieldname": "tenure_months",
+   "fieldtype": "Int",
+   "label": "Tenure (months)"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Feasibility & EHS"
+  },
+  {
+   "fieldname": "ehs_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Fetched from the Phase 1 site survey. This is what the vendor feasibility report and the EHS checklist print - never re-entered.</p>"
+  },
+  {
+   "fieldname": "feasibility_status",
+   "fieldtype": "Data",
+   "label": "Feasibility Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "capacity_applied_kw",
+   "fieldtype": "Float",
+   "label": "Capacity Applied (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "capacity_installable_kw",
+   "fieldtype": "Float",
+   "label": "Capacity Installable (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ehs_overall_status",
+   "fieldtype": "Data",
+   "label": "EHS Status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ehs_conditions",
+   "fieldtype": "Small Text",
+   "label": "EHS Conditions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "structural_certificate_on_file",
+   "fieldtype": "Check",
+   "label": "Structural Certificate on File",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Beneficiary Account"
+  },
+  {
+   "fieldname": "payee_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The lender credits the EPC, not the consumer. Fetched from the Company payee block.</p>"
+  },
+  {
+   "fieldname": "payee_legal_name",
+   "fieldtype": "Data",
+   "label": "Payee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payee_bank_name",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payee_bank_account_no",
+   "fieldtype": "Data",
+   "label": "Account No",
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "payee_bank_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payee_bank_ifsc",
+   "fieldtype": "Data",
+   "label": "IFSC",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Disbursement"
+  },
+  {
+   "fieldname": "disbursements",
+   "fieldtype": "Table",
+   "label": "Disbursements",
+   "options": "Loan Disbursement",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "total_disbursed",
+   "fieldtype": "Currency",
+   "label": "Total Disbursed",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "outstanding",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "advance_received_on",
+   "fieldtype": "Date",
+   "label": "Advance Received",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "balance_received_on",
+   "fieldtype": "Date",
+   "label": "Balance Received",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Loan Application",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,lender,loan_sanction_no",
+ "description": "A financed job's money arrives in two tranches - an advance on sanction and the balance after the completion report. Modelled, not handled over email."
+}

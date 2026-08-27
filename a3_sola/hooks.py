@@ -1,3 +1,17 @@
+# Copyright (c) 2026, Acube Innovations and contributors
+# For license information, please see license.txt
+"""a3_sola hooks.
+
+One app, four modules — Solar CRM, Solar Operations, Solar Projects, Platform.
+
+This file is deliberately thin and stays that way. Everything a module contributes —
+doctypes, doc events, permission hooks, schedulers and fixtures — is declared in its own
+registry file under `a3_sola/registry/` and merged here. Every later phase adds a registry
+file and nothing else to this file.
+"""
+
+from a3_sola import registry
+
 app_name = "a3_sola"
 app_title = "A3 Sola"
 app_publisher = "Acube Innovations"
@@ -5,245 +19,25 @@ app_description = "Solar EPC business application for ERPNext: Solar CRM, Solar 
 app_email = "saaspurchases@acube.co"
 app_license = "mit"
 
-# Apps
-# ------------------
+required_apps = ["frappe/erpnext"]
 
-# required_apps = []
+app_include_js = "a3_sola.bundle.js"
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "a3_sola",
-# 		"logo": "/assets/a3_sola/logo.png",
-# 		"title": "A3 Sola",
-# 		"route": "/a3_sola",
-# 		"has_permission": "a3_sola.api.permission.has_app_permission"
-# 	}
-# ]
+after_install = "a3_sola.setup.install.after_install"
+after_migrate = "a3_sola.setup.install.after_migrate"
 
-# Includes in <head>
-# ------------------
+# --- assembled from the per-module registries -------------------------------
+doc_events = registry.merged_doc_events()
+scheduler_events = registry.merged_scheduler_events()
+fixtures = registry.merged_fixtures()
+permission_query_conditions = registry.permission_query_conditions()
+has_permission = registry.has_permission_map()
+standard_portal_menu_items = registry.merged_portal_menu_items()
+update_website_context = registry.merged_website_context()
+website_route_rules = registry.merged_website_route_rules()
 
-# include js, css files in header of desk.html
-# app_include_css = "/assets/a3_sola/css/a3_sola.css"
-# app_include_js = "/assets/a3_sola/js/a3_sola.js"
-
-# include js, css files in header of web template
-# web_include_css = "/assets/a3_sola/css/a3_sola.css"
-# web_include_js = "/assets/a3_sola/js/a3_sola.js"
-
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "a3_sola/public/scss/website"
-
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
-
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
-
-# include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
-
-# Svg Icons
-# ------------------
-# include app icons in desk
-# app_include_icons = "a3_sola/public/icons.svg"
-
-# Home Pages
-# ----------
-
-# application home page (will override Website Settings)
-# home_page = "login"
-
-# website user home page (by Role)
-# role_home_page = {
-# 	"Role": "home_page"
-# }
-
-# Generators
-# ----------
-
-# automatically create page for each record of this doctype
-# website_generators = ["Web Page"]
-
-# Jinja
-# ----------
-
-# add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "a3_sola.utils.jinja_methods",
-# 	"filters": "a3_sola.utils.jinja_filters"
-# }
-
-# Installation
-# ------------
-
-# before_install = "a3_sola.install.before_install"
-# after_install = "a3_sola.install.after_install"
-
-# Uninstallation
-# ------------
-
-# before_uninstall = "a3_sola.uninstall.before_uninstall"
-# after_uninstall = "a3_sola.uninstall.after_uninstall"
-
-# Integration Setup
-# ------------------
-# To set up dependencies/integrations with other apps
-# Name of the app being installed is passed as an argument
-
-# before_app_install = "a3_sola.utils.before_app_install"
-# after_app_install = "a3_sola.utils.after_app_install"
-
-# Integration Cleanup
-# -------------------
-# To clean up dependencies/integrations with other apps
-# Name of the app being uninstalled is passed as an argument
-
-# before_app_uninstall = "a3_sola.utils.before_app_uninstall"
-# after_app_uninstall = "a3_sola.utils.after_app_uninstall"
-
-# Desk Notifications
-# ------------------
-# See frappe.core.notifications.get_notification_config
-
-# notification_config = "a3_sola.notifications.get_notification_config"
-
-# Permissions
-# -----------
-# Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
-
-# DocType Class
-# ---------------
-# Override standard doctype classes
-
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
-
-# Document Events
-# ---------------
-# Hook on document methods and events
-
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
-
-# Scheduled Tasks
-# ---------------
-
-# scheduler_events = {
-# 	"all": [
-# 		"a3_sola.tasks.all"
-# 	],
-# 	"daily": [
-# 		"a3_sola.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"a3_sola.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"a3_sola.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"a3_sola.tasks.monthly"
-# 	],
-# }
-
-# Testing
-# -------
-
-# before_tests = "a3_sola.install.before_tests"
-
-# Overriding Methods
-# ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "a3_sola.event.get_events"
-# }
-#
-# each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
-# along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "a3_sola.task.get_dashboard_data"
-# }
-
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-# ignore_links_on_delete = ["Communication", "ToDo"]
-
-# Request Events
-# ----------------
-# before_request = ["a3_sola.utils.before_request"]
-# after_request = ["a3_sola.utils.after_request"]
-
-# Job Events
-# ----------
-# before_job = ["a3_sola.utils.before_job"]
-# after_job = ["a3_sola.utils.after_job"]
-
-# User Data Protection
-# --------------------
-
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"a3_sola.auth.validate"
-# ]
-
-# Automatically update python controller files with type annotations for this app.
-# export_python_type_annotations = True
-
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-
-# Translation
-# ------------
-# List of apps whose translatable strings should be excluded from this app's translations.
-# ignore_translatable_strings_from = []
-
+jinja = {
+	"methods": [
+		"a3_sola.api.proposal.proposal_context",
+	],
+}

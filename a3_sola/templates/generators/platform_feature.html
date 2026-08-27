@@ -1,0 +1,79 @@
+{% extends "templates/platform_base.html" %}
+
+{% block extra_schema %}
+<script type="application/ld+json">{{ breadcrumb_schema }}</script>
+{% endblock %}
+
+{% block content %}
+<article>
+	<section class="a3s-hero a3s-detail-hero">
+		<div class="a3s-container">
+			<nav class="a3s-crumbs" aria-label="Breadcrumb">
+				<a href="/">Home</a> <span aria-hidden="true">/</span>
+				<a href="/features">Features</a> <span aria-hidden="true">/</span>
+				<span aria-current="page">{{ doc.feature_name }}</span>
+			</nav>
+			<span class="a3s-eyebrow">{{ doc.feature_group }}</span>
+			<h1>{{ doc.hero_headline or doc.feature_name }}</h1>
+			<p class="a3s-lead">{{ doc.hero_subtext or doc.short_description }}</p>
+		</div>
+	</section>
+
+	{%- if doc.body_content %}
+	<section class="a3s-section">
+		<div class="a3s-container a3s-prose a3s-reveal">
+			{{ doc.body_content }}
+		</div>
+	</section>
+	{%- endif %}
+
+	{%- for section in doc.detail_sections %}
+	<section class="a3s-section {% if loop.index is even %}a3s-section--surface{% endif %}">
+		<div class="a3s-container">
+			<div class="a3s-split {% if section.layout == 'Text Right' %}a3s-split--reverse{% endif %}
+				{% if section.layout == 'Full Width' %}a3s-split--full{% endif %} a3s-reveal">
+				<div class="a3s-prose">
+					<h2>{{ section.section_title }}</h2>
+					{{ section.section_body or "" }}
+				</div>
+				{%- if section.section_image and section.layout != 'Full Width' %}
+				<div><img src="{{ section.section_image }}" alt="{{ section.section_title }}" loading="lazy"></div>
+				{%- endif %}
+			</div>
+		</div>
+	</section>
+	{%- endfor %}
+
+	{%- if siblings %}
+	<section class="a3s-section a3s-section--surface">
+		<div class="a3s-container">
+			<div class="a3s-head a3s-reveal">
+				<h2 style="font-size:1.5rem">More features</h2>
+			</div>
+			<div class="a3s-grid a3s-grid--4">
+				{%- for item in siblings %}
+				<a class="a3s-card a3s-reveal" href="/{{ item.route }}">
+					<span class="a3s-card__icon" aria-hidden="true">{{ item.icon or "◆" }}</span>
+					<h3 class="a3s-card__title">{{ item.title }}</h3>
+					<p class="a3s-card__text">{{ item.short_description }}</p>
+				</a>
+				{%- endfor %}
+			</div>
+		</div>
+	</section>
+	{%- endif %}
+
+	<section class="a3s-section a3s-section--tint">
+		<div class="a3s-container" style="text-align:center">
+			<h2 class="a3s-reveal">{{ doc.cta_headline or "See it on your own jobs" }}</h2>
+			<div class="a3s-hero__cta a3s-reveal" style="justify-content:center;margin-top:1.5rem">
+				<a class="a3s-btn a3s-btn--primary" href="{{ doc.cta_button_link or '/get-started' }}"
+					data-analytics="signup_started" data-analytics-source="feature_detail">
+					{{ doc.cta_button_text or "Get started" }}
+				</a>
+				<a class="a3s-btn a3s-btn--secondary" href="/#contact">Book a demo</a>
+			</div>
+		</div>
+	</section>
+</article>
+{% endblock %}

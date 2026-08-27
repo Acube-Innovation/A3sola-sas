@@ -1,0 +1,360 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "capacity_kw",
+  "cb_2",
+  "work_order_type",
+  "status",
+  "company",
+  "amended_from",
+  "sb_3",
+  "planned_start_date",
+  "planned_end_date",
+  "cb_4",
+  "actual_start_date",
+  "actual_end_date",
+  "vehicle_reference",
+  "sb_5",
+  "crew",
+  "sb_6",
+  "work_description",
+  "work_completed_percent",
+  "sb_7",
+  "work_logs",
+  "sb_8",
+  "site_photographs",
+  "sb_9",
+  "safety_note",
+  "safety_briefing_done",
+  "ppe_verified",
+  "cb_11",
+  "height_work_permit",
+  "safety_remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "fetch_from": "solar_installation.capacity_kw",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "work_order_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Structure Erection\nModule Mounting\nDC Wiring\nAC Wiring & Earthing\nInverter Installation\nTesting\nRectification",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Planned\nIn Progress\nOn Hold\nCompleted\nCancelled",
+   "default": "Planned",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Installation Work Order",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Schedule"
+  },
+  {
+   "fieldname": "planned_start_date",
+   "fieldtype": "Date",
+   "label": "Planned Start",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "planned_end_date",
+   "fieldtype": "Date",
+   "label": "Planned End",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_start_date",
+   "fieldtype": "Date",
+   "label": "Actual Start"
+  },
+  {
+   "fieldname": "actual_end_date",
+   "fieldtype": "Date",
+   "label": "Actual End"
+  },
+  {
+   "fieldname": "vehicle_reference",
+   "fieldtype": "Data",
+   "label": "Vehicle"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Crew"
+  },
+  {
+   "fieldname": "crew",
+   "fieldtype": "Table",
+   "label": "Crew",
+   "options": "Work Order Crew"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "work_description",
+   "fieldtype": "Text",
+   "label": "Work Description"
+  },
+  {
+   "fieldname": "work_completed_percent",
+   "fieldtype": "Percent",
+   "label": "Completed %",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Work Logs"
+  },
+  {
+   "fieldname": "work_logs",
+   "fieldtype": "Table",
+   "label": "Work Logs",
+   "options": "Work Log"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Photographs"
+  },
+  {
+   "fieldname": "site_photographs",
+   "fieldtype": "Table",
+   "label": "Site Photographs",
+   "options": "Survey Image"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Safety"
+  },
+  {
+   "fieldname": "safety_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Both checks are mandatory before submit. Work at height without a briefing is how people get hurt.</p>"
+  },
+  {
+   "fieldname": "safety_briefing_done",
+   "fieldtype": "Check",
+   "label": "Safety Briefing Done",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ppe_verified",
+   "fieldtype": "Check",
+   "label": "PPE Verified",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "height_work_permit",
+   "fieldtype": "Attach",
+   "label": "Height Work Permit"
+  },
+  {
+   "fieldname": "safety_remarks",
+   "fieldtype": "Small Text",
+   "label": "Safety Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Installation Work Order",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,work_order_type,status"
+}

@@ -1,0 +1,267 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "rule_name",
+  "valuation_mode",
+  "applicable_consumer_category",
+  "cb_1",
+  "effective_from",
+  "effective_to",
+  "is_active",
+  "company",
+  "sb_2",
+  "goods_value_percent",
+  "services_value_percent",
+  "cb_3",
+  "goods_hsn_code",
+  "services_sac_code",
+  "sb_4",
+  "goods_item_tax_template",
+  "goods_item",
+  "cb_5",
+  "services_item_tax_template",
+  "services_item",
+  "sb_6",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-GSTR-.###",
+   "reqd": 1,
+   "default": "SOL-GSTR-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "valuation_mode",
+   "fieldtype": "Select",
+   "label": "Valuation Mode",
+   "options": "Blended 70:30\nSeparate Line Items\nSingle Rate",
+   "reqd": 1,
+   "default": "Blended 70:30",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applicable_consumer_category",
+   "fieldtype": "Select",
+   "label": "Consumer Category",
+   "options": "All\nResidential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
+   "default": "All",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Valuation Split"
+  },
+  {
+   "fieldname": "goods_value_percent",
+   "fieldtype": "Float",
+   "label": "Goods %",
+   "default": "70",
+   "precision": 2
+  },
+  {
+   "fieldname": "services_value_percent",
+   "fieldtype": "Float",
+   "label": "Services %",
+   "default": "30",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "goods_hsn_code",
+   "fieldtype": "Data",
+   "label": "Goods HSN"
+  },
+  {
+   "fieldname": "services_sac_code",
+   "fieldtype": "Data",
+   "label": "Services SAC",
+   "default": "9954"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Tax Templates"
+  },
+  {
+   "fieldname": "goods_item_tax_template",
+   "fieldtype": "Link",
+   "label": "Goods Item Tax Template",
+   "options": "Item Tax Template"
+  },
+  {
+   "fieldname": "goods_item",
+   "fieldtype": "Link",
+   "label": "Goods Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "services_item_tax_template",
+   "fieldtype": "Link",
+   "label": "Services Item Tax Template",
+   "options": "Item Tax Template"
+  },
+  {
+   "fieldname": "services_item",
+   "fieldtype": "Link",
+   "label": "Services Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar GST Valuation Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "rule_name",
+ "show_title_field_in_link": 1,
+ "description": "Solar EPC is a composite supply. The valuation basis is CONFIGURATION - no rate constant appears anywhere in the code, and postings are gated on a recorded CA confirmation."
+}

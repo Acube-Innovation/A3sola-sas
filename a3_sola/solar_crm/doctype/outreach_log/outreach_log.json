@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contact_datetime",
+  "channel",
+  "outreach_step",
+  "call_status",
+  "cb_1",
+  "message_template",
+  "logged_by",
+  "outcome",
+  "next_action"
+ ],
+ "fields": [
+  {
+   "fieldname": "contact_datetime",
+   "fieldtype": "Datetime",
+   "label": "When",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "Call\nWhatsApp\nEmail\nSMS\nSite Visit\nWalk-in",
+   "reqd": 1,
+   "default": "Call",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "outreach_step",
+   "fieldtype": "Select",
+   "label": "Step",
+   "options": "Step 1: First Contact\nStep 2: 24hr Nudge\nStep 3: Value/ROI\nStep 4: Breakup/Close\nCompleted: Proposal Sent\nAd-hoc",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "call_status",
+   "fieldtype": "Select",
+   "label": "Call Status",
+   "options": "Not Answered\nBusy\nSwitched Off\nConnected\nNot Applicable",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "message_template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Outreach Message Template"
+  },
+  {
+   "fieldname": "logged_by",
+   "fieldtype": "Link",
+   "label": "Logged By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Small Text",
+   "label": "Outcome",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "next_action",
+   "fieldtype": "Small Text",
+   "label": "Next Action"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Outreach Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

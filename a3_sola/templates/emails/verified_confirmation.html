@@ -1,0 +1,18 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ doc.full_name }},</p>
+<p style="margin:0 0 24px;">
+	Your email is confirmed. Here is what happens next:
+</p>
+<ol style="margin:0 0 24px;padding-left:20px;color:#6b7383;">
+	<li style="margin-bottom:8px;">Complete payment for the {{ doc.plan_code }} plan, billed {{ doc.billing_cycle|lower }}.</li>
+	<li style="margin-bottom:8px;">We set up your company, users and document templates.</li>
+	<li>Your team logs in and starts entering real enquiries.</li>
+</ol>
+<p style="margin:0 0 24px;">
+	<a href="{{ summary_url }}" style="display:inline-block;background:#f7941e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:9999px;font-weight:600;font-size:15px;">View my order</a>
+</p>
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	Reference {{ doc.name }}. Reply to this email if anything looks wrong.
+</p>
+{% endblock %}

@@ -1,0 +1,575 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "specification_code",
+  "package_name",
+  "capacity_kw",
+  "system_type",
+  "connection_type",
+  "cb_1",
+  "inverter_topology",
+  "is_dcr_compliant",
+  "area_required_sqft",
+  "tier",
+  "is_active",
+  "company",
+  "sb_2",
+  "module_specification",
+  "module_make",
+  "module_alternate_makes",
+  "cb_3",
+  "module_wattage",
+  "module_count",
+  "sb_4",
+  "inverter_1_specification",
+  "inverter_1_make",
+  "cb_5",
+  "inverter_1_capacity_kw",
+  "inverter_1_count",
+  "sb_6",
+  "inverter_2_specification",
+  "inverter_2_make",
+  "cb_7",
+  "inverter_2_capacity_kw",
+  "inverter_2_count",
+  "sb_8",
+  "dcdb_specification",
+  "acdb_specification",
+  "dc_cable_specification",
+  "ac_cable_specification",
+  "mounting_structure_specification",
+  "cb_9",
+  "solar_energy_meter_count",
+  "earthing_sets",
+  "lightning_protection_sets",
+  "battery_specification",
+  "battery_count",
+  "sb_10",
+  "components",
+  "sb_11",
+  "cost_option_1",
+  "cost_option_2",
+  "standard_discount",
+  "additional_structure_and_cable_cost",
+  "cb_12",
+  "indicative_subsidy",
+  "net_rate",
+  "sb_13",
+  "kseb_application_fee",
+  "kseb_registration_fee",
+  "cb_14",
+  "kseb_registration_refundable",
+  "net_meter_charge",
+  "statutory_total",
+  "sb_15",
+  "expected_daily_units_low",
+  "cb_16",
+  "expected_daily_units_high",
+  "sb_17",
+  "item",
+  "bom",
+  "cb_18",
+  "warranty_years"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-PKG-.#####",
+   "reqd": 1,
+   "default": "SOL-PKG-.#####",
+   "hidden": 1
+  },
+  {
+   "fieldname": "specification_code",
+   "fieldtype": "Data",
+   "label": "Specification Code",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1,
+   "description": "The client's own code, e.g. 3Kw 1PH, 5KW 3PH Micro."
+  },
+  {
+   "fieldname": "package_name",
+   "fieldtype": "Data",
+   "label": "Package Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System Type",
+   "options": "On-Grid\nOff-Grid\nHybrid",
+   "reqd": 1,
+   "default": "On-Grid",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "reqd": 1,
+   "default": "Single Phase",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_topology",
+   "fieldtype": "Select",
+   "label": "Inverter Topology",
+   "options": "String\nString with Optimiser\nMicroinverter\nHybrid",
+   "reqd": 1,
+   "default": "String",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_dcr_compliant",
+   "fieldtype": "Check",
+   "label": "DCR Compliant",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "area_required_sqft",
+   "fieldtype": "Float",
+   "label": "Area Required (sq ft)",
+   "precision": 2
+  },
+  {
+   "fieldname": "tier",
+   "fieldtype": "Select",
+   "label": "Tier",
+   "options": "Standard\nPremium",
+   "default": "Standard"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "module_specification",
+   "fieldtype": "Data",
+   "label": "Module Specification",
+   "description": "e.g. 550 Wp Mono PERC Bifacial DCR"
+  },
+  {
+   "fieldname": "module_make",
+   "fieldtype": "Link",
+   "label": "Module Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "module_alternate_makes",
+   "fieldtype": "Data",
+   "label": "Alternate Makes",
+   "description": "Printed on the proposal as written, e.g. Rayzon/Vikram/Equivalent"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "module_wattage",
+   "fieldtype": "Float",
+   "label": "Module Wattage (Wp)",
+   "precision": 2
+  },
+  {
+   "fieldname": "module_count",
+   "fieldtype": "Int",
+   "label": "Number of Modules"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Inverter Option 1"
+  },
+  {
+   "fieldname": "inverter_1_specification",
+   "fieldtype": "Small Text",
+   "label": "Specification"
+  },
+  {
+   "fieldname": "inverter_1_make",
+   "fieldtype": "Link",
+   "label": "Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_1_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "inverter_1_count",
+   "fieldtype": "Int",
+   "label": "Nos"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Inverter Option 2"
+  },
+  {
+   "fieldname": "inverter_2_specification",
+   "fieldtype": "Small Text",
+   "label": "Specification"
+  },
+  {
+   "fieldname": "inverter_2_make",
+   "fieldtype": "Link",
+   "label": "Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_2_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "inverter_2_count",
+   "fieldtype": "Int",
+   "label": "Nos"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Balance of System"
+  },
+  {
+   "fieldname": "dcdb_specification",
+   "fieldtype": "Small Text",
+   "label": "DCDB"
+  },
+  {
+   "fieldname": "acdb_specification",
+   "fieldtype": "Small Text",
+   "label": "ACDB"
+  },
+  {
+   "fieldname": "dc_cable_specification",
+   "fieldtype": "Small Text",
+   "label": "DC Cable"
+  },
+  {
+   "fieldname": "ac_cable_specification",
+   "fieldtype": "Small Text",
+   "label": "AC Cable"
+  },
+  {
+   "fieldname": "mounting_structure_specification",
+   "fieldtype": "Small Text",
+   "label": "Mounting Structure"
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_energy_meter_count",
+   "fieldtype": "Int",
+   "label": "Solar Energy Meters"
+  },
+  {
+   "fieldname": "earthing_sets",
+   "fieldtype": "Int",
+   "label": "Earthing Sets"
+  },
+  {
+   "fieldname": "lightning_protection_sets",
+   "fieldtype": "Int",
+   "label": "Lightning Protection Sets"
+  },
+  {
+   "fieldname": "battery_specification",
+   "fieldtype": "Small Text",
+   "label": "Battery"
+  },
+  {
+   "fieldname": "battery_count",
+   "fieldtype": "Int",
+   "label": "Batteries"
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Components"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Components",
+   "options": "Solar Package Component"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Commercials"
+  },
+  {
+   "fieldname": "cost_option_1",
+   "fieldtype": "Currency",
+   "label": "Cost Option 1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_option_2",
+   "fieldtype": "Currency",
+   "label": "Cost Option 2"
+  },
+  {
+   "fieldname": "standard_discount",
+   "fieldtype": "Currency",
+   "label": "Standard Discount"
+  },
+  {
+   "fieldname": "additional_structure_and_cable_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Structure & Cable Cost"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "indicative_subsidy",
+   "fieldtype": "Currency",
+   "label": "Indicative Subsidy",
+   "read_only": 1,
+   "description": "Resolved from the scheme, never typed."
+  },
+  {
+   "fieldname": "net_rate",
+   "fieldtype": "Currency",
+   "label": "Net Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Statutory (resolved from the fee schedule)"
+  },
+  {
+   "fieldname": "kseb_application_fee",
+   "fieldtype": "Currency",
+   "label": "Application Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kseb_registration_fee",
+   "fieldtype": "Currency",
+   "label": "Registration Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kseb_registration_refundable",
+   "fieldtype": "Currency",
+   "label": "Registration Refundable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_charge",
+   "fieldtype": "Currency",
+   "label": "Net Meter Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "statutory_total",
+   "fieldtype": "Currency",
+   "label": "Statutory Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Generation"
+  },
+  {
+   "fieldname": "expected_daily_units_low",
+   "fieldtype": "Float",
+   "label": "Expected Units/day (low)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_daily_units_high",
+   "fieldtype": "Float",
+   "label": "Expected Units/day (high)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "ERPNext"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "bom",
+   "fieldtype": "Link",
+   "label": "BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "cb_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warranty_years",
+   "fieldtype": "Int",
+   "label": "System Warranty (years)",
+   "default": "5"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "package_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "specification_code,package_name,capacity_kw",
+ "description": "Mirrors the client's existing package master workbook field for field, so migrating it is an import rather than a re-derivation."
+}

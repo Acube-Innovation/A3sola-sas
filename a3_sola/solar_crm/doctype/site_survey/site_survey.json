@@ -1,0 +1,604 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_consumer",
+  "survey_date",
+  "surveyor",
+  "cb_2",
+  "customer_name",
+  "discom",
+  "discom_section",
+  "company",
+  "amended_from",
+  "sb_3",
+  "roof_type",
+  "total_roof_area_sqft",
+  "cb_4",
+  "total_usable_area_sqft",
+  "total_usable_kw",
+  "sb_5",
+  "roof_segments",
+  "sb_6",
+  "shadow_observations",
+  "average_shading_percent",
+  "shading_remarks",
+  "sb_7",
+  "existing_meter_type",
+  "main_switch_rating",
+  "earthing_available",
+  "cb_8",
+  "distance_roof_to_meter_m",
+  "inverter_location",
+  "cable_route_notes",
+  "sb_9",
+  "roof_condition",
+  "structure_type_required",
+  "cb_10",
+  "civil_work_required",
+  "additional_civil_cost",
+  "structural_remarks",
+  "tab_11",
+  "ehs_note",
+  "sb_13",
+  "ehs_checklist",
+  "sb_14",
+  "ehs_overall_status",
+  "ehs_conditions",
+  "sb_15",
+  "structural_safety_certificate",
+  "structural_certifier_name",
+  "structural_certifier_type",
+  "owner_consent_obtained",
+  "owner_consent_document",
+  "construction_timeline_shared",
+  "cb_16",
+  "water_source_for_cleaning",
+  "water_permission_required",
+  "tree_lopping_required",
+  "tree_lopping_permission",
+  "roof_access_24x7",
+  "alternate_access_notes",
+  "asbestos_present",
+  "batteries_in_scope",
+  "ceig_approval_applicable",
+  "tab_17",
+  "sb_18",
+  "feasibility_status",
+  "capacity_applied_kw",
+  "cb_19",
+  "capacity_installable_kw",
+  "infeasibility_reason",
+  "sb_20",
+  "recommended_capacity_kw",
+  "surveyor_remarks",
+  "sb_21",
+  "survey_images"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Survey Details"
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "survey_date",
+   "fieldtype": "Date",
+   "label": "Survey Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "surveyor",
+   "fieldtype": "Link",
+   "label": "Surveyor",
+   "options": "User"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer",
+   "fetch_from": "solar_consumer.consumer_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "fetch_from": "solar_consumer.discom",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discom_section",
+   "fieldtype": "Link",
+   "label": "Section",
+   "options": "DISCOM Section",
+   "fetch_from": "solar_consumer.discom_section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Site Survey",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Roof Assessment"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type"
+  },
+  {
+   "fieldname": "total_roof_area_sqft",
+   "fieldtype": "Float",
+   "label": "Total Roof Area (sq ft)",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_usable_area_sqft",
+   "fieldtype": "Float",
+   "label": "Usable Area (sq ft)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "total_usable_kw",
+   "fieldtype": "Float",
+   "label": "Usable Capacity (kW)",
+   "read_only": 1,
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Roof Segments"
+  },
+  {
+   "fieldname": "roof_segments",
+   "fieldtype": "Table",
+   "label": "Roof Segments",
+   "options": "Roof Segment"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Shading"
+  },
+  {
+   "fieldname": "shadow_observations",
+   "fieldtype": "Table",
+   "label": "Shadow Observations",
+   "options": "Shadow Observation"
+  },
+  {
+   "fieldname": "average_shading_percent",
+   "fieldtype": "Float",
+   "label": "Average Shading %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "shading_remarks",
+   "fieldtype": "Small Text",
+   "label": "Shading Remarks"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Electrical Readiness"
+  },
+  {
+   "fieldname": "existing_meter_type",
+   "fieldtype": "Data",
+   "label": "Existing Meter Type"
+  },
+  {
+   "fieldname": "main_switch_rating",
+   "fieldtype": "Data",
+   "label": "Main Switch Rating"
+  },
+  {
+   "fieldname": "earthing_available",
+   "fieldtype": "Check",
+   "label": "Earthing Available"
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "distance_roof_to_meter_m",
+   "fieldtype": "Float",
+   "label": "Roof to Meter (m)",
+   "precision": 2
+  },
+  {
+   "fieldname": "inverter_location",
+   "fieldtype": "Data",
+   "label": "Inverter Location"
+  },
+  {
+   "fieldname": "cable_route_notes",
+   "fieldtype": "Small Text",
+   "label": "Cable Route Notes"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Structural"
+  },
+  {
+   "fieldname": "roof_condition",
+   "fieldtype": "Select",
+   "label": "Roof Condition",
+   "options": "Good\nFair\nNeeds Repair",
+   "default": "Good"
+  },
+  {
+   "fieldname": "structure_type_required",
+   "fieldtype": "Select",
+   "label": "Structure Required",
+   "options": "Standard\nElevated\nCustom",
+   "default": "Standard"
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "civil_work_required",
+   "fieldtype": "Check",
+   "label": "Civil Work Required"
+  },
+  {
+   "fieldname": "additional_civil_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Civil Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "structural_remarks",
+   "fieldtype": "Small Text",
+   "label": "Structural Remarks"
+  },
+  {
+   "fieldname": "tab_11",
+   "fieldtype": "Tab Break",
+   "label": "EHS & Lender Compliance"
+  },
+  {
+   "fieldname": "ehs_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Every bank-financed job needs a signed vendor feasibility report and an EHS checklist before the first disbursement. The surveyor answers this once, on site; Phase 2 prints both documents from it.</p>"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "EHS Checklist"
+  },
+  {
+   "fieldname": "ehs_checklist",
+   "fieldtype": "Table",
+   "label": "EHS Checklist",
+   "options": "EHS Checklist Item"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "EHS Status"
+  },
+  {
+   "fieldname": "ehs_overall_status",
+   "fieldtype": "Select",
+   "label": "EHS Status",
+   "options": "Cleared\nCleared with Conditions\nBlocked",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "ehs_conditions",
+   "fieldtype": "Small Text",
+   "label": "Conditions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Key Evidence"
+  },
+  {
+   "fieldname": "structural_safety_certificate",
+   "fieldtype": "Attach",
+   "label": "Structural Safety Certificate"
+  },
+  {
+   "fieldname": "structural_certifier_name",
+   "fieldtype": "Data",
+   "label": "Certifier Name"
+  },
+  {
+   "fieldname": "structural_certifier_type",
+   "fieldtype": "Select",
+   "label": "Certifier Type",
+   "options": "Chartered Engineer\nArchitect\nCompetent Person"
+  },
+  {
+   "fieldname": "owner_consent_obtained",
+   "fieldtype": "Check",
+   "label": "Owner / RWA Consent Obtained"
+  },
+  {
+   "fieldname": "owner_consent_document",
+   "fieldtype": "Attach",
+   "label": "Consent Document"
+  },
+  {
+   "fieldname": "construction_timeline_shared",
+   "fieldtype": "Check",
+   "label": "Construction Timeline Shared"
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "water_source_for_cleaning",
+   "fieldtype": "Select",
+   "label": "Water Source",
+   "options": "Owner Overhead Tank\nShared Connection\nTanker\nNot Available"
+  },
+  {
+   "fieldname": "water_permission_required",
+   "fieldtype": "Check",
+   "label": "Water Permission Required"
+  },
+  {
+   "fieldname": "tree_lopping_required",
+   "fieldtype": "Check",
+   "label": "Tree Lopping Required"
+  },
+  {
+   "fieldname": "tree_lopping_permission",
+   "fieldtype": "Attach",
+   "label": "Lopping Permission",
+   "depends_on": "eval:doc.tree_lopping_required"
+  },
+  {
+   "fieldname": "roof_access_24x7",
+   "fieldtype": "Check",
+   "label": "24x7 Roof Access",
+   "default": "1"
+  },
+  {
+   "fieldname": "alternate_access_notes",
+   "fieldtype": "Small Text",
+   "label": "Alternate Access",
+   "depends_on": "eval:!doc.roof_access_24x7"
+  },
+  {
+   "fieldname": "asbestos_present",
+   "fieldtype": "Check",
+   "label": "Asbestos Roofing Present",
+   "description": "Lender go/no-go. Blocks submission."
+  },
+  {
+   "fieldname": "batteries_in_scope",
+   "fieldtype": "Check",
+   "label": "Batteries in Scope"
+  },
+  {
+   "fieldname": "ceig_approval_applicable",
+   "fieldtype": "Check",
+   "label": "CEIG Approval Applicable"
+  },
+  {
+   "fieldname": "tab_17",
+   "fieldtype": "Tab Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Feasibility"
+  },
+  {
+   "fieldname": "feasibility_status",
+   "fieldtype": "Select",
+   "label": "Feasibility Status",
+   "options": "Feasible\nFeasible with Conditions\nNot Feasible",
+   "reqd": 1,
+   "default": "Feasible",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "capacity_applied_kw",
+   "fieldtype": "Float",
+   "label": "Capacity Applied (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "cb_19",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "capacity_installable_kw",
+   "fieldtype": "Float",
+   "label": "Capacity Installable (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "infeasibility_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "depends_on": "eval:doc.feasibility_status=='Not Feasible'"
+  },
+  {
+   "fieldname": "sb_20",
+   "fieldtype": "Section Break",
+   "label": "Recommendation"
+  },
+  {
+   "fieldname": "recommended_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Recommended Capacity (kW)",
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "surveyor_remarks",
+   "fieldtype": "Text",
+   "label": "Surveyor Remarks"
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Photographs"
+  },
+  {
+   "fieldname": "survey_images",
+   "fieldtype": "Table",
+   "label": "Survey Images",
+   "options": "Survey Image"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Site Survey",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_consumer,survey_date"
+}

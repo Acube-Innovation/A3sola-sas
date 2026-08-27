@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "preference_order",
+  "consumer_number",
+  "tariff",
+  "cb_1",
+  "electrical_section",
+  "premises_address"
+ ],
+ "fields": [
+  {
+   "fieldname": "preference_order",
+   "fieldtype": "Int",
+   "label": "Order",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tariff",
+   "fieldtype": "Data",
+   "label": "Tariff",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "electrical_section",
+   "fieldtype": "Data",
+   "label": "Section",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "premises_address",
+   "fieldtype": "Small Text",
+   "label": "Premises"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Wheeling Preference",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

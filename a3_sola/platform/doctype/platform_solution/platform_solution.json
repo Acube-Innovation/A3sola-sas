@@ -1,0 +1,277 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solution_name",
+  "route",
+  "icon",
+  "cb_2",
+  "display_order",
+  "is_published",
+  "show_on_homepage",
+  "sb_3",
+  "short_description",
+  "target_audience",
+  "key_outcomes",
+  "tab_4",
+  "sb_5",
+  "hero_headline",
+  "hero_subtext",
+  "sb_6",
+  "body_content",
+  "sb_7",
+  "detail_sections",
+  "sb_8",
+  "cta_headline",
+  "cb_9",
+  "cta_button_text",
+  "cta_button_link",
+  "tab_10",
+  "sb_11",
+  "meta_title",
+  "meta_description"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Card"
+  },
+  {
+   "fieldname": "solution_name",
+   "fieldtype": "Data",
+   "label": "Solution Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Route",
+   "unique": 1
+  },
+  {
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Published",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "show_on_homepage",
+   "fieldtype": "Check",
+   "label": "Show on Homepage",
+   "default": "1",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "short_description",
+   "fieldtype": "Small Text",
+   "label": "Short Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_audience",
+   "fieldtype": "Small Text",
+   "label": "Target Audience",
+   "description": "Who this is for, in one sentence."
+  },
+  {
+   "fieldname": "key_outcomes",
+   "fieldtype": "Table",
+   "label": "Key Outcomes",
+   "options": "Platform Bullet"
+  },
+  {
+   "fieldname": "tab_4",
+   "fieldtype": "Tab Break",
+   "label": "Detail Page"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Hero"
+  },
+  {
+   "fieldname": "hero_headline",
+   "fieldtype": "Data",
+   "label": "Hero Headline"
+  },
+  {
+   "fieldname": "hero_subtext",
+   "fieldtype": "Text",
+   "label": "Hero Subtext"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Body"
+  },
+  {
+   "fieldname": "body_content",
+   "fieldtype": "Text Editor",
+   "label": "Body Content"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Sections"
+  },
+  {
+   "fieldname": "detail_sections",
+   "fieldtype": "Table",
+   "label": "Detail Sections",
+   "options": "Platform Detail Section"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Call to Action"
+  },
+  {
+   "fieldname": "cta_headline",
+   "fieldtype": "Data",
+   "label": "CTA Headline"
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cta_button_text",
+   "fieldtype": "Data",
+   "label": "CTA Button Text"
+  },
+  {
+   "fieldname": "cta_button_link",
+   "fieldtype": "Data",
+   "label": "CTA Button Link"
+  },
+  {
+   "fieldname": "tab_10",
+   "fieldtype": "Tab Break",
+   "label": "SEO"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Search"
+  },
+  {
+   "fieldname": "meta_title",
+   "fieldtype": "Data",
+   "label": "Meta Title",
+   "description": "Falls back to the record name and the site meta title."
+  },
+  {
+   "fieldname": "meta_description",
+   "fieldtype": "Small Text",
+   "label": "Meta Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Platform Solution",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Marketing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Sales",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Guest",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "PLT-SOLN-.###",
+ "title_field": "solution_name",
+ "show_title_field_in_link": 1,
+ "has_web_view": 1,
+ "is_published_field": "is_published",
+ "website_search_field": "solution_name"
+}

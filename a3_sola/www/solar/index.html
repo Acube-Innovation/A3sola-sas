@@ -1,0 +1,255 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("My Solar System") }}{% endblock %}
+
+{% block page_content %}
+<div class="solar-portal">
+	{% if not systems %}
+		<div class="alert alert-info">
+			{{ _("No solar system is linked to your account yet. Please contact us if you believe this is wrong.") }}
+		</div>
+	{% endif %}
+
+	{% for system in systems %}
+	<section class="solar-system mb-5">
+		<h2>{{ system.capacity_kw }} kWp {{ system.system_type or "" }}</h2>
+		<p class="text-muted">{{ system.installation_address or "" }}</p>
+
+		<h4 class="mt-4">{{ _("System details") }}</h4>
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<tbody>
+					<tr><th>{{ _("Consumer number") }}</th><td>{{ system.consumer_number or "-" }}</td></tr>
+					<tr><th>{{ _("SPIN") }}</th><td>{{ system.spin or "-" }}</td></tr>
+					<tr><th>{{ _("Commissioned on") }}</th><td>{{ frappe.format(system.commissioning_date, "Date") if system.commissioning_date else "-" }}</td></tr>
+					<tr><th>{{ _("Net meter") }}</th><td>{{ system.net_meter_serial_no or "-" }}{% if system.net_meter_make %} ({{ system.net_meter_make }}){% endif %}</td></tr>
+					<tr><th>{{ _("Commissioning certificate") }}</th><td>{{ system.commissioning_certificate_no or "-" }}</td></tr>
+					<tr><th>{{ _("Modules") }}</th><td>{{ system.module_count or "-" }} &times; {{ system.module_wattage or "-" }} Wp</td></tr>
+					<tr><th>{{ _("Inverter") }}</th><td>{{ system.inverter_capacity_kw or "-" }} kW</td></tr>
+					<tr><th>{{ _("DISCOM") }}</th><td>{{ system.discom or "-" }}{% if system.discom_section %} &mdash; {{ system.discom_section }}{% endif %}</td></tr>
+				</tbody>
+			</table>
+		</div>
+
+		<h4 class="mt-4">{{ _("Warranty") }}</h4>
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>{{ _("Component") }}</th><th>{{ _("Make") }}</th>
+						<th>{{ _("Cover") }}</th><th>{{ _("Years") }}</th><th>{{ _("Ends on") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in system.warranty %}
+					<tr>
+						<td>{{ row.component }}</td>
+						<td>{{ row.make or "-" }}</td>
+						<td>{{ row.basis }}</td>
+						<td>{{ row.years }}</td>
+						<td>{{ frappe.format(row.ends_on, "Date") }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<h4 class="mt-4">{{ _("Generation") }}</h4>
+		<p class="text-muted">
+			{{ _("Your proposal quoted {0} to {1} units a day for this system.").format(
+				system.quoted_band.low, system.quoted_band.high) }}
+		</p>
+		{% if system.generation %}
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>{{ _("Reading date") }}</th><th>{{ _("Units generated") }}</th>
+						<th>{{ _("Expected") }}</th><th>{{ _("Units per day") }}</th>
+						<th>{{ _("Against quoted band") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in system.generation %}
+					<tr>
+						<td>{{ frappe.format(row.reading_date, "Date") }}</td>
+						<td>{{ row.units_generated_since_last }}</td>
+						<td>{{ row.expected_generation_kwh }}</td>
+						<td>{{ row.actual_units_per_day }}</td>
+						<td>
+							{% if row.actual_units_per_day >= system.quoted_band.low %}
+								<span class="indicator-pill green">{{ _("Within band") }}</span>
+							{% else %}
+								<span class="indicator-pill orange">{{ _("Below band") }}</span>
+							{% endif %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+		<p class="text-muted">{{ _("No readings recorded yet.") }}</p>
+		{% endif %}
+
+		<h4 class="mt-4">{{ _("Service") }}</h4>
+		{% if system.next_visit %}
+		<p>{{ _("Next visit: {0} ({1})").format(
+			frappe.format(system.next_visit.scheduled_date, "Date"), system.next_visit.visit_type) }}</p>
+		{% else %}
+		<p class="text-muted">{{ _("No visit scheduled at the moment.") }}</p>
+		{% endif %}
+
+		{% if system.service.visits %}
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>{{ _("Visit") }}</th><th>{{ _("Date") }}</th><th>{{ _("Type") }}</th>
+						<th>{{ _("Checks passed") }}</th><th>{{ _("Recommendation") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for visit in system.service.visits %}
+					<tr>
+						<td>{{ visit.name }}</td>
+						<td>{{ frappe.format(visit.visit_date, "Date") }}</td>
+						<td>{{ visit.visit_type }}</td>
+						<td>{{ visit.items_ok }}</td>
+						<td>{{ visit.next_visit_recommendation or "-" }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% endif %}
+
+		{% if system.service.tickets %}
+		<h5 class="mt-3">{{ _("Your requests") }}</h5>
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>{{ _("Reference") }}</th><th>{{ _("Reported") }}</th>
+						<th>{{ _("About") }}</th><th>{{ _("Status") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for ticket in system.service.tickets %}
+					<tr>
+						<td>{{ ticket.name }}</td>
+						<td>{{ frappe.format(ticket.reported_on, "Datetime") }}</td>
+						<td>{{ ticket.category }}</td>
+						<td>{{ ticket.status }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% endif %}
+
+		<h4 class="mt-4">{{ _("Your documents") }}</h4>
+		{% if system.documents %}
+		<ul class="list-unstyled">
+			{% for document in system.documents %}
+			<li class="mb-2">
+				<button class="btn btn-sm btn-default solar-document"
+					data-log="{{ document.name }}">{{ document.document_name }}</button>
+				<span class="text-muted small">{{ frappe.format(document.generated_on, "Date") }}</span>
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="text-muted">{{ _("No documents are available yet.") }}</p>
+		{% endif %}
+
+		<h4 class="mt-4">{{ _("Your invoices") }}</h4>
+		{% if system.invoices %}
+		<div class="table-responsive">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>{{ _("Invoice") }}</th><th>{{ _("Date") }}</th><th>{{ _("Due") }}</th>
+						<th class="text-right">{{ _("Amount") }}</th>
+						<th class="text-right">{{ _("Outstanding") }}</th>
+						<th>{{ _("Status") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for invoice in system.invoices %}
+					<tr>
+						<td>{{ invoice.name }}</td>
+						<td>{{ frappe.format(invoice.posting_date, "Date") }}</td>
+						<td>{{ frappe.format(invoice.due_date, "Date") }}</td>
+						<td class="text-right">{{ frappe.format(invoice.grand_total, "Currency") }}</td>
+						<td class="text-right">{{ frappe.format(invoice.outstanding_amount, "Currency") }}</td>
+						<td>{{ invoice.status }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+		<p class="text-muted">{{ _("No invoices raised yet.") }}</p>
+		{% endif %}
+
+		<h4 class="mt-4">{{ _("Report a problem") }}</h4>
+		<form class="solar-ticket-form" data-installation="{{ system.name }}">
+			<div class="form-group">
+				<label for="category-{{ loop.index }}">{{ _("What is it about?") }}</label>
+				<select class="form-control solar-ticket-category" id="category-{{ loop.index }}">
+					{% for category in ticket_categories %}
+					<option value="{{ category }}">{{ category }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="description-{{ loop.index }}">{{ _("What is happening?") }}</label>
+				<textarea class="form-control solar-ticket-description" id="description-{{ loop.index }}"
+					rows="3" required></textarea>
+			</div>
+			<button type="submit" class="btn btn-primary btn-sm">{{ _("Send") }}</button>
+			<span class="solar-ticket-result text-muted ml-2"></span>
+		</form>
+	</section>
+	{% endfor %}
+</div>
+
+<script>
+frappe.ready(function () {
+	document.querySelectorAll(".solar-document").forEach(function (button) {
+		button.addEventListener("click", function () {
+			// The URL is resolved per click, against the session - never rendered into the page.
+			frappe.call({
+				method: "a3_sola.api.portal.download",
+				args: { document_log: button.dataset.log },
+			}).then(function (response) {
+				if (response.message) {
+					window.open(response.message, "_blank");
+				}
+			});
+		});
+	});
+
+	document.querySelectorAll(".solar-ticket-form").forEach(function (form) {
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var result = form.querySelector(".solar-ticket-result");
+			frappe.call({
+				method: "a3_sola.api.portal.raise_ticket",
+				args: {
+					installation: form.dataset.installation,
+					category: form.querySelector(".solar-ticket-category").value,
+					description: form.querySelector(".solar-ticket-description").value,
+				},
+			}).then(function (response) {
+				if (response.message) {
+					result.textContent = __("Logged as {0}. We will be in touch.", [response.message]);
+					form.querySelector(".solar-ticket-description").value = "";
+				}
+			});
+		});
+	});
+});
+</script>
+{% endblock %}

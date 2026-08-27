@@ -1,0 +1,15 @@
+{#- Branded email shell. Inline styles only: email clients discard stylesheets. -#}
+<div style="background:#f7f9fc;padding:32px 16px;font-family:'Plus Jakarta Sans',-apple-system,'Segoe UI',system-ui,sans-serif;color:#2a3342;">
+	<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid rgba(42,51,66,0.12);border-radius:20px;overflow:hidden;">
+		<div style="padding:24px 32px;border-bottom:1px solid rgba(42,51,66,0.12);">
+			<span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:#f7941e;color:#ffffff;font-size:14px;vertical-align:middle;">&#9728;</span>
+			<span style="font-weight:700;font-size:16px;margin-left:8px;vertical-align:middle;">{{ product_name }}</span>
+		</div>
+		<div style="padding:32px;line-height:1.65;font-size:15px;">
+			{% block body %}{% endblock %}
+		</div>
+		<div style="padding:20px 32px;border-top:1px solid rgba(42,51,66,0.12);font-size:12px;color:#6b7383;">
+			{{ company_legal_name }}{% if sales_email %} &middot; <a href="mailto:{{ sales_email }}" style="color:#6b7383;">{{ sales_email }}</a>{% endif %}
+		</div>
+	</div>
+</div>

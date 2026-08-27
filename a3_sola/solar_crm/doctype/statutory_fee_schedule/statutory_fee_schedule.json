@@ -1,0 +1,280 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "schedule_name",
+  "discom",
+  "cb_1",
+  "effective_from",
+  "effective_to",
+  "is_active",
+  "company",
+  "sb_2",
+  "application_fee_base",
+  "application_fee_gst_applicable",
+  "cb_3",
+  "application_fee_gst_percent",
+  "sb_4",
+  "registration_fee_per_kw",
+  "registration_fee_gst_percent",
+  "registration_fee_min",
+  "registration_fee_max",
+  "cb_5",
+  "registration_refund_percent",
+  "refund_computed_on",
+  "sb_6",
+  "net_meter_charges",
+  "sb_7",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-FEE-.YYYY.-.###",
+   "reqd": 1,
+   "default": "SOL-FEE-.YYYY.-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "schedule_name",
+   "fieldtype": "Data",
+   "label": "Schedule Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Application Fee"
+  },
+  {
+   "fieldname": "application_fee_base",
+   "fieldtype": "Currency",
+   "label": "Application Fee (base)",
+   "default": "1000"
+  },
+  {
+   "fieldname": "application_fee_gst_applicable",
+   "fieldtype": "Check",
+   "label": "GST Applicable",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "application_fee_gst_percent",
+   "fieldtype": "Float",
+   "label": "GST %",
+   "default": "18",
+   "precision": 2,
+   "depends_on": "eval:doc.application_fee_gst_applicable"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Registration Fee"
+  },
+  {
+   "fieldname": "registration_fee_per_kw",
+   "fieldtype": "Currency",
+   "label": "Registration Fee per kW",
+   "default": "1000"
+  },
+  {
+   "fieldname": "registration_fee_gst_percent",
+   "fieldtype": "Float",
+   "label": "GST %",
+   "default": "18",
+   "precision": 2
+  },
+  {
+   "fieldname": "registration_fee_min",
+   "fieldtype": "Currency",
+   "label": "Minimum"
+  },
+  {
+   "fieldname": "registration_fee_max",
+   "fieldtype": "Currency",
+   "label": "Maximum"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "registration_refund_percent",
+   "fieldtype": "Float",
+   "label": "Refundable %",
+   "default": "80",
+   "precision": 2
+  },
+  {
+   "fieldname": "refund_computed_on",
+   "fieldtype": "Select",
+   "label": "Refund Computed On",
+   "options": "Base Amount\nGross Amount",
+   "default": "Base Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Net Meter"
+  },
+  {
+   "fieldname": "net_meter_charges",
+   "fieldtype": "Table",
+   "label": "Net Meter Charges",
+   "options": "Net Meter Charge"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Statutory Fee Schedule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "schedule_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "schedule_name,discom",
+ "description": "The single source of truth for every rupee the customer pays a government body. Nothing in this app may print a statutory fee that did not come from here."
+}

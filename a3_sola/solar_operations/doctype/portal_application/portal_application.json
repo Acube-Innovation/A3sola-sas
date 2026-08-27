@@ -1,0 +1,400 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "discom",
+  "cb_2",
+  "application_type",
+  "company",
+  "amended_from",
+  "sb_3",
+  "application_number",
+  "application_date",
+  "applied_by",
+  "cb_4",
+  "portal_login_reference",
+  "sanctioned_capacity_kw",
+  "sb_5",
+  "national_portal_application_id",
+  "discom_consumer_id",
+  "cb_6",
+  "discom_id",
+  "spin",
+  "sb_7",
+  "application_status",
+  "status_updated_on",
+  "expected_response_date",
+  "cb_8",
+  "days_pending",
+  "is_overdue",
+  "query_count",
+  "sb_9",
+  "queries",
+  "sb_10",
+  "approval_number",
+  "approval_date",
+  "approval_attachment",
+  "cb_11",
+  "rejection_reason",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "fetch_from": "solar_installation.discom",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "application_type",
+   "fieldtype": "Select",
+   "label": "Application Type",
+   "options": "National Portal\nDISCOM Feasibility\nNet Meter Application\nElectrical Inspectorate\nSubsidy Redemption\nRegistration Fee Refund",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Portal Application",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Application"
+  },
+  {
+   "fieldname": "application_number",
+   "fieldtype": "Data",
+   "label": "Application Number",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "application_date",
+   "fieldtype": "Date",
+   "label": "Application Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applied_by",
+   "fieldtype": "Link",
+   "label": "Applied By",
+   "options": "User"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "portal_login_reference",
+   "fieldtype": "Data",
+   "label": "Portal Login Reference"
+  },
+  {
+   "fieldname": "sanctioned_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Sanctioned Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "External Identifiers"
+  },
+  {
+   "fieldname": "national_portal_application_id",
+   "fieldtype": "Data",
+   "label": "National Portal ID",
+   "description": "Shape NP-KLSEB<yy>-<digits>. Validated against the DISCOM's configurable pattern - warn, never block."
+  },
+  {
+   "fieldname": "discom_consumer_id",
+   "fieldtype": "Data",
+   "label": "DISCOM Consumer ID"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "discom_id",
+   "fieldtype": "Data",
+   "label": "DISCOM ID"
+  },
+  {
+   "fieldname": "spin",
+   "fieldtype": "Data",
+   "label": "SPIN"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "application_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Submitted\nUnder Review\nQuery Raised\nApproved\nRejected\nWithdrawn",
+   "reqd": 1,
+   "default": "Submitted",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status_updated_on",
+   "fieldtype": "Date",
+   "label": "Status Updated",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "expected_response_date",
+   "fieldtype": "Date",
+   "label": "Expected Response",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "days_pending",
+   "fieldtype": "Int",
+   "label": "Days Pending",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_overdue",
+   "fieldtype": "Check",
+   "label": "Overdue",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "query_count",
+   "fieldtype": "Int",
+   "label": "Query Cycles",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "description": "Query cycles are the single largest source of hidden delay."
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Queries"
+  },
+  {
+   "fieldname": "queries",
+   "fieldtype": "Table",
+   "label": "Queries",
+   "options": "Application Query",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "approval_number",
+   "fieldtype": "Data",
+   "label": "Approval Number",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Date",
+   "label": "Approval Date",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "approval_attachment",
+   "fieldtype": "Attach",
+   "label": "Approval Document",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Portal Application",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,application_number,application_type",
+ "description": "External applications carry their own numbers, dates and statuses. There is no public API, so they are mirrored here. Never scrape or automate a portal."
+}

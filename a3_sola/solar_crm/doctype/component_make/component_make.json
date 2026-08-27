@@ -1,0 +1,242 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "make_name",
+  "component_type",
+  "model_family",
+  "technology",
+  "cb_1",
+  "is_dcr",
+  "is_active",
+  "company",
+  "sb_2",
+  "product_warranty_years",
+  "performance_warranty_years",
+  "cb_3",
+  "performance_floor_10yr_percent",
+  "performance_floor_25yr_percent",
+  "sb_4",
+  "bis_certificate_no",
+  "bis_certificate",
+  "cb_5",
+  "datasheet"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-MAKE-.###",
+   "reqd": 1,
+   "default": "SOL-MAKE-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "make_name",
+   "fieldtype": "Data",
+   "label": "Make",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "label": "Component Type",
+   "options": "Module\nInverter\nOptimiser\nMounting Structure\nCable\nDCDB\nACDB\nEarthing\nLightning Protection\nEnergy Meter\nBattery\nOther",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "model_family",
+   "fieldtype": "Data",
+   "label": "Model Family",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "technology",
+   "fieldtype": "Data",
+   "label": "Technology",
+   "in_list_view": 1,
+   "description": "e.g. Mono PERC Bifacial, TopCon Bifacial"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_dcr",
+   "fieldtype": "Check",
+   "label": "DCR",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Warranty"
+  },
+  {
+   "fieldname": "product_warranty_years",
+   "fieldtype": "Int",
+   "label": "Product Warranty (years)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "performance_warranty_years",
+   "fieldtype": "Int",
+   "label": "Performance Warranty (years)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "performance_floor_10yr_percent",
+   "fieldtype": "Float",
+   "label": "Performance Floor @10y (%)",
+   "precision": 2
+  },
+  {
+   "fieldname": "performance_floor_25yr_percent",
+   "fieldtype": "Float",
+   "label": "Performance Floor @25y (%)",
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Certification"
+  },
+  {
+   "fieldname": "bis_certificate_no",
+   "fieldtype": "Data",
+   "label": "BIS Certificate No"
+  },
+  {
+   "fieldname": "bis_certificate",
+   "fieldtype": "Attach",
+   "label": "BIS Certificate"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "datasheet",
+   "fieldtype": "Attach",
+   "label": "Datasheet"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Component Make",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "make_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "make_name,component_type,model_family",
+ "description": "The single warranty master for the whole product. Later modules read it and never restate a term."
+}

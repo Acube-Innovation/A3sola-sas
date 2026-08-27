@@ -1,0 +1,442 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "om_contract",
+  "project",
+  "solar_installation",
+  "service_ticket",
+  "cb_2",
+  "component_type",
+  "item",
+  "serial_no",
+  "company",
+  "amended_from",
+  "sb_3",
+  "manufacturer",
+  "component_make",
+  "dcr_certificate_no",
+  "purchase_date",
+  "cb_4",
+  "warranty_years_applicable",
+  "warranty_expiry_date",
+  "is_within_warranty",
+  "claim_basis",
+  "sb_5",
+  "failure_date",
+  "failure_description",
+  "diagnostic_report",
+  "tab_6",
+  "sb_7",
+  "claim_status",
+  "claim_submitted_on",
+  "manufacturer_reference_no",
+  "cb_8",
+  "rejection_reason",
+  "sb_9",
+  "replacement_serial_no",
+  "replacement_received_on",
+  "cb_10",
+  "replacement_installed_on",
+  "old_unit_returned",
+  "sb_11",
+  "claim_value",
+  "amount_recovered",
+  "cb_12",
+  "cost_borne_by_company"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "om_contract",
+   "fieldtype": "Link",
+   "label": "O&M Contract",
+   "options": "Solar OM Contract",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_ticket",
+   "fieldtype": "Link",
+   "label": "Service Ticket",
+   "options": "Service Ticket"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "label": "Component",
+   "options": "Module\nInverter\nOptimiser\nMeter\nStructure\nCable",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Data",
+   "label": "Serial No",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Must exist in the Phase 2 serial register for this installation."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar Warranty Claim",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Warranty Position"
+  },
+  {
+   "fieldname": "manufacturer",
+   "fieldtype": "Data",
+   "label": "Manufacturer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "component_make",
+   "fieldtype": "Link",
+   "label": "Component Make",
+   "options": "Component Make",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dcr_certificate_no",
+   "fieldtype": "Data",
+   "label": "DCR Certificate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_date",
+   "fieldtype": "Date",
+   "label": "Purchase Date"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warranty_years_applicable",
+   "fieldtype": "Int",
+   "label": "Warranty Years",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warranty_expiry_date",
+   "fieldtype": "Date",
+   "label": "Warranty Expiry",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_within_warranty",
+   "fieldtype": "Check",
+   "label": "Within Warranty",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "claim_basis",
+   "fieldtype": "Select",
+   "label": "Claim Basis",
+   "options": "Product\nPerformance",
+   "default": "Product"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Failure"
+  },
+  {
+   "fieldname": "failure_date",
+   "fieldtype": "Date",
+   "label": "Failure Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "failure_description",
+   "fieldtype": "Text",
+   "label": "Failure Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "diagnostic_report",
+   "fieldtype": "Attach",
+   "label": "Diagnostic Report"
+  },
+  {
+   "fieldname": "tab_6",
+   "fieldtype": "Tab Break",
+   "label": "Claim"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Submission"
+  },
+  {
+   "fieldname": "claim_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nUnder Review\nApproved\nRejected\nReplacement Dispatched\nReplaced\nClosed",
+   "reqd": 1,
+   "default": "Draft",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "claim_submitted_on",
+   "fieldtype": "Date",
+   "label": "Submitted On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "manufacturer_reference_no",
+   "fieldtype": "Data",
+   "label": "Manufacturer Ref",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Replacement"
+  },
+  {
+   "fieldname": "replacement_serial_no",
+   "fieldtype": "Data",
+   "label": "Replacement Serial",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "replacement_received_on",
+   "fieldtype": "Date",
+   "label": "Received On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "replacement_installed_on",
+   "fieldtype": "Date",
+   "label": "Installed On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "old_unit_returned",
+   "fieldtype": "Check",
+   "label": "Old Unit Returned",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Value"
+  },
+  {
+   "fieldname": "claim_value",
+   "fieldtype": "Currency",
+   "label": "Claim Value",
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "amount_recovered",
+   "fieldtype": "Currency",
+   "label": "Recovered",
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_borne_by_company",
+   "fieldtype": "Currency",
+   "label": "Borne by Company",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar Warranty Claim",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Service Coordinator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar O&M Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "om_contract,serial_no,claim_status",
+ "description": "Manufacturer warranty claims are settled between the vendor or customer and the manufacturer; the DISCOM and implementing agencies are excluded."
+}

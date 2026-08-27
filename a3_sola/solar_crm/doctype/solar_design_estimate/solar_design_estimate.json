@@ -1,0 +1,670 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_consumer",
+  "site_survey",
+  "estimate_date",
+  "cb_2",
+  "subsidy_scheme",
+  "electricity_tariff",
+  "consumer_category",
+  "connection_type",
+  "company",
+  "amended_from",
+  "sb_3",
+  "annual_consumption_units",
+  "consumption_based_capacity_kw",
+  "roof_limited_capacity_kw",
+  "sanctioned_load_capacity_kw",
+  "cb_4",
+  "recommended_capacity_kw",
+  "binding_constraint",
+  "override_capacity_kw",
+  "final_capacity_kw",
+  "sb_5",
+  "solar_package",
+  "system_type",
+  "is_dcr_compliant",
+  "cb_6",
+  "specific_yield",
+  "average_shading_percent",
+  "sb_7",
+  "options",
+  "recommended_option",
+  "sb_8",
+  "estimated_annual_generation_kwh",
+  "estimated_monthly_generation_kwh",
+  "units_offset_per_cycle",
+  "cb_9",
+  "expected_daily_units_low",
+  "expected_daily_units_high",
+  "estimated_annual_savings",
+  "sb_10",
+  "savings_breakdown",
+  "tab_11",
+  "sb_12",
+  "gross_system_cost",
+  "additional_civil_cost",
+  "total_project_cost",
+  "cb_13",
+  "applicable_subsidy_amount",
+  "subsidy_slab_used",
+  "net_cost_to_customer",
+  "cost_per_kw",
+  "sb_14",
+  "statutory_note",
+  "net_meter_mode",
+  "kseb_application_fee",
+  "kseb_registration_fee",
+  "kseb_registration_refundable",
+  "cb_16",
+  "net_meter_charge",
+  "net_meter_monthly_rental",
+  "net_meter_allocation_lead_days",
+  "statutory_total",
+  "sb_17",
+  "statutory_breakdown",
+  "sb_18",
+  "connection_type_compliant",
+  "required_connection_type",
+  "cb_19",
+  "regulation_message",
+  "tab_20",
+  "sb_21",
+  "simple_payback_years",
+  "cb_22",
+  "lifetime_savings",
+  "sb_23",
+  "cashflow"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "site_survey",
+   "fieldtype": "Link",
+   "label": "Site Survey",
+   "options": "Site Survey",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "estimate_date",
+   "fieldtype": "Date",
+   "label": "Estimate Date",
+   "reqd": 1,
+   "default": "Today"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme"
+  },
+  {
+   "fieldname": "electricity_tariff",
+   "fieldtype": "Link",
+   "label": "Electricity Tariff",
+   "options": "Electricity Tariff"
+  },
+  {
+   "fieldname": "consumer_category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Residential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
+   "fetch_from": "solar_consumer.consumer_category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "fetch_from": "solar_consumer.connection_type"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar Design Estimate",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Sizing Constraints"
+  },
+  {
+   "fieldname": "annual_consumption_units",
+   "fieldtype": "Float",
+   "label": "Annual Consumption (units)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "consumption_based_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Consumption-based (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "roof_limited_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Roof-limited (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "sanctioned_load_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Sanctioned-load (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recommended_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Recommended (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "binding_constraint",
+   "fieldtype": "Data",
+   "label": "Binding Constraint",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "override_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Override Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "final_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Final Capacity (kW)",
+   "read_only": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "System"
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "label": "Solar Package",
+   "options": "Solar Package"
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System Type",
+   "options": "On-Grid\nOff-Grid\nHybrid",
+   "default": "On-Grid"
+  },
+  {
+   "fieldname": "is_dcr_compliant",
+   "fieldtype": "Check",
+   "label": "DCR Compliant",
+   "fetch_from": "solar_package.is_dcr_compliant",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "specific_yield",
+   "fieldtype": "Float",
+   "label": "Specific Yield",
+   "precision": 2
+  },
+  {
+   "fieldname": "average_shading_percent",
+   "fieldtype": "Float",
+   "label": "Average Shading %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Options"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Table",
+   "label": "Priced Options",
+   "options": "Design Estimate Option"
+  },
+  {
+   "fieldname": "recommended_option",
+   "fieldtype": "Data",
+   "label": "Recommended Option",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Generation & Savings"
+  },
+  {
+   "fieldname": "estimated_annual_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Annual Generation (kWh)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "estimated_monthly_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Monthly Generation (kWh)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "units_offset_per_cycle",
+   "fieldtype": "Float",
+   "label": "Units Offset per Cycle",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_daily_units_low",
+   "fieldtype": "Float",
+   "label": "Daily Units (low)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "expected_daily_units_high",
+   "fieldtype": "Float",
+   "label": "Daily Units (high)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "estimated_annual_savings",
+   "fieldtype": "Currency",
+   "label": "Annual Savings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Savings Breakdown"
+  },
+  {
+   "fieldname": "savings_breakdown",
+   "fieldtype": "Long Text",
+   "label": "Savings Breakdown (JSON)",
+   "read_only": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "tab_11",
+   "fieldtype": "Tab Break",
+   "label": "Commercials"
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Cost"
+  },
+  {
+   "fieldname": "gross_system_cost",
+   "fieldtype": "Currency",
+   "label": "Gross System Cost",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "additional_civil_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Civil Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "total_project_cost",
+   "fieldtype": "Currency",
+   "label": "Total Project Cost",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "applicable_subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Applicable Subsidy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subsidy_slab_used",
+   "fieldtype": "Data",
+   "label": "Slab Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_cost_to_customer",
+   "fieldtype": "Currency",
+   "label": "Net Cost to Customer",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cost_per_kw",
+   "fieldtype": "Currency",
+   "label": "Cost per kW",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Statutory Fees"
+  },
+  {
+   "fieldname": "statutory_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Resolved from the Statutory Fee Schedule. Never typed, never editable.</p>"
+  },
+  {
+   "fieldname": "net_meter_mode",
+   "fieldtype": "Select",
+   "label": "Net Meter Mode",
+   "options": "Purchased by Customer\nAvailed from DISCOM on Rental",
+   "reqd": 1,
+   "default": "Purchased by Customer",
+   "description": "Changes the final billing milestone in Phase 3, so it is captured at design time."
+  },
+  {
+   "fieldname": "kseb_application_fee",
+   "fieldtype": "Currency",
+   "label": "Application Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kseb_registration_fee",
+   "fieldtype": "Currency",
+   "label": "Registration Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kseb_registration_refundable",
+   "fieldtype": "Currency",
+   "label": "Registration Refundable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_meter_charge",
+   "fieldtype": "Currency",
+   "label": "Net Meter Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_monthly_rental",
+   "fieldtype": "Currency",
+   "label": "Net Meter Monthly Rental",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_allocation_lead_days",
+   "fieldtype": "Int",
+   "label": "Allocation Lead Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "statutory_total",
+   "fieldtype": "Currency",
+   "label": "Statutory Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "Statutory Breakdown"
+  },
+  {
+   "fieldname": "statutory_breakdown",
+   "fieldtype": "Long Text",
+   "label": "Statutory Breakdown (JSON)",
+   "read_only": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Regulatory"
+  },
+  {
+   "fieldname": "connection_type_compliant",
+   "fieldtype": "Check",
+   "label": "Connection Type Compliant",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_connection_type",
+   "fieldtype": "Data",
+   "label": "Required Connection Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_19",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "regulation_message",
+   "fieldtype": "Small Text",
+   "label": "Regulation Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_20",
+   "fieldtype": "Tab Break",
+   "label": "Returns"
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Payback"
+  },
+  {
+   "fieldname": "simple_payback_years",
+   "fieldtype": "Float",
+   "label": "Simple Payback (years)",
+   "read_only": 1,
+   "precision": 2,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lifetime_savings",
+   "fieldtype": "Currency",
+   "label": "Lifetime Savings",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_23",
+   "fieldtype": "Section Break",
+   "label": "Cashflow"
+  },
+  {
+   "fieldname": "cashflow",
+   "fieldtype": "Table",
+   "label": "Cashflow Projection",
+   "options": "Cashflow Projection",
+   "read_only": 1,
+   "permlevel": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Design Estimate",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_consumer,final_capacity_kw"
+}

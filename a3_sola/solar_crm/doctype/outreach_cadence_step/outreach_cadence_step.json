@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_name",
+  "offset_days_from_previous",
+  "message_template",
+  "is_terminal",
+  "auto_send"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_name",
+   "fieldtype": "Select",
+   "label": "Step",
+   "options": "Step 1: First Contact\nStep 2: 24hr Nudge\nStep 3: Value/ROI\nStep 4: Breakup/Close\nCompleted: Proposal Sent",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "offset_days_from_previous",
+   "fieldtype": "Int",
+   "label": "Offset Days",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "message_template",
+   "fieldtype": "Link",
+   "label": "Message Template",
+   "options": "Outreach Message Template",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_terminal",
+   "fieldtype": "Check",
+   "label": "Terminal",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "auto_send",
+   "fieldtype": "Check",
+   "label": "Auto Send"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Outreach Cadence Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

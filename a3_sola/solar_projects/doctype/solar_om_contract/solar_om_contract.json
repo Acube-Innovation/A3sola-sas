@@ -1,0 +1,729 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "project",
+  "solar_installation",
+  "solar_consumer",
+  "customer",
+  "cb_2",
+  "capacity_kw",
+  "solar_package",
+  "installation_address",
+  "company",
+  "amended_from",
+  "sb_3",
+  "site_contact_person",
+  "cb_4",
+  "site_contact_number",
+  "sb_5",
+  "contract_type",
+  "start_date",
+  "end_date",
+  "duration_years",
+  "cb_6",
+  "contract_value",
+  "is_scheme_mandated",
+  "status",
+  "renewed_from",
+  "renewed_to",
+  "days_to_expiry",
+  "sb_7",
+  "coverage",
+  "sb_8",
+  "preventive_visits_per_year",
+  "critical_response_hours",
+  "critical_resolution_hours",
+  "cb_9",
+  "major_response_hours",
+  "major_resolution_hours",
+  "minor_resolution_days",
+  "sb_10",
+  "pr_note",
+  "contractual_performance_ratio_percent",
+  "performance_ratio_at_commissioning",
+  "cb_12",
+  "current_performance_ratio_percent",
+  "performance_obligation_status",
+  "consecutive_underperforming_readings",
+  "tab_13",
+  "sb_14",
+  "visit_plan",
+  "sb_15",
+  "next_visit_date",
+  "visits_completed",
+  "cb_16",
+  "visits_missed",
+  "visit_compliance_percent",
+  "open_tickets",
+  "tab_17",
+  "sb_18",
+  "warranty_note",
+  "module_make",
+  "module_product_warranty_years",
+  "module_performance_warranty_years",
+  "cb_20",
+  "module_performance_floor_10yr",
+  "module_performance_floor_25yr",
+  "sb_21",
+  "inverter_make",
+  "inverter_warranty_years",
+  "cb_22",
+  "workmanship_warranty_years",
+  "warranty_summary",
+  "tab_23",
+  "sb_24",
+  "om_provision_allocated",
+  "om_cost_incurred",
+  "cb_25",
+  "om_provision_balance",
+  "om_cost_per_visit_average",
+  "tab_26",
+  "sb_27",
+  "performance_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "label": "Solar Package",
+   "options": "Solar Package",
+   "read_only": 1
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Link",
+   "label": "Site Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar OM Contract",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Site Contact"
+  },
+  {
+   "fieldname": "site_contact_person",
+   "fieldtype": "Data",
+   "label": "Contact Person"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_contact_number",
+   "fieldtype": "Data",
+   "label": "Contact Number"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Contract Terms"
+  },
+  {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Comprehensive (Scheme Mandated)\nAMC (Paid Renewal)\nWarranty Only",
+   "reqd": 1,
+   "default": "Comprehensive (Scheme Mandated)",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "duration_years",
+   "fieldtype": "Int",
+   "label": "Years",
+   "read_only": 1,
+   "default": "5"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract_value",
+   "fieldtype": "Currency",
+   "label": "Contract Value",
+   "permlevel": 1,
+   "description": "Zero for a scheme-mandated contract."
+  },
+  {
+   "fieldname": "is_scheme_mandated",
+   "fieldtype": "Check",
+   "label": "Scheme Mandated",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nActive\nExpiring Soon\nExpired\nRenewed\nTerminated",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "renewed_from",
+   "fieldtype": "Link",
+   "options": "Solar OM Contract",
+   "label": "Renewal Of",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The contract this one succeeds. Set when a renewal is raised."
+  },
+  {
+   "fieldname": "renewed_to",
+   "fieldtype": "Link",
+   "options": "Solar OM Contract",
+   "label": "Renewed As",
+   "read_only": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1,
+   "description": "The successor contract, once this one has been renewed."
+  },
+  {
+   "fieldname": "days_to_expiry",
+   "fieldtype": "Int",
+   "label": "Days to Expiry",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Coverage"
+  },
+  {
+   "fieldname": "coverage",
+   "fieldtype": "Table",
+   "label": "Coverage",
+   "options": "Solar OM Coverage Item"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Service Levels"
+  },
+  {
+   "fieldname": "preventive_visits_per_year",
+   "fieldtype": "Int",
+   "label": "Preventive Visits / Year",
+   "default": "3",
+   "description": "The client offers free inspection for five years, three visits a year."
+  },
+  {
+   "fieldname": "critical_response_hours",
+   "fieldtype": "Int",
+   "label": "Critical Response (h)",
+   "default": "24"
+  },
+  {
+   "fieldname": "critical_resolution_hours",
+   "fieldtype": "Int",
+   "label": "Critical Resolution (h)",
+   "default": "72"
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "major_response_hours",
+   "fieldtype": "Int",
+   "label": "Major Response (h)",
+   "default": "48"
+  },
+  {
+   "fieldname": "major_resolution_hours",
+   "fieldtype": "Int",
+   "label": "Major Resolution (h)",
+   "default": "120"
+  },
+  {
+   "fieldname": "minor_resolution_days",
+   "fieldtype": "Int",
+   "label": "Minor Resolution (days)",
+   "default": "15"
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Performance Obligation"
+  },
+  {
+   "fieldname": "pr_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The consumer-vendor agreement requires the performance ratio to be maintained at the contractual floor for the whole warranty period. A breach is a contractual exposure, not a chart.</p>"
+  },
+  {
+   "fieldname": "contractual_performance_ratio_percent",
+   "fieldtype": "Float",
+   "label": "Contractual PR %",
+   "default": "75",
+   "precision": 2
+  },
+  {
+   "fieldname": "performance_ratio_at_commissioning",
+   "fieldtype": "Percent",
+   "label": "PR at Commissioning",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_performance_ratio_percent",
+   "fieldtype": "Percent",
+   "label": "Current PR",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "performance_obligation_status",
+   "fieldtype": "Select",
+   "label": "Obligation",
+   "options": "Meeting\nAt Risk\nBreached",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Meeting",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "consecutive_underperforming_readings",
+   "fieldtype": "Int",
+   "label": "Consecutive Low Readings",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_13",
+   "fieldtype": "Tab Break",
+   "label": "Schedule"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Visit Plan"
+  },
+  {
+   "fieldname": "visit_plan",
+   "fieldtype": "Table",
+   "label": "Visit Plan",
+   "options": "Solar OM Visit Plan",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Compliance"
+  },
+  {
+   "fieldname": "next_visit_date",
+   "fieldtype": "Date",
+   "label": "Next Visit",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "visits_completed",
+   "fieldtype": "Int",
+   "label": "Completed",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "visits_missed",
+   "fieldtype": "Int",
+   "label": "Missed",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "visit_compliance_percent",
+   "fieldtype": "Percent",
+   "label": "Compliance %",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "open_tickets",
+   "fieldtype": "Int",
+   "label": "Open Tickets",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tab_17",
+   "fieldtype": "Tab Break",
+   "label": "Warranty"
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Module"
+  },
+  {
+   "fieldname": "warranty_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Every term is read from the Component Make master for the makes this installation actually carries. A Rayzon module and a Vikram module on adjacent roofs expire three years apart.</p>"
+  },
+  {
+   "fieldname": "module_make",
+   "fieldtype": "Link",
+   "label": "Module Make",
+   "options": "Component Make",
+   "read_only": 1
+  },
+  {
+   "fieldname": "module_product_warranty_years",
+   "fieldtype": "Int",
+   "label": "Product (years)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "module_performance_warranty_years",
+   "fieldtype": "Int",
+   "label": "Performance (years)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "module_performance_floor_10yr",
+   "fieldtype": "Float",
+   "label": "Floor @10y %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "module_performance_floor_25yr",
+   "fieldtype": "Float",
+   "label": "Floor @25y %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Inverter & Workmanship"
+  },
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "label": "Inverter Make",
+   "options": "Component Make",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inverter_warranty_years",
+   "fieldtype": "Int",
+   "label": "Inverter (years)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "workmanship_warranty_years",
+   "fieldtype": "Int",
+   "label": "Workmanship (years)",
+   "read_only": 1,
+   "default": "5"
+  },
+  {
+   "fieldname": "warranty_summary",
+   "fieldtype": "Small Text",
+   "label": "Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_23",
+   "fieldtype": "Tab Break",
+   "label": "Financials"
+  },
+  {
+   "fieldname": "sb_24",
+   "fieldtype": "Section Break",
+   "label": "Provision"
+  },
+  {
+   "fieldname": "om_provision_allocated",
+   "fieldtype": "Currency",
+   "label": "Provision Allocated",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "om_cost_incurred",
+   "fieldtype": "Currency",
+   "label": "Cost Incurred",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_25",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "om_provision_balance",
+   "fieldtype": "Currency",
+   "label": "Provision Balance",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "om_cost_per_visit_average",
+   "fieldtype": "Currency",
+   "label": "Avg Cost / Visit",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "tab_26",
+   "fieldtype": "Tab Break",
+   "label": "Performance"
+  },
+  {
+   "fieldname": "sb_27",
+   "fieldtype": "Section Break",
+   "label": "Log"
+  },
+  {
+   "fieldname": "performance_log",
+   "fieldtype": "Table",
+   "label": "Performance Log",
+   "options": "Performance Log",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar OM Contract",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Service Coordinator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar O&M Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "title_field": "customer",
+ "show_title_field_in_link": 1,
+ "search_fields": "project,customer,status",
+ "description": "A five-year comprehensive obligation from the date of DISCOM commissioning, with a performance ratio that must be MAINTAINED at the contractual floor - not a service module, a liability."
+}

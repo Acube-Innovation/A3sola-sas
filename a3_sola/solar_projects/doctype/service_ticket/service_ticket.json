@@ -1,0 +1,533 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "om_contract",
+  "project",
+  "solar_installation",
+  "customer",
+  "cb_2",
+  "reported_on",
+  "reported_by",
+  "reported_via",
+  "company",
+  "amended_from",
+  "sb_3",
+  "category",
+  "severity",
+  "is_scheme_related",
+  "description",
+  "sb_4",
+  "attachments",
+  "tab_5",
+  "sb_6",
+  "response_due_by",
+  "resolution_due_by",
+  "cb_7",
+  "first_response_on",
+  "resolved_on",
+  "sb_8",
+  "response_sla_met",
+  "resolution_sla_met",
+  "hours_to_response",
+  "cb_9",
+  "hours_to_resolution",
+  "sla_breach_reason",
+  "escalation_level",
+  "tab_10",
+  "sb_11",
+  "assigned_to",
+  "om_visit",
+  "installation_snag",
+  "cb_12",
+  "warranty_claim",
+  "root_cause",
+  "sb_13",
+  "resolution_description",
+  "is_chargeable",
+  "chargeable_amount",
+  "sb_14",
+  "status",
+  "closed_on",
+  "cb_15",
+  "customer_confirmation",
+  "reopen_count"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "om_contract",
+   "fieldtype": "Link",
+   "label": "O&M Contract",
+   "options": "Solar OM Contract",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reported_on",
+   "fieldtype": "Datetime",
+   "label": "Reported On",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Data",
+   "label": "Reported By"
+  },
+  {
+   "fieldname": "reported_via",
+   "fieldtype": "Select",
+   "label": "Via",
+   "options": "Phone\nWhatsApp\nEmail\nPortal\nField Observation\nDISCOM Referral",
+   "default": "Phone",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Service Ticket",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Issue"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "No Generation\nLow Generation\nInverter Fault\nModule Damage\nStructure\nCabling\nEarthing\nNet Meter\nBilling Query\nOther",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Critical\nMajor\nMinor",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_scheme_related",
+   "fieldtype": "Check",
+   "label": "Scheme Related",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Set when the complaint could reach the ministry's grievance channel. Reported separately."
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Survey Image"
+  },
+  {
+   "fieldname": "tab_5",
+   "fieldtype": "Tab Break",
+   "label": "SLA"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Targets"
+  },
+  {
+   "fieldname": "response_due_by",
+   "fieldtype": "Datetime",
+   "label": "Response Due",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "resolution_due_by",
+   "fieldtype": "Datetime",
+   "label": "Resolution Due",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "first_response_on",
+   "fieldtype": "Datetime",
+   "label": "First Response",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Datetime",
+   "label": "Resolved On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "response_sla_met",
+   "fieldtype": "Check",
+   "label": "Response SLA Met",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "resolution_sla_met",
+   "fieldtype": "Check",
+   "label": "Resolution SLA Met",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "hours_to_response",
+   "fieldtype": "Float",
+   "label": "Hours to Response",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hours_to_resolution",
+   "fieldtype": "Float",
+   "label": "Hours to Resolution",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "sla_breach_reason",
+   "fieldtype": "Small Text",
+   "label": "Breach Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "escalation_level",
+   "fieldtype": "Int",
+   "label": "Escalation Level",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_10",
+   "fieldtype": "Tab Break",
+   "label": "Handling"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "om_visit",
+   "fieldtype": "Link",
+   "label": "O&M Visit",
+   "options": "Solar OM Visit",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "installation_snag",
+   "fieldtype": "Link",
+   "label": "Snag",
+   "options": "Installation Snag",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warranty_claim",
+   "fieldtype": "Link",
+   "label": "Warranty Claim",
+   "options": "Solar Warranty Claim",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "root_cause",
+   "fieldtype": "Select",
+   "label": "Root Cause",
+   "options": "Workmanship\nComponent Failure\nExternal Damage\nGrid Issue\nCustomer Misuse\nSoiling\nNo Fault Found\nUnder Investigation",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "resolution_description",
+   "fieldtype": "Text",
+   "label": "Resolution",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "is_chargeable",
+   "fieldtype": "Check",
+   "label": "Chargeable",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "chargeable_amount",
+   "fieldtype": "Currency",
+   "label": "Chargeable Amount",
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Closure"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nAcknowledged\nIn Progress\nAwaiting Parts\nAwaiting Customer\nResolved\nClosed\nReopened",
+   "reqd": 1,
+   "default": "Open",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "closed_on",
+   "fieldtype": "Datetime",
+   "label": "Closed On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_confirmation",
+   "fieldtype": "Check",
+   "label": "Customer Confirmed",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "reopen_count",
+   "fieldtype": "Int",
+   "label": "Reopened",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Service Ticket",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Service Coordinator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Accounts Executive",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar O&M Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Project Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "om_contract,category,severity,status",
+ "description": "A breached complaint SLA is a business-continuity risk. The ministry can temporarily deactivate a vendor that fails to resolve consumer complaints."
+}

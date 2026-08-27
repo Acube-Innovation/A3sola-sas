@@ -1,0 +1,21 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ doc.full_name }},</p>
+<p style="margin:0 0 24px;">
+	Thanks for signing {{ doc.organisation_name }} up to {{ product_name }}. Confirm this
+	email address and we will take you to your order summary.
+</p>
+<p style="margin:0 0 24px;">
+	<a href="{{ link }}" style="display:inline-block;background:#f7941e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:9999px;font-weight:600;font-size:15px;">Confirm my email</a>
+</p>
+<p style="margin:0 0 8px;color:#6b7383;font-size:13px;">
+	Or copy this link into your browser:
+</p>
+<p style="margin:0 0 24px;word-break:break-all;font-size:13px;">
+	<a href="{{ link }}" style="color:#f7941e;">{{ link }}</a>
+</p>
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	This link works for {{ hours }} hours and can be used once. If you did not sign up,
+	ignore this email and nothing will happen.
+</p>
+{% endblock %}

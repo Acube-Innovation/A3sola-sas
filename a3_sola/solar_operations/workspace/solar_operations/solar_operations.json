@@ -1,0 +1,342 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"ops-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Operations</span>\", \"col\": 12}}, {\"id\": \"ops-s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Installation\", \"col\": 3}}, {\"id\": \"ops-s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Pipeline\", \"col\": 3}}, {\"id\": \"ops-s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Documents Due\", \"col\": 3}}, {\"id\": \"ops-s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"External Delay\", \"col\": 3}}, {\"id\": \"ops-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Execution\", \"col\": 4}}, {\"id\": \"ops-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"External & Finance\", \"col\": 4}}, {\"id\": \"ops-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"ops-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Templates\", \"col\": 4}}]",
+ "creation": "2026-08-25 13:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "tool",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Solar Operations",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Execution",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Installation",
+   "link_count": 0,
+   "link_to": "Solar Installation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Installation Work Order",
+   "link_count": 0,
+   "link_to": "Installation Work Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Commissioning Report",
+   "link_count": 0,
+   "link_to": "Commissioning Report",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Net Metering Agreement",
+   "link_count": 0,
+   "link_to": "Net Metering Agreement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Installation Snag",
+   "link_count": 0,
+   "link_to": "Installation Snag",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "External & Finance",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal Application",
+   "link_count": 0,
+   "link_to": "Portal Application",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Loan Application",
+   "link_count": 0,
+   "link_to": "Loan Application",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Statutory Fee Payment",
+   "link_count": 0,
+   "link_to": "Statutory Fee Payment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subsidy Claim",
+   "link_count": 0,
+   "link_to": "Subsidy Claim",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 10,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Installation Pipeline Status",
+   "link_count": 0,
+   "link_to": "Installation Pipeline Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "External Dependency Ageing",
+   "link_count": 0,
+   "link_to": "External Dependency Ageing",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Document Pack Status",
+   "link_count": 0,
+   "link_to": "Document Pack Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stage Cycle Time Analysis",
+   "link_count": 0,
+   "link_to": "Stage Cycle Time Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Serial Traceability Register",
+   "link_count": 0,
+   "link_to": "Serial Traceability Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Subsidy Claim Tracker",
+   "link_count": 0,
+   "link_to": "Subsidy Claim Tracker",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Statutory Fee and Refund Register",
+   "link_count": 0,
+   "link_to": "Statutory Fee and Refund Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Bank Disbursement Tracker",
+   "link_count": 0,
+   "link_to": "Bank Disbursement Tracker",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Snag Register and Closure",
+   "link_count": 0,
+   "link_to": "Snag Register and Closure",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "EHS and Feasibility Compliance",
+   "link_count": 0,
+   "link_to": "EHS and Feasibility Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Templates",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Installation Stage Template",
+   "link_count": 0,
+   "link_to": "Installation Stage Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Checklist Template",
+   "link_count": 0,
+   "link_to": "Document Checklist Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Document Template",
+   "link_count": 0,
+   "link_to": "Solar Document Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Template Set",
+   "link_count": 0,
+   "link_to": "Document Template Set",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Solar Operations",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "A3 Sola",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 32.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Solar Installation",
+   "link_to": "Solar Installation",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "label": "Pipeline",
+   "link_to": "Installation Pipeline Status",
+   "type": "Report",
+   "is_query_report": 1
+  },
+  {
+   "color": "Orange",
+   "label": "Documents Due",
+   "link_to": "Document Pack Status",
+   "type": "Report",
+   "is_query_report": 1
+  },
+  {
+   "color": "Red",
+   "label": "External Delay",
+   "link_to": "External Dependency Ageing",
+   "type": "Report",
+   "is_query_report": 1
+  }
+ ],
+ "title": "Solar Operations"
+}

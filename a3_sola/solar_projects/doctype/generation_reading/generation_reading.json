@@ -1,0 +1,304 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "project",
+  "om_contract",
+  "cb_2",
+  "reading_date",
+  "reading_source",
+  "recorded_by",
+  "company",
+  "amended_from",
+  "sb_3",
+  "import_reading",
+  "export_reading",
+  "inverter_lifetime_kwh",
+  "cb_4",
+  "units_generated_since_last",
+  "days_since_last_reading",
+  "sb_5",
+  "expected_generation_kwh",
+  "performance_ratio_percent",
+  "cb_6",
+  "variance_percent",
+  "triggered_ticket",
+  "sb_7",
+  "reading_photograph",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "om_contract",
+   "fieldtype": "Link",
+   "label": "O&M Contract",
+   "options": "Solar OM Contract"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reading_date",
+   "fieldtype": "Date",
+   "label": "Reading Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reading_source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Net Meter\nInverter Display\nInverter Portal\nCustomer Reported\nO&M Visit",
+   "reqd": 1,
+   "default": "Net Meter",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "label": "Recorded By",
+   "options": "User"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Generation Reading",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Readings"
+  },
+  {
+   "fieldname": "import_reading",
+   "fieldtype": "Float",
+   "label": "Import",
+   "precision": 2
+  },
+  {
+   "fieldname": "export_reading",
+   "fieldtype": "Float",
+   "label": "Export",
+   "precision": 2
+  },
+  {
+   "fieldname": "inverter_lifetime_kwh",
+   "fieldtype": "Float",
+   "label": "Inverter Lifetime (kWh)",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "units_generated_since_last",
+   "fieldtype": "Float",
+   "label": "Generated Since Last",
+   "read_only": 1,
+   "precision": 2,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "days_since_last_reading",
+   "fieldtype": "Int",
+   "label": "Days Since Last",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Performance"
+  },
+  {
+   "fieldname": "expected_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Expected",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "performance_ratio_percent",
+   "fieldtype": "Percent",
+   "label": "PR %",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "variance_percent",
+   "fieldtype": "Percent",
+   "label": "Variance %",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "triggered_ticket",
+   "fieldtype": "Link",
+   "label": "Ticket Raised",
+   "options": "Service Ticket",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "reading_photograph",
+   "fieldtype": "Attach",
+   "label": "Photograph"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Generation Reading",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Service Coordinator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,reading_date"
+}

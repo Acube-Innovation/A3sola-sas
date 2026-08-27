@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "units_from",
+  "units_to",
+  "rate_per_unit",
+  "fixed_charge",
+  "duty_percent"
+ ],
+ "fields": [
+  {
+   "fieldname": "units_from",
+   "fieldtype": "Float",
+   "label": "Units From",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "units_to",
+   "fieldtype": "Float",
+   "label": "Units To",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rate_per_unit",
+   "fieldtype": "Currency",
+   "label": "Rate / Unit",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "fixed_charge",
+   "fieldtype": "Currency",
+   "label": "Fixed Charge",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "duty_percent",
+   "fieldtype": "Float",
+   "label": "Duty %",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Tariff Slab",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

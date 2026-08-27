@@ -1,0 +1,673 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "full_name",
+  "work_email",
+  "cb_2",
+  "phone",
+  "designation",
+  "sb_3",
+  "organisation_name",
+  "organisation_type",
+  "gstin",
+  "website",
+  "cb_4",
+  "city",
+  "state",
+  "country",
+  "approximate_monthly_installations",
+  "sb_5",
+  "subscription_plan",
+  "plan_code",
+  "billing_cycle",
+  "cb_6",
+  "additional_users",
+  "total_users",
+  "tab_7",
+  "sb_8",
+  "snapshot_note",
+  "base_amount",
+  "additional_user_amount",
+  "implementation_fee",
+  "cb_10",
+  "subtotal",
+  "tax_amount",
+  "total_amount",
+  "currency",
+  "sb_11",
+  "price_breakdown",
+  "tab_12",
+  "sb_13",
+  "status",
+  "status_reason",
+  "cb_14",
+  "is_email_verified",
+  "verified_on",
+  "verification_attempts",
+  "sb_15",
+  "verification_token",
+  "cb_16",
+  "token_expires_on",
+  "tab_17",
+  "sb_18",
+  "source",
+  "referrer_url",
+  "landing_page",
+  "cb_19",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "sb_20",
+  "ip_address",
+  "cb_21",
+  "user_agent",
+  "sb_22",
+  "accepted_terms",
+  "accepted_terms_on",
+  "cb_23",
+  "marketing_consent",
+  "tab_24",
+  "sb_25",
+  "handoff_note",
+  "razorpay_order_id",
+  "razorpay_payment_id",
+  "cb_27",
+  "payment_completed_on",
+  "sb_28",
+  "provisioned_company",
+  "provisioned_site",
+  "cb_29",
+  "subscription",
+  "admin_user",
+  "tab_30",
+  "sb_31",
+  "event_log",
+  "sb_32",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Applicant"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "work_email",
+   "fieldtype": "Data",
+   "label": "Work Email",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Organisation"
+  },
+  {
+   "fieldname": "organisation_name",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "organisation_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Solar EPC\nDealer or Distributor\nO&M Service Provider\nMulti-Branch Group\nOther",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country",
+   "default": "India"
+  },
+  {
+   "fieldname": "approximate_monthly_installations",
+   "fieldtype": "Select",
+   "label": "Monthly Installations",
+   "options": "Under 10\n10-50\n50-200\nOver 200",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Plan"
+  },
+  {
+   "fieldname": "subscription_plan",
+   "fieldtype": "Link",
+   "label": "Plan",
+   "options": "Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "label": "Plan Code",
+   "read_only": 1,
+   "fetch_from": "subscription_plan.plan_code",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "label": "Billing Cycle",
+   "options": "Monthly\nAnnual",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "additional_users",
+   "fieldtype": "Int",
+   "label": "Additional Users",
+   "default": "0"
+  },
+  {
+   "fieldname": "total_users",
+   "fieldtype": "Int",
+   "label": "Total Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_7",
+   "fieldtype": "Tab Break",
+   "label": "Pricing"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Snapshot"
+  },
+  {
+   "fieldname": "snapshot_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Taken when the applicant signed up. Phase 5 charges these figures - it must never recompute from the live plan, or a price change would charge a number the applicant never agreed to.</p>"
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_user_amount",
+   "fieldtype": "Currency",
+   "label": "Additional Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "implementation_fee",
+   "fieldtype": "Currency",
+   "label": "Implementation Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Currency",
+   "label": "Subtotal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Breakdown"
+  },
+  {
+   "fieldname": "price_breakdown",
+   "fieldtype": "Long Text",
+   "label": "Price Breakdown",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "tab_12",
+   "fieldtype": "Tab Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Progress"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nAwaiting Email Verification\nVerified\nAwaiting Payment\nPayment Failed\nPaid\nProvisioning\nActive\nAbandoned\nRejected",
+   "read_only": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "status_reason",
+   "fieldtype": "Small Text",
+   "label": "Status Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_email_verified",
+   "fieldtype": "Check",
+   "label": "Email Verified",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "verified_on",
+   "fieldtype": "Datetime",
+   "label": "Verified On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "verification_attempts",
+   "fieldtype": "Int",
+   "label": "Verification Attempts",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Verification"
+  },
+  {
+   "fieldname": "verification_token",
+   "fieldtype": "Data",
+   "label": "Verification Token",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "permlevel": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "token_expires_on",
+   "fieldtype": "Datetime",
+   "label": "Token Expires",
+   "read_only": 1,
+   "permlevel": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_17",
+   "fieldtype": "Tab Break",
+   "label": "Attribution"
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source"
+  },
+  {
+   "fieldname": "referrer_url",
+   "fieldtype": "Data",
+   "label": "Referrer"
+  },
+  {
+   "fieldname": "landing_page",
+   "fieldtype": "Data",
+   "label": "Landing Page"
+  },
+  {
+   "fieldname": "cb_19",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "utm_source",
+   "fieldtype": "Data",
+   "label": "UTM Source",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "utm_medium",
+   "fieldtype": "Data",
+   "label": "UTM Medium"
+  },
+  {
+   "fieldname": "utm_campaign",
+   "fieldtype": "Data",
+   "label": "UTM Campaign",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "utm_term",
+   "fieldtype": "Data",
+   "label": "UTM Term"
+  },
+  {
+   "fieldname": "utm_content",
+   "fieldtype": "Data",
+   "label": "UTM Content"
+  },
+  {
+   "fieldname": "sb_20",
+   "fieldtype": "Section Break",
+   "label": "Request"
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP Address",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "user_agent",
+   "fieldtype": "Small Text",
+   "label": "User Agent",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_22",
+   "fieldtype": "Section Break",
+   "label": "Consent"
+  },
+  {
+   "fieldname": "accepted_terms",
+   "fieldtype": "Check",
+   "label": "Accepted Terms",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_terms_on",
+   "fieldtype": "Datetime",
+   "label": "Accepted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "marketing_consent",
+   "fieldtype": "Check",
+   "label": "Marketing Consent"
+  },
+  {
+   "fieldname": "tab_24",
+   "fieldtype": "Tab Break",
+   "label": "Handoff"
+  },
+  {
+   "fieldname": "sb_25",
+   "fieldtype": "Section Break",
+   "label": "Payment"
+  },
+  {
+   "fieldname": "handoff_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Populated by later phases. Phase 5 owns payment, Phase 6 provisioning, Phase 7 the subscription.</p>"
+  },
+  {
+   "fieldname": "razorpay_order_id",
+   "fieldtype": "Data",
+   "label": "Razorpay Order",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "razorpay_payment_id",
+   "fieldtype": "Data",
+   "label": "Razorpay Payment",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_27",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_completed_on",
+   "fieldtype": "Datetime",
+   "label": "Paid On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_28",
+   "fieldtype": "Section Break",
+   "label": "Provisioning"
+  },
+  {
+   "fieldname": "provisioned_company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "provisioned_site",
+   "fieldtype": "Data",
+   "label": "Site",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_29",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subscription",
+   "fieldtype": "Data",
+   "label": "Subscription",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "Left as Data until Phase 7 defines the doctype."
+  },
+  {
+   "fieldname": "admin_user",
+   "fieldtype": "Link",
+   "label": "Admin User",
+   "options": "User",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_30",
+   "fieldtype": "Tab Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "sb_31",
+   "fieldtype": "Section Break",
+   "label": "Event Log"
+  },
+  {
+   "fieldname": "event_log",
+   "fieldtype": "Table",
+   "label": "Events",
+   "options": "Signup Event Log"
+  },
+  {
+   "fieldname": "sb_32",
+   "fieldtype": "Section Break",
+   "label": "Amend"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Subscription Signup",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Subscription Signup",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Sales",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Platform Admin",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "organisation_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "work_email,organisation_name,plan_code"
+}

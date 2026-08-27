@@ -1,0 +1,392 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "fee_type",
+  "cb_2",
+  "statutory_fee_schedule",
+  "company",
+  "amended_from",
+  "sb_3",
+  "paid_by",
+  "payment_date",
+  "payment_reference",
+  "cb_4",
+  "amount_base",
+  "amount_gst",
+  "amount_gross",
+  "receipt",
+  "sb_5",
+  "reimbursable_from_customer",
+  "reimbursed_amount",
+  "cb_6",
+  "reimbursement_status",
+  "sb_7",
+  "refundable_amount",
+  "refund_claimed_on",
+  "refund_portal_application",
+  "cb_8",
+  "refund_received_on",
+  "refund_received_amount",
+  "refund_variance",
+  "refund_credited_to",
+  "refund_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fee_type",
+   "fieldtype": "Select",
+   "label": "Fee Type",
+   "options": "Application Fee\nRegistration Fee\nNet Meter Charge\nOther",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "statutory_fee_schedule",
+   "fieldtype": "Link",
+   "label": "Fee Schedule",
+   "options": "Statutory Fee Schedule",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Statutory Fee Payment",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Payment"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Select",
+   "label": "Paid By",
+   "options": "Company on Behalf of Customer\nCustomer Directly",
+   "reqd": 1,
+   "default": "Company on Behalf of Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Payment Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payment_reference",
+   "fieldtype": "Data",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount_base",
+   "fieldtype": "Currency",
+   "label": "Base",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_gst",
+   "fieldtype": "Currency",
+   "label": "GST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_gross",
+   "fieldtype": "Currency",
+   "label": "Gross",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "receipt",
+   "fieldtype": "Attach",
+   "label": "Receipt",
+   "description": "Mandatory when the company paid - no receipt, no reimbursement."
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Reimbursement"
+  },
+  {
+   "fieldname": "reimbursable_from_customer",
+   "fieldtype": "Currency",
+   "label": "Reimbursable",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "reimbursed_amount",
+   "fieldtype": "Currency",
+   "label": "Reimbursed",
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reimbursement_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Applicable\nPending\nPartially Recovered\nFully Recovered",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Not Applicable",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Refund"
+  },
+  {
+   "fieldname": "refundable_amount",
+   "fieldtype": "Currency",
+   "label": "Refundable",
+   "read_only": 1,
+   "depends_on": "eval:doc.fee_type=='Registration Fee'"
+  },
+  {
+   "fieldname": "refund_claimed_on",
+   "fieldtype": "Date",
+   "label": "Claimed On",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.fee_type=='Registration Fee'"
+  },
+  {
+   "fieldname": "refund_portal_application",
+   "fieldtype": "Link",
+   "label": "Refund Application",
+   "options": "Portal Application",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.fee_type=='Registration Fee'"
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "refund_received_on",
+   "fieldtype": "Date",
+   "label": "Received On",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.fee_type=='Registration Fee'"
+  },
+  {
+   "fieldname": "refund_received_amount",
+   "fieldtype": "Currency",
+   "label": "Received Amount",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.fee_type=='Registration Fee'"
+  },
+  {
+   "fieldname": "refund_variance",
+   "fieldtype": "Currency",
+   "label": "Variance",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "refund_credited_to",
+   "fieldtype": "Select",
+   "label": "Credited To",
+   "options": "Consumer Account\nCompany Account",
+   "default": "Consumer Account"
+  },
+  {
+   "fieldname": "refund_status",
+   "fieldtype": "Select",
+   "label": "Refund Status",
+   "options": "Not Due\nDue\nClaimed\nReceived\nShort Received\nWritten Off",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Not Due",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Statutory Fee Payment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,fee_type",
+ "description": "The client pays the DISCOM on the customer's behalf and recovers it against receipts; 80% of the registration base comes back after commissioning. Today that is tracked nowhere."
+}

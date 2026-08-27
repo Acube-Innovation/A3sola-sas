@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "milestone_name",
+  "trigger_type",
+  "trigger_stage_code",
+  "percentage",
+  "milestone_amount",
+  "cb_1",
+  "funding_source",
+  "is_triggered",
+  "triggered_on",
+  "due_date",
+  "sb_2",
+  "sales_invoice",
+  "invoice_status",
+  "invoiced_amount",
+  "cb_3",
+  "paid_amount",
+  "outstanding",
+  "matched_disbursement",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "milestone_name",
+   "fieldtype": "Data",
+   "label": "Milestone",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trigger_type",
+   "fieldtype": "Select",
+   "label": "Trigger",
+   "options": "On Order\nOn Installation Stage\nOn Commissioning\nOn Date\nOn Loan Disbursement\nManual",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trigger_stage_code",
+   "fieldtype": "Data",
+   "label": "Stage",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "%",
+   "precision": 2,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "milestone_amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "funding_source",
+   "fieldtype": "Select",
+   "label": "Funded By",
+   "options": "Customer\nLender"
+  },
+  {
+   "fieldname": "is_triggered",
+   "fieldtype": "Check",
+   "label": "Triggered",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "triggered_on",
+   "fieldtype": "Date",
+   "label": "Triggered On",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Invoice"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "invoice_status",
+   "fieldtype": "Data",
+   "label": "Invoice Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoiced_amount",
+   "fieldtype": "Currency",
+   "label": "Invoiced",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "matched_disbursement",
+   "fieldtype": "Data",
+   "label": "Matched Tranche",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Billing Milestone Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

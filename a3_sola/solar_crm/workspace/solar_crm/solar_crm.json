@@ -1,0 +1,345 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"crm-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar CRM</span>\", \"col\": 12}}, {\"id\": \"crm-sc\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Lead\", \"col\": 3}}, {\"id\": \"crm-sc2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Consumer\", \"col\": 3}}, {\"id\": \"crm-sc3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Proposal\", \"col\": 3}}, {\"id\": \"crm-sc4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Follow-ups Due\", \"col\": 3}}, {\"id\": \"crm-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Sales Journey\", \"col\": 4}}, {\"id\": \"crm-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"crm-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Master Data\", \"col\": 4}}]",
+ "creation": "2026-08-25 13:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "sun",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Solar CRM",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Journey",
+   "link_count": 8,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Lead",
+   "link_count": 0,
+   "link_to": "Lead",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Consumer",
+   "link_count": 0,
+   "link_to": "Solar Consumer",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Site Survey",
+   "link_count": 0,
+   "link_to": "Site Survey",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Design Estimate",
+   "link_count": 0,
+   "link_to": "Solar Design Estimate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subsidy Eligibility Check",
+   "link_count": 0,
+   "link_to": "Subsidy Eligibility Check",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Proposal",
+   "link_count": 0,
+   "link_to": "Solar Proposal",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Quotation",
+   "link_count": 0,
+   "link_to": "Quotation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order",
+   "link_count": 0,
+   "link_to": "Sales Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Lead Follow-up Due",
+   "link_count": 0,
+   "link_to": "Lead Follow-up Due",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Proposal Register",
+   "link_count": 0,
+   "link_to": "Proposal Register",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Outreach Funnel Conversion",
+   "link_count": 0,
+   "link_to": "Outreach Funnel Conversion",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Solar Sales Pipeline",
+   "link_count": 0,
+   "link_to": "Solar Sales Pipeline",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Statutory Fee Exposure",
+   "link_count": 0,
+   "link_to": "Statutory Fee Exposure",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Master Data",
+   "link_count": 11,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "A3 Sola Settings",
+   "link_count": 0,
+   "link_to": "A3 Sola Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Package",
+   "link_count": 0,
+   "link_to": "Solar Package",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Component Make",
+   "link_count": 0,
+   "link_to": "Component Make",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Statutory Fee Schedule",
+   "link_count": 0,
+   "link_to": "Statutory Fee Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Grid Regulation Rule",
+   "link_count": 0,
+   "link_to": "Grid Regulation Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subsidy Scheme",
+   "link_count": 0,
+   "link_to": "Subsidy Scheme",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Electricity Tariff",
+   "link_count": 0,
+   "link_to": "Electricity Tariff",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "DISCOM",
+   "link_count": 0,
+   "link_to": "DISCOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "DISCOM Section",
+   "link_count": 0,
+   "link_to": "DISCOM Section",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Roof Type",
+   "link_count": 0,
+   "link_to": "Roof Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Outreach Message Template",
+   "link_count": 0,
+   "link_to": "Outreach Message Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar CRM",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "A3 Sola",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 31.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Lead",
+   "link_to": "Lead",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Solar Consumer",
+   "link_to": "Solar Consumer",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Solar Proposal",
+   "link_to": "Solar Proposal",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "label": "Follow-ups Due",
+   "link_to": "Lead Follow-up Due",
+   "type": "Report",
+   "is_query_report": 1
+  }
+ ],
+ "title": "Solar CRM"
+}

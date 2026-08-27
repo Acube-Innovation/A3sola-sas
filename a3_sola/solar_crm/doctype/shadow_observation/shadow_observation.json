@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "time_slot",
+  "shading_percent",
+  "obstruction_source"
+ ],
+ "fields": [
+  {
+   "fieldname": "time_slot",
+   "fieldtype": "Select",
+   "label": "Time Slot",
+   "options": "08:00\n10:00\n12:00\n14:00\n16:00",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "shading_percent",
+   "fieldtype": "Float",
+   "label": "Shading %",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "obstruction_source",
+   "fieldtype": "Data",
+   "label": "Obstruction",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Shadow Observation",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

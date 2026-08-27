@@ -1,0 +1,16 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;"><strong>New signup: {{ doc.organisation_name }}</strong></p>
+<table style="width:100%;border-collapse:collapse;font-size:14px;">
+	<tr><td style="padding:6px 0;color:#6b7383;">Contact</td><td style="padding:6px 0;">{{ doc.full_name }}{% if doc.designation %}, {{ doc.designation }}{% endif %}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Email</td><td style="padding:6px 0;">{{ doc.work_email }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Phone</td><td style="padding:6px 0;">{{ doc.phone }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Plan</td><td style="padding:6px 0;">{{ doc.plan_code }} &middot; {{ doc.billing_cycle }} &middot; {{ doc.total_users }} users</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Value</td><td style="padding:6px 0;">{{ frappe.utils.fmt_money(doc.total_amount, currency=doc.currency) }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Volume</td><td style="padding:6px 0;">{{ doc.approximate_monthly_installations or "not stated" }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Source</td><td style="padding:6px 0;">{{ doc.utm_source or doc.source or "direct" }}</td></tr>
+</table>
+<p style="margin:24px 0 0;font-size:13px;color:#6b7383;">
+	Awaiting email verification. Reference {{ doc.name }}.
+</p>
+{% endblock %}

@@ -1,0 +1,944 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "capacity_kw",
+  "cb_2",
+  "commissioning_date",
+  "commissioned_by",
+  "discom_representative_name",
+  "commissioning_status",
+  "company",
+  "amended_from",
+  "tab_3",
+  "sb_4",
+  "checklist_note",
+  "electrical_division",
+  "electrical_subdivision",
+  "electrical_section",
+  "consumer_number",
+  "tariff_category",
+  "connected_load_watts",
+  "cb_6",
+  "plant_owner_name",
+  "installation_address",
+  "consumer_email",
+  "consumer_contact_no",
+  "alternate_contact_no",
+  "sb_7",
+  "consumer_bank_name",
+  "consumer_bank_account_no",
+  "cb_8",
+  "consumer_bank_ifsc",
+  "sb_9",
+  "installer_name",
+  "installer_address",
+  "cb_10",
+  "installer_email",
+  "installer_contact_no",
+  "sb_11",
+  "plant_type",
+  "total_capacity_kwp",
+  "module_count",
+  "module_wattage",
+  "module_make",
+  "cb_12",
+  "inverter_make",
+  "inverter_serial_no",
+  "inverter_phase",
+  "inverter_capacity_kw",
+  "inverter_count",
+  "dc_input_voltage",
+  "hybrid_scheme_conforms_to_ce_rees",
+  "sb_13",
+  "completion_certificate_submitted_to_section",
+  "energisation_approval_from_ei",
+  "energisation_approval_details",
+  "cb_14",
+  "electrical_inspectorate_approval_no",
+  "electrical_inspectorate_date",
+  "sb_15",
+  "dc_isolator_on_inverter_incoming",
+  "visual_isolator_before_connectivity_point",
+  "cb_16",
+  "wiring_as_per_approved_scheme",
+  "sb_17",
+  "earthing_provided_ac_db",
+  "earthing_provided_dc_db",
+  "earthing_provided_structure_and_panels",
+  "cb_18",
+  "earthing_provided_la_and_inverter_body",
+  "earthing_provided_isolator",
+  "earthing_verified",
+  "surge_protection_installed",
+  "sb_19",
+  "protection_note",
+  "protection_settings",
+  "tab_21",
+  "sb_22",
+  "net_meter_serial_no",
+  "net_meter_make",
+  "net_meter_installation_date",
+  "cb_23",
+  "initial_import_reading",
+  "initial_export_reading",
+  "meter_seal_number",
+  "net_meter_photograph",
+  "sb_24",
+  "commissioning_certificate_no",
+  "cb_25",
+  "commissioning_certificate",
+  "sb_26",
+  "test_readings",
+  "all_tests_passed",
+  "sb_27",
+  "structure_torque_check_done",
+  "cable_dressing_verified",
+  "cb_28",
+  "labelling_complete",
+  "sb_29",
+  "pr_note",
+  "first_day_generation_kwh",
+  "expected_daily_generation_kwh",
+  "performance_ratio_at_commissioning",
+  "performance_ratio_threshold",
+  "cb_31",
+  "radiation_sensor_id",
+  "measured_irradiance_w_m2",
+  "calibration_lab",
+  "calibration_valid_until",
+  "radiation_sensor_calibration_certificate",
+  "performance_remarks",
+  "pr_override_reason",
+  "tab_32",
+  "sb_33",
+  "customer_handover_done",
+  "user_manual_provided",
+  "warranty_certificates_provided",
+  "cb_34",
+  "customer_trained_on_monitoring",
+  "customer_signature",
+  "sb_35",
+  "handover_remarks",
+  "has_open_snags"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "fetch_from": "solar_installation.capacity_kw",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "commissioning_date",
+   "fieldtype": "Date",
+   "label": "Commissioning Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "commissioned_by",
+   "fieldtype": "Link",
+   "label": "Commissioned By",
+   "options": "User"
+  },
+  {
+   "fieldname": "discom_representative_name",
+   "fieldtype": "Data",
+   "label": "DISCOM Representative"
+  },
+  {
+   "fieldname": "commissioning_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Commissioned\nCommissioned with Snags\nRejected",
+   "default": "Commissioned",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Commissioning Report",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "tab_3",
+   "fieldtype": "Tab Break",
+   "label": "DISCOM Checklist"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Administrative"
+  },
+  {
+   "fieldname": "checklist_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Fetched from the consumer, section and package. The DISCOM's checklist asks for every one of these and the client fills it by hand today.</p>"
+  },
+  {
+   "fieldname": "electrical_division",
+   "fieldtype": "Data",
+   "label": "Electrical Division",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electrical_subdivision",
+   "fieldtype": "Data",
+   "label": "Electrical Sub-Division",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electrical_section",
+   "fieldtype": "Data",
+   "label": "Electrical Section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tariff_category",
+   "fieldtype": "Data",
+   "label": "Tariff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connected_load_watts",
+   "fieldtype": "Float",
+   "label": "Connected Load (W)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plant_owner_name",
+   "fieldtype": "Data",
+   "label": "Plant Owner",
+   "read_only": 1
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Small Text",
+   "label": "Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_contact_no",
+   "fieldtype": "Data",
+   "label": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "alternate_contact_no",
+   "fieldtype": "Data",
+   "label": "Alternate Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Consumer Bank (for refund and DBT)"
+  },
+  {
+   "fieldname": "consumer_bank_name",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "consumer_bank_account_no",
+   "fieldtype": "Data",
+   "label": "Account No",
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consumer_bank_ifsc",
+   "fieldtype": "Data",
+   "label": "IFSC",
+   "read_only": 1,
+   "permlevel": 2
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Installer"
+  },
+  {
+   "fieldname": "installer_name",
+   "fieldtype": "Data",
+   "label": "Installer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "installer_address",
+   "fieldtype": "Small Text",
+   "label": "Installer Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "installer_email",
+   "fieldtype": "Data",
+   "label": "Installer Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "installer_contact_no",
+   "fieldtype": "Data",
+   "label": "Installer Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Plant Details"
+  },
+  {
+   "fieldname": "plant_type",
+   "fieldtype": "Select",
+   "label": "Plant Type",
+   "options": "On Grid\nOff Grid\nHybrid",
+   "default": "On Grid"
+  },
+  {
+   "fieldname": "total_capacity_kwp",
+   "fieldtype": "Float",
+   "label": "Total Capacity (kWp)",
+   "precision": 3
+  },
+  {
+   "fieldname": "module_count",
+   "fieldtype": "Int",
+   "label": "Number of Panels"
+  },
+  {
+   "fieldname": "module_wattage",
+   "fieldtype": "Float",
+   "label": "Individual Capacity (Wp)",
+   "precision": 2
+  },
+  {
+   "fieldname": "module_make",
+   "fieldtype": "Data",
+   "label": "Panel Make"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Data",
+   "label": "Inverter Make"
+  },
+  {
+   "fieldname": "inverter_serial_no",
+   "fieldtype": "Data",
+   "label": "Inverter Serial No"
+  },
+  {
+   "fieldname": "inverter_phase",
+   "fieldtype": "Select",
+   "label": "Inverter Phase",
+   "options": "Single Phase\nThree Phase"
+  },
+  {
+   "fieldname": "inverter_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Inverter Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "inverter_count",
+   "fieldtype": "Int",
+   "label": "Number of Inverters"
+  },
+  {
+   "fieldname": "dc_input_voltage",
+   "fieldtype": "Float",
+   "label": "DC Input Voltage",
+   "precision": 2
+  },
+  {
+   "fieldname": "hybrid_scheme_conforms_to_ce_rees",
+   "fieldtype": "Check",
+   "label": "Hybrid Scheme Conforms to CE (REES)",
+   "depends_on": "eval:doc.plant_type=='Hybrid'"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Statutory Declarations"
+  },
+  {
+   "fieldname": "completion_certificate_submitted_to_section",
+   "fieldtype": "Check",
+   "label": "Completion Certificate Submitted to Section"
+  },
+  {
+   "fieldname": "energisation_approval_from_ei",
+   "fieldtype": "Select",
+   "label": "Energisation Approval from EI",
+   "options": "Yes\nNo\nNot Applicable",
+   "default": "Not Applicable"
+  },
+  {
+   "fieldname": "energisation_approval_details",
+   "fieldtype": "Small Text",
+   "label": "Approval Details"
+  },
+  {
+   "fieldname": "cb_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "electrical_inspectorate_approval_no",
+   "fieldtype": "Data",
+   "label": "Inspectorate Approval No"
+  },
+  {
+   "fieldname": "electrical_inspectorate_date",
+   "fieldtype": "Date",
+   "label": "Inspectorate Date"
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Isolation & Wiring"
+  },
+  {
+   "fieldname": "dc_isolator_on_inverter_incoming",
+   "fieldtype": "Check",
+   "label": "DC Isolator on Inverter Incoming Side"
+  },
+  {
+   "fieldname": "visual_isolator_before_connectivity_point",
+   "fieldtype": "Check",
+   "label": "Visual Isolator Before Connectivity Point"
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "wiring_as_per_approved_scheme",
+   "fieldtype": "Check",
+   "label": "Wiring as per Approved Scheme"
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "Earthing"
+  },
+  {
+   "fieldname": "earthing_provided_ac_db",
+   "fieldtype": "Check",
+   "label": "AC DB"
+  },
+  {
+   "fieldname": "earthing_provided_dc_db",
+   "fieldtype": "Check",
+   "label": "DC DB"
+  },
+  {
+   "fieldname": "earthing_provided_structure_and_panels",
+   "fieldtype": "Check",
+   "label": "Structure & Panels"
+  },
+  {
+   "fieldname": "cb_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "earthing_provided_la_and_inverter_body",
+   "fieldtype": "Check",
+   "label": "LA & Inverter Body"
+  },
+  {
+   "fieldname": "earthing_provided_isolator",
+   "fieldtype": "Check",
+   "label": "Isolator"
+  },
+  {
+   "fieldname": "earthing_verified",
+   "fieldtype": "Check",
+   "label": "Earthing Verified",
+   "reqd": 1
+  },
+  {
+   "fieldname": "surge_protection_installed",
+   "fieldtype": "Check",
+   "label": "Surge Protection Installed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_19",
+   "fieldtype": "Section Break",
+   "label": "Inverter Protection Settings"
+  },
+  {
+   "fieldname": "protection_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Every function needs a value and documentary proof. This is precisely what the Assistant Engineer refuses on, and a rejected inspection costs another site visit.</p>"
+  },
+  {
+   "fieldname": "protection_settings",
+   "fieldtype": "Table",
+   "label": "Protection Settings",
+   "options": "Inverter Protection Setting"
+  },
+  {
+   "fieldname": "tab_21",
+   "fieldtype": "Tab Break",
+   "label": "Technical"
+  },
+  {
+   "fieldname": "sb_22",
+   "fieldtype": "Section Break",
+   "label": "Net Metering"
+  },
+  {
+   "fieldname": "net_meter_serial_no",
+   "fieldtype": "Data",
+   "label": "Net Meter Serial",
+   "reqd": 1
+  },
+  {
+   "fieldname": "net_meter_make",
+   "fieldtype": "Data",
+   "label": "Net Meter Make"
+  },
+  {
+   "fieldname": "net_meter_installation_date",
+   "fieldtype": "Date",
+   "label": "Net Meter Installed"
+  },
+  {
+   "fieldname": "cb_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initial_import_reading",
+   "fieldtype": "Float",
+   "label": "Initial Import",
+   "precision": 2
+  },
+  {
+   "fieldname": "initial_export_reading",
+   "fieldtype": "Float",
+   "label": "Initial Export",
+   "precision": 2
+  },
+  {
+   "fieldname": "meter_seal_number",
+   "fieldtype": "Data",
+   "label": "Meter Seal No"
+  },
+  {
+   "fieldname": "net_meter_photograph",
+   "fieldtype": "Attach",
+   "label": "Net Meter Photograph"
+  },
+  {
+   "fieldname": "sb_24",
+   "fieldtype": "Section Break",
+   "label": "Statutory Certificates"
+  },
+  {
+   "fieldname": "commissioning_certificate_no",
+   "fieldtype": "Data",
+   "label": "Commissioning Certificate No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_25",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "commissioning_certificate",
+   "fieldtype": "Attach",
+   "label": "Commissioning Certificate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_26",
+   "fieldtype": "Section Break",
+   "label": "Test Readings"
+  },
+  {
+   "fieldname": "test_readings",
+   "fieldtype": "Table",
+   "label": "Test Readings",
+   "options": "Test Reading"
+  },
+  {
+   "fieldname": "all_tests_passed",
+   "fieldtype": "Check",
+   "label": "All Tests Passed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_27",
+   "fieldtype": "Section Break",
+   "label": "Workmanship"
+  },
+  {
+   "fieldname": "structure_torque_check_done",
+   "fieldtype": "Check",
+   "label": "Structure Torque Check"
+  },
+  {
+   "fieldname": "cable_dressing_verified",
+   "fieldtype": "Check",
+   "label": "Cable Dressing Verified"
+  },
+  {
+   "fieldname": "cb_28",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "labelling_complete",
+   "fieldtype": "Check",
+   "label": "Labelling Complete"
+  },
+  {
+   "fieldname": "sb_29",
+   "fieldtype": "Section Break",
+   "label": "Performance Baseline"
+  },
+  {
+   "fieldname": "pr_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The consumer-vendor agreement requires a performance ratio of at least 75% at commissioning, measured with a NABL-calibrated radiation sensor, and maintained for five years.</p>"
+  },
+  {
+   "fieldname": "first_day_generation_kwh",
+   "fieldtype": "Float",
+   "label": "First Day Generation (kWh)",
+   "precision": 2
+  },
+  {
+   "fieldname": "expected_daily_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Expected Daily (kWh)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "performance_ratio_at_commissioning",
+   "fieldtype": "Percent",
+   "label": "Performance Ratio",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "performance_ratio_threshold",
+   "fieldtype": "Percent",
+   "label": "Required Ratio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_31",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "radiation_sensor_id",
+   "fieldtype": "Data",
+   "label": "Radiation Sensor ID"
+  },
+  {
+   "fieldname": "measured_irradiance_w_m2",
+   "fieldtype": "Float",
+   "label": "Measured Irradiance (W/m2)",
+   "precision": 2
+  },
+  {
+   "fieldname": "calibration_lab",
+   "fieldtype": "Select",
+   "label": "Calibration Lab",
+   "options": "NABL Accredited\nInternational Accredited\nOther"
+  },
+  {
+   "fieldname": "calibration_valid_until",
+   "fieldtype": "Date",
+   "label": "Calibration Valid Until"
+  },
+  {
+   "fieldname": "radiation_sensor_calibration_certificate",
+   "fieldtype": "Attach",
+   "label": "Calibration Certificate"
+  },
+  {
+   "fieldname": "performance_remarks",
+   "fieldtype": "Small Text",
+   "label": "Performance Remarks"
+  },
+  {
+   "fieldname": "pr_override_reason",
+   "fieldtype": "Small Text",
+   "label": "Below-Threshold Reason",
+   "description": "Required by a manager when the ratio is below the contractual floor."
+  },
+  {
+   "fieldname": "tab_32",
+   "fieldtype": "Tab Break",
+   "label": "Handover"
+  },
+  {
+   "fieldname": "sb_33",
+   "fieldtype": "Section Break",
+   "label": "Customer Handover"
+  },
+  {
+   "fieldname": "customer_handover_done",
+   "fieldtype": "Check",
+   "label": "Handover Done"
+  },
+  {
+   "fieldname": "user_manual_provided",
+   "fieldtype": "Check",
+   "label": "User Manual Provided"
+  },
+  {
+   "fieldname": "warranty_certificates_provided",
+   "fieldtype": "Check",
+   "label": "Warranty Certificates Provided"
+  },
+  {
+   "fieldname": "cb_34",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_trained_on_monitoring",
+   "fieldtype": "Check",
+   "label": "Trained on Monitoring"
+  },
+  {
+   "fieldname": "customer_signature",
+   "fieldtype": "Attach",
+   "label": "Customer Signature"
+  },
+  {
+   "fieldname": "sb_35",
+   "fieldtype": "Section Break",
+   "label": "Handover Remarks"
+  },
+  {
+   "fieldname": "handover_remarks",
+   "fieldtype": "Text",
+   "label": "Handover Remarks"
+  },
+  {
+   "fieldname": "has_open_snags",
+   "fieldtype": "Check",
+   "label": "Has Open Snags",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Commissioning Report",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,commissioning_certificate_no",
+ "description": "Carries every field on the DISCOM's installation and inverter testing checklist, so the checklist prints rather than being transcribed."
+}

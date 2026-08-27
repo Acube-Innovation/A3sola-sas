@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "sb_1",
+  "subsidy_receivable_account",
+  "subsidy_recovery_income_account",
+  "sb_2",
+  "om_provision_liability_account",
+  "om_expense_account",
+  "sb_3",
+  "wip_account",
+  "project_revenue_account",
+  "material_consumption_account",
+  "subcontractor_cost_account",
+  "sb_4",
+  "statutory_fee_receivable_account",
+  "statutory_refund_receivable_account",
+  "warranty_claim_receivable_account",
+  "loan_advance_received_account",
+  "write_off_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Subsidy"
+  },
+  {
+   "fieldname": "subsidy_receivable_account",
+   "fieldtype": "Link",
+   "label": "Subsidy Receivable",
+   "options": "Account"
+  },
+  {
+   "fieldname": "subsidy_recovery_income_account",
+   "fieldtype": "Link",
+   "label": "Subsidy Recovery Income",
+   "options": "Account"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "O&M"
+  },
+  {
+   "fieldname": "om_provision_liability_account",
+   "fieldtype": "Link",
+   "label": "O&M Provision (Liability)",
+   "options": "Account"
+  },
+  {
+   "fieldname": "om_expense_account",
+   "fieldtype": "Link",
+   "label": "O&M Expense",
+   "options": "Account"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Project"
+  },
+  {
+   "fieldname": "wip_account",
+   "fieldtype": "Link",
+   "label": "Work in Progress",
+   "options": "Account"
+  },
+  {
+   "fieldname": "project_revenue_account",
+   "fieldtype": "Link",
+   "label": "Project Revenue",
+   "options": "Account"
+  },
+  {
+   "fieldname": "material_consumption_account",
+   "fieldtype": "Link",
+   "label": "Material Consumption",
+   "options": "Account"
+  },
+  {
+   "fieldname": "subcontractor_cost_account",
+   "fieldtype": "Link",
+   "label": "Subcontractor Cost",
+   "options": "Account"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Statutory & Claims"
+  },
+  {
+   "fieldname": "statutory_fee_receivable_account",
+   "fieldtype": "Link",
+   "label": "Statutory Fee Receivable",
+   "options": "Account"
+  },
+  {
+   "fieldname": "statutory_refund_receivable_account",
+   "fieldtype": "Link",
+   "label": "Statutory Refund Receivable",
+   "options": "Account"
+  },
+  {
+   "fieldname": "warranty_claim_receivable_account",
+   "fieldtype": "Link",
+   "label": "Warranty Claim Receivable",
+   "options": "Account"
+  },
+  {
+   "fieldname": "loan_advance_received_account",
+   "fieldtype": "Link",
+   "label": "Loan Advance Received",
+   "options": "Account"
+  },
+  {
+   "fieldname": "write_off_account",
+   "fieldtype": "Link",
+   "label": "Write Off",
+   "options": "Account"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar Company Account Mapping",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1,
+ "description": "Accounts resolve strictly per company. A posting that reaches another company's account moves one tenant's money into another's ledger."
+}

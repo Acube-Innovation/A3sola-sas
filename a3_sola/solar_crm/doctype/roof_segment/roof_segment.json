@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "segment_name",
+  "area_sqft",
+  "tilt_degrees",
+  "azimuth",
+  "is_usable",
+  "cb_1",
+  "usable_kw",
+  "obstruction_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "segment_name",
+   "fieldtype": "Data",
+   "label": "Segment",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "area_sqft",
+   "fieldtype": "Float",
+   "label": "Area (sq ft)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "tilt_degrees",
+   "fieldtype": "Float",
+   "label": "Tilt",
+   "precision": 2
+  },
+  {
+   "fieldname": "azimuth",
+   "fieldtype": "Select",
+   "label": "Azimuth",
+   "options": "South\nSouth-East\nSouth-West\nEast\nWest\nNorth",
+   "default": "South",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_usable",
+   "fieldtype": "Check",
+   "label": "Usable",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "usable_kw",
+   "fieldtype": "Float",
+   "label": "Usable kW",
+   "read_only": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "obstruction_notes",
+   "fieldtype": "Small Text",
+   "label": "Obstructions"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Roof Segment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

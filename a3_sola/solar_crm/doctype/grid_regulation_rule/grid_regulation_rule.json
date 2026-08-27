@@ -1,0 +1,247 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "rule_code",
+  "rule_name",
+  "discom",
+  "regulator",
+  "cb_1",
+  "rule_type",
+  "threshold_kw",
+  "required_connection_type",
+  "company",
+  "sb_2",
+  "notified_on",
+  "effective_from",
+  "cb_3",
+  "is_stayed",
+  "stay_authority",
+  "stayed_from",
+  "stayed_until",
+  "sb_4",
+  "customer_facing_clause"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-REG-.###",
+   "reqd": 1,
+   "default": "SOL-REG-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "label": "Rule Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "regulator",
+   "fieldtype": "Data",
+   "label": "Regulator",
+   "default": "KSERC"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rule_type",
+   "fieldtype": "Select",
+   "label": "Rule Type",
+   "options": "Phase Requirement\nCapacity Ceiling\nSanctioned Load Ceiling\nOther",
+   "reqd": 1,
+   "default": "Phase Requirement",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "threshold_kw",
+   "fieldtype": "Float",
+   "label": "Threshold (kW)",
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "required_connection_type",
+   "fieldtype": "Select",
+   "label": "Required Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "depends_on": "eval:doc.rule_type=='Phase Requirement'"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Effect & Stay"
+  },
+  {
+   "fieldname": "notified_on",
+   "fieldtype": "Date",
+   "label": "Notified On"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_stayed",
+   "fieldtype": "Check",
+   "label": "Stayed",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "stay_authority",
+   "fieldtype": "Data",
+   "label": "Stay Authority",
+   "depends_on": "eval:doc.is_stayed"
+  },
+  {
+   "fieldname": "stayed_from",
+   "fieldtype": "Date",
+   "label": "Stayed From",
+   "depends_on": "eval:doc.is_stayed"
+  },
+  {
+   "fieldname": "stayed_until",
+   "fieldtype": "Date",
+   "label": "Stayed Until",
+   "depends_on": "eval:doc.is_stayed"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Customer Facing Clause"
+  },
+  {
+   "fieldname": "customer_facing_clause",
+   "fieldtype": "Text Editor",
+   "label": "Customer Facing Clause",
+   "description": "The sentence that prints on the proposal. Rendered from here so it can never go stale."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Grid Regulation Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "rule_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "rule_code,rule_name",
+ "description": "Dated regulatory constraints, so a court stay is a data change and not a deployment."
+}

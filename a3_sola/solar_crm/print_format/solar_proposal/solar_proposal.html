@@ -1,0 +1,196 @@
+{%- set ctx = proposal_context(doc.name) -%}
+{%- set settings = ctx.settings -%}
+{%- set estimate = ctx.estimate -%}
+{%- set consumer = ctx.consumer -%}
+{%- set company = ctx.company -%}
+{%- macro rupee(v) -%}{{ frappe.utils.fmt_money(v, currency="INR") }}{%- endmacro -%}
+
+<div class="a3s">
+
+{# --- a. Covering letter ------------------------------------------------ #}
+<div class="cover">
+  <p class="muted">{{ frappe.utils.formatdate(doc.proposal_date, "dd/MM/yyyy") }}</p>
+  <p><strong>{{ doc.salutation or "" }} {{ doc.customer_name }}</strong><br>
+     {{ doc.location }}{% if doc.district %}, {{ doc.district }}{% endif %}</p>
+  {{ settings.covering_letter_text or "" }}
+  <p class="sig">For <strong>{{ company.epc_name or company.company_name }}</strong><br>
+     {% if company.epc_authorised_signatory %}{{ company.epc_authorised_signatory }}<br>{% endif %}
+     {{ company.epc_signatory_designation or "Authorised Signatory" }}</p>
+  <p class="muted">Proposal No: <strong>{{ doc.name }}</strong></p>
+</div>
+
+{# --- b. About us ------------------------------------------------------- #}
+{% if settings.about_us_text %}
+<h2>About Us</h2>
+{{ settings.about_us_text }}
+{% endif %}
+
+{# --- c. Executive summary ---------------------------------------------- #}
+<div class="page-break"></div>
+<h2>Proposed Clean Energy Solution</h2>
+<h3>Executive Summary</h3>
+<table>
+  <thead><tr><th style="width:8%">Sl No</th><th style="width:38%">Particulars</th><th>Description</th></tr></thead>
+  <tbody>
+  {% for label, value in ctx.executive_summary %}
+    <tr><td>{{ loop.index }}</td><td>{{ label }}</td><td>{{ value }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{# --- d. Specifications -------------------------------------------------- #}
+<h3>Specifications &amp; Quantity of Major Components</h3>
+<table>
+  <thead><tr><th style="width:7%">Sl. No.</th><th style="width:22%">Item Description</th>
+    <th style="width:41%">Specification</th><th style="width:20%">Make</th><th style="width:10%">Nos.</th></tr></thead>
+  <tbody>
+  {% for row in ctx.specification_rows %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ row.item }}</td>
+      <td>{{ (row.specification or "") | replace("\n", "<br>") }}</td>
+      <td>{{ row.make or "" }}</td>
+      <td>{{ row.nos or "" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{# --- e. Project cost, one block per quoted option ----------------------- #}
+<h3>Project Cost</h3>
+{% for option in ctx.options %}
+  <p><strong>{{ option.option_name }}</strong></p>
+  <table>
+    <thead><tr><th style="width:7%">Sl. No.</th><th>Item</th><th style="width:22%" class="num">Amount (Rs.)</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Design, Supply, Installation, Testing and Commissioning of
+            {{ "%g"|format(estimate.final_capacity_kw) }} kWp
+            {{ estimate.connection_type or consumer.connection_type }} Grid Connected Rooftop Solar Power Plant
+            {% if ctx.primary_package and not ctx.primary_package.is_dcr_compliant %}with Non-DCR panels{% endif %}
+            {% if option.inverter_topology != "String" %}and {{ option.inverter_topology }}{% endif %}
+            including GST</td>
+        <td class="num">{{ rupee(option.total_option_cost) }}</td>
+      </tr>
+    </tbody>
+  </table>
+{% endfor %}
+
+{# --- f. KSEBL expenses, computed from the fee schedule ------------------ #}
+<h3>{{ ctx.discom_name or "DISCOM" }} Expenses</h3>
+<table>
+  <thead><tr><th style="width:7%">Sl. No.</th><th>Item</th><th style="width:22%" class="num">Amount (Rs.)</th></tr></thead>
+  <tbody>
+  {% for row in ctx.statutory.rows %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ row.item }}{% if row.note %}<br><span class="muted">{{ row.note }}</span>{% endif %}</td>
+      <td class="num">{{ rupee(row.amount) }}</td>
+    </tr>
+  {% endfor %}
+    <tr><td></td><td><strong>Total</strong></td><td class="num"><strong>{{ rupee(ctx.statutory.total) }}</strong></td></tr>
+  </tbody>
+</table>
+
+{# --- Subsidy note: never a cost line ------------------------------------ #}
+{% if estimate.applicable_subsidy_amount %}
+<div class="note">
+  <strong>Expected Government Subsidy: {{ rupee(estimate.applicable_subsidy_amount) }}</strong>
+  {{ settings.subsidy_note_text or "" }}
+</div>
+{% endif %}
+
+{# --- g. Terms ----------------------------------------------------------- #}
+<div class="page-break"></div>
+<h2>General Terms &amp; Conditions</h2>
+{{ settings.terms_and_conditions_text or "" }}
+{% for clause in ctx.regulation_clauses %}{{ clause.clause }}{% endfor %}
+{% if settings.gst_treatment_note %}{{ settings.gst_treatment_note }}{% endif %}
+
+{# --- h. Payment terms --------------------------------------------------- #}
+<h2>Payment Terms</h2>
+<ul>
+  <li>70% as advance with the purchase order.</li>
+  <li>20% after delivery and installation.</li>
+  {% if estimate.net_meter_mode == "Availed from DISCOM on Rental" %}
+  <li>10% after submission of the completion documents to the DISCOM, since the net meter is
+      availed from the DISCOM and allocation takes about
+      {{ estimate.net_meter_allocation_lead_days }} days.</li>
+  {% else %}
+  <li>10% after commissioning of the system with the net meter.</li>
+  {% endif %}
+  <li>Payments made to the DISCOM are reimbursed against submission of payment receipts.</li>
+</ul>
+
+{# --- i. Bank details ---------------------------------------------------- #}
+<h2>Bank Account Details for Payment</h2>
+<table>
+  <tbody>
+    <tr><th style="width:35%">Registered name of the Company</th><td>{{ company.payee_legal_name or company.company_name }}</td></tr>
+    {% if company.payee_pan %}<tr><th>PAN</th><td>{{ company.payee_pan }}</td></tr>{% endif %}
+    {% if company.payee_gstin %}<tr><th>GST</th><td>{{ company.payee_gstin }}</td></tr>{% endif %}
+    <tr><th>Bank</th><td>{{ company.payee_bank_name or "" }}</td></tr>
+    <tr><th>A/c No.</th><td>{{ company.payee_bank_account_no or "" }}</td></tr>
+    <tr><th>Branch</th><td>{{ company.payee_bank_branch or "" }}</td></tr>
+    <tr><th>IFS Code</th><td>{{ company.payee_bank_ifsc or "" }}</td></tr>
+  </tbody>
+</table>
+{% if company.payment_qr_code %}<img src="{{ company.payment_qr_code }}" style="height:110px">{% endif %}
+
+{# --- j. Schedule -------------------------------------------------------- #}
+<h2>Schedule of Delivery, Installation and Commissioning</h2>
+{{ settings.delivery_schedule_text or "" }}
+
+{# --- k. Warranty, by make ----------------------------------------------- #}
+<h2>Warranty</h2>
+<p>System warranty shall be for
+   {{ ctx.primary_package.warranty_years if ctx.primary_package else 5 }} years
+   from the date of commissioning.</p>
+<table>
+  <thead><tr><th style="width:26%">Component</th><th style="width:20%">Make</th><th>Terms</th></tr></thead>
+  <tbody>
+  {% for row in ctx.warranty %}
+    <tr><td>{{ row.component }}</td><td>{{ row.make }}</td><td>{{ row.terms }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{# --- l. Scope of work --------------------------------------------------- #}
+<h2>Scope of Work</h2>
+<h3>{{ settings.company_scope_label or "Our Scope" }}</h3>
+<ul>{% for row in ctx.scope.company %}<li><strong>{{ row.category }}:</strong> {{ row.scope_text }}</li>{% endfor %}</ul>
+<h3>{{ settings.customer_scope_label or "Client's Scope" }}</h3>
+<ul>{% for row in ctx.scope.customer %}<li><strong>{{ row.category }}:</strong> {{ row.scope_text }}</li>{% endfor %}</ul>
+
+{# --- m. Savings and payback annexure ------------------------------------ #}
+<div class="page-break"></div>
+<h2>Savings &amp; Payback Annexure</h2>
+<table>
+  <tbody>
+    <tr><th style="width:45%">Estimated annual generation</th><td class="num">{{ "%.0f"|format(estimate.estimated_annual_generation_kwh) }} kWh</td></tr>
+    <tr><th>Expected generation per day</th><td class="num">{{ "%g"|format(estimate.expected_daily_units_low) }} &ndash; {{ "%g"|format(estimate.expected_daily_units_high) }} units</td></tr>
+    <tr><th>Estimated annual savings</th><td class="num">{{ rupee(estimate.estimated_annual_savings) }}</td></tr>
+    <tr><th>Simple payback</th><td class="num">{{ "%.1f"|format(estimate.simple_payback_years) }} years</td></tr>
+  </tbody>
+</table>
+<p class="muted">Savings are computed slab by slab against the telescopic tariff, because the
+   units a solar system removes are the most expensive ones.</p>
+<table>
+  <thead><tr><th>Year</th><th class="num">Generation (kWh)</th><th class="num">Savings</th>
+    <th class="num">Cumulative</th><th class="num">Net Position</th></tr></thead>
+  <tbody>
+  {% for row in estimate.cashflow %}
+    <tr>
+      <td>{{ row.year }}</td>
+      <td class="num">{{ "%.0f"|format(row.generation_kwh) }}</td>
+      <td class="num">{{ rupee(row.savings_amount) }}</td>
+      <td class="num">{{ rupee(row.cumulative_savings) }}</td>
+      <td class="num">{{ rupee(row.net_position) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<p class="muted">Offer validity: {{ settings.offer_validity_days or 30 }} days from the date of this offer.</p>
+</div>

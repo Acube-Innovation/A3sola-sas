@@ -1,0 +1,577 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "om_contract",
+  "project",
+  "solar_installation",
+  "customer",
+  "cb_2",
+  "site_address",
+  "visit_type",
+  "is_unscheduled",
+  "service_ticket",
+  "visit_plan_row",
+  "company",
+  "amended_from",
+  "sb_3",
+  "scheduled_date",
+  "visit_date",
+  "technician",
+  "cb_4",
+  "time_in",
+  "time_out",
+  "duration_hours",
+  "travel_km",
+  "sb_5",
+  "additional_crew",
+  "sb_6",
+  "checklist",
+  "items_ok",
+  "cb_7",
+  "items_attention",
+  "items_defect",
+  "sb_8",
+  "import_reading",
+  "export_reading",
+  "generation_since_last_visit",
+  "cb_9",
+  "inverter_lifetime_generation",
+  "inverter_error_codes",
+  "string_voltage_readings",
+  "sb_10",
+  "modules_cleaned",
+  "water_used_litres",
+  "cb_11",
+  "soiling_observed",
+  "tab_12",
+  "sb_13",
+  "materials_consumed",
+  "sb_14",
+  "labour_cost",
+  "material_cost",
+  "travel_cost",
+  "cb_15",
+  "total_visit_cost",
+  "is_chargeable",
+  "chargeable_amount",
+  "sales_invoice",
+  "sb_16",
+  "customer_present",
+  "customer_signature",
+  "customer_feedback",
+  "cb_17",
+  "customer_remarks",
+  "next_visit_recommendation"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "om_contract",
+   "fieldtype": "Link",
+   "label": "O&M Contract",
+   "options": "Solar OM Contract",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_address",
+   "fieldtype": "Link",
+   "label": "Site Address",
+   "options": "Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "visit_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Preventive\nCleaning\nAnnual Health Check\nInverter Service",
+   "reqd": 1,
+   "default": "Preventive",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_unscheduled",
+   "fieldtype": "Check",
+   "label": "Unscheduled"
+  },
+  {
+   "fieldname": "service_ticket",
+   "fieldtype": "Link",
+   "label": "Service Ticket",
+   "options": "Service Ticket"
+  },
+  {
+   "fieldname": "visit_plan_row",
+   "fieldtype": "Data",
+   "label": "Plan Row",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar OM Visit",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "scheduled_date",
+   "fieldtype": "Date",
+   "label": "Scheduled"
+  },
+  {
+   "fieldname": "visit_date",
+   "fieldtype": "Date",
+   "label": "Visit Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "technician",
+   "fieldtype": "Link",
+   "label": "Technician",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "time_in",
+   "fieldtype": "Datetime",
+   "label": "Time In"
+  },
+  {
+   "fieldname": "time_out",
+   "fieldtype": "Datetime",
+   "label": "Time Out"
+  },
+  {
+   "fieldname": "duration_hours",
+   "fieldtype": "Float",
+   "label": "Hours",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "travel_km",
+   "fieldtype": "Float",
+   "label": "Travel (km)",
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Crew"
+  },
+  {
+   "fieldname": "additional_crew",
+   "fieldtype": "Table",
+   "label": "Additional Crew",
+   "options": "Work Order Crew"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Checklist"
+  },
+  {
+   "fieldname": "checklist",
+   "fieldtype": "Table",
+   "label": "Checklist",
+   "options": "Visit Checklist Item"
+  },
+  {
+   "fieldname": "items_ok",
+   "fieldtype": "Int",
+   "label": "OK",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "items_attention",
+   "fieldtype": "Int",
+   "label": "Attention",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items_defect",
+   "fieldtype": "Int",
+   "label": "Defects",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Readings"
+  },
+  {
+   "fieldname": "import_reading",
+   "fieldtype": "Float",
+   "label": "Import",
+   "precision": 2
+  },
+  {
+   "fieldname": "export_reading",
+   "fieldtype": "Float",
+   "label": "Export",
+   "precision": 2
+  },
+  {
+   "fieldname": "generation_since_last_visit",
+   "fieldtype": "Float",
+   "label": "Generation Since Last",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_lifetime_generation",
+   "fieldtype": "Float",
+   "label": "Inverter Lifetime (kWh)",
+   "precision": 2
+  },
+  {
+   "fieldname": "inverter_error_codes",
+   "fieldtype": "Data",
+   "label": "Error Codes"
+  },
+  {
+   "fieldname": "string_voltage_readings",
+   "fieldtype": "Small Text",
+   "label": "String Voltages"
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Cleaning"
+  },
+  {
+   "fieldname": "modules_cleaned",
+   "fieldtype": "Check",
+   "label": "Modules Cleaned"
+  },
+  {
+   "fieldname": "water_used_litres",
+   "fieldtype": "Float",
+   "label": "Water (L)",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "soiling_observed",
+   "fieldtype": "Select",
+   "label": "Soiling",
+   "options": "None\nLight\nModerate\nHeavy",
+   "default": "None"
+  },
+  {
+   "fieldname": "tab_12",
+   "fieldtype": "Tab Break",
+   "label": "Cost & Closure"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Materials"
+  },
+  {
+   "fieldname": "materials_consumed",
+   "fieldtype": "Table",
+   "label": "Materials",
+   "options": "Visit Material"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Cost"
+  },
+  {
+   "fieldname": "labour_cost",
+   "fieldtype": "Currency",
+   "label": "Labour",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "material_cost",
+   "fieldtype": "Currency",
+   "label": "Material",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "travel_cost",
+   "fieldtype": "Currency",
+   "label": "Travel",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_visit_cost",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "permlevel": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_chargeable",
+   "fieldtype": "Check",
+   "label": "Chargeable",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "chargeable_amount",
+   "fieldtype": "Currency",
+   "label": "Chargeable Amount",
+   "permlevel": 1,
+   "depends_on": "eval:doc.is_chargeable"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_16",
+   "fieldtype": "Section Break",
+   "label": "Closure"
+  },
+  {
+   "fieldname": "customer_present",
+   "fieldtype": "Check",
+   "label": "Customer Present"
+  },
+  {
+   "fieldname": "customer_signature",
+   "fieldtype": "Attach",
+   "label": "Signature"
+  },
+  {
+   "fieldname": "customer_feedback",
+   "fieldtype": "Select",
+   "label": "Feedback",
+   "options": "Satisfied\nNeutral\nDissatisfied"
+  },
+  {
+   "fieldname": "cb_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_remarks",
+   "fieldtype": "Small Text",
+   "label": "Customer Remarks"
+  },
+  {
+   "fieldname": "next_visit_recommendation",
+   "fieldtype": "Small Text",
+   "label": "Next Visit Recommendation"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar OM Visit",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Service Coordinator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Service Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar O&M Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "om_contract,visit_date,technician",
+ "description": "Reuses the Phase 2 child doctype Work Order Crew - it was built standalone for exactly this. Do not create a second crew table."
+}

@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "query_date",
+  "query_raised_by",
+  "query_description",
+  "cb_1",
+  "response_date",
+  "response_description",
+  "response_attachment",
+  "is_resolved"
+ ],
+ "fields": [
+  {
+   "fieldname": "query_date",
+   "fieldtype": "Date",
+   "label": "Raised On",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "query_raised_by",
+   "fieldtype": "Data",
+   "label": "Raised By",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "query_description",
+   "fieldtype": "Small Text",
+   "label": "Query",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "response_date",
+   "fieldtype": "Date",
+   "label": "Responded On"
+  },
+  {
+   "fieldname": "response_description",
+   "fieldtype": "Small Text",
+   "label": "Response"
+  },
+  {
+   "fieldname": "response_attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "is_resolved",
+   "fieldtype": "Check",
+   "label": "Resolved",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Application Query",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

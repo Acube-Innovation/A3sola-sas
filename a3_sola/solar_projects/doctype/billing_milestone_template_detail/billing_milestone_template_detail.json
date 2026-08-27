@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "milestone_name",
+  "trigger_type",
+  "trigger_stage_code",
+  "percentage",
+  "cb_1",
+  "funding_source",
+  "is_advance",
+  "credit_days",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "milestone_name",
+   "fieldtype": "Data",
+   "label": "Milestone",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trigger_type",
+   "fieldtype": "Select",
+   "label": "Trigger",
+   "options": "On Order\nOn Installation Stage\nOn Commissioning\nOn Date\nOn Loan Disbursement\nManual",
+   "reqd": 1,
+   "default": "On Installation Stage",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trigger_stage_code",
+   "fieldtype": "Data",
+   "label": "Stage Code",
+   "in_list_view": 1,
+   "description": "Matches an Installation Stage Log code such as DISP, INST, COMM, KTST or BCOM."
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percent",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "funding_source",
+   "fieldtype": "Select",
+   "label": "Funded By",
+   "options": "Customer\nLender",
+   "default": "Customer",
+   "in_list_view": 1,
+   "description": "On a financed job the advance and balance arrive from the bank, not the customer."
+  },
+  {
+   "fieldname": "is_advance",
+   "fieldtype": "Check",
+   "label": "Advance",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Int",
+   "label": "Credit Days"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Billing Milestone Template Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

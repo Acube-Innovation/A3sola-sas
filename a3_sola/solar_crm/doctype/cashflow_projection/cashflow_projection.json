@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "year",
+  "generation_kwh",
+  "savings_amount",
+  "cumulative_savings",
+  "net_position"
+ ],
+ "fields": [
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "Year",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "generation_kwh",
+   "fieldtype": "Float",
+   "label": "Generation (kWh)",
+   "in_list_view": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "savings_amount",
+   "fieldtype": "Currency",
+   "label": "Savings",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cumulative_savings",
+   "fieldtype": "Currency",
+   "label": "Cumulative Savings",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "net_position",
+   "fieldtype": "Currency",
+   "label": "Net Position",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Cashflow Projection",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

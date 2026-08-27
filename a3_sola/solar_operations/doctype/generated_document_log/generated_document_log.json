@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "solar_document_template",
+  "document_name",
+  "template_version",
+  "status",
+  "is_stale",
+  "cb_1",
+  "file",
+  "generated_on",
+  "generated_by",
+  "issued_on",
+  "signed_on",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "solar_document_template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Solar Document Template",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "document_name",
+   "fieldtype": "Data",
+   "label": "Document",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Int",
+   "label": "Ver",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Generated\nIssued\nSigned\nSuperseded\nCancelled",
+   "default": "Generated",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_stale",
+   "fieldtype": "Check",
+   "label": "Stale",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "generated_on",
+   "fieldtype": "Datetime",
+   "label": "Generated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generated_by",
+   "fieldtype": "Link",
+   "label": "By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_on",
+   "fieldtype": "Date",
+   "label": "Issued"
+  },
+  {
+   "fieldname": "signed_on",
+   "fieldtype": "Date",
+   "label": "Signed"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Generated Document Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

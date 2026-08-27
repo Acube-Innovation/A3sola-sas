@@ -1,0 +1,169 @@
+{%- set s = platform_settings -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{ page_meta_title or s.meta_title or s.product_name or "a3 sola" }}</title>
+	<meta name="description" content="{{ page_meta_description or s.meta_description or '' }}">
+	<link rel="canonical" href="{{ canonical_url }}">
+	{%- if s.brand_favicon %}
+	<link rel="icon" href="{{ s.brand_favicon }}">
+	{%- endif %}
+
+	{#- Open Graph and Twitter, per-page overrides falling back to Settings. -#}
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="{{ s.product_name or 'a3 sola' }}">
+	<meta property="og:title" content="{{ page_meta_title or s.meta_title or '' }}">
+	<meta property="og:description" content="{{ page_meta_description or s.meta_description or '' }}">
+	<meta property="og:url" content="{{ canonical_url }}">
+	{%- if s.og_image %}
+	<meta property="og:image" content="{{ site_url }}{{ s.og_image }}">
+	{%- endif %}
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="{{ page_meta_title or s.meta_title or '' }}">
+	<meta name="twitter:description" content="{{ page_meta_description or s.meta_description or '' }}">
+	{%- if no_index %}
+	<meta name="robots" content="noindex, nofollow">
+	{%- endif %}
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css">
+
+	<script type="application/ld+json">{{ organization_schema }}</script>
+	{%- block extra_schema %}{% endblock %}
+	{%- block extra_head %}{% endblock %}
+
+	{#- Analytics loads only when it is switched on AND consent has been given. -#}
+	{%- if s.enable_analytics and (s.google_analytics_id or s.google_tag_manager_id) %}
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		window.a3sAnalytics = {
+			gaId: {{ (s.google_analytics_id or "") | tojson }},
+			gtmId: {{ (s.google_tag_manager_id or "") | tojson }}
+		};
+	</script>
+	{%- endif %}
+</head>
+<body class="a3s">
+<a class="a3s-skip" href="#main">Skip to content</a>
+
+{%- if maintenance_active %}
+<main id="main" class="a3s-maintenance">
+	<div class="a3s-maintenance__panel">
+		<span class="a3s-logo__mark" aria-hidden="true">☀</span>
+		<h1 style="font-size:1.6rem;margin-top:1rem">{{ s.product_name or "a3 sola" }}</h1>
+		<p class="a3s-lead" style="margin-inline:auto">
+			{{ s.maintenance_message or "We are making a short improvement and will be back shortly." }}
+		</p>
+		{%- if s.sales_email %}
+		<p class="a3s-small a3s-muted">Need us sooner? <a href="mailto:{{ s.sales_email }}">{{ s.sales_email }}</a></p>
+		{%- endif %}
+	</div>
+</main>
+{%- else %}
+
+<header class="a3s-header" id="a3s-header">
+	<div class="a3s-container a3s-header__inner">
+		<a class="a3s-logo" href="/" aria-label="{{ s.product_name or 'a3 sola' }} home">
+			{%- if s.brand_logo %}
+			<img src="{{ s.brand_logo }}" alt="{{ s.product_name or 'a3 sola' }}">
+			{%- else %}
+			<span class="a3s-logo__mark" aria-hidden="true">☀</span>
+			{%- endif %}
+			<span>{{ s.product_name or "a3 sola" }}</span>
+		</a>
+
+		<nav class="a3s-nav" aria-label="Primary">
+			{%- for item in nav_items %}
+			<a href="{{ item.href }}">{{ item.label }}</a>
+			{%- endfor %}
+		</nav>
+
+		<div class="a3s-header__actions">
+			<a class="a3s-btn a3s-btn--ghost" href="{{ home_prefix }}#contact">Book a demo</a>
+			<a class="a3s-btn a3s-btn--primary" href="/get-started" data-analytics="signup_started" data-analytics-source="header">Sign up</a>
+		</div>
+
+		<button class="a3s-burger" id="a3s-burger" type="button"
+			aria-expanded="false" aria-controls="a3s-mobile-nav" aria-label="Open menu">
+			<span></span><span></span><span></span>
+		</button>
+	</div>
+</header>
+
+<div class="a3s-backdrop" id="a3s-backdrop" hidden></div>
+<nav class="a3s-mobile-nav" id="a3s-mobile-nav" aria-label="Mobile" hidden>
+	{%- for item in nav_items %}
+	<a href="{{ item.href }}">{{ item.label }}</a>
+	{%- endfor %}
+	<a class="a3s-btn a3s-btn--secondary" href="{{ home_prefix }}#contact">Book a demo</a>
+	<a class="a3s-btn a3s-btn--primary" href="/get-started">Sign up</a>
+</nav>
+
+<main id="main">
+	{%- block content %}{% endblock %}
+</main>
+
+<footer class="a3s-footer">
+	<div class="a3s-container">
+		<div class="a3s-footer__grid">
+			<div>
+				<a class="a3s-logo" href="/">
+					<span class="a3s-logo__mark" aria-hidden="true">☀</span>
+					<span>{{ s.product_name or "a3 sola" }}</span>
+				</a>
+				<p style="margin-top:1rem;max-width:22rem">
+					{{ s.product_tagline or "The solar EPC platform built on ERPNext." }}
+				</p>
+				{%- if s.partner_badge_text %}
+				<p class="a3s-small" style="margin-top:1rem">{{ s.partner_badge_text }}</p>
+				{%- endif %}
+			</div>
+			<div>
+				<h4>Product</h4>
+				<ul class="a3s-footer__links">
+					<li><a href="/features">Features</a></li>
+					<li><a href="/solutions">Solutions</a></li>
+					<li><a href="/pricing">Pricing</a></li>
+					<li><a href="/get-started">Get started</a></li>
+				</ul>
+			</div>
+			<div>
+				<h4>Company</h4>
+				<ul class="a3s-footer__links">
+					{%- if s.parent_company_url %}
+					<li><a href="{{ s.parent_company_url }}" rel="noopener">Acube Innovations</a></li>
+					{%- endif %}
+					<li><a href="{{ home_prefix }}#contact">Contact</a></li>
+					{%- if s.sales_email %}
+					<li><a href="mailto:{{ s.sales_email }}">{{ s.sales_email }}</a></li>
+					{%- endif %}
+					{%- if s.sales_phone %}
+					<li><a href="tel:{{ s.sales_phone | replace(' ', '') }}">{{ s.sales_phone }}</a></li>
+					{%- endif %}
+				</ul>
+			</div>
+			<div>
+				<h4>Legal</h4>
+				<ul class="a3s-footer__links">
+					<li><a href="/legal/privacy">Privacy</a></li>
+					<li><a href="/legal/terms">Terms</a></li>
+					<li><a href="/legal/refund-policy">Refund policy</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="a3s-footer__bottom">
+			<span>&copy; {{ current_year }} {{ s.company_legal_name or "Acube Innovations LLP" }}. All rights reserved.</span>
+			<span>{{ s.footer_tagline or "" }}</span>
+		</div>
+	</div>
+</footer>
+{%- endif %}
+
+<script src="/assets/a3_sola/js/platform.js"></script>
+{%- block extra_scripts %}{% endblock %}
+</body>
+</html>

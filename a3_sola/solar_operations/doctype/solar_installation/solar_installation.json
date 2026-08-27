@@ -1,0 +1,1048 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_consumer",
+  "consumer_name",
+  "customer",
+  "sales_order",
+  "quotation",
+  "cb_2",
+  "solar_design_estimate",
+  "subsidy_eligibility_check",
+  "solar_proposal",
+  "project",
+  "company",
+  "amended_from",
+  "sb_3",
+  "identifier_note",
+  "consumer_number",
+  "discom_id",
+  "national_portal_application_id",
+  "cb_5",
+  "jan_samarth_id",
+  "loan_sanction_no",
+  "spin",
+  "tab_6",
+  "sb_7",
+  "solar_package",
+  "capacity_kw",
+  "system_type",
+  "is_dcr_compliant",
+  "cb_8",
+  "module_make",
+  "module_wattage",
+  "module_count",
+  "inverter_make",
+  "inverter_capacity_kw",
+  "sb_9",
+  "installation_address",
+  "discom",
+  "discom_section",
+  "connection_type",
+  "cb_10",
+  "roof_type",
+  "latitude",
+  "longitude",
+  "sb_11",
+  "project_manager",
+  "cb_12",
+  "site_engineer",
+  "tab_13",
+  "sb_14",
+  "stage_template",
+  "order_date",
+  "target_commissioning_date",
+  "cb_15",
+  "current_stage",
+  "current_stage_owner_type",
+  "blocking_party",
+  "sb_16",
+  "status",
+  "overall_progress_percent",
+  "cb_17",
+  "days_since_order",
+  "is_sla_breached",
+  "sb_18",
+  "stage_chain",
+  "stages",
+  "tab_20",
+  "sb_21",
+  "document_pack_complete",
+  "cb_22",
+  "stale_document_count",
+  "sb_23",
+  "documents",
+  "sb_24",
+  "generated_documents",
+  "tab_25",
+  "sb_26",
+  "subsidy_scheme",
+  "expected_subsidy_amount",
+  "company_funds_subsidy_gap",
+  "cb_27",
+  "gross_contract_value",
+  "net_payable_by_customer",
+  "sb_28",
+  "net_meter_mode",
+  "kseb_application_fee",
+  "kseb_registration_fee",
+  "cb_29",
+  "kseb_registration_refundable",
+  "net_meter_charge",
+  "statutory_total",
+  "registration_fee_paid_on",
+  "refund_status",
+  "refund_received_amount",
+  "sb_30",
+  "is_financed",
+  "lender",
+  "lender_branch",
+  "loan_application",
+  "cb_31",
+  "sanctioned_amount",
+  "disbursed_amount",
+  "disbursement_outstanding",
+  "tab_32",
+  "sb_33",
+  "warranty_start_date",
+  "cb_34",
+  "warranty_end_date",
+  "sb_35",
+  "modules_expected",
+  "modules_captured",
+  "cb_36",
+  "inverters_captured",
+  "serial_capture_complete",
+  "sb_37",
+  "serials",
+  "sb_38",
+  "open_snag_count",
+  "critical_snag_count",
+  "cb_39",
+  "total_labour_hours",
+  "performance_ratio_at_commissioning"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "label": "Consumer",
+   "fetch_from": "solar_consumer.consumer_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "quotation",
+   "fieldtype": "Link",
+   "label": "Quotation",
+   "options": "Quotation"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_design_estimate",
+   "fieldtype": "Link",
+   "label": "Design Estimate",
+   "options": "Solar Design Estimate"
+  },
+  {
+   "fieldname": "subsidy_eligibility_check",
+   "fieldtype": "Link",
+   "label": "Eligibility Check",
+   "options": "Subsidy Eligibility Check"
+  },
+  {
+   "fieldname": "solar_proposal",
+   "fieldtype": "Link",
+   "label": "Proposal",
+   "options": "Solar Proposal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "Populated by Phase 3."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar Installation",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "External Identifiers"
+  },
+  {
+   "fieldname": "identifier_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Five numbers follow one job through five systems. Each is captured once here and every generated document reads it from here.</p>"
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "fetch_from": "solar_consumer.consumer_number",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "discom_id",
+   "fieldtype": "Data",
+   "label": "DISCOM ID",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "national_portal_application_id",
+   "fieldtype": "Data",
+   "label": "PM Surya Ghar Portal ID",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "jan_samarth_id",
+   "fieldtype": "Data",
+   "label": "Jan Samarth ID",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "loan_sanction_no",
+   "fieldtype": "Data",
+   "label": "Loan Sanction No",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "spin",
+   "fieldtype": "Data",
+   "label": "Solar Plant Identification Number (SPIN)",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_6",
+   "fieldtype": "Tab Break",
+   "label": "System"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "System Details"
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "label": "Solar Package",
+   "options": "Solar Package"
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System Type",
+   "options": "On-Grid\nOff-Grid\nHybrid",
+   "default": "On-Grid"
+  },
+  {
+   "fieldname": "is_dcr_compliant",
+   "fieldtype": "Check",
+   "label": "DCR Compliant"
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "module_make",
+   "fieldtype": "Link",
+   "label": "Module Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "module_wattage",
+   "fieldtype": "Float",
+   "label": "Module Wattage",
+   "precision": 2
+  },
+  {
+   "fieldname": "module_count",
+   "fieldtype": "Int",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "label": "Inverter Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "inverter_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Inverter Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Site"
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Link",
+   "label": "Installation Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "discom_section",
+   "fieldtype": "Link",
+   "label": "DISCOM Section",
+   "options": "DISCOM Section",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase"
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "precision": 6
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "precision": 6
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Team"
+  },
+  {
+   "fieldname": "project_manager",
+   "fieldtype": "Link",
+   "label": "Project Manager",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_engineer",
+   "fieldtype": "Link",
+   "label": "Site Engineer",
+   "options": "User"
+  },
+  {
+   "fieldname": "tab_13",
+   "fieldtype": "Tab Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Plan"
+  },
+  {
+   "fieldname": "stage_template",
+   "fieldtype": "Link",
+   "label": "Stage Template",
+   "options": "Installation Stage Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "order_date",
+   "fieldtype": "Date",
+   "label": "Order Date",
+   "reqd": 1,
+   "default": "Today"
+  },
+  {
+   "fieldname": "target_commissioning_date",
+   "fieldtype": "Date",
+   "label": "Target Commissioning"
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_stage",
+   "fieldtype": "Data",
+   "label": "Current Stage",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "current_stage_owner_type",
+   "fieldtype": "Data",
+   "label": "Stage Owner",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "blocking_party",
+   "fieldtype": "Data",
+   "label": "Blocking Party",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_16",
+   "fieldtype": "Section Break",
+   "label": "Progress"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nIn Progress\nBlocked\nAwaiting External\nCommissioned\nSubsidy Claimed\nClosed\nCancelled",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "overall_progress_percent",
+   "fieldtype": "Percent",
+   "label": "Progress",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "days_since_order",
+   "fieldtype": "Int",
+   "label": "Days Since Order",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_sla_breached",
+   "fieldtype": "Check",
+   "label": "SLA Breached",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Stage Chain"
+  },
+  {
+   "fieldname": "stage_chain",
+   "fieldtype": "HTML",
+   "options": ""
+  },
+  {
+   "fieldname": "stages",
+   "fieldtype": "Table",
+   "label": "Stages",
+   "options": "Installation Stage Log",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_20",
+   "fieldtype": "Tab Break",
+   "label": "Documents"
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Document Pack"
+  },
+  {
+   "fieldname": "document_pack_complete",
+   "fieldtype": "Check",
+   "label": "Pack Complete",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stale_document_count",
+   "fieldtype": "Int",
+   "label": "Stale Documents",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_23",
+   "fieldtype": "Section Break",
+   "label": "Checklist"
+  },
+  {
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "Document Checklist",
+   "options": "Installation Document",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_24",
+   "fieldtype": "Section Break",
+   "label": "Generated"
+  },
+  {
+   "fieldname": "generated_documents",
+   "fieldtype": "Table",
+   "label": "Generated Documents",
+   "options": "Generated Document Log",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_25",
+   "fieldtype": "Tab Break",
+   "label": "Commercials"
+  },
+  {
+   "fieldname": "sb_26",
+   "fieldtype": "Section Break",
+   "label": "Scheme & Subsidy"
+  },
+  {
+   "fieldname": "subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme"
+  },
+  {
+   "fieldname": "expected_subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Expected Subsidy",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "company_funds_subsidy_gap",
+   "fieldtype": "Check",
+   "label": "Company Funds the Subsidy Gap",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_27",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gross_contract_value",
+   "fieldtype": "Currency",
+   "label": "Contract Value",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "net_payable_by_customer",
+   "fieldtype": "Currency",
+   "label": "Net Payable",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_28",
+   "fieldtype": "Section Break",
+   "label": "Statutory"
+  },
+  {
+   "fieldname": "net_meter_mode",
+   "fieldtype": "Select",
+   "label": "Net Meter Mode",
+   "options": "Purchased by Customer\nAvailed from DISCOM on Rental"
+  },
+  {
+   "fieldname": "kseb_application_fee",
+   "fieldtype": "Currency",
+   "label": "Application Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kseb_registration_fee",
+   "fieldtype": "Currency",
+   "label": "Registration Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_29",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kseb_registration_refundable",
+   "fieldtype": "Currency",
+   "label": "Registration Refundable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_charge",
+   "fieldtype": "Currency",
+   "label": "Net Meter Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "statutory_total",
+   "fieldtype": "Currency",
+   "label": "Statutory Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "registration_fee_paid_on",
+   "fieldtype": "Date",
+   "label": "Registration Fee Paid",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "refund_status",
+   "fieldtype": "Select",
+   "label": "Refund Status",
+   "options": "Not Due\nDue\nClaimed\nReceived\nWritten Off",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "default": "Not Due",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "refund_received_amount",
+   "fieldtype": "Currency",
+   "label": "Refund Received",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_30",
+   "fieldtype": "Section Break",
+   "label": "Finance"
+  },
+  {
+   "fieldname": "is_financed",
+   "fieldtype": "Check",
+   "label": "Financed",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "lender",
+   "fieldtype": "Data",
+   "label": "Lender",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.is_financed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "lender_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.is_financed"
+  },
+  {
+   "fieldname": "loan_application",
+   "fieldtype": "Link",
+   "label": "Loan Application",
+   "options": "Loan Application",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_31",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sanctioned_amount",
+   "fieldtype": "Currency",
+   "label": "Sanctioned",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "disbursed_amount",
+   "fieldtype": "Currency",
+   "label": "Disbursed",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "disbursement_outstanding",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "tab_32",
+   "fieldtype": "Tab Break",
+   "label": "Warranty & Serials"
+  },
+  {
+   "fieldname": "sb_33",
+   "fieldtype": "Section Break",
+   "label": "Warranty"
+  },
+  {
+   "fieldname": "warranty_start_date",
+   "fieldtype": "Date",
+   "label": "Warranty Start",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_34",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warranty_end_date",
+   "fieldtype": "Date",
+   "label": "Warranty End",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_35",
+   "fieldtype": "Section Break",
+   "label": "Serial Register"
+  },
+  {
+   "fieldname": "modules_expected",
+   "fieldtype": "Int",
+   "label": "Modules Expected",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "modules_captured",
+   "fieldtype": "Int",
+   "label": "Modules Captured",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_36",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverters_captured",
+   "fieldtype": "Int",
+   "label": "Inverters Captured",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "serial_capture_complete",
+   "fieldtype": "Check",
+   "label": "Capture Complete",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_37",
+   "fieldtype": "Section Break",
+   "label": "Serials"
+  },
+  {
+   "fieldname": "serials",
+   "fieldtype": "Table",
+   "label": "Serial Register",
+   "options": "Installation Serial Register",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_38",
+   "fieldtype": "Section Break",
+   "label": "Snags & Materials"
+  },
+  {
+   "fieldname": "open_snag_count",
+   "fieldtype": "Int",
+   "label": "Open Snags",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "critical_snag_count",
+   "fieldtype": "Int",
+   "label": "Critical Snags",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_39",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_labour_hours",
+   "fieldtype": "Float",
+   "label": "Labour Hours",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": 2,
+   "description": "Rolled up for Phase 3 costing."
+  },
+  {
+   "fieldname": "performance_ratio_at_commissioning",
+   "fieldtype": "Percent",
+   "label": "PR at Commissioning",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Solar Installation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 2,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "title_field": "consumer_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "solar_consumer,consumer_number,current_stage",
+ "description": "The central record of the Operations module: one job from confirmed order to subsidy disbursement and registration-fee refund."
+}

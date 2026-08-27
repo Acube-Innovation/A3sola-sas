@@ -1,0 +1,58 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"a3s-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>A3 Sola</span>\", \"col\": 12}}, {\"id\": \"a3s-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"One app, four modules. Solar CRM is live; Solar Operations, Solar Projects and Platform arrive in later phases.\", \"col\": 12}}, {\"id\": \"a3s-sc\", \"type\": \"card\", \"data\": {\"card_name\": \"Modules\", \"col\": 4}}]",
+ "creation": "2026-08-25 13:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "sun",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "A3 Sola",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Modules",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar CRM",
+   "link_count": 0,
+   "link_to": "Solar CRM",
+   "link_type": "Workspace",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Operations",
+   "link_count": 0,
+   "link_to": "Solar Operations",
+   "link_type": "Workspace",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "A3 Sola",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 30.0,
+ "shortcuts": [],
+ "title": "A3 Sola"
+}

@@ -1,0 +1,285 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "template_code",
+  "document_name",
+  "category",
+  "recipient",
+  "cb_1",
+  "stage_code",
+  "source_doctype",
+  "is_mandatory",
+  "is_active",
+  "version",
+  "company",
+  "sb_2",
+  "requires_stamp_paper",
+  "stamp_paper_value",
+  "cb_3",
+  "signatory",
+  "requires_company_seal",
+  "output_format",
+  "sb_4",
+  "attachment_checklist",
+  "sb_5",
+  "body_template",
+  "sb_6",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-DTPL-.###",
+   "reqd": 1,
+   "default": "SOL-DTPL-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "label": "Template Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "document_name",
+   "fieldtype": "Data",
+   "label": "Document Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "MNRE\nNational Portal\nKSEB\nBank\nCustomer\nInternal",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "recipient",
+   "fieldtype": "Select",
+   "label": "Recipient",
+   "options": "Consumer\nAssistant Engineer\nBank Manager\nNational Portal\nElectrical Inspectorate\nInternal\nManufacturer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stage_code",
+   "fieldtype": "Data",
+   "label": "Due at Stage",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Solar Installation\nPortal Application\nLoan Application\nCommissioning Report\nNet Metering Agreement\nSubsidy Claim\nStatutory Fee Payment",
+   "reqd": 1,
+   "default": "Solar Installation"
+  },
+  {
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "default": "1"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "label": "Version",
+   "read_only": 1,
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Execution Requirements"
+  },
+  {
+   "fieldname": "requires_stamp_paper",
+   "fieldtype": "Check",
+   "label": "Requires Stamp Paper"
+  },
+  {
+   "fieldname": "stamp_paper_value",
+   "fieldtype": "Currency",
+   "label": "Stamp Paper Value",
+   "depends_on": "eval:doc.requires_stamp_paper"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "signatory",
+   "fieldtype": "Select",
+   "label": "Signatory",
+   "options": "Consumer\nAuthorised Signatory\nBoth\nConsumer and Two Witnesses"
+  },
+  {
+   "fieldname": "requires_company_seal",
+   "fieldtype": "Check",
+   "label": "Requires Company Seal"
+  },
+  {
+   "fieldname": "output_format",
+   "fieldtype": "Select",
+   "label": "Output",
+   "options": "PDF\nDOCX\nBoth",
+   "default": "PDF"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Enclosures"
+  },
+  {
+   "fieldname": "attachment_checklist",
+   "fieldtype": "Small Text",
+   "label": "Enclosures",
+   "description": "The list of attachments the covering letter names, one per line."
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Body"
+  },
+  {
+   "fieldname": "body_template",
+   "fieldtype": "Code",
+   "label": "Body Template",
+   "options": "Jinja",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes",
+   "description": "Record which client document this was transcribed from."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Solar Document Template",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "document_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "template_code,document_name,category",
+ "description": "One record per outgoing document. The template is data, so a DISCOM circular changing a form is an edit, not a deployment."
+}

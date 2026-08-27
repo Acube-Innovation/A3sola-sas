@@ -1,0 +1,412 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "project",
+  "solar_installation",
+  "customer",
+  "sales_order",
+  "cb_2",
+  "consumer_category",
+  "net_meter_mode",
+  "is_financed",
+  "company",
+  "amended_from",
+  "sb_3",
+  "gross_contract_value",
+  "expected_subsidy_amount",
+  "net_payable_by_customer",
+  "cb_4",
+  "gst_valuation_rule",
+  "milestone_template",
+  "sb_5",
+  "milestones",
+  "sb_6",
+  "total_planned",
+  "total_triggered",
+  "total_invoiced",
+  "cb_7",
+  "total_collected",
+  "total_outstanding",
+  "unbilled_balance",
+  "billing_completion_percent",
+  "sb_8",
+  "statutory_note",
+  "statutory_fees_paid_by_company",
+  "statutory_reimbursed",
+  "cb_10",
+  "statutory_outstanding",
+  "registration_refund_expected",
+  "registration_refund_received"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consumer_category",
+   "fieldtype": "Data",
+   "label": "Consumer Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_mode",
+   "fieldtype": "Data",
+   "label": "Net Meter Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_financed",
+   "fieldtype": "Check",
+   "label": "Financed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Solar Billing Plan",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Contract"
+  },
+  {
+   "fieldname": "gross_contract_value",
+   "fieldtype": "Currency",
+   "label": "Contract Value",
+   "reqd": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "expected_subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Expected Subsidy",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "net_payable_by_customer",
+   "fieldtype": "Currency",
+   "label": "Net Payable",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gst_valuation_rule",
+   "fieldtype": "Link",
+   "label": "GST Valuation Rule",
+   "options": "Solar GST Valuation Rule"
+  },
+  {
+   "fieldname": "milestone_template",
+   "fieldtype": "Link",
+   "label": "Milestone Template",
+   "options": "Billing Milestone Template"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Milestones"
+  },
+  {
+   "fieldname": "milestones",
+   "fieldtype": "Table",
+   "label": "Milestones",
+   "options": "Billing Milestone Entry",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_planned",
+   "fieldtype": "Currency",
+   "label": "Planned",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "total_triggered",
+   "fieldtype": "Currency",
+   "label": "Triggered",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "total_invoiced",
+   "fieldtype": "Currency",
+   "label": "Invoiced",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_collected",
+   "fieldtype": "Currency",
+   "label": "Collected",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "total_outstanding",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "unbilled_balance",
+   "fieldtype": "Currency",
+   "label": "Unbilled",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "billing_completion_percent",
+   "fieldtype": "Percent",
+   "label": "Billed %",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Statutory Reimbursement"
+  },
+  {
+   "fieldname": "statutory_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Outside the contract value and outside the composite supply. Billed as a separate non-taxable reimbursement against receipts.</p>"
+  },
+  {
+   "fieldname": "statutory_fees_paid_by_company",
+   "fieldtype": "Currency",
+   "label": "Fees Paid by Company",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "statutory_reimbursed",
+   "fieldtype": "Currency",
+   "label": "Reimbursed",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "statutory_outstanding",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "registration_refund_expected",
+   "fieldtype": "Currency",
+   "label": "Refund Expected",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "registration_refund_received",
+   "fieldtype": "Currency",
+   "label": "Refund Received",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Solar Billing Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar O&M Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Project Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Accounts Executive",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar O&M Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "title_field": "customer",
+ "show_title_field_in_link": 1,
+ "search_fields": "project,customer"
+}

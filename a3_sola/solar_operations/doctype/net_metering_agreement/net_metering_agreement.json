@@ -1,0 +1,483 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "commissioning_report",
+  "cb_2",
+  "agreement_date",
+  "place_of_execution",
+  "validity_years",
+  "company",
+  "amended_from",
+  "sb_3",
+  "discom_representative_name",
+  "witness_1_name",
+  "witness_2_name",
+  "cb_4",
+  "stamp_paper_value",
+  "stamp_paper_serial",
+  "signed_agreement",
+  "sb_5",
+  "consumer_name",
+  "permanent_address",
+  "consumer_number_and_category",
+  "cb_6",
+  "supply_voltage",
+  "connected_load_or_contract_demand",
+  "sb_7",
+  "installation_address",
+  "spin",
+  "plant_capacity_kwp",
+  "electrical_section",
+  "cb_8",
+  "solar_meter_type",
+  "solar_meter_number",
+  "solar_meter_make",
+  "solar_meter_initial_reading",
+  "solar_meter_calibration_certificate",
+  "sb_9",
+  "distribution_transformer_details",
+  "ht_feeder_details",
+  "local_body_type",
+  "cb_10",
+  "local_body_name",
+  "village",
+  "survey_number",
+  "gps_coordinates",
+  "sb_11",
+  "wheeling_preferences",
+  "sb_12",
+  "is_terminated",
+  "terminated_on",
+  "cb_13",
+  "terminated_by",
+  "termination_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commissioning_report",
+   "fieldtype": "Link",
+   "label": "Commissioning Report",
+   "options": "Commissioning Report"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "agreement_date",
+   "fieldtype": "Date",
+   "label": "Agreement Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "place_of_execution",
+   "fieldtype": "Data",
+   "label": "Place"
+  },
+  {
+   "fieldname": "validity_years",
+   "fieldtype": "Int",
+   "label": "Validity (years)",
+   "read_only": 1,
+   "default": "25"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Net Metering Agreement",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "discom_representative_name",
+   "fieldtype": "Data",
+   "label": "DISCOM Representative"
+  },
+  {
+   "fieldname": "witness_1_name",
+   "fieldtype": "Data",
+   "label": "Witness 1"
+  },
+  {
+   "fieldname": "witness_2_name",
+   "fieldtype": "Data",
+   "label": "Witness 2"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stamp_paper_value",
+   "fieldtype": "Currency",
+   "label": "Stamp Paper Value"
+  },
+  {
+   "fieldname": "stamp_paper_serial",
+   "fieldtype": "Data",
+   "label": "Stamp Paper Serial"
+  },
+  {
+   "fieldname": "signed_agreement",
+   "fieldtype": "Attach",
+   "label": "Signed Agreement"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Schedule I - Consumer"
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "label": "Consumer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "permanent_address",
+   "fieldtype": "Small Text",
+   "label": "Permanent Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number_and_category",
+   "fieldtype": "Data",
+   "label": "Consumer No & Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supply_voltage",
+   "fieldtype": "Data",
+   "label": "Supply Voltage"
+  },
+  {
+   "fieldname": "connected_load_or_contract_demand",
+   "fieldtype": "Data",
+   "label": "Connected Load / Contract Demand",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Schedule II - Premises & Plant"
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Small Text",
+   "label": "Premises Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "spin",
+   "fieldtype": "Data",
+   "label": "Solar Plant Identification Number (SPIN)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plant_capacity_kwp",
+   "fieldtype": "Float",
+   "label": "Capacity (kWp)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "electrical_section",
+   "fieldtype": "Data",
+   "label": "Electrical Section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_meter_type",
+   "fieldtype": "Data",
+   "label": "Solar Meter Type",
+   "default": "Unidirectional Energy Meter"
+  },
+  {
+   "fieldname": "solar_meter_number",
+   "fieldtype": "Data",
+   "label": "Solar Meter No"
+  },
+  {
+   "fieldname": "solar_meter_make",
+   "fieldtype": "Data",
+   "label": "Solar Meter Make"
+  },
+  {
+   "fieldname": "solar_meter_initial_reading",
+   "fieldtype": "Float",
+   "label": "Initial Reading",
+   "precision": 2
+  },
+  {
+   "fieldname": "solar_meter_calibration_certificate",
+   "fieldtype": "Attach",
+   "label": "Calibration Certificate"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Location & Network"
+  },
+  {
+   "fieldname": "distribution_transformer_details",
+   "fieldtype": "Small Text",
+   "label": "Distribution Transformer (HT prosumer)"
+  },
+  {
+   "fieldname": "ht_feeder_details",
+   "fieldtype": "Small Text",
+   "label": "HT Feeder"
+  },
+  {
+   "fieldname": "local_body_type",
+   "fieldtype": "Data",
+   "label": "Local Body Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "local_body_name",
+   "fieldtype": "Data",
+   "label": "Local Body",
+   "read_only": 1
+  },
+  {
+   "fieldname": "village",
+   "fieldtype": "Data",
+   "label": "Village",
+   "read_only": 1
+  },
+  {
+   "fieldname": "survey_number",
+   "fieldtype": "Data",
+   "label": "Survey Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gps_coordinates",
+   "fieldtype": "Data",
+   "label": "GPS",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Schedule III - Wheeling Preferences"
+  },
+  {
+   "fieldname": "wheeling_preferences",
+   "fieldtype": "Table",
+   "label": "Wheeling Preferences",
+   "options": "Wheeling Preference"
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Termination"
+  },
+  {
+   "fieldname": "is_terminated",
+   "fieldtype": "Check",
+   "label": "Terminated",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "terminated_on",
+   "fieldtype": "Date",
+   "label": "Terminated On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "terminated_by",
+   "fieldtype": "Select",
+   "label": "Terminated By",
+   "options": "Consumer\nDISCOM",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "termination_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Net Metering Agreement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,spin",
+ "description": "Executed on stamp paper with a schedule no other record holds, and a legal life of twenty-five years - so it is a record, not a one-off print."
+}

@@ -1,0 +1,1662 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_1",
+  "sb_2",
+  "product_name",
+  "brand_website",
+  "cb_3",
+  "rounding_precision",
+  "tab_4",
+  "sb_5",
+  "consumer_series_prefix",
+  "survey_series_prefix",
+  "design_series_prefix",
+  "cb_6",
+  "eligibility_series_prefix",
+  "quotation_series_prefix",
+  "sb_7",
+  "default_discom",
+  "default_subsidy_scheme",
+  "default_tariff",
+  "default_fee_schedule",
+  "cb_8",
+  "default_specific_yield",
+  "default_area_per_kw_sqft",
+  "default_daily_yield_low",
+  "default_daily_yield_high",
+  "sb_9",
+  "annual_degradation_percent",
+  "tariff_escalation_percent",
+  "cb_10",
+  "cashflow_years",
+  "sb_11",
+  "proposal_series_prefix",
+  "proposal_fiscal_year_format",
+  "proposal_file_name_pattern",
+  "cb_12",
+  "offer_validity_days",
+  "company_scope_label",
+  "customer_scope_label",
+  "sb_13",
+  "covering_letter_text",
+  "about_us_text",
+  "terms_and_conditions_text",
+  "delivery_schedule_text",
+  "exclusions_text",
+  "gst_treatment_note",
+  "subsidy_note_text",
+  "sb_14",
+  "scope_of_work",
+  "sb_15",
+  "enable_followup_automation",
+  "followup_overdue_grace_days",
+  "consecutive_non_connect_threshold",
+  "cb_16",
+  "outreach_escalation_role",
+  "sb_17",
+  "outreach_cadence",
+  "sb_18",
+  "outreach_signature",
+  "brand_social_links",
+  "sb_19",
+  "enable_phase2_handoff",
+  "tab_20",
+  "sb_21",
+  "installation_series_prefix",
+  "portal_application_series_prefix",
+  "work_order_series_prefix",
+  "commissioning_series_prefix",
+  "cb_22",
+  "snag_series_prefix",
+  "subsidy_claim_series_prefix",
+  "loan_application_series_prefix",
+  "net_metering_agreement_series_prefix",
+  "statutory_fee_payment_series_prefix",
+  "sb_23",
+  "default_stage_template",
+  "default_source_warehouse",
+  "site_warehouse_group",
+  "cb_24",
+  "default_installation_lead_days",
+  "material_variance_tolerance_percent",
+  "sb_25",
+  "enable_sla_escalation",
+  "escalation_role",
+  "escalation_reminder_days",
+  "cb_26",
+  "create_todo_on_breach",
+  "critical_snag_sla_days",
+  "subsidy_claim_follow_up_days",
+  "sb_27",
+  "enforce_serial_uniqueness",
+  "require_serials_before_commissioning",
+  "cb_28",
+  "serial_manifest_format",
+  "sb_29",
+  "performance_ratio_threshold_percent",
+  "sb_30",
+  "default_document_template_set",
+  "stamp_paper_denomination",
+  "document_output_format",
+  "cb_31",
+  "regenerate_on_source_change",
+  "letter_head",
+  "document_footer_text",
+  "stamp_paper_note",
+  "sb_32",
+  "auto_create_fee_payment_on_stage",
+  "refund_follow_up_days",
+  "cb_33",
+  "refund_claim_lead_days_after_commissioning",
+  "sb_34",
+  "enable_financed_sales",
+  "default_loan_scheme",
+  "advance_disbursement_percent",
+  "cb_35",
+  "loan_sanction_sla_days",
+  "balance_disbursement_sla_days",
+  "sb_36",
+  "company_carries_subsidy_gap",
+  "tab_37",
+  "sb_38",
+  "project_series_prefix",
+  "billing_plan_series_prefix",
+  "om_contract_series_prefix",
+  "om_visit_series_prefix",
+  "cb_39",
+  "service_ticket_series_prefix",
+  "warranty_claim_series_prefix",
+  "generation_reading_series_prefix",
+  "statutory_recovery_series_prefix",
+  "sb_40",
+  "posting_gate_note",
+  "enable_accounting_postings",
+  "gst_treatment_confirmed_by_ca",
+  "cb_42",
+  "ca_confirmation_date",
+  "ca_confirmation_remarks",
+  "sb_43",
+  "solar_account_mapping",
+  "sb_44",
+  "cost_categories",
+  "enable_wip_accounting",
+  "overhead_recovery_percent",
+  "cb_45",
+  "default_labour_cost_per_hour",
+  "rework_cost_category",
+  "sb_46",
+  "provision_note",
+  "enable_om_provision",
+  "om_provision_method",
+  "om_provision_percent",
+  "cb_48",
+  "om_provision_per_kw",
+  "om_provision_years",
+  "travel_cost_per_km",
+  "release_provision_on",
+  "sb_49",
+  "auto_create_project",
+  "auto_create_om_contract",
+  "auto_create_invoice_on_milestone",
+  "cb_50",
+  "project_type_solar",
+  "default_billing_milestone_template",
+  "sb_51",
+  "monsoon_start_month",
+  "monsoon_end_month",
+  "contract_expiry_window_days",
+  "cb_52",
+  "underperformance_threshold_percent",
+  "underperformance_consecutive_readings",
+  "ticket_reopen_escalation_threshold",
+  "platform_tab",
+  "sb_902",
+  "signup_series_prefix",
+  "cb_903",
+  "demo_request_series_prefix",
+  "sb_904",
+  "product_tagline",
+  "company_legal_name",
+  "partner_badge_text",
+  "cb_905",
+  "brand_logo",
+  "brand_favicon",
+  "accent_color",
+  "footer_tagline",
+  "sb_906",
+  "sales_email",
+  "sales_phone",
+  "office_address",
+  "cb_907",
+  "demo_scheduler_url",
+  "parent_company_url",
+  "sb_908",
+  "enable_public_signup",
+  "enable_demo_requests",
+  "cb_909",
+  "maintenance_mode",
+  "maintenance_message",
+  "sb_910",
+  "mockup_kpi_1_label",
+  "mockup_kpi_1_value",
+  "mockup_kpi_2_label",
+  "mockup_kpi_2_value",
+  "cb_911",
+  "mockup_kpi_3_label",
+  "mockup_kpi_3_value",
+  "mockup_delta_label",
+  "mockup_delta_value",
+  "sb_912",
+  "meta_title",
+  "meta_description",
+  "og_image",
+  "cb_913",
+  "google_analytics_id",
+  "google_tag_manager_id",
+  "enable_analytics",
+  "sb_1201",
+  "signup_rate_limit_per_ip_per_hour",
+  "signup_rate_limit_per_email_per_day",
+  "demo_rate_limit_per_ip_per_hour",
+  "cb_1202",
+  "verification_attempts_max",
+  "verification_token_hours",
+  "resend_verification_max",
+  "sb_1203",
+  "enable_captcha",
+  "captcha_provider",
+  "cb_1204",
+  "captcha_site_key",
+  "captcha_secret_key",
+  "sb_1205",
+  "disposable_email_domains",
+  "create_lead_from_demo_request",
+  "cb_1206",
+  "signup_abandon_after_days",
+  "signup_reminder_after_hours",
+  "personal_data_retention_days",
+  "verification_token_retention_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_1",
+   "fieldtype": "Tab Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Product"
+  },
+  {
+   "fieldname": "product_name",
+   "fieldtype": "Data",
+   "label": "Product Name",
+   "default": "A3 Sola"
+  },
+  {
+   "fieldname": "brand_website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rounding_precision",
+   "fieldtype": "Int",
+   "label": "Rounding Precision",
+   "default": "2"
+  },
+  {
+   "fieldname": "tab_4",
+   "fieldtype": "Tab Break",
+   "label": "CRM"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Naming Series Prefixes"
+  },
+  {
+   "fieldname": "consumer_series_prefix",
+   "fieldtype": "Data",
+   "label": "Solar Consumer",
+   "reqd": 1,
+   "default": "SOL-CON"
+  },
+  {
+   "fieldname": "survey_series_prefix",
+   "fieldtype": "Data",
+   "label": "Site Survey",
+   "reqd": 1,
+   "default": "SOL-SRV"
+  },
+  {
+   "fieldname": "design_series_prefix",
+   "fieldtype": "Data",
+   "label": "Design Estimate",
+   "reqd": 1,
+   "default": "SOL-DSN"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eligibility_series_prefix",
+   "fieldtype": "Data",
+   "label": "Eligibility Check",
+   "reqd": 1,
+   "default": "SOL-ELG"
+  },
+  {
+   "fieldname": "quotation_series_prefix",
+   "fieldtype": "Data",
+   "label": "Quotation",
+   "reqd": 1,
+   "default": "SOL-QTN"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
+  },
+  {
+   "fieldname": "default_discom",
+   "fieldtype": "Link",
+   "label": "Default DISCOM",
+   "options": "DISCOM"
+  },
+  {
+   "fieldname": "default_subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Default Subsidy Scheme",
+   "options": "Subsidy Scheme"
+  },
+  {
+   "fieldname": "default_tariff",
+   "fieldtype": "Link",
+   "label": "Default Electricity Tariff",
+   "options": "Electricity Tariff"
+  },
+  {
+   "fieldname": "default_fee_schedule",
+   "fieldtype": "Link",
+   "label": "Default Statutory Fee Schedule",
+   "options": "Statutory Fee Schedule"
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_specific_yield",
+   "fieldtype": "Float",
+   "label": "Specific Yield (kWh/kWp/yr)",
+   "reqd": 1,
+   "default": "1500",
+   "precision": 2,
+   "description": "Derived from the client's own proposals: 250 sq ft for 3 kW, 350 for 5 kW, 800 for 10 kW, and daily bands of 12-15, 20-25 and 40-50 units."
+  },
+  {
+   "fieldname": "default_area_per_kw_sqft",
+   "fieldtype": "Float",
+   "label": "Area per kW (sq ft)",
+   "reqd": 1,
+   "default": "80",
+   "precision": 2
+  },
+  {
+   "fieldname": "default_daily_yield_low",
+   "fieldtype": "Float",
+   "label": "Daily Yield Low (units/kWp)",
+   "default": "4.0",
+   "precision": 2
+  },
+  {
+   "fieldname": "default_daily_yield_high",
+   "fieldtype": "Float",
+   "label": "Daily Yield High (units/kWp)",
+   "default": "5.0",
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Calculation Rules"
+  },
+  {
+   "fieldname": "annual_degradation_percent",
+   "fieldtype": "Float",
+   "label": "Annual Degradation %",
+   "default": "0.7",
+   "precision": 2
+  },
+  {
+   "fieldname": "tariff_escalation_percent",
+   "fieldtype": "Float",
+   "label": "Tariff Escalation %",
+   "default": "3.0",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cashflow_years",
+   "fieldtype": "Int",
+   "label": "Cashflow Years",
+   "default": "25"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Proposal"
+  },
+  {
+   "fieldname": "proposal_series_prefix",
+   "fieldtype": "Data",
+   "label": "Proposal Series Prefix",
+   "reqd": 1,
+   "default": "RENC-PROP"
+  },
+  {
+   "fieldname": "proposal_fiscal_year_format",
+   "fieldtype": "Select",
+   "label": "Fiscal Year Format",
+   "options": "YY-YY\nYYYY-YY",
+   "reqd": 1,
+   "default": "YY-YY"
+  },
+  {
+   "fieldname": "proposal_file_name_pattern",
+   "fieldtype": "Data",
+   "label": "File Name Pattern",
+   "reqd": 1,
+   "default": "{seq}-{series}-{date}-{capacity}-{customer_name}"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "offer_validity_days",
+   "fieldtype": "Int",
+   "label": "Offer Validity (days)",
+   "default": "30"
+  },
+  {
+   "fieldname": "company_scope_label",
+   "fieldtype": "Data",
+   "label": "Company Scope Label",
+   "default": "Our Scope"
+  },
+  {
+   "fieldname": "customer_scope_label",
+   "fieldtype": "Data",
+   "label": "Customer Scope Label",
+   "default": "Client's Scope"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Proposal Text Blocks"
+  },
+  {
+   "fieldname": "covering_letter_text",
+   "fieldtype": "Text Editor",
+   "label": "Covering Letter"
+  },
+  {
+   "fieldname": "about_us_text",
+   "fieldtype": "Text Editor",
+   "label": "About Us"
+  },
+  {
+   "fieldname": "terms_and_conditions_text",
+   "fieldtype": "Text Editor",
+   "label": "General Terms & Conditions"
+  },
+  {
+   "fieldname": "delivery_schedule_text",
+   "fieldtype": "Text Editor",
+   "label": "Delivery & Commissioning Schedule"
+  },
+  {
+   "fieldname": "exclusions_text",
+   "fieldtype": "Text Editor",
+   "label": "Exclusions"
+  },
+  {
+   "fieldname": "gst_treatment_note",
+   "fieldtype": "Text Editor",
+   "label": "GST Treatment Note",
+   "description": "What the quoted price includes. The actual treatment is settled in Phase 3 against a recorded CA confirmation."
+  },
+  {
+   "fieldname": "subsidy_note_text",
+   "fieldtype": "Text Editor",
+   "label": "Subsidy Note"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Scope of Work"
+  },
+  {
+   "fieldname": "scope_of_work",
+   "fieldtype": "Table",
+   "label": "Scope of Work",
+   "options": "Scope Of Work Item"
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Outreach"
+  },
+  {
+   "fieldname": "enable_followup_automation",
+   "fieldtype": "Check",
+   "label": "Enable Follow-up Automation",
+   "default": "1"
+  },
+  {
+   "fieldname": "followup_overdue_grace_days",
+   "fieldtype": "Int",
+   "label": "Follow-up Grace Days",
+   "default": "0"
+  },
+  {
+   "fieldname": "consecutive_non_connect_threshold",
+   "fieldtype": "Int",
+   "label": "Consecutive Non-Connect Threshold",
+   "default": "3"
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outreach_escalation_role",
+   "fieldtype": "Link",
+   "label": "Escalation Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "Outreach Cadence"
+  },
+  {
+   "fieldname": "outreach_cadence",
+   "fieldtype": "Table",
+   "label": "Cadence Steps",
+   "options": "Outreach Cadence Step"
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Signature & Links"
+  },
+  {
+   "fieldname": "outreach_signature",
+   "fieldtype": "Text",
+   "label": "Signature Block",
+   "description": "Appended to every outreach message. Plain text - WhatsApp bold markers are preserved."
+  },
+  {
+   "fieldname": "brand_social_links",
+   "fieldtype": "Table",
+   "label": "Social Links",
+   "options": "Brand Link"
+  },
+  {
+   "fieldname": "sb_19",
+   "fieldtype": "Section Break",
+   "label": "Feature Flags"
+  },
+  {
+   "fieldname": "enable_phase2_handoff",
+   "fieldtype": "Check",
+   "label": "Enable Phase 2 Handoff",
+   "default": "1"
+  },
+  {
+   "fieldname": "tab_20",
+   "fieldtype": "Tab Break",
+   "label": "Operations"
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Naming Series Prefixes"
+  },
+  {
+   "fieldname": "installation_series_prefix",
+   "fieldtype": "Data",
+   "label": "Solar Installation",
+   "reqd": 1,
+   "default": "SOL-INST"
+  },
+  {
+   "fieldname": "portal_application_series_prefix",
+   "fieldtype": "Data",
+   "label": "Portal Application",
+   "reqd": 1,
+   "default": "SOL-APP"
+  },
+  {
+   "fieldname": "work_order_series_prefix",
+   "fieldtype": "Data",
+   "label": "Work Order",
+   "reqd": 1,
+   "default": "SOL-WO"
+  },
+  {
+   "fieldname": "commissioning_series_prefix",
+   "fieldtype": "Data",
+   "label": "Commissioning Report",
+   "reqd": 1,
+   "default": "SOL-COM"
+  },
+  {
+   "fieldname": "cb_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "snag_series_prefix",
+   "fieldtype": "Data",
+   "label": "Installation Snag",
+   "reqd": 1,
+   "default": "SOL-SNAG"
+  },
+  {
+   "fieldname": "subsidy_claim_series_prefix",
+   "fieldtype": "Data",
+   "label": "Subsidy Claim",
+   "reqd": 1,
+   "default": "SOL-CLM"
+  },
+  {
+   "fieldname": "loan_application_series_prefix",
+   "fieldtype": "Data",
+   "label": "Loan Application",
+   "reqd": 1,
+   "default": "SOL-LOAN"
+  },
+  {
+   "fieldname": "net_metering_agreement_series_prefix",
+   "fieldtype": "Data",
+   "label": "Net Metering Agreement",
+   "reqd": 1,
+   "default": "SOL-NMA"
+  },
+  {
+   "fieldname": "statutory_fee_payment_series_prefix",
+   "fieldtype": "Data",
+   "label": "Statutory Fee Payment",
+   "reqd": 1,
+   "default": "SOL-SFP"
+  },
+  {
+   "fieldname": "sb_23",
+   "fieldtype": "Section Break",
+   "label": "Operations Defaults"
+  },
+  {
+   "fieldname": "default_stage_template",
+   "fieldtype": "Link",
+   "label": "Default Stage Template",
+   "options": "Installation Stage Template"
+  },
+  {
+   "fieldname": "default_source_warehouse",
+   "fieldtype": "Link",
+   "label": "Source Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "site_warehouse_group",
+   "fieldtype": "Link",
+   "label": "Site Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "cb_24",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_installation_lead_days",
+   "fieldtype": "Int",
+   "label": "Installation Lead Days",
+   "default": "90"
+  },
+  {
+   "fieldname": "material_variance_tolerance_percent",
+   "fieldtype": "Float",
+   "label": "Material Variance Tolerance %",
+   "default": "5",
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_25",
+   "fieldtype": "Section Break",
+   "label": "SLA & Escalation"
+  },
+  {
+   "fieldname": "enable_sla_escalation",
+   "fieldtype": "Check",
+   "label": "Enable SLA Escalation",
+   "default": "1"
+  },
+  {
+   "fieldname": "escalation_role",
+   "fieldtype": "Link",
+   "label": "Escalation Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "escalation_reminder_days",
+   "fieldtype": "Int",
+   "label": "Reminder Window (days)",
+   "default": "3"
+  },
+  {
+   "fieldname": "cb_26",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "create_todo_on_breach",
+   "fieldtype": "Check",
+   "label": "Create ToDo on Breach",
+   "default": "1"
+  },
+  {
+   "fieldname": "critical_snag_sla_days",
+   "fieldtype": "Int",
+   "label": "Critical Snag SLA (days)",
+   "default": "3"
+  },
+  {
+   "fieldname": "subsidy_claim_follow_up_days",
+   "fieldtype": "Int",
+   "label": "Subsidy Claim Follow-up (days)",
+   "default": "45"
+  },
+  {
+   "fieldname": "sb_27",
+   "fieldtype": "Section Break",
+   "label": "Serial Control"
+  },
+  {
+   "fieldname": "enforce_serial_uniqueness",
+   "fieldtype": "Check",
+   "label": "Enforce Serial Uniqueness",
+   "default": "1",
+   "description": "The national portal rejects submissions containing a repeated module or inverter serial."
+  },
+  {
+   "fieldname": "require_serials_before_commissioning",
+   "fieldtype": "Check",
+   "label": "Require Serials Before Commissioning",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb_28",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "serial_manifest_format",
+   "fieldtype": "Select",
+   "label": "Manifest Format",
+   "options": "NISE DCR\nGeneric CSV",
+   "default": "NISE DCR"
+  },
+  {
+   "fieldname": "sb_29",
+   "fieldtype": "Section Break",
+   "label": "Commissioning"
+  },
+  {
+   "fieldname": "performance_ratio_threshold_percent",
+   "fieldtype": "Float",
+   "label": "Contractual Performance Ratio %",
+   "default": "75",
+   "precision": 2,
+   "description": "The consumer-vendor agreement requires 75% at commissioning, maintained for five years."
+  },
+  {
+   "fieldname": "sb_30",
+   "fieldtype": "Section Break",
+   "label": "Documents"
+  },
+  {
+   "fieldname": "default_document_template_set",
+   "fieldtype": "Link",
+   "label": "Default Template Set",
+   "options": "Document Template Set"
+  },
+  {
+   "fieldname": "stamp_paper_denomination",
+   "fieldtype": "Currency",
+   "label": "Stamp Paper Denomination"
+  },
+  {
+   "fieldname": "document_output_format",
+   "fieldtype": "Select",
+   "label": "Output Format",
+   "options": "PDF\nDOCX\nBoth",
+   "default": "PDF"
+  },
+  {
+   "fieldname": "cb_31",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "regenerate_on_source_change",
+   "fieldtype": "Check",
+   "label": "Regenerate on Source Change",
+   "default": "1"
+  },
+  {
+   "fieldname": "letter_head",
+   "fieldtype": "Link",
+   "label": "Letter Head",
+   "options": "Letter Head"
+  },
+  {
+   "fieldname": "document_footer_text",
+   "fieldtype": "Small Text",
+   "label": "Document Footer"
+  },
+  {
+   "fieldname": "stamp_paper_note",
+   "fieldtype": "Small Text",
+   "label": "Stamp Paper Note"
+  },
+  {
+   "fieldname": "sb_32",
+   "fieldtype": "Section Break",
+   "label": "Statutory"
+  },
+  {
+   "fieldname": "auto_create_fee_payment_on_stage",
+   "fieldtype": "Check",
+   "label": "Auto-create Fee Payment",
+   "default": "1"
+  },
+  {
+   "fieldname": "refund_follow_up_days",
+   "fieldtype": "Int",
+   "label": "Refund Follow-up (days)",
+   "default": "30"
+  },
+  {
+   "fieldname": "cb_33",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "refund_claim_lead_days_after_commissioning",
+   "fieldtype": "Int",
+   "label": "Refund Claimable After (days)",
+   "default": "15"
+  },
+  {
+   "fieldname": "sb_34",
+   "fieldtype": "Section Break",
+   "label": "Finance"
+  },
+  {
+   "fieldname": "enable_financed_sales",
+   "fieldtype": "Check",
+   "label": "Enable Financed Sales",
+   "default": "1"
+  },
+  {
+   "fieldname": "default_loan_scheme",
+   "fieldtype": "Select",
+   "label": "Default Loan Scheme",
+   "options": "PM Surya Ghar via Jan Samarth\nBank Own Scheme\nOther",
+   "default": "PM Surya Ghar via Jan Samarth"
+  },
+  {
+   "fieldname": "advance_disbursement_percent",
+   "fieldtype": "Float",
+   "label": "Advance Disbursement %",
+   "default": "70",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_35",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "loan_sanction_sla_days",
+   "fieldtype": "Int",
+   "label": "Loan Sanction SLA (days)",
+   "default": "15"
+  },
+  {
+   "fieldname": "balance_disbursement_sla_days",
+   "fieldtype": "Int",
+   "label": "Balance Disbursement SLA (days)",
+   "default": "10"
+  },
+  {
+   "fieldname": "sb_36",
+   "fieldtype": "Section Break",
+   "label": "Subsidy"
+  },
+  {
+   "fieldname": "company_carries_subsidy_gap",
+   "fieldtype": "Check",
+   "label": "Company Carries the Subsidy Gap",
+   "description": "When checked, the company quotes net of subsidy and funds that amount until the customer's DBT lands and is passed on."
+  },
+  {
+   "fieldname": "tab_37",
+   "fieldtype": "Tab Break",
+   "label": "Projects"
+  },
+  {
+   "fieldname": "sb_38",
+   "fieldtype": "Section Break",
+   "label": "Naming Series Prefixes"
+  },
+  {
+   "fieldname": "project_series_prefix",
+   "fieldtype": "Data",
+   "label": "Project",
+   "reqd": 1,
+   "default": "SOL-PRJ"
+  },
+  {
+   "fieldname": "billing_plan_series_prefix",
+   "fieldtype": "Data",
+   "label": "Billing Plan",
+   "reqd": 1,
+   "default": "SOL-BPL"
+  },
+  {
+   "fieldname": "om_contract_series_prefix",
+   "fieldtype": "Data",
+   "label": "O&M Contract",
+   "reqd": 1,
+   "default": "SOL-AMC"
+  },
+  {
+   "fieldname": "om_visit_series_prefix",
+   "fieldtype": "Data",
+   "label": "O&M Visit",
+   "reqd": 1,
+   "default": "SOL-VST"
+  },
+  {
+   "fieldname": "cb_39",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_ticket_series_prefix",
+   "fieldtype": "Data",
+   "label": "Service Ticket",
+   "reqd": 1,
+   "default": "SOL-TKT"
+  },
+  {
+   "fieldname": "warranty_claim_series_prefix",
+   "fieldtype": "Data",
+   "label": "Warranty Claim",
+   "reqd": 1,
+   "default": "SOL-WCL"
+  },
+  {
+   "fieldname": "generation_reading_series_prefix",
+   "fieldtype": "Data",
+   "label": "Generation Reading",
+   "reqd": 1,
+   "default": "SOL-GEN"
+  },
+  {
+   "fieldname": "statutory_recovery_series_prefix",
+   "fieldtype": "Data",
+   "label": "Statutory Fee Recovery",
+   "reqd": 1,
+   "default": "SOL-SFR"
+  },
+  {
+   "fieldname": "sb_40",
+   "fieldtype": "Section Break",
+   "label": "Accounting Control"
+  },
+  {
+   "fieldname": "posting_gate_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Postings are OFF by default so the client can run Phase 3 as a tracking system from day one and switch the ledger on later. The gate cannot be lifted without a recorded CA confirmation.</p>"
+  },
+  {
+   "fieldname": "enable_accounting_postings",
+   "fieldtype": "Check",
+   "label": "Enable Accounting Postings"
+  },
+  {
+   "fieldname": "gst_treatment_confirmed_by_ca",
+   "fieldtype": "Check",
+   "label": "GST Treatment Confirmed by CA"
+  },
+  {
+   "fieldname": "cb_42",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ca_confirmation_date",
+   "fieldtype": "Date",
+   "label": "CA Confirmation Date",
+   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca"
+  },
+  {
+   "fieldname": "ca_confirmation_remarks",
+   "fieldtype": "Small Text",
+   "label": "CA Confirmation Remarks",
+   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca"
+  },
+  {
+   "fieldname": "sb_43",
+   "fieldtype": "Section Break",
+   "label": "Account Mapping"
+  },
+  {
+   "fieldname": "solar_account_mapping",
+   "fieldtype": "Table",
+   "label": "Account Mapping",
+   "options": "Solar Company Account Mapping"
+  },
+  {
+   "fieldname": "sb_44",
+   "fieldtype": "Section Break",
+   "label": "Costing"
+  },
+  {
+   "fieldname": "cost_categories",
+   "fieldtype": "Table",
+   "label": "Cost Categories",
+   "options": "Cost Category Config"
+  },
+  {
+   "fieldname": "enable_wip_accounting",
+   "fieldtype": "Check",
+   "label": "Enable WIP Accounting"
+  },
+  {
+   "fieldname": "overhead_recovery_percent",
+   "fieldtype": "Float",
+   "label": "Overhead Recovery %",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_45",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_labour_cost_per_hour",
+   "fieldtype": "Currency",
+   "label": "Default Labour Cost / Hour"
+  },
+  {
+   "fieldname": "rework_cost_category",
+   "fieldtype": "Data",
+   "label": "Rework Category",
+   "default": "Rework",
+   "description": "Isolated from base material and labour - it is the client's quality-cost signal."
+  },
+  {
+   "fieldname": "sb_46",
+   "fieldtype": "Section Break",
+   "label": "O&M Accrual"
+  },
+  {
+   "fieldname": "provision_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Every commissioned job creates a five-year cost commitment. Accruing it at commissioning is the difference between a margin figure that is true and one that is fiction until 2031.</p>"
+  },
+  {
+   "fieldname": "enable_om_provision",
+   "fieldtype": "Check",
+   "label": "Enable O&M Provision",
+   "default": "1"
+  },
+  {
+   "fieldname": "om_provision_method",
+   "fieldtype": "Select",
+   "label": "Method",
+   "options": "Percent of Contract Value\nFixed per kW\nFixed per Contract",
+   "default": "Percent of Contract Value"
+  },
+  {
+   "fieldname": "om_provision_percent",
+   "fieldtype": "Float",
+   "label": "Provision %",
+   "default": "2.0",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_48",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "om_provision_per_kw",
+   "fieldtype": "Currency",
+   "label": "Provision per kW"
+  },
+  {
+   "fieldname": "om_provision_years",
+   "fieldtype": "Int",
+   "label": "Provision Years",
+   "default": "5"
+  },
+  {
+   "fieldname": "travel_cost_per_km",
+   "fieldtype": "Currency",
+   "label": "Travel Cost per km",
+   "default": "12",
+   "description": "Costs a visit's travel. Left at zero, every site visit looks free."
+  },
+  {
+   "fieldname": "release_provision_on",
+   "fieldtype": "Select",
+   "label": "Release On",
+   "options": "Per Visit\nStraight Line Monthly",
+   "default": "Per Visit"
+  },
+  {
+   "fieldname": "sb_49",
+   "fieldtype": "Section Break",
+   "label": "Project Defaults"
+  },
+  {
+   "fieldname": "auto_create_project",
+   "fieldtype": "Check",
+   "label": "Auto-create Project",
+   "default": "1"
+  },
+  {
+   "fieldname": "auto_create_om_contract",
+   "fieldtype": "Check",
+   "label": "Auto-create O&M Contract",
+   "default": "1"
+  },
+  {
+   "fieldname": "auto_create_invoice_on_milestone",
+   "fieldtype": "Check",
+   "label": "Auto-create Draft Invoice on Milestone"
+  },
+  {
+   "fieldname": "cb_50",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project_type_solar",
+   "fieldtype": "Link",
+   "label": "Solar Project Type",
+   "options": "Project Type"
+  },
+  {
+   "fieldname": "default_billing_milestone_template",
+   "fieldtype": "Link",
+   "label": "Default Milestone Template",
+   "options": "Billing Milestone Template"
+  },
+  {
+   "fieldname": "sb_51",
+   "fieldtype": "Section Break",
+   "label": "O&M Scheduling"
+  },
+  {
+   "fieldname": "monsoon_start_month",
+   "fieldtype": "Int",
+   "label": "Monsoon Start Month",
+   "default": "6",
+   "description": "Kerala's soiling pattern is not the national one - cleaning visits bias either side of these months."
+  },
+  {
+   "fieldname": "monsoon_end_month",
+   "fieldtype": "Int",
+   "label": "Monsoon End Month",
+   "default": "9"
+  },
+  {
+   "fieldname": "contract_expiry_window_days",
+   "fieldtype": "Int",
+   "label": "Expiring Soon Window (days)",
+   "default": "90"
+  },
+  {
+   "fieldname": "cb_52",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "underperformance_threshold_percent",
+   "fieldtype": "Float",
+   "label": "Underperformance Threshold %",
+   "default": "80",
+   "precision": 2
+  },
+  {
+   "fieldname": "underperformance_consecutive_readings",
+   "fieldtype": "Int",
+   "label": "Consecutive Low Readings",
+   "default": "3"
+  },
+  {
+   "fieldname": "ticket_reopen_escalation_threshold",
+   "fieldtype": "Int",
+   "label": "Reopen Escalation Threshold",
+   "default": "2"
+  },
+  {
+   "fieldname": "platform_tab",
+   "fieldtype": "Tab Break",
+   "label": "Platform"
+  },
+  {
+   "fieldname": "sb_902",
+   "fieldtype": "Section Break",
+   "label": "Naming"
+  },
+  {
+   "fieldname": "signup_series_prefix",
+   "fieldtype": "Data",
+   "label": "Signup Prefix",
+   "default": "SGN"
+  },
+  {
+   "fieldname": "cb_903",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "demo_request_series_prefix",
+   "fieldtype": "Data",
+   "label": "Demo Request Prefix",
+   "default": "DEM"
+  },
+  {
+   "fieldname": "sb_904",
+   "fieldtype": "Section Break",
+   "label": "Brand"
+  },
+  {
+   "fieldname": "product_tagline",
+   "fieldtype": "Data",
+   "label": "Product Tagline"
+  },
+  {
+   "fieldname": "company_legal_name",
+   "fieldtype": "Data",
+   "label": "Company Legal Name"
+  },
+  {
+   "fieldname": "partner_badge_text",
+   "fieldtype": "Data",
+   "label": "Partner Badge",
+   "default": "Official ERPNext Partner"
+  },
+  {
+   "fieldname": "cb_905",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "brand_logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "brand_favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "accent_color",
+   "fieldtype": "Color",
+   "label": "Accent Colour"
+  },
+  {
+   "fieldname": "footer_tagline",
+   "fieldtype": "Data",
+   "label": "Footer Tagline"
+  },
+  {
+   "fieldname": "sb_906",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "sales_email",
+   "fieldtype": "Data",
+   "label": "Sales Email"
+  },
+  {
+   "fieldname": "sales_phone",
+   "fieldtype": "Data",
+   "label": "Sales Phone"
+  },
+  {
+   "fieldname": "office_address",
+   "fieldtype": "Small Text",
+   "label": "Office Address"
+  },
+  {
+   "fieldname": "cb_907",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "demo_scheduler_url",
+   "fieldtype": "Data",
+   "label": "Demo Scheduler URL"
+  },
+  {
+   "fieldname": "parent_company_url",
+   "fieldtype": "Data",
+   "label": "Parent Company URL"
+  },
+  {
+   "fieldname": "sb_908",
+   "fieldtype": "Section Break",
+   "label": "Site Behaviour"
+  },
+  {
+   "fieldname": "enable_public_signup",
+   "fieldtype": "Check",
+   "label": "Enable Public Signup",
+   "default": "1"
+  },
+  {
+   "fieldname": "enable_demo_requests",
+   "fieldtype": "Check",
+   "label": "Enable Demo Requests",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb_909",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "maintenance_mode",
+   "fieldtype": "Check",
+   "label": "Maintenance Mode"
+  },
+  {
+   "fieldname": "maintenance_message",
+   "fieldtype": "Small Text",
+   "label": "Maintenance Message"
+  },
+  {
+   "fieldname": "sb_910",
+   "fieldtype": "Section Break",
+   "label": "Homepage Mockup"
+  },
+  {
+   "fieldname": "mockup_kpi_1_label",
+   "fieldtype": "Data",
+   "label": "KPI 1 Label",
+   "default": "Installations Live"
+  },
+  {
+   "fieldname": "mockup_kpi_1_value",
+   "fieldtype": "Data",
+   "label": "KPI 1 Value",
+   "default": "248"
+  },
+  {
+   "fieldname": "mockup_kpi_2_label",
+   "fieldtype": "Data",
+   "label": "KPI 2 Label",
+   "default": "kW Commissioned"
+  },
+  {
+   "fieldname": "mockup_kpi_2_value",
+   "fieldtype": "Data",
+   "label": "KPI 2 Value",
+   "default": "1420"
+  },
+  {
+   "fieldname": "cb_911",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mockup_kpi_3_label",
+   "fieldtype": "Data",
+   "label": "KPI 3 Label",
+   "default": "Avg Payback"
+  },
+  {
+   "fieldname": "mockup_kpi_3_value",
+   "fieldtype": "Data",
+   "label": "KPI 3 Value",
+   "default": "3.8 yrs"
+  },
+  {
+   "fieldname": "mockup_delta_label",
+   "fieldtype": "Data",
+   "label": "Delta Label",
+   "default": "Revenue this month"
+  },
+  {
+   "fieldname": "mockup_delta_value",
+   "fieldtype": "Data",
+   "label": "Delta Value",
+   "default": "18%"
+  },
+  {
+   "fieldname": "sb_912",
+   "fieldtype": "Section Break",
+   "label": "SEO & Analytics"
+  },
+  {
+   "fieldname": "meta_title",
+   "fieldtype": "Data",
+   "label": "Meta Title"
+  },
+  {
+   "fieldname": "meta_description",
+   "fieldtype": "Small Text",
+   "label": "Meta Description"
+  },
+  {
+   "fieldname": "og_image",
+   "fieldtype": "Attach Image",
+   "label": "Open Graph Image"
+  },
+  {
+   "fieldname": "cb_913",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "google_analytics_id",
+   "fieldtype": "Data",
+   "label": "Google Analytics ID"
+  },
+  {
+   "fieldname": "google_tag_manager_id",
+   "fieldtype": "Data",
+   "label": "Tag Manager ID"
+  },
+  {
+   "fieldname": "enable_analytics",
+   "fieldtype": "Check",
+   "label": "Enable Analytics",
+   "default": "0"
+  },
+  {
+   "fieldname": "sb_1201",
+   "fieldtype": "Section Break",
+   "label": "Abuse Control"
+  },
+  {
+   "fieldname": "signup_rate_limit_per_ip_per_hour",
+   "fieldtype": "Int",
+   "label": "Signups per IP per Hour",
+   "default": "5"
+  },
+  {
+   "fieldname": "signup_rate_limit_per_email_per_day",
+   "fieldtype": "Int",
+   "label": "Signups per Email per Day",
+   "default": "3"
+  },
+  {
+   "fieldname": "demo_rate_limit_per_ip_per_hour",
+   "fieldtype": "Int",
+   "label": "Demo Requests per IP per Hour",
+   "default": "5"
+  },
+  {
+   "fieldname": "cb_1202",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "verification_attempts_max",
+   "fieldtype": "Int",
+   "label": "Max Verification Attempts",
+   "default": "10"
+  },
+  {
+   "fieldname": "verification_token_hours",
+   "fieldtype": "Int",
+   "label": "Verification Link Valid (hours)",
+   "default": "24"
+  },
+  {
+   "fieldname": "resend_verification_max",
+   "fieldtype": "Int",
+   "label": "Max Verification Resends",
+   "default": "3"
+  },
+  {
+   "fieldname": "sb_1203",
+   "fieldtype": "Section Break",
+   "label": "Captcha"
+  },
+  {
+   "fieldname": "enable_captcha",
+   "fieldtype": "Check",
+   "label": "Enable Captcha",
+   "description": "Strongly recommended before go-live. Off by default so a misconfigured key cannot break signup on day one."
+  },
+  {
+   "fieldname": "captcha_provider",
+   "fieldtype": "Select",
+   "label": "Captcha Provider",
+   "options": "Cloudflare Turnstile\nGoogle reCAPTCHA v3",
+   "default": "Cloudflare Turnstile",
+   "depends_on": "eval:doc.enable_captcha"
+  },
+  {
+   "fieldname": "cb_1204",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "captcha_site_key",
+   "fieldtype": "Data",
+   "label": "Captcha Site Key",
+   "depends_on": "eval:doc.enable_captcha"
+  },
+  {
+   "fieldname": "captcha_secret_key",
+   "fieldtype": "Password",
+   "label": "Captcha Secret Key",
+   "depends_on": "eval:doc.enable_captcha"
+  },
+  {
+   "fieldname": "sb_1205",
+   "fieldtype": "Section Break",
+   "label": "Signup Behaviour"
+  },
+  {
+   "fieldname": "disposable_email_domains",
+   "fieldtype": "Small Text",
+   "label": "Blocked Email Domains",
+   "description": "One domain per line. Signups from these addresses are refused."
+  },
+  {
+   "fieldname": "create_lead_from_demo_request",
+   "fieldtype": "Check",
+   "label": "Create a CRM Lead from Demo Requests",
+   "description": "Off by default so spam does not reach the sales pipeline."
+  },
+  {
+   "fieldname": "cb_1206",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "signup_abandon_after_days",
+   "fieldtype": "Int",
+   "label": "Abandon Unverified Signups After (days)",
+   "default": "7"
+  },
+  {
+   "fieldname": "signup_reminder_after_hours",
+   "fieldtype": "Int",
+   "label": "Send One Reminder After (hours)",
+   "default": "24"
+  },
+  {
+   "fieldname": "personal_data_retention_days",
+   "fieldtype": "Int",
+   "label": "Purge IP and User Agent After (days)",
+   "default": "30"
+  },
+  {
+   "fieldname": "verification_token_retention_days",
+   "fieldtype": "Int",
+   "label": "Purge Verification Tokens After (days)",
+   "default": "30"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "A3 Sola Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1,
+ "description": "The single settings doctype for the whole a3_sola product."
+}

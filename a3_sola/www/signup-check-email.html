@@ -1,0 +1,72 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<span class="a3s-card__icon" aria-hidden="true">📬</span>
+			<h1 style="font-size:1.7rem">Check your email</h1>
+			<p class="a3s-card__text">
+				If that address can be signed up, we have sent it a verification link.
+				Open it to confirm your email and see your order.
+			</p>
+			<p class="a3s-small a3s-muted" style="margin-top:1rem">
+				It usually arrives within a minute. If it has not, check your spam folder
+				before resending.
+			</p>
+
+			{%- if reference %}
+			<div id="a3s-resend" style="margin-top:1.5rem">
+				<button class="a3s-btn a3s-btn--secondary" type="button"
+					data-reference="{{ reference }}" id="a3s-resend-btn">Resend the link</button>
+				<p class="a3s-form__status" role="status" aria-live="polite"></p>
+			</div>
+			<p class="a3s-small a3s-muted" style="margin-top:1.5rem">Reference {{ reference }}</p>
+			{%- endif %}
+		</div>
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+	var button = document.getElementById("a3s-resend-btn");
+	if (!button) return;
+	var status = document.querySelector("#a3s-resend .a3s-form__status");
+	var cooling = 0;
+
+	function tick() {
+		if (cooling <= 0) {
+			button.disabled = false;
+			button.textContent = "Resend the link";
+			return;
+		}
+		button.textContent = "Resend in " + cooling + "s";
+		cooling -= 1;
+		window.setTimeout(tick, 1000);
+	}
+
+	button.addEventListener("click", function () {
+		button.disabled = true;
+		status.className = "a3s-form__status";
+		status.textContent = "Sending…";
+		frappe.call({
+			method: "a3_sola.api.signup.resend_verification",
+			args: { signup_reference: button.dataset.reference },
+		}).then(function (response) {
+			status.className = "a3s-form__status is-success";
+			status.textContent = (response.message && response.message.message) || "Sent.";
+			// A countdown, so somebody does not sit clicking into a rate limit.
+			cooling = 60;
+			tick();
+		}).catch(function (err) {
+			status.className = "a3s-form__status is-error";
+			status.textContent = (err && err.message) || "Please wait a little before trying again.";
+			cooling = 60;
+			tick();
+		});
+	});
+})();
+</script>
+{% endblock %}

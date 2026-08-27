@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "option_name",
+  "inverter_topology",
+  "solar_package",
+  "is_recommended",
+  "cb_1",
+  "system_cost",
+  "additional_structure_cost",
+  "total_option_cost",
+  "display_order",
+  "sb_2",
+  "module_make",
+  "module_specification",
+  "module_count",
+  "sb_3",
+  "inverter_make",
+  "inverter_specification",
+  "cb_4",
+  "inverter_count",
+  "inverter_warranty_years",
+  "sb_5",
+  "option_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "option_name",
+   "fieldtype": "Data",
+   "label": "Option",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "inverter_topology",
+   "fieldtype": "Select",
+   "label": "Topology",
+   "options": "String\nString with Optimiser\nMicroinverter\nHybrid",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "Solar Package",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_recommended",
+   "fieldtype": "Check",
+   "label": "Recommended",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "system_cost",
+   "fieldtype": "Currency",
+   "label": "System Cost",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "additional_structure_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Structure Cost"
+  },
+  {
+   "fieldname": "total_option_cost",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Order"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "module_make",
+   "fieldtype": "Link",
+   "label": "Module Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "module_specification",
+   "fieldtype": "Small Text",
+   "label": "Module Specification"
+  },
+  {
+   "fieldname": "module_count",
+   "fieldtype": "Int",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Inverter"
+  },
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "label": "Inverter Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "inverter_specification",
+   "fieldtype": "Small Text",
+   "label": "Inverter Specification"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inverter_count",
+   "fieldtype": "Int",
+   "label": "Nos"
+  },
+  {
+   "fieldname": "inverter_warranty_years",
+   "fieldtype": "Int",
+   "label": "Inverter Warranty (years)",
+   "read_only": 1,
+   "description": "Fetched from the make, never typed."
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "option_notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Option",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1,
+ "description": "The client quotes one array with different inverter topologies at different prices; an estimate holds options and the quotation carries exactly one."
+}

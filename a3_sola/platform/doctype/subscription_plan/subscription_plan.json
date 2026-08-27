@@ -1,0 +1,358 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "plan_name",
+  "plan_code",
+  "tagline",
+  "cb_2",
+  "display_order",
+  "is_popular",
+  "is_custom_pricing",
+  "is_published",
+  "is_active",
+  "tab_3",
+  "sb_4",
+  "currency",
+  "monthly_price",
+  "annual_price",
+  "annual_months_free",
+  "cb_5",
+  "additional_user_price_monthly",
+  "additional_user_price_annual",
+  "sb_6",
+  "implementation_fee",
+  "cb_7",
+  "implementation_free_on_annual",
+  "tab_8",
+  "sb_9",
+  "included_users",
+  "max_users",
+  "cb_10",
+  "included_companies",
+  "storage_limit_gb",
+  "sb_11",
+  "enabled_modules",
+  "role_profile",
+  "cb_12",
+  "trial_days",
+  "tab_13",
+  "sb_14",
+  "cta_text",
+  "inherits_from_plan",
+  "sb_15",
+  "features"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "label": "Plan Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "label": "Plan Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Lowercase slug used in every pricing link and by Phase 5. Changing it breaks live URLs."
+  },
+  {
+   "fieldname": "tagline",
+   "fieldtype": "Small Text",
+   "label": "Tagline"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_popular",
+   "fieldtype": "Check",
+   "label": "Most Popular",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_custom_pricing",
+   "fieldtype": "Check",
+   "label": "Custom Pricing",
+   "description": "Shows Custom instead of a price and routes the visitor to sales."
+  },
+  {
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Published",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "tab_3",
+   "fieldtype": "Tab Break",
+   "label": "Pricing"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Subscription"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR",
+   "reqd": 1
+  },
+  {
+   "fieldname": "monthly_price",
+   "fieldtype": "Currency",
+   "label": "Monthly Price",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "annual_price",
+   "fieldtype": "Currency",
+   "label": "Annual Price",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "annual_months_free",
+   "fieldtype": "Int",
+   "label": "Months Free on Annual",
+   "default": "2"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "additional_user_price_monthly",
+   "fieldtype": "Currency",
+   "label": "Additional User (Monthly)"
+  },
+  {
+   "fieldname": "additional_user_price_annual",
+   "fieldtype": "Currency",
+   "label": "Additional User (Annual)"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Implementation"
+  },
+  {
+   "fieldname": "implementation_fee",
+   "fieldtype": "Currency",
+   "label": "Implementation Fee"
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "implementation_free_on_annual",
+   "fieldtype": "Check",
+   "label": "Waived on Annual",
+   "default": "1"
+  },
+  {
+   "fieldname": "tab_8",
+   "fieldtype": "Tab Break",
+   "label": "Entitlements"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Users"
+  },
+  {
+   "fieldname": "included_users",
+   "fieldtype": "Int",
+   "label": "Included Users",
+   "reqd": 1
+  },
+  {
+   "fieldname": "max_users",
+   "fieldtype": "Int",
+   "label": "Maximum Users",
+   "description": "0 means unlimited."
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "included_companies",
+   "fieldtype": "Int",
+   "label": "Included Companies",
+   "default": "1"
+  },
+  {
+   "fieldname": "storage_limit_gb",
+   "fieldtype": "Int",
+   "label": "Storage Limit (GB)"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Access"
+  },
+  {
+   "fieldname": "enabled_modules",
+   "fieldtype": "Table",
+   "label": "Enabled Modules",
+   "options": "Plan Module"
+  },
+  {
+   "fieldname": "role_profile",
+   "fieldtype": "Link",
+   "label": "Role Profile",
+   "options": "Role Profile",
+   "description": "Assigned to every user this plan provisions."
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "trial_days",
+   "fieldtype": "Int",
+   "label": "Trial Days",
+   "default": "0"
+  },
+  {
+   "fieldname": "tab_13",
+   "fieldtype": "Tab Break",
+   "label": "Marketing"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Card"
+  },
+  {
+   "fieldname": "cta_text",
+   "fieldtype": "Data",
+   "label": "CTA Text",
+   "default": "Get started"
+  },
+  {
+   "fieldname": "inherits_from_plan",
+   "fieldtype": "Link",
+   "label": "Inherits From",
+   "options": "Subscription Plan",
+   "description": "Renders as Everything in X on the card."
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Feature List"
+  },
+  {
+   "fieldname": "features",
+   "fieldtype": "Table",
+   "label": "Features",
+   "options": "Plan Feature"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Subscription Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Marketing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Sales",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Guest",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "PLT-PLAN-.###",
+ "title_field": "plan_name",
+ "show_title_field_in_link": 1
+}

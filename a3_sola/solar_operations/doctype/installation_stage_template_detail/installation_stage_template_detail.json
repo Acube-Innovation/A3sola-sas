@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "stage_code",
+  "stage_name",
+  "owner_type",
+  "sla_days",
+  "cb_1",
+  "responsible_role",
+  "is_mandatory",
+  "requires_document",
+  "allow_parallel",
+  "display_order",
+  "sb_2",
+  "applicability",
+  "applicability_threshold_kw",
+  "cb_3",
+  "document_checklist_template",
+  "document_template_set",
+  "sb_4",
+  "stage_description"
+ ],
+ "fields": [
+  {
+   "fieldname": "stage_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "stage_name",
+   "fieldtype": "Data",
+   "label": "Stage",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "owner_type",
+   "fieldtype": "Select",
+   "label": "Owner",
+   "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment",
+   "reqd": 1,
+   "default": "Internal",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sla_days",
+   "fieldtype": "Int",
+   "label": "SLA Days",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "responsible_role",
+   "fieldtype": "Link",
+   "label": "Responsible Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requires_document",
+   "fieldtype": "Check",
+   "label": "Requires Document",
+   "default": "1"
+  },
+  {
+   "fieldname": "allow_parallel",
+   "fieldtype": "Check",
+   "label": "Allow Parallel"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Order"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Applicability"
+  },
+  {
+   "fieldname": "applicability",
+   "fieldtype": "Select",
+   "label": "Applies When",
+   "options": "Always\nFinanced Sales Only\nSelf-Funded Only\nSubsidised Only\nNon-Subsidised Only\nAbove Capacity Threshold\nNet Meter From DISCOM Only\nNet Meter Purchased Only",
+   "reqd": 1,
+   "default": "Always",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applicability_threshold_kw",
+   "fieldtype": "Float",
+   "label": "Threshold (kW)",
+   "precision": 3,
+   "depends_on": "eval:doc.applicability=='Above Capacity Threshold'"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "document_checklist_template",
+   "fieldtype": "Link",
+   "label": "Checklist Template",
+   "options": "Document Checklist Template"
+  },
+  {
+   "fieldname": "document_template_set",
+   "fieldtype": "Link",
+   "label": "Documents Generated",
+   "options": "Document Template Set"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fieldname": "stage_description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Installation Stage Template Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

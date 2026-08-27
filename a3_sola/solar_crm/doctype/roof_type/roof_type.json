@@ -1,0 +1,174 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "roof_type",
+  "structure_cost_multiplier",
+  "area_per_kw_sqft",
+  "cb_1",
+  "typical_tilt_degrees",
+  "company",
+  "sb_2",
+  "mounting_structure_specification",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SOL-ROOF-.###",
+   "reqd": 1,
+   "default": "SOL-ROOF-.###",
+   "hidden": 1
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Data",
+   "label": "Roof Type",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "structure_cost_multiplier",
+   "fieldtype": "Float",
+   "label": "Structure Cost Multiplier",
+   "default": "1.0",
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "area_per_kw_sqft",
+   "fieldtype": "Float",
+   "label": "Area per kW (sq ft)",
+   "precision": 2,
+   "in_list_view": 1,
+   "description": "Overrides the app default for this roof type."
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "typical_tilt_degrees",
+   "fieldtype": "Float",
+   "label": "Typical Tilt (deg)",
+   "default": "11",
+   "precision": 2
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Structure"
+  },
+  {
+   "fieldname": "mounting_structure_specification",
+   "fieldtype": "Small Text",
+   "label": "Mounting Structure Specification"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Roof Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "roof_type",
+ "show_title_field_in_link": 1,
+ "search_fields": "roof_type"
+}

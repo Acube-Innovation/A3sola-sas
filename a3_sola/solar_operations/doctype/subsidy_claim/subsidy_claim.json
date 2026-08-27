@@ -1,0 +1,462 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "solar_installation",
+  "solar_consumer",
+  "customer",
+  "cb_2",
+  "subsidy_scheme",
+  "sanctioned_capacity_kw",
+  "claim_model",
+  "company",
+  "amended_from",
+  "accounting_note",
+  "sb_4",
+  "pcr_uploaded_on",
+  "pcr_reference_no",
+  "pcr_acknowledgement",
+  "cb_5",
+  "bank_details_submitted",
+  "customer_bank_confirmation",
+  "days_since_pcr",
+  "sb_6",
+  "claim_status",
+  "expected_subsidy_amount",
+  "claim_submitted_on",
+  "cb_7",
+  "query_description",
+  "sb_8",
+  "disbursed_on",
+  "disbursed_amount",
+  "disbursement_reference",
+  "cb_9",
+  "disbursement_proof",
+  "variance_amount",
+  "variance_reason",
+  "sb_10",
+  "recovery_note",
+  "amount_recoverable_from_customer",
+  "amount_recovered",
+  "recovery_date",
+  "cb_12",
+  "recovery_payment_entry",
+  "outstanding_recovery",
+  "recovery_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "fetch_from": "solar_installation.solar_consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "fetch_from": "solar_installation.customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme",
+   "fetch_from": "solar_installation.subsidy_scheme",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sanctioned_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Sanctioned Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "claim_model",
+   "fieldtype": "Select",
+   "label": "Claim Model",
+   "options": "Customer Claims Directly\nCompany Funded Gap",
+   "reqd": 1,
+   "default": "Customer Claims Directly",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Subsidy Claim",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "accounting_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">No accounting entry is made in this module. The receivable and its settlement are posted by the Projects module.</p>"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "PCR"
+  },
+  {
+   "fieldname": "pcr_uploaded_on",
+   "fieldtype": "Date",
+   "label": "PCR Uploaded",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pcr_reference_no",
+   "fieldtype": "Data",
+   "label": "PCR Reference",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "pcr_acknowledgement",
+   "fieldtype": "Attach",
+   "label": "PCR Acknowledgement",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank_details_submitted",
+   "fieldtype": "Check",
+   "label": "Bank Details Submitted",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "customer_bank_confirmation",
+   "fieldtype": "Attach",
+   "label": "Bank Confirmation",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "days_since_pcr",
+   "fieldtype": "Int",
+   "label": "Days Since PCR",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Claim"
+  },
+  {
+   "fieldname": "claim_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Started\nPCR Pending\nPCR Uploaded\nUnder Verification\nQuery Raised\nApproved\nDisbursed\nRejected",
+   "reqd": 1,
+   "default": "Not Started",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "expected_subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Expected Subsidy",
+   "permlevel": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "claim_submitted_on",
+   "fieldtype": "Date",
+   "label": "Claim Submitted",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "query_description",
+   "fieldtype": "Small Text",
+   "label": "Query",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Disbursement"
+  },
+  {
+   "fieldname": "disbursed_on",
+   "fieldtype": "Date",
+   "label": "Disbursed On",
+   "allow_on_submit": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disbursed_amount",
+   "fieldtype": "Currency",
+   "label": "Disbursed Amount",
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "disbursement_reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "disbursement_proof",
+   "fieldtype": "Attach",
+   "label": "Proof",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "variance_amount",
+   "fieldtype": "Currency",
+   "label": "Variance",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "variance_reason",
+   "fieldtype": "Small Text",
+   "label": "Variance Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Recovery"
+  },
+  {
+   "fieldname": "recovery_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Only where the company quoted net of subsidy and has funded the gap until the customer's DBT lands.</p>"
+  },
+  {
+   "fieldname": "amount_recoverable_from_customer",
+   "fieldtype": "Currency",
+   "label": "Recoverable",
+   "permlevel": 1,
+   "depends_on": "eval:doc.claim_model=='Company Funded Gap'"
+  },
+  {
+   "fieldname": "amount_recovered",
+   "fieldtype": "Currency",
+   "label": "Recovered",
+   "allow_on_submit": 1,
+   "permlevel": 1,
+   "depends_on": "eval:doc.claim_model=='Company Funded Gap'"
+  },
+  {
+   "fieldname": "recovery_date",
+   "fieldtype": "Date",
+   "label": "Recovery Date",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.claim_model=='Company Funded Gap'"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recovery_payment_entry",
+   "fieldtype": "Link",
+   "label": "Payment Entry",
+   "options": "Payment Entry",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.claim_model=='Company Funded Gap'"
+  },
+  {
+   "fieldname": "outstanding_recovery",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "recovery_status",
+   "fieldtype": "Select",
+   "label": "Recovery Status",
+   "options": "Not Applicable\nPending\nPartially Recovered\nFully Recovered\nWritten Off",
+   "default": "Not Applicable",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Subsidy Claim",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Operations Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Documentation Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Site Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Liaison Officer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar QC Inspector",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Technician",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Operations Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "autoname": "Prompt",
+ "search_fields": "solar_installation,claim_status",
+ "description": "The subsidy is a Direct Benefit Transfer from the government to the CUSTOMER after commissioning. It is never the company's revenue. Track both claim models; post nothing - Phase 3 owns the ledger."
+}

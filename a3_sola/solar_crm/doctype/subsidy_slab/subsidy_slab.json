@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "capacity_from_kw",
+  "capacity_to_kw",
+  "calculation_basis",
+  "subsidy_amount",
+  "max_subsidy_cap"
+ ],
+ "fields": [
+  {
+   "fieldname": "capacity_from_kw",
+   "fieldtype": "Float",
+   "label": "From (kW)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "capacity_to_kw",
+   "fieldtype": "Float",
+   "label": "To (kW)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "calculation_basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "options": "Fixed\nPer kW",
+   "reqd": 1,
+   "default": "Fixed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "max_subsidy_cap",
+   "fieldtype": "Currency",
+   "label": "Cap",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Subsidy Slab",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

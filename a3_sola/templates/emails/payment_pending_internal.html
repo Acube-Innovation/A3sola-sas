@@ -1,0 +1,16 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;"><strong>{{ doc.organisation_name }} is ready to pay</strong></p>
+<p style="margin:0 0 20px;">
+	They reached the payment step and online payment is not live yet, so they have been
+	told a person will contact them. Please do that today.
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:14px;">
+	<tr><td style="padding:6px 0;color:#6b7383;">Contact</td><td style="padding:6px 0;">{{ doc.full_name }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Email</td><td style="padding:6px 0;">{{ doc.work_email }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Phone</td><td style="padding:6px 0;">{{ doc.phone }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Plan</td><td style="padding:6px 0;">{{ doc.plan_code }} &middot; {{ doc.billing_cycle }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Value</td><td style="padding:6px 0;">{{ frappe.utils.fmt_money(doc.total_amount, currency=doc.currency) }}</td></tr>
+</table>
+<p style="margin:24px 0 0;font-size:13px;color:#6b7383;">Reference {{ doc.name }}.</p>
+{% endblock %}

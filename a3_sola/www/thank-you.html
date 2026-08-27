@@ -1,0 +1,38 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<span class="a3s-card__icon" aria-hidden="true">👋</span>
+			<h1 style="font-size:1.7rem">Thanks — we have your request</h1>
+			<p class="a3s-card__text">
+				Someone from our team will be in touch within one working day to arrange a
+				demo on your own numbers.
+			</p>
+
+			<div style="text-align:left;margin-top:2rem">
+				<h2 style="font-size:1.05rem">What happens next</h2>
+				<ol class="a3s-muted" style="padding-left:1.25rem;margin-top:.75rem">
+					<li style="margin-bottom:.5rem">We call to understand how you work today.</li>
+					<li style="margin-bottom:.5rem">A half-hour walkthrough of a real job, enquiry to commissioning.</li>
+					<li>An honest recommendation about which plan fits, or whether we fit at all.</li>
+				</ol>
+			</div>
+
+			{%- if platform_settings.demo_scheduler_url %}
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_settings.demo_scheduler_url }}"
+				rel="noopener" style="margin-top:1.5rem">Pick a time now</a>
+			{%- endif %}
+			<p class="a3s-small a3s-muted" style="margin-top:1.5rem">
+				In a hurry?
+				{%- if platform_settings.sales_phone %}
+				Call <a href="tel:{{ platform_settings.sales_phone | replace(' ', '') }}">{{ platform_settings.sales_phone }}</a>.
+				{%- elif platform_settings.sales_email %}
+				Email <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a>.
+				{%- endif %}
+			</p>
+		</div>
+	</div>
+</section>
+{% endblock %}

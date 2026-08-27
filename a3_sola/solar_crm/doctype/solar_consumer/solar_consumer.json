@@ -1,0 +1,577 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "consumer_name",
+  "customer",
+  "contact_person",
+  "mobile_no",
+  "email_id",
+  "alternate_contact_no",
+  "cb_2",
+  "consumer_category",
+  "company",
+  "status",
+  "lead",
+  "sb_3",
+  "discom",
+  "discom_section",
+  "electrical_division",
+  "electrical_subdivision",
+  "consumer_number",
+  "cb_4",
+  "tariff_category",
+  "connection_type",
+  "connected_load_watts",
+  "sanctioned_load_kw",
+  "connection_date",
+  "sb_5",
+  "avg_consumption_units",
+  "avg_bill_amount",
+  "cb_6",
+  "billing_frequency",
+  "annual_consumption_units",
+  "sb_7",
+  "installation_address",
+  "roof_type",
+  "approx_roof_area_sqft",
+  "cb_8",
+  "latitude",
+  "longitude",
+  "sb_9",
+  "local_body_type",
+  "local_body_name",
+  "village",
+  "cb_10",
+  "survey_number",
+  "gps_coordinates",
+  "sb_11",
+  "bank_details_note",
+  "bank_account_holder_name",
+  "bank_account_no",
+  "bank_name",
+  "cb_13",
+  "bank_branch",
+  "bank_ifsc_code",
+  "cancelled_cheque",
+  "bank_details_verified",
+  "bank_details_verified_by",
+  "sb_14",
+  "has_availed_prior_subsidy",
+  "prior_scheme_name",
+  "prior_subsidy_year",
+  "cb_15",
+  "prior_capacity_kw",
+  "prior_subsidy_notes",
+  "sb_16",
+  "discom_id",
+  "national_portal_consumer_id",
+  "cb_17",
+  "spin"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Consumer Details"
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "label": "Consumer Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "alternate_contact_no",
+   "fieldtype": "Data",
+   "label": "Alternate Contact"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consumer_category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Residential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
+   "reqd": 1,
+   "default": "Residential",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "New\nSurveyed\nDesigned\nProposed\nQuoted\nConverted\nDropped",
+   "read_only": 1,
+   "default": "New",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Connection Details"
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "discom_section",
+   "fieldtype": "Link",
+   "label": "DISCOM Section",
+   "options": "DISCOM Section",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "electrical_division",
+   "fieldtype": "Data",
+   "label": "Electrical Division",
+   "fetch_from": "discom_section.electrical_division",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electrical_subdivision",
+   "fieldtype": "Data",
+   "label": "Electrical Sub-Division",
+   "fetch_from": "discom_section.electrical_subdivision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tariff_category",
+   "fieldtype": "Data",
+   "label": "Tariff Category",
+   "description": "As printed on the DISCOM's forms, e.g. LT-1/Single."
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "default": "Single Phase",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "connected_load_watts",
+   "fieldtype": "Float",
+   "label": "Connected Load (W)",
+   "precision": 2,
+   "description": "In watts - the DISCOM inspection checklist asks for watts, not kW."
+  },
+  {
+   "fieldname": "sanctioned_load_kw",
+   "fieldtype": "Float",
+   "label": "Sanctioned Load (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "connection_date",
+   "fieldtype": "Date",
+   "label": "Connection Date"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Consumption"
+  },
+  {
+   "fieldname": "avg_consumption_units",
+   "fieldtype": "Float",
+   "label": "Average Units per Billing Cycle",
+   "precision": 2
+  },
+  {
+   "fieldname": "avg_bill_amount",
+   "fieldtype": "Currency",
+   "label": "Average Bill"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "billing_frequency",
+   "fieldtype": "Select",
+   "label": "Billing Frequency",
+   "options": "Monthly\nBimonthly",
+   "default": "Bimonthly"
+  },
+  {
+   "fieldname": "annual_consumption_units",
+   "fieldtype": "Float",
+   "label": "Annual Consumption (units)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Site"
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Link",
+   "label": "Installation Address",
+   "options": "Address"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type"
+  },
+  {
+   "fieldname": "approx_roof_area_sqft",
+   "fieldtype": "Float",
+   "label": "Approx Roof Area (sq ft)",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "precision": 6
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "precision": 6
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Statutory Location"
+  },
+  {
+   "fieldname": "local_body_type",
+   "fieldtype": "Select",
+   "label": "Local Body Type",
+   "options": "Corporation\nMunicipality\nPanchayat"
+  },
+  {
+   "fieldname": "local_body_name",
+   "fieldtype": "Data",
+   "label": "Local Body"
+  },
+  {
+   "fieldname": "village",
+   "fieldtype": "Data",
+   "label": "Village"
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "survey_number",
+   "fieldtype": "Data",
+   "label": "Survey Number"
+  },
+  {
+   "fieldname": "gps_coordinates",
+   "fieldtype": "Data",
+   "label": "GPS Coordinates",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "DBT & Refund Bank Details"
+  },
+  {
+   "fieldname": "bank_details_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The subsidy is a direct transfer to the consumer and 80% of the registration fee is refunded to a consumer account. Neither can land without these, and both print on the refund request and the inspection checklist.</p>"
+  },
+  {
+   "fieldname": "bank_account_holder_name",
+   "fieldtype": "Data",
+   "label": "Account Holder Name",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "label": "Account Number",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_ifsc_code",
+   "fieldtype": "Data",
+   "label": "IFSC Code",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cancelled_cheque",
+   "fieldtype": "Attach",
+   "label": "Cancelled Cheque",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_details_verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_details_verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Subsidy History"
+  },
+  {
+   "fieldname": "has_availed_prior_subsidy",
+   "fieldtype": "Check",
+   "label": "Prior Central Subsidy Availed"
+  },
+  {
+   "fieldname": "prior_scheme_name",
+   "fieldtype": "Data",
+   "label": "Prior Scheme",
+   "depends_on": "eval:doc.has_availed_prior_subsidy"
+  },
+  {
+   "fieldname": "prior_subsidy_year",
+   "fieldtype": "Int",
+   "label": "Prior Year",
+   "depends_on": "eval:doc.has_availed_prior_subsidy"
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "prior_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Prior Capacity (kW)",
+   "precision": 3,
+   "depends_on": "eval:doc.has_availed_prior_subsidy"
+  },
+  {
+   "fieldname": "prior_subsidy_notes",
+   "fieldtype": "Small Text",
+   "label": "Notes",
+   "depends_on": "eval:doc.has_availed_prior_subsidy"
+  },
+  {
+   "fieldname": "sb_16",
+   "fieldtype": "Section Break",
+   "label": "External Identifiers"
+  },
+  {
+   "fieldname": "discom_id",
+   "fieldtype": "Data",
+   "label": "DISCOM ID",
+   "description": "The DISCOM code the national portal uses."
+  },
+  {
+   "fieldname": "national_portal_consumer_id",
+   "fieldtype": "Data",
+   "label": "National Portal Consumer ID"
+  },
+  {
+   "fieldname": "cb_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spin",
+   "fieldtype": "Data",
+   "label": "Solar Plant Identification Number (SPIN)",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Consumer",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "Prompt",
+ "title_field": "consumer_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "consumer_name,consumer_number,mobile_no",
+ "description": "The consumer is the electricity connection, not the person - one Customer may hold several connections."
+}
