@@ -15,6 +15,17 @@ dependencies = [
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
+# Which Frappe and ERPNext this app runs on. Frappe Cloud reads this to decide whether it
+# can build the app against a given bench, and refuses the app outright when it is absent.
+#
+# Pinned to the v15 line rather than left open: this app leans on ERPNext v15 behaviour in
+# places that would not survive a major bump - the Company chart-of-accounts build, the
+# permission query hooks, and the website route resolution the public site depends on. A
+# v16 bench needs a deliberate port, not an automatic install.
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"
+erpnext = ">=15.0.0,<16.0.0"
+
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
 # package_name = "~=1.1.0"
