@@ -61,6 +61,7 @@ STEPS = (
 	("proposal", "Solar Proposal", lambda ctx: _proposal(ctx["company"], ctx["design_estimate"])),
 	("installation", "Solar Installation", lambda ctx: _installation(ctx["company"], ctx["design_estimate"])),
 	("signup", "Subscription Signup", lambda ctx: _signup()),
+	("demo_request", "Demo Request", lambda ctx: _demo_request()),
 	("subscription", "Platform Subscription", lambda ctx: _subscription()),
 	("tenant", "Tenant", lambda ctx: _tenant(ctx["company"], ctx["subscription"])),
 )
@@ -80,6 +81,7 @@ def install(company=None):
 	fails, and this one is built to be pointed at somebody else's database.
 	"""
 	frappe.flags.in_demo = True
+	frappe.flags.a3s_demo_limit = 1
 	made, failed = {}, {}
 	try:
 		context = {"company": company or _company()}
@@ -103,17 +105,103 @@ def install(company=None):
 			else:
 				context[key] = None
 				failed[key] = "the record was not there afterwards"
+		# The spine above is one record of each thing a person creates by hand. The rest of
+		# the app's documents are produced by *doing the work* - advancing an installation
+		# through its stages, commissioning it, taking a payment, provisioning a tenant -
+		# so they are built by driving those flows rather than by fabricating rows. The
+		# generators are already tested and already idempotent; run at a limit of one they
+		# produce exactly one of each.
+		for label, build in (
+			("operations", _drive_operations),
+			("projects", _drive_projects),
+			("payments", _drive_payments),
+			("provisioning", _drive_provisioning),
+		):
+			try:
+				build(context["company"])
+				frappe.db.commit()
+			except Exception as exception:
+				frappe.db.rollback()
+				failed[label] = str(exception)[:200]
 	finally:
 		frappe.flags.in_demo = False
+		frappe.flags.a3s_demo_limit = None
 
 	_log("created " + ", ".join(f"{k}={v}" for k, v in made.items()))
 	if failed:
 		_log("NOT created: " + ", ".join(f"{k} ({why})" for k, why in failed.items()))
+	coverage = report_coverage(made.get("company"))
+	_log(f"documents with at least one record: {coverage['covered']} of {coverage['total']}")
+	if coverage["missing"]:
+		_log("no record yet for: " + ", ".join(coverage["missing"]))
 	_log(f"sign in at /app as  {USER_EMAIL}  /  {USER_PASSWORD}")
 	return {
 		"created": made,
 		"failed": failed,
+		"coverage": coverage,
 		"login": {"user": USER_EMAIL, "password": USER_PASSWORD},
+	}
+
+
+# ------------------------------------------------------- doing the actual work
+def _drive_operations(company):
+	"""One installation taken through its stages, which is what creates the rest.
+
+	A work order, a portal application, a fee payment, a subsidy claim, a snag, a loan, a
+	net-metering agreement and a commissioning report are all consequences of moving a job
+	forward. Fabricating them as rows would produce records that exist but do not hang
+	together - a commissioning report for a job that was never installed.
+	"""
+	from a3_sola.demo import generate_operations_demo
+
+	generate_operations_demo.run(company)
+
+
+def _drive_projects(company):
+	"""Commissioning creates the project, the billing plan and the O&M contract."""
+	from a3_sola.demo import generate_projects_demo
+
+	generate_projects_demo.run(company)
+
+
+def _drive_payments(company):
+	"""A subscription with its order, transaction, invoice, mandate and settlement."""
+	from a3_sola.demo import generate_payments_demo
+
+	generate_payments_demo.run(company)
+
+
+def _drive_provisioning(company):
+	"""A tenant with its provisioning job, invitation and isolation results."""
+	from a3_sola.demo import generate_provisioning_demo
+
+	generate_provisioning_demo.run(company)
+
+
+def report_coverage(company=None):
+	"""Which of the app's documents have at least one record, and which do not.
+
+	Reported rather than asserted. Some documents only exist once something has genuinely
+	happened - a refund needs a payment to reverse, a warranty claim needs a failed
+	component - and a starter dataset that faked those would be teaching the wrong shape.
+	Saying plainly what is empty is more useful than filling it with fiction.
+	"""
+	modules = ("Solar CRM", "Solar Operations", "Solar Projects", "Platform")
+	covered, missing = [], []
+	for doctype in frappe.get_all(
+		"DocType", filters={"module": ["in", modules]}, pluck="name"
+	):
+		meta = frappe.get_meta(doctype)
+		if meta.istable or meta.issingle:
+			continue
+		if frappe.db.count(doctype):
+			covered.append(doctype)
+		else:
+			missing.append(doctype)
+	return {
+		"total": len(covered) + len(missing),
+		"covered": len(covered),
+		"missing": sorted(missing),
 	}
 
 
@@ -474,6 +562,33 @@ def _signup():
 	return doc.name
 
 
+def _demo_request():
+	"""The other half of the funnel: somebody who wants a conversation, not a card."""
+	email = "starter.demo@example.com"
+	existing = frappe.db.get_value("Demo Request", {"work_email": email}, "name")
+	if existing:
+		return existing
+	doc = frappe.get_doc(
+		{
+			"doctype": "Demo Request",
+			"full_name": "Starter Prospect",
+			"work_email": email,
+			"phone": "9847000103",
+			"organisation_name": f"{TAG} Prospect Solar",
+			"city": "Thrissur",
+			"state": "Kerala",
+			"country": "India",
+			"message": "We install about 20 rooftop systems a month and want to see the "
+			           "subsidy tracking and the KSEB paperwork before we commit.",
+			"status": "New",
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_mandatory = True
+	doc.insert(ignore_permissions=True)
+	return doc.name
+
+
 # ------------------------------------------------------------------- phase 5
 def _subscription():
 	organisation = f"{TAG} Solar EPC"
@@ -606,6 +721,7 @@ def teardown():
 		("Tenant", {"tenant_name": f"{TAG} Solar EPC"}),
 		("Platform Subscription", {"organisation_name": f"{TAG} Solar EPC"}),
 		("Subscription Signup", {"work_email": "starter.signup@example.com"}),
+		("Demo Request", {"work_email": "starter.demo@example.com"}),
 		("Solar Installation", {"company": COMPANY}),
 		("Solar Proposal", {"company": COMPANY}),
 		("Subsidy Eligibility Check", {"company": COMPANY}),
