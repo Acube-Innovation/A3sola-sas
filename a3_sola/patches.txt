@@ -12,6 +12,7 @@ a3_sola.patches.v1_0.move_platform_site_under_base_route
 # The public pages moved under www/a3sola/, so the site root is free for the desk.
 a3_sola.patches.v1_0.serve_desk_at_site_root
 
-# One of everything, for a fresh database. Opt-in: does nothing unless the site config
-# says `a3s_seed_starter_data`. See the patch's docstring.
-a3_sola.patches.v1_0.seed_starter_dataset
+# A test company, a user who can sign in as it, and one record of every document.
+# Renamed from `seed_starter_dataset`: that one is already in the Patch Log on deployed
+# sites, and Frappe never re-runs a logged patch - so editing it would have done nothing.
+a3_sola.patches.v1_0.install_starter_dataset
