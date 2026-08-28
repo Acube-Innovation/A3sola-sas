@@ -7,12 +7,13 @@ One row per Solar Consumer with the stage it has reached and how long it has bee
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate, today
+from a3_sola.api.permissions import resolve_report_company
 
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
-	if not filters.company:
-		filters.company = frappe.defaults.get_user_default("Company")
+	# Not simply what the caller asked for - see permissions.resolve_report_company.
+	filters.company = resolve_report_company(filters.company)
 	return get_columns(filters), get_data(filters)
 
 

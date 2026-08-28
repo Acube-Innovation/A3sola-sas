@@ -1,0 +1,19 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello,</p>
+<p style="margin:0 0 20px;">
+	Your {{ product_name }} subscription is due for renewal. This one needs you to
+	authorise it rather than being collected automatically.
+</p>
+<p style="margin:0 0 20px;padding:14px 16px;background:#f7f9fc;border-radius:12px;font-size:14px;">
+	{{ route_reason }}
+</p>
+<p style="margin:0 0 24px;">
+	<a href="{{ link_url }}" style="display:inline-block;background:#f7941e;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:9999px;font-weight:600;font-size:15px;">Renew {{ amount }}</a>
+</p>
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	Your service continues uninterrupted while you complete this. If you would rather not
+	renew, no action is needed{% if sales_email %} - though we would appreciate knowing why, at
+	<a href="mailto:{{ sales_email }}" style="color:#6b7383;">{{ sales_email }}</a>{% endif %}.
+</p>
+{% endblock %}

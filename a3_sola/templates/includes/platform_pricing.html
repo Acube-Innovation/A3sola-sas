@@ -74,7 +74,7 @@
 			data-analytics="plan_selected" data-analytics-source="pricing">{{ plan.cta_text or "Talk to us" }}</a>
 		{%- else %}
 		<a class="a3s-btn {% if plan.is_popular %}a3s-btn--primary{% else %}a3s-btn--secondary{% endif %} a3s-btn--block a3s-plan__cta"
-			href="/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
+			href="{{ platform_base }}/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
 			data-cta-plan="{{ plan.plan_code }}"
 			data-analytics="plan_selected" data-analytics-source="pricing">{{ plan.cta_text or "Get started" }}</a>
 		{%- endif %}
@@ -125,7 +125,7 @@
 					<a class="a3s-btn a3s-btn--secondary" href="{{ home_prefix }}#contact">Talk to us</a>
 					{%- else %}
 					<a class="a3s-btn a3s-btn--secondary"
-						href="/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
+						href="{{ platform_base }}/get-started?package={{ plan.plan_code }}&amp;cycle=monthly"
 						data-cta-plan="{{ plan.plan_code }}">Choose</a>
 					{%- endif %}
 				</td>

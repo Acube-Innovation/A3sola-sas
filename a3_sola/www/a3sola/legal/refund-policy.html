@@ -1,0 +1,35 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-hero a3s-detail-hero">
+	<div class="a3s-container">
+		<nav class="a3s-crumbs" aria-label="Breadcrumb">
+			<a href="{{ platform_base }}">Home</a> <span aria-hidden="true">/</span>
+			<span aria-current="page">{{ legal_title }}</span>
+		</nav>
+		<h1 style="font-size:clamp(2rem,4vw,2.8rem)">{{ legal_title }}</h1>
+		<p class="a3s-small a3s-muted">Last updated {{ frappe.format(legal_updated, "Date") }}</p>
+	</div>
+</section>
+
+<section class="a3s-section" style="padding-top:2rem">
+	<div class="a3s-container">
+		<div class="a3s-legal a3s-prose">
+			{%- if legal_is_draft %}
+			<div class="a3s-draft">
+				<strong>Draft for legal review.</strong>
+				This text is a first draft and has not yet been reviewed by a lawyer. It does
+				not yet form a binding agreement. Please contact us with any question about it
+				in the meantime.
+			</div>
+			{%- elif legal_reviewed_by %}
+			<p class="a3s-small a3s-muted">
+				Reviewed by {{ legal_reviewed_by }}{% if legal_reviewed_on %} on
+				{{ frappe.format(legal_reviewed_on, "Date") }}{% endif %}.
+			</p>
+			{%- endif %}
+			{{ legal_body }}
+		</div>
+	</div>
+</section>
+{% endblock %}

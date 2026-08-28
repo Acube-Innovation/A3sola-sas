@@ -1,12 +1,12 @@
 {
  "charts": [],
- "content": "[{\"id\": \"prj-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Projects</span>\", \"col\": 12}}, {\"id\": \"prj-s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project\", \"col\": 3}}, {\"id\": \"prj-s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Profitability\", \"col\": 3}}, {\"id\": \"prj-s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Billing\", \"col\": 3}}, {\"id\": \"prj-s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"SLA\", \"col\": 3}}, {\"id\": \"prj-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Delivery & Costing\", \"col\": 4}}, {\"id\": \"prj-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Billing & Recovery\", \"col\": 4}}, {\"id\": \"prj-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Operations & Maintenance\", \"col\": 4}}, {\"id\": \"prj-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"O&M Reports\", \"col\": 4}}, {\"id\": \"prj-c5\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance & Renewal\", \"col\": 4}}]",
+ "content": "[{\"id\": \"sp-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Projects</span>\", \"col\": 12}}, {\"id\": \"sp-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project\", \"col\": 3}}, {\"id\": \"sp-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Billing Plan\", \"col\": 3}}, {\"id\": \"sp-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Service Ticket\", \"col\": 3}}, {\"id\": \"sp-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project Profitability\", \"col\": 3}}, {\"id\": \"sp-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Billing vs Collection\", \"col\": 3}}, {\"id\": \"sp-7\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>At a glance</span>\", \"col\": 12}}, {\"id\": \"sp-8\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Projects In Delivery\", \"col\": 3}}, {\"id\": \"sp-9\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Contract Value In Hand\", \"col\": 3}}, {\"id\": \"sp-10\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Unbilled Balance\", \"col\": 3}}, {\"id\": \"sp-11\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Outstanding From Customers\", \"col\": 3}}, {\"id\": \"sp-12\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Statutory Reimbursement Outstanding\", \"col\": 3}}, {\"id\": \"sp-13\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Live O&M Contracts\", \"col\": 3}}, {\"id\": \"sp-14\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"kWp Under Maintenance\", \"col\": 3}}, {\"id\": \"sp-15\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Open Service Tickets\", \"col\": 3}}, {\"id\": \"sp-16\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Escalated Tickets\", \"col\": 3}}, {\"id\": \"sp-17\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Performance Obligation Breached\", \"col\": 3}}, {\"id\": \"sp-18\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"O&M Provision Balance\", \"col\": 3}}, {\"id\": \"sp-19\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Warranty Claims Open\", \"col\": 3}}, {\"id\": \"sp-20\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Trends</span>\", \"col\": 12}}, {\"id\": \"sp-21\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Project Margin by Capacity Band\", \"col\": 6}}, {\"id\": \"sp-22\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Billing\", \"col\": 6}}, {\"id\": \"sp-23\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Service Tickets by Category\", \"col\": 6}}, {\"id\": \"sp-24\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Service Tickets by Root Cause\", \"col\": 6}}, {\"id\": \"sp-25\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Performance Obligation Status\", \"col\": 6}}, {\"id\": \"sp-26\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Warranty Claims by Component\", \"col\": 6}}, {\"id\": \"sp-27\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Everything in this module</span>\", \"col\": 12}}, {\"id\": \"sp-28\", \"type\": \"card\", \"data\": {\"card_name\": \"Delivery and costing\", \"col\": 4}}, {\"id\": \"sp-29\", \"type\": \"card\", \"data\": {\"card_name\": \"Billing and recovery\", \"col\": 4}}, {\"id\": \"sp-30\", \"type\": \"card\", \"data\": {\"card_name\": \"O&M contracts\", \"col\": 4}}, {\"id\": \"sp-31\", \"type\": \"card\", \"data\": {\"card_name\": \"Service and warranty\", \"col\": 4}}, {\"id\": \"sp-32\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"sp-33\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuration\", \"col\": 4}}]",
  "creation": "2026-08-25 13:00:00.000000",
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "money-coins-1",
+ "icon": "project",
  "idx": 0,
  "is_hidden": 0,
  "label": "Solar Projects",
@@ -14,10 +14,11 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Delivery & Costing",
-   "link_count": 5,
+   "label": "Delivery and costing",
+   "link_count": 2,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "project"
   },
   {
    "dependencies": "",
@@ -42,45 +43,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Cost Category Config",
-   "link_count": 0,
-   "link_to": "Cost Category Config",
-   "link_type": "DocType",
+   "label": "Billing and recovery",
+   "link_count": 2,
    "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Project Profitability",
-   "link_count": 0,
-   "link_to": "Project Profitability",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Cost Overrun Analysis",
-   "link_count": 0,
-   "link_to": "Cost Overrun Analysis",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Billing & Recovery",
-   "link_count": 7,
-   "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "money-coins-1"
   },
   {
    "dependencies": "",
@@ -97,17 +66,6 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Billing Milestone Template",
-   "link_count": 0,
-   "link_to": "Billing Milestone Template",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Statutory Fee Recovery",
    "link_count": 0,
    "link_to": "Statutory Fee Recovery",
@@ -116,56 +74,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Solar GST Valuation Rule",
-   "link_count": 0,
-   "link_to": "Solar GST Valuation Rule",
-   "link_type": "DocType",
+   "label": "O&M contracts",
+   "link_count": 3,
    "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Billing vs Collection",
-   "link_count": 0,
-   "link_to": "Billing vs Collection",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Subsidy Receivable Ageing",
-   "link_count": 0,
-   "link_to": "Subsidy Receivable Ageing",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Statutory Recovery Register",
-   "link_count": 0,
-   "link_to": "Statutory Recovery Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Operations & Maintenance",
-   "link_count": 6,
-   "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "tool"
   },
   {
    "dependencies": "",
@@ -188,6 +103,26 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar OM Coverage Item",
+   "link_count": 0,
+   "link_to": "Solar OM Coverage Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service and warranty",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "support"
   },
   {
    "dependencies": "",
@@ -223,23 +158,68 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Solar OM Coverage Item",
+   "label": "Reports",
+   "link_count": 15,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "chart"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Project Profitability",
    "link_count": 0,
-   "link_to": "Solar OM Coverage Item",
-   "link_type": "DocType",
+   "link_to": "Project Profitability",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   },
   {
+   "dependencies": "",
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "O&M Reports",
-   "link_count": 7,
+   "is_query_report": 1,
+   "label": "Cost Overrun Analysis",
+   "link_count": 0,
+   "link_to": "Cost Overrun Analysis",
+   "link_type": "Report",
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Billing vs Collection",
+   "link_count": 0,
+   "link_to": "Billing vs Collection",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Subsidy Receivable Ageing",
+   "link_count": 0,
+   "link_to": "Subsidy Receivable Ageing",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Statutory Recovery Register",
+   "link_count": 0,
+   "link_to": "Statutory Recovery Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "dependencies": "",
@@ -319,14 +299,6 @@
    "type": "Link"
   },
   {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Compliance & Renewal",
-   "link_count": 3,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 1,
@@ -351,6 +323,59 @@
   {
    "dependencies": "",
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "System Expansion Candidates",
+   "link_count": 0,
+   "link_to": "System Expansion Candidates",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuration",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "setting"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cost Category Config",
+   "link_count": 0,
+   "link_to": "Cost Category Config",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing Milestone Template",
+   "link_count": 0,
+   "link_to": "Billing Milestone Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar GST Valuation Rule",
+   "link_count": 0,
+   "link_to": "Solar GST Valuation Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
    "is_query_report": 0,
    "label": "A3 Sola Settings",
    "link_count": 0,
@@ -360,7 +385,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-08-28 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Projects",
  "name": "Solar Projects",
@@ -373,33 +398,44 @@
  "sequence_id": 33.0,
  "shortcuts": [
   {
-   "color": "Grey",
-   "doc_view": "List",
+   "color": "green",
    "label": "Project",
    "link_to": "Project",
-   "type": "DocType"
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "project"
   },
   {
-   "color": "Green",
-   "label": "Profitability",
+   "color": "green",
+   "label": "Solar Billing Plan",
+   "link_to": "Solar Billing Plan",
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "money-coins-1"
+  },
+  {
+   "color": "green",
+   "label": "Service Ticket",
+   "link_to": "Service Ticket",
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "support"
+  },
+  {
+   "color": "green",
+   "label": "Project Profitability",
    "link_to": "Project Profitability",
    "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   },
   {
-   "color": "Orange",
-   "label": "Billing",
+   "color": "green",
+   "label": "Billing vs Collection",
    "link_to": "Billing vs Collection",
    "type": "Report",
-   "is_query_report": 1
-  },
-  {
-   "color": "Red",
-   "label": "SLA",
-   "link_to": "Service Ticket SLA Compliance",
-   "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   }
  ],
- "title": "Solar Projects"
+ "title": "Solar Projects",
+ "indicator_color": "green"
 }

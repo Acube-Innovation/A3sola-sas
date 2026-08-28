@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sequence",
+  "seed_type",
+  "target_doctype",
+  "module",
+  "payload",
+  "is_mandatory",
+  "skip_if_exists",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "#",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "seed_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Company Setting\nCost Center\nWarehouse\nItem Group\nMaster Record\nFixture Set\nNaming Series\nCustom Script",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Link",
+   "label": "Target DocType",
+   "options": "DocType",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "module",
+   "fieldtype": "Select",
+   "label": "Module",
+   "options": "Solar CRM\nSolar Operations\nSolar Projects\nCore",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Code",
+   "label": "Payload (JSON)",
+   "options": "JSON",
+   "description": "Tokens {{tenant_code}}, {{company}}, {{company_abbr}}, {{tenant_name}}, {{state}}, {{country}}, {{currency}} are substituted. Nothing else is evaluated."
+  },
+  {
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "skip_if_exists",
+   "fieldtype": "Check",
+   "label": "Skip if exists",
+   "default": "1"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Blueprint Seed Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

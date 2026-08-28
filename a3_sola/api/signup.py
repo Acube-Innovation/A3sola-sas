@@ -255,7 +255,7 @@ def submit_signup(payload):
 		"ok": True,
 		"message": _(NEUTRAL_SIGNUP_MESSAGE),
 		"reference": doc.name,
-		"next": "/get-started/check-email?ref=" + doc.name,
+		"next": platform.route("get-started/check-email") + "?ref=" + doc.name,
 	}
 
 
@@ -270,7 +270,9 @@ def _issue_verification(doc, resend=False):
 	doc.flags.ignore_permissions = True
 	doc.save(ignore_permissions=True)
 
-	link = get_url(f"/verify-email?token={token}")
+	# Same reason as above: a resend can be reached from a GET-rendered page.
+	frappe.flags.commit = True
+	link = get_url(f"{platform.route('verify-email')}?token={token}")
 	try:
 		frappe.sendmail(
 			recipients=[doc.work_email],
@@ -333,6 +335,8 @@ def verify_email(token):
 	if doc.verification_attempts > max_attempts:
 		doc.flags.ignore_permissions = True
 		doc.save(ignore_permissions=True)
+		# The count has to survive, or the cap never bites on repeated GETs.
+		frappe.flags.commit = True
 		frappe.throw(_(GENERIC_TOKEN_ERROR), title=_("Link Not Valid"))
 
 	expired = doc.token_expires_on and now_datetime() > frappe.utils.get_datetime(
@@ -341,6 +345,7 @@ def verify_email(token):
 	if not _token_matches(doc.verification_token, token) or expired or doc.is_email_verified:
 		doc.flags.ignore_permissions = True
 		doc.save(ignore_permissions=True)
+		frappe.flags.commit = True
 		frappe.throw(_(GENERIC_TOKEN_ERROR), title=_("Link Not Valid"))
 
 	doc.is_email_verified = 1
@@ -352,8 +357,13 @@ def verify_email(token):
 	doc.flags.ignore_permissions = True
 	doc.save(ignore_permissions=True)
 
+	# Frappe commits only on POST, PUT and DELETE. A verification link in an email is a
+	# GET, so without this the verification is written and then rolled back - the customer
+	# sees "confirmed" and the record still says otherwise.
+	frappe.flags.commit = True
+
 	_send_verified_confirmation(doc)
-	return {"ok": True, "next": f"/get-started/summary?ref={doc.name}&t={_summary_key(doc)}"}
+	return {"ok": True, "next": f"{platform.route('get-started/summary')}?ref={doc.name}&t={_summary_key(doc)}"}
 
 
 def _summary_key(doc):
@@ -379,7 +389,7 @@ def _send_verified_confirmation(doc):
 			message=frappe.render_template(
 				"a3_sola/templates/emails/verified_confirmation.html",
 				platform.email_context({"doc": doc, "summary_url": get_url(
-					f"/get-started/summary?ref={doc.name}&t={_summary_key(doc)}"
+					f"{platform.route('get-started/summary')}?ref={doc.name}&t={_summary_key(doc)}"
 				)}),
 			),
 			reference_doctype=doc.doctype,
@@ -568,50 +578,47 @@ def submit_demo_request(payload):
 	return {
 		"ok": True,
 		"message": _("Thanks - we will be in touch shortly."),
-		"next": "/thank-you",
+		"next": platform.route("thank-you"),
 	}
 
 
-# ------------------------------------------------------------ Phase 5 contract
+# ------------------------------------------------------------ payment handoff
 def initiate_payment(signup_reference, token):
-	"""PHASE 5 IMPLEMENTS THIS. It is not implemented here on purpose.
+	"""Implemented in Phase 5. Delegates to `a3_sola.api.payments`.
 
-	Contract:
-
-	* Resolve the signup with `_authorised_signup(signup_reference, token)` - the same
-	  proof-of-applicant check every other mutating endpoint uses.
-	* Read `base_amount`, `additional_user_amount`, `implementation_fee`, `subtotal`,
-	  `tax_amount`, `total_amount` and `currency` AS STORED on the record. Do NOT call
-	  `platform.calculate_plan_total` again: the applicant agreed to the snapshot, and the
-	  live plan may have changed since.
-	* Create the Razorpay order, write `razorpay_order_id` back.
-	* Move status Verified -> Awaiting Payment via `doc.set_status(...)`, which writes the
-	  event log entry.
-	* On the webhook: Awaiting Payment -> Paid (writing `razorpay_payment_id` and
-	  `payment_completed_on`) or -> Payment Failed with a reason.
-
-	Until then the summary page catches this and shows a "we will contact you" state, so
-	the funnel is usable end to end without payments.
+	Kept under the name Phase 4 published, so nothing that already calls it has to change.
+	The contract is unchanged: charge the pricing snapshot stored on the signup, never a
+	fresh calculation, and move the status Verified -> Awaiting Payment.
 	"""
-	raise NotImplementedError(
-		"Phase 5 implements initiate_payment against Razorpay, charging the pricing "
-		"snapshot stored on the Subscription Signup."
-	)
+	from a3_sola.api import payments
+
+	return payments.initiate_payment(signup_reference, token)
 
 
 @frappe.whitelist(allow_guest=True)
 @rate_limited("payment_ip", "signup_rate_limit_per_ip_per_hour", 10)
 def request_payment_contact(signup_reference, token):
-	"""What the summary page's Proceed button does until Phase 5 lands.
+	"""What the summary page's Proceed button does.
 
-	Tries the real thing, and where it is not there yet tells the applicant a human will
-	be in touch and tells sales to be that human.
+	Payments are live, so this creates the gateway order and hands off to checkout. The
+	fallback below is kept deliberately: if the gateway is unconfigured on a given site,
+	the applicant is told a person will be in touch rather than shown a broken button.
 	"""
 	doc = _authorised_signup(signup_reference, token)
 	try:
-		return initiate_payment(signup_reference, token)
+		initiate_payment(signup_reference, token)
+		# Payments are live: send them to checkout rather than to a holding message.
+		return {
+			"ok": True,
+			"pending": False,
+			"redirect": f"{platform.route('checkout')}?ref={doc.name}&t={_clean(token, 64)}",
+		}
 	except NotImplementedError:
 		pass
+	except frappe.ValidationError:
+		raise
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: checkout handoff {doc.name}")
 
 	recipient = get_value("sales_email")
 	if recipient:

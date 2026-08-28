@@ -15,6 +15,8 @@ from frappe.utils import add_days, add_to_date, now_datetime, today
 
 from a3_sola.api import platform
 
+from a3_sola.demo.scale import take
+
 #: Four sources with deliberately different quality, so the acquisition report has a story.
 SOURCES = (
 	("google", "cpc", "kerala-solar-epc"),
@@ -107,7 +109,7 @@ def run(company=None):
 		return
 
 	created = 0
-	for index, (status, plan_code, cycle, extra_users) in enumerate(STATUS_PLAN):
+	for index, (status, plan_code, cycle, extra_users) in enumerate(take(STATUS_PLAN)):
 		organisation, contact, designation, city, volume = ORGANISATIONS[index]
 		source, medium, campaign = SOURCES[index % len(SOURCES)]
 		# Spread the ages so the abandonment job and the ageing reports have something

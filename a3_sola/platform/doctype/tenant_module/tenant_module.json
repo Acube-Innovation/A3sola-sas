@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "module_name",
+  "is_enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "module_name",
+   "fieldtype": "Select",
+   "label": "Module",
+   "options": "Solar CRM\nSolar Operations\nSolar Projects",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Tenant Module",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

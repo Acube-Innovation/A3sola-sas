@@ -1,0 +1,250 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "event_id",
+  "event_type",
+  "gateway",
+  "cb_2",
+  "received_on",
+  "source_ip",
+  "is_replay",
+  "sb_3",
+  "signature_header",
+  "signature_verified",
+  "cb_4",
+  "payload_hash",
+  "tab_5",
+  "sb_6",
+  "processing_status",
+  "processed_on",
+  "cb_7",
+  "processing_attempts",
+  "related_doctype",
+  "related_name",
+  "sb_8",
+  "error_traceback",
+  "sb_9",
+  "raw_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Event"
+  },
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event ID",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "The gateway's own event identifier. This is the primary idempotency key."
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "label": "Event Type",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "gateway",
+   "fieldtype": "Data",
+   "label": "Gateway",
+   "default": "Razorpay"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Datetime",
+   "label": "Received On",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "Source IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_replay",
+   "fieldtype": "Check",
+   "label": "Replay",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Verification"
+  },
+  {
+   "fieldname": "signature_header",
+   "fieldtype": "Data",
+   "label": "Signature Header",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "signature_verified",
+   "fieldtype": "Check",
+   "label": "Signature Verified",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Payload Hash",
+   "read_only": 1,
+   "description": "SHA256 of the raw body. Used to spot duplicates when an event id is absent."
+  },
+  {
+   "fieldname": "tab_5",
+   "fieldtype": "Tab Break",
+   "label": "Processing"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Received\nVerified\nProcessing\nProcessed\nIgnored\nFailed\nReplayed",
+   "default": "Received",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "processed_on",
+   "fieldtype": "Datetime",
+   "label": "Processed On"
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "processing_attempts",
+   "fieldtype": "Int",
+   "label": "Attempts"
+  },
+  {
+   "fieldname": "related_doctype",
+   "fieldtype": "Data",
+   "label": "Related Type"
+  },
+  {
+   "fieldname": "related_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Related",
+   "options": "related_doctype"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Error"
+  },
+  {
+   "fieldname": "error_traceback",
+   "fieldtype": "Long Text",
+   "label": "Error"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "fieldname": "raw_payload",
+   "fieldtype": "Long Text",
+   "label": "Raw Payload",
+   "read_only": 1,
+   "permlevel": 1,
+   "description": "Redacted of card, contact and token data before storing."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Payment Webhook Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "event_type",
+ "show_title_field_in_link": 1,
+ "search_fields": "event_id,event_type"
+}

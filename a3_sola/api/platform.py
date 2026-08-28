@@ -47,19 +47,30 @@ def slugify(text):
 
 
 def resolve_route(prefix, route, title, name):
-	"""Keep an existing route, or build one from the title. Never collide."""
+	"""Keep an existing route, or build one from the title. Never collide.
+
+	Base-aware, and it has to be: these routes are stored on the record, and the record is
+	re-saved by seeding on every migrate. A derivation that did not know about the base
+	would quietly strip it back off each time - the page would work right up until the next
+	`bench migrate`, which is the worst kind of intermittent.
+	"""
+	site_base = base_route()
+	stem = f"{site_base}/{prefix}" if site_base else prefix
+
 	if route:
 		candidate = route.strip("/")
-		if not candidate.startswith(f"{prefix}/"):
-			candidate = f"{prefix}/{slugify(candidate.split('/')[-1])}"
+		if not candidate.startswith(f"{stem}/"):
+			# Whatever base it used to carry, take the slug and rebuild under the current
+			# one. `.split("/")[-1]` is the slug however deeply it was nested before.
+			candidate = f"{stem}/{slugify(candidate.split('/')[-1])}"
 	else:
-		candidate = f"{prefix}/{slugify(title)}"
+		candidate = f"{stem}/{slugify(title)}"
 
-	base, suffix = candidate, 1
+	unique, suffix = candidate, 1
 	doctype = "Platform Feature" if prefix == "features" else "Platform Solution"
 	while frappe.db.exists(doctype, {"route": candidate, "name": ["!=", name or ""]}):
 		suffix += 1
-		candidate = f"{base}-{suffix}"
+		candidate = f"{unique}-{suffix}"
 	return candidate
 
 
@@ -375,13 +386,63 @@ def _validate_additional_users(plan, additional_users):
 
 # ----------------------------------------------------------- website context
 #: Where the primary nav points. Anchors on the homepage, absolute links elsewhere.
+#: Where the public site lives, relative to the site root.
+#:
+#: This is a constant rather than a setting, and deliberately: the pages physically live in
+#: `a3_sola/www/a3sola/`, and Frappe resolves a website route from the file path. A runtime
+#: setting would let somebody change the links without moving the directory, and every link
+#: on the site would then point at a 404.
+#:
+#: To move the site: rename the `www/<base>` directory, change this constant, and run
+#: `bench migrate` so the feature and solution detail routes follow. Set it to "" and move
+#: the pages back to `www/` to serve at the root again.
+BASE_ROUTE = "a3sola"
+
+
+def base_route():
+	"""The public site's base path, with no slashes. "" means the site root."""
+	return BASE_ROUTE.strip("/ ")
+
+
+def route(path=""):
+	"""A public URL for `path`, under the site's base.
+
+	`route("pricing")` gives `/a3sola/pricing`. `route()` gives the site home.
+	"""
+	base = base_route()
+	path = str(path or "").strip("/")
+	if base and path:
+		return f"/{base}/{path}"
+	if base:
+		return f"/{base}"
+	return f"/{path}" if path else "/"
+
+
+#: Public pages, for the sitemap and for the route rules that need one. Most resolve from
+#: the file path alone and need no rule at all.
+PUBLIC_PAGES = (
+	("", "index"),
+	("pricing", "pricing"),
+	("features", "features/index"),
+	("solutions", "solutions/index"),
+	("get-started", "get-started"),
+	("verify-email", "verify-email"),
+	("thank-you", "thank-you"),
+	("checkout", "checkout"),
+	("payment-status", "payment-status"),
+	("accept-invitation", "accept-invitation"),
+	("legal/privacy", "legal/privacy"),
+	("legal/terms", "legal/terms"),
+	("legal/refund-policy", "legal/refund-policy"),
+)
+
 NAV_ITEMS = (
-	("Features", "#features", "/features"),
-	("Solutions", "#solutions", "/solutions"),
-	("Platform", "#platform", "/#platform"),
-	("Integrations", "#integrations", "/#integrations"),
-	("Pricing", "/pricing", "/pricing"),
-	("Contact", "#contact", "/#contact"),
+	("Features", "#features", "features"),
+	("Solutions", "#solutions", "solutions"),
+	("Platform", "#platform", "#platform"),
+	("Integrations", "#integrations", "#integrations"),
+	("Pricing", "pricing", "pricing"),
+	("Contact", "#contact", "#contact"),
 )
 
 #: Pages that stay up during maintenance. Legal text has to remain reachable - somebody
@@ -393,6 +454,10 @@ NO_INDEX_ROUTES = (
 	"get-started",
 	"verify-email",
 	"thank-you",
+	"checkout",
+	"payment-status",
+	"billing",
+	"solar",
 )
 
 
@@ -405,17 +470,22 @@ def update_website_context(context):
 	"""
 	settings = site_settings()
 	route = (getattr(frappe.local, "request", None) and frappe.local.request.path or "").strip("/")
+	base = base_route()
+	if base and (route == base or route.startswith(base + "/")):
+		# Everything downstream reasons about the route relative to the public site, not
+		# to the server root, so the base comes off before any of it.
+		route = route[len(base):].strip("/")
 	route = route or (context.get("route") or "").strip("/")
 
 	context.platform_settings = settings
 	context.current_year = frappe.utils.now_datetime().year
 	context.site_url = frappe.utils.get_url()
-	context.canonical_url = frappe.utils.get_url(route)
+	# The public URL, not the base-stripped one used for the lookups below - a canonical
+	# tag pointing at a different address than the page it is on is worse than none.
+	context.canonical_url = frappe.utils.get_url(platform_route(route))
 	context.home_prefix = "" if route in ("", "index") else "/"
-	context.nav_items = [
-		{"label": label, "href": home if route in ("", "index") else away}
-		for label, home, away in NAV_ITEMS
-	]
+	context.platform_base = platform_route()
+	context.nav_items = _nav_items(route)
 	context.maintenance_active = bool(
 		settings.maintenance_mode and not route.startswith(MAINTENANCE_EXEMPT_PREFIXES)
 	)
@@ -424,6 +494,25 @@ def update_website_context(context):
 	)
 	context.organization_schema = organization_schema(settings)
 	return context
+
+
+def platform_route(path=""):
+	"""Template-facing alias for `route`, since `route` is a common context name."""
+	return route(path)
+
+
+def _nav_items(current_route):
+	"""The header links. On the home page they are anchors; elsewhere they are real URLs."""
+	on_home = current_route in ("", "index")
+	items = []
+	for label, home_target, away_target in NAV_ITEMS:
+		target = home_target if on_home else away_target
+		if target.startswith("#"):
+			href = target if on_home else f"{route()}{target}"
+		else:
+			href = route(target)
+		items.append({"label": label, "href": href})
+	return items
 
 
 def organization_schema(settings=None):

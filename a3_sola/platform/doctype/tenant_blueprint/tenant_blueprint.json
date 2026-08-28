@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "blueprint_name",
+  "applicable_plan",
+  "is_default",
+  "cb_1",
+  "is_active",
+  "description",
+  "sb_2",
+  "seed_items",
+  "sb_3",
+  "post_provision_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "blueprint_name",
+   "fieldtype": "Data",
+   "label": "Blueprint",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "applicable_plan",
+   "fieldtype": "Link",
+   "label": "Applies to Plan",
+   "options": "Subscription Plan",
+   "in_standard_filter": 1,
+   "description": "Blank means every plan."
+  },
+  {
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Seed Items"
+  },
+  {
+   "fieldname": "seed_items",
+   "fieldtype": "Table",
+   "label": "Seed Items",
+   "options": "Blueprint Seed Item"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "After Provisioning"
+  },
+  {
+   "fieldname": "post_provision_notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes shown to the tenant admin"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Tenant Blueprint",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Platform Tenant Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TBP-{###}",
+ "naming_rule": "Expression",
+ "title_field": "blueprint_name",
+ "show_title_field_in_link": 1,
+ "description": "What a new tenant gets. Data, not a script - onboarding content changes without a deploy."
+}

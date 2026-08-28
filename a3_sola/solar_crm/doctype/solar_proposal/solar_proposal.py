@@ -27,9 +27,20 @@ class SolarProposal(Document):
 	def autoname(self):
 		"""Allocate the next sequence for the company and financial year, under a lock.
 
-		A max()+1 read races: two salespeople generating at the same moment would collide
-		and one proposal would silently overwrite the other's number. The row lock makes
-		the allocation atomic.
+		Two things are going on, and they pull in different directions.
+
+		**The sequence is per company**, because that is what the client references in their
+		WhatsApp history and their bank correspondence, and because a tenant whose numbers
+		skipped from 4 to 17 would be reading another tenant's activity out of the gaps.
+
+		**The name must be unique across the site**, because it is a primary key. Those two
+		facts collide the moment a second company exists: both allocate sequence 1 for the
+		same year, both derive `RENC-PROP-26-27-0001`, and the second one fails to save.
+		That is why the company abbreviation is in the name - the same suffix ERPNext puts
+		on every account, warehouse and cost centre, for the same reason.
+
+		The row lock covers the allocation itself: a max()+1 read races, and two salespeople
+		generating at the same moment would otherwise take the same number.
 		"""
 		self.set_fiscal_year()
 		prefix = get_value("proposal_series_prefix") or "RENC-PROP"
@@ -47,7 +58,20 @@ class SolarProposal(Document):
 			(self.company, self.fiscal_year),
 		)[0][0]
 		self.proposal_sequence = (last or 0) + 1
-		self.name = f"{series}-{self.proposal_sequence:04d}"
+		self.name = _proposal_name(series, self.company, self.proposal_sequence)
+
+		# Defence in depth. The lock makes the allocation atomic and the abbreviation makes
+		# it unique, but a name that already exists must never be handed back regardless -
+		# it would surface as an IntegrityError from deep inside the insert.
+		guard = 0
+		while frappe.db.exists("Solar Proposal", self.name):
+			guard += 1
+			self.proposal_sequence += 1
+			self.name = _proposal_name(series, self.company, self.proposal_sequence)
+			if guard > 999:
+				frappe.throw(
+					_("Could not allocate a free proposal number for {0}.").format(self.company)
+				)
 
 	def set_fiscal_year(self):
 		if self.fiscal_year:
@@ -127,6 +151,17 @@ class SolarProposal(Document):
 			frappe.db.set_value(
 				"Solar Proposal", name, {"status": "Superseded", "superseded_by": self.name}, update_modified=False
 			)
+
+
+def _proposal_name(series, company, sequence):
+	"""`RENC-PROP-26-27-SSE-0001` - series, company, number.
+
+	The company code sits before the number so one company's proposals sort together, and
+	so the number itself still reads as the sequence the client quotes.
+	"""
+	abbr = frappe.get_cached_value("Company", company, "abbr") if company else None
+	abbr = (abbr or "").strip().upper()
+	return f"{series}-{abbr}-{sequence:04d}" if abbr else f"{series}-{sequence:04d}"
 
 
 def _fiscal_label(fiscal_year, fmt):

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"plt-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Platform</span>\", \"col\": 12}}, {\"id\": \"plt-s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Subscription Signup\", \"col\": 3}}, {\"id\": \"plt-s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Demo Request\", \"col\": 3}}, {\"id\": \"plt-s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Funnel\", \"col\": 3}}, {\"id\": \"plt-s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plans\", \"col\": 3}}, {\"id\": \"plt-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Funnel\", \"col\": 4}}, {\"id\": \"plt-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Commercials\", \"col\": 4}}, {\"id\": \"plt-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Site Content\", \"col\": 4}}, {\"id\": \"plt-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuration\", \"col\": 4}}]",
+ "content": "[{\"id\": \"p-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Platform</span>\", \"col\": 12}}, {\"id\": \"p-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Subscription Signup\", \"col\": 3}}, {\"id\": \"p-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Platform Subscription\", \"col\": 3}}, {\"id\": \"p-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Tenant\", \"col\": 3}}, {\"id\": \"p-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Signup Funnel\", \"col\": 3}}, {\"id\": \"p-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Subscription Revenue\", \"col\": 3}}, {\"id\": \"p-7\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>At a glance</span>\", \"col\": 12}}, {\"id\": \"p-8\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Signups This Month\", \"col\": 3}}, {\"id\": \"p-9\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Verified Signups\", \"col\": 3}}, {\"id\": \"p-10\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Awaiting Payment\", \"col\": 3}}, {\"id\": \"p-11\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Pipeline Value of Verified Signups\", \"col\": 3}}, {\"id\": \"p-12\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Abandoned This Month\", \"col\": 3}}, {\"id\": \"p-13\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Demo Requests This Month\", \"col\": 3}}, {\"id\": \"p-14\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Demo Requests Unassigned\", \"col\": 3}}, {\"id\": \"p-15\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Published Features\", \"col\": 3}}, {\"id\": \"p-16\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Active Subscriptions\", \"col\": 3}}, {\"id\": \"p-17\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Past Due Subscriptions\", \"col\": 3}}, {\"id\": \"p-18\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Collected This Month\", \"col\": 3}}, {\"id\": \"p-19\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Overdue Value\", \"col\": 3}}, {\"id\": \"p-20\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Mandates Needing Attention\", \"col\": 3}}, {\"id\": \"p-21\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Refunds This Month\", \"col\": 3}}, {\"id\": \"p-22\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Unmatched Settlement Lines\", \"col\": 3}}, {\"id\": \"p-23\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Invoices Raised\", \"col\": 3}}, {\"id\": \"p-24\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Trends</span>\", \"col\": 12}}, {\"id\": \"p-25\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Daily Signups\", \"col\": 6}}, {\"id\": \"p-26\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Signups by Plan\", \"col\": 6}}, {\"id\": \"p-27\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Signup Funnel Drop-off\", \"col\": 6}}, {\"id\": \"p-28\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Acquisition Source Mix\", \"col\": 6}}, {\"id\": \"p-29\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Demo Requests by Status\", \"col\": 6}}, {\"id\": \"p-30\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Collection Success by Route\", \"col\": 6}}, {\"id\": \"p-31\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Payment Failure Reasons\", \"col\": 6}}, {\"id\": \"p-32\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Collections\", \"col\": 6}}, {\"id\": \"p-33\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Everything in this module</span>\", \"col\": 12}}, {\"id\": \"p-34\", \"type\": \"card\", \"data\": {\"card_name\": \"Funnel\", \"col\": 4}}, {\"id\": \"p-35\", \"type\": \"card\", \"data\": {\"card_name\": \"Plans and pricing\", \"col\": 4}}, {\"id\": \"p-36\", \"type\": \"card\", \"data\": {\"card_name\": \"Site content\", \"col\": 4}}, {\"id\": \"p-37\", \"type\": \"card\", \"data\": {\"card_name\": \"Taking money\", \"col\": 4}}, {\"id\": \"p-38\", \"type\": \"card\", \"data\": {\"card_name\": \"Subscriptions and invoicing\", \"col\": 4}}, {\"id\": \"p-39\", \"type\": \"card\", \"data\": {\"card_name\": \"Tenants\", \"col\": 4}}, {\"id\": \"p-40\", \"type\": \"card\", \"data\": {\"card_name\": \"Funnel reports\", \"col\": 4}}, {\"id\": \"p-41\", \"type\": \"card\", \"data\": {\"card_name\": \"Money reports\", \"col\": 4}}, {\"id\": \"p-42\", \"type\": \"card\", \"data\": {\"card_name\": \"Tenant reports\", \"col\": 4}}, {\"id\": \"p-43\", \"type\": \"card\", \"data\": {\"card_name\": \"Audit and settings\", \"col\": 4}}]",
  "creation": "2026-08-25 13:00:00.000000",
  "docstatus": 0,
  "doctype": "Workspace",
@@ -15,9 +15,10 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Funnel",
-   "link_count": 5,
+   "link_count": 2,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "funnel"
   },
   {
    "dependencies": "",
@@ -42,45 +43,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Signup Funnel",
-   "link_count": 0,
-   "link_to": "Signup Funnel",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Abandoned Signups",
-   "link_count": 0,
-   "link_to": "Abandoned Signups",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Demo Request Pipeline",
-   "link_count": 0,
-   "link_to": "Demo Request Pipeline",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Commercials",
-   "link_count": 3,
+   "label": "Plans and pricing",
+   "link_count": 1,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "money-coins-1"
   },
   {
    "dependencies": "",
@@ -94,34 +63,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Signups by Plan and Cycle",
-   "link_count": 0,
-   "link_to": "Signups by Plan and Cycle",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Acquisition Source Performance",
-   "link_count": 0,
-   "link_to": "Acquisition Source Performance",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Site Content",
-   "link_count": 7,
+   "label": "Site content",
+   "link_count": 6,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "web"
   },
   {
    "dependencies": "",
@@ -190,6 +138,240 @@
    "type": "Link"
   },
   {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Taking money",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "wallet"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Order",
+   "link_count": 0,
+   "link_to": "Payment Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Transaction",
+   "link_count": 0,
+   "link_to": "Payment Transaction",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Mandate",
+   "link_count": 0,
+   "link_to": "Payment Mandate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Refund",
+   "link_count": 0,
+   "link_to": "Payment Refund",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Webhook Log",
+   "link_count": 0,
+   "link_to": "Payment Webhook Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subscriptions and invoicing",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "retail"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Platform Subscription",
+   "link_count": 0,
+   "link_to": "Platform Subscription",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subscription Invoice",
+   "link_count": 0,
+   "link_to": "Subscription Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Dunning Policy",
+   "link_count": 0,
+   "link_to": "Dunning Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Settlement Reconciliation",
+   "link_count": 0,
+   "link_to": "Settlement Reconciliation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenants",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "users"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenant",
+   "link_count": 0,
+   "link_to": "Tenant",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Provisioning Job",
+   "link_count": 0,
+   "link_to": "Provisioning Job",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenant Blueprint",
+   "link_count": 0,
+   "link_to": "Tenant Blueprint",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenant Invitation",
+   "link_count": 0,
+   "link_to": "Tenant Invitation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Funnel reports",
+   "link_count": 6,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "chart"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Signup Funnel",
+   "link_count": 0,
+   "link_to": "Signup Funnel",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Abandoned Signups",
+   "link_count": 0,
+   "link_to": "Abandoned Signups",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Demo Request Pipeline",
+   "link_count": 0,
+   "link_to": "Demo Request Pipeline",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Signups by Plan and Cycle",
+   "link_count": 0,
+   "link_to": "Signups by Plan and Cycle",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Acquisition Source Performance",
+   "link_count": 0,
+   "link_to": "Acquisition Source Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 1,
@@ -203,10 +385,227 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Configuration",
-   "link_count": 1,
+   "label": "Money reports",
+   "link_count": 10,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "report"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Subscription Revenue",
+   "link_count": 0,
+   "link_to": "Subscription Revenue",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Collection Performance",
+   "link_count": 0,
+   "link_to": "Collection Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Payment Failure Analysis",
+   "link_count": 0,
+   "link_to": "Payment Failure Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Dunning Effectiveness",
+   "link_count": 0,
+   "link_to": "Dunning Effectiveness",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Mandate Health",
+   "link_count": 0,
+   "link_to": "Mandate Health",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "AFA Exposure",
+   "link_count": 0,
+   "link_to": "AFA Exposure",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Invoice and Tax Register",
+   "link_count": 0,
+   "link_to": "Invoice and Tax Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Settlement Reconciliation Summary",
+   "link_count": 0,
+   "link_to": "Settlement Reconciliation Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Refund Register",
+   "link_count": 0,
+   "link_to": "Refund Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Unreconciled Payments",
+   "link_count": 0,
+   "link_to": "Unreconciled Payments",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tenant reports",
+   "link_count": 7,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "list"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Tenant Register",
+   "link_count": 0,
+   "link_to": "Tenant Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Seat Utilisation",
+   "link_count": 0,
+   "link_to": "Seat Utilisation",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Provisioning Performance",
+   "link_count": 0,
+   "link_to": "Provisioning Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Provisioning Failures",
+   "link_count": 0,
+   "link_to": "Provisioning Failures",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Invitation Funnel",
+   "link_count": 0,
+   "link_to": "Invitation Funnel",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Isolation Test Status",
+   "link_count": 0,
+   "link_to": "Isolation Test Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Onboarding Completion",
+   "link_count": 0,
+   "link_to": "Onboarding Completion",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Audit and settings",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "lock"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Platform Audit Entry",
+   "link_count": 0,
+   "link_to": "Platform Audit Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "dependencies": "",
@@ -220,7 +619,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-08-28 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Platform",
  "name": "Platform",
@@ -233,33 +632,44 @@
  "sequence_id": 34.0,
  "shortcuts": [
   {
-   "color": "Orange",
-   "doc_view": "List",
+   "color": "purple",
    "label": "Subscription Signup",
    "link_to": "Subscription Signup",
-   "type": "DocType"
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "funnel"
   },
   {
-   "color": "Blue",
-   "doc_view": "List",
-   "label": "Demo Request",
-   "link_to": "Demo Request",
-   "type": "DocType"
+   "color": "purple",
+   "label": "Platform Subscription",
+   "link_to": "Platform Subscription",
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "retail"
   },
   {
-   "color": "Green",
-   "label": "Funnel",
+   "color": "purple",
+   "label": "Tenant",
+   "link_to": "Tenant",
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "users"
+  },
+  {
+   "color": "purple",
+   "label": "Signup Funnel",
    "link_to": "Signup Funnel",
    "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   },
   {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Plans",
-   "link_to": "Subscription Plan",
-   "type": "DocType"
+   "color": "purple",
+   "label": "Subscription Revenue",
+   "link_to": "Subscription Revenue",
+   "type": "Report",
+   "doc_view": ""
   }
  ],
- "title": "Platform"
+ "title": "Platform",
+ "indicator_color": "purple"
 }

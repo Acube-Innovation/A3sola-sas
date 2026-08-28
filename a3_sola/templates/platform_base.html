@@ -67,7 +67,7 @@
 
 <header class="a3s-header" id="a3s-header">
 	<div class="a3s-container a3s-header__inner">
-		<a class="a3s-logo" href="/" aria-label="{{ s.product_name or 'a3 sola' }} home">
+		<a class="a3s-logo" href="{{ platform_base }}" aria-label="{{ s.product_name or 'a3 sola' }} home">
 			{%- if s.brand_logo %}
 			<img src="{{ s.brand_logo }}" alt="{{ s.product_name or 'a3 sola' }}">
 			{%- else %}
@@ -84,7 +84,7 @@
 
 		<div class="a3s-header__actions">
 			<a class="a3s-btn a3s-btn--ghost" href="{{ home_prefix }}#contact">Book a demo</a>
-			<a class="a3s-btn a3s-btn--primary" href="/get-started" data-analytics="signup_started" data-analytics-source="header">Sign up</a>
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started" data-analytics="signup_started" data-analytics-source="header">Sign up</a>
 		</div>
 
 		<button class="a3s-burger" id="a3s-burger" type="button"
@@ -100,7 +100,7 @@
 	<a href="{{ item.href }}">{{ item.label }}</a>
 	{%- endfor %}
 	<a class="a3s-btn a3s-btn--secondary" href="{{ home_prefix }}#contact">Book a demo</a>
-	<a class="a3s-btn a3s-btn--primary" href="/get-started">Sign up</a>
+	<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started">Sign up</a>
 </nav>
 
 <main id="main">
@@ -111,7 +111,7 @@
 	<div class="a3s-container">
 		<div class="a3s-footer__grid">
 			<div>
-				<a class="a3s-logo" href="/">
+				<a class="a3s-logo" href="{{ platform_base }}">
 					<span class="a3s-logo__mark" aria-hidden="true">☀</span>
 					<span>{{ s.product_name or "a3 sola" }}</span>
 				</a>
@@ -125,10 +125,10 @@
 			<div>
 				<h4>Product</h4>
 				<ul class="a3s-footer__links">
-					<li><a href="/features">Features</a></li>
-					<li><a href="/solutions">Solutions</a></li>
-					<li><a href="/pricing">Pricing</a></li>
-					<li><a href="/get-started">Get started</a></li>
+					<li><a href="{{ platform_base }}/features">Features</a></li>
+					<li><a href="{{ platform_base }}/solutions">Solutions</a></li>
+					<li><a href="{{ platform_base }}/pricing">Pricing</a></li>
+					<li><a href="{{ platform_base }}/get-started">Get started</a></li>
 				</ul>
 			</div>
 			<div>
@@ -149,9 +149,9 @@
 			<div>
 				<h4>Legal</h4>
 				<ul class="a3s-footer__links">
-					<li><a href="/legal/privacy">Privacy</a></li>
-					<li><a href="/legal/terms">Terms</a></li>
-					<li><a href="/legal/refund-policy">Refund policy</a></li>
+					<li><a href="{{ platform_base }}/legal/privacy">Privacy</a></li>
+					<li><a href="{{ platform_base }}/legal/terms">Terms</a></li>
+					<li><a href="{{ platform_base }}/legal/refund-policy">Refund policy</a></li>
 				</ul>
 			</div>
 		</div>

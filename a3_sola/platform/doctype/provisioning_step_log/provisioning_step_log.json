@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "step_code",
+  "step_name",
+  "sequence",
+  "is_reversible",
+  "status",
+  "started_on",
+  "completed_on",
+  "duration_seconds",
+  "created_doctype",
+  "created_name",
+  "attempt_number",
+  "error_message",
+  "error_traceback",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "step_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "step_name",
+   "fieldtype": "Data",
+   "label": "Step",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "#",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_reversible",
+   "fieldtype": "Check",
+   "label": "Reversible",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nRunning\nCompleted\nFailed\nSkipped\nRolled Back",
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Finished",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_seconds",
+   "fieldtype": "Float",
+   "label": "Seconds",
+   "read_only": 1,
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "created_doctype",
+   "fieldtype": "Data",
+   "label": "Created DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_name",
+   "fieldtype": "Data",
+   "label": "Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "Attempt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_traceback",
+   "fieldtype": "Long Text",
+   "label": "Traceback",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Provisioning Step Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

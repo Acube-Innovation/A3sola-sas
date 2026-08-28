@@ -1,0 +1,46 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			{%- if state == "verified" %}
+			<span class="a3s-card__icon" aria-hidden="true">✅</span>
+			<h1 style="font-size:1.7rem">Your email is confirmed</h1>
+			<p class="a3s-card__text">Here is your order. Nothing has been charged yet.</p>
+			<a class="a3s-btn a3s-btn--primary" href="{{ next_url }}" style="margin-top:1.5rem">
+				View my order
+			</a>
+			<script>if (window.a3sTrack) window.a3sTrack("email_verified", {});</script>
+
+			{%- elif state == "throttled" %}
+			<span class="a3s-card__icon" aria-hidden="true">⏳</span>
+			<h1 style="font-size:1.7rem">Please wait a moment</h1>
+			<p class="a3s-card__text">
+				There have been a lot of attempts from here. Wait a little and open the link
+				again.
+			</p>
+
+			{%- else %}
+			<span class="a3s-card__icon" aria-hidden="true">🔗</span>
+			<h1 style="font-size:1.7rem">That link is not valid</h1>
+			<p class="a3s-card__text">
+				It may have expired, or it may already have been used. Verification links
+				work once, and only for a limited time.
+			</p>
+			<p class="a3s-small a3s-muted" style="margin-top:1rem">
+				Start again and we will send you a fresh one.
+			</p>
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started" style="margin-top:1.5rem">
+				Start again
+			</a>
+			{%- if platform_settings.sales_email %}
+			<p class="a3s-small a3s-muted" style="margin-top:1rem">
+				Stuck? Email <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a>.
+			</p>
+			{%- endif %}
+			{%- endif %}
+		</div>
+	</div>
+</section>
+{% endblock %}

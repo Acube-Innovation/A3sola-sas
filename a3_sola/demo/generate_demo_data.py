@@ -16,6 +16,8 @@ from frappe.utils import add_days, flt, nowdate, today
 
 from a3_sola.setup.install import default_company, seed_masters
 
+from a3_sola.demo.scale import take
+
 DEMO_TAG = "a3s-demo"
 SECOND_COMPANY = "Sunwise Energy Solutions"
 SECOND_ABBR = "SWES"
@@ -141,7 +143,7 @@ def setup_company_identity(company):
 # ------------------------------------------------------------------------ leads
 def generate_leads(company):
 	created = 0
-	for name, mobile, city, bill, kw, call_status, stage, status, offset in LEADS:
+	for name, mobile, city, bill, kw, call_status, stage, status, offset in take(LEADS):
 		if frappe.db.exists("Lead", {"lead_name": name, "company": company}):
 			continue
 		doc = frappe.get_doc(
@@ -174,7 +176,7 @@ def generate_leads(company):
 # -------------------------------------------------------------------- consumers
 def generate_consumers(company):
 	names = []
-	for name, category, units, load, phase, bank, prior in CONSUMERS:
+	for name, category, units, load, phase, bank, prior in take(CONSUMERS):
 		existing = frappe.db.get_value("Solar Consumer", {"consumer_name": name, "company": company}, "name")
 		if existing:
 			names.append(existing)
@@ -448,6 +450,26 @@ def generate_proposals(company, estimates):
 
 
 # ------------------------------------------------------------------- entrypoint
+def run_sample(count=5):
+	"""Five of everything, across all six phases. The default way to fill a demo site.
+
+	`run()` builds the full hand-written set, which is more records than anyone wants to
+	read. This caps every list at `count` so each list view, report and filter has enough
+	to be meaningful and little enough to take in at a glance.
+
+	Operations and Projects are not capped, and deliberately: they do not build N of one
+	thing, they build a scenario - a job stuck at DISCOM feasibility past its SLA, a
+	financed one awaiting sanction, one with a breached service ticket, one whose
+	generation is sliding. Slicing that to a number would leave whichever states happened
+	to sort first, which is the opposite of useful. They produce five to seven jobs anyway.
+	"""
+	frappe.flags.a3s_demo_limit = int(count)
+	try:
+		return run()
+	finally:
+		frappe.flags.a3s_demo_limit = None
+
+
 def run():
 	"""Build the whole demo. Idempotent - safe to re-run."""
 	frappe.flags.in_demo = True
@@ -478,6 +500,17 @@ def run():
 
 	generate_platform_demo.run()
 
+	# Phase 5: subscriptions, collections, invoices and settlements. Mock gateway only.
+	from a3_sola.demo import generate_payments_demo
+
+	generate_payments_demo.run(company)
+
+	# Phase 6: provisioned tenants, including the awkward states an operator has to deal
+	# with. Without these the Provisioning Failures view and the isolation report are empty.
+	from a3_sola.demo import generate_provisioning_demo
+
+	generate_provisioning_demo.run(company)
+
 	# A second tenant with its own masters, so isolation is demonstrable.
 	company_b = _company_b()
 	generate_consumers(company_b)
@@ -493,8 +526,16 @@ def teardown():
 	frappe.flags.in_demo = True
 	from a3_sola.demo import generate_operations_demo
 
-	from a3_sola.demo import generate_platform_demo, generate_projects_demo
+	from a3_sola.demo import (
+		generate_payments_demo,
+		generate_platform_demo,
+		generate_projects_demo,
+	)
 
+	from a3_sola.demo import generate_provisioning_demo
+
+	generate_provisioning_demo.teardown()
+	generate_payments_demo.teardown()
 	generate_platform_demo.teardown()
 	generate_projects_demo.teardown()
 	generate_operations_demo.teardown()

@@ -13,13 +13,20 @@ from frappe.utils import cint
 PLATFORM_ROLES = [
 	("Platform Marketing Manager", "Marketing content, FAQs and the public site. No access to signups or plans."),
 	("Platform Sales", "Subscription signups and demo requests. Cannot edit plans or pricing."),
-	("Platform Admin", "Plans, pricing, platform settings and everything the other two can do."),
+	("Platform Billing Executive", "View payments, invoices and dunning. Can issue payment links. No refunds, no settings."),
+	("Platform Billing Manager", "Refund approval, reconciliation and mandate management."),
+	("Platform Admin", "Plans, pricing, gateway credentials and everything the others can do."),
 ]
 
 PLATFORM_ROLE_PROFILES = {
 	"Platform Marketing": ["Platform Marketing Manager"],
 	"Platform Sales": ["Platform Sales"],
-	"Platform Administration": ["Platform Admin", "Platform Sales", "Platform Marketing Manager"],
+	"Platform Billing": ["Platform Billing Executive"],
+	"Platform Billing Management": ["Platform Billing Manager", "Platform Billing Executive"],
+	"Platform Administration": [
+		"Platform Admin", "Platform Sales", "Platform Marketing Manager",
+		"Platform Billing Manager",
+	],
 }
 
 # ----------------------------------------------------------------- content copy
@@ -404,8 +411,27 @@ FAQS = [
 ]
 
 # ------------------------------------------------------------------- seeding
+def set_home_page():
+	"""`/` belongs to the desk; the public site lives at /a3sola.
+
+	Frappe would otherwise serve whatever sits at `www/index.html`, and before the public
+	pages were moved under `www/a3sola/` that was the marketing homepage - so signing in to
+	the ERP meant first getting past a landing page. The pages moved, which frees `/`, and
+	this points it where a logged-in user expects to land.
+	"""
+	settings = frappe.get_single("Website Settings")
+	if settings.home_page in (None, "", "index"):
+		settings.home_page = "app"
+		settings.flags.ignore_permissions = True
+		settings.flags.ignore_mandatory = True
+		settings.save(ignore_permissions=True)
+		return True
+	return False
+
+
 def setup():
 	"""Platform is not tenant-scoped, so this runs once per site, not per company."""
+	set_home_page()
 	create_roles()
 	seed_features()
 	seed_solutions()
@@ -414,7 +440,14 @@ def setup():
 	seed_plans()
 	seed_faqs()
 	seed_legal_pages()
+	seed_dunning_policy()
 	set_defaults()
+
+
+def seed_dunning_policy():
+	from a3_sola.api import dunning
+
+	dunning.seed_default_policy()
 
 
 def seed_legal_pages():
@@ -636,6 +669,9 @@ ROBOTS_TXT = """User-agent: *
 Disallow: /get-started
 Disallow: /verify-email
 Disallow: /thank-you
+Disallow: /checkout
+Disallow: /payment-status
+Disallow: /billing
 Disallow: /api/
 Disallow: /app/
 Disallow: /private/

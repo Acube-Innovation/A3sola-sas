@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"ops-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Operations</span>\", \"col\": 12}}, {\"id\": \"ops-s1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Installation\", \"col\": 3}}, {\"id\": \"ops-s2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Pipeline\", \"col\": 3}}, {\"id\": \"ops-s3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Documents Due\", \"col\": 3}}, {\"id\": \"ops-s4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"External Delay\", \"col\": 3}}, {\"id\": \"ops-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Execution\", \"col\": 4}}, {\"id\": \"ops-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"External & Finance\", \"col\": 4}}, {\"id\": \"ops-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"ops-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Templates\", \"col\": 4}}]",
+ "content": "[{\"id\": \"so-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>Solar Operations</span>\", \"col\": 12}}, {\"id\": \"so-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Installation\", \"col\": 3}}, {\"id\": \"so-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Installation Work Order\", \"col\": 3}}, {\"id\": \"so-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Installation Pipeline Status\", \"col\": 3}}, {\"id\": \"so-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Document Pack Status\", \"col\": 3}}, {\"id\": \"so-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"External Dependency Ageing\", \"col\": 3}}, {\"id\": \"so-7\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>At a glance</span>\", \"col\": 12}}, {\"id\": \"so-8\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Installations In Progress\", \"col\": 3}}, {\"id\": \"so-9\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Awaiting External Approval\", \"col\": 3}}, {\"id\": \"so-10\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"SLA Breached\", \"col\": 3}}, {\"id\": \"so-11\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Open Critical Snags\", \"col\": 3}}, {\"id\": \"so-12\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Documents Stale\", \"col\": 3}}, {\"id\": \"so-13\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Subsidy Claims Pending\", \"col\": 3}}, {\"id\": \"so-14\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Outstanding Subsidy Recovery\", \"col\": 3}}, {\"id\": \"so-15\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Registration Refunds Outstanding\", \"col\": 3}}, {\"id\": \"so-16\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Loan Balance Outstanding\", \"col\": 3}}, {\"id\": \"so-17\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"kW Commissioned\", \"col\": 3}}, {\"id\": \"so-18\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Trends</span>\", \"col\": 12}}, {\"id\": \"so-19\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Installations by Current Stage\", \"col\": 6}}, {\"id\": \"so-20\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Installations by Status\", \"col\": 6}}, {\"id\": \"so-21\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Blocking Party\", \"col\": 6}}, {\"id\": \"so-22\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Snags by Category\", \"col\": 6}}, {\"id\": \"so-23\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Monthly Commissioned Capacity\", \"col\": 6}}, {\"id\": \"so-24\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Everything in this module</span>\", \"col\": 12}}, {\"id\": \"so-25\", \"type\": \"card\", \"data\": {\"card_name\": \"On site\", \"col\": 4}}, {\"id\": \"so-26\", \"type\": \"card\", \"data\": {\"card_name\": \"Handover\", \"col\": 4}}, {\"id\": \"so-27\", \"type\": \"card\", \"data\": {\"card_name\": \"Waiting on someone else\", \"col\": 4}}, {\"id\": \"so-28\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"so-29\", \"type\": \"card\", \"data\": {\"card_name\": \"Stage and document templates\", \"col\": 4}}]",
  "creation": "2026-08-25 13:00:00.000000",
  "docstatus": 0,
  "doctype": "Workspace",
@@ -14,10 +14,11 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Execution",
-   "link_count": 5,
+   "label": "On site",
+   "link_count": 3,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "milestone"
   },
   {
    "dependencies": "",
@@ -45,6 +46,26 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Installation Snag",
+   "link_count": 0,
+   "link_to": "Installation Snag",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Handover",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "success"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Commissioning Report",
    "link_count": 0,
    "link_to": "Commissioning Report",
@@ -64,23 +85,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Installation Snag",
-   "link_count": 0,
-   "link_to": "Installation Snag",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "External & Finance",
+   "label": "Waiting on someone else",
    "link_count": 4,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "external-link"
   },
   {
    "dependencies": "",
@@ -97,9 +108,9 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Loan Application",
+   "label": "Subsidy Claim",
    "link_count": 0,
-   "link_to": "Loan Application",
+   "link_to": "Subsidy Claim",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -119,9 +130,9 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Subsidy Claim",
+   "label": "Loan Application",
    "link_count": 0,
-   "link_to": "Subsidy Claim",
+   "link_to": "Loan Application",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -132,7 +143,8 @@
    "label": "Reports",
    "link_count": 10,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "chart"
   },
   {
    "dependencies": "",
@@ -141,6 +153,17 @@
    "label": "Installation Pipeline Status",
    "link_count": 0,
    "link_to": "Installation Pipeline Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stage Cycle Time Analysis",
+   "link_count": 0,
+   "link_to": "Stage Cycle Time Analysis",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -171,9 +194,9 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Stage Cycle Time Analysis",
+   "label": "EHS and Feasibility Compliance",
    "link_count": 0,
-   "link_to": "Stage Cycle Time Analysis",
+   "link_to": "EHS and Feasibility Compliance",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -185,6 +208,17 @@
    "label": "Serial Traceability Register",
    "link_count": 0,
    "link_to": "Serial Traceability Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Snag Register and Closure",
+   "link_count": 0,
+   "link_to": "Snag Register and Closure",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -223,34 +257,13 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Snag Register and Closure",
-   "link_count": 0,
-   "link_to": "Snag Register and Closure",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "EHS and Feasibility Compliance",
-   "link_count": 0,
-   "link_to": "EHS and Feasibility Compliance",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Templates",
+   "label": "Stage and document templates",
    "link_count": 4,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "file"
   },
   {
    "dependencies": "",
@@ -297,7 +310,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-08-28 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Operations",
@@ -310,33 +323,43 @@
  "sequence_id": 32.0,
  "shortcuts": [
   {
-   "color": "Grey",
-   "doc_view": "List",
+   "color": "cyan",
    "label": "Solar Installation",
    "link_to": "Solar Installation",
-   "type": "DocType"
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "milestone"
   },
   {
-   "color": "Blue",
-   "label": "Pipeline",
+   "color": "cyan",
+   "label": "Installation Work Order",
+   "link_to": "Installation Work Order",
+   "type": "DocType",
+   "doc_view": "",
+   "icon": "list"
+  },
+  {
+   "color": "cyan",
+   "label": "Installation Pipeline Status",
    "link_to": "Installation Pipeline Status",
    "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   },
   {
-   "color": "Orange",
-   "label": "Documents Due",
+   "color": "cyan",
+   "label": "Document Pack Status",
    "link_to": "Document Pack Status",
    "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   },
   {
-   "color": "Red",
-   "label": "External Delay",
+   "color": "cyan",
+   "label": "External Dependency Ageing",
    "link_to": "External Dependency Ageing",
    "type": "Report",
-   "is_query_report": 1
+   "doc_view": ""
   }
  ],
- "title": "Solar Operations"
+ "title": "Solar Operations",
+ "indicator_color": "cyan"
 }

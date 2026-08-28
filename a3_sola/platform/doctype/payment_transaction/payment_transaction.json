@@ -1,0 +1,311 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "payment_order",
+  "attempt_number",
+  "cb_2",
+  "gateway_payment_id",
+  "status",
+  "sb_3",
+  "method",
+  "method_detail",
+  "cb_4",
+  "amount",
+  "currency",
+  "sb_5",
+  "gateway_fee",
+  "cb_6",
+  "gateway_tax",
+  "tab_7",
+  "sb_8",
+  "initiated_on",
+  "cb_9",
+  "completed_on",
+  "sb_10",
+  "error_code",
+  "error_description",
+  "error_source",
+  "cb_11",
+  "error_step",
+  "error_reason",
+  "sb_12",
+  "signature_verified",
+  "cb_13",
+  "verification_method",
+  "sb_14",
+  "raw_response"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Attempt"
+  },
+  {
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "Attempt",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gateway_payment_id",
+   "fieldtype": "Data",
+   "label": "Gateway Payment ID",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Created\nAuthorized\nCaptured\nFailed\nRefunded\nDisputed",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Instrument"
+  },
+  {
+   "fieldname": "method",
+   "fieldtype": "Select",
+   "label": "Method",
+   "options": "Card\nUPI\nNetbanking\nWallet\nEMI\nAutopay\nOther",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "method_detail",
+   "fieldtype": "Data",
+   "label": "Method Detail",
+   "description": "Bank or wallet name, or card network and last four. Never a full number."
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Gateway Charges"
+  },
+  {
+   "fieldname": "gateway_fee",
+   "fieldtype": "Currency",
+   "label": "Gateway Fee"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gateway_tax",
+   "fieldtype": "Currency",
+   "label": "Gateway Tax"
+  },
+  {
+   "fieldname": "tab_7",
+   "fieldtype": "Tab Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Timing"
+  },
+  {
+   "fieldname": "initiated_on",
+   "fieldtype": "Datetime",
+   "label": "Initiated On"
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On"
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Error"
+  },
+  {
+   "fieldname": "error_code",
+   "fieldtype": "Data",
+   "label": "Error Code"
+  },
+  {
+   "fieldname": "error_description",
+   "fieldtype": "Small Text",
+   "label": "Error Description"
+  },
+  {
+   "fieldname": "error_source",
+   "fieldtype": "Data",
+   "label": "Error Source"
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "error_step",
+   "fieldtype": "Data",
+   "label": "Error Step"
+  },
+  {
+   "fieldname": "error_reason",
+   "fieldtype": "Data",
+   "label": "Error Reason"
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Verification"
+  },
+  {
+   "fieldname": "signature_verified",
+   "fieldtype": "Check",
+   "label": "Signature Verified",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "verification_method",
+   "fieldtype": "Select",
+   "label": "Verified Via",
+   "options": "Checkout Callback\nWebhook\nManual Fetch\nGateway Fetch\nManual Override"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Raw Response"
+  },
+  {
+   "fieldname": "raw_response",
+   "fieldtype": "Long Text",
+   "label": "Raw Response",
+   "read_only": 1,
+   "permlevel": 1,
+   "description": "Redacted of card, contact and token data before storing."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Payment Transaction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Sales",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "gateway_payment_id",
+ "show_title_field_in_link": 1,
+ "search_fields": "gateway_payment_id,payment_order"
+}

@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "test_code",
+  "test_description",
+  "target_doctype",
+  "expected_result",
+  "actual_result",
+  "status",
+  "details",
+  "run_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "test_description",
+   "fieldtype": "Small Text",
+   "label": "What was checked",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Data",
+   "label": "Target",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_result",
+   "fieldtype": "Data",
+   "label": "Expected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_result",
+   "fieldtype": "Data",
+   "label": "Actual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Passed\nFailed\nSkipped\nError",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details",
+   "read_only": 1
+  },
+  {
+   "fieldname": "run_on",
+   "fieldtype": "Datetime",
+   "label": "Run on",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Tenant Isolation Test Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

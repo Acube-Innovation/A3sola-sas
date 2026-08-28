@@ -1,0 +1,117 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		{%- if not summary %}
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<h1 style="font-size:1.6rem">We could not find that order</h1>
+			<p class="a3s-card__text">Open the link in your confirmation email again.</p>
+		</div>
+		{%- else %}
+		<div class="a3s-card a3s-narrow" id="a3s-status-card" style="text-align:center"
+			data-reference="{{ reference }}" data-key="{{ key }}">
+
+			<div data-state="pending">
+				<span class="a3s-card__icon" aria-hidden="true">⏳</span>
+				<h1 style="font-size:1.6rem">Confirming your payment</h1>
+				<p class="a3s-card__text">
+					This usually takes a few seconds. Please do not close this page or pay again.
+				</p>
+			</div>
+
+			<div data-state="paid" hidden>
+				<span class="a3s-card__icon" aria-hidden="true">✅</span>
+				<h1 style="font-size:1.6rem">Payment received</h1>
+				<p class="a3s-card__text">
+					Thank you. We are setting {{ summary.organisation_name }} up now and will
+					email you as soon as your account is ready.
+				</p>
+				<p class="a3s-small a3s-muted" style="margin-top:1rem">
+					Reference {{ summary.reference }}
+				</p>
+			</div>
+
+			<div data-state="failed" hidden>
+				<span class="a3s-card__icon" aria-hidden="true">⚠️</span>
+				<h1 style="font-size:1.6rem">That payment did not go through</h1>
+				<p class="a3s-card__text" id="a3s-failure-reason">
+					Nothing has been charged. You can try again with the same or a different method.
+				</p>
+				<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/checkout?ref={{ reference }}&amp;t={{ key }}"
+					style="margin-top:1.5rem">Try again</a>
+			</div>
+
+			<div data-state="timeout" hidden>
+				<span class="a3s-card__icon" aria-hidden="true">📩</span>
+				<h1 style="font-size:1.6rem">Still confirming</h1>
+				<p class="a3s-card__text">
+					Your bank is taking longer than usual. You do not need to wait here &mdash;
+					we will email you the moment it settles, and nothing will be charged twice.
+				</p>
+				{%- if platform_settings.sales_email %}
+				<p class="a3s-small a3s-muted" style="margin-top:1rem">
+					Any concern, email <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a>
+					quoting {{ summary.reference }}.
+				</p>
+				{%- endif %}
+			</div>
+		</div>
+		{%- endif %}
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+	var card = document.getElementById("a3s-status-card");
+	if (!card) return;
+
+	var reference = card.dataset.reference;
+	var key = card.dataset.key;
+	// Backoff, and a hard stop: a spinner that never resolves is worse than an honest
+	// "we will email you".
+	var delays = [2000, 3000, 4000, 5000, 8000, 8000, 10000, 10000, 15000, 15000];
+	var attempt = 0;
+
+	function show(state) {
+		card.querySelectorAll("[data-state]").forEach(function (panel) {
+			panel.hidden = panel.dataset.state !== state;
+		});
+	}
+
+	function poll() {
+		frappe.call({
+			method: "a3_sola.api.payments.get_payment_status",
+			args: { signup_reference: reference, token: key },
+		}).then(function (response) {
+			var status = response.message || {};
+			if (status.is_paid) {
+				show("paid");
+				if (window.a3sTrack) window.a3sTrack("payment_succeeded", {});
+				return;
+			}
+			if (status.is_failed) {
+				show("failed");
+				if (window.a3sTrack) window.a3sTrack("payment_failed", {});
+				return;
+			}
+			next();
+		}).catch(next);
+	}
+
+	function next() {
+		if (attempt >= delays.length) {
+			show("timeout");
+			return;
+		}
+		window.setTimeout(poll, delays[attempt]);
+		attempt += 1;
+	}
+
+	show("pending");
+	poll();
+})();
+</script>
+{% endblock %}

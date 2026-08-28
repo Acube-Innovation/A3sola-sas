@@ -1,0 +1,27 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello,</p>
+<p style="margin:0 0 20px;">
+	We could not collect your {{ product_name }} subscription payment.
+	{% if message %}{{ message }}{% endif %}
+</p>
+{%- if needs_new_mandate %}
+<p style="margin:0 0 20px;padding:14px 16px;background:rgba(254,188,46,0.14);border-radius:12px;font-size:14px;">
+	Your saved payment method can no longer be used, so retrying will not help. Please set
+	up a new one and we will take it from there.
+</p>
+{%- else %}
+<p style="margin:0 0 20px;">
+	We will try again automatically. There is nothing you need to do unless it fails again.
+</p>
+{%- endif %}
+<p style="margin:0 0 20px;">
+	Your service is running normally in the meantime.
+</p>
+{%- if sales_email %}
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	Anything unclear? Reply to this email or write to
+	<a href="mailto:{{ sales_email }}" style="color:#6b7383;">{{ sales_email }}</a>.
+</p>
+{%- endif %}
+{% endblock %}

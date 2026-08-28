@@ -1,0 +1,104 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		{%- if not summary %}
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<h1 style="font-size:1.6rem">We could not find that order</h1>
+			<p class="a3s-card__text">
+				The link may be incomplete. Open the link in your confirmation email again,
+				or start a fresh signup.
+			</p>
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started" style="margin-top:1.5rem">Start again</a>
+		</div>
+		{%- else %}
+		<div class="a3s-narrow">
+			<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Your order</h1>
+			<p class="a3s-lead">
+				{{ summary.organisation_name }} &middot; {{ summary.plan_name }} &middot;
+				billed {{ summary.billing_cycle|lower }}
+			</p>
+
+			<div class="a3s-card" style="margin-top:2rem">
+				<div class="a3s-lines">
+					{%- for line in summary.line_items %}
+					<div class="a3s-line">
+						<span>
+							<strong>{{ line.label }}</strong>
+							{%- if line.detail %}<br><small>{{ line.detail }}</small>{% endif %}
+						</span>
+						<span>
+							{%- if line.waived %}
+							<s>{{ frappe.utils.fmt_money(line.struck_amount, currency=summary.currency) }}</s>
+							{{ frappe.utils.fmt_money(0, currency=summary.currency) }}
+							{%- else %}
+							{{ frappe.utils.fmt_money(line.amount, currency=summary.currency) }}
+							{%- endif %}
+						</span>
+					</div>
+					{%- endfor %}
+					<div class="a3s-line a3s-line--total">
+						<span><strong>Total</strong></span>
+						<span>{{ frappe.utils.fmt_money(summary.total_amount, currency=summary.currency) }}</span>
+					</div>
+				</div>
+				<p class="a3s-small a3s-muted" style="margin-top:1rem">
+					{{ summary.total_users }} users
+					({{ summary.included_users }} included{% if summary.additional_users %},
+					{{ summary.additional_users }} additional{% endif %}).
+					This is the price you were quoted and the price you will be charged.
+				</p>
+			</div>
+
+			<div id="a3s-pay" style="margin-top:2rem">
+				<button class="a3s-btn a3s-btn--primary" type="button" id="a3s-pay-btn"
+					data-reference="{{ reference }}" data-key="{{ key }}"
+					data-analytics="payment_initiated">Proceed to payment</button>
+				<p class="a3s-form__status" role="status" aria-live="polite"></p>
+			</div>
+
+			<p class="a3s-small a3s-muted" style="margin-top:2rem">
+				Need a different plan? <a href="/#contact">Talk to us</a> before paying and we
+				will change it for you. Reference {{ summary.reference }}.
+			</p>
+		</div>
+		{%- endif %}
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+	var button = document.getElementById("a3s-pay-btn");
+	if (!button) return;
+	var status = document.querySelector("#a3s-pay .a3s-form__status");
+
+	button.addEventListener("click", function () {
+		button.disabled = true;
+		status.className = "a3s-form__status";
+		status.textContent = "One moment…";
+		frappe.call({
+			method: "a3_sola.api.signup.request_payment_contact",
+			args: { signup_reference: button.dataset.reference, token: button.dataset.key },
+		}).then(function (response) {
+			var result = response.message || {};
+			// Until Phase 5 lands this is the "we will call you" path, and the funnel is
+			// still usable end to end.
+			if (result.pending) {
+				button.hidden = true;
+				status.className = "a3s-form__status is-success";
+				status.textContent = result.message;
+				return;
+			}
+			if (result.redirect) window.location.href = result.redirect;
+		}).catch(function (err) {
+			button.disabled = false;
+			status.className = "a3s-form__status is-error";
+			status.textContent = (err && err.message) || "Something went wrong. Please try again.";
+		});
+	});
+})();
+</script>
+{% endblock %}

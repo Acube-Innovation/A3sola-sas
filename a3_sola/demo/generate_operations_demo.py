@@ -259,7 +259,11 @@ def run(company=None):
 	from a3_sola.setup.install import default_company
 
 	company = company or default_company()
-	estimates = _consumers_with_estimates(company, needed=7)
+	# Two more than the demo limit: the scenarios below want one installation per state,
+	# and a couple spare so a re-run on a site that already used some still has material.
+	from a3_sola.demo.scale import limit
+
+	estimates = _consumers_with_estimates(company, needed=max(7, limit() + 2))
 	if not estimates:
 		_log("no unused design estimates; Operations demo already built")
 		return

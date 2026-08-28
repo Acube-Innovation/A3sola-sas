@@ -1,0 +1,28 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello,</p>
+<p style="margin:0 0 20px;">
+	The saved payment method on your {{ product_name }} subscription can no longer be
+	used for automatic payments. This usually means a card expired or the bank withdrew
+	its approval - it is not a problem with your account.
+</p>
+<p style="margin:0 0 20px;padding:14px 16px;background:rgba(254,188,46,0.14);border-radius:12px;font-size:14px;">
+	Nothing has been charged, and nothing will be charged automatically until you set up
+	a new payment method. Your service continues to run normally.
+</p>
+<p style="margin:0 0 24px;">
+	<a href="{{ billing_url }}" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#f7941e;color:#ffffff;text-decoration:none;font-weight:600;">
+		Set up a new payment method
+	</a>
+</p>
+<p style="margin:0 0 20px;font-size:14px;color:#6b7383;">
+	If you would rather pay each renewal manually, you can ignore this - we will send you
+	a payment link before every renewal instead.
+</p>
+{%- if sales_email %}
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	Questions? Reply to this email or write to
+	<a href="mailto:{{ sales_email }}" style="color:#6b7383;">{{ sales_email }}</a>.
+</p>
+{%- endif %}
+{% endblock %}

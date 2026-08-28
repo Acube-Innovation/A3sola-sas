@@ -1,0 +1,140 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		{%- if not summary %}
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<h1 style="font-size:1.6rem">We could not find that order</h1>
+			<p class="a3s-card__text">
+				Open the link in your confirmation email again, or start a fresh signup.
+			</p>
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started" style="margin-top:1.5rem">Start again</a>
+		</div>
+
+		{%- elif already_paid %}
+		<div class="a3s-card a3s-narrow" style="text-align:center">
+			<span class="a3s-card__icon" aria-hidden="true">✅</span>
+			<h1 style="font-size:1.6rem">This is already paid</h1>
+			<p class="a3s-card__text">
+				Nothing further is due. We are setting your account up and will email you.
+			</p>
+			<a class="a3s-btn a3s-btn--secondary" href="{{ platform_base }}/payment-status?ref={{ reference }}&amp;t={{ key }}"
+				style="margin-top:1.5rem">View status</a>
+		</div>
+
+		{%- else %}
+		<div class="a3s-narrow">
+			<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Complete your subscription</h1>
+			<p class="a3s-lead">
+				{{ summary.organisation_name }} &middot; {{ summary.plan_name }} &middot;
+				billed {{ summary.billing_cycle|lower }}
+			</p>
+
+			<div class="a3s-card" style="margin-top:2rem">
+				<div class="a3s-lines">
+					{%- for line in summary.line_items %}
+					<div class="a3s-line">
+						<span>
+							<strong>{{ line.label }}</strong>
+							{%- if line.detail %}<br><small>{{ line.detail }}</small>{% endif %}
+						</span>
+						<span>
+							{%- if line.waived %}
+							<s>{{ frappe.utils.fmt_money(line.struck_amount, currency=summary.currency) }}</s>
+							{{ frappe.utils.fmt_money(0, currency=summary.currency) }}
+							{%- else %}
+							{{ frappe.utils.fmt_money(line.amount, currency=summary.currency) }}
+							{%- endif %}
+						</span>
+					</div>
+					{%- endfor %}
+
+					{#- GST shown as its own lines. A customer claiming input credit needs
+					    to see the split, not a single tax-inclusive figure. -#}
+					{%- if order %}
+					<div class="a3s-line">
+						<span><strong>Subtotal</strong></span>
+						<span>{{ frappe.utils.fmt_money(order.subtotal, currency=order.currency) }}</span>
+					</div>
+					{%- if order.tax_type == "IGST" and order.igst_amount %}
+					<div class="a3s-line">
+						<span>IGST</span>
+						<span>{{ frappe.utils.fmt_money(order.igst_amount, currency=order.currency) }}</span>
+					</div>
+					{%- else %}
+					{%- if order.cgst_amount %}
+					<div class="a3s-line">
+						<span>CGST</span>
+						<span>{{ frappe.utils.fmt_money(order.cgst_amount, currency=order.currency) }}</span>
+					</div>
+					{%- endif %}
+					{%- if order.sgst_amount %}
+					<div class="a3s-line">
+						<span>SGST</span>
+						<span>{{ frappe.utils.fmt_money(order.sgst_amount, currency=order.currency) }}</span>
+					</div>
+					{%- endif %}
+					{%- endif %}
+					<div class="a3s-line a3s-line--total">
+						<span><strong>Amount payable</strong></span>
+						<span>{{ frappe.utils.fmt_money(order.total_amount, currency=order.currency) }}</span>
+					</div>
+					{%- endif %}
+				</div>
+			</div>
+
+			{%- if renewal_note %}
+			<div class="a3s-draft" style="margin-top:1.5rem">
+				<strong>How renewals will work.</strong> {{ renewal_note }}
+			</div>
+			{%- endif %}
+
+			{%- if mock_mode %}
+			<div class="a3s-draft" style="margin-top:2rem">
+				<strong>Simulated payment.</strong> This site is running the mock gateway, so
+				nothing is charged and no card is involved. Use the buttons below to see what
+				happens on success and on failure.
+			</div>
+			<div id="a3s-pay" data-mock="1" style="margin-top:1.5rem">
+				<button class="a3s-btn a3s-btn--primary a3s-btn--block" type="button" id="a3s-pay-btn"
+					data-reference="{{ reference }}" data-key="{{ key }}" data-outcome="success"
+					data-analytics="payment_initiated">
+					Simulate a successful payment of
+					{{ frappe.utils.fmt_money(order.total_amount, currency=order.currency) if order else "" }}
+				</button>
+				<button class="a3s-btn a3s-btn--secondary a3s-btn--block" type="button"
+					id="a3s-fail-btn" data-reference="{{ reference }}" data-key="{{ key }}"
+					data-outcome="failure" style="margin-top:.75rem">
+					Simulate a declined payment
+				</button>
+				<p class="a3s-form__status" role="status" aria-live="polite"></p>
+			</div>
+
+			{%- else %}
+			<div id="a3s-pay" style="margin-top:2rem">
+				<button class="a3s-btn a3s-btn--primary a3s-btn--block" type="button" id="a3s-pay-btn"
+					data-reference="{{ reference }}" data-key="{{ key }}"
+					data-analytics="payment_initiated">
+					Pay {{ frappe.utils.fmt_money(order.total_amount, currency=order.currency) if order else "" }}
+				</button>
+				<p class="a3s-form__status" role="status" aria-live="polite"></p>
+			</div>
+
+			<p class="a3s-small a3s-muted" style="margin-top:1.5rem">
+				Payment is handled entirely by our payment gateway. Your card details are
+				entered on their secure page and never reach our servers.
+			</p>
+			{%- endif %}
+		</div>
+		{%- endif %}
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+{%- if not mock_mode %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{%- endif %}
+<script src="/assets/a3_sola/js/checkout.js"></script>
+{% endblock %}

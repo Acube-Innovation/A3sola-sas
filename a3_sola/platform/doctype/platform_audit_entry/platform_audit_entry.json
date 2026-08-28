@@ -1,0 +1,253 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "entry_type",
+  "subject",
+  "occurred_on",
+  "cb_2",
+  "actor",
+  "actor_roles",
+  "source_ip",
+  "sb_3",
+  "reference_doctype",
+  "reference_name",
+  "cb_4",
+  "platform_subscription",
+  "amount",
+  "currency",
+  "sb_5",
+  "reason",
+  "cb_6",
+  "changed_field",
+  "value_before",
+  "value_after",
+  "sb_7",
+  "previous_entry",
+  "entry_hash",
+  "cb_8",
+  "chain_index",
+  "detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "What happened"
+  },
+  {
+   "fieldname": "entry_type",
+   "fieldtype": "Select",
+   "label": "Event",
+   "options": "Refund Requested\nRefund Approved\nRefund Processed\nRefund Failed\nManual Payment Override\nPayment Status Refetched\nPayment Link Reissued\nWebhook Reprocessed\nMandate Re-registered\nMandate Cancelled\nReconciliation Imported\nReconciliation Submitted\nAccounting Posted\nAccounting Reposted\nGateway Credentials Changed\nGateway Mode Changed\nCompliance Setting Changed",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Summary",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "occurred_on",
+   "fieldtype": "Datetime",
+   "label": "Occurred on",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Performed by",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "actor_roles",
+   "fieldtype": "Small Text",
+   "label": "Roles held at the time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "From IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "What it was about"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference type",
+   "options": "DocType",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1,
+   "default": "INR"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Why, and what changed"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Text",
+   "label": "Reason given",
+   "read_only": 1,
+   "description": "The operator's own words. Required for every manual override."
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "changed_field",
+   "fieldtype": "Data",
+   "label": "Field changed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "value_before",
+   "fieldtype": "Small Text",
+   "label": "Before",
+   "read_only": 1,
+   "description": "Secrets are never stored here - only whether one was set."
+  },
+  {
+   "fieldname": "value_after",
+   "fieldtype": "Small Text",
+   "label": "After",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Tamper evidence"
+  },
+  {
+   "fieldname": "previous_entry",
+   "fieldtype": "Link",
+   "label": "Previous entry",
+   "options": "Platform Audit Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_hash",
+   "fieldtype": "Data",
+   "label": "Entry hash",
+   "read_only": 1,
+   "description": "SHA-256 over this entry's content and the previous entry's hash."
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "chain_index",
+   "fieldtype": "Int",
+   "label": "Position in chain",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Long Text",
+   "label": "Detail",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-27 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Platform Audit Entry",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "format:AUD-{YYYY}-{#####}",
+ "naming_rule": "Expression",
+ "title_field": "subject",
+ "show_title_field_in_link": 1,
+ "search_fields": "entry_type,actor,reference_name",
+ "description": "Append-only. Nobody may edit or delete an entry once written, not even the Administrator - each row carries a hash of its own content chained to the row before it, so a row that is altered in the database can be detected.",
+ "default_view": "List"
+}

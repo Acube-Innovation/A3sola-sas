@@ -147,9 +147,9 @@ def verify_captcha(token):
 	secret = settings.get_password("captcha_secret_key", raise_exception=False)
 	if not secret:
 		frappe.log_error(
-			"Captcha is enabled but no secret key is configured. Submissions are being "
+			title="a3_sola: captcha misconfigured",
+			message="Captcha is enabled but no secret key is configured. Submissions are being "
 			"refused because failing open would defeat the point.",
-			"a3_sola: captcha misconfigured",
 		)
 		frappe.throw(_("We could not verify that you are human. Please try again."))
 
