@@ -107,9 +107,9 @@ def create_project_from_commissioning(commissioning_report):
 	if get_value("auto_create_om_contract"):
 		try:
 			create_om_contract(project.name)
-		except NotImplementedError:
-			frappe.log_error("create_om_contract is not implemented", "a3_sola")
 		except Exception:
+			# The contract is a five-year obligation, but failing to raise it must not
+			# undo a valid commissioning. Logged loudly and picked up by the O&M register.
 			frappe.log_error(frappe.get_traceback(), f"a3_sola: O&M contract for {project.name}")
 
 	try:

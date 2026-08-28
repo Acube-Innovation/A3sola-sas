@@ -241,7 +241,109 @@
   "signup_abandon_after_days",
   "signup_reminder_after_hours",
   "personal_data_retention_days",
-  "verification_token_retention_days"
+  "verification_token_retention_days",
+  "payments_tab",
+  "sb_1402",
+  "payment_gateway",
+  "gateway_mode",
+  "cb_1403",
+  "razorpay_account_id",
+  "sb_1404",
+  "razorpay_key_id",
+  "razorpay_key_secret",
+  "cb_1405",
+  "razorpay_webhook_secret",
+  "webhook_path_token",
+  "sb_1406",
+  "payment_order_series_prefix",
+  "payment_transaction_series_prefix",
+  "webhook_log_series_prefix",
+  "mandate_series_prefix",
+  "cb_1407",
+  "subscription_series_prefix",
+  "subscription_invoice_series_prefix",
+  "refund_series_prefix",
+  "reconciliation_series_prefix",
+  "sb_1408",
+  "rbi_note",
+  "afa_free_debit_ceiling",
+  "mandate_headroom_percent",
+  "cb_1410",
+  "pre_debit_notice_hours",
+  "send_post_debit_confirmation",
+  "sb_1411",
+  "subscription_gst_rate",
+  "company_gstin",
+  "company_state_code",
+  "cb_1412",
+  "subscription_hsn_sac",
+  "place_of_supply_rule",
+  "enable_einvoicing",
+  "sb_1413",
+  "payment_link_expiry_hours",
+  "auto_capture_payments",
+  "cb_1414",
+  "enable_payment_retries",
+  "sb_1415",
+  "payment_posting_note",
+  "enable_payment_postings",
+  "sb_1417",
+  "payment_account_mapping",
+  "sb_1601",
+  "refund_approval_threshold",
+  "cb_1602",
+  "unreconciled_alert_days",
+  "tab_5001",
+  "provisioning_note",
+  "sb_5003",
+  "tenant_series_prefix",
+  "provisioning_job_series_prefix",
+  "cb_5004",
+  "invitation_series_prefix",
+  "sb_5005",
+  "tenancy_strategy_note",
+  "tenancy_strategy",
+  "reserved_tenant_codes",
+  "sb_5007",
+  "provisioning_default_country",
+  "provisioning_default_currency",
+  "default_chart_of_accounts",
+  "cb_5008",
+  "default_fiscal_year_start",
+  "company_abbr_length",
+  "create_default_warehouses",
+  "create_default_cost_centers",
+  "sb_5009",
+  "admin_role_profile_fallback",
+  "provisioning_send_welcome_email",
+  "welcome_email_template",
+  "cb_5010",
+  "password_link_expiry_hours",
+  "force_password_reset",
+  "enable_two_factor_for_admins",
+  "sb_5011",
+  "invitation_expiry_days",
+  "cb_5012",
+  "max_pending_invitations_multiplier",
+  "sb_5013",
+  "provisioning_mode",
+  "provisioning_queue",
+  "cb_5014",
+  "provisioning_timeout_minutes",
+  "max_provisioning_retries",
+  "notify_on_failure_role",
+  "sb_5015",
+  "isolation_gate_note",
+  "run_isolation_test_on_provision",
+  "isolation_test_waiver_reason",
+  "cb_5017",
+  "isolation_recheck_monthly",
+  "provisioning_failure_alert_age_hours",
+  "sb_6001",
+  "invite_limit_note",
+  "invite_rate_limit",
+  "cb_6003",
+  "invite_accept_rate_limit"
  ],
  "fields": [
   {
@@ -1578,11 +1680,593 @@
    "fieldtype": "Int",
    "label": "Purge Verification Tokens After (days)",
    "default": "30"
+  },
+  {
+   "fieldname": "payments_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "sb_1402",
+   "fieldtype": "Section Break",
+   "label": "Gateway"
+  },
+  {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Select",
+   "label": "Gateway",
+   "options": "Razorpay",
+   "default": "Razorpay",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gateway_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Mock\nTest\nLive",
+   "default": "Mock",
+   "reqd": 1,
+   "description": "Mock runs a simulated gateway with no real money and no credentials - for trying the flow end to end. Test uses Razorpay's own test keys. Live takes real payments."
+  },
+  {
+   "fieldname": "cb_1403",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "razorpay_account_id",
+   "fieldtype": "Data",
+   "label": "Razorpay Account ID"
+  },
+  {
+   "fieldname": "sb_1404",
+   "fieldtype": "Section Break",
+   "label": "Credentials"
+  },
+  {
+   "fieldname": "razorpay_key_id",
+   "fieldtype": "Data",
+   "label": "Key ID",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "razorpay_key_secret",
+   "fieldtype": "Password",
+   "label": "Key Secret",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_1405",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "razorpay_webhook_secret",
+   "fieldtype": "Password",
+   "label": "Webhook Secret",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "webhook_path_token",
+   "fieldtype": "Data",
+   "label": "Webhook Path Token",
+   "permlevel": 1,
+   "description": "A non-obvious segment in the webhook URL. Signature verification is the real control; this only keeps casual traffic away."
+  },
+  {
+   "fieldname": "sb_1406",
+   "fieldtype": "Section Break",
+   "label": "Payment Naming"
+  },
+  {
+   "fieldname": "payment_order_series_prefix",
+   "fieldtype": "Data",
+   "label": "Payment Order Prefix",
+   "default": "PORD"
+  },
+  {
+   "fieldname": "payment_transaction_series_prefix",
+   "fieldtype": "Data",
+   "label": "Transaction Prefix",
+   "default": "PTXN"
+  },
+  {
+   "fieldname": "webhook_log_series_prefix",
+   "fieldtype": "Data",
+   "label": "Webhook Log Prefix",
+   "default": "WHK"
+  },
+  {
+   "fieldname": "mandate_series_prefix",
+   "fieldtype": "Data",
+   "label": "Mandate Prefix",
+   "default": "MND"
+  },
+  {
+   "fieldname": "cb_1407",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subscription_series_prefix",
+   "fieldtype": "Data",
+   "label": "Subscription Prefix",
+   "default": "SUB"
+  },
+  {
+   "fieldname": "subscription_invoice_series_prefix",
+   "fieldtype": "Data",
+   "label": "Subscription Invoice Prefix",
+   "default": "SINV"
+  },
+  {
+   "fieldname": "refund_series_prefix",
+   "fieldtype": "Data",
+   "label": "Refund Prefix",
+   "default": "PREF"
+  },
+  {
+   "fieldname": "reconciliation_series_prefix",
+   "fieldtype": "Data",
+   "label": "Reconciliation Prefix",
+   "default": "RECN"
+  },
+  {
+   "fieldname": "sb_1408",
+   "fieldtype": "Section Break",
+   "label": "RBI e-Mandate Compliance"
+  },
+  {
+   "fieldname": "rbi_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The RBI Digital Payments E-mandate Framework governs recurring debits. These values reflect the framework as understood at build time and <b>must be re-verified against current RBI guidance before go-live</b>. See docs/COMPLIANCE_NOTES.md.</p>"
+  },
+  {
+   "fieldname": "afa_free_debit_ceiling",
+   "fieldtype": "Currency",
+   "label": "No-AFA Debit Ceiling",
+   "default": "15000",
+   "reqd": 1,
+   "description": "RBI e-mandate threshold on the TOTAL debit including tax. Above this every debit needs Additional Factor Authentication. The higher one-lakh ceiling covers insurance, mutual funds and card bills only - a SaaS subscription does not qualify."
+  },
+  {
+   "fieldname": "mandate_headroom_percent",
+   "fieldtype": "Float",
+   "label": "Mandate Headroom %",
+   "default": "20",
+   "description": "Registers the mandate maximum above the current debit, so adding users or upgrading does not immediately invalidate it."
+  },
+  {
+   "fieldname": "cb_1410",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pre_debit_notice_hours",
+   "fieldtype": "Int",
+   "label": "Pre-Debit Notice (hours)",
+   "default": "24",
+   "reqd": 1,
+   "description": "Mandatory advance notice before any auto-debit. 24 hours is the regulatory minimum and a lower value is refused."
+  },
+  {
+   "fieldname": "send_post_debit_confirmation",
+   "fieldtype": "Check",
+   "label": "Send Post-Debit Confirmation",
+   "default": "1",
+   "description": "Required after every collection."
+  },
+  {
+   "fieldname": "sb_1411",
+   "fieldtype": "Section Break",
+   "label": "Subscription Tax"
+  },
+  {
+   "fieldname": "subscription_gst_rate",
+   "fieldtype": "Float",
+   "label": "GST Rate %",
+   "default": "18",
+   "description": "On the SaaS subscription supply - unrelated to the tenant's own solar contracts. Confirm with the CA before go-live."
+  },
+  {
+   "fieldname": "company_gstin",
+   "fieldtype": "Data",
+   "label": "Company GSTIN"
+  },
+  {
+   "fieldname": "company_state_code",
+   "fieldtype": "Data",
+   "label": "Company State Code",
+   "description": "Two-digit GST state code of the supplier, e.g. 32 for Kerala."
+  },
+  {
+   "fieldname": "cb_1412",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subscription_hsn_sac",
+   "fieldtype": "Data",
+   "label": "HSN / SAC",
+   "default": "997331"
+  },
+  {
+   "fieldname": "place_of_supply_rule",
+   "fieldtype": "Select",
+   "label": "Place of Supply",
+   "options": "Customer State\nCompany State",
+   "default": "Customer State"
+  },
+  {
+   "fieldname": "enable_einvoicing",
+   "fieldtype": "Check",
+   "label": "Enable e-Invoicing",
+   "description": "Mandatory above the prevailing turnover threshold. Check current CBIC guidance before go-live."
+  },
+  {
+   "fieldname": "sb_1413",
+   "fieldtype": "Section Break",
+   "label": "Collection Behaviour"
+  },
+  {
+   "fieldname": "payment_link_expiry_hours",
+   "fieldtype": "Int",
+   "label": "Payment Link Expiry (hours)",
+   "default": "72"
+  },
+  {
+   "fieldname": "auto_capture_payments",
+   "fieldtype": "Check",
+   "label": "Auto-Capture Payments",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb_1414",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "enable_payment_retries",
+   "fieldtype": "Check",
+   "label": "Enable Payment Retries",
+   "default": "1"
+  },
+  {
+   "fieldname": "sb_1415",
+   "fieldtype": "Section Break",
+   "label": "Payment Ledger"
+  },
+  {
+   "fieldname": "payment_posting_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The whole payment flow works in tracking mode with this off. Nothing reaches a ledger until it is on and the accounts below are mapped. Same discipline as the Projects tab.</p>"
+  },
+  {
+   "fieldname": "enable_payment_postings",
+   "fieldtype": "Check",
+   "label": "Enable Payment Postings",
+   "default": "0"
+  },
+  {
+   "fieldname": "sb_1417",
+   "fieldtype": "Section Break",
+   "label": "Payment Account Mapping"
+  },
+  {
+   "fieldname": "payment_account_mapping",
+   "fieldtype": "Table",
+   "label": "Payment Accounts",
+   "options": "Platform Payment Account Mapping"
+  },
+  {
+   "fieldname": "sb_1601",
+   "fieldtype": "Section Break",
+   "label": "Refunds"
+  },
+  {
+   "fieldname": "refund_approval_threshold",
+   "fieldtype": "Currency",
+   "label": "Refund Approval Threshold",
+   "default": "5000",
+   "description": "Above this a refund needs a billing manager's explicit approval."
+  },
+  {
+   "fieldname": "cb_1602",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unreconciled_alert_days",
+   "fieldtype": "Int",
+   "label": "Alert on Unreconciled After (days)",
+   "default": "5"
+  },
+  {
+   "fieldname": "tab_5001",
+   "fieldtype": "Tab Break",
+   "label": "Provisioning"
+  },
+  {
+   "fieldname": "provisioning_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Provisioning runs privileged operations - creating companies, users and roles - triggered by an inbound webhook. Everything on this tab shapes what a stranger's payment is allowed to build.</p>"
+  },
+  {
+   "fieldname": "sb_5003",
+   "fieldtype": "Section Break",
+   "label": "Naming"
+  },
+  {
+   "fieldname": "tenant_series_prefix",
+   "fieldtype": "Data",
+   "label": "Tenant Prefix",
+   "default": "TNT"
+  },
+  {
+   "fieldname": "provisioning_job_series_prefix",
+   "fieldtype": "Data",
+   "label": "Job Prefix",
+   "default": "PROV"
+  },
+  {
+   "fieldname": "cb_5004",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invitation_series_prefix",
+   "fieldtype": "Data",
+   "label": "Invitation Prefix",
+   "default": "TINV"
+  },
+  {
+   "fieldname": "sb_5005",
+   "fieldtype": "Section Break",
+   "label": "Tenancy Strategy"
+  },
+  {
+   "fieldname": "tenancy_strategy_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">An architectural decision, not a toggle. Multi Company is right for the first twenty to fifty tenants and lets you ship; Multi Site is right once one tenant's data loss would end the business, or one tenant's volume degrades everyone else's queries. Changing this is blocked once any Tenant exists - see docs/TENANCY_MODEL.md.</p>"
+  },
+  {
+   "fieldname": "tenancy_strategy",
+   "fieldtype": "Select",
+   "label": "Tenancy Strategy",
+   "options": "Multi Company\nMulti Site",
+   "default": "Multi Company"
+  },
+  {
+   "fieldname": "reserved_tenant_codes",
+   "fieldtype": "Small Text",
+   "label": "Reserved Codes",
+   "description": "One per line or comma separated. A tenant code matching any of these is refused.",
+   "default": "admin, api, www, app, mail, support, billing, help, status, docs, blog, shop, static, assets, cdn, ftp, smtp, imap, dev, test, staging, demo, root, system, frappe, erpnext, a3sola, sola, tenant, platform, portal, login, signup, account"
+  },
+  {
+   "fieldname": "sb_5007",
+   "fieldtype": "Section Break",
+   "label": "Company Defaults"
+  },
+  {
+   "fieldname": "provisioning_default_country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country",
+   "default": "India"
+  },
+  {
+   "fieldname": "provisioning_default_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR"
+  },
+  {
+   "fieldname": "default_chart_of_accounts",
+   "fieldtype": "Data",
+   "label": "Chart of Accounts",
+   "default": "Standard"
+  },
+  {
+   "fieldname": "cb_5008",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_fiscal_year_start",
+   "fieldtype": "Data",
+   "label": "Fiscal Year Start",
+   "default": "04-01",
+   "description": "MM-DD. India's year starts 1 April."
+  },
+  {
+   "fieldname": "company_abbr_length",
+   "fieldtype": "Int",
+   "label": "Abbreviation Length",
+   "default": "4"
+  },
+  {
+   "fieldname": "create_default_warehouses",
+   "fieldtype": "Check",
+   "label": "Create Warehouses",
+   "default": "1"
+  },
+  {
+   "fieldname": "create_default_cost_centers",
+   "fieldtype": "Check",
+   "label": "Create Cost Centres",
+   "default": "1"
+  },
+  {
+   "fieldname": "sb_5009",
+   "fieldtype": "Section Break",
+   "label": "Admin User"
+  },
+  {
+   "fieldname": "admin_role_profile_fallback",
+   "fieldtype": "Link",
+   "label": "Fallback Role Profile",
+   "options": "Role Profile",
+   "description": "Used when the plan names no role profile."
+  },
+  {
+   "fieldname": "provisioning_send_welcome_email",
+   "fieldtype": "Check",
+   "label": "Send Welcome Email",
+   "default": "1"
+  },
+  {
+   "fieldname": "welcome_email_template",
+   "fieldtype": "Link",
+   "label": "Welcome Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "cb_5010",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "password_link_expiry_hours",
+   "fieldtype": "Int",
+   "label": "Password Link Expiry (hours)",
+   "default": "72"
+  },
+  {
+   "fieldname": "force_password_reset",
+   "fieldtype": "Check",
+   "label": "Force Password Reset",
+   "default": "1"
+  },
+  {
+   "fieldname": "enable_two_factor_for_admins",
+   "fieldtype": "Check",
+   "label": "Two-Factor for Tenant Admins"
+  },
+  {
+   "fieldname": "sb_5011",
+   "fieldtype": "Section Break",
+   "label": "Invitations"
+  },
+  {
+   "fieldname": "invitation_expiry_days",
+   "fieldtype": "Int",
+   "label": "Invitation Expiry (days)",
+   "default": "14"
+  },
+  {
+   "fieldname": "cb_5012",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_pending_invitations_multiplier",
+   "fieldtype": "Float",
+   "label": "Pending Invitation Multiplier",
+   "default": "1.5",
+   "precision": 2,
+   "description": "Allows inviting a little beyond the seat count to cover non-responders. The quota still binds at acceptance."
+  },
+  {
+   "fieldname": "sb_5013",
+   "fieldtype": "Section Break",
+   "label": "Behaviour"
+  },
+  {
+   "fieldname": "provisioning_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Automatic\nManual Approval",
+   "default": "Automatic",
+   "description": "Manual Approval queues the job and waits for a human. Worth using for the first few tenants."
+  },
+  {
+   "fieldname": "provisioning_queue",
+   "fieldtype": "Select",
+   "label": "Queue",
+   "options": "long\ndefault",
+   "default": "long"
+  },
+  {
+   "fieldname": "cb_5014",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "provisioning_timeout_minutes",
+   "fieldtype": "Int",
+   "label": "Timeout (minutes)",
+   "default": "15"
+  },
+  {
+   "fieldname": "max_provisioning_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "default": "3"
+  },
+  {
+   "fieldname": "notify_on_failure_role",
+   "fieldtype": "Link",
+   "label": "Notify Role on Failure",
+   "options": "Role"
+  },
+  {
+   "fieldname": "sb_5015",
+   "fieldtype": "Section Break",
+   "label": "Isolation"
+  },
+  {
+   "fieldname": "isolation_gate_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">The last line of defence against one tenant reading another's ledger. It is a gating step: a tenant that fails it is never handed to a customer.</p>"
+  },
+  {
+   "fieldname": "run_isolation_test_on_provision",
+   "fieldtype": "Check",
+   "label": "Verify Isolation Before Activating",
+   "default": "1"
+  },
+  {
+   "fieldname": "isolation_test_waiver_reason",
+   "fieldtype": "Small Text",
+   "label": "Justification for Skipping",
+   "mandatory_depends_on": "eval:!doc.run_isolation_test_on_provision"
+  },
+  {
+   "fieldname": "cb_5017",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "isolation_recheck_monthly",
+   "fieldtype": "Check",
+   "label": "Re-check Every Month",
+   "default": "1"
+  },
+  {
+   "fieldname": "provisioning_failure_alert_age_hours",
+   "fieldtype": "Int",
+   "label": "Alert on Interventions Older Than (hours)",
+   "default": "24"
+  },
+  {
+   "fieldname": "sb_6001",
+   "fieldtype": "Section Break",
+   "label": "Invitation Rate Limits"
+  },
+  {
+   "fieldname": "invite_limit_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Invitation sending and acceptance are both reachable by people who are not yet your customers. These are the ceilings, per hour.</p>"
+  },
+  {
+   "fieldname": "invite_rate_limit",
+   "fieldtype": "Int",
+   "label": "Invitations Sent per Admin per Hour",
+   "default": "30"
+  },
+  {
+   "fieldname": "cb_6003",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invite_accept_rate_limit",
+   "fieldtype": "Int",
+   "label": "Acceptance Attempts per IP per Hour",
+   "default": "20"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-08-28 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
@@ -1601,56 +2285,16 @@
    "create": 1
   },
   {
-   "role": "Solar CRM Manager",
+   "permlevel": 1,
    "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1
+   "role": "Platform Admin",
+   "write": 1
   },
   {
-   "role": "Solar Sales Manager",
+   "permlevel": 1,
    "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Design Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Sales Executive",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Survey Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "role": "System Manager",
+   "write": 1
   }
  ],
  "sort_field": "modified",
@@ -1658,5 +2302,5 @@
  "states": [],
  "track_changes": 1,
  "issingle": 1,
- "description": "The single settings doctype for the whole a3_sola product."
+ "description": "Site-wide configuration shared by every tenant. Deliberately unreachable by any customer role: in a multi-company deployment one tenant editing this would change behaviour for all of them. The app reads it through helpers that bypass permissions, so nothing functional depends on a customer being able to open it."
 }

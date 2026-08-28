@@ -1,0 +1,15 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;"><strong>{{ order.customer_name }} has paid</strong></p>
+<p style="margin:0 0 20px;">
+	Automated provisioning is not live yet, so this account needs setting up by hand today.
+	They have paid and are waiting.
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:14px;">
+	<tr><td style="padding:6px 0;color:#6b7383;">Email</td><td style="padding:6px 0;">{{ order.customer_email }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Phone</td><td style="padding:6px 0;">{{ order.customer_phone }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Amount</td><td style="padding:6px 0;">{{ frappe.utils.fmt_money(order.total_amount, currency=order.currency) }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Order</td><td style="padding:6px 0;">{{ order.name }}</td></tr>
+	<tr><td style="padding:6px 0;color:#6b7383;">Signup</td><td style="padding:6px 0;">{{ order.subscription_signup }}</td></tr>
+</table>
+{% endblock %}

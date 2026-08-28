@@ -4,3 +4,14 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+
+# The public site moved under a configurable base route. Feature and solution detail pages
+# carry their own route as data, so they have to follow the templates.
+a3_sola.patches.v1_0.move_platform_site_under_base_route
+
+# The public pages moved under www/a3sola/, so the site root is free for the desk.
+a3_sola.patches.v1_0.serve_desk_at_site_root
+
+# One of everything, for a fresh database. Opt-in: does nothing unless the site config
+# says `a3s_seed_starter_data`. See the patch's docstring.
+a3_sola.patches.v1_0.seed_starter_dataset

@@ -108,3 +108,66 @@ def registered_doctypes():
 	from a3_sola.registry import all_permission_doctypes
 
 	return all_permission_doctypes()
+
+
+def require_role(roles, action=None):
+	"""Refuse anyone outside `roles`. Unlike `frappe.only_for`, this holds under test.
+
+	`frappe.only_for` returns immediately when `frappe.flags.in_test` is set, which means
+	a role guard written with it is never actually exercised by the suite - the tests pass
+	whether the guard is there or not. For anything that moves money that is the wrong
+	trade: these are exactly the guards worth proving. Administrator still passes, as it
+	does everywhere else in Frappe.
+	"""
+	if frappe.session.user == "Administrator":
+		return True
+	if isinstance(roles, str):
+		roles = (roles,)
+	if set(roles).isdisjoint(frappe.get_roles()):
+		frappe.throw(
+			_("{0} is only allowed for {1}.").format(
+				action or _("This action"), ", ".join(frappe.bold(_(role)) for role in roles)
+			),
+			frappe.PermissionError,
+			_("Not Permitted"),
+		)
+	return True
+
+
+def resolve_report_company(requested=None, user=None):
+	"""The company a report may run for. Never simply what the caller asked for.
+
+	Every report in this app takes a company filter, and the obvious implementation -
+	default it to the user's company, then trust it - is a cross-tenant leak with a
+	friendly face. A report that builds raw SQL from `filters.company` never touches the
+	permission query conditions at all, so a tenant admin who edits the filter in the URL
+	reads a competitor's ledger and nothing anywhere throws.
+
+	So: no company asked for means the user's own; a company they hold no permission on is
+	refused by name rather than silently swapped, because silently swapping would make a
+	report that looks like it answered the question asked.
+	"""
+	user = user or frappe.session.user
+	permitted = get_permitted_companies(user)
+
+	if not requested:
+		requested = frappe.defaults.get_user_default("Company")
+		if not requested and permitted:
+			requested = permitted[0]
+		if not requested:
+			requested = frappe.defaults.get_global_default("company")
+
+	if permitted is None:
+		# No User Permission on Company - internal staff, or a single-company install.
+		return requested
+	if not permitted:
+		frappe.throw(
+			_("You are not permitted to see any company's data."), frappe.PermissionError
+		)
+	if requested and requested not in permitted:
+		frappe.throw(
+			_("You are not permitted to run this report for {0}.").format(frappe.bold(requested)),
+			frappe.PermissionError,
+			title=_("Not Your Company"),
+		)
+	return requested or permitted[0]

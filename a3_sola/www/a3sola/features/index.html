@@ -1,0 +1,45 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-hero a3s-detail-hero">
+	<div class="a3s-container">
+		<nav class="a3s-crumbs" aria-label="Breadcrumb">
+			<a href="{{ platform_base }}">Home</a> <span aria-hidden="true">/</span>
+			<span aria-current="page">Features</span>
+		</nav>
+		<h1>Everything a solar EPC actually has to do</h1>
+		<p class="a3s-lead">
+			One record follows the job from the first enquiry to the end of its warranty.
+			These are the parts of it.
+		</p>
+	</div>
+</section>
+
+{%- for group, features in groups %}
+<section class="a3s-section {% if loop.index is even %}a3s-section--surface{% endif %}"
+	aria-labelledby="group-{{ loop.index }}">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-reveal">
+			<span class="a3s-eyebrow">{{ group }}</span>
+			<h2 id="group-{{ loop.index }}" style="font-size:1.7rem">{{ group }}</h2>
+		</div>
+		<div class="a3s-grid a3s-grid--3">
+			{%- for feature in features %}
+			<a class="a3s-card a3s-reveal" href="/{{ feature.route }}">
+				<span class="a3s-card__icon" aria-hidden="true">{{ feature.icon or "◆" }}</span>
+				<h3 class="a3s-card__title">{{ feature.feature_name }}</h3>
+				<p class="a3s-card__text">{{ feature.short_description }}</p>
+				{%- set items = bullets.get(feature.name) %}
+				{%- if items %}
+				<ul class="a3s-card__bullets">
+					{%- for bullet in items[:3] %}<li>{{ bullet }}</li>{%- endfor %}
+				</ul>
+				{%- endif %}
+				<span class="a3s-card__more">Learn more &rarr;</span>
+			</a>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+{%- endfor %}
+{% endblock %}

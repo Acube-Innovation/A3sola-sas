@@ -1,0 +1,143 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Team &amp; seats</h1>
+
+		{%- if not seats %}
+		<div class="a3s-card a3s-narrow" style="margin-top:2rem;text-align:center">
+			<p class="a3s-card__text">
+				This page is for the administrator of a workspace. If you are one and are
+				seeing this, ask your account manager to check your access.
+			</p>
+		</div>
+		{%- else %}
+
+		<div class="a3s-card" style="margin-top:2rem">
+			<p class="a3s-card__text" style="margin:0">
+				<strong>{{ seats.usage.used }}</strong> of <strong>{{ seats.usage.quota }}</strong>
+				seats in use{% if seats.usage.pending %}, {{ seats.usage.pending }} invitation{{ "s" if seats.usage.pending != 1 }} waiting to be accepted{% endif %}.
+				{%- if seats.usage.available %}
+				You can invite {{ seats.usage.available }} more.
+				{%- else %}
+				Every seat is taken. To add someone, buy more seats from your
+				<a href="/billing">billing page</a> or remove a user who no longer needs access.
+				{%- endif %}
+			</p>
+		</div>
+
+		{%- if seats.usage.available %}
+		<div class="a3s-card" style="margin-top:1.5rem">
+			<h2 class="a3s-card__title">Invite someone</h2>
+			<form id="a3s-invite-form" style="display:grid;gap:0.75rem;max-width:32rem">
+				<input type="email" name="email" placeholder="Their work email" required
+				       class="a3s-input" style="padding:0.7rem 0.9rem;border-radius:0.6rem;border:1px solid rgba(42,51,66,0.18)">
+				<input type="text" name="invited_name" placeholder="Their name (optional)"
+				       class="a3s-input" style="padding:0.7rem 0.9rem;border-radius:0.6rem;border:1px solid rgba(42,51,66,0.18)">
+				<button type="submit" class="a3s-btn a3s-btn--primary" style="justify-self:start">Send invitation</button>
+			</form>
+			<p id="a3s-invite-message" style="margin:0.75rem 0 0;font-size:0.9rem"></p>
+		</div>
+		{%- endif %}
+
+		<div class="a3s-card" style="margin-top:1.5rem;overflow-x:auto">
+			<h2 class="a3s-card__title">People in your workspace</h2>
+			<table style="width:100%;border-collapse:collapse;font-size:0.92rem">
+				<thead><tr>
+					<th style="text-align:left;padding:0.5rem 0">Email</th>
+					<th style="text-align:left;padding:0.5rem 0">Name</th>
+					<th style="text-align:left;padding:0.5rem 0">Status</th>
+				</tr></thead>
+				<tbody>
+				{%- for user in seats.users %}
+					<tr style="border-top:1px solid rgba(42,51,66,0.08)">
+						<td style="padding:0.5rem 0">{{ user.email }}</td>
+						<td style="padding:0.5rem 0">{{ user.full_name or "" }}</td>
+						<td style="padding:0.5rem 0">{{ "Active" if user.enabled else "Disabled" }}</td>
+					</tr>
+				{%- endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		{%- if seats.invitations %}
+		<div class="a3s-card" style="margin-top:1.5rem;overflow-x:auto">
+			<h2 class="a3s-card__title">Invitations</h2>
+			<table style="width:100%;border-collapse:collapse;font-size:0.92rem">
+				<thead><tr>
+					<th style="text-align:left;padding:0.5rem 0">Email</th>
+					<th style="text-align:left;padding:0.5rem 0">Status</th>
+					<th style="text-align:left;padding:0.5rem 0">Expires</th>
+					<th style="text-align:left;padding:0.5rem 0"></th>
+				</tr></thead>
+				<tbody>
+				{%- for invitation in seats.invitations %}
+					<tr style="border-top:1px solid rgba(42,51,66,0.08)">
+						<td style="padding:0.5rem 0">{{ invitation.invited_email }}</td>
+						<td style="padding:0.5rem 0">{{ invitation.status }}</td>
+						<td style="padding:0.5rem 0">{{ frappe.utils.format_date(invitation.token_expires_on) if invitation.token_expires_on else "" }}</td>
+						<td style="padding:0.5rem 0;text-align:right">
+							{%- if invitation.status in ("Pending", "Sent") %}
+							<button class="a3s-link-button" data-resend="{{ invitation.name }}">Resend</button>
+							<button class="a3s-link-button" data-revoke="{{ invitation.name }}">Revoke</button>
+							{%- endif %}
+						</td>
+					</tr>
+				{%- endfor %}
+				</tbody>
+			</table>
+		</div>
+		{%- endif %}
+		{%- endif %}
+	</div>
+</section>
+
+<script>
+(function () {
+	var form = document.getElementById("a3s-invite-form");
+	var message = document.getElementById("a3s-invite-message");
+
+	function say(text, ok) {
+		if (!message) return;
+		message.textContent = text;
+		message.style.color = ok ? "#1a7f4b" : "#b3261e";
+	}
+
+	function call(method, args, done) {
+		frappe.call({ method: method, args: args, callback: done, error: function (r) {
+			say((r && r.message) || "That did not work. Try again in a moment.", false);
+		}});
+	}
+
+	if (form) {
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var data = new FormData(form);
+			say("Sending…", true);
+			call("a3_sola.api.invitations.invite", {
+				tenant: {{ seats.tenant_id | tojson }},
+				email: data.get("email"),
+				invited_name: data.get("invited_name")
+			}, function () { window.location.reload(); });
+		});
+	}
+
+	document.querySelectorAll("[data-resend]").forEach(function (button) {
+		button.addEventListener("click", function () {
+			call("a3_sola.api.invitations.resend",
+			     { invitation_name: button.getAttribute("data-resend") },
+			     function () { window.location.reload(); });
+		});
+	});
+	document.querySelectorAll("[data-revoke]").forEach(function (button) {
+		button.addEventListener("click", function () {
+			if (!window.confirm("Revoke this invitation? The link stops working immediately.")) return;
+			call("a3_sola.api.invitations.revoke",
+			     { invitation_name: button.getAttribute("data-revoke") },
+			     function () { window.location.reload(); });
+		});
+	});
+})();
+</script>
+{% endblock %}

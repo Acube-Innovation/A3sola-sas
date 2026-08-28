@@ -24,6 +24,22 @@ NUMBER_CARDS = [
 	("Demo Requests Unassigned", "Demo Request", "Count", None,
 	 [["status", "=", "New"], ["assigned_to", "is", "not set"]], "Orange"),
 	("Published Features", "Platform Feature", "Count", None, [["is_published", "=", 1]], "Grey"),
+	# Money.
+	("Active Subscriptions", "Platform Subscription", "Count", None,
+	 [["status", "=", "Active"], ["docstatus", "=", 1]], "Green"),
+	("Past Due Subscriptions", "Platform Subscription", "Count", None,
+	 [["status", "=", "Past Due"], ["docstatus", "=", 1]], "Red"),
+	("Collected This Month", "Payment Order", "Sum", "total_amount",
+	 [["status", "=", "Paid"]], "Green"),
+	("Overdue Value", "Payment Order", "Sum", "total_amount",
+	 [["status", "in", ["Failed", "Pending"]]], "Red"),
+	("Mandates Needing Attention", "Payment Mandate", "Count", None,
+	 [["status", "in", ["Rejected", "Paused", "Expired"]]], "Orange"),
+	("Refunds This Month", "Payment Refund", "Sum", "refund_amount",
+	 [["status", "=", "Processed"]], "Purple"),
+	("Unmatched Settlement Lines", "Settlement Reconciliation", "Sum", "unmatched_count",
+	 [["docstatus", "<", 2]], "Red"),
+	("Invoices Raised", "Subscription Invoice", "Count", None, [["docstatus", "=", 1]], "Blue"),
 ]
 
 CHARTS = [
@@ -79,7 +95,65 @@ CHARTS = [
 	},
 ]
 
+PAYMENT_CHARTS = [
+	{
+		"name": "Collection Success by Route",
+		"chart_name": "Collection Success by Route",
+		"chart_type": "Group By",
+		"document_type": "Platform Subscription",
+		"group_by_type": "Count",
+		"group_by_based_on": "collection_route",
+		"type": "Donut",
+		"number_of_groups": 3,
+	},
+	{
+		"name": "Payment Failure Reasons",
+		"chart_name": "Payment Failure Reasons",
+		"chart_type": "Group By",
+		"document_type": "Payment Transaction",
+		"group_by_type": "Count",
+		"group_by_based_on": "error_code",
+		"type": "Bar",
+		"number_of_groups": 8,
+	},
+	{
+		"name": "Monthly Collections",
+		"chart_name": "Monthly Collections",
+		"chart_type": "Sum",
+		"document_type": "Payment Order",
+		"based_on": "paid_on",
+		"value_based_on": "total_amount",
+		"timespan": "Last Year",
+		"time_interval": "Monthly",
+		"type": "Bar",
+	},
+]
+
+CHARTS += PAYMENT_CHARTS
+
 NOTIFICATIONS = [
+	{
+		"name": "Platform Mandate Rejected",
+		"subject": "Mandate rejected: {{ doc.customer_name }}",
+		"document_type": "Payment Mandate",
+		"event": "Value Change",
+		"value_changed": "status",
+		"condition": 'doc.status == "Rejected"',
+		"message": "Their next collection will fail unless the mandate is re-registered. "
+		"Contact them today rather than discovering it at renewal.",
+		"recipients_role": "Platform Billing Manager",
+	},
+	{
+		"name": "Platform Payment Failed",
+		"subject": "Payment failed: {{ doc.customer_name }}",
+		"document_type": "Payment Order",
+		"event": "Value Change",
+		"value_changed": "status",
+		"condition": 'doc.status == "Failed"',
+		"message": "A collection did not go through. Dunning will chase it automatically; "
+		"this is for visibility, not action, unless it repeats.",
+		"recipients_role": "Platform Billing Executive",
+	},
 	{
 		"name": "Platform New Signup",
 		"subject": "New signup: {{ doc.organisation_name }}",

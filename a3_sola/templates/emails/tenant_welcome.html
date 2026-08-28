@@ -1,0 +1,46 @@
+{% extends "templates/emails/_layout.html" %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello,</p>
+<p style="margin:0 0 20px;">
+	Your {{ product_name }} workspace for <strong>{{ tenant.tenant_name }}</strong> is ready.
+	It already knows how a rooftop solar business works &mdash; the pipeline, the execution
+	stages, the document pack, the subsidy scheme and the five-year O&amp;M model are all
+	set up and waiting.
+</p>
+<p style="margin:0 0 24px;">
+	<a href="{{ set_password_url }}" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#f7941e;color:#ffffff;text-decoration:none;font-weight:600;">
+		Set your password and sign in
+	</a>
+</p>
+<p style="margin:0 0 20px;font-size:13px;color:#6b7383;">
+	That link works once and expires in {{ expiry_hours }} hours. Nobody, including us, has
+	set a password on your account.
+</p>
+
+<p style="margin:0 0 8px;font-weight:600;">What your plan includes</p>
+<ul style="margin:0 0 20px;padding-left:20px;color:#2a3342;">
+	<li>{{ tenant.user_quota }} user{{ "s" if tenant.user_quota != 1 }}</li>
+	{%- for module in modules %}
+	<li>{{ module }}</li>
+	{%- endfor %}
+</ul>
+
+<p style="margin:0 0 8px;font-weight:600;">Three things to do first</p>
+<ol style="margin:0 0 20px;padding-left:20px;color:#2a3342;">
+	{%- for task in tasks %}
+	<li style="margin-bottom:6px;">{{ task[1] }}</li>
+	{%- endfor %}
+</ol>
+<p style="margin:0 0 20px;font-size:14px;">
+	These were left for you deliberately. Guessing your ledger accounts, your tariff or your
+	CA's view on GST would have been worse than leaving them blank, because a field that
+	already looks filled in is one nobody goes back to check.
+</p>
+
+{%- if sales_email %}
+<p style="margin:0;color:#6b7383;font-size:13px;">
+	Anything unclear? Reply to this email or write to
+	<a href="mailto:{{ sales_email }}" style="color:#6b7383;">{{ sales_email }}</a>.
+</p>
+{%- endif %}
+{% endblock %}

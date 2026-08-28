@@ -433,24 +433,32 @@ class TestSummary(SignupTestCase):
 		self.assertEqual(len(messages), 1)
 
 
-class TestPhaseFiveContract(SignupTestCase):
-	def test_initiate_payment_is_declared_but_not_implemented(self):
-		with self.assertRaises(NotImplementedError):
-			signup.initiate_payment("SGN-0001", "key")
+class TestPaymentHandoff(SignupTestCase):
+	"""Phase 5 implemented the extension point. The contract it promised still holds."""
 
-	def test_its_docstring_states_the_contract(self):
+	def test_initiate_payment_delegates_to_the_payments_module(self):
 		doc = signup.initiate_payment.__doc__ or ""
 		self.assertIn("snapshot", doc.lower())
 		self.assertIn("Awaiting Payment", doc)
 
-	def test_the_funnel_still_completes_without_payments(self):
+	def test_a_verified_signup_reaches_checkout(self):
 		self._submit()
 		doc = self._record()
 		signup.verify_email(doc.verification_token)
 		doc.reload()
 		result = signup.request_payment_contact(doc.name, signup._summary_key(doc))
 		self.assertTrue(result["ok"])
-		self.assertTrue(result["pending"])
+		self.assertFalse(result.get("pending"), "payments are live; this should not hold")
+		self.assertIn("/checkout", result["redirect"])
+
+	def test_the_signup_moves_to_awaiting_payment(self):
+		self._submit()
+		doc = self._record()
+		signup.verify_email(doc.verification_token)
+		doc.reload()
+		signup.initiate_payment(doc.name, signup._summary_key(doc))
+		doc.reload()
+		self.assertEqual(doc.status, "Awaiting Payment")
 
 
 class TestNothingPrivilegedIsCreated(SignupTestCase):

@@ -12,12 +12,30 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import set_request
 from frappe.website.serve import get_response
 
+from a3_sola.api.platform import base_route
+from a3_sola.api.platform import route as public_route
+
 
 def render(path):
-	"""Render as a logged-out visitor, the way the public sees it."""
+	"""Render as a logged-out visitor, the way the public sees it.
+
+	Takes a path relative to the public site's base, so these tests keep working wherever
+	the site is mounted. `render("pricing")` and `render("/pricing")` both mean the pricing
+	page, not a page at the server root.
+	"""
+	# Idempotent. Some callers pass a path relative to the site ("pricing"); others pass a
+	# route read straight off a record, which already carries the base
+	# ("a3sola/features/..."). Prefixing the second kind again gives /a3sola/a3sola/... and
+	# a 404 that looks like a routing bug rather than a test bug.
+	relative = path.lstrip("/")
+	prefix = base_route()
+	if prefix and (relative == prefix or relative.startswith(prefix + "/")):
+		full = "/" + relative
+	else:
+		full = public_route(relative)
 	frappe.set_user("Guest")
-	set_request(method="GET", path=path)
-	response = get_response(path)
+	set_request(method="GET", path=full)
+	response = get_response(full)
 	return response.status_code, response.get_data(as_text=True)
 
 
@@ -26,12 +44,12 @@ class TestHomepage(FrappeTestCase):
 		frappe.set_user("Administrator")
 
 	def test_the_homepage_is_public(self):
-		status, html = render("/")
+		status, html = render("")
 		self.assertEqual(status, 200)
 		self.assertIn("a3s-hero", html)
 
 	def test_every_section_is_present(self):
-		_status, html = render("/")
+		_status, html = render("")
 		for anchor in (
 			'id="features"', 'id="solutions"', 'id="subsidy"', 'id="platform"',
 			'id="integrations"', 'id="pricing"', 'id="apps"', 'id="contact"',
@@ -39,7 +57,7 @@ class TestHomepage(FrappeTestCase):
 			self.assertIn(anchor, html, f"missing section {anchor}")
 
 	def test_every_published_plan_appears_with_its_price(self):
-		_status, html = render("/")
+		_status, html = render("")
 		for plan in frappe.get_all(
 			"Subscription Plan",
 			filters={"is_published": 1, "is_active": 1},
@@ -54,13 +72,13 @@ class TestHomepage(FrappeTestCase):
 				)
 
 	def test_a_custom_plan_shows_custom_not_a_number(self):
-		_status, html = render("/")
+		_status, html = render("")
 		self.assertIn("Custom", html)
 
 	def test_every_published_feature_appears(self):
 		import html as html_lib
 
-		_status, page = render("/")
+		_status, page = render("")
 		# Compare unescaped, so an ampersand in a feature name is not a false failure.
 		unescaped = html_lib.unescape(page)
 		for name in frappe.get_all(
@@ -77,32 +95,32 @@ class TestHomepage(FrappeTestCase):
 		frappe.db.set_value("Platform Feature", name, "is_published", 0)
 		frappe.clear_cache()
 		try:
-			_status, html = render("/")
+			_status, html = render("")
 			self.assertNotIn(f'href="/{route}"', html)
 		finally:
 			frappe.db.set_value("Platform Feature", name, "is_published", 1)
 			frappe.clear_cache()
 
 	def test_every_stat_appears(self):
-		_status, html = render("/")
+		_status, html = render("")
 		for stat in frappe.get_all(
 			"Platform Stat", filters={"is_published": 1}, fields=["stat_value", "stat_label"]
 		):
 			self.assertIn(stat.stat_label, html)
 
 	def test_integrations_without_a_logo_fall_back_to_an_initial(self):
-		_status, html = render("/")
+		_status, html = render("")
 		self.assertIn("a3s-chip__initial", html)
 
 	def test_organization_schema_is_emitted(self):
-		_status, html = render("/")
+		_status, html = render("")
 		self.assertIn('"@type": "Organization"', html)
 
 	def test_nothing_links_to_an_external_cdn_for_behaviour(self):
 		"""One font stylesheet is allowed; scripts must all be ours."""
 		import re
 
-		_status, html = render("/")
+		_status, html = render("")
 		for src in re.findall(r'<script[^>]+src="([^"]+)"', html):
 			self.assertFalse(
 				src.startswith("http") and "localhost" not in src,
@@ -118,8 +136,8 @@ class TestPricingLinks(FrappeTestCase):
 		"""Phase 5 reads both parameters. A CTA that drops one breaks the funnel."""
 		import re
 
-		_status, html = render("/")
-		links = re.findall(r'href="(/get-started\?[^"]*)"', html)
+		_status, html = render("")
+		links = re.findall(rf'href="({re.escape(public_route("get-started"))}\?[^"]*)"', html)
 		self.assertTrue(links, "no pricing CTA links found")
 		for link in links:
 			self.assertIn("package=", link)
@@ -128,7 +146,7 @@ class TestPricingLinks(FrappeTestCase):
 	def test_every_self_serve_plan_has_a_cta(self):
 		import re
 
-		_status, html = render("/")
+		_status, html = render("")
 		codes = set(re.findall(r'package=([a-z0-9-]+)', html))
 		for plan_code in frappe.get_all(
 			"Subscription Plan",
@@ -140,7 +158,7 @@ class TestPricingLinks(FrappeTestCase):
 	def test_the_custom_plan_goes_to_sales_not_to_signup(self):
 		import re
 
-		_status, html = render("/")
+		_status, html = render("")
 		codes = set(re.findall(r'package=([a-z0-9-]+)', html))
 		for plan_code in frappe.get_all(
 			"Subscription Plan", filters={"is_custom_pricing": 1}, pluck="plan_code"
@@ -291,7 +309,7 @@ class TestMaintenanceMode(FrappeTestCase):
 	def test_maintenance_intercepts_the_homepage(self):
 		frappe.db.set_single_value("A3 Sola Settings", "maintenance_mode", 1)
 		frappe.clear_cache()
-		_status, html = render("/")
+		_status, html = render("")
 		self.assertIn("a3s-maintenance", html)
 		self.assertNotIn("a3s-hero", html)
 

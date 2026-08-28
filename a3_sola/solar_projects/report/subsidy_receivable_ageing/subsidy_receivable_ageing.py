@@ -9,14 +9,15 @@ company has funded nothing, so there is no receivable to age - that absence is d
 import frappe
 from frappe import _
 from frappe.utils import date_diff, flt, getdate, today
+from a3_sola.api.permissions import resolve_report_company
 
 BUCKETS = ((30, "0-30"), (60, "31-60"), (90, "61-90"), (10**6, "90+"))
 
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
-	if not filters.company:
-		filters.company = frappe.defaults.get_user_default("Company")
+	# Not simply what the caller asked for - see permissions.resolve_report_company.
+	filters.company = resolve_report_company(filters.company)
 	return get_columns(), get_data(filters)
 
 

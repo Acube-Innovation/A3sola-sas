@@ -1,0 +1,356 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+
+{#- 1. Hero -------------------------------------------------------------- #}
+<section class="a3s-hero">
+	<div class="a3s-container a3s-hero__grid">
+		<div class="a3s-reveal">
+			{%- if platform_settings.partner_badge_text %}
+			<span class="a3s-eyebrow">{{ platform_settings.partner_badge_text }}</span>
+			{%- endif %}
+			<h1>Run your entire solar business &mdash; sales, installation and O&amp;M &mdash; on one platform</h1>
+			<p class="a3s-lead">
+				From the first WhatsApp enquiry to the fifth year of the O&amp;M obligation, on an
+				ERPNext backbone that already knows accounting, stock and payroll.
+			</p>
+			<ul class="a3s-hero__checks">
+				<li>Every KSEB and bank document generated from one record</li>
+				<li>PM Surya Ghar subsidy tracked to the customer's bank account</li>
+				<li>The five-year service obligation managed as a liability, not a promise</li>
+			</ul>
+			<div class="a3s-hero__cta">
+				<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started"
+					data-analytics="signup_started" data-analytics-source="hero">Get started</a>
+				<a class="a3s-btn a3s-btn--ghost" href="#contact">Book a demo &rarr;</a>
+			</div>
+		</div>
+
+		{#- The product mockup, built in HTML so it stays crisp and stays editable. -#}
+		<div class="a3s-mockup a3s-reveal" aria-hidden="true">
+			<div class="a3s-mockup__bar">
+				<span class="a3s-dot a3s-dot--red"></span>
+				<span class="a3s-dot a3s-dot--amber"></span>
+				<span class="a3s-dot a3s-dot--green"></span>
+				<span class="a3s-mockup__title">{{ platform_settings.product_name or "a3 sola" }}</span>
+			</div>
+			<div class="a3s-mockup__body">
+				<div class="a3s-mockup__kpis">
+					<div class="a3s-kpi">
+						<span class="a3s-kpi__label">{{ platform_settings.mockup_kpi_1_label }}</span>
+						<span class="a3s-kpi__value">{{ platform_settings.mockup_kpi_1_value }}</span>
+					</div>
+					<div class="a3s-kpi">
+						<span class="a3s-kpi__label">{{ platform_settings.mockup_kpi_2_label }}</span>
+						<span class="a3s-kpi__value">{{ platform_settings.mockup_kpi_2_value }}</span>
+					</div>
+					<div class="a3s-kpi">
+						<span class="a3s-kpi__label">{{ platform_settings.mockup_kpi_3_label }}</span>
+						<span class="a3s-kpi__value">{{ platform_settings.mockup_kpi_3_value }}</span>
+					</div>
+				</div>
+				<div class="a3s-mockup__delta">
+					<span>{{ platform_settings.mockup_delta_label }}</span>
+					<span class="a3s-delta">&#9650; {{ platform_settings.mockup_delta_value }}</span>
+				</div>
+				<div class="a3s-mockup__rows">
+					<div class="a3s-mockup__row">
+						<span>Chandran Nair &middot; 3 kWp</span>
+						<span class="a3s-pill a3s-pill--green">Commissioned</span>
+					</div>
+					<div class="a3s-mockup__row">
+						<span>Sreelatha Devi &middot; 5 kWp</span>
+						<span class="a3s-pill a3s-pill--amber">Awaiting net meter</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+{#- 2. Stat strip ------------------------------------------------------- #}
+{%- if stats %}
+<section class="a3s-stats">
+	<div class="a3s-container">
+		<div class="a3s-stats__row">
+			{%- for stat in stats %}
+			<div class="a3s-stat a3s-reveal">
+				<span class="a3s-stat__value">{{ stat.stat_value }}</span>
+				<span class="a3s-stat__label">{{ stat.stat_label }}</span>
+			</div>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+{%- endif %}
+
+{#- 3. Features --------------------------------------------------------- #}
+<section class="a3s-section" id="features" aria-labelledby="features-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow">Everything in one place</span>
+			<h2 id="features-heading">One platform for every part of a solar job</h2>
+			<p class="a3s-lead">
+				Not a CRM bolted to a spreadsheet. One record follows the job from enquiry to
+				the end of its warranty, and every document comes out of it.
+			</p>
+		</div>
+		<div class="a3s-grid a3s-grid--3">
+			{%- for feature in features %}
+			<a class="a3s-card a3s-reveal" href="/{{ feature.route }}">
+				<span class="a3s-card__icon" aria-hidden="true">{{ feature.icon or "◆" }}</span>
+				<h3 class="a3s-card__title">{{ feature.feature_name }}</h3>
+				<p class="a3s-card__text">{{ feature.short_description }}</p>
+				{%- set bullets = feature_bullets.get(feature.name) %}
+				{%- if bullets %}
+				<ul class="a3s-card__bullets">
+					{%- for bullet in bullets[:3] %}
+					<li>{{ bullet }}</li>
+					{%- endfor %}
+				</ul>
+				{%- endif %}
+				<span class="a3s-card__more">Learn more &rarr;</span>
+			</a>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+
+{#- 4. Solutions -------------------------------------------------------- #}
+<section class="a3s-section a3s-section--surface" id="solutions" aria-labelledby="solutions-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow">Who it's for</span>
+			<h2 id="solutions-heading">Built for the way solar businesses actually run</h2>
+			<p class="a3s-lead">
+				Whether you install ten roofs a month or run four branches across two states.
+			</p>
+		</div>
+		<div class="a3s-wrap">
+			{%- for solution in solutions %}
+			<a class="a3s-card a3s-card--flex a3s-reveal" href="/{{ solution.route }}">
+				<span class="a3s-card__icon" aria-hidden="true">{{ solution.icon or "◆" }}</span>
+				<h3 class="a3s-card__title">{{ solution.solution_name }}</h3>
+				<p class="a3s-card__text">{{ solution.short_description }}</p>
+				<span class="a3s-card__more">Learn more &rarr;</span>
+			</a>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+
+{#- 5. Domain deep-dive ------------------------------------------------- #}
+<section class="a3s-section a3s-section--tint" id="subsidy" aria-labelledby="subsidy-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow a3s-eyebrow--accent">Subsidy &amp; compliance</span>
+			<h2 id="subsidy-heading">Built for the subsidy scheme, not bolted on</h2>
+			<p class="a3s-lead">
+				PM Surya Ghar is not a field on a form. It decides what you can quote, what
+				evidence you must hold, and what you owe the customer for five years.
+			</p>
+		</div>
+		<div class="a3s-grid a3s-grid--4">
+			{%- for title, line_one, line_two in domain_tiles %}
+			<div class="a3s-card a3s-reveal">
+				<h3 class="a3s-card__title">{{ title }}</h3>
+				<p class="a3s-card__text">{{ line_one }}</p>
+				<p class="a3s-card__text" style="margin-top:.5rem">{{ line_two }}</p>
+			</div>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+
+{#- 6. Powered by ERPNext ----------------------------------------------- #}
+<section class="a3s-section" id="platform" aria-labelledby="platform-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow">Powered by ERPNext</span>
+			<h2 id="platform-heading">An enterprise backbone under your solar front-end</h2>
+			<p class="a3s-lead">
+				Built by {{ platform_settings.company_legal_name or "Acube Innovations" }},
+				{{ platform_settings.partner_badge_text or "an Official ERPNext Partner" }}.
+				The solar layer is ours; everything underneath it is the ERP thousands of
+				companies already run their books on.
+			</p>
+		</div>
+		<div class="a3s-grid a3s-grid--3">
+			{%- for title, description in backbone_tiles %}
+			<div class="a3s-card a3s-reveal">
+				<h3 class="a3s-card__title">{{ title }}</h3>
+				<p class="a3s-card__text">{{ description }}</p>
+			</div>
+			{%- endfor %}
+		</div>
+		{%- if platform_settings.parent_company_url %}
+		<p class="a3s-small a3s-muted" style="text-align:center;margin-top:2rem">
+			<a href="{{ platform_settings.parent_company_url }}" rel="noopener">
+				{{ platform_settings.footer_tagline or "Built by Acube Innovations." }}
+			</a>
+		</p>
+		{%- endif %}
+	</div>
+</section>
+
+{#- 7. Integrations ----------------------------------------------------- #}
+<section class="a3s-section a3s-section--surface" id="integrations" aria-labelledby="integrations-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow">Integrations</span>
+			<h2 id="integrations-heading">Works with what you already use</h2>
+			<p class="a3s-lead">
+				The portals you have to file with, the banks you have to satisfy, and the
+				inverter clouds your plants already report to.
+			</p>
+		</div>
+		<div class="a3s-grid a3s-grid--3">
+			{%- for category, items in integrations.items() %}
+			<div class="a3s-reveal">
+				<h3 class="a3s-card__title">{{ category }}</h3>
+				<div class="a3s-chips">
+					{%- for item in items %}
+					<span class="a3s-chip" title="{{ item.integration_name }}">
+						{%- if item.logo %}
+						<img src="{{ item.logo }}" alt="{{ item.integration_name }}">
+						{%- else %}
+						<span class="a3s-chip__initial" aria-hidden="true">{{ item.initial }}</span>
+						{%- endif %}
+						<span>{{ item.integration_name }}</span>
+					</span>
+					{%- endfor %}
+				</div>
+			</div>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+
+{#- 8. Pricing ---------------------------------------------------------- #}
+<section class="a3s-section" id="pricing" aria-labelledby="pricing-heading">
+	<div class="a3s-container">
+		{% include "templates/includes/platform_pricing.html" %}
+	</div>
+</section>
+
+{#- 9. Apps ------------------------------------------------------------- #}
+<section class="a3s-section a3s-section--surface" id="apps" aria-labelledby="apps-heading">
+	<div class="a3s-container">
+		<div class="a3s-head a3s-head--center a3s-reveal">
+			<span class="a3s-eyebrow">Apps</span>
+			<h2 id="apps-heading">For customers, crews and owners</h2>
+		</div>
+		<div class="a3s-grid a3s-grid--3">
+			{%- for title, icon, description in app_tiles %}
+			<div class="a3s-card a3s-reveal">
+				<span class="a3s-card__icon" aria-hidden="true">{{ icon }}</span>
+				<h3 class="a3s-card__title">{{ title }}</h3>
+				<p class="a3s-card__text">{{ description }}</p>
+			</div>
+			{%- endfor %}
+		</div>
+	</div>
+</section>
+
+{#- 10. Closing CTA ----------------------------------------------------- #}
+<section class="a3s-section a3s-section--tint">
+	<div class="a3s-container" style="text-align:center">
+		<h2 class="a3s-reveal">Ready to run your solar business on one platform?</h2>
+		<p class="a3s-lead a3s-reveal" style="margin-inline:auto">
+			Start on Starter, move to Growth when you need the accounting and the O&amp;M layer.
+			No lock-in, and your data stays yours.
+		</p>
+		<div class="a3s-hero__cta a3s-reveal" style="justify-content:center;margin-top:2rem">
+			<a class="a3s-btn a3s-btn--primary" href="{{ platform_base }}/get-started"
+				data-analytics="signup_started" data-analytics-source="closing">Get started</a>
+			<a class="a3s-btn a3s-btn--secondary" href="#contact">Book a demo</a>
+		</div>
+	</div>
+</section>
+
+{#- 11. Contact and demo ------------------------------------------------ #}
+<section class="a3s-section" id="contact" aria-labelledby="contact-heading">
+	<div class="a3s-container a3s-contact">
+		<div class="a3s-reveal">
+			<span class="a3s-eyebrow">Talk to us</span>
+			<h2 id="contact-heading">Book a demo of {{ platform_settings.product_name or "a3 sola" }}</h2>
+			<p class="a3s-lead">
+				Half an hour, on your own numbers. We will walk through a real job from enquiry
+				to commissioning and show you the documents it produces.
+			</p>
+			<ul class="a3s-contact__list">
+				{%- if platform_settings.sales_email %}
+				<li><strong>Email</strong> <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a></li>
+				{%- endif %}
+				{%- if platform_settings.sales_phone %}
+				<li><strong>Phone</strong> <a href="tel:{{ platform_settings.sales_phone | replace(' ', '') }}">{{ platform_settings.sales_phone }}</a></li>
+				{%- endif %}
+				{%- if platform_settings.office_address %}
+				<li><strong>Office</strong> <span>{{ platform_settings.office_address }}</span></li>
+				{%- endif %}
+				{%- if platform_settings.demo_scheduler_url %}
+				<li><strong>Diary</strong> <a href="{{ platform_settings.demo_scheduler_url }}" rel="noopener">Pick a time that suits you</a></li>
+				{%- endif %}
+			</ul>
+		</div>
+
+		<div class="a3s-card a3s-reveal">
+			{%- if platform_settings.enable_demo_requests %}
+			<h3 class="a3s-card__title">Request a demo</h3>
+			<form class="a3s-form" id="a3s-demo-form" novalidate>
+				{#- Honeypot: a real person never sees this, a bot fills it in. -#}
+				<div class="a3s-hp" aria-hidden="true">
+					<label for="demo-website">Website</label>
+					<input type="text" id="demo-website" name="website_url" tabindex="-1" autocomplete="off">
+				</div>
+				<div class="a3s-field">
+					<label for="demo-name">Full name <span aria-hidden="true">*</span></label>
+					<input type="text" id="demo-name" name="full_name" required autocomplete="name">
+				</div>
+				<div class="a3s-field">
+					<label for="demo-email">Work email <span aria-hidden="true">*</span></label>
+					<input type="email" id="demo-email" name="work_email" required autocomplete="email">
+				</div>
+				<div class="a3s-field">
+					<label for="demo-phone">Phone <span aria-hidden="true">*</span></label>
+					<input type="tel" id="demo-phone" name="phone" required autocomplete="tel">
+				</div>
+				<div class="a3s-field">
+					<label for="demo-org">Company name <span aria-hidden="true">*</span></label>
+					<input type="text" id="demo-org" name="organisation_name" required autocomplete="organization">
+				</div>
+				<div class="a3s-field">
+					<label for="demo-volume">Approximate installations per month</label>
+					<select id="demo-volume" name="approximate_monthly_installations">
+						{%- for volume in installation_volumes %}
+						<option value="{{ volume }}">{{ volume }}</option>
+						{%- endfor %}
+					</select>
+				</div>
+				<div class="a3s-field">
+					<label for="demo-message">How can we help?</label>
+					<textarea id="demo-message" name="message" rows="3"></textarea>
+				</div>
+				<button class="a3s-btn a3s-btn--primary a3s-btn--block" type="submit"
+					data-analytics="demo_requested">Request a demo</button>
+				<p class="a3s-small a3s-muted a3s-consent">
+					By submitting you agree to our <a href="{{ platform_base }}/legal/privacy">privacy policy</a>.
+					We use your details to contact you about {{ platform_settings.product_name or "a3 sola" }}
+					and nothing else.
+				</p>
+				<p class="a3s-form__status" role="status" aria-live="polite"></p>
+			</form>
+			{%- else %}
+			<h3 class="a3s-card__title">Demo requests are paused</h3>
+			<p class="a3s-card__text">
+				We are not taking new demo requests at the moment.
+				{%- if platform_settings.sales_email %}
+				Email <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a> and we will come back to you.
+				{%- endif %}
+			</p>
+			{%- endif %}
+		</div>
+	</div>
+</section>
+
+{% endblock %}

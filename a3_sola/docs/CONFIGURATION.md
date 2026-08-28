@@ -176,3 +176,117 @@ In **A3 Sola Settings → Projects**:
 Response and resolution hours live on each **Solar OM Contract**, not globally, because
 they are what that customer was actually promised. See
 [OM_PLAYBOOK.md](OM_PLAYBOOK.md).
+
+## 15. Payments — the gateway
+
+In **A3 Sola Settings → Payments**:
+
+- `payment_gateway` — Razorpay is the only implementation today
+- `gateway_mode` — **Mock**, Test or Live. A fresh site ships in Mock: the whole funnel
+  works, nothing is charged, and no account is needed. Live is refused until the
+  credentials below are filled in, because a Live site without them fails at checkout,
+  which is the worst possible moment to discover it.
+- `razorpay_key_id`, `razorpay_key_secret`, `razorpay_webhook_secret` — permlevel 1,
+  visible to **Platform Admin** alone. Changing any of them writes a Platform Audit Entry
+  recording who and when, never the value.
+- `razorpay_account_id` — for the settlement API
+- `auto_capture_payments` — capture at authorisation rather than in a second step. Leave
+  it on unless the client's risk process says otherwise.
+
+The webhook endpoint is `/api/method/a3_sola.api.webhooks.receive`. Subscribe at least to
+`payment.captured`, `payment.failed`, `payment.authorized`, `order.paid`,
+`payment_link.paid`, `payment_link.expired`, and the four `token.*` events. Copy the
+webhook secret Razorpay generates into `razorpay_webhook_secret` — an event signed with a
+different secret is discarded, silently and correctly.
+
+## 16. Payments — compliance windows
+
+- `afa_free_debit_ceiling` (default 15000) — the RBI no-AFA ceiling. It decides whether a
+  monthly subscription can auto-debit or must be collected through a link. Verify the
+  current figure before go-live; see [COMPLIANCE_NOTES.md](COMPLIANCE_NOTES.md).
+- `pre_debit_notice_hours` (default 24) — **the settings form refuses anything under 24**,
+  and the billing engine refuses a debit whose notice was late or missing. This is not a
+  preference.
+- `send_post_debit_confirmation` — leave on. It is required, not courteous.
+- `subscription_gst_rate` (18) and `company_state_code` — the tax split is wrong for every
+  customer if the supplier state is wrong.
+- `refund_approval_threshold` — refunds above it wait for a billing manager and cannot be
+  submitted until approved.
+
+## 17. Payments — accounting
+
+`enable_payment_postings` gates every subscription posting, independently of the project
+gate in section 11. With it shut, invoices and payments are recorded and reported but
+nothing reaches a ledger, which is the right state until the accounts are mapped.
+
+Map the accounts in **Platform Payment Account Mapping**, one row per company:
+subscription receivable, subscription revenue, deferred revenue, gateway clearing, gateway
+charges, and the GST output heads. A mapping that names another company's account is
+refused at save.
+
+## 18. The audit trail
+
+Nothing to configure — it is on. Worth knowing: **Platform Audit Entry** records every
+refund, manual override, credential change, reconciliation and posting, cannot be edited or
+deleted by anyone, and is hash-chained so alteration in the database is detectable. Run
+**Verify the Chain** from any entry, or read the nightly check's Error Log. See
+[COMPLIANCE_NOTES.md](COMPLIANCE_NOTES.md).
+
+## 19. Provisioning — the tenancy strategy
+
+In **A3 Sola Settings → Provisioning**:
+
+- `tenancy_strategy` — **Multi Company** or Multi Site. This is architecture, not a
+  preference, and the form refuses to change it once any Tenant exists. Multi Site is
+  designed for but not implemented; see [TENANCY_MODEL.md](TENANCY_MODEL.md).
+- `reserved_tenant_codes` — codes a tenant may never take. `admin`, `api`, `www` and the
+  rest are seeded; add anything else that would be confusing as a company abbreviation or,
+  under multi-site, as a subdomain. A built-in list backs this up, because an emptied
+  blocklist is the kind of mistake nobody notices until somebody registers `admin`.
+- `tenant_series_prefix`, `provisioning_job_series_prefix`, `invitation_series_prefix` —
+  naming, as everywhere else in this app.
+
+## 20. Provisioning — what a new company gets
+
+- `provisioning_default_country` (India), `provisioning_default_currency` (INR),
+  `default_chart_of_accounts` (Standard), `default_fiscal_year_start` (04-01).
+- `company_abbr_length` (4) — ERPNext appends this to every account, warehouse and cost
+  centre it creates, so short and stable is right. It is derived from the tenant code, never
+  from what the applicant typed.
+- `create_default_warehouses` and `create_default_cost_centers` — leave both on. Without the
+  warehouses, the Phase 2 material flow fails on the tenant's first work order; without a
+  cost centre, every Profit and Loss posting fails at submit.
+
+## 21. Provisioning — the admin and their team
+
+- `admin_role_profile_fallback` — used when the plan names no role profile. Seeded to
+  **Solar Tenant Administrator**.
+- `provisioning_send_welcome_email` and `welcome_email_template` — the built-in template is
+  used when none is named.
+- `password_link_expiry_hours` (72) — no password is ever set by the system, for anyone. The
+  admin gets a single-use reset link and sets their own.
+- `force_password_reset`, `enable_two_factor_for_admins` — the second is off by default;
+  turn it on for tenants who ask.
+- `invitation_expiry_days` (14) and `max_pending_invitations_multiplier` (1.5) — the
+  multiplier lets a tenant invite a little beyond their seat count to cover non-responders.
+  The quota still binds at acceptance.
+- `invite_rate_limit` (30/hour per admin) and `invite_accept_rate_limit` (20/hour per IP).
+
+## 22. Provisioning — behaviour and the isolation gate
+
+- `provisioning_mode` — **Automatic** or **Manual Approval**. Manual Approval queues the job
+  and waits for a human, which is worth using for the first few tenants.
+- `provisioning_queue` (long), `provisioning_timeout_minutes` (15),
+  `max_provisioning_retries` (3), `notify_on_failure_role` (Platform Tenant Manager).
+- `provisioning_failure_alert_age_hours` (24) — how long an intervention may sit before the
+  daily job says so out loud.
+- `run_isolation_test_on_provision` — **leave this on.** It is the last thing standing
+  between a new tenant and another customer's data, and unchecking it demands a written
+  justification that the form will not let you skip.
+- `isolation_recheck_monthly` — re-verifies every active tenant. A regression introduced by
+  a later phase should be found by us, not by a customer.
+
+**Site config, not settings:** on an instance that will provision many tenants, raise
+`throttle_user_limit` in `site_config.json`. Frappe blocks user creation past sixty a minute
+across the whole site, and a provisioning run that trips it leaves a tenant half-built for a
+reason unrelated to the tenant.

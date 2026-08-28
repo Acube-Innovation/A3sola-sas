@@ -1,0 +1,69 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Setting up {{ checklist.tenant or "your workspace" }}</h1>
+
+		{%- if not checklist.tasks %}
+		<div class="a3s-card a3s-narrow" style="margin-top:2rem;text-align:center">
+			<p class="a3s-card__text">Nothing outstanding.</p>
+		</div>
+		{%- else %}
+
+		{%- if checklist.outstanding_critical %}
+		<div class="a3s-card" style="margin-top:1.5rem;border-left:4px solid #f7941e">
+			<p class="a3s-card__text" style="margin:0">
+				<strong>{{ checklist.outstanding_critical }}</strong> important
+				step{{ "s" if checklist.outstanding_critical != 1 }} still to do. Until the
+				account mapping is done, nothing you invoice reaches your books.
+			</p>
+		</div>
+		{%- endif %}
+
+		<div class="a3s-card" style="margin-top:1.5rem">
+			<p class="a3s-card__text" style="margin:0">
+				{{ checklist.completed }} of {{ checklist.total }} done.
+			</p>
+		</div>
+
+		{%- if checklist.notes %}
+		<div class="a3s-card" style="margin-top:1.5rem">{{ checklist.notes }}</div>
+		{%- endif %}
+
+		<div style="display:grid;gap:1rem;margin-top:1.5rem">
+		{%- for task in checklist.tasks %}
+			<div class="a3s-card" style="{% if task.done %}opacity:0.55{% endif %}">
+				<h2 class="a3s-card__title" style="display:flex;gap:0.6rem;align-items:baseline">
+					<span>{{ "✓" if task.done else "○" }}</span>
+					<span>{{ task.title }}</span>
+					{%- if task.critical and not task.done %}
+					<span style="font-size:0.72rem;font-weight:600;color:#b3261e;letter-spacing:0.04em">IMPORTANT</span>
+					{%- endif %}
+				</h2>
+				<p class="a3s-card__text">{{ task.detail }}</p>
+				{%- if not task.done %}
+				<p style="margin:0.75rem 0 0;display:flex;gap:1rem;align-items:center">
+					<a class="a3s-btn a3s-btn--ghost" href="{{ task.route }}">Do this</a>
+					<button class="a3s-link-button" data-done="{{ task.code }}">Mark as done</button>
+				</p>
+				{%- endif %}
+			</div>
+		{%- endfor %}
+		</div>
+		{%- endif %}
+	</div>
+</section>
+
+<script>
+document.querySelectorAll("[data-done]").forEach(function (button) {
+	button.addEventListener("click", function () {
+		frappe.call({
+			method: "a3_sola.api.onboarding.complete_task",
+			args: { task_code: button.getAttribute("data-done") },
+			callback: function () { window.location.reload(); }
+		});
+	});
+});
+</script>
+{% endblock %}

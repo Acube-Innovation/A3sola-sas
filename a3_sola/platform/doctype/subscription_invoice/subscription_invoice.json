@@ -1,0 +1,490 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "platform_subscription",
+  "payment_order",
+  "subscription_signup",
+  "cb_2",
+  "customer",
+  "company",
+  "sb_3",
+  "customer_legal_name",
+  "customer_gstin",
+  "customer_address",
+  "cb_4",
+  "customer_state",
+  "customer_state_code",
+  "place_of_supply",
+  "sb_5",
+  "invoice_date",
+  "period_start",
+  "period_end",
+  "cb_6",
+  "billing_cycle",
+  "due_date",
+  "tab_7",
+  "sb_8",
+  "items",
+  "sb_9",
+  "currency",
+  "taxable_value",
+  "tax_rate",
+  "tax_type",
+  "cb_10",
+  "igst_amount",
+  "cgst_amount",
+  "sgst_amount",
+  "total_tax",
+  "sb_11",
+  "grand_total",
+  "cb_12",
+  "amount_in_words",
+  "tab_13",
+  "sb_14",
+  "payment_status",
+  "paid_amount",
+  "cb_15",
+  "paid_on",
+  "payment_reference",
+  "tab_16",
+  "sb_17",
+  "einvoice_status",
+  "irn",
+  "cb_18",
+  "irn_generated_on",
+  "qr_code",
+  "einvoice_error",
+  "sb_19",
+  "posting_status",
+  "cb_20",
+  "sales_invoice",
+  "sb_21",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order"
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Billed To"
+  },
+  {
+   "fieldname": "customer_legal_name",
+   "fieldtype": "Data",
+   "label": "Legal Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer_gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "customer_address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_state",
+   "fieldtype": "Data",
+   "label": "State"
+  },
+  {
+   "fieldname": "customer_state_code",
+   "fieldtype": "Data",
+   "label": "State Code"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place of Supply"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Period"
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "label": "Cycle",
+   "options": "Monthly\nAnnual"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "tab_7",
+   "fieldtype": "Tab Break",
+   "label": "Lines"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Subscription Invoice Item"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Tax"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR",
+   "reqd": 1
+  },
+  {
+   "fieldname": "taxable_value",
+   "fieldtype": "Currency",
+   "label": "Taxable Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_rate",
+   "fieldtype": "Float",
+   "label": "Rate %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_type",
+   "fieldtype": "Select",
+   "label": "Tax Type",
+   "options": "IGST\nCGST+SGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "igst_amount",
+   "fieldtype": "Currency",
+   "label": "IGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cgst_amount",
+   "fieldtype": "Currency",
+   "label": "CGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sgst_amount",
+   "fieldtype": "Currency",
+   "label": "SGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_tax",
+   "fieldtype": "Currency",
+   "label": "Total Tax",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Total"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount_in_words",
+   "fieldtype": "Data",
+   "label": "In Words",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_13",
+   "fieldtype": "Tab Break",
+   "label": "Payment"
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Settlement"
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Unpaid\nPaid\nPartially Paid\nRefunded\nWritten Off",
+   "default": "Unpaid",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Date",
+   "label": "Paid On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "payment_reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_16",
+   "fieldtype": "Tab Break",
+   "label": "Compliance"
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "e-Invoicing"
+  },
+  {
+   "fieldname": "einvoice_status",
+   "fieldtype": "Select",
+   "label": "e-Invoice Status",
+   "options": "Not Applicable\nPending\nGenerated\nFailed\nCancelled",
+   "default": "Not Applicable",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "irn",
+   "fieldtype": "Data",
+   "label": "IRN",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "irn_generated_on",
+   "fieldtype": "Datetime",
+   "label": "IRN Generated",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "qr_code",
+   "fieldtype": "Attach",
+   "label": "QR Code",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "einvoice_error",
+   "fieldtype": "Small Text",
+   "label": "e-Invoice Error",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_19",
+   "fieldtype": "Section Break",
+   "label": "Ledger"
+  },
+  {
+   "fieldname": "posting_status",
+   "fieldtype": "Select",
+   "label": "Posting Status",
+   "options": "Not Posted\nPosted\nFailed\nCancelled",
+   "default": "Not Posted",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Amend"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Subscription Invoice",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Subscription Invoice",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "customer_legal_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "customer_legal_name,customer_gstin,platform_subscription"
+}

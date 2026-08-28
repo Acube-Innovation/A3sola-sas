@@ -1,0 +1,323 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "tenant",
+  "platform_subscription",
+  "payment_order",
+  "subscription_signup",
+  "cb_2",
+  "status",
+  "tenancy_strategy",
+  "blueprint",
+  "idempotency_key",
+  "sb_3",
+  "triggered_by",
+  "triggered_on",
+  "current_step",
+  "progress_percent",
+  "cb_4",
+  "started_on",
+  "completed_on",
+  "duration_seconds",
+  "attempt_number",
+  "sb_5",
+  "steps",
+  "sb_6",
+  "pnr_note",
+  "point_of_no_return_passed",
+  "requires_manual_intervention",
+  "failure_summary",
+  "cb_8",
+  "intervention_notes",
+  "resolved_by",
+  "resolved_on",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "What is being provisioned"
+  },
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "label": "Tenant",
+   "options": "Tenant",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Queued\nRunning\nCompleted\nFailed\nFailed Past Point of No Return\nCancelled\nRolled Back",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "default": "Queued"
+  },
+  {
+   "fieldname": "tenancy_strategy",
+   "fieldtype": "Data",
+   "label": "Strategy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "blueprint",
+   "fieldtype": "Link",
+   "label": "Blueprint",
+   "options": "Tenant Blueprint",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1,
+   "read_only": 1,
+   "unique": 1,
+   "description": "Derived from the subscription, so a repeated webhook finds this job instead of starting another."
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Progress"
+  },
+  {
+   "fieldname": "triggered_by",
+   "fieldtype": "Select",
+   "label": "Triggered by",
+   "options": "Payment Webhook\nManual\nRetry\nAPI",
+   "read_only": 1,
+   "default": "Payment Webhook"
+  },
+  {
+   "fieldname": "triggered_on",
+   "fieldtype": "Datetime",
+   "label": "Triggered",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_step",
+   "fieldtype": "Data",
+   "label": "Current Step",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "progress_percent",
+   "fieldtype": "Percent",
+   "label": "Progress",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Finished",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_seconds",
+   "fieldtype": "Float",
+   "label": "Seconds",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "Attempt",
+   "read_only": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Steps"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Provisioning Step Log"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Failure"
+  },
+  {
+   "fieldname": "pnr_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Past the point of no return nothing is rolled back automatically. A half-built tenant a human is told about is far safer than an automated cleanup that deletes the wrong Company.</p>"
+  },
+  {
+   "fieldname": "point_of_no_return_passed",
+   "fieldtype": "Check",
+   "label": "Point of No Return Passed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requires_manual_intervention",
+   "fieldtype": "Check",
+   "label": "Needs a Human",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "failure_summary",
+   "fieldtype": "Small Text",
+   "label": "Failure",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intervention_notes",
+   "fieldtype": "Text",
+   "label": "Intervention Notes"
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Datetime",
+   "label": "Resolved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Provisioning Job",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Provisioning Job",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Platform Tenant Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Provisioning Operator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "submit": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "search_fields": "tenant,platform_subscription,status",
+ "description": "One provisioning run. Its step log is the account of what happened and where it stopped."
+}

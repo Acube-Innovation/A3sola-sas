@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gateway_payment_id",
+  "gateway_refund_id",
+  "entry_type",
+  "cb_1",
+  "gross_amount",
+  "gateway_fee",
+  "gateway_tax",
+  "net_amount",
+  "settled_on",
+  "sb_2",
+  "payment_order",
+  "payment_transaction",
+  "cb_3",
+  "match_status",
+  "variance_amount",
+  "variance_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "gateway_payment_id",
+   "fieldtype": "Data",
+   "label": "Payment ID",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gateway_refund_id",
+   "fieldtype": "Data",
+   "label": "Refund ID"
+  },
+  {
+   "fieldname": "entry_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Payment\nRefund\nAdjustment\nFee\nTax\nChargeback",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "label": "Gross",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gateway_fee",
+   "fieldtype": "Currency",
+   "label": "Fee"
+  },
+  {
+   "fieldname": "gateway_tax",
+   "fieldtype": "Currency",
+   "label": "Fee Tax"
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "Net",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "settled_on",
+   "fieldtype": "Date",
+   "label": "Settled On"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Match"
+  },
+  {
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_transaction",
+   "fieldtype": "Link",
+   "label": "Transaction",
+   "options": "Payment Transaction",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "match_status",
+   "fieldtype": "Select",
+   "label": "Match",
+   "options": "Matched\nUnmatched\nPartially Matched\nDisputed",
+   "default": "Unmatched",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "variance_amount",
+   "fieldtype": "Currency",
+   "label": "Variance"
+  },
+  {
+   "fieldname": "variance_reason",
+   "fieldtype": "Small Text",
+   "label": "Variance Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Settlement Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

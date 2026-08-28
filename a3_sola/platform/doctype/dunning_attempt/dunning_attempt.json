@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attempt_number",
+  "attempt_date",
+  "attempt_type",
+  "cb_1",
+  "payment_order",
+  "outcome",
+  "error_code",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "attempt_number",
+   "fieldtype": "Int",
+   "label": "#",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attempt_date",
+   "fieldtype": "Datetime",
+   "label": "When",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attempt_type",
+   "fieldtype": "Select",
+   "label": "Action",
+   "options": "Auto Retry\nEmail Reminder\nSMS Reminder\nWhatsApp Reminder\nPayment Link Issued\nPhone Follow-up\nFinal Notice",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "options": "Succeeded\nFailed\nNo Response\nLink Opened\nContacted",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "error_code",
+   "fieldtype": "Data",
+   "label": "Error Code"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Dunning Attempt",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

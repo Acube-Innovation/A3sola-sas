@@ -1,0 +1,503 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "subscription_signup",
+  "organisation_name",
+  "customer",
+  "cb_2",
+  "primary_contact_email",
+  "primary_contact_phone",
+  "sb_3",
+  "gstin",
+  "state_code",
+  "cb_4",
+  "place_of_supply",
+  "sb_5",
+  "subscription_plan",
+  "plan_code",
+  "billing_cycle",
+  "cb_6",
+  "included_users",
+  "additional_users",
+  "total_users",
+  "tab_7",
+  "sb_8",
+  "sub_snapshot_note",
+  "base_amount",
+  "additional_user_amount",
+  "cb_10",
+  "subtotal",
+  "tax_amount",
+  "recurring_amount",
+  "currency",
+  "sb_11",
+  "start_date",
+  "current_period_start",
+  "current_period_end",
+  "cb_12",
+  "next_billing_date",
+  "next_debit_date",
+  "last_successful_billing_date",
+  "billing_day",
+  "sb_13",
+  "billing_cycles",
+  "tab_14",
+  "sb_15",
+  "collection_route",
+  "route_reason",
+  "cb_16",
+  "payment_mandate",
+  "mandate_status",
+  "sb_17",
+  "status",
+  "status_reason",
+  "tab_18",
+  "sb_19",
+  "successful_payments",
+  "failed_payments",
+  "cb_20",
+  "consecutive_failures",
+  "lifetime_value",
+  "sb_701",
+  "dunning_attempts",
+  "sb_21",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup"
+  },
+  {
+   "fieldname": "organisation_name",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "primary_contact_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "primary_contact_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Tax Identity"
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "state_code",
+   "fieldtype": "Data",
+   "label": "State Code"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place of Supply"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Plan"
+  },
+  {
+   "fieldname": "subscription_plan",
+   "fieldtype": "Link",
+   "label": "Plan",
+   "options": "Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "label": "Plan Code",
+   "read_only": 1,
+   "fetch_from": "subscription_plan.plan_code",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "label": "Cycle",
+   "options": "Monthly\nAnnual",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "included_users",
+   "fieldtype": "Int",
+   "label": "Included Users"
+  },
+  {
+   "fieldname": "additional_users",
+   "fieldtype": "Int",
+   "label": "Additional Users"
+  },
+  {
+   "fieldname": "total_users",
+   "fieldtype": "Int",
+   "label": "Total Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_7",
+   "fieldtype": "Tab Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Pricing Snapshot"
+  },
+  {
+   "fieldname": "sub_snapshot_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Carried from the signup. Re-snapshotted only on an explicit plan change - never silently from the live plan.</p>"
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_user_amount",
+   "fieldtype": "Currency",
+   "label": "Additional Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Currency",
+   "label": "Subtotal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recurring_amount",
+   "fieldtype": "Currency",
+   "label": "Recurring Debit",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Per-cycle debit INCLUDING tax. This is the figure compared against the RBI ceiling."
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Schedule"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "current_period_start",
+   "fieldtype": "Date",
+   "label": "Period Start"
+  },
+  {
+   "fieldname": "current_period_end",
+   "fieldtype": "Date",
+   "label": "Period End"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "next_billing_date",
+   "fieldtype": "Date",
+   "label": "Next Billing",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "next_debit_date",
+   "fieldtype": "Date",
+   "label": "Next Debit"
+  },
+  {
+   "fieldname": "last_successful_billing_date",
+   "fieldtype": "Date",
+   "label": "Last Collected"
+  },
+  {
+   "fieldname": "billing_day",
+   "fieldtype": "Int",
+   "label": "Billing Day"
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Cycles"
+  },
+  {
+   "fieldname": "billing_cycles",
+   "fieldtype": "Table",
+   "label": "Cycles",
+   "options": "Subscription Billing Cycle"
+  },
+  {
+   "fieldname": "tab_14",
+   "fieldtype": "Tab Break",
+   "label": "Collection"
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Route"
+  },
+  {
+   "fieldname": "collection_route",
+   "fieldtype": "Select",
+   "label": "Route",
+   "options": "Auto Debit\nAssisted Renewal",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "route_reason",
+   "fieldtype": "Small Text",
+   "label": "Why This Route",
+   "read_only": 1,
+   "description": "Plain English, so support can explain it to a customer."
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_mandate",
+   "fieldtype": "Link",
+   "label": "Mandate",
+   "options": "Payment Mandate"
+  },
+  {
+   "fieldname": "mandate_status",
+   "fieldtype": "Data",
+   "label": "Mandate Status",
+   "read_only": 1,
+   "fetch_from": "payment_mandate.status"
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nPending Payment\nActive\nPast Due\nSuspended\nCancelled\nExpired",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "status_reason",
+   "fieldtype": "Small Text",
+   "label": "Status Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_18",
+   "fieldtype": "Tab Break",
+   "label": "Counters"
+  },
+  {
+   "fieldname": "sb_19",
+   "fieldtype": "Section Break",
+   "label": "History"
+  },
+  {
+   "fieldname": "successful_payments",
+   "fieldtype": "Int",
+   "label": "Successful Payments",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "failed_payments",
+   "fieldtype": "Int",
+   "label": "Failed Payments",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consecutive_failures",
+   "fieldtype": "Int",
+   "label": "Consecutive Failures",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "lifetime_value",
+   "fieldtype": "Currency",
+   "label": "Lifetime Value",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_701",
+   "fieldtype": "Section Break",
+   "label": "Dunning"
+  },
+  {
+   "fieldname": "dunning_attempts",
+   "fieldtype": "Table",
+   "label": "Dunning Attempts",
+   "options": "Dunning Attempt"
+  },
+  {
+   "fieldname": "sb_21",
+   "fieldtype": "Section Break",
+   "label": "Amend"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Platform Subscription",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Platform Subscription",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "organisation_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "organisation_name,plan_code"
+}

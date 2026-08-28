@@ -1,0 +1,565 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "reference_doctype",
+  "reference_name",
+  "subscription_signup",
+  "platform_subscription",
+  "cb_2",
+  "customer_name",
+  "customer_email",
+  "customer_phone",
+  "sb_3",
+  "order_type",
+  "billing_cycle",
+  "description",
+  "cb_4",
+  "period_start",
+  "period_end",
+  "tab_5",
+  "sb_6",
+  "snapshot_note",
+  "base_amount",
+  "additional_user_amount",
+  "implementation_fee",
+  "cb_8",
+  "subtotal",
+  "tax_amount",
+  "total_amount",
+  "currency",
+  "sb_9",
+  "amount_in_paise",
+  "cb_10",
+  "price_breakdown",
+  "tab_11",
+  "sb_12",
+  "place_of_supply",
+  "customer_gstin",
+  "cb_13",
+  "customer_state_code",
+  "tax_type",
+  "sb_14",
+  "igst_amount",
+  "cgst_amount",
+  "cb_15",
+  "sgst_amount",
+  "tab_16",
+  "sb_17",
+  "gateway",
+  "collection_mode",
+  "collection_reason",
+  "cb_18",
+  "gateway_order_id",
+  "gateway_payment_link_id",
+  "gateway_payment_link_url",
+  "expires_on",
+  "sb_19",
+  "status",
+  "paid_on",
+  "amount_paid",
+  "cb_20",
+  "attempt_count",
+  "last_error_code",
+  "last_error_description",
+  "tab_21",
+  "sb_22",
+  "idempotency_key",
+  "cb_23",
+  "created_from_ip",
+  "sb_24",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Type",
+   "options": "Subscription Signup\nPlatform Subscription\nSubscription Invoice",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup",
+   "read_only": 1
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Data",
+   "label": "Subscription",
+   "read_only": 1,
+   "description": "Left as Data until P5-A3S-002 defines Platform Subscription."
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Purpose"
+  },
+  {
+   "fieldname": "order_type",
+   "fieldtype": "Select",
+   "label": "Order Type",
+   "options": "Initial Subscription\nRenewal\nUpgrade Difference\nAdditional Users\nImplementation Fee\nManual",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "label": "Billing Cycle",
+   "options": "Monthly\nAnnual",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End"
+  },
+  {
+   "fieldname": "tab_5",
+   "fieldtype": "Tab Break",
+   "label": "Amounts"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Snapshot"
+  },
+  {
+   "fieldname": "snapshot_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Copied from the source snapshot, never recomputed. The applicant agreed to these figures.</p>"
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_user_amount",
+   "fieldtype": "Currency",
+   "label": "Additional Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "implementation_fee",
+   "fieldtype": "Currency",
+   "label": "Implementation Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Currency",
+   "label": "Subtotal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Gateway Amount"
+  },
+  {
+   "fieldname": "amount_in_paise",
+   "fieldtype": "Int",
+   "label": "Amount in Paise",
+   "read_only": 1,
+   "description": "Computed once here from the total. Never re-derived downstream - a second float conversion is where rounding drift gets in."
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_breakdown",
+   "fieldtype": "Long Text",
+   "label": "Price Breakdown",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "tab_11",
+   "fieldtype": "Tab Break",
+   "label": "Tax"
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Place of Supply"
+  },
+  {
+   "fieldname": "place_of_supply",
+   "fieldtype": "Data",
+   "label": "Place of Supply"
+  },
+  {
+   "fieldname": "customer_gstin",
+   "fieldtype": "Data",
+   "label": "Customer GSTIN"
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_state_code",
+   "fieldtype": "Data",
+   "label": "Customer State Code"
+  },
+  {
+   "fieldname": "tax_type",
+   "fieldtype": "Select",
+   "label": "Tax Type",
+   "options": "IGST\nCGST+SGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_14",
+   "fieldtype": "Section Break",
+   "label": "Split"
+  },
+  {
+   "fieldname": "igst_amount",
+   "fieldtype": "Currency",
+   "label": "IGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cgst_amount",
+   "fieldtype": "Currency",
+   "label": "CGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sgst_amount",
+   "fieldtype": "Currency",
+   "label": "SGST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_16",
+   "fieldtype": "Tab Break",
+   "label": "Gateway"
+  },
+  {
+   "fieldname": "sb_17",
+   "fieldtype": "Section Break",
+   "label": "Collection"
+  },
+  {
+   "fieldname": "gateway",
+   "fieldtype": "Data",
+   "label": "Gateway",
+   "default": "Razorpay"
+  },
+  {
+   "fieldname": "collection_mode",
+   "fieldtype": "Select",
+   "label": "Collection Mode",
+   "options": "Checkout\nPayment Link\nAuto Debit",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "collection_reason",
+   "fieldtype": "Small Text",
+   "label": "Why This Mode",
+   "read_only": 1,
+   "description": "Plain English, so support can explain it to a customer."
+  },
+  {
+   "fieldname": "cb_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gateway_order_id",
+   "fieldtype": "Data",
+   "label": "Gateway Order ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gateway_payment_link_id",
+   "fieldtype": "Data",
+   "label": "Payment Link ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gateway_payment_link_url",
+   "fieldtype": "Data",
+   "label": "Payment Link URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Datetime",
+   "label": "Expires On"
+  },
+  {
+   "fieldname": "sb_19",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Created\nPending\nAttempted\nPaid\nPartially Paid\nFailed\nExpired\nCancelled\nRefunded",
+   "read_only": 1,
+   "default": "Created",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Datetime",
+   "label": "Paid On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amount_paid",
+   "fieldtype": "Currency",
+   "label": "Amount Paid",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attempt_count",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "last_error_code",
+   "fieldtype": "Data",
+   "label": "Last Error Code",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "last_error_description",
+   "fieldtype": "Small Text",
+   "label": "Last Error",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_21",
+   "fieldtype": "Tab Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "sb_22",
+   "fieldtype": "Section Break",
+   "label": "Idempotency"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "unique": 1,
+   "description": "Deterministic from the reference and period. A double-click cannot create a second order for the same billing period."
+  },
+  {
+   "fieldname": "cb_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_from_ip",
+   "fieldtype": "Data",
+   "label": "Created From IP",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_24",
+   "fieldtype": "Section Break",
+   "label": "Amend"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Payment Order",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Payment Order",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Sales",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "customer_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "customer_email,gateway_order_id,reference_name"
+}

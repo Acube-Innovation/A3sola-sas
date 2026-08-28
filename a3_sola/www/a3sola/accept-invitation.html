@@ -1,0 +1,50 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container a3s-narrow" style="text-align:center">
+		<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Join your team</h1>
+		<div class="a3s-card" style="margin-top:2rem;text-align:left">
+			<p class="a3s-card__text">
+				Accepting creates your account. You will be sent straight to a page where you
+				set your own password — nobody, including us, ever sets one for you.
+			</p>
+			<form id="a3s-accept-form" style="margin-top:1.25rem;display:grid;gap:0.75rem">
+				<input type="hidden" name="token" value="{{ token }}">
+				<input type="text" name="full_name" placeholder="Your name"
+				       style="padding:0.7rem 0.9rem;border-radius:0.6rem;border:1px solid rgba(42,51,66,0.18)">
+				<button type="submit" class="a3s-btn a3s-btn--primary" style="justify-self:start">Accept invitation</button>
+			</form>
+			<p id="a3s-accept-message" style="margin:1rem 0 0;font-size:0.95rem"></p>
+		</div>
+	</div>
+</section>
+
+<script>
+(function () {
+	var form = document.getElementById("a3s-accept-form");
+	var message = document.getElementById("a3s-accept-message");
+	form.addEventListener("submit", function (event) {
+		event.preventDefault();
+		var data = new FormData(form);
+		message.textContent = "One moment…";
+		message.style.color = "#6b7383";
+		frappe.call({
+			method: "a3_sola.api.invitations.accept_invitation",
+			args: { token: data.get("token"), full_name: data.get("full_name") },
+			callback: function (r) {
+				var url = (r.message || {}).set_password_url;
+				if (url) { window.location.href = url; return; }
+				message.textContent = "Your account is ready. Check your email to set a password.";
+				message.style.color = "#1a7f4b";
+			},
+			error: function (r) {
+				message.textContent = (r && r.message)
+					|| "That invitation link is not valid. It may have expired or been withdrawn.";
+				message.style.color = "#b3261e";
+			}
+		});
+	});
+})();
+</script>
+{% endblock %}

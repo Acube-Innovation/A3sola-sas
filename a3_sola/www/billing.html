@@ -1,0 +1,157 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Billing</h1>
+
+		{%- if not subscriptions %}
+		<div class="a3s-card a3s-narrow" style="margin-top:2rem;text-align:center">
+			<p class="a3s-card__text">
+				No subscription is linked to your account yet.
+				{%- if platform_settings.sales_email %}
+				Email <a href="mailto:{{ platform_settings.sales_email }}">{{ platform_settings.sales_email }}</a>
+				if you think that is wrong.
+				{%- endif %}
+			</p>
+		</div>
+		{%- endif %}
+
+		{%- for sub in subscriptions %}
+		<div class="a3s-card" style="margin-top:2rem">
+			<h2 style="font-size:1.3rem">{{ sub.plan_name or sub.plan_code }}</h2>
+			<p class="a3s-card__text">{{ sub.organisation_name }} &middot; {{ sub.status }}</p>
+
+			<div class="a3s-lines" style="margin-top:1.5rem">
+				<div class="a3s-line">
+					<span><strong>Amount per {{ sub.billing_cycle|lower }}</strong></span>
+					<span>{{ frappe.utils.fmt_money(sub.recurring_amount, currency=sub.currency) }}</span>
+				</div>
+				<div class="a3s-line">
+					<span><strong>Users</strong></span>
+					<span>{{ sub.total_users }} ({{ sub.included_users }} included)</span>
+				</div>
+				<div class="a3s-line">
+					<span><strong>Current period</strong></span>
+					<span>{{ frappe.format(sub.current_period_start, "Date") }} &ndash; {{ frappe.format(sub.current_period_end, "Date") }}</span>
+				</div>
+				<div class="a3s-line">
+					<span><strong>Next billing</strong></span>
+					<span>{{ frappe.format(sub.next_billing_date, "Date") }}</span>
+				</div>
+			</div>
+
+			{#- How the money is collected, explained rather than labelled. -#}
+			<div class="a3s-draft" style="margin-top:1.5rem">
+				<strong>How you pay.</strong> {{ sub.route_reason }}
+			</div>
+
+			{%- if sub.mandate %}
+			<h3 style="font-size:1.05rem;margin-top:1.5rem">Payment method</h3>
+			<div class="a3s-lines">
+				<div class="a3s-line">
+					<span>{{ sub.mandate.mandate_type }}{% if sub.mandate.instrument_masked %} &middot; {{ sub.mandate.instrument_masked }}{% endif %}</span>
+					<span>{{ sub.mandate.status }}</span>
+				</div>
+				{%- if sub.mandate.registered_max_amount %}
+				<div class="a3s-line">
+					<span>Authorised up to</span>
+					<span>{{ frappe.utils.fmt_money(sub.mandate.registered_max_amount, currency=sub.currency) }}</span>
+				</div>
+				{%- endif %}
+			</div>
+			{%- if sub.mandate.status == "Active" %}
+			<button class="a3s-btn a3s-btn--secondary a3s-cancel-mandate" type="button"
+				data-subscription="{{ sub.name }}" style="margin-top:1rem">
+				Cancel automatic payment
+			</button>
+			<p class="a3s-small a3s-muted" style="margin-top:.5rem">
+				You can cancel at any time. We will send you a link before each renewal instead.
+			</p>
+			{%- elif sub.mandate.status == "Rejected" %}
+			<div class="a3s-draft" style="margin-top:1rem">
+				<strong>Your payment method was declined.</strong> Set up a new one so your
+				next renewal is not interrupted.
+			</div>
+			{%- endif %}
+			{%- endif %}
+			<p class="a3s-form__status" role="status" aria-live="polite"></p>
+		</div>
+		{%- endfor %}
+
+		{%- if invoices %}
+		<h2 style="font-size:1.3rem;margin-top:3rem">Invoices</h2>
+		<div class="a3s-compare">
+			<table class="a3s-table">
+				<thead>
+					<tr>
+						<th scope="col">Invoice</th><th scope="col">Date</th>
+						<th scope="col">Period</th><th scope="col">Tax</th>
+						<th scope="col">Total</th><th scope="col">Status</th>
+						<th scope="col"><span class="a3s-sr">Download</span></th>
+					</tr>
+				</thead>
+				<tbody>
+					{%- for invoice in invoices %}
+					<tr>
+						<th scope="row" data-label="Invoice">{{ invoice.name }}</th>
+						<td data-label="Date">{{ frappe.format(invoice.invoice_date, "Date") }}</td>
+						<td data-label="Period">{{ frappe.format(invoice.period_start, "Date") }} &ndash; {{ frappe.format(invoice.period_end, "Date") }}</td>
+						<td data-label="Tax">{{ invoice.tax_type }} {{ frappe.utils.fmt_money(invoice.total_tax, currency="INR") }}</td>
+						<td data-label="Total">{{ frappe.utils.fmt_money(invoice.grand_total, currency="INR") }}</td>
+						<td data-label="Status">{{ invoice.payment_status }}</td>
+						<td data-label="">
+							<button class="a3s-btn a3s-btn--secondary a3s-download-invoice"
+								type="button" data-invoice="{{ invoice.name }}">PDF</button>
+						</td>
+					</tr>
+					{%- endfor %}
+				</tbody>
+			</table>
+		</div>
+		{%- endif %}
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+	document.querySelectorAll(".a3s-cancel-mandate").forEach(function (button) {
+		button.addEventListener("click", function () {
+			if (!window.confirm("Cancel automatic payment? We will send you a link before each renewal instead.")) {
+				return;
+			}
+			var status = button.closest(".a3s-card").querySelector(".a3s-form__status");
+			button.disabled = true;
+			frappe.call({
+				method: "a3_sola.api.billing_portal.cancel_my_mandate",
+				args: { subscription: button.dataset.subscription },
+			}).then(function (response) {
+				status.className = "a3s-form__status is-success";
+				status.textContent = (response.message && response.message.message) || "Cancelled.";
+				button.hidden = true;
+			}).catch(function (err) {
+				button.disabled = false;
+				status.className = "a3s-form__status is-error";
+				status.textContent = (err && err.message) || "We could not cancel that. Please contact us.";
+			});
+		});
+	});
+
+	document.querySelectorAll(".a3s-download-invoice").forEach(function (button) {
+		button.addEventListener("click", function () {
+			// The URL is resolved per click, against the session - never rendered inline.
+			frappe.call({
+				method: "a3_sola.api.billing_portal.download_invoice",
+				args: { invoice: button.dataset.invoice },
+			}).then(function (response) {
+				if (response.message && response.message.print_url) {
+					window.open(response.message.print_url, "_blank");
+				}
+			});
+		});
+	});
+})();
+</script>
+{% endblock %}

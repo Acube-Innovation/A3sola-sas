@@ -1,0 +1,559 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_1",
+  "sb_2",
+  "tenant_name",
+  "tenant_code",
+  "status",
+  "cb_3",
+  "platform_subscription",
+  "subscription_signup",
+  "customer",
+  "status_reason",
+  "sb_4",
+  "primary_contact_name",
+  "primary_contact_email",
+  "primary_contact_phone",
+  "billing_email",
+  "cb_5",
+  "city",
+  "state",
+  "state_code",
+  "country",
+  "gstin",
+  "sb_6",
+  "tenancy_note",
+  "tenancy_strategy",
+  "company",
+  "cb_8",
+  "site_name",
+  "site_url",
+  "tab_9",
+  "entitlement_note",
+  "sb_11",
+  "subscription_plan",
+  "plan_code",
+  "assigned_role_profile",
+  "cb_12",
+  "included_users",
+  "additional_users",
+  "user_quota",
+  "sb_13",
+  "max_companies",
+  "storage_limit_gb",
+  "cb_14",
+  "enabled_modules",
+  "sb_15",
+  "active_users",
+  "pending_invitations",
+  "cb_16",
+  "seats_available",
+  "storage_used_gb",
+  "last_usage_calculated_on",
+  "users",
+  "tab_17",
+  "sb_18",
+  "provisioning_job",
+  "admin_user",
+  "cb_19",
+  "provisioned_on",
+  "activated_on",
+  "sb_20",
+  "isolation_note",
+  "isolation_test_passed",
+  "isolation_test_on",
+  "isolation_results",
+  "sb_22",
+  "onboarding_tasks",
+  "post_provision_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_1",
+   "fieldtype": "Tab Break",
+   "label": "Tenant"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "tenant_name",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "tenant_code",
+   "fieldtype": "Data",
+   "label": "Tenant Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Lowercase slug. Becomes the company abbreviation, and under multi-site the subdomain."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Provisioning\nActive\nProvisioned with Errors\nSuspended\nCancelled\nTerminated",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "default": "Provisioning"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "status_reason",
+   "fieldtype": "Small Text",
+   "label": "Why",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "primary_contact_name",
+   "fieldtype": "Data",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "primary_contact_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "primary_contact_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "billing_email",
+   "fieldtype": "Data",
+   "label": "Billing Email"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "state_code",
+   "fieldtype": "Data",
+   "label": "State Code"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Tenancy"
+  },
+  {
+   "fieldname": "tenancy_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Snapshotted at creation. Changing the strategy in Settings later must never reclassify a tenant that already exists.</p>"
+  },
+  {
+   "fieldname": "tenancy_strategy",
+   "fieldtype": "Select",
+   "label": "Strategy",
+   "options": "Multi Company\nMulti Site",
+   "read_only": 1,
+   "default": "Multi Company"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "label": "Site",
+   "read_only": 1
+  },
+  {
+   "fieldname": "site_url",
+   "fieldtype": "Data",
+   "label": "Site URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_9",
+   "fieldtype": "Tab Break",
+   "label": "Entitlements"
+  },
+  {
+   "fieldname": "entitlement_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Snapshotted from the plan at provisioning, exactly as price is snapshotted at signup. If the plan later changes, this tenant keeps what it bought until an explicit plan change re-snapshots it. Enforcement reads these fields and never the live plan.</p>"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Plan"
+  },
+  {
+   "fieldname": "subscription_plan",
+   "fieldtype": "Link",
+   "label": "Plan",
+   "options": "Subscription Plan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "label": "Plan Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_role_profile",
+   "fieldtype": "Link",
+   "label": "Role Profile",
+   "options": "Role Profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "included_users",
+   "fieldtype": "Int",
+   "label": "Included Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_users",
+   "fieldtype": "Int",
+   "label": "Additional Users",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_quota",
+   "fieldtype": "Int",
+   "label": "User Quota",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Included plus additional. This is the number enforced."
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Limits"
+  },
+  {
+   "fieldname": "max_companies",
+   "fieldtype": "Int",
+   "label": "Max Companies",
+   "read_only": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "storage_limit_gb",
+   "fieldtype": "Int",
+   "label": "Storage Limit (GB)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "enabled_modules",
+   "fieldtype": "Table",
+   "label": "Modules",
+   "options": "Tenant Module"
+  },
+  {
+   "fieldname": "sb_15",
+   "fieldtype": "Section Break",
+   "label": "Usage"
+  },
+  {
+   "fieldname": "active_users",
+   "fieldtype": "Int",
+   "label": "Active Users",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pending_invitations",
+   "fieldtype": "Int",
+   "label": "Pending Invitations",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "seats_available",
+   "fieldtype": "Int",
+   "label": "Seats Available",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "storage_used_gb",
+   "fieldtype": "Float",
+   "label": "Storage Used (GB)",
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "fieldname": "last_usage_calculated_on",
+   "fieldtype": "Datetime",
+   "label": "Usage Calculated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Users",
+   "options": "Tenant User"
+  },
+  {
+   "fieldname": "tab_17",
+   "fieldtype": "Tab Break",
+   "label": "Provisioning"
+  },
+  {
+   "fieldname": "sb_18",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "provisioning_job",
+   "fieldtype": "Link",
+   "label": "Provisioning Job",
+   "options": "Provisioning Job",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admin_user",
+   "fieldtype": "Link",
+   "label": "Admin User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_19",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "provisioned_on",
+   "fieldtype": "Datetime",
+   "label": "Provisioned",
+   "read_only": 1
+  },
+  {
+   "fieldname": "activated_on",
+   "fieldtype": "Datetime",
+   "label": "Activated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_20",
+   "fieldtype": "Section Break",
+   "label": "Isolation"
+  },
+  {
+   "fieldname": "isolation_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">A tenant that has not passed isolation must never be handed to a customer. Failure blocks activation.</p>"
+  },
+  {
+   "fieldname": "isolation_test_passed",
+   "fieldtype": "Check",
+   "label": "Isolation Passed",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "isolation_test_on",
+   "fieldtype": "Datetime",
+   "label": "Last Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "isolation_results",
+   "fieldtype": "Table",
+   "label": "Results",
+   "options": "Tenant Isolation Test Result"
+  },
+  {
+   "fieldname": "sb_22",
+   "fieldtype": "Section Break",
+   "label": "Onboarding"
+  },
+  {
+   "fieldname": "onboarding_tasks",
+   "fieldtype": "Table",
+   "label": "Setup Checklist",
+   "options": "Tenant Onboarding Task"
+  },
+  {
+   "fieldname": "post_provision_notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes for the admin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Tenant",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Tenant",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Platform Tenant Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Provisioning Operator",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "tenant_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "tenant_code,primary_contact_email,status",
+ "description": "One customer workspace. The registry Phase 7 reads to decide who still has access."
+}

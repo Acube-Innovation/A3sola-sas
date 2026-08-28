@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "error_code",
+  "error_class",
+  "cb_1",
+  "customer_message",
+  "requires_new_mandate"
+ ],
+ "fields": [
+  {
+   "fieldname": "error_code",
+   "fieldtype": "Data",
+   "label": "Gateway Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "error_class",
+   "fieldtype": "Select",
+   "label": "Class",
+   "options": "Transient\nPermanent\nUnknown",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Transient is worth retrying. Permanent is not - it needs the customer to act."
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_message",
+   "fieldtype": "Small Text",
+   "label": "What to Tell the Customer"
+  },
+  {
+   "fieldname": "requires_new_mandate",
+   "fieldtype": "Check",
+   "label": "Needs Re-Registration",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Gateway Error Class",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

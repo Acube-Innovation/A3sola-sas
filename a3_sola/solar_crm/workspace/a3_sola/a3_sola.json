@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"a3s-hd\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>A3 Sola</span>\", \"col\": 12}}, {\"id\": \"a3s-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"One app, four modules. Solar CRM is live; Solar Operations, Solar Projects and Platform arrive in later phases.\", \"col\": 12}}, {\"id\": \"a3s-sc\", \"type\": \"card\", \"data\": {\"card_name\": \"Modules\", \"col\": 4}}]",
+ "content": "[{\"id\": \"as-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'>A3 Sola</span>\", \"col\": 12}}, {\"id\": \"as-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar CRM\", \"col\": 3}}, {\"id\": \"as-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Operations\", \"col\": 3}}, {\"id\": \"as-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Projects\", \"col\": 3}}, {\"id\": \"as-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Platform\", \"col\": 3}}, {\"id\": \"as-6\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h6'>Everything in this module</span>\", \"col\": 12}}, {\"id\": \"as-8\", \"type\": \"card\", \"data\": {\"card_name\": \"What needs attention today\", \"col\": 4}}, {\"id\": \"as-9\", \"type\": \"card\", \"data\": {\"card_name\": \"Set up\", \"col\": 4}}]",
  "creation": "2026-08-25 13:00:00.000000",
  "docstatus": 0,
  "doctype": "Workspace",
@@ -14,19 +14,95 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Modules",
-   "link_count": 2,
+   "label": "What needs attention today",
+   "link_count": 6,
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Card Break",
+   "icon": "activity"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Lead Follow-up Due",
+   "link_count": 0,
+   "link_to": "Lead Follow-up Due",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Installation Pipeline Status",
+   "link_count": 0,
+   "link_to": "Installation Pipeline Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "External Dependency Ageing",
+   "link_count": 0,
+   "link_to": "External Dependency Ageing",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Service Ticket SLA Compliance",
+   "link_count": 0,
+   "link_to": "Service Ticket SLA Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Billing vs Collection",
+   "link_count": 0,
+   "link_to": "Billing vs Collection",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Preventive Visit Compliance",
+   "link_count": 0,
+   "link_to": "Preventive Visit Compliance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Set up",
+   "link_count": 7,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "setting"
   },
   {
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Solar CRM",
+   "label": "A3 Sola Settings",
    "link_count": 0,
-   "link_to": "Solar CRM",
-   "link_type": "Workspace",
+   "link_to": "A3 Sola Settings",
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   },
@@ -34,15 +110,70 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Solar Operations",
+   "label": "Company",
    "link_count": 0,
-   "link_to": "Solar Operations",
-   "link_type": "Workspace",
+   "link_to": "Company",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Solar Package",
+   "link_count": 0,
+   "link_to": "Solar Package",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Component Make",
+   "link_count": 0,
+   "link_to": "Component Make",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "DISCOM",
+   "link_count": 0,
+   "link_to": "DISCOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Electricity Tariff",
+   "link_count": 0,
+   "link_to": "Electricity Tariff",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Subsidy Scheme",
+   "link_count": 0,
+   "link_to": "Subsidy Scheme",
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-08-28 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola",
@@ -53,6 +184,40 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 30.0,
- "shortcuts": [],
- "title": "A3 Sola"
+ "shortcuts": [
+  {
+   "color": "orange",
+   "label": "Solar CRM",
+   "type": "URL",
+   "doc_view": "",
+   "url": "/app/solar-crm",
+   "icon": "crm"
+  },
+  {
+   "color": "orange",
+   "label": "Solar Operations",
+   "type": "URL",
+   "doc_view": "",
+   "url": "/app/solar-operations",
+   "icon": "tool"
+  },
+  {
+   "color": "orange",
+   "label": "Solar Projects",
+   "type": "URL",
+   "doc_view": "",
+   "url": "/app/solar-projects",
+   "icon": "project"
+  },
+  {
+   "color": "orange",
+   "label": "Platform",
+   "type": "URL",
+   "doc_view": "",
+   "url": "/app/platform",
+   "icon": "globe"
+  }
+ ],
+ "title": "A3 Sola",
+ "indicator_color": "orange"
 }

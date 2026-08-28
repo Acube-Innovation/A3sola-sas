@@ -208,10 +208,10 @@ def _audience(ticket, audience):
 			return users
 
 	frappe.log_error(
-		f"Ticket {ticket.name} breached its SLA but no user holds {role}, "
+		title="a3_sola: escalation reached nobody",
+		message=f"Ticket {ticket.name} breached its SLA but no user holds {role}, "
 		"Solar O&M Manager, Solar Operations Manager or System Manager. "
 		"Nobody was notified.",
-		"a3_sola: escalation reached nobody",
 	)
 	return []
 

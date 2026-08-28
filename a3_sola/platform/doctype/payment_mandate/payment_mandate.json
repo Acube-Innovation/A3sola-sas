@@ -1,0 +1,333 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_1",
+  "platform_subscription",
+  "subscription_signup",
+  "cb_2",
+  "customer_name",
+  "customer_email",
+  "customer_phone",
+  "sb_3",
+  "mandate_type",
+  "gateway_token_id",
+  "gateway_customer_id",
+  "gateway_subscription_id",
+  "cb_4",
+  "bank_or_issuer",
+  "instrument_masked",
+  "debit_day_of_cycle",
+  "sb_5",
+  "registered_max_amount",
+  "registered_on",
+  "cb_6",
+  "valid_until",
+  "tab_7",
+  "sb_8",
+  "recurring_debit_amount",
+  "afa_ceiling_at_registration",
+  "cb_9",
+  "requires_afa_per_debit",
+  "classification_reason",
+  "tab_10",
+  "sb_11",
+  "status",
+  "status_reason",
+  "cb_12",
+  "cancelled_on",
+  "cancellation_source",
+  "sb_13",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subscription_signup",
+   "fieldtype": "Link",
+   "label": "Signup",
+   "options": "Subscription Signup"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "customer_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Authorisation"
+  },
+  {
+   "fieldname": "mandate_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Card e-Mandate\nUPI Autopay\ne-NACH\nEmandate Netbanking",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gateway_token_id",
+   "fieldtype": "Data",
+   "label": "Gateway Token",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gateway_customer_id",
+   "fieldtype": "Data",
+   "label": "Gateway Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gateway_subscription_id",
+   "fieldtype": "Data",
+   "label": "Gateway Subscription",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank_or_issuer",
+   "fieldtype": "Data",
+   "label": "Bank / Issuer"
+  },
+  {
+   "fieldname": "instrument_masked",
+   "fieldtype": "Data",
+   "label": "Instrument",
+   "description": "Last four only. Never more."
+  },
+  {
+   "fieldname": "debit_day_of_cycle",
+   "fieldtype": "Int",
+   "label": "Debit Day"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Registered Limits"
+  },
+  {
+   "fieldname": "registered_max_amount",
+   "fieldtype": "Currency",
+   "label": "Registered Maximum",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Set above the current debit by the configured headroom, so adding users does not immediately invalidate the mandate."
+  },
+  {
+   "fieldname": "registered_on",
+   "fieldtype": "Date",
+   "label": "Registered On"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valid_until",
+   "fieldtype": "Date",
+   "label": "Valid Until"
+  },
+  {
+   "fieldname": "tab_7",
+   "fieldtype": "Tab Break",
+   "label": "Compliance"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "AFA Classification"
+  },
+  {
+   "fieldname": "recurring_debit_amount",
+   "fieldtype": "Currency",
+   "label": "Recurring Debit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "afa_ceiling_at_registration",
+   "fieldtype": "Currency",
+   "label": "Ceiling at Registration",
+   "read_only": 1,
+   "description": "Snapshot of the setting when this mandate was registered. A later change to the ceiling must not silently reclassify an existing mandate."
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requires_afa_per_debit",
+   "fieldtype": "Check",
+   "label": "Needs Authentication Each Debit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "classification_reason",
+   "fieldtype": "Small Text",
+   "label": "Why",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_10",
+   "fieldtype": "Tab Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "State"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending Registration\nActive\nPaused\nCancelled\nRejected\nExpired",
+   "default": "Pending Registration",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "status_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cancelled_on",
+   "fieldtype": "Date",
+   "label": "Cancelled On",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cancellation_source",
+   "fieldtype": "Select",
+   "label": "Cancelled By",
+   "options": "Customer\nMerchant\nBank\nSystem",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sb_13",
+   "fieldtype": "Section Break",
+   "label": "Amend"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Payment Mandate",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Payment Mandate",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "role": "Platform Billing Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1,
+ "title_field": "customer_name",
+ "show_title_field_in_link": 1
+}

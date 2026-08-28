@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-25 13:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "bank_or_clearing_account",
+  "cb_1",
+  "gateway_fee_expense_account",
+  "subscription_revenue_account",
+  "sb_2",
+  "gst_output_igst_account",
+  "gst_output_cgst_account",
+  "cb_3",
+  "gst_output_sgst_account",
+  "sb_4",
+  "unearned_revenue_account",
+  "cb_5",
+  "refund_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bank_or_clearing_account",
+   "fieldtype": "Link",
+   "label": "Bank / Clearing",
+   "options": "Account",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gateway_fee_expense_account",
+   "fieldtype": "Link",
+   "label": "Gateway Fee Expense",
+   "options": "Account"
+  },
+  {
+   "fieldname": "subscription_revenue_account",
+   "fieldtype": "Link",
+   "label": "Subscription Revenue",
+   "options": "Account"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "GST Output"
+  },
+  {
+   "fieldname": "gst_output_igst_account",
+   "fieldtype": "Link",
+   "label": "IGST Output",
+   "options": "Account"
+  },
+  {
+   "fieldname": "gst_output_cgst_account",
+   "fieldtype": "Link",
+   "label": "CGST Output",
+   "options": "Account"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gst_output_sgst_account",
+   "fieldtype": "Link",
+   "label": "SGST Output",
+   "options": "Account"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Other"
+  },
+  {
+   "fieldname": "unearned_revenue_account",
+   "fieldtype": "Link",
+   "label": "Unearned Revenue",
+   "options": "Account",
+   "description": "Set only if the auditor requires annual revenue to be deferred over the period."
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "refund_account",
+   "fieldtype": "Link",
+   "label": "Refund",
+   "options": "Account"
+  }
+ ],
+ "links": [],
+ "modified": "2026-08-25 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Platform Payment Account Mapping",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

@@ -16,6 +16,7 @@ from a3_sola.setup import (
 	install_ops,
 	dashboard_platform,
 	install_platform,
+	install_provisioning,
 	install_projects,
 	seed_data,
 )
@@ -64,6 +65,7 @@ def setup():
 	# Platform is not tenant-scoped: it is the product's own marketing and funnel data,
 	# so it seeds once per site rather than once per company.
 	install_platform.setup()
+	install_provisioning.setup()
 	frappe.db.commit()
 	dashboard.install()
 	dashboard_ops.install()
@@ -74,6 +76,16 @@ def setup():
 
 def backfill_settings_defaults():
 	"""Apply defaults for any newly added settings field, once, before anything saves."""
+	from a3_sola.solar_crm.doctype.a3_sola_settings.a3_sola_settings import (
+		repair_dangling_links,
+		repair_orphan_company_rows,
+	)
+
+	# Before the first save, not after. Frappe validates every link on every save, so one
+	# setting pointing at a deleted record makes the whole singleton unsaveable - and with
+	# it this function, the seeding it drives, and provisioning.
+	repair_orphan_company_rows()
+	repair_dangling_links()
 	settings = frappe.get_single("A3 Sola Settings")
 	filled = apply_field_defaults(settings)
 	if filled:
@@ -99,10 +111,13 @@ def seed_all_companies():
 
 
 def install_custom_fields():
+	from a3_sola.setup.custom_fields_platform import PLATFORM_CUSTOM_FIELDS
+
 	for definitions, module in (
 		(CUSTOM_FIELDS, MODULE),
 		(OPS_CUSTOM_FIELDS, OPS_MODULE),
 		(PROJ_CUSTOM_FIELDS, PROJ_MODULE),
+		(PLATFORM_CUSTOM_FIELDS, "Platform"),
 	):
 		create_custom_fields(definitions, ignore_validate=True)
 		# Tag them to their module so `bench export-fixtures` stays module-scoped.
@@ -122,6 +137,14 @@ def default_company():
 
 
 def _exists(doctype, filters):
+	"""Does this master already exist FOR THIS COMPANY?
+
+	Every caller passes a company, and that is load-bearing rather than tidy. A check
+	written without one - `{"roof_type": "RCC Flat Roof"}` - is true as soon as any tenant
+	on the instance has that roof type, so the second tenant provisioned gets none at all
+	and their first site survey has nothing to choose from. The seeding then reports
+	success, because from its point of view the record does exist.
+	"""
 	return frappe.db.exists(doctype, filters)
 
 
@@ -138,7 +161,10 @@ def seed_masters(company=None):
 	"""Seed every master this app needs, for one company. Idempotent."""
 	company = company or default_company()
 	if not company:
-		frappe.log_error("a3_sola: no Company exists, skipping master seeding", "a3_sola install")
+		frappe.log_error(
+			title="a3_sola: master seeding skipped",
+			message="No Company exists yet, so there is nothing to seed masters against.",
+		)
 		return
 
 	discom = seed_discom(company)
@@ -184,7 +210,7 @@ def seed_discom(company):
 
 def seed_discom_sections(company, discom):
 	for section, district in seed_data.DISCOM_SECTIONS:
-		if _exists("DISCOM Section", {"section_name": section, "discom": discom}):
+		if _exists("DISCOM Section", {"section_name": section, "discom": discom, "company": company}):
 			continue
 		_insert(
 			{
@@ -201,7 +227,7 @@ def seed_discom_sections(company, discom):
 
 def seed_roof_types(company):
 	for roof, multiplier, area, structure in seed_data.ROOF_TYPES:
-		if _exists("Roof Type", {"roof_type": roof}):
+		if _exists("Roof Type", {"roof_type": roof, "company": company}):
 			continue
 		_insert(
 			{
@@ -349,7 +375,7 @@ def seed_fee_schedule(company, discom):
 
 
 def seed_regulation_rules(company, discom):
-	if _exists("Grid Regulation Rule", {"rule_code": "KSERC-3PH-ABOVE-3KW"}):
+	if _exists("Grid Regulation Rule", {"rule_code": "KSERC-3PH-ABOVE-3KW", "company": company}):
 		return
 	_insert(
 		{
@@ -380,7 +406,7 @@ def seed_regulation_rules(company, discom):
 
 def seed_component_makes(company):
 	for make, ctype, tech, is_dcr, product, performance, floor10, floor25 in seed_data.COMPONENT_MAKES:
-		if _exists("Component Make", {"make_name": make, "component_type": ctype}):
+		if _exists("Component Make", {"make_name": make, "component_type": ctype, "company": company}):
 			continue
 		_insert(
 			{

@@ -1,0 +1,75 @@
+{% extends "templates/platform_base.html" %}
+
+{% block content %}
+<section class="a3s-section">
+	<div class="a3s-container">
+		<h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Map your ledger accounts</h1>
+
+		{%- if not mapping %}
+		<div class="a3s-card a3s-narrow" style="margin-top:2rem;text-align:center">
+			<p class="a3s-card__text">This page is for the administrator of a workspace.</p>
+		</div>
+		{%- else %}
+		<div class="a3s-card" style="margin-top:1.5rem">
+			<p class="a3s-card__text" style="margin:0">
+				Every account below was left blank on purpose. A guessed mapping posts money to
+				the wrong ledger and nobody notices until a reconciliation, so this is a
+				decision for you and your accountant. Nothing posts to your books until it is
+				done — invoicing and costing work perfectly well in the meantime.
+			</p>
+			<p class="a3s-card__text" style="margin:0.75rem 0 0;color:#6b7383;font-size:0.9rem">
+				Mapping for <strong>{{ mapping.company }}</strong>. Only accounts belonging to
+				your own company can be chosen.
+			</p>
+		</div>
+
+		<form id="a3s-mapping-form" class="a3s-card" style="margin-top:1.5rem;display:grid;gap:1rem">
+			{%- for field in mapping.fields %}
+			<label style="display:grid;gap:0.35rem">
+				<span style="font-weight:600;font-size:0.92rem">{{ field.label }}</span>
+				<select name="{{ field.fieldname }}"
+				        style="padding:0.6rem 0.8rem;border-radius:0.6rem;border:1px solid rgba(42,51,66,0.18)">
+					<option value="">Not mapped</option>
+					{%- for account in accounts %}
+					<option value="{{ account.name }}" {% if account.name == field.value %}selected{% endif %}>{{ account.name }}</option>
+					{%- endfor %}
+				</select>
+			</label>
+			{%- endfor %}
+			<button type="submit" class="a3s-btn a3s-btn--primary" style="justify-self:start">Save mapping</button>
+			<p id="a3s-mapping-message" style="margin:0;font-size:0.9rem"></p>
+		</form>
+		{%- endif %}
+	</div>
+</section>
+
+<script>
+(function () {
+	var form = document.getElementById("a3s-mapping-form");
+	var message = document.getElementById("a3s-mapping-message");
+	if (!form) return;
+	form.addEventListener("submit", function (event) {
+		event.preventDefault();
+		var mapping = {};
+		new FormData(form).forEach(function (value, key) { mapping[key] = value; });
+		message.textContent = "Saving…";
+		message.style.color = "#6b7383";
+		frappe.call({
+			method: "a3_sola.api.tenant_settings.save_account_mapping",
+			args: { mapping: mapping },
+			callback: function (r) {
+				var done = (r.message || {}).complete;
+				message.textContent = done
+					? "Saved. Every account is mapped, so postings can be switched on."
+					: "Saved. Some accounts are still unmapped.";
+				message.style.color = done ? "#1a7f4b" : "#6b7383";
+			},
+			error: function (r) {
+				message.textContent = (r && r.message) || "That did not save.";
+				message.style.color = "#b3261e";
+			}
+		});
+	});
+})();
+</script>
+{% endblock %}

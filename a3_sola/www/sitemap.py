@@ -29,7 +29,7 @@ def get_context(context):
 	context.no_cache = 1
 	entries = [
 		{
-			"url": frappe.utils.get_url(route),
+			"url": frappe.utils.get_url(platform.route(route)),
 			"priority": priority,
 			"changefreq": frequency,
 			"lastmod": None,
@@ -43,7 +43,7 @@ def get_context(context):
 		):
 			entries.append(
 				{
-					"url": frappe.utils.get_url(row.route),
+					"url": frappe.utils.get_url(platform.route(row.route)),
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"lastmod": frappe.utils.get_datetime(row.modified).strftime("%Y-%m-%d"),
