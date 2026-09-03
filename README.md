@@ -249,21 +249,120 @@ once any tenant exists, and every tenant snapshots the strategy it was built und
 [`docs/TENANCY_MODEL.md`](a3_sola/docs/TENANCY_MODEL.md) for the comparison, what would
 trigger a migration, and what migrating would involve.
 
-### Extension points for later phases
+### Extension points, and where each one was filled
 
-These are called at the right moments and do the minimum today. A later phase fills them in
-without touching the paths that call them. Phase 6 implemented the two Phase 5 left for it —
-`trigger_provisioning` (the orchestrator) and `on_initial_payment_refunded` (suspend the
-tenant, delete nothing) — and left four for Phase 7:
+These are called at the right moments and each was left doing the minimum until the phase
+that owned the decision arrived. **Phase 7 filled the last six.** The seams remain seams:
+collection still refuses to decide what a failed payment costs a customer, and provisioning
+still refuses to decide when a tenant is switched off — each hands over to the lifecycle
+policy, which has the guards.
 
-| Function | Called when | Phase |
-|---|---|---|
-| `platform_subscription.set_tenant_access_state(tenant, state, reason)` | Any access change after provisioning: suspend, cancel, terminate, reinstate | 7 |
-| `entitlements.add_seats(tenant, count)` | A customer buys seats mid-cycle — must re-snapshot and bill prorated | 7 |
-| `platform_subscription.on_billing_cycle_completed(subscription)` | A cycle collects successfully and the period rolls | 7 |
-| `platform_subscription.on_payment_failed_final(subscription)` | Dunning has run every step and it is still unpaid | 7 |
-| `platform_subscription.on_subscription_activated(subscription)` | A subscription reaches Active for the first time | 7 |
-| `dunning.on_dunning_exhausted(subscription)` | Every dunning step is spent | 7 |
+| Function | Called when | Implemented in | Hands over to |
+|---|---|---|---|
+| `signup.trigger_provisioning` | Initial payment captured | 6 | `api.provisioning.orchestrator` |
+| `payment_refund.on_initial_payment_refunded` | The first payment is refunded | 6 | Tenant suspension; deletes nothing |
+| `tenant.set_tenant_access_state(tenant, state, reason)` | Any access change after provisioning | **7** | `api.lifecycle.access` |
+| `entitlements.add_seats(tenant, count)` | A customer buys seats mid-cycle | **7** | `api.lifecycle.seats` |
+| `platform_subscription.on_billing_cycle_completed` | A cycle collects and the period rolls | **7** | `api.lifecycle.handlers` |
+| `platform_subscription.on_payment_failed_final` | Dunning is spent and it is still unpaid | **7** | `api.lifecycle.handlers` |
+| `platform_subscription.on_subscription_activated` | A subscription first reaches Active | **7** | `api.lifecycle.handlers` |
+| `dunning.on_dunning_exhausted` | Every dunning step is spent | **7** | `api.lifecycle.handlers` |
+
+### The subscription lifecycle
+
+**The governing rule: suspension is never a side effect.** Every access change is a
+deliberate, logged, individually reversible transition produced by a named policy, carrying
+a reason a human can read. Nothing changes access as a consequence of doing something else,
+and nothing changes access without writing a Subscription Event first.
+
+#### The state machine
+
+| State | Access | Billing | Enters from | Exits to |
+|---|---|---|---|---|
+| Trialing | Full | none | Draft, Pending Payment | Active, Pending Payment, Cancelled |
+| Active | Full | charging | Trialing, Past Due, Grace, Suspended, Cancelled | Past Due, Cancelling, Cancelled |
+| Past Due | **Full** | dunning | Active, Pending Payment, Grace | Active, Grace, Cancelling, Cancelled |
+| Grace | Banner | dunning | Past Due | Active, Past Due, **Suspended**, Cancelling, Cancelled |
+| Suspended | Blocked | halted | Grace only | Active, Cancelled |
+| Cancelling | Full | final period | Active, Past Due, Grace | Active, Cancelled |
+| Cancelled | Blocked | none | Cancelling, Suspended, Trialing, Active | Active (inside the window), Terminated |
+| Terminated | Blocked | none | Cancelled | — |
+
+Two absences are deliberate and are each covered by a test:
+
+- **There is no Active → Suspended move.** A customer reaches Suspended through Past Due
+  and Grace, having been warned at each, or not at all.
+- **There is no Trialing → Suspended move.** A trial that never had a payment method is
+  cancelled, not suspended. There is nothing to suspend them over.
+
+And **Past Due leaves access Full**, on purpose. A failed debit is usually a bank problem
+rather than a refusal to pay; restricting a customer's work over one loses the account.
+Restriction starts at Grace, as a banner that does not obstruct anything.
+
+#### Policy is data, not code
+
+A client who wants 21 days of grace edits a Subscription Policy row. They do not commission
+a change. Each stage names its day offset, the state it moves to, the access effect, whether
+it needs approval and whether it notifies. See `docs/POLICY_GUIDE.md` for what moving each
+number costs you.
+
+#### The reversibility guarantee
+
+Suspension disables access **without destroying state**. It never deletes a User, never
+removes a Role or Role Profile, never deletes a User Permission and never touches tenant
+business data. What it changes is `User.enabled`, and what each user was before is
+snapshotted and committed *first*. Restoration puts every user back to its recorded prior
+state — which is not "everybody enabled": somebody the customer had themselves disabled
+stays disabled.
+
+Restoration needs no approval, no scheduler and no queue. A tenant who pays at 11pm is
+working at 11:01pm.
+
+**A suspended tenant can always reach the billing portal and pay.** Locking a customer out
+of the page that ends their suspension would be the worst bug in this area, so the gate's
+allowlist covers billing, the payment endpoints, the webhook, password reset and login —
+each with its own test.
+
+#### The circuit breaker and the kill switch
+
+Before applying any suspension the nightly run counts how many it would perform. Over
+`max_suspensions_per_run` it **halts the entire pass, performs none of them, and alerts**.
+A gateway outage or a date-arithmetic bug must never lock out the customer base, and a
+halted run somebody investigates in the morning is always cheaper than mass suspension.
+
+The kill switch halts every state change at once while leaving evaluation and logging
+running — for use during an incident. See `docs/LIFECYCLE_RUNBOOK.md`.
+
+#### It ships inert
+
+`dry_run_mode` on, `enable_automatic_suspension` off. The engine evaluates every
+subscription every night, writes down every decision, and changes nothing. Turning it on
+is gated behind a pre-flight check that refuses until a default policy exists, notification
+templates are present, the breaker limit is set, somebody holds the approval role, the
+engine has run daily for a week and the simulation has been run — and then still requires
+typing `SUSPEND CUSTOMERS`.
+
+The policy, its five stage emails and the breaker limit all ship, so three of those six
+pass on a fresh site. The two that cannot are the two that are evidence of a person
+watching: somebody holding the approval role, and a week of daily runs behind you.
+
+#### Proration
+
+One function, `api/lifecycle/proration.py`, and deliberately no second one. Calendar days,
+inclusive of both period ends; money rounded once, at the line. An upgrade charges the
+difference immediately; a downgrade takes effect at the next boundary and refunds nothing.
+
+Every plan and seat change recomputes **both** the mandate's registered maximum and the RBI
+AFA ceiling, and acts on either being crossed. A change that silently breaks next month's
+collection is the most damaging thing this area could ship.
+
+#### Downgrades collide with usage, and that is handled honestly
+
+A tenant on 12 users moving to a 5-seat plan has a problem the software cannot solve. It
+does not try: the blockers are listed, the tenant chooses who to remove, and if they have
+not by the boundary the downgrade **does not apply** and they stay on the higher plan for
+another period. The correct failure mode is "you keep paying more", never "your data became
+unreachable".
 
 ### Analytics events
 
@@ -330,7 +429,24 @@ Read [`a3_sola/docs/ACCOUNTING_TREATMENT.md`](a3_sola/docs/ACCOUNTING_TREATMENT.
 | `docs/PAYMENTS_RUNBOOK.md` | Running collections: failures, webhooks, reconciliation, recovery actions |
 | `docs/TENANCY_MODEL.md` | Multi-company versus multi-site, why this choice, and what migrating would involve |
 | `docs/PROVISIONING_RUNBOOK.md` | Every provisioning failure state, and the Sev-1 procedure for a suspected cross-tenant leak |
-| `docs/UAT_Phase1.md` … `UAT_Phase6.md` | Acceptance cases, and which test automates each |
+| `docs/LIFECYCLE_RUNBOOK.md` | The daily rhythm, handling a gateway outage without suspending anyone, answering "why was I suspended", the kill-switch procedure |
+| `docs/POLICY_GUIDE.md` | Designing a subscription policy, and what each threshold costs you when it is too lax and when it is too aggressive |
+| `docs/UAT_Phase1.md` … `UAT_Phase7.md` | Acceptance cases per phase |
+| **`docs/UAT_MASTER.md`** | **All acceptance cases grouped by business process, the end-to-end scenarios and their results, and the client sign-off pack** |
+| **`docs/ARCHITECTURE.md`** | **The definitive technical document. Read this first** |
+| **`docs/PROJECT_SUMMARY.md`** | **For leadership: what was built, what is switched off and why, every risk that remains** |
+| `docs/security/ISOLATION_AUDIT.md` | The adversarial suite, its vectors and the zero-success evidence |
+| `docs/security/ENDPOINT_INVENTORY.md` | Every whitelisted method, generated from the code |
+| `docs/security/PERMISSION_MATRIX.md` | Every doctype against every role, generated |
+| `docs/security/FINDINGS.md` | Security findings, severity-ranked, with what was fixed |
+| `docs/ops/PERFORMANCE_BASELINE.md` | Every measured figure, before and after each fix, plus sizing |
+| `docs/ops/BACKUP_AND_DR.md` | The measured restore, RTO and RPO, and the drill outcomes |
+| `docs/ops/MONITORING.md` | Every check, threshold, channel and expected frequency |
+| `docs/ops/ON_CALL.md` | Severity, escalation, and a decision tree per incident |
+| `docs/ops/ADMIN_CONSOLE.md` | The console, and who should use what |
+| `docs/ops/DEPLOYMENT.md` | The reproducible build and the smoke test |
+| `docs/ops/GO_LIVE.md` | The five stages, their rollbacks, and the launch checklist |
+| `docs/training/*.md` | Role-based guides: tenant admin, sales, operations, finance, service, platform operator, FAQ |
 
 ### Customer portal
 
@@ -555,6 +671,15 @@ Child tables: Billing Milestone Entry, Billing Milestone Template Detail, Cost C
 | Platform Stat | Master |
 | Subscription Plan | Master |
 | Subscription Signup | Submittable |
+| Subscription Policy | Master |
+| Policy Stage | Child |
+| Subscription Event | Transaction (append-only) |
+| Access Suspension | Transaction |
+| Suspended User Snapshot | Child |
+| Plan Change Request | Transaction |
+| Proration Line | Child |
+| Seat Change Request | Transaction |
+| Cancellation Request | Transaction |
 
 Child tables: Plan Feature, Plan Module, Platform Bullet, Platform Detail Section, Signup Event Log.
 
@@ -573,6 +698,9 @@ Platform doctypes carry no `company` field by design — see above.
 | Daily | Solar Projects | `a3_sola.api.om.mark_due_and_missed_visits` | Marks preventive visits due, and missed once the date passes |
 | Daily | Solar Projects | `a3_sola.api.om.detect_renewals` | Raises a renewal Opportunity for contracts nearing expiry |
 | Daily (long) | Solar Projects | `a3_sola.api.costing.nightly_cost_refresh` | Rebuilds project costs from source documents |
+| Daily | Platform | `a3_sola.api.lifecycle.engine.run_lifecycle` | Evaluates every subscription against its policy. Ships inert — dry run on, automatic suspension off |
+| Daily | Platform | `a3_sola.api.lifecycle.engine.alert_on_missing_heartbeat` | Alerts if the engine has not run for two days. The single most likely failure is silence, not a wrong decision |
+| Daily | Platform | `a3_sola.api.lifecycle.suspension.remind_pending` | Reminds about suspensions awaiting a decision. Inaction never applies one |
 | Daily (long) | Solar Projects | `a3_sola.api.billing.refresh_billing_summaries` | Rebuilds billing plan summaries from invoices and payments |
 | Hourly | Platform | `a3_sola.api.reconciliation.gateway_health_check` | Alerts when the gateway stops answering or webhooks stop arriving |
 | Daily | Platform | `a3_sola.api.billing_engine.run_daily_billing` | The five collection passes: notice, auto debit, assisted renewal, confirmation, close-out |

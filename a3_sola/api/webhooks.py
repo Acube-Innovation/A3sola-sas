@@ -139,7 +139,32 @@ def _source_ip():
 
 
 def _log_unverified(raw_body, signature, payload_hash, note=None):
-	"""Record the attempt without trusting a byte of it."""
+	"""Record the attempt without trusting a byte of it, and without letting an attacker
+	fill the disk with the record of their own attempts.
+
+	FINDING (Phase 8, Medium, fixed here). Every unverified request wrote a committed row
+	whose `event_id` carried a random suffix, so nothing deduplicated them. An
+	unauthenticated attacker could POST to this endpoint in a loop and grow the webhook
+	log without limit - no credentials, no signature, just volume.
+
+	The rows still matter: a genuinely misconfigured secret shows up as a burst of
+	unverified attempts, and losing that would be worse than the disk risk. So the first
+	few per source IP per hour are still written, and beyond that the attempt is counted
+	in the file log only. The signal survives; the unbounded growth does not.
+	"""
+	from a3_sola.api import ratelimit
+
+	if not ratelimit.check(
+		"webhook_unverified", _source_ip(), "webhook_unverified_log_max", 20,
+		window_seconds=3600,
+	):
+		frappe.logger("a3_sola").warning({
+			"event": "webhook_signature_failed_suppressed",
+			"ip": _source_ip(), "hash": payload_hash[:16],
+			"note": "over the per-IP logging cap for this hour",
+		})
+		return
+
 	try:
 		frappe.get_doc(
 			{

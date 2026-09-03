@@ -10,7 +10,7 @@
  "sequence_id": 32.0,
  "public": 1,
  "is_hidden": 0,
- "content": "[{\"id\":\"so-1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Solar Operations</span>\",\"col\":12}},{\"id\":\"so-2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Solar Installation\",\"col\":3}},{\"id\":\"so-3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Installation Work Order\",\"col\":3}},{\"id\":\"so-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Installation Pipeline Status\",\"col\":3}},{\"id\":\"so-5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Document Pack Status\",\"col\":3}},{\"id\":\"so-6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"External Dependency Ageing\",\"col\":3}},{\"id\":\"4_rMgez3FS\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"so-25\",\"type\":\"card\",\"data\":{\"card_name\":\"On site\",\"col\":4}},{\"id\":\"so-26\",\"type\":\"card\",\"data\":{\"card_name\":\"Handover\",\"col\":4}},{\"id\":\"so-27\",\"type\":\"card\",\"data\":{\"card_name\":\"Waiting on someone else\",\"col\":4}},{\"id\":\"so-28\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"so-29\",\"type\":\"card\",\"data\":{\"card_name\":\"Stage and document templates\",\"col\":4}}]",
+ "content": "[{\"id\": \"so-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Solar Operations</span>\", \"col\": 12}}, {\"id\": \"so-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Installation\", \"col\": 3}}, {\"id\": \"so-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Installation Work Order\", \"col\": 3}}, {\"id\": \"so-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Installation Pipeline Status\", \"col\": 3}}, {\"id\": \"so-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Document Pack Status\", \"col\": 3}}, {\"id\": \"so-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"External Dependency Ageing\", \"col\": 3}}, {\"id\": \"4_rMgez3FS\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"so-25\", \"type\": \"card\", \"data\": {\"card_name\": \"On site\", \"col\": 4}}, {\"id\": \"so-26\", \"type\": \"card\", \"data\": {\"card_name\": \"Handover\", \"col\": 4}}, {\"id\": \"so-27\", \"type\": \"card\", \"data\": {\"card_name\": \"Waiting on someone else\", \"col\": 4}}, {\"id\": \"so-28\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"so-29\", \"type\": \"card\", \"data\": {\"card_name\": \"Stage and document templates\", \"col\": 4}}, {\"id\": \"solar-operations-extra-0\", \"type\": \"card\", \"data\": {\"card_name\": \"Materials\", \"col\": 4}}]",
  "hide_custom": 0,
  "links": [
   {
@@ -315,6 +315,59 @@
    "is_query_report": 0,
    "link_count": 0,
    "parentfield": "links"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Materials",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "stock"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Warehouse",
+   "link_count": 0,
+   "link_to": "Warehouse",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entry",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Request",
+   "link_count": 0,
+   "link_to": "Material Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
  "shortcuts": [
@@ -359,7 +412,7 @@
    "parentfield": "shortcuts"
   }
  ],
- "modified": "2026-08-28 12:35:49.424510",
+ "modified": "2026-08-28 21:00:00.000000",
  "creation": "2026-08-28 12:35:49.424510",
  "owner": "Administrator",
  "modified_by": "Administrator",

@@ -383,7 +383,16 @@ class TestSubscriptionRouting(FrappeTestCase):
 			"14,000 is under the ceiling but 16,520 is not - tax must count",
 		)
 
-	def test_phase_seven_extension_points_exist_and_are_declared(self):
+	def test_the_phase_seven_extension_points_hand_over_rather_than_decide(self):
+		"""Collection knows a payment failed. It does not get to decide what that costs
+		the customer - that is the lifecycle policy's job, and these three are the seam.
+
+		Originally these asserted the stubs still raised. Phase 7 implemented them, so the
+		property worth holding now is that the seam is still a seam: each one delegates
+		into the lifecycle package instead of acting on access itself.
+		"""
+		import inspect
+
 		from a3_sola.platform.doctype.platform_subscription import platform_subscription
 
 		for name in (
@@ -392,8 +401,11 @@ class TestSubscriptionRouting(FrappeTestCase):
 		):
 			handler = getattr(platform_subscription, name)
 			self.assertTrue(handler.__doc__, f"{name} has no contract docstring")
-			with self.assertRaises(NotImplementedError):
-				handler(frappe._dict({"name": "SUB-1"}))
+			source = inspect.getsource(handler)
+			self.assertIn("a3_sola.api.lifecycle.handlers", source,
+			              f"{name} no longer hands over to the lifecycle package")
+			self.assertNotIn("enabled", source,
+			                 f"{name} is touching user access from the billing side")
 
 
 class TestPreDebitNoticeIsMandatory(FrappeTestCase):

@@ -198,3 +198,222 @@ def pay_outstanding(subscription):
 		"currency": order.currency,
 		"pay_url": order.gateway_payment_link_url,
 	}
+
+
+# ---------------------------------------------------------- Phase 7: self-service
+#
+# Everything below is guarded by `assert_owns`, and the ones that change something also
+# require the tenant's own admin role. A customer being able to read their own history is
+# the point; an ordinary user of theirs being able to downgrade the plan is not.
+
+
+def _session_tenant():
+	"""The tenant the logged-in user belongs to, if any."""
+	from a3_sola.api.entitlements import TENANT_FIELD
+
+	if frappe.session.user in ("Guest", ""):
+		return None
+	return frappe.db.get_value("User", frappe.session.user, TENANT_FIELD)
+
+
+def _assert_tenant_member(subscription):
+	"""Read access for anyone who belongs to the tenant this subscription pays for.
+
+	Deliberately separate from `assert_owns`, which is not widened. `assert_owns` gates
+	invoices, mandates and payment, and those should stay with the billing contact and the
+	linked Customer - a tenant's site engineer has no business downloading their employer's
+	invoices. What this grants is the subscription's own state, the seat count, the team
+	list and the event history: what somebody needs to understand why the banner at the top
+	of their screen is there.
+	"""
+	tenant = frappe.db.get_value("Tenant", {"platform_subscription": subscription}, "name")
+	if tenant and _session_tenant() == tenant:
+		return tenant
+	# Falls back to the billing-contact and Customer paths, so the person who opened the
+	# subscription still reaches it even before a tenant exists.
+	assert_owns(subscription)
+	return tenant
+
+
+def _assert_tenant_admin(subscription):
+	"""The caller must administer the tenant this subscription belongs to."""
+	from a3_sola.api.entitlements import TENANT_FIELD
+
+	tenant = _assert_tenant_member(subscription)
+	if not tenant:
+		frappe.throw(_("Not found"), frappe.DoesNotExistError)
+	if frappe.db.get_value("Tenant", tenant, "admin_user") == frappe.session.user:
+		return tenant
+
+	# The second path: somebody the tenant has since made an administrator. Checked on the
+	# role PROFILE, not on a role - "Solar Tenant Administrator" is a Role Profile, and
+	# `frappe.get_roles()` would never contain it. Whichever profile the tenant was
+	# provisioned with is the one that counts, so it is read from the tenant rather than
+	# hardcoded.
+	profile = frappe.db.get_value("Tenant", tenant, "assigned_role_profile")
+	if profile and frappe.db.get_value("User", frappe.session.user, "role_profile_name") == profile:
+		if frappe.db.get_value("User", frappe.session.user, TENANT_FIELD) == tenant:
+			return tenant
+
+	frappe.throw(
+		_("Only your organisation's administrator can change the plan or the number of "
+		  "seats. Ask them, or contact us."),
+		frappe.PermissionError,
+	)
+
+
+@frappe.whitelist()
+def my_plan(subscription):
+	"""The current plan, what it costs, and when it renews."""
+	_assert_tenant_member(subscription)
+	doc = frappe.get_doc("Platform Subscription", subscription)
+	tenant = frappe.db.get_value("Tenant", {"platform_subscription": subscription}, "name")
+	usage = {}
+	if tenant:
+		from a3_sola.api.entitlements import get_tenant_usage
+
+		usage = get_tenant_usage(tenant)
+	return {
+		"plan": doc.subscription_plan,
+		"plan_code": doc.plan_code,
+		"cycle": doc.billing_cycle,
+		"amount": flt(doc.recurring_amount),
+		"currency": doc.currency,
+		"status": doc.status,
+		"access_state": doc.access_state,
+		"next_billing_date": doc.next_billing_date,
+		"collection_route": doc.collection_route,
+		"trial_end_date": doc.trial_end_date,
+		"seats": usage,
+		# Said plainly, because a customer who can see what happens next raises fewer
+		# tickets than one who has to ask.
+		"next_change_on": doc.next_state_change_on,
+		"next_change_to": doc.next_state_change_to,
+	}
+
+
+@frappe.whitelist()
+def available_plans(subscription):
+	"""Every plan they could move to, with what each would cost them."""
+	from a3_sola.api import platform
+
+	_assert_tenant_member(subscription)
+	doc = frappe.get_doc("Platform Subscription", subscription)
+	out = []
+	for plan in platform.get_published_plans():
+		out.append({
+			**plan,
+			"is_current": plan.get("name") == doc.subscription_plan,
+		})
+	return out
+
+
+@frappe.whitelist()
+def preview_plan_change(subscription, new_plan=None, new_cycle=None):
+	"""The proration and any consequence for how they pay - BEFORE they confirm.
+
+	Nobody should agree to a figure they have not seen, and nobody should discover that
+	their next renewal now needs authentication after it has failed at the bank.
+	"""
+	from a3_sola.api.lifecycle import plan_change
+
+	_assert_tenant_member(subscription)
+	return plan_change.preview(subscription, new_plan=new_plan, new_cycle=new_cycle)
+
+
+@frappe.whitelist()
+def change_my_plan(subscription, new_plan=None, new_cycle=None):
+	_assert_tenant_admin(subscription)
+	from a3_sola.api.lifecycle import plan_change
+
+	return plan_change.request_change(subscription, new_plan=new_plan,
+	                                  new_cycle=new_cycle,
+	                                  requested_by="Tenant Self Service")
+
+
+@frappe.whitelist()
+def preview_seat_change(subscription, count):
+	from a3_sola.api.lifecycle import seats
+
+	tenant = _tenant_for(subscription)
+	return seats.preview_seats(tenant, count)
+
+
+@frappe.whitelist()
+def change_my_seats(subscription, count):
+	"""Buying a seat mid-workday should take under a minute, so this is the whole flow."""
+	from a3_sola.api.lifecycle import seats
+
+	tenant = _assert_tenant_admin(subscription)
+	return seats.request_seats(tenant, count, requested_by="Tenant Self Service")
+
+
+@frappe.whitelist()
+def my_team(subscription):
+	"""The user list with last activity - what a downgrade decision needs.
+
+	The tenant chooses who to remove. Nothing here picks for them.
+	"""
+	from a3_sola.api.entitlements import TENANT_FIELD
+
+	tenant = _tenant_for(subscription)
+	return frappe.get_all(
+		"User", filters={TENANT_FIELD: tenant},
+		fields=["name", "full_name", "enabled", "last_login", "last_active"],
+		order_by="last_active desc",
+	)
+
+
+@frappe.whitelist()
+def my_history(subscription, limit=30):
+	"""Their own subscription events, in language a customer can read.
+
+	Internal detail is deliberately dropped: no policy stage codes, no actor, no dry-run
+	rows. What is left is what happened and why.
+	"""
+	from a3_sola.api.lifecycle import events
+
+	_assert_tenant_member(subscription)
+	readable = []
+	for row in events.history(subscription, limit=int(limit)):
+		if row.get("was_dry_run"):
+			continue
+		if row.get("event_type") == "Policy Evaluated":
+			continue
+		readable.append({
+			"when": row["event_time"],
+			"what": row["event_type"],
+			"why": row["reason"],
+		})
+	return readable
+
+
+@frappe.whitelist()
+def cancel_my_subscription(subscription, reason, reason_detail=None,
+                           competitor_named=None, would_reconsider=0):
+	"""End of period, always, from here. Immediate cancellation may involve a refund and
+	is an internal decision."""
+	from a3_sola.api.lifecycle import cancellation
+
+	_assert_tenant_admin(subscription)
+	return cancellation.request_cancellation(
+		subscription, reason, reason_detail=reason_detail,
+		cancellation_type="End of Period", requested_by="Tenant Self Service",
+		competitor_named=competitor_named, would_reconsider=would_reconsider,
+	)
+
+
+@frappe.whitelist()
+def reactivate_my_subscription(subscription):
+	from a3_sola.api.lifecycle import cancellation
+
+	_assert_tenant_admin(subscription)
+	return cancellation.reactivate_subscription(subscription,
+	                                            trigger="Tenant Self Service")
+
+
+def _tenant_for(subscription):
+	tenant = _assert_tenant_member(subscription)
+	if not tenant:
+		frappe.throw(_("Not found"), frappe.DoesNotExistError)
+	return tenant

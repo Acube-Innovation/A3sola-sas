@@ -1,0 +1,370 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tenant",
+  "platform_subscription",
+  "suspension_type",
+  "cb_1",
+  "status",
+  "policy",
+  "policy_stage",
+  "sb_2",
+  "reason",
+  "reason_detail",
+  "cb_3",
+  "outstanding_amount",
+  "outstanding_invoices",
+  "sb_4",
+  "requested_by",
+  "requested_on",
+  "scheduled_for",
+  "cb_5",
+  "warning_sent_on",
+  "notification_sent_on",
+  "applied_on",
+  "sb_6",
+  "approval_status",
+  "approved_by",
+  "approved_on",
+  "cb_7",
+  "rejection_reason",
+  "sb_8",
+  "affected_users_note",
+  "affected_users",
+  "users_disabled_count",
+  "sb_9",
+  "restored_on",
+  "restored_by",
+  "cb_10",
+  "restoration_trigger",
+  "restoration_reason",
+  "sb_11",
+  "subscription_event",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tenant",
+   "options": "Tenant",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription",
+   "options": "Platform Subscription"
+  },
+  {
+   "default": "Non Payment",
+   "fieldname": "suspension_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Non Payment\nPolicy Violation\nCustomer Request\nCancellation\nManual\nSecurity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nPending Approval\nScheduled\nApplied\nRestored\nCancelled\nFailed\nPartially Applied",
+   "read_only": 1
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Policy",
+   "options": "Subscription Policy"
+  },
+  {
+   "fieldname": "policy_stage",
+   "fieldtype": "Data",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Why"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reason_detail",
+   "fieldtype": "Text",
+   "label": "Detail"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding"
+  },
+  {
+   "fieldname": "outstanding_invoices",
+   "fieldtype": "Small Text",
+   "label": "Invoices"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Request"
+  },
+  {
+   "default": "Scheduler",
+   "fieldname": "requested_by",
+   "fieldtype": "Select",
+   "label": "Requested By",
+   "options": "Scheduler\nInternal User\nTenant"
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "label": "Requested On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "scheduled_for",
+   "fieldtype": "Datetime",
+   "label": "Scheduled For"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "A suspension whose warning was not sent the required number of days earlier is refused.",
+   "fieldname": "warning_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Warning Sent On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "notification_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Notified On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "applied_on",
+   "fieldtype": "Datetime",
+   "label": "Applied On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Not Required",
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Approval",
+   "options": "Not Required\nPending\nApproved\nRejected",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Users Affected"
+  },
+  {
+   "fieldname": "affected_users_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>Snapshotted and committed <b>before</b> anybody is disabled. A crash halfway through a suspension must still leave a complete record of what to restore.</p>"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "affected_users",
+   "fieldtype": "Table",
+   "label": "Affected Users",
+   "options": "Suspended User Snapshot"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "users_disabled_count",
+   "fieldtype": "Int",
+   "label": "Users Disabled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Restoration"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restored_on",
+   "fieldtype": "Datetime",
+   "label": "Restored On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restored_by",
+   "fieldtype": "Link",
+   "label": "Restored By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restoration_trigger",
+   "fieldtype": "Select",
+   "label": "Restoration Trigger",
+   "options": "\nPayment Received\nManual\nPolicy\nDispute"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restoration_reason",
+   "fieldtype": "Small Text",
+   "label": "Restoration Reason"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "subscription_event",
+   "fieldtype": "Link",
+   "label": "Event",
+   "options": "Subscription Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Access Suspension",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Access Suspension",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Admin",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Lifecycle Operator",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Billing Manager",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

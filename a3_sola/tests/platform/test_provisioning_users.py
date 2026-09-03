@@ -460,12 +460,49 @@ class TestOnboarding(UserProvisioningTestCase):
 
 
 class TestExtensionPoints(FrappeTestCase):
-	def test_add_seats_is_declared_for_phase_seven(self):
-		with self.assertRaises(NotImplementedError):
-			entitlements.add_seats("TNT-0001", 5)
+	"""The two seams Phase 6 left for Phase 7, now that Phase 7 has filled them.
 
-	def test_set_tenant_access_state_is_declared_for_phase_seven(self):
+	These used to assert the stubs still raised. What matters now is that the contracts
+	they promised are actually kept - the docstrings said the funnel would stay a single
+	funnel and that nothing would ever delete a customer's company, and those are the
+	properties a later phase could quietly break.
+	"""
+
+	def test_add_seats_delegates_to_the_lifecycle_package(self):
+		import inspect
+
+		source = inspect.getsource(entitlements.add_seats)
+		self.assertIn("a3_sola.api.lifecycle.seats", source)
+		self.assertIn("phase 7", (entitlements.add_seats.__doc__ or "").lower())
+
+	def test_set_tenant_access_state_is_still_the_single_funnel(self):
+		import inspect
+
 		from a3_sola.platform.doctype.tenant.tenant import set_tenant_access_state
 
-		with self.assertRaises(NotImplementedError):
-			set_tenant_access_state("TNT-0001", "Suspended", "test")
+		source = inspect.getsource(set_tenant_access_state)
+		self.assertIn("a3_sola.api.lifecycle.handlers", source)
+		self.assertIn("phase 7", (set_tenant_access_state.__doc__ or "").lower())
+
+	def test_nothing_in_the_lifecycle_deletes_a_user_role_or_permission(self):
+		"""The reversibility guarantee, checked as a property of the source rather than
+		of one code path - a suspension that deleted anything could not be undone."""
+		import os
+
+		base = frappe.get_app_path("a3_sola", "api", "lifecycle")
+		offenders = []
+		for filename in sorted(os.listdir(base)):
+			if not filename.endswith(".py"):
+				continue
+			with open(os.path.join(base, filename)) as handle:
+				source = handle.read()
+			for forbidden in ('delete_doc("User"', "delete_doc('User'",
+			                  'delete_doc("Role"', "delete_doc('Role'",
+			                  'delete_doc("User Permission"',
+			                  'delete_doc("Role Profile"'):
+				if forbidden in source:
+					offenders.append(f"{filename}: {forbidden}")
+		self.assertEqual(
+			offenders, [],
+			f"the lifecycle deletes something it could not restore: {offenders}",
+		)

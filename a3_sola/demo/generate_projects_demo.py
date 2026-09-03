@@ -50,7 +50,14 @@ CREW = (
 
 
 def _technician(company, index=0):
+	"""One crew member per index. Past the end of the pool they get a number.
+
+	Wrapping back to the start of CREW booked the same technician on two projects over
+	the same dates, and the scheduling guard - correctly - refused the second work order.
+	"""
 	first, last, gender, born = CREW[index % len(CREW)]
+	if index >= len(CREW):
+		last = f"{last} {index // len(CREW) + 1}"
 	existing = frappe.db.get_value(
 		"Employee", {"company": company, "employee_name": f"{first} {last}"}, "name"
 	)

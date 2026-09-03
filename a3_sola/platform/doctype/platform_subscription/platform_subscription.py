@@ -25,6 +25,18 @@ class PlatformSubscription(Document):
 	def autoname(self):
 		set_name(self, "subscription_series_prefix", ".YYYY.-.#####", fallback="SUB")
 
+	def onload(self):
+		"""The tenant, for the lifecycle actions on the form.
+
+		Every one of them acts on the tenant rather than the subscription - suspension,
+		restoration and seats are all about users - and the link runs the other way, from
+		Tenant to subscription, so the form cannot follow it on its own.
+		"""
+		self.set_onload(
+			"tenant",
+			frappe.db.get_value("Tenant", {"platform_subscription": self.name}, "name"),
+		)
+
 	def validate(self):
 		self.roll_up_users()
 		self.derive_recurring_amount()
@@ -113,40 +125,37 @@ class PlatformSubscription(Document):
 
 # ------------------------------------------------------------ Phase 7 contracts
 def on_billing_cycle_completed(subscription):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/handlers.py.
 
-	Called after a cycle has been collected successfully and the period rolled forward.
-	Phase 7 uses it to apply renewal policy - price changes taking effect at renewal,
-	scheduled downgrades, trial expiry - and must not itself collect money.
+	Phase 7 owns renewal policy after a collected cycle: advancing the period,
+	restoring a customer whose balance is now clear, and applying any change that was
+	waiting for the boundary.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements on_billing_cycle_completed: renewal policy after a "
-		"successfully collected cycle."
-	)
+	from a3_sola.api.lifecycle.handlers import on_billing_cycle_completed as implementation
+
+	return implementation(subscription)
 
 
 def on_payment_failed_final(subscription):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/handlers.py.
 
-	Called when collection has failed and the dunning policy has run out of steps. Phase 7
-	decides what happens next - grace period, suspension, cancellation - and owns the
-	customer communication for it. Phase 5 stops at Past Due.
+	Phase 7 owns what happens after dunning: Past Due, and no access change. A failed
+	payment is usually a bank problem rather than a refusal to pay.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements on_payment_failed_final: what happens after dunning is "
-		"exhausted."
-	)
+	from a3_sola.api.lifecycle.handlers import on_payment_failed_final as implementation
+
+	return implementation(subscription)
 
 
 def on_subscription_activated(subscription):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/handlers.py.
 
-	Called once when a subscription first becomes Active. Phase 7 uses it to start the
-	lifecycle clock - trial end, first renewal, entitlement grants.
+	Phase 7 owns the lifecycle clock: the trial window, the first renewal date and the
+	policy this subscription will be governed by.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements on_subscription_activated: starting the lifecycle clock."
-	)
+	from a3_sola.api.lifecycle.handlers import on_subscription_activated as implementation
+
+	return implementation(subscription)
 
 
 def safely(handler, subscription, event):

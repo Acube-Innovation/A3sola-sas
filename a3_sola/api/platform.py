@@ -19,6 +19,8 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
+from a3_sola.api import ratelimit
+
 CONTENT_CACHE_KEY = "a3_sola_platform_content"
 PLAN_CODE_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 CYCLES = ("monthly", "annual")
@@ -252,6 +254,10 @@ def _plan_modules(names):
 
 
 @frappe.whitelist(allow_guest=True)
+# Unauthenticated and free to call, so it is capped per IP. It writes nothing and
+# reads published pricing only, which is why the cap is generous rather than tight -
+# the pricing page legitimately calls it on every toggle.
+@ratelimit.rate_limited("plan_total", "plan_total_rate_limit", 240, window_seconds=3600)
 def calculate_plan_total(plan_code, cycle="monthly", additional_users=0):
 	"""What this plan actually costs. The single source of truth for every price shown.
 

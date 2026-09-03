@@ -88,22 +88,14 @@ class Tenant(Document):
 
 
 def set_tenant_access_state(tenant, state, reason):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/access.py.
 
-	Contract:
-
-	* The single entry point for every access-state change after provisioning: Suspended,
-	  Cancelled, Terminated, and the return journeys. Phase 6 sets Active exactly once, at
-	  the end of provisioning, and touches nothing afterwards.
-	* It must set the Tenant status and `status_reason`, disable or re-enable the tenant's
-	  users to match, and leave the Company and its data untouched in every case. Nothing
-	  in this product deletes a customer's company.
-	* It must be idempotent: calling it twice with the same state changes nothing the
-	  second time, because a daily lifecycle job will call it repeatedly.
-	* It must write an audit entry, because switching a paying customer off is exactly the
-	  kind of action somebody asks about six months later.
+	Still the single funnel Phase 6 defined: every access change after provisioning goes
+	through here. The contract it promised is kept - the Company and its data are never
+	touched, calling it twice with the same state does nothing the second time, and an
+	audit entry is written every time, because switching a paying customer off is exactly
+	the kind of action somebody asks about six months later.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements set_tenant_access_state: the one funnel for suspension, "
-		"cancellation and reactivation."
-	)
+	from a3_sola.api.lifecycle.handlers import set_tenant_access_state as implementation
+
+	return implementation(tenant, state, reason)

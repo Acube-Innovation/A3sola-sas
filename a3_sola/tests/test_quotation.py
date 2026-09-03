@@ -35,10 +35,24 @@ def ensure_item(code="Solar Package Test Item"):
 
 
 def ensure_customer(name="Solar Test Customer"):
+	"""A customer with its group and territory named outright.
+
+	Leaving them to the site's defaults made this fixture - and, through it, ten test
+	modules - depend on whatever `Selling Settings` happened to hold: ERPNext ships
+	`All Customer Groups`, which is the root of the tree, and refuses a customer filed
+	against a group. The suite only passed while an earlier customer of this name
+	happened to still be on the site.
+	"""
 	if frappe.db.exists("Customer", name):
 		return name
 	frappe.get_doc(
-		{"doctype": "Customer", "customer_name": name, "customer_type": "Individual"}
+		{
+			"doctype": "Customer",
+			"customer_name": name,
+			"customer_type": "Individual",
+			"customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
+			"territory": frappe.db.get_value("Territory", {"is_group": 0}, "name"),
+		}
 	).insert(ignore_permissions=True)
 	return name
 

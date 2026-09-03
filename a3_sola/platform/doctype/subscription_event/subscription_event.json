@@ -1,0 +1,235 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "platform_subscription",
+  "tenant",
+  "event_type",
+  "event_time",
+  "cb_1",
+  "from_state",
+  "to_state",
+  "triggered_by",
+  "actor",
+  "was_dry_run",
+  "sb_2",
+  "reason",
+  "reason_detail",
+  "sb_3",
+  "policy",
+  "policy_stage",
+  "cb_4",
+  "access_effect_applied",
+  "amount_at_risk",
+  "notification_sent",
+  "sb_5",
+  "related_doctype",
+  "related_name",
+  "cb_6",
+  "is_reversible",
+  "reversal_event"
+ ],
+ "fields": [
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "label": "Tenant",
+   "options": "Tenant",
+   "search_index": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Event",
+   "options": "Provisioned\nTrial Started\nTrial Ended\nActivated\nRenewed\nPayment Failed\nEntered Past Due\nEntered Grace\nSuspension Warned\nSuspended\nRestored\nPlan Upgraded\nPlan Downgraded\nSeats Added\nSeats Removed\nCancellation Requested\nCancelled\nReactivated\nTerminated\nPolicy Evaluated\nManual Override",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "event_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_state",
+   "fieldtype": "Data",
+   "label": "From"
+  },
+  {
+   "fieldname": "to_state",
+   "fieldtype": "Data",
+   "label": "To"
+  },
+  {
+   "fieldname": "triggered_by",
+   "fieldtype": "Select",
+   "label": "Triggered By",
+   "options": "Scheduler\nWebhook\nTenant Self Service\nInternal User\nAPI"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User"
+  },
+  {
+   "fieldname": "was_dry_run",
+   "fieldtype": "Check",
+   "label": "Dry Run"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Why"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason_detail",
+   "fieldtype": "Text",
+   "label": "Detail"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Policy"
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Policy",
+   "options": "Subscription Policy"
+  },
+  {
+   "fieldname": "policy_stage",
+   "fieldtype": "Data",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "access_effect_applied",
+   "fieldtype": "Data",
+   "label": "Access Effect Applied"
+  },
+  {
+   "fieldname": "amount_at_risk",
+   "fieldtype": "Currency",
+   "label": "Amount at Risk"
+  },
+  {
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "label": "Notification Sent"
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "related_doctype",
+   "fieldtype": "Data",
+   "label": "Related Doctype"
+  },
+  {
+   "fieldname": "related_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Related Name",
+   "options": "related_doctype"
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_reversible",
+   "fieldtype": "Check",
+   "label": "Reversible"
+  },
+  {
+   "fieldname": "reversal_event",
+   "fieldtype": "Link",
+   "label": "Reversed By",
+   "options": "Subscription Event",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Subscription Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Admin",
+   "share": 1
+  },
+  {
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Lifecycle Operator"
+  },
+  {
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Billing Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "event_type",
+ "track_changes": 0
+}

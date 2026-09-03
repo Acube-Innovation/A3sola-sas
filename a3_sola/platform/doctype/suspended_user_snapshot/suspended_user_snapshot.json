@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "user_full_name",
+  "was_enabled",
+  "restored",
+  "cb_1",
+  "last_active_on",
+  "restored_on",
+  "sb_2",
+  "had_roles",
+  "restore_error"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "user_full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name"
+  },
+  {
+   "columns": 1,
+   "description": "What to restore this user to. NOT 'enable on restore' - a user the tenant had themselves disabled must stay disabled.",
+   "fieldname": "was_enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Was Enabled"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 1,
+   "fieldname": "restored",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Restored",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_active_on",
+   "fieldtype": "Datetime",
+   "label": "Last Active"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restored_on",
+   "fieldtype": "Datetime",
+   "label": "Restored On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Captured for audit and for verifying the round trip. Roles are never removed by a suspension.",
+   "fieldname": "had_roles",
+   "fieldtype": "Small Text",
+   "label": "Roles Held"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "restore_error",
+   "fieldtype": "Small Text",
+   "label": "Restore Error",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Suspended User Snapshot",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -71,6 +71,21 @@ PROVISIONING_DOCTYPES = [
 	"Tenant Invitation",
 ]
 
+#: Phase 7. Subscription lifecycle and access control. Guest has NO permission on any of
+#: these: a Subscription Event readable by a logged-out visitor would publish which
+#: customers are behind on payment, and an Access Suspension would publish their staff.
+LIFECYCLE_DOCTYPES = [
+	"Subscription Policy",
+	"Policy Stage",
+	"Subscription Event",
+	"Access Suspension",
+	"Suspended User Snapshot",
+	"Plan Change Request",
+	"Proration Line",
+	"Seat Change Request",
+	"Cancellation Request",
+]
+
 FUNNEL_DOCTYPES = [
 	"Subscription Signup",
 	"Demo Request",
@@ -78,7 +93,11 @@ FUNNEL_DOCTYPES = [
 ]
 
 DOCTYPES = (
-	PUBLIC_CONTENT_DOCTYPES + FUNNEL_DOCTYPES + PAYMENT_DOCTYPES + PROVISIONING_DOCTYPES
+	PUBLIC_CONTENT_DOCTYPES
+	+ FUNNEL_DOCTYPES
+	+ PAYMENT_DOCTYPES
+	+ PROVISIONING_DOCTYPES
+	+ LIFECYCLE_DOCTYPES
 )
 
 #: Deliberately empty. See the module docstring: these records are not tenant-scoped, so
@@ -88,6 +107,15 @@ PERMISSION_DOCTYPES = []
 #: Seat enforcement lives on the User document itself, because that is the only place
 #: where "one more user" is an event rather than a report. See api/entitlements.py.
 DOC_EVENTS = {
+	# Registered on the wildcard so a doctype added by a later phase cannot quietly slip
+	# past the Read Only access effect. It refuses submit, cancel and amend only - reading,
+	# reporting and printing stay open, because a restricted tenant must still be able to
+	# retrieve their own data.
+	"*": {
+		"on_submit": ["a3_sola.api.lifecycle.gate.block_writes"],
+		"on_cancel": ["a3_sola.api.lifecycle.gate.block_writes"],
+		"on_update_after_submit": ["a3_sola.api.lifecycle.gate.block_writes"],
+	},
 	"User": {
 		"validate": ["a3_sola.api.entitlements.before_user_save"],
 		"on_update": ["a3_sola.api.entitlements.after_user_change"],
@@ -96,7 +124,13 @@ DOC_EVENTS = {
 }
 
 SCHEDULER_EVENTS = {
-	"hourly": ["a3_sola.api.reconciliation.gateway_health_check"],
+	"hourly": [
+		"a3_sola.api.reconciliation.gateway_health_check",
+		# The watchdog runs hourly so a stopped daily job is noticed the same day rather
+		# than the next. It stamps its own heartbeat, so a watchdog that dies is itself
+		# detectable - one level up, by the external check on the health endpoint.
+		"a3_sola.api.monitoring.heartbeat.watchdog",
+	],
 	"daily": [
 		# Recurring collection. Every pass is idempotent and safe to re-run.
 		"a3_sola.api.billing_engine.run_daily_billing",
@@ -113,11 +147,24 @@ SCHEDULER_EVENTS = {
 		"a3_sola.api.provisioning.orchestrator.alert_on_open_interventions",
 		"a3_sola.api.entitlements.recalculate_all_usage",
 		"a3_sola.api.invitations.expire_stale_invitations",
+		# Lifecycle. Ships inert - dry run on, automatic suspension off - so these
+		# evaluate every subscription, write down every decision, and change nothing.
+		"a3_sola.api.lifecycle.engine.run_lifecycle",
+		"a3_sola.api.lifecycle.engine.alert_on_missing_heartbeat",
+		"a3_sola.api.lifecycle.suspension.remind_pending",
+		# Business anomalies, routed by severity. See docs/ops/MONITORING.md for each
+		# check's expected frequency at 50 tenants.
+		"a3_sola.api.monitoring.alerts.run_business_alerts",
+		# Error Log has no retention by default and reached 165 MB on this bench.
+		"a3_sola.api.monitoring.jobs.purge_error_log",
 	],
 	"monthly": [
 		"a3_sola.api.accounting_payments.release_deferred_revenue",
 		# A regression introduced by a later phase should be found by us, not by a customer.
 		"a3_sola.api.isolation.monthly_isolation_sweep",
+		# Phase 8's adversarial suite, read-only, against live data. The Phase 6 sweep
+		# above checks that a tenant is isolated; this one actively attacks it.
+		"a3_sola.api.security.audit.monthly_isolation_audit",
 	],
 	"weekly": ["a3_sola.api.funnel_jobs.weekly_funnel_summary"],
 }

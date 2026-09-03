@@ -69,8 +69,16 @@ def _payload(payload):
 
 
 def _clean(value, limit=140):
-	"""Strip, bound the length, and never trust it into HTML later."""
-	return (str(value or "").strip())[:limit]
+	"""Strip, remove control characters, bound the length, and never trust it into HTML.
+
+	FINDING (Phase 8, Medium, fixed). This kept null bytes and other control characters.
+	Every public form field goes through it and the values reach email headers, generated
+	filenames and CSV exports - layers where an embedded NUL or CR truncates or splits the
+	value without ever seeing the validation. See a3_sola/api/sanitise.py.
+	"""
+	from a3_sola.api.sanitise import clean_text
+
+	return clean_text(value, limit)
 
 
 def _require(data, field, label):

@@ -23,12 +23,20 @@ PROTECTION_VALUES = {
 
 
 def solar_customer(company=None):
-	"""A real job always has a party. Everything downstream depends on one."""
+	"""A real job always has a party. Everything downstream depends on one.
+
+	The group and territory are named rather than left to the site's defaults:
+	`Selling Settings` ships pointing at `All Customer Groups`, which is the root of the
+	tree, and ERPNext refuses a customer filed against a group. Inheriting it made this
+	fixture fail on any site whose selling defaults had been saved.
+	"""
 	doc = frappe.get_doc(
 		{
 			"doctype": "Customer",
 			"customer_name": f"Test Customer {frappe.generate_hash(length=6)}",
 			"customer_type": "Individual",
+			"customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
+			"territory": frappe.db.get_value("Territory", {"is_group": 0}, "name"),
 		}
 	)
 	doc.flags.ignore_permissions = True

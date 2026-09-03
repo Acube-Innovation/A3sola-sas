@@ -46,15 +46,30 @@ def get_data(filters):
 		fields=["name", "consumer_name", "consumer_category", "status", "discom_section", "owner", "modified"],
 		limit_page_length=0,
 	)
+	# The latest estimate for every consumer on the page, in one query rather than one per
+	# row. This is the pipeline view a sales manager leaves open, and its cost grew with
+	# the pipeline - which is precisely the wrong way round.
+	estimates = _latest_estimates([row.name for row in rows])
+
 	for row in rows:
 		row["days_in_stage"] = frappe.utils.date_diff(today(), getdate(row.modified))
-		estimate = frappe.db.get_value(
-			"Solar Design Estimate",
-			{"solar_consumer": row.name, "docstatus": ["<", 2]},
-			["final_capacity_kw", "total_project_cost"],
-			as_dict=True,
-			order_by="creation desc",
-		)
-		row["capacity_kw"] = flt(estimate.final_capacity_kw) if estimate else 0
-		row["estimated_value"] = flt(estimate.total_project_cost) if estimate else 0
+		estimate = estimates.get(row.name)
+		row["capacity_kw"] = flt(estimate["final_capacity_kw"]) if estimate else 0
+		row["estimated_value"] = flt(estimate["total_project_cost"]) if estimate else 0
 	return rows
+
+
+def _latest_estimates(consumers):
+	"""{consumer: newest estimate}. Ordered oldest first so the last write per consumer
+	wins, which is the same answer `order_by creation desc, limit 1` gave per row."""
+	if not consumers:
+		return {}
+	latest = {}
+	for estimate in frappe.get_all(
+		"Solar Design Estimate",
+		filters={"solar_consumer": ["in", consumers], "docstatus": ["<", 2]},
+		fields=["solar_consumer", "final_capacity_kw", "total_project_cost"],
+		order_by="creation asc",
+	):
+		latest[estimate.solar_consumer] = estimate
+	return latest

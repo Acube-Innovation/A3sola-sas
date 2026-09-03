@@ -15,6 +15,7 @@ from a3_sola.setup import (
 	dashboard_projects,
 	install_ops,
 	dashboard_platform,
+	install_lifecycle,
 	install_platform,
 	install_provisioning,
 	install_projects,
@@ -66,6 +67,7 @@ def setup():
 	# so it seeds once per site rather than once per company.
 	install_platform.setup()
 	install_provisioning.setup()
+	install_lifecycle.setup()
 	frappe.db.commit()
 	dashboard.install()
 	dashboard_ops.install()

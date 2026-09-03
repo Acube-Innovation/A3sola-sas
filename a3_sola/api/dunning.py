@@ -322,13 +322,13 @@ def _exhausted(subscription, summary):
 
 
 def on_dunning_exhausted(subscription):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/handlers.py.
 
-	Called when the dunning policy has run every step and the subscription is still
-	unpaid. Phase 7 decides what happens - grace, suspension, cancellation - and owns the
-	communication. Phase 5 deliberately stops here rather than suspending on its own:
-	cutting a customer off is a policy decision, not a billing one.
+	Phase 5 deliberately stops here rather than suspending on its own: cutting a customer
+	off is a policy decision, not a billing one. Phase 7 moves the subscription to the
+	stage its policy says it has reached, and the nightly engine - with its approval
+	requirement, its minimum tenure and its circuit breaker - decides the rest.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements on_dunning_exhausted: suspension policy after dunning ends."
-	)
+	from a3_sola.api.lifecycle.handlers import on_dunning_exhausted as implementation
+
+	return implementation(subscription)

@@ -511,6 +511,13 @@ def run():
 
 	generate_provisioning_demo.run(company)
 
+	# Phase 7: the lifecycle. Subscriptions in every state with the history behind them,
+	# because the decision audit, the suspension register and the MRR bridge are all built
+	# on the event log - a tenant simply marked Suspended makes them look broken.
+	from a3_sola.demo import generate_lifecycle_demo
+
+	generate_lifecycle_demo.run(company)
+
 	# A second tenant with its own masters, so isolation is demonstrable.
 	company_b = _company_b()
 	generate_consumers(company_b)

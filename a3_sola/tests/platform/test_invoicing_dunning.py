@@ -376,11 +376,26 @@ class TestDunning(FrappeTestCase):
 		offsets = sorted({step.day_offset for step in policy.steps})
 		self.assertEqual(offsets, [0, 1, 3, 7, 10])
 
-	def test_the_phase_seven_contract_is_declared(self):
+	def test_dunning_hands_over_to_phase_seven_rather_than_suspending(self):
+		"""Phase 5 stops at "still unpaid". It must never decide to switch anybody off.
+
+		This started life asserting the stub raised NotImplementedError. Phase 7 has
+		implemented it, so what is worth proving now is the handover itself: the contract
+		is still declared, and collection still refuses to make the access decision on its
+		own - it delegates to the policy engine, which has the guards.
+		"""
+		import inspect
+
 		doc = (dunning.on_dunning_exhausted.__doc__ or "").lower()
 		self.assertIn("phase 7", doc)
-		with self.assertRaises(NotImplementedError):
-			dunning.on_dunning_exhausted(frappe._dict({"name": "SUB-1"}))
+		self.assertIn("policy decision, not a billing one", doc)
+
+		source = inspect.getsource(dunning.on_dunning_exhausted)
+		self.assertIn("a3_sola.api.lifecycle.handlers", source,
+		              "dunning no longer hands over to the lifecycle package")
+		for forbidden in ("suspend_tenant_access", "\"Suspended\"", "User.enabled"):
+			self.assertNotIn(forbidden, source,
+			                 f"collection is deciding access for itself: {forbidden}")
 
 
 class TestBillingPortalIsolation(FrappeTestCase):
