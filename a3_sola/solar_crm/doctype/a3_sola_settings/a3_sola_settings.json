@@ -2,6 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-08-25 13:00:00.000000",
+ "description": "Site-wide configuration shared by every tenant. Deliberately unreachable by any customer role: in a multi-company deployment one tenant editing this would change behaviour for all of them. The app reads it through helpers that bypass permissions, so nothing functional depends on a customer being able to open it.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -343,7 +344,72 @@
   "invite_limit_note",
   "invite_rate_limit",
   "cb_6003",
-  "invite_accept_rate_limit"
+  "invite_accept_rate_limit",
+  "lifecycle_tab",
+  "lifecycle_note",
+  "sb_7001",
+  "policy_series_prefix",
+  "subscription_event_series_prefix",
+  "plan_change_series_prefix",
+  "cb_7002",
+  "seat_change_series_prefix",
+  "suspension_series_prefix",
+  "cancellation_series_prefix",
+  "sb_7003",
+  "default_subscription_policy",
+  "enable_automatic_suspension",
+  "cb_7004",
+  "dry_run_mode",
+  "require_manual_approval_for_suspension",
+  "lifecycle_kill_switch",
+  "sb_7005",
+  "lifecycle_job_hour",
+  "state_evaluation_batch_size",
+  "cb_7006",
+  "reactivation_window_days",
+  "data_retention_days_after_cancel",
+  "sb_7007",
+  "notify_days_before_renewal",
+  "notify_before_suspension_days",
+  "cb_7008",
+  "lifecycle_alert_role",
+  "suspension_approval_role",
+  "sb_7009",
+  "lifecycle_guard_note",
+  "max_suspensions_per_run",
+  "cb_7010",
+  "min_days_active_before_suspension",
+  "sb_7011",
+  "lifecycle_simulation_last_run",
+  "cb_7012",
+  "lifecycle_heartbeat_on",
+  "lifecycle_heartbeat_streak_days",
+  "sb_7013",
+  "seat_trust_min_days",
+  "refund_current_period_on_downgrade",
+  "cb_7014",
+  "retention_step_enabled",
+  "generate_data_export_on_cancel",
+  "sb_8001",
+  "security_limits_note",
+  "plan_total_rate_limit",
+  "cb_8002",
+  "webhook_unverified_log_max",
+  "monitoring_tab",
+  "monitoring_note",
+  "sb_9001",
+  "job_heartbeats",
+  "sb_9003",
+  "alert_payment_success_floor",
+  "alert_webhook_failure_limit",
+  "cb_9004",
+  "alert_signup_drought_days",
+  "expect_signups",
+  "health_rate_limit",
+  "sb_9005",
+  "notify_tenant_on_impersonation",
+  "cb_9006",
+  "error_log_retention_days"
  ],
  "fields": [
   {
@@ -357,10 +423,10 @@
    "label": "Product"
   },
   {
+   "default": "A3 Sola",
    "fieldname": "product_name",
    "fieldtype": "Data",
-   "label": "Product Name",
-   "default": "A3 Sola"
+   "label": "Product Name"
   },
   {
    "fieldname": "brand_website",
@@ -372,10 +438,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "2",
    "fieldname": "rounding_precision",
    "fieldtype": "Int",
-   "label": "Rounding Precision",
-   "default": "2"
+   "label": "Rounding Precision"
   },
   {
    "fieldname": "tab_4",
@@ -388,43 +454,43 @@
    "label": "Naming Series Prefixes"
   },
   {
+   "default": "SOL-CON",
    "fieldname": "consumer_series_prefix",
    "fieldtype": "Data",
    "label": "Solar Consumer",
-   "reqd": 1,
-   "default": "SOL-CON"
+   "reqd": 1
   },
   {
+   "default": "SOL-SRV",
    "fieldname": "survey_series_prefix",
    "fieldtype": "Data",
    "label": "Site Survey",
-   "reqd": 1,
-   "default": "SOL-SRV"
+   "reqd": 1
   },
   {
+   "default": "SOL-DSN",
    "fieldname": "design_series_prefix",
    "fieldtype": "Data",
    "label": "Design Estimate",
-   "reqd": 1,
-   "default": "SOL-DSN"
+   "reqd": 1
   },
   {
    "fieldname": "cb_6",
    "fieldtype": "Column Break"
   },
   {
+   "default": "SOL-ELG",
    "fieldname": "eligibility_series_prefix",
    "fieldtype": "Data",
    "label": "Eligibility Check",
-   "reqd": 1,
-   "default": "SOL-ELG"
+   "reqd": 1
   },
   {
+   "default": "SOL-QTN",
    "fieldname": "quotation_series_prefix",
    "fieldtype": "Data",
    "label": "Quotation",
-   "reqd": 1,
-   "default": "SOL-QTN"
+   "reqd": 1
   },
   {
    "fieldname": "sb_7",
@@ -460,34 +526,34 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "1500",
+   "description": "Derived from the client's own proposals: 250 sq ft for 3 kW, 350 for 5 kW, 800 for 10 kW, and daily bands of 12-15, 20-25 and 40-50 units.",
    "fieldname": "default_specific_yield",
    "fieldtype": "Float",
    "label": "Specific Yield (kWh/kWp/yr)",
-   "reqd": 1,
-   "default": "1500",
    "precision": 2,
-   "description": "Derived from the client's own proposals: 250 sq ft for 3 kW, 350 for 5 kW, 800 for 10 kW, and daily bands of 12-15, 20-25 and 40-50 units."
+   "reqd": 1
   },
   {
+   "default": "80",
    "fieldname": "default_area_per_kw_sqft",
    "fieldtype": "Float",
    "label": "Area per kW (sq ft)",
-   "reqd": 1,
-   "default": "80",
-   "precision": 2
+   "precision": 2,
+   "reqd": 1
   },
   {
+   "default": "4.0",
    "fieldname": "default_daily_yield_low",
    "fieldtype": "Float",
    "label": "Daily Yield Low (units/kWp)",
-   "default": "4.0",
    "precision": 2
   },
   {
+   "default": "5.0",
    "fieldname": "default_daily_yield_high",
    "fieldtype": "Float",
    "label": "Daily Yield High (units/kWp)",
-   "default": "5.0",
    "precision": 2
   },
   {
@@ -496,17 +562,17 @@
    "label": "Calculation Rules"
   },
   {
+   "default": "0.7",
    "fieldname": "annual_degradation_percent",
    "fieldtype": "Float",
    "label": "Annual Degradation %",
-   "default": "0.7",
    "precision": 2
   },
   {
+   "default": "3.0",
    "fieldname": "tariff_escalation_percent",
    "fieldtype": "Float",
    "label": "Tariff Escalation %",
-   "default": "3.0",
    "precision": 2
   },
   {
@@ -514,10 +580,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "25",
    "fieldname": "cashflow_years",
    "fieldtype": "Int",
-   "label": "Cashflow Years",
-   "default": "25"
+   "label": "Cashflow Years"
   },
   {
    "fieldname": "sb_11",
@@ -525,48 +591,48 @@
    "label": "Proposal"
   },
   {
+   "default": "RENC-PROP",
    "fieldname": "proposal_series_prefix",
    "fieldtype": "Data",
    "label": "Proposal Series Prefix",
-   "reqd": 1,
-   "default": "RENC-PROP"
+   "reqd": 1
   },
   {
+   "default": "YY-YY",
    "fieldname": "proposal_fiscal_year_format",
    "fieldtype": "Select",
    "label": "Fiscal Year Format",
    "options": "YY-YY\nYYYY-YY",
-   "reqd": 1,
-   "default": "YY-YY"
+   "reqd": 1
   },
   {
+   "default": "{seq}-{series}-{date}-{capacity}-{customer_name}",
    "fieldname": "proposal_file_name_pattern",
    "fieldtype": "Data",
    "label": "File Name Pattern",
-   "reqd": 1,
-   "default": "{seq}-{series}-{date}-{capacity}-{customer_name}"
+   "reqd": 1
   },
   {
    "fieldname": "cb_12",
    "fieldtype": "Column Break"
   },
   {
+   "default": "30",
    "fieldname": "offer_validity_days",
    "fieldtype": "Int",
-   "label": "Offer Validity (days)",
-   "default": "30"
+   "label": "Offer Validity (days)"
   },
   {
+   "default": "Our Scope",
    "fieldname": "company_scope_label",
    "fieldtype": "Data",
-   "label": "Company Scope Label",
-   "default": "Our Scope"
+   "label": "Company Scope Label"
   },
   {
+   "default": "Client's Scope",
    "fieldname": "customer_scope_label",
    "fieldtype": "Data",
-   "label": "Customer Scope Label",
-   "default": "Client's Scope"
+   "label": "Customer Scope Label"
   },
   {
    "fieldname": "sb_13",
@@ -599,10 +665,10 @@
    "label": "Exclusions"
   },
   {
+   "description": "What the quoted price includes. The actual treatment is settled in Phase 3 against a recorded CA confirmation.",
    "fieldname": "gst_treatment_note",
    "fieldtype": "Text Editor",
-   "label": "GST Treatment Note",
-   "description": "What the quoted price includes. The actual treatment is settled in Phase 3 against a recorded CA confirmation."
+   "label": "GST Treatment Note"
   },
   {
    "fieldname": "subsidy_note_text",
@@ -626,22 +692,22 @@
    "label": "Outreach"
   },
   {
+   "default": "1",
    "fieldname": "enable_followup_automation",
    "fieldtype": "Check",
-   "label": "Enable Follow-up Automation",
-   "default": "1"
+   "label": "Enable Follow-up Automation"
   },
   {
+   "default": "0",
    "fieldname": "followup_overdue_grace_days",
    "fieldtype": "Int",
-   "label": "Follow-up Grace Days",
-   "default": "0"
+   "label": "Follow-up Grace Days"
   },
   {
+   "default": "3",
    "fieldname": "consecutive_non_connect_threshold",
    "fieldtype": "Int",
-   "label": "Consecutive Non-Connect Threshold",
-   "default": "3"
+   "label": "Consecutive Non-Connect Threshold"
   },
   {
    "fieldname": "cb_16",
@@ -670,10 +736,10 @@
    "label": "Signature & Links"
   },
   {
+   "description": "Appended to every outreach message. Plain text - WhatsApp bold markers are preserved.",
    "fieldname": "outreach_signature",
    "fieldtype": "Text",
-   "label": "Signature Block",
-   "description": "Appended to every outreach message. Plain text - WhatsApp bold markers are preserved."
+   "label": "Signature Block"
   },
   {
    "fieldname": "brand_social_links",
@@ -687,10 +753,10 @@
    "label": "Feature Flags"
   },
   {
+   "default": "1",
    "fieldname": "enable_phase2_handoff",
    "fieldtype": "Check",
-   "label": "Enable Phase 2 Handoff",
-   "default": "1"
+   "label": "Enable Phase 2 Handoff"
   },
   {
    "fieldname": "tab_20",
@@ -703,71 +769,71 @@
    "label": "Naming Series Prefixes"
   },
   {
+   "default": "SOL-INST",
    "fieldname": "installation_series_prefix",
    "fieldtype": "Data",
    "label": "Solar Installation",
-   "reqd": 1,
-   "default": "SOL-INST"
+   "reqd": 1
   },
   {
+   "default": "SOL-APP",
    "fieldname": "portal_application_series_prefix",
    "fieldtype": "Data",
    "label": "Portal Application",
-   "reqd": 1,
-   "default": "SOL-APP"
+   "reqd": 1
   },
   {
+   "default": "SOL-WO",
    "fieldname": "work_order_series_prefix",
    "fieldtype": "Data",
    "label": "Work Order",
-   "reqd": 1,
-   "default": "SOL-WO"
+   "reqd": 1
   },
   {
+   "default": "SOL-COM",
    "fieldname": "commissioning_series_prefix",
    "fieldtype": "Data",
    "label": "Commissioning Report",
-   "reqd": 1,
-   "default": "SOL-COM"
+   "reqd": 1
   },
   {
    "fieldname": "cb_22",
    "fieldtype": "Column Break"
   },
   {
+   "default": "SOL-SNAG",
    "fieldname": "snag_series_prefix",
    "fieldtype": "Data",
    "label": "Installation Snag",
-   "reqd": 1,
-   "default": "SOL-SNAG"
+   "reqd": 1
   },
   {
+   "default": "SOL-CLM",
    "fieldname": "subsidy_claim_series_prefix",
    "fieldtype": "Data",
    "label": "Subsidy Claim",
-   "reqd": 1,
-   "default": "SOL-CLM"
+   "reqd": 1
   },
   {
+   "default": "SOL-LOAN",
    "fieldname": "loan_application_series_prefix",
    "fieldtype": "Data",
    "label": "Loan Application",
-   "reqd": 1,
-   "default": "SOL-LOAN"
+   "reqd": 1
   },
   {
+   "default": "SOL-NMA",
    "fieldname": "net_metering_agreement_series_prefix",
    "fieldtype": "Data",
    "label": "Net Metering Agreement",
-   "reqd": 1,
-   "default": "SOL-NMA"
+   "reqd": 1
   },
   {
+   "default": "SOL-SFP",
    "fieldname": "statutory_fee_payment_series_prefix",
    "fieldtype": "Data",
    "label": "Statutory Fee Payment",
-   "reqd": 1,
-   "default": "SOL-SFP"
+   "reqd": 1
   },
   {
    "fieldname": "sb_23",
@@ -797,16 +863,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "90",
    "fieldname": "default_installation_lead_days",
    "fieldtype": "Int",
-   "label": "Installation Lead Days",
-   "default": "90"
+   "label": "Installation Lead Days"
   },
   {
+   "default": "5",
    "fieldname": "material_variance_tolerance_percent",
    "fieldtype": "Float",
    "label": "Material Variance Tolerance %",
-   "default": "5",
    "precision": 2
   },
   {
@@ -815,10 +881,10 @@
    "label": "SLA & Escalation"
   },
   {
+   "default": "1",
    "fieldname": "enable_sla_escalation",
    "fieldtype": "Check",
-   "label": "Enable SLA Escalation",
-   "default": "1"
+   "label": "Enable SLA Escalation"
   },
   {
    "fieldname": "escalation_role",
@@ -827,32 +893,32 @@
    "options": "Role"
   },
   {
+   "default": "3",
    "fieldname": "escalation_reminder_days",
    "fieldtype": "Int",
-   "label": "Reminder Window (days)",
-   "default": "3"
+   "label": "Reminder Window (days)"
   },
   {
    "fieldname": "cb_26",
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
    "fieldname": "create_todo_on_breach",
    "fieldtype": "Check",
-   "label": "Create ToDo on Breach",
-   "default": "1"
+   "label": "Create ToDo on Breach"
   },
   {
+   "default": "3",
    "fieldname": "critical_snag_sla_days",
    "fieldtype": "Int",
-   "label": "Critical Snag SLA (days)",
-   "default": "3"
+   "label": "Critical Snag SLA (days)"
   },
   {
+   "default": "45",
    "fieldname": "subsidy_claim_follow_up_days",
    "fieldtype": "Int",
-   "label": "Subsidy Claim Follow-up (days)",
-   "default": "45"
+   "label": "Subsidy Claim Follow-up (days)"
   },
   {
    "fieldname": "sb_27",
@@ -860,28 +926,28 @@
    "label": "Serial Control"
   },
   {
+   "default": "1",
+   "description": "The national portal rejects submissions containing a repeated module or inverter serial.",
    "fieldname": "enforce_serial_uniqueness",
    "fieldtype": "Check",
-   "label": "Enforce Serial Uniqueness",
-   "default": "1",
-   "description": "The national portal rejects submissions containing a repeated module or inverter serial."
+   "label": "Enforce Serial Uniqueness"
   },
   {
+   "default": "1",
    "fieldname": "require_serials_before_commissioning",
    "fieldtype": "Check",
-   "label": "Require Serials Before Commissioning",
-   "default": "1"
+   "label": "Require Serials Before Commissioning"
   },
   {
    "fieldname": "cb_28",
    "fieldtype": "Column Break"
   },
   {
+   "default": "NISE DCR",
    "fieldname": "serial_manifest_format",
    "fieldtype": "Select",
    "label": "Manifest Format",
-   "options": "NISE DCR\nGeneric CSV",
-   "default": "NISE DCR"
+   "options": "NISE DCR\nGeneric CSV"
   },
   {
    "fieldname": "sb_29",
@@ -889,12 +955,12 @@
    "label": "Commissioning"
   },
   {
+   "default": "75",
+   "description": "The consumer-vendor agreement requires 75% at commissioning, maintained for five years.",
    "fieldname": "performance_ratio_threshold_percent",
    "fieldtype": "Float",
    "label": "Contractual Performance Ratio %",
-   "default": "75",
-   "precision": 2,
-   "description": "The consumer-vendor agreement requires 75% at commissioning, maintained for five years."
+   "precision": 2
   },
   {
    "fieldname": "sb_30",
@@ -913,21 +979,21 @@
    "label": "Stamp Paper Denomination"
   },
   {
+   "default": "PDF",
    "fieldname": "document_output_format",
    "fieldtype": "Select",
    "label": "Output Format",
-   "options": "PDF\nDOCX\nBoth",
-   "default": "PDF"
+   "options": "PDF\nDOCX\nBoth"
   },
   {
    "fieldname": "cb_31",
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
    "fieldname": "regenerate_on_source_change",
    "fieldtype": "Check",
-   "label": "Regenerate on Source Change",
-   "default": "1"
+   "label": "Regenerate on Source Change"
   },
   {
    "fieldname": "letter_head",
@@ -951,26 +1017,26 @@
    "label": "Statutory"
   },
   {
+   "default": "1",
    "fieldname": "auto_create_fee_payment_on_stage",
    "fieldtype": "Check",
-   "label": "Auto-create Fee Payment",
-   "default": "1"
+   "label": "Auto-create Fee Payment"
   },
   {
+   "default": "30",
    "fieldname": "refund_follow_up_days",
    "fieldtype": "Int",
-   "label": "Refund Follow-up (days)",
-   "default": "30"
+   "label": "Refund Follow-up (days)"
   },
   {
    "fieldname": "cb_33",
    "fieldtype": "Column Break"
   },
   {
+   "default": "15",
    "fieldname": "refund_claim_lead_days_after_commissioning",
    "fieldtype": "Int",
-   "label": "Refund Claimable After (days)",
-   "default": "15"
+   "label": "Refund Claimable After (days)"
   },
   {
    "fieldname": "sb_34",
@@ -978,23 +1044,23 @@
    "label": "Finance"
   },
   {
+   "default": "1",
    "fieldname": "enable_financed_sales",
    "fieldtype": "Check",
-   "label": "Enable Financed Sales",
-   "default": "1"
+   "label": "Enable Financed Sales"
   },
   {
+   "default": "PM Surya Ghar via Jan Samarth",
    "fieldname": "default_loan_scheme",
    "fieldtype": "Select",
    "label": "Default Loan Scheme",
-   "options": "PM Surya Ghar via Jan Samarth\nBank Own Scheme\nOther",
-   "default": "PM Surya Ghar via Jan Samarth"
+   "options": "PM Surya Ghar via Jan Samarth\nBank Own Scheme\nOther"
   },
   {
+   "default": "70",
    "fieldname": "advance_disbursement_percent",
    "fieldtype": "Float",
    "label": "Advance Disbursement %",
-   "default": "70",
    "precision": 2
   },
   {
@@ -1002,16 +1068,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "15",
    "fieldname": "loan_sanction_sla_days",
    "fieldtype": "Int",
-   "label": "Loan Sanction SLA (days)",
-   "default": "15"
+   "label": "Loan Sanction SLA (days)"
   },
   {
+   "default": "10",
    "fieldname": "balance_disbursement_sla_days",
    "fieldtype": "Int",
-   "label": "Balance Disbursement SLA (days)",
-   "default": "10"
+   "label": "Balance Disbursement SLA (days)"
   },
   {
    "fieldname": "sb_36",
@@ -1019,10 +1085,10 @@
    "label": "Subsidy"
   },
   {
+   "description": "When checked, the company quotes net of subsidy and funds that amount until the customer's DBT lands and is passed on.",
    "fieldname": "company_carries_subsidy_gap",
    "fieldtype": "Check",
-   "label": "Company Carries the Subsidy Gap",
-   "description": "When checked, the company quotes net of subsidy and funds that amount until the customer's DBT lands and is passed on."
+   "label": "Company Carries the Subsidy Gap"
   },
   {
    "fieldname": "tab_37",
@@ -1035,64 +1101,64 @@
    "label": "Naming Series Prefixes"
   },
   {
+   "default": "SOL-PRJ",
    "fieldname": "project_series_prefix",
    "fieldtype": "Data",
    "label": "Project",
-   "reqd": 1,
-   "default": "SOL-PRJ"
+   "reqd": 1
   },
   {
+   "default": "SOL-BPL",
    "fieldname": "billing_plan_series_prefix",
    "fieldtype": "Data",
    "label": "Billing Plan",
-   "reqd": 1,
-   "default": "SOL-BPL"
+   "reqd": 1
   },
   {
+   "default": "SOL-AMC",
    "fieldname": "om_contract_series_prefix",
    "fieldtype": "Data",
    "label": "O&M Contract",
-   "reqd": 1,
-   "default": "SOL-AMC"
+   "reqd": 1
   },
   {
+   "default": "SOL-VST",
    "fieldname": "om_visit_series_prefix",
    "fieldtype": "Data",
    "label": "O&M Visit",
-   "reqd": 1,
-   "default": "SOL-VST"
+   "reqd": 1
   },
   {
    "fieldname": "cb_39",
    "fieldtype": "Column Break"
   },
   {
+   "default": "SOL-TKT",
    "fieldname": "service_ticket_series_prefix",
    "fieldtype": "Data",
    "label": "Service Ticket",
-   "reqd": 1,
-   "default": "SOL-TKT"
+   "reqd": 1
   },
   {
+   "default": "SOL-WCL",
    "fieldname": "warranty_claim_series_prefix",
    "fieldtype": "Data",
    "label": "Warranty Claim",
-   "reqd": 1,
-   "default": "SOL-WCL"
+   "reqd": 1
   },
   {
+   "default": "SOL-GEN",
    "fieldname": "generation_reading_series_prefix",
    "fieldtype": "Data",
    "label": "Generation Reading",
-   "reqd": 1,
-   "default": "SOL-GEN"
+   "reqd": 1
   },
   {
+   "default": "SOL-SFR",
    "fieldname": "statutory_recovery_series_prefix",
    "fieldtype": "Data",
    "label": "Statutory Fee Recovery",
-   "reqd": 1,
-   "default": "SOL-SFR"
+   "reqd": 1
   },
   {
    "fieldname": "sb_40",
@@ -1119,16 +1185,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca",
    "fieldname": "ca_confirmation_date",
    "fieldtype": "Date",
-   "label": "CA Confirmation Date",
-   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca"
+   "label": "CA Confirmation Date"
   },
   {
+   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca",
    "fieldname": "ca_confirmation_remarks",
    "fieldtype": "Small Text",
-   "label": "CA Confirmation Remarks",
-   "depends_on": "eval:doc.gst_treatment_confirmed_by_ca"
+   "label": "CA Confirmation Remarks"
   },
   {
    "fieldname": "sb_43",
@@ -1173,11 +1239,11 @@
    "label": "Default Labour Cost / Hour"
   },
   {
+   "default": "Rework",
+   "description": "Isolated from base material and labour - it is the client's quality-cost signal.",
    "fieldname": "rework_cost_category",
    "fieldtype": "Data",
-   "label": "Rework Category",
-   "default": "Rework",
-   "description": "Isolated from base material and labour - it is the client's quality-cost signal."
+   "label": "Rework Category"
   },
   {
    "fieldname": "sb_46",
@@ -1190,23 +1256,23 @@
    "options": "<p class=\"text-muted small\">Every commissioned job creates a five-year cost commitment. Accruing it at commissioning is the difference between a margin figure that is true and one that is fiction until 2031.</p>"
   },
   {
+   "default": "1",
    "fieldname": "enable_om_provision",
    "fieldtype": "Check",
-   "label": "Enable O&M Provision",
-   "default": "1"
+   "label": "Enable O&M Provision"
   },
   {
+   "default": "Percent of Contract Value",
    "fieldname": "om_provision_method",
    "fieldtype": "Select",
    "label": "Method",
-   "options": "Percent of Contract Value\nFixed per kW\nFixed per Contract",
-   "default": "Percent of Contract Value"
+   "options": "Percent of Contract Value\nFixed per kW\nFixed per Contract"
   },
   {
+   "default": "2.0",
    "fieldname": "om_provision_percent",
    "fieldtype": "Float",
    "label": "Provision %",
-   "default": "2.0",
    "precision": 2
   },
   {
@@ -1219,24 +1285,24 @@
    "label": "Provision per kW"
   },
   {
+   "default": "5",
    "fieldname": "om_provision_years",
    "fieldtype": "Int",
-   "label": "Provision Years",
-   "default": "5"
+   "label": "Provision Years"
   },
   {
+   "default": "12",
+   "description": "Costs a visit's travel. Left at zero, every site visit looks free.",
    "fieldname": "travel_cost_per_km",
    "fieldtype": "Currency",
-   "label": "Travel Cost per km",
-   "default": "12",
-   "description": "Costs a visit's travel. Left at zero, every site visit looks free."
+   "label": "Travel Cost per km"
   },
   {
+   "default": "Per Visit",
    "fieldname": "release_provision_on",
    "fieldtype": "Select",
    "label": "Release On",
-   "options": "Per Visit\nStraight Line Monthly",
-   "default": "Per Visit"
+   "options": "Per Visit\nStraight Line Monthly"
   },
   {
    "fieldname": "sb_49",
@@ -1244,16 +1310,16 @@
    "label": "Project Defaults"
   },
   {
+   "default": "1",
    "fieldname": "auto_create_project",
    "fieldtype": "Check",
-   "label": "Auto-create Project",
-   "default": "1"
+   "label": "Auto-create Project"
   },
   {
+   "default": "1",
    "fieldname": "auto_create_om_contract",
    "fieldtype": "Check",
-   "label": "Auto-create O&M Contract",
-   "default": "1"
+   "label": "Auto-create O&M Contract"
   },
   {
    "fieldname": "auto_create_invoice_on_milestone",
@@ -1282,46 +1348,46 @@
    "label": "O&M Scheduling"
   },
   {
+   "default": "6",
+   "description": "Kerala's soiling pattern is not the national one - cleaning visits bias either side of these months.",
    "fieldname": "monsoon_start_month",
    "fieldtype": "Int",
-   "label": "Monsoon Start Month",
-   "default": "6",
-   "description": "Kerala's soiling pattern is not the national one - cleaning visits bias either side of these months."
+   "label": "Monsoon Start Month"
   },
   {
+   "default": "9",
    "fieldname": "monsoon_end_month",
    "fieldtype": "Int",
-   "label": "Monsoon End Month",
-   "default": "9"
+   "label": "Monsoon End Month"
   },
   {
+   "default": "90",
    "fieldname": "contract_expiry_window_days",
    "fieldtype": "Int",
-   "label": "Expiring Soon Window (days)",
-   "default": "90"
+   "label": "Expiring Soon Window (days)"
   },
   {
    "fieldname": "cb_52",
    "fieldtype": "Column Break"
   },
   {
+   "default": "80",
    "fieldname": "underperformance_threshold_percent",
    "fieldtype": "Float",
    "label": "Underperformance Threshold %",
-   "default": "80",
    "precision": 2
   },
   {
+   "default": "3",
    "fieldname": "underperformance_consecutive_readings",
    "fieldtype": "Int",
-   "label": "Consecutive Low Readings",
-   "default": "3"
+   "label": "Consecutive Low Readings"
   },
   {
+   "default": "2",
    "fieldname": "ticket_reopen_escalation_threshold",
    "fieldtype": "Int",
-   "label": "Reopen Escalation Threshold",
-   "default": "2"
+   "label": "Reopen Escalation Threshold"
   },
   {
    "fieldname": "platform_tab",
@@ -1334,20 +1400,20 @@
    "label": "Naming"
   },
   {
+   "default": "SGN",
    "fieldname": "signup_series_prefix",
    "fieldtype": "Data",
-   "label": "Signup Prefix",
-   "default": "SGN"
+   "label": "Signup Prefix"
   },
   {
    "fieldname": "cb_903",
    "fieldtype": "Column Break"
   },
   {
+   "default": "DEM",
    "fieldname": "demo_request_series_prefix",
    "fieldtype": "Data",
-   "label": "Demo Request Prefix",
-   "default": "DEM"
+   "label": "Demo Request Prefix"
   },
   {
    "fieldname": "sb_904",
@@ -1365,10 +1431,10 @@
    "label": "Company Legal Name"
   },
   {
+   "default": "Official ERPNext Partner",
    "fieldname": "partner_badge_text",
    "fieldtype": "Data",
-   "label": "Partner Badge",
-   "default": "Official ERPNext Partner"
+   "label": "Partner Badge"
   },
   {
    "fieldname": "cb_905",
@@ -1434,16 +1500,16 @@
    "label": "Site Behaviour"
   },
   {
+   "default": "1",
    "fieldname": "enable_public_signup",
    "fieldtype": "Check",
-   "label": "Enable Public Signup",
-   "default": "1"
+   "label": "Enable Public Signup"
   },
   {
+   "default": "1",
    "fieldname": "enable_demo_requests",
    "fieldtype": "Check",
-   "label": "Enable Demo Requests",
-   "default": "1"
+   "label": "Enable Demo Requests"
   },
   {
    "fieldname": "cb_909",
@@ -1465,56 +1531,56 @@
    "label": "Homepage Mockup"
   },
   {
+   "default": "Installations Live",
    "fieldname": "mockup_kpi_1_label",
    "fieldtype": "Data",
-   "label": "KPI 1 Label",
-   "default": "Installations Live"
+   "label": "KPI 1 Label"
   },
   {
+   "default": "248",
    "fieldname": "mockup_kpi_1_value",
    "fieldtype": "Data",
-   "label": "KPI 1 Value",
-   "default": "248"
+   "label": "KPI 1 Value"
   },
   {
+   "default": "kW Commissioned",
    "fieldname": "mockup_kpi_2_label",
    "fieldtype": "Data",
-   "label": "KPI 2 Label",
-   "default": "kW Commissioned"
+   "label": "KPI 2 Label"
   },
   {
+   "default": "1420",
    "fieldname": "mockup_kpi_2_value",
    "fieldtype": "Data",
-   "label": "KPI 2 Value",
-   "default": "1420"
+   "label": "KPI 2 Value"
   },
   {
    "fieldname": "cb_911",
    "fieldtype": "Column Break"
   },
   {
+   "default": "Avg Payback",
    "fieldname": "mockup_kpi_3_label",
    "fieldtype": "Data",
-   "label": "KPI 3 Label",
-   "default": "Avg Payback"
+   "label": "KPI 3 Label"
   },
   {
+   "default": "3.8 yrs",
    "fieldname": "mockup_kpi_3_value",
    "fieldtype": "Data",
-   "label": "KPI 3 Value",
-   "default": "3.8 yrs"
+   "label": "KPI 3 Value"
   },
   {
+   "default": "Revenue this month",
    "fieldname": "mockup_delta_label",
    "fieldtype": "Data",
-   "label": "Delta Label",
-   "default": "Revenue this month"
+   "label": "Delta Label"
   },
   {
+   "default": "18%",
    "fieldname": "mockup_delta_value",
    "fieldtype": "Data",
-   "label": "Delta Value",
-   "default": "18%"
+   "label": "Delta Value"
   },
   {
    "fieldname": "sb_912",
@@ -1551,10 +1617,10 @@
    "label": "Tag Manager ID"
   },
   {
+   "default": "0",
    "fieldname": "enable_analytics",
    "fieldtype": "Check",
-   "label": "Enable Analytics",
-   "default": "0"
+   "label": "Enable Analytics"
   },
   {
    "fieldname": "sb_1201",
@@ -1562,44 +1628,44 @@
    "label": "Abuse Control"
   },
   {
+   "default": "5",
    "fieldname": "signup_rate_limit_per_ip_per_hour",
    "fieldtype": "Int",
-   "label": "Signups per IP per Hour",
-   "default": "5"
+   "label": "Signups per IP per Hour"
   },
   {
+   "default": "3",
    "fieldname": "signup_rate_limit_per_email_per_day",
    "fieldtype": "Int",
-   "label": "Signups per Email per Day",
-   "default": "3"
+   "label": "Signups per Email per Day"
   },
   {
+   "default": "5",
    "fieldname": "demo_rate_limit_per_ip_per_hour",
    "fieldtype": "Int",
-   "label": "Demo Requests per IP per Hour",
-   "default": "5"
+   "label": "Demo Requests per IP per Hour"
   },
   {
    "fieldname": "cb_1202",
    "fieldtype": "Column Break"
   },
   {
+   "default": "10",
    "fieldname": "verification_attempts_max",
    "fieldtype": "Int",
-   "label": "Max Verification Attempts",
-   "default": "10"
+   "label": "Max Verification Attempts"
   },
   {
+   "default": "24",
    "fieldname": "verification_token_hours",
    "fieldtype": "Int",
-   "label": "Verification Link Valid (hours)",
-   "default": "24"
+   "label": "Verification Link Valid (hours)"
   },
   {
+   "default": "3",
    "fieldname": "resend_verification_max",
    "fieldtype": "Int",
-   "label": "Max Verification Resends",
-   "default": "3"
+   "label": "Max Verification Resends"
   },
   {
    "fieldname": "sb_1203",
@@ -1607,34 +1673,34 @@
    "label": "Captcha"
   },
   {
+   "description": "Strongly recommended before go-live. Off by default so a misconfigured key cannot break signup on day one.",
    "fieldname": "enable_captcha",
    "fieldtype": "Check",
-   "label": "Enable Captcha",
-   "description": "Strongly recommended before go-live. Off by default so a misconfigured key cannot break signup on day one."
+   "label": "Enable Captcha"
   },
   {
+   "default": "Cloudflare Turnstile",
+   "depends_on": "eval:doc.enable_captcha",
    "fieldname": "captcha_provider",
    "fieldtype": "Select",
    "label": "Captcha Provider",
-   "options": "Cloudflare Turnstile\nGoogle reCAPTCHA v3",
-   "default": "Cloudflare Turnstile",
-   "depends_on": "eval:doc.enable_captcha"
+   "options": "Cloudflare Turnstile\nGoogle reCAPTCHA v3"
   },
   {
    "fieldname": "cb_1204",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.enable_captcha",
    "fieldname": "captcha_site_key",
    "fieldtype": "Data",
-   "label": "Captcha Site Key",
-   "depends_on": "eval:doc.enable_captcha"
+   "label": "Captcha Site Key"
   },
   {
+   "depends_on": "eval:doc.enable_captcha",
    "fieldname": "captcha_secret_key",
    "fieldtype": "Password",
-   "label": "Captcha Secret Key",
-   "depends_on": "eval:doc.enable_captcha"
+   "label": "Captcha Secret Key"
   },
   {
    "fieldname": "sb_1205",
@@ -1642,44 +1708,44 @@
    "label": "Signup Behaviour"
   },
   {
+   "description": "One domain per line. Signups from these addresses are refused.",
    "fieldname": "disposable_email_domains",
    "fieldtype": "Small Text",
-   "label": "Blocked Email Domains",
-   "description": "One domain per line. Signups from these addresses are refused."
+   "label": "Blocked Email Domains"
   },
   {
+   "description": "Off by default so spam does not reach the sales pipeline.",
    "fieldname": "create_lead_from_demo_request",
    "fieldtype": "Check",
-   "label": "Create a CRM Lead from Demo Requests",
-   "description": "Off by default so spam does not reach the sales pipeline."
+   "label": "Create a CRM Lead from Demo Requests"
   },
   {
    "fieldname": "cb_1206",
    "fieldtype": "Column Break"
   },
   {
+   "default": "7",
    "fieldname": "signup_abandon_after_days",
    "fieldtype": "Int",
-   "label": "Abandon Unverified Signups After (days)",
-   "default": "7"
+   "label": "Abandon Unverified Signups After (days)"
   },
   {
+   "default": "24",
    "fieldname": "signup_reminder_after_hours",
    "fieldtype": "Int",
-   "label": "Send One Reminder After (hours)",
-   "default": "24"
+   "label": "Send One Reminder After (hours)"
   },
   {
+   "default": "30",
    "fieldname": "personal_data_retention_days",
    "fieldtype": "Int",
-   "label": "Purge IP and User Agent After (days)",
-   "default": "30"
+   "label": "Purge IP and User Agent After (days)"
   },
   {
+   "default": "30",
    "fieldname": "verification_token_retention_days",
    "fieldtype": "Int",
-   "label": "Purge Verification Tokens After (days)",
-   "default": "30"
+   "label": "Purge Verification Tokens After (days)"
   },
   {
    "fieldname": "payments_tab",
@@ -1692,21 +1758,21 @@
    "label": "Gateway"
   },
   {
+   "default": "Razorpay",
    "fieldname": "payment_gateway",
    "fieldtype": "Select",
    "label": "Gateway",
    "options": "Razorpay",
-   "default": "Razorpay",
    "reqd": 1
   },
   {
+   "default": "Mock",
+   "description": "Mock runs a simulated gateway with no real money and no credentials - for trying the flow end to end. Test uses Razorpay's own test keys. Live takes real payments.",
    "fieldname": "gateway_mode",
    "fieldtype": "Select",
    "label": "Mode",
    "options": "Mock\nTest\nLive",
-   "default": "Mock",
-   "reqd": 1,
-   "description": "Mock runs a simulated gateway with no real money and no credentials - for trying the flow end to end. Test uses Razorpay's own test keys. Live takes real payments."
+   "reqd": 1
   },
   {
    "fieldname": "cb_1403",
@@ -1745,11 +1811,11 @@
    "permlevel": 1
   },
   {
+   "description": "A non-obvious segment in the webhook URL. Signature verification is the real control; this only keeps casual traffic away.",
    "fieldname": "webhook_path_token",
    "fieldtype": "Data",
    "label": "Webhook Path Token",
-   "permlevel": 1,
-   "description": "A non-obvious segment in the webhook URL. Signature verification is the real control; this only keeps casual traffic away."
+   "permlevel": 1
   },
   {
    "fieldname": "sb_1406",
@@ -1757,56 +1823,56 @@
    "label": "Payment Naming"
   },
   {
+   "default": "PORD",
    "fieldname": "payment_order_series_prefix",
    "fieldtype": "Data",
-   "label": "Payment Order Prefix",
-   "default": "PORD"
+   "label": "Payment Order Prefix"
   },
   {
+   "default": "PTXN",
    "fieldname": "payment_transaction_series_prefix",
    "fieldtype": "Data",
-   "label": "Transaction Prefix",
-   "default": "PTXN"
+   "label": "Transaction Prefix"
   },
   {
+   "default": "WHK",
    "fieldname": "webhook_log_series_prefix",
    "fieldtype": "Data",
-   "label": "Webhook Log Prefix",
-   "default": "WHK"
+   "label": "Webhook Log Prefix"
   },
   {
+   "default": "MND",
    "fieldname": "mandate_series_prefix",
    "fieldtype": "Data",
-   "label": "Mandate Prefix",
-   "default": "MND"
+   "label": "Mandate Prefix"
   },
   {
    "fieldname": "cb_1407",
    "fieldtype": "Column Break"
   },
   {
+   "default": "SUB",
    "fieldname": "subscription_series_prefix",
    "fieldtype": "Data",
-   "label": "Subscription Prefix",
-   "default": "SUB"
+   "label": "Subscription Prefix"
   },
   {
+   "default": "SINV",
    "fieldname": "subscription_invoice_series_prefix",
    "fieldtype": "Data",
-   "label": "Subscription Invoice Prefix",
-   "default": "SINV"
+   "label": "Subscription Invoice Prefix"
   },
   {
+   "default": "PREF",
    "fieldname": "refund_series_prefix",
    "fieldtype": "Data",
-   "label": "Refund Prefix",
-   "default": "PREF"
+   "label": "Refund Prefix"
   },
   {
+   "default": "RECN",
    "fieldname": "reconciliation_series_prefix",
    "fieldtype": "Data",
-   "label": "Reconciliation Prefix",
-   "default": "RECN"
+   "label": "Reconciliation Prefix"
   },
   {
    "fieldname": "sb_1408",
@@ -1819,38 +1885,38 @@
    "options": "<p class=\"text-muted small\">The RBI Digital Payments E-mandate Framework governs recurring debits. These values reflect the framework as understood at build time and <b>must be re-verified against current RBI guidance before go-live</b>. See docs/COMPLIANCE_NOTES.md.</p>"
   },
   {
+   "default": "15000",
+   "description": "RBI e-mandate threshold on the TOTAL debit including tax. Above this every debit needs Additional Factor Authentication. The higher one-lakh ceiling covers insurance, mutual funds and card bills only - a SaaS subscription does not qualify.",
    "fieldname": "afa_free_debit_ceiling",
    "fieldtype": "Currency",
    "label": "No-AFA Debit Ceiling",
-   "default": "15000",
-   "reqd": 1,
-   "description": "RBI e-mandate threshold on the TOTAL debit including tax. Above this every debit needs Additional Factor Authentication. The higher one-lakh ceiling covers insurance, mutual funds and card bills only - a SaaS subscription does not qualify."
+   "reqd": 1
   },
   {
+   "default": "20",
+   "description": "Registers the mandate maximum above the current debit, so adding users or upgrading does not immediately invalidate it.",
    "fieldname": "mandate_headroom_percent",
    "fieldtype": "Float",
-   "label": "Mandate Headroom %",
-   "default": "20",
-   "description": "Registers the mandate maximum above the current debit, so adding users or upgrading does not immediately invalidate it."
+   "label": "Mandate Headroom %"
   },
   {
    "fieldname": "cb_1410",
    "fieldtype": "Column Break"
   },
   {
+   "default": "24",
+   "description": "Mandatory advance notice before any auto-debit. 24 hours is the regulatory minimum and a lower value is refused.",
    "fieldname": "pre_debit_notice_hours",
    "fieldtype": "Int",
    "label": "Pre-Debit Notice (hours)",
-   "default": "24",
-   "reqd": 1,
-   "description": "Mandatory advance notice before any auto-debit. 24 hours is the regulatory minimum and a lower value is refused."
+   "reqd": 1
   },
   {
+   "default": "1",
+   "description": "Required after every collection.",
    "fieldname": "send_post_debit_confirmation",
    "fieldtype": "Check",
-   "label": "Send Post-Debit Confirmation",
-   "default": "1",
-   "description": "Required after every collection."
+   "label": "Send Post-Debit Confirmation"
   },
   {
    "fieldname": "sb_1411",
@@ -1858,11 +1924,11 @@
    "label": "Subscription Tax"
   },
   {
+   "default": "18",
+   "description": "On the SaaS subscription supply - unrelated to the tenant's own solar contracts. Confirm with the CA before go-live.",
    "fieldname": "subscription_gst_rate",
    "fieldtype": "Float",
-   "label": "GST Rate %",
-   "default": "18",
-   "description": "On the SaaS subscription supply - unrelated to the tenant's own solar contracts. Confirm with the CA before go-live."
+   "label": "GST Rate %"
   },
   {
    "fieldname": "company_gstin",
@@ -1870,33 +1936,33 @@
    "label": "Company GSTIN"
   },
   {
+   "description": "Two-digit GST state code of the supplier, e.g. 32 for Kerala.",
    "fieldname": "company_state_code",
    "fieldtype": "Data",
-   "label": "Company State Code",
-   "description": "Two-digit GST state code of the supplier, e.g. 32 for Kerala."
+   "label": "Company State Code"
   },
   {
    "fieldname": "cb_1412",
    "fieldtype": "Column Break"
   },
   {
+   "default": "997331",
    "fieldname": "subscription_hsn_sac",
    "fieldtype": "Data",
-   "label": "HSN / SAC",
-   "default": "997331"
+   "label": "HSN / SAC"
   },
   {
+   "default": "Customer State",
    "fieldname": "place_of_supply_rule",
    "fieldtype": "Select",
    "label": "Place of Supply",
-   "options": "Customer State\nCompany State",
-   "default": "Customer State"
+   "options": "Customer State\nCompany State"
   },
   {
+   "description": "Mandatory above the prevailing turnover threshold. Check current CBIC guidance before go-live.",
    "fieldname": "enable_einvoicing",
    "fieldtype": "Check",
-   "label": "Enable e-Invoicing",
-   "description": "Mandatory above the prevailing turnover threshold. Check current CBIC guidance before go-live."
+   "label": "Enable e-Invoicing"
   },
   {
    "fieldname": "sb_1413",
@@ -1904,26 +1970,26 @@
    "label": "Collection Behaviour"
   },
   {
+   "default": "72",
    "fieldname": "payment_link_expiry_hours",
    "fieldtype": "Int",
-   "label": "Payment Link Expiry (hours)",
-   "default": "72"
+   "label": "Payment Link Expiry (hours)"
   },
   {
+   "default": "1",
    "fieldname": "auto_capture_payments",
    "fieldtype": "Check",
-   "label": "Auto-Capture Payments",
-   "default": "1"
+   "label": "Auto-Capture Payments"
   },
   {
    "fieldname": "cb_1414",
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
    "fieldname": "enable_payment_retries",
    "fieldtype": "Check",
-   "label": "Enable Payment Retries",
-   "default": "1"
+   "label": "Enable Payment Retries"
   },
   {
    "fieldname": "sb_1415",
@@ -1936,10 +2002,10 @@
    "options": "<p class=\"text-muted small\">The whole payment flow works in tracking mode with this off. Nothing reaches a ledger until it is on and the accounts below are mapped. Same discipline as the Projects tab.</p>"
   },
   {
+   "default": "0",
    "fieldname": "enable_payment_postings",
    "fieldtype": "Check",
-   "label": "Enable Payment Postings",
-   "default": "0"
+   "label": "Enable Payment Postings"
   },
   {
    "fieldname": "sb_1417",
@@ -1958,21 +2024,21 @@
    "label": "Refunds"
   },
   {
+   "default": "5000",
+   "description": "Above this a refund needs a billing manager's explicit approval.",
    "fieldname": "refund_approval_threshold",
    "fieldtype": "Currency",
-   "label": "Refund Approval Threshold",
-   "default": "5000",
-   "description": "Above this a refund needs a billing manager's explicit approval."
+   "label": "Refund Approval Threshold"
   },
   {
    "fieldname": "cb_1602",
    "fieldtype": "Column Break"
   },
   {
+   "default": "5",
    "fieldname": "unreconciled_alert_days",
    "fieldtype": "Int",
-   "label": "Alert on Unreconciled After (days)",
-   "default": "5"
+   "label": "Alert on Unreconciled After (days)"
   },
   {
    "fieldname": "tab_5001",
@@ -1990,26 +2056,26 @@
    "label": "Naming"
   },
   {
+   "default": "TNT",
    "fieldname": "tenant_series_prefix",
    "fieldtype": "Data",
-   "label": "Tenant Prefix",
-   "default": "TNT"
+   "label": "Tenant Prefix"
   },
   {
+   "default": "PROV",
    "fieldname": "provisioning_job_series_prefix",
    "fieldtype": "Data",
-   "label": "Job Prefix",
-   "default": "PROV"
+   "label": "Job Prefix"
   },
   {
    "fieldname": "cb_5004",
    "fieldtype": "Column Break"
   },
   {
+   "default": "TINV",
    "fieldname": "invitation_series_prefix",
    "fieldtype": "Data",
-   "label": "Invitation Prefix",
-   "default": "TINV"
+   "label": "Invitation Prefix"
   },
   {
    "fieldname": "sb_5005",
@@ -2022,18 +2088,18 @@
    "options": "<p class=\"text-muted small\">An architectural decision, not a toggle. Multi Company is right for the first twenty to fifty tenants and lets you ship; Multi Site is right once one tenant's data loss would end the business, or one tenant's volume degrades everyone else's queries. Changing this is blocked once any Tenant exists - see docs/TENANCY_MODEL.md.</p>"
   },
   {
+   "default": "Multi Company",
    "fieldname": "tenancy_strategy",
    "fieldtype": "Select",
    "label": "Tenancy Strategy",
-   "options": "Multi Company\nMulti Site",
-   "default": "Multi Company"
+   "options": "Multi Company\nMulti Site"
   },
   {
+   "default": "admin, api, www, app, mail, support, billing, help, status, docs, blog, shop, static, assets, cdn, ftp, smtp, imap, dev, test, staging, demo, root, system, frappe, erpnext, a3sola, sola, tenant, platform, portal, login, signup, account",
+   "description": "One per line or comma separated. A tenant code matching any of these is refused.",
    "fieldname": "reserved_tenant_codes",
    "fieldtype": "Small Text",
-   "label": "Reserved Codes",
-   "description": "One per line or comma separated. A tenant code matching any of these is refused.",
-   "default": "admin, api, www, app, mail, support, billing, help, status, docs, blog, shop, static, assets, cdn, ftp, smtp, imap, dev, test, staging, demo, root, system, frappe, erpnext, a3sola, sola, tenant, platform, portal, login, signup, account"
+   "label": "Reserved Codes"
   },
   {
    "fieldname": "sb_5007",
@@ -2041,53 +2107,53 @@
    "label": "Company Defaults"
   },
   {
+   "default": "India",
    "fieldname": "provisioning_default_country",
    "fieldtype": "Link",
    "label": "Country",
-   "options": "Country",
-   "default": "India"
+   "options": "Country"
   },
   {
+   "default": "INR",
    "fieldname": "provisioning_default_currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency",
-   "default": "INR"
+   "options": "Currency"
   },
   {
+   "default": "Standard",
    "fieldname": "default_chart_of_accounts",
    "fieldtype": "Data",
-   "label": "Chart of Accounts",
-   "default": "Standard"
+   "label": "Chart of Accounts"
   },
   {
    "fieldname": "cb_5008",
    "fieldtype": "Column Break"
   },
   {
+   "default": "04-01",
+   "description": "MM-DD. India's year starts 1 April.",
    "fieldname": "default_fiscal_year_start",
    "fieldtype": "Data",
-   "label": "Fiscal Year Start",
-   "default": "04-01",
-   "description": "MM-DD. India's year starts 1 April."
+   "label": "Fiscal Year Start"
   },
   {
+   "default": "4",
    "fieldname": "company_abbr_length",
    "fieldtype": "Int",
-   "label": "Abbreviation Length",
-   "default": "4"
+   "label": "Abbreviation Length"
   },
   {
+   "default": "1",
    "fieldname": "create_default_warehouses",
    "fieldtype": "Check",
-   "label": "Create Warehouses",
-   "default": "1"
+   "label": "Create Warehouses"
   },
   {
+   "default": "1",
    "fieldname": "create_default_cost_centers",
    "fieldtype": "Check",
-   "label": "Create Cost Centres",
-   "default": "1"
+   "label": "Create Cost Centres"
   },
   {
    "fieldname": "sb_5009",
@@ -2095,17 +2161,17 @@
    "label": "Admin User"
   },
   {
+   "description": "Used when the plan names no role profile.",
    "fieldname": "admin_role_profile_fallback",
    "fieldtype": "Link",
    "label": "Fallback Role Profile",
-   "options": "Role Profile",
-   "description": "Used when the plan names no role profile."
+   "options": "Role Profile"
   },
   {
+   "default": "1",
    "fieldname": "provisioning_send_welcome_email",
    "fieldtype": "Check",
-   "label": "Send Welcome Email",
-   "default": "1"
+   "label": "Send Welcome Email"
   },
   {
    "fieldname": "welcome_email_template",
@@ -2118,16 +2184,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "72",
    "fieldname": "password_link_expiry_hours",
    "fieldtype": "Int",
-   "label": "Password Link Expiry (hours)",
-   "default": "72"
+   "label": "Password Link Expiry (hours)"
   },
   {
+   "default": "1",
    "fieldname": "force_password_reset",
    "fieldtype": "Check",
-   "label": "Force Password Reset",
-   "default": "1"
+   "label": "Force Password Reset"
   },
   {
    "fieldname": "enable_two_factor_for_admins",
@@ -2140,22 +2206,22 @@
    "label": "Invitations"
   },
   {
+   "default": "14",
    "fieldname": "invitation_expiry_days",
    "fieldtype": "Int",
-   "label": "Invitation Expiry (days)",
-   "default": "14"
+   "label": "Invitation Expiry (days)"
   },
   {
    "fieldname": "cb_5012",
    "fieldtype": "Column Break"
   },
   {
+   "default": "1.5",
+   "description": "Allows inviting a little beyond the seat count to cover non-responders. The quota still binds at acceptance.",
    "fieldname": "max_pending_invitations_multiplier",
    "fieldtype": "Float",
    "label": "Pending Invitation Multiplier",
-   "default": "1.5",
-   "precision": 2,
-   "description": "Allows inviting a little beyond the seat count to cover non-responders. The quota still binds at acceptance."
+   "precision": 2
   },
   {
    "fieldname": "sb_5013",
@@ -2163,35 +2229,35 @@
    "label": "Behaviour"
   },
   {
+   "default": "Automatic",
+   "description": "Manual Approval queues the job and waits for a human. Worth using for the first few tenants.",
    "fieldname": "provisioning_mode",
    "fieldtype": "Select",
    "label": "Mode",
-   "options": "Automatic\nManual Approval",
-   "default": "Automatic",
-   "description": "Manual Approval queues the job and waits for a human. Worth using for the first few tenants."
+   "options": "Automatic\nManual Approval"
   },
   {
+   "default": "long",
    "fieldname": "provisioning_queue",
    "fieldtype": "Select",
    "label": "Queue",
-   "options": "long\ndefault",
-   "default": "long"
+   "options": "long\ndefault"
   },
   {
    "fieldname": "cb_5014",
    "fieldtype": "Column Break"
   },
   {
+   "default": "15",
    "fieldname": "provisioning_timeout_minutes",
    "fieldtype": "Int",
-   "label": "Timeout (minutes)",
-   "default": "15"
+   "label": "Timeout (minutes)"
   },
   {
+   "default": "3",
    "fieldname": "max_provisioning_retries",
    "fieldtype": "Int",
-   "label": "Max Retries",
-   "default": "3"
+   "label": "Max Retries"
   },
   {
    "fieldname": "notify_on_failure_role",
@@ -2210,10 +2276,10 @@
    "options": "<p class=\"text-muted small\">The last line of defence against one tenant reading another's ledger. It is a gating step: a tenant that fails it is never handed to a customer.</p>"
   },
   {
+   "default": "1",
    "fieldname": "run_isolation_test_on_provision",
    "fieldtype": "Check",
-   "label": "Verify Isolation Before Activating",
-   "default": "1"
+   "label": "Verify Isolation Before Activating"
   },
   {
    "fieldname": "isolation_test_waiver_reason",
@@ -2226,16 +2292,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
    "fieldname": "isolation_recheck_monthly",
    "fieldtype": "Check",
-   "label": "Re-check Every Month",
-   "default": "1"
+   "label": "Re-check Every Month"
   },
   {
+   "default": "24",
    "fieldname": "provisioning_failure_alert_age_hours",
    "fieldtype": "Int",
-   "label": "Alert on Interventions Older Than (hours)",
-   "default": "24"
+   "label": "Alert on Interventions Older Than (hours)"
   },
   {
    "fieldname": "sb_6001",
@@ -2248,23 +2314,399 @@
    "options": "<p class=\"text-muted small\">Invitation sending and acceptance are both reachable by people who are not yet your customers. These are the ceilings, per hour.</p>"
   },
   {
+   "default": "30",
    "fieldname": "invite_rate_limit",
    "fieldtype": "Int",
-   "label": "Invitations Sent per Admin per Hour",
-   "default": "30"
+   "label": "Invitations Sent per Admin per Hour"
   },
   {
    "fieldname": "cb_6003",
    "fieldtype": "Column Break"
   },
   {
+   "default": "20",
    "fieldname": "invite_accept_rate_limit",
    "fieldtype": "Int",
-   "label": "Acceptance Attempts per IP per Hour",
-   "default": "20"
+   "label": "Acceptance Attempts per IP per Hour"
+  },
+  {
+   "fieldname": "lifecycle_tab",
+   "fieldtype": "Tab Break",
+   "label": "Lifecycle"
+  },
+  {
+   "fieldname": "lifecycle_note",
+   "fieldtype": "HTML",
+   "label": "",
+   "options": "<p class='text-muted'>This tab decides when a paying customer is warned, restricted or switched off. <b>It ships inert.</b> Dry run is on and automatic suspension is off, so the engine evaluates every subscription every night, writes down what it would have done, and does nothing. Read a cycle or two of those decisions before letting it act.</p>"
+  },
+  {
+   "fieldname": "sb_7001",
+   "fieldtype": "Section Break",
+   "label": "Naming"
+  },
+  {
+   "default": "SPOL",
+   "fieldname": "policy_series_prefix",
+   "fieldtype": "Data",
+   "label": "Policy Prefix"
+  },
+  {
+   "default": "SEVT",
+   "fieldname": "subscription_event_series_prefix",
+   "fieldtype": "Data",
+   "label": "Event Prefix"
+  },
+  {
+   "default": "PCHG",
+   "fieldname": "plan_change_series_prefix",
+   "fieldtype": "Data",
+   "label": "Plan Change Prefix"
+  },
+  {
+   "fieldname": "cb_7002",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "default": "SEAT",
+   "fieldname": "seat_change_series_prefix",
+   "fieldtype": "Data",
+   "label": "Seat Change Prefix"
+  },
+  {
+   "default": "SUSP",
+   "fieldname": "suspension_series_prefix",
+   "fieldtype": "Data",
+   "label": "Suspension Prefix"
+  },
+  {
+   "default": "CANC",
+   "fieldname": "cancellation_series_prefix",
+   "fieldtype": "Data",
+   "label": "Cancellation Prefix"
+  },
+  {
+   "fieldname": "sb_7003",
+   "fieldtype": "Section Break",
+   "label": "Policy"
+  },
+  {
+   "fieldname": "default_subscription_policy",
+   "fieldtype": "Link",
+   "label": "Default Policy",
+   "options": "Subscription Policy"
+  },
+  {
+   "default": "0",
+   "description": "Off deliberately. Watch the engine make correct decisions in report-only mode for a cycle or two before letting it act.",
+   "fieldname": "enable_automatic_suspension",
+   "fieldtype": "Check",
+   "label": "Enable Automatic Suspension"
+  },
+  {
+   "fieldname": "cb_7004",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "default": "1",
+   "description": "In dry run the engine computes and logs every decision but performs no access change of any kind.",
+   "fieldname": "dry_run_mode",
+   "fieldtype": "Check",
+   "label": "Dry Run"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_manual_approval_for_suspension",
+   "fieldtype": "Check",
+   "label": "Suspension Needs Approval"
+  },
+  {
+   "default": "0",
+   "description": "Halts every lifecycle state change immediately while evaluation and logging carry on. For use during an incident - see docs/LIFECYCLE_RUNBOOK.md.",
+   "fieldname": "lifecycle_kill_switch",
+   "fieldtype": "Check",
+   "label": "Kill Switch"
+  },
+  {
+   "fieldname": "sb_7005",
+   "fieldtype": "Section Break",
+   "label": "Timing"
+  },
+  {
+   "default": "2",
+   "fieldname": "lifecycle_job_hour",
+   "fieldtype": "Int",
+   "label": "Job Hour"
+  },
+  {
+   "default": "200",
+   "fieldname": "state_evaluation_batch_size",
+   "fieldtype": "Int",
+   "label": "Batch Size"
+  },
+  {
+   "fieldname": "cb_7006",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "default": "30",
+   "fieldname": "reactivation_window_days",
+   "fieldtype": "Int",
+   "label": "Reactivation Window (days)"
+  },
+  {
+   "default": "90",
+   "fieldname": "data_retention_days_after_cancel",
+   "fieldtype": "Int",
+   "label": "Retention After Cancellation (days)"
+  },
+  {
+   "fieldname": "sb_7007",
+   "fieldtype": "Section Break",
+   "label": "Notifications"
+  },
+  {
+   "default": "7,3,1",
+   "description": "Comma-separated offsets.",
+   "fieldname": "notify_days_before_renewal",
+   "fieldtype": "Data",
+   "label": "Renewal Notices (days before)"
+  },
+  {
+   "default": "3",
+   "fieldname": "notify_before_suspension_days",
+   "fieldtype": "Int",
+   "label": "Suspension Warning (days before)"
+  },
+  {
+   "fieldname": "cb_7008",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "lifecycle_alert_role",
+   "fieldtype": "Link",
+   "label": "Alert Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "suspension_approval_role",
+   "fieldtype": "Link",
+   "label": "Suspension Approval Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "sb_7009",
+   "fieldtype": "Section Break",
+   "label": "Guards"
+  },
+  {
+   "fieldname": "lifecycle_guard_note",
+   "fieldtype": "HTML",
+   "label": "",
+   "options": "<p class='text-muted'>Two brakes on the same pedal. The circuit breaker stops a bug or a gateway outage from locking out the customer base in one run - a halted run a human investigates is always cheaper than mass suspension. The minimum tenure stops a brand-new tenant being cut off over a first-payment hiccup.</p>"
+  },
+  {
+   "default": "10",
+   "description": "Circuit breaker. A run that would suspend more than this halts, performs none of them, and alerts.",
+   "fieldname": "max_suspensions_per_run",
+   "fieldtype": "Int",
+   "label": "Max Suspensions per Run"
+  },
+  {
+   "fieldname": "cb_7010",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "default": "14",
+   "fieldname": "min_days_active_before_suspension",
+   "fieldtype": "Int",
+   "label": "Minimum Tenure Before Suspension (days)"
+  },
+  {
+   "fieldname": "sb_7011",
+   "fieldtype": "Section Break",
+   "label": "Pre-flight"
+  },
+  {
+   "fieldname": "lifecycle_simulation_last_run",
+   "fieldtype": "Datetime",
+   "label": "Simulation Last Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_7012",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "lifecycle_heartbeat_on",
+   "fieldtype": "Datetime",
+   "label": "Engine Last Ran",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle_heartbeat_streak_days",
+   "fieldtype": "Int",
+   "label": "Consecutive Days Run",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7013",
+   "fieldtype": "Section Break",
+   "label": "Plans and Seats"
+  },
+  {
+   "default": "180",
+   "description": "A tenant this many days old with no failed payments gets an extra seat immediately and is billed on the next invoice. Conservative on purpose - lower it once you know your customers.",
+   "fieldname": "seat_trust_min_days",
+   "fieldtype": "Int",
+   "label": "Seat Trust Threshold (days)"
+  },
+  {
+   "default": "0",
+   "description": "Off by default: a downgrade takes effect at the period boundary and the customer keeps what they paid for. Some clients prefer to be more generous.",
+   "fieldname": "refund_current_period_on_downgrade",
+   "fieldtype": "Check",
+   "label": "Refund the Current Period on a Downgrade"
+  },
+  {
+   "fieldname": "cb_7014",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "An internal step somebody chooses to take before a cancellation matures. Never an obstacle the customer has to clear.",
+   "fieldname": "retention_step_enabled",
+   "fieldtype": "Check",
+   "label": "Offer Retention Step"
+  },
+  {
+   "default": "1",
+   "fieldname": "generate_data_export_on_cancel",
+   "fieldtype": "Check",
+   "label": "Generate Data Export on Cancellation"
+  },
+  {
+   "fieldname": "sb_8001",
+   "fieldtype": "Section Break",
+   "label": "Public Endpoint Limits"
+  },
+  {
+   "fieldname": "security_limits_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>Caps on what an unauthenticated caller can do. Both were added by the Phase 8 audit - see <code>docs/security/FINDINGS.md</code>.</p>"
+  },
+  {
+   "default": "240",
+   "description": "The pricing page calls this on every toggle, so the cap is generous. It writes nothing and reads published pricing only.",
+   "fieldname": "plan_total_rate_limit",
+   "fieldtype": "Int",
+   "label": "Plan Pricing Calls per IP per Hour"
+  },
+  {
+   "fieldname": "cb_8002",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "20",
+   "description": "A bad-signature request writes a log row. Without a cap an unauthenticated caller could fill the disk with the record of their own attempts. Beyond this, attempts are counted in the file log only - the signal survives, the unbounded growth does not.",
+   "fieldname": "webhook_unverified_log_max",
+   "fieldtype": "Int",
+   "label": "Unverified Webhook Rows per IP per Hour"
+  },
+  {
+   "fieldname": "monitoring_tab",
+   "fieldtype": "Tab Break",
+   "label": "Monitoring"
+  },
+  {
+   "fieldname": "monitoring_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>Every alert below carries an expected frequency at 50 tenants. Anything expected more than about twice a week belongs on a dashboard, not in an on-call channel - see <code>docs/ops/MONITORING.md</code>.</p>"
+  },
+  {
+   "fieldname": "sb_9001",
+   "fieldtype": "Section Break",
+   "label": "Heartbeats"
+  },
+  {
+   "description": "Written by every scheduled job. Read by the watchdog, which alerts on absence rather than on error.",
+   "fieldname": "job_heartbeats",
+   "fieldtype": "Long Text",
+   "label": "Job Heartbeats",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_9003",
+   "fieldtype": "Section Break",
+   "label": "Alert Thresholds"
+  },
+  {
+   "default": "85",
+   "fieldname": "alert_payment_success_floor",
+   "fieldtype": "Float",
+   "label": "Payment Success Floor (%)"
+  },
+  {
+   "default": "20",
+   "fieldname": "alert_webhook_failure_limit",
+   "fieldtype": "Int",
+   "label": "Webhook Signature Failures per 6h"
+  },
+  {
+   "fieldname": "cb_9004",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "7",
+   "fieldname": "alert_signup_drought_days",
+   "fieldtype": "Int",
+   "label": "Signup Drought (days)"
+  },
+  {
+   "default": "0",
+   "description": "Off until the public funnel is live, or the drought alert fires every week before launch and gets muted.",
+   "fieldname": "expect_signups",
+   "fieldtype": "Check",
+   "label": "Expect Signups"
+  },
+  {
+   "default": "120",
+   "fieldname": "health_rate_limit",
+   "fieldtype": "Int",
+   "label": "Health Endpoint Calls per IP per Hour"
+  },
+  {
+   "fieldname": "sb_9005",
+   "fieldtype": "Section Break",
+   "label": "Support Sessions"
+  },
+  {
+   "default": "1",
+   "description": "On by default and it should stay on. Impersonating a customer without telling them is a trust violation, whatever the reason.",
+   "fieldname": "notify_tenant_on_impersonation",
+   "fieldtype": "Check",
+   "label": "Tell the Tenant About Support Sessions"
+  },
+  {
+   "fieldname": "cb_9006",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "30",
+   "description": "Frappe keeps error logs forever. On this bench that table reached 165 MB - half the database - which hides the signal as well as filling the disk.",
+   "fieldname": "error_log_retention_days",
+   "fieldtype": "Int",
+   "label": "Error Log Retention (days)"
   }
  ],
  "index_web_pages_for_search": 1,
+ "issingle": 1,
  "links": [],
  "modified": "2026-08-28 14:00:00.000000",
  "modified_by": "Administrator",
@@ -2273,16 +2715,16 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "role": "System Manager",
-   "read": 1,
-   "print": 1,
+   "create": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
    "permlevel": 0,
-   "write": 1,
-   "create": 1
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
   },
   {
    "permlevel": 1,
@@ -2300,7 +2742,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "issingle": 1,
- "description": "Site-wide configuration shared by every tenant. Deliberately unreachable by any customer role: in a multi-company deployment one tenant editing this would change behaviour for all of them. The app reads it through helpers that bypass permissions, so nothing functional depends on a customer being able to open it."
+ "track_changes": 1
 }

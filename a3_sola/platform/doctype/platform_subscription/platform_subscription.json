@@ -67,6 +67,22 @@
   "sb_701",
   "dunning_attempts",
   "sb_21",
+  "lifecycle_sb",
+  "access_state",
+  "state_since",
+  "days_in_state",
+  "suspension_count",
+  "lifecycle_cb",
+  "policy",
+  "current_policy_stage",
+  "next_state_change_on",
+  "next_state_change_to",
+  "lifecycle_dates_sb",
+  "trial_end_date",
+  "lifetime_days_active",
+  "lifecycle_dates_cb",
+  "cancellation_effective_date",
+  "reactivation_deadline",
   "amended_from"
  ],
  "fields": [
@@ -84,9 +100,9 @@
   {
    "fieldname": "organisation_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Organisation",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "customer",
@@ -146,21 +162,21 @@
    "reqd": 1
   },
   {
+   "fetch_from": "subscription_plan.plan_code",
    "fieldname": "plan_code",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Plan Code",
-   "read_only": 1,
-   "fetch_from": "subscription_plan.plan_code",
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "billing_cycle",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Cycle",
    "options": "Monthly\nAnnual",
-   "reqd": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "cb_6",
@@ -226,19 +242,19 @@
    "read_only": 1
   },
   {
+   "description": "Per-cycle debit INCLUDING tax. This is the figure compared against the RBI ceiling.",
    "fieldname": "recurring_amount",
    "fieldtype": "Currency",
-   "label": "Recurring Debit",
-   "read_only": 1,
    "in_list_view": 1,
-   "description": "Per-cycle debit INCLUDING tax. This is the figure compared against the RBI ceiling."
+   "label": "Recurring Debit",
+   "read_only": 1
   },
   {
+   "default": "INR",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency",
-   "default": "INR"
+   "options": "Currency"
   },
   {
    "fieldname": "sb_11",
@@ -267,8 +283,8 @@
   {
    "fieldname": "next_billing_date",
    "fieldtype": "Date",
-   "label": "Next Billing",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Next Billing"
   },
   {
    "fieldname": "next_debit_date",
@@ -309,18 +325,18 @@
   {
    "fieldname": "collection_route",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Route",
    "options": "Auto Debit\nAssisted Renewal",
-   "read_only": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "read_only": 1
   },
   {
+   "description": "Plain English, so support can explain it to a customer.",
    "fieldname": "route_reason",
    "fieldtype": "Small Text",
    "label": "Why This Route",
-   "read_only": 1,
-   "description": "Plain English, so support can explain it to a customer."
+   "read_only": 1
   },
   {
    "fieldname": "cb_16",
@@ -333,11 +349,11 @@
    "options": "Payment Mandate"
   },
   {
+   "fetch_from": "payment_mandate.status",
    "fieldname": "mandate_status",
    "fieldtype": "Data",
    "label": "Mandate Status",
-   "read_only": 1,
-   "fetch_from": "payment_mandate.status"
+   "read_only": 1
   },
   {
    "fieldname": "sb_17",
@@ -345,21 +361,21 @@
    "label": "Status"
   },
   {
+   "allow_on_submit": 1,
+   "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "Draft\nPending Payment\nActive\nPast Due\nSuspended\nCancelled\nExpired",
-   "default": "Draft",
-   "read_only": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "allow_on_submit": 1
+   "label": "Status",
+   "options": "Draft\nPending Payment\nTrialing\nActive\nPast Due\nGrace\nSuspended\nCancelling\nCancelled\nTerminated",
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "status_reason",
    "fieldtype": "Small Text",
-   "label": "Status Reason",
-   "allow_on_submit": 1
+   "label": "Status Reason"
   },
   {
    "fieldname": "tab_18",
@@ -372,36 +388,36 @@
    "label": "History"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "successful_payments",
    "fieldtype": "Int",
    "label": "Successful Payments",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "failed_payments",
    "fieldtype": "Int",
    "label": "Failed Payments",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "cb_20",
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "consecutive_failures",
    "fieldtype": "Int",
    "label": "Consecutive Failures",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "lifetime_value",
    "fieldtype": "Currency",
    "label": "Lifetime Value",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "sb_701",
@@ -420,16 +436,112 @@
    "label": "Amend"
   },
   {
+   "fieldname": "lifecycle_sb",
+   "fieldtype": "Section Break",
+   "label": "Lifecycle"
+  },
+  {
+   "default": "Full",
+   "description": "Deliberately not the same axis as status: Past Due leaves access Full.",
+   "fieldname": "access_state",
+   "fieldtype": "Select",
+   "label": "Access",
+   "options": "Full\nBanner\nRead Only\nBlocked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state_since",
+   "fieldtype": "Datetime",
+   "label": "In This State Since",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days_in_state",
+   "fieldtype": "Int",
+   "label": "Days in State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "suspension_count",
+   "fieldtype": "Int",
+   "label": "Times Suspended",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Policy",
+   "options": "Subscription Policy",
+   "read_only": 0
+  },
+  {
+   "fieldname": "current_policy_stage",
+   "fieldtype": "Data",
+   "label": "Policy Stage",
+   "read_only": 1
+  },
+  {
+   "description": "What happens next and when - visible to both the tenant and support.",
+   "fieldname": "next_state_change_on",
+   "fieldtype": "Date",
+   "label": "Next Change On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_state_change_to",
+   "fieldtype": "Data",
+   "label": "Next Change To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle_dates_sb",
+   "fieldtype": "Section Break",
+   "label": "Lifecycle Dates"
+  },
+  {
+   "fieldname": "trial_end_date",
+   "fieldtype": "Date",
+   "label": "Trial Ends",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifetime_days_active",
+   "fieldtype": "Int",
+   "label": "Lifetime Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle_dates_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cancellation_effective_date",
+   "fieldtype": "Date",
+   "label": "Cancellation Effective",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reactivation_deadline",
+   "fieldtype": "Date",
+   "label": "Reactivation Deadline",
+   "read_only": 1
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
-   "options": "Platform Subscription",
-   "read_only": 1,
    "no_copy": 1,
-   "print_hide": 1
+   "options": "Platform Subscription",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
  "modified": "2026-08-25 13:00:00.000000",
  "modified_by": "Administrator",
@@ -438,66 +550,65 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1
+   "write": 1
   },
   {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Platform Admin",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1
+   "write": 1
   },
   {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Platform Billing Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
    "submit": 1,
-   "cancel": 1
+   "write": 1
   },
   {
-   "role": "Platform Billing Executive",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Billing Executive",
+   "share": 1
   }
  ],
+ "search_fields": "organisation_name,plan_code",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "is_submittable": 1,
  "title_field": "organisation_name",
- "show_title_field_in_link": 1,
- "search_fields": "organisation_name,plan_code"
+ "track_changes": 1
 }

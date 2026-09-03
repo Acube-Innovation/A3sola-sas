@@ -1,0 +1,364 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tenant",
+  "platform_subscription",
+  "cancellation_type",
+  "cb_1",
+  "status",
+  "requested_by",
+  "requested_by_user",
+  "requested_on",
+  "effective_date",
+  "sb_2",
+  "reason",
+  "reason_detail",
+  "cb_3",
+  "competitor_named",
+  "would_reconsider",
+  "feedback_score",
+  "sb_4",
+  "retention_note",
+  "retention_offer_made",
+  "retention_offer_detail",
+  "cb_5",
+  "retention_outcome",
+  "sb_6",
+  "outstanding_amount",
+  "refund_due",
+  "cb_7",
+  "payment_refund",
+  "sb_8",
+  "export_note",
+  "data_export_requested",
+  "data_export_generated_on",
+  "cb_9",
+  "data_export_file",
+  "data_export_downloaded_on",
+  "sb_10",
+  "reactivation_deadline",
+  "cb_11",
+  "retention_expiry_date",
+  "sb_12",
+  "subscription_event",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tenant",
+   "options": "Tenant"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "reqd": 1
+  },
+  {
+   "default": "End of Period",
+   "description": "End of period by default: the customer keeps what they paid for.",
+   "fieldname": "cancellation_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "End of Period\nImmediate\nNon Payment"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nRetention In Progress\nScheduled\nCancelled\nReactivated\nWithdrawn",
+   "read_only": 1
+  },
+  {
+   "default": "Tenant Self Service",
+   "fieldname": "requested_by",
+   "fieldtype": "Select",
+   "label": "Requested By",
+   "options": "Tenant Self Service\nInternal User\nNon Payment\nPolicy"
+  },
+  {
+   "fieldname": "requested_by_user",
+   "fieldtype": "Link",
+   "label": "Requested By User",
+   "options": "User"
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "label": "Requested On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Why They Are Leaving"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Reason",
+   "options": "Too Expensive\nMissing Features\nSwitching Provider\nBusiness Closed\nPoor Support\nImplementation Difficulty\nTemporary Pause\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason_detail",
+   "fieldtype": "Text",
+   "label": "In Their Words"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "competitor_named",
+   "fieldtype": "Data",
+   "label": "Competitor Named"
+  },
+  {
+   "fieldname": "would_reconsider",
+   "fieldtype": "Check",
+   "label": "Would Reconsider"
+  },
+  {
+   "fieldname": "feedback_score",
+   "fieldtype": "Int",
+   "label": "Feedback Score"
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "Retention"
+  },
+  {
+   "fieldname": "retention_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>A step somebody chooses to take, never an obstacle the customer has to clear. A cancel button hiding behind three retention screens is a dark pattern and a support cost.</p>"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "retention_offer_made",
+   "fieldtype": "Check",
+   "label": "Offer Made"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "retention_offer_detail",
+   "fieldtype": "Small Text",
+   "label": "Offer"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Not Attempted",
+   "fieldname": "retention_outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "options": "Not Attempted\nAccepted\nDeclined\nNo Response"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Money"
+  },
+  {
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refund_due",
+   "fieldtype": "Currency",
+   "label": "Refund Due",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_refund",
+   "fieldtype": "Link",
+   "label": "Refund",
+   "options": "Payment Refund",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Their Data"
+  },
+  {
+   "fieldname": "export_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>Always generated before access ends. A customer who leaves with their data leaves as a possible returner; one who cannot get it leaves as a complaint.</p>"
+  },
+  {
+   "default": "1",
+   "fieldname": "data_export_requested",
+   "fieldtype": "Check",
+   "label": "Export Requested"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "data_export_generated_on",
+   "fieldtype": "Datetime",
+   "label": "Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "data_export_file",
+   "fieldtype": "Attach",
+   "label": "Export File",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "data_export_downloaded_on",
+   "fieldtype": "Datetime",
+   "label": "Downloaded On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Coming Back"
+  },
+  {
+   "fieldname": "reactivation_deadline",
+   "fieldtype": "Date",
+   "label": "Reactivation Deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention_expiry_date",
+   "fieldtype": "Date",
+   "label": "Data Retained Until",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "subscription_event",
+   "fieldtype": "Link",
+   "label": "Event",
+   "options": "Subscription Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Cancellation Request",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Cancellation Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Admin",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Retention Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Billing Manager",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

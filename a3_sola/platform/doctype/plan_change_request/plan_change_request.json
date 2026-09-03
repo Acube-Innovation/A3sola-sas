@@ -1,0 +1,393 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tenant",
+  "platform_subscription",
+  "request_type",
+  "cb_1",
+  "status",
+  "requested_by",
+  "requested_by_user",
+  "requested_on",
+  "sb_2",
+  "current_plan",
+  "current_cycle",
+  "cb_3",
+  "current_users",
+  "current_recurring_amount",
+  "sb_4",
+  "new_plan",
+  "new_cycle",
+  "cb_5",
+  "new_included_users",
+  "new_recurring_amount",
+  "sb_6",
+  "effective_type",
+  "effective_date",
+  "sb_7",
+  "proration_note",
+  "proration",
+  "net_amount_payable",
+  "cb_8",
+  "credit_carried_forward",
+  "payment_order",
+  "payment_status",
+  "sb_9",
+  "mandate_note",
+  "mandate_impact",
+  "mandate_impact_detail",
+  "cb_10",
+  "new_collection_route",
+  "sb_11",
+  "downgrade_blockers",
+  "users_to_remove",
+  "sb_12",
+  "applied_on",
+  "subscription_event",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tenant",
+   "options": "Tenant"
+  },
+  {
+   "fieldname": "platform_subscription",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subscription",
+   "options": "Platform Subscription",
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Upgrade\nDowngrade\nCycle Change\nPlan Swap",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nAwaiting Payment\nAwaiting User Reduction\nScheduled\nApplied\nFailed\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "Internal User",
+   "fieldname": "requested_by",
+   "fieldtype": "Select",
+   "label": "Requested By",
+   "options": "Tenant Self Service\nInternal User\nAPI"
+  },
+  {
+   "fieldname": "requested_by_user",
+   "fieldtype": "Link",
+   "label": "Requested By User",
+   "options": "User"
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "label": "Requested On"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Current"
+  },
+  {
+   "fieldname": "current_plan",
+   "fieldtype": "Link",
+   "label": "Current Plan",
+   "options": "Subscription Plan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_cycle",
+   "fieldtype": "Data",
+   "label": "Current Cycle",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_users",
+   "fieldtype": "Int",
+   "label": "Current Seats",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_recurring_amount",
+   "fieldtype": "Currency",
+   "label": "Current Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_4",
+   "fieldtype": "Section Break",
+   "label": "New"
+  },
+  {
+   "fieldname": "new_plan",
+   "fieldtype": "Link",
+   "label": "New Plan",
+   "options": "Subscription Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "new_cycle",
+   "fieldtype": "Select",
+   "label": "New Cycle",
+   "options": "\nMonthly\nAnnual"
+  },
+  {
+   "fieldname": "cb_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "new_included_users",
+   "fieldtype": "Int",
+   "label": "New Seats",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_recurring_amount",
+   "fieldtype": "Currency",
+   "label": "New Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "When"
+  },
+  {
+   "description": "Upgrades take effect at once. Downgrades wait for the period boundary.",
+   "fieldname": "effective_type",
+   "fieldtype": "Select",
+   "label": "Effective",
+   "options": "Immediate\nNext Period",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date"
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Proration"
+  },
+  {
+   "fieldname": "proration_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>Every figure below comes from one function - <code>api/lifecycle/proration.py</code> - and the customer sees this breakdown before confirming. There is no second implementation anywhere.</p>"
+  },
+  {
+   "fieldname": "proration",
+   "fieldtype": "Table",
+   "label": "Proration",
+   "options": "Proration Line"
+  },
+  {
+   "fieldname": "net_amount_payable",
+   "fieldtype": "Currency",
+   "label": "Payable Now",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "credit_carried_forward",
+   "fieldtype": "Currency",
+   "label": "Credit Carried Forward",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "payment_order",
+   "fieldtype": "Link",
+   "label": "Payment Order",
+   "options": "Payment Order",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "payment_status",
+   "fieldtype": "Data",
+   "label": "Payment Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Mandate Impact"
+  },
+  {
+   "fieldname": "mandate_note",
+   "fieldtype": "HTML",
+   "options": "<p class='text-muted'>A change that silently breaks next month's collection is the most damaging bug this flow could ship, so both the mandate's registered maximum and the RBI AFA ceiling are recomputed here and acted on.</p>"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "mandate_impact",
+   "fieldtype": "Select",
+   "label": "Mandate Impact",
+   "options": "None\nRequires New Maximum\nRequires Re-registration\nRequires Route Change",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "mandate_impact_detail",
+   "fieldtype": "Small Text",
+   "label": "Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "new_collection_route",
+   "fieldtype": "Data",
+   "label": "New Collection Route",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Downgrade"
+  },
+  {
+   "fieldname": "downgrade_blockers",
+   "fieldtype": "Small Text",
+   "label": "Blockers",
+   "read_only": 1
+  },
+  {
+   "fieldname": "users_to_remove",
+   "fieldtype": "Int",
+   "label": "Users to Remove",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "applied_on",
+   "fieldtype": "Datetime",
+   "label": "Applied On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "subscription_event",
+   "fieldtype": "Link",
+   "label": "Event",
+   "options": "Subscription Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Plan Change Request",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Plan Change Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Admin",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Retention Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Billing Manager",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

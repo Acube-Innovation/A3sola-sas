@@ -43,12 +43,23 @@ def get_data(filters):
 		],
 		limit_page_length=0,
 	)
+	# One query for every subscription named, instead of one per mandate. At 554 mandates
+	# this report issued 563 queries; the number of mandates is the number of paying
+	# customers, so it grows with the business and it grows on the report the billing team
+	# opens to find out which collections are about to fail.
+	subscriptions = {row.platform_subscription for row in rows if row.platform_subscription}
+	amounts = {
+		r.name: r.recurring_amount
+		for r in frappe.get_all(
+			"Platform Subscription",
+			filters={"name": ["in", list(subscriptions) or [""]]},
+			fields=["name", "recurring_amount"],
+		)
+	}
+
 	for row in rows:
 		current = flt(
-			frappe.db.get_value(
-				"Platform Subscription", row.platform_subscription, "recurring_amount"
-			)
-			or row.recurring_debit_amount
+			amounts.get(row.platform_subscription) or row.recurring_debit_amount
 		)
 		row["covers"] = 1 if current <= flt(row.registered_max_amount) else 0
 		row["days_to_expiry"] = (

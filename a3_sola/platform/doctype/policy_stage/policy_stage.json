@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "creation": "2026-09-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sequence",
+  "stage_code",
+  "from_state",
+  "to_state",
+  "trigger_type",
+  "day_offset",
+  "access_effect",
+  "cb_1",
+  "requires_approval",
+  "notify_tenant",
+  "notification_template",
+  "notify_internal",
+  "is_reversible",
+  "sb_2",
+  "description"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sequence",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "stage_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Code",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "from_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "From State",
+   "options": "Draft\nPending Payment\nTrialing\nActive\nPast Due\nGrace\nSuspended\nCancelling\nCancelled\nTerminated"
+  },
+  {
+   "columns": 1,
+   "fieldname": "to_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "To State",
+   "options": "Draft\nPending Payment\nTrialing\nActive\nPast Due\nGrace\nSuspended\nCancelling\nCancelled\nTerminated"
+  },
+  {
+   "columns": 1,
+   "fieldname": "trigger_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Trigger",
+   "options": "Days After Due Date\nDays After Failure\nDunning Exhausted\nDays Before Period End\nManual\nImmediate",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "day_offset",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Day Offset"
+  },
+  {
+   "columns": 1,
+   "default": "None",
+   "fieldname": "access_effect",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Access Effect",
+   "options": "None\nBanner Only\nRead Only\nBlocked"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requires_approval",
+   "fieldtype": "Check",
+   "label": "Needs Approval"
+  },
+  {
+   "default": "1",
+   "fieldname": "notify_tenant",
+   "fieldtype": "Check",
+   "label": "Notify Tenant"
+  },
+  {
+   "fieldname": "notification_template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "notify_internal",
+   "fieldtype": "Check",
+   "label": "Notify Internal Team"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_reversible",
+   "fieldtype": "Check",
+   "label": "Reversible"
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Policy Stage",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

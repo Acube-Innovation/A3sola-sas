@@ -283,23 +283,17 @@ def upgrade_message(module):
 
 # ------------------------------------------------------------------- seats
 def add_seats(tenant, count):
-	"""PHASE 7 IMPLEMENTS THIS.
+	"""Phase 7 implements this. See a3_sola/api/lifecycle/seats.py.
 
-	Contract:
-
-	* Called when a customer buys additional users mid-cycle.
-	* It must RE-SNAPSHOT the tenant's `additional_users` and `user_quota` - the whole
-	  point of the snapshot is that it changes only on an explicit commercial event, and
-	  this is one.
-	* It must trigger prorated billing for the remainder of the current period through
-	  the Phase 5 payment path, and must not grant the seats until that payment is
-	  confirmed by webhook.
-	* It must call `apply_module_entitlements` afterwards so role assignment stays in step.
+	The contract this stub promised is kept: the quota is re-snapshotted, prorated billing
+	goes through the Phase 5 path, and `apply_module_entitlements` runs afterwards. Phase 7
+	widens it in one deliberate way - a long-tenured tenant with no failed payments gets
+	the seat immediately and is billed on the next invoice, because a hard quota block that
+	takes three days to clear becomes a support ticket and a bad review.
 	"""
-	raise NotImplementedError(
-		"Phase 7 implements add_seats: re-snapshot the quota and raise prorated billing "
-		"for the added seats."
-	)
+	from a3_sola.api.lifecycle.seats import add_seats as implementation
+
+	return implementation(tenant, count)
 
 
 # ------------------------------------------------------------------- nightly

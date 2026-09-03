@@ -17,8 +17,16 @@ patch, and it is worth knowing: editing a shipped patch is a no-op.
 
     Company    Starter Solar EPC
     User       starter.engineer@example.com
-    Records    one of each - lead, consumer, survey, estimate, proposal, installation,
-               project, billing plan, O&M contract, subscription, tenant, and the rest
+    Records    one job followed from the first enquiry to its fourth year of service -
+               lead, consumer, survey, estimate, eligibility check, proposal, quotation,
+               order, installation, work orders, portal application, fee payment and its
+               recovery, loan, subsidy claim, snag, commissioning report, net metering
+               agreement, project, billing plan, O&M contract, visits, tickets, warranty
+               claim and generation readings - plus the platform's own chain from signup
+               to an invited tenant user
+
+Every document links back to the one before it, so the whole job can be walked forward
+from the Connections panel at the foot of each form. See `docs/STARTER_DATASET.md`.
 
 Idempotent: a second migrate creates nothing.
 

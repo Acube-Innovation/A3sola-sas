@@ -10,7 +10,7 @@
  "sequence_id": 33.0,
  "public": 1,
  "is_hidden": 0,
- "content": "[{\"id\":\"sp-1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Solar Projects</span>\",\"col\":12}},{\"id\":\"sp-2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":3}},{\"id\":\"sp-3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Solar Billing Plan\",\"col\":3}},{\"id\":\"sp-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Service Ticket\",\"col\":3}},{\"id\":\"sp-5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project Profitability\",\"col\":3}},{\"id\":\"sp-6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Billing vs Collection\",\"col\":3}},{\"id\":\"RUOWYbaPeh\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sp-28\",\"type\":\"card\",\"data\":{\"card_name\":\"Delivery and costing\",\"col\":4}},{\"id\":\"sp-29\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing and recovery\",\"col\":4}},{\"id\":\"sp-30\",\"type\":\"card\",\"data\":{\"card_name\":\"O&M contracts\",\"col\":4}},{\"id\":\"sp-31\",\"type\":\"card\",\"data\":{\"card_name\":\"Service and warranty\",\"col\":4}},{\"id\":\"sp-32\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"sp-33\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}}]",
+ "content": "[{\"id\": \"sp-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Solar Projects</span>\", \"col\": 12}}, {\"id\": \"sp-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project\", \"col\": 3}}, {\"id\": \"sp-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Solar Billing Plan\", \"col\": 3}}, {\"id\": \"sp-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Service Ticket\", \"col\": 3}}, {\"id\": \"sp-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Project Profitability\", \"col\": 3}}, {\"id\": \"sp-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Billing vs Collection\", \"col\": 3}}, {\"id\": \"RUOWYbaPeh\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sp-28\", \"type\": \"card\", \"data\": {\"card_name\": \"Delivery and costing\", \"col\": 4}}, {\"id\": \"sp-29\", \"type\": \"card\", \"data\": {\"card_name\": \"Billing and recovery\", \"col\": 4}}, {\"id\": \"sp-30\", \"type\": \"card\", \"data\": {\"card_name\": \"O&M contracts\", \"col\": 4}}, {\"id\": \"sp-31\", \"type\": \"card\", \"data\": {\"card_name\": \"Service and warranty\", \"col\": 4}}, {\"id\": \"sp-32\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"sp-33\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuration\", \"col\": 4}}, {\"id\": \"solar-projects-extra-0\", \"type\": \"card\", \"data\": {\"card_name\": \"Invoicing and payments\", \"col\": 4}}]",
  "hide_custom": 0,
  "links": [
   {
@@ -391,6 +391,48 @@
    "is_query_report": 0,
    "link_count": 0,
    "parentfield": "links"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Invoicing and payments",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break",
+   "icon": "money-coins-1"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payment Entry",
+   "link_count": 0,
+   "link_to": "Payment Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Journal Entry",
+   "link_count": 0,
+   "link_to": "Journal Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
  "shortcuts": [
@@ -435,7 +477,7 @@
    "parentfield": "shortcuts"
   }
  ],
- "modified": "2026-08-28 12:35:49.390443",
+ "modified": "2026-08-28 21:00:00.000000",
  "creation": "2026-08-28 12:35:49.390443",
  "owner": "Administrator",
  "modified_by": "Administrator",

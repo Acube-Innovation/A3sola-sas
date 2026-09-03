@@ -1,7 +1,10 @@
 {
  "actions": [],
  "allow_rename": 0,
+ "autoname": "format:AUD-{YYYY}-{#####}",
  "creation": "2026-08-25 13:00:00.000000",
+ "default_view": "List",
+ "description": "Append-only. Nobody may edit or delete an entry once written, not even the Administrator - each row carries a hash of its own content chained to the row before it, so a row that is altered in the database can be detected.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -43,28 +46,28 @@
   {
    "fieldname": "entry_type",
    "fieldtype": "Select",
-   "label": "Event",
-   "options": "Refund Requested\nRefund Approved\nRefund Processed\nRefund Failed\nManual Payment Override\nPayment Status Refetched\nPayment Link Reissued\nWebhook Reprocessed\nMandate Re-registered\nMandate Cancelled\nReconciliation Imported\nReconciliation Submitted\nAccounting Posted\nAccounting Reposted\nGateway Credentials Changed\nGateway Mode Changed\nCompliance Setting Changed",
-   "reqd": 1,
-   "read_only": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Event",
+   "options": "Refund Requested\nRefund Approved\nRefund Processed\nRefund Failed\nManual Payment Override\nPayment Status Refetched\nPayment Link Reissued\nWebhook Reprocessed\nMandate Re-registered\nMandate Cancelled\nReconciliation Imported\nReconciliation Submitted\nAccounting Posted\nAccounting Reposted\nGateway Credentials Changed\nGateway Mode Changed\nCompliance Setting Changed\nSupport Session Started\nSupport Session Ended",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "subject",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Summary",
-   "reqd": 1,
    "read_only": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "occurred_on",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Occurred on",
-   "reqd": 1,
    "read_only": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "cb_2",
@@ -73,11 +76,11 @@
   {
    "fieldname": "actor",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Performed by",
    "options": "User",
-   "read_only": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "read_only": 1
   },
   {
    "fieldname": "actor_roles",
@@ -99,18 +102,18 @@
   {
    "fieldname": "reference_doctype",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Reference type",
    "options": "DocType",
-   "read_only": 1,
-   "in_standard_filter": 1
+   "read_only": 1
   },
   {
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
    "label": "Reference",
    "options": "reference_doctype",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "cb_4",
@@ -119,10 +122,10 @@
   {
    "fieldname": "platform_subscription",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Subscription",
    "options": "Platform Subscription",
-   "read_only": 1,
-   "in_standard_filter": 1
+   "read_only": 1
   },
   {
    "fieldname": "amount",
@@ -132,12 +135,12 @@
    "read_only": 1
   },
   {
+   "default": "INR",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
    "options": "Currency",
-   "read_only": 1,
-   "default": "INR"
+   "read_only": 1
   },
   {
    "fieldname": "sb_5",
@@ -145,11 +148,11 @@
    "label": "Why, and what changed"
   },
   {
+   "description": "The operator's own words. Required for every manual override.",
    "fieldname": "reason",
    "fieldtype": "Text",
    "label": "Reason given",
-   "read_only": 1,
-   "description": "The operator's own words. Required for every manual override."
+   "read_only": 1
   },
   {
    "fieldname": "cb_6",
@@ -162,11 +165,11 @@
    "read_only": 1
   },
   {
+   "description": "Secrets are never stored here - only whether one was set.",
    "fieldname": "value_before",
    "fieldtype": "Small Text",
    "label": "Before",
-   "read_only": 1,
-   "description": "Secrets are never stored here - only whether one was set."
+   "read_only": 1
   },
   {
    "fieldname": "value_after",
@@ -187,11 +190,11 @@
    "read_only": 1
   },
   {
+   "description": "SHA-256 over this entry's content and the previous entry's hash.",
    "fieldname": "entry_hash",
    "fieldtype": "Data",
    "label": "Entry hash",
-   "read_only": 1,
-   "description": "SHA-256 over this entry's content and the previous entry's hash."
+   "read_only": 1
   },
   {
    "fieldname": "cb_8",
@@ -216,38 +219,35 @@
  "modified_by": "Administrator",
  "module": "Platform",
  "name": "Platform Audit Entry",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
-   "role": "System Manager",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
   },
   {
-   "role": "Platform Admin",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Platform Admin",
+   "share": 1
   }
  ],
+ "search_fields": "entry_type,actor,reference_name",
+ "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 0,
- "autoname": "format:AUD-{YYYY}-{#####}",
- "naming_rule": "Expression",
  "title_field": "subject",
- "show_title_field_in_link": 1,
- "search_fields": "entry_type,actor,reference_name",
- "description": "Append-only. Nobody may edit or delete an entry once written, not even the Administrator - each row carries a hash of its own content chained to the row before it, so a row that is altered in the database can be detected.",
- "default_view": "List"
+ "track_changes": 0
 }
