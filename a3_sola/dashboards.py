@@ -36,9 +36,9 @@ def get_lead_dashboard_data(data=None):
 		data,
 		"lead",
 		[
-			(_("Solar pipeline"), ["Solar Consumer", "Solar Proposal"]),
+			(_("Solar pipeline"), ["Solar Consumer", "Subsidy Eligibility Check", "Solar Proposal"]),
 		],
-		non_standard={"Solar Consumer": "lead", "Solar Proposal": "lead"},
+		non_standard={"Solar Consumer": "lead", "Subsidy Eligibility Check": "lead", "Solar Proposal": "lead"},
 	)
 
 

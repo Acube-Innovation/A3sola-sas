@@ -1,0 +1,91 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Leads</h2>
+		<p class="a3s-main__sub">Prospects and enquiries, stored in ERPNext.</p>
+	</div>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/leads/new">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-lead"></use></svg>
+		<span>New lead</span>
+	</a>
+</div>
+
+{#- ---- filters (GET, so a search is a shareable URL) ---------------------- #}
+<form class="a3s-toolbar" method="get" action="/a3solaportal/leads" role="search">
+	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
+	       placeholder="Search name, company, email or phone" aria-label="Search leads">
+	<select class="a3s-toolbar__select" name="status" aria-label="Filter by status">
+		<option value="">All statuses</option>
+		{%- for opt in status_options %}
+		<option value="{{ opt }}"{% if opt == status_filter %} selected{% endif %}>{{ opt }}</option>
+		{%- endfor %}
+	</select>
+	<button type="submit" class="a3s-btn a3s-btn--ghost">Filter</button>
+	{%- if q or status_filter %}
+	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads">Clear</a>
+	{%- endif %}
+</form>
+
+{% if leads %}
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Contact</th>
+				<th>Status</th>
+				<th class="a3s-table__num">Created</th>
+			</tr>
+		</thead>
+		<tbody>
+			{%- for lead in leads %}
+			<tr>
+				<td>
+					<a class="a3s-table__link" href="{{ lead.route }}">{{ lead.display | e }}</a>
+					{%- if lead.company_name and lead.company_name != lead.display %}
+					<span class="a3s-table__meta">{{ lead.company_name | e }}</span>
+					{%- endif %}
+					{%- if lead.place %}
+					<span class="a3s-table__meta a3s-table__place">
+						{%- if lead.city %}<span class="a3s-tag">{{ lead.city | e }}</span>{% endif -%}
+						{%- if lead.city and lead.state %}, {% endif -%}
+						{%- if lead.state %}{{ lead.state | e }}{% endif -%}
+					</span>
+					{%- endif %}
+				</td>
+				<td>
+					{%- if lead.email_id %}<span class="a3s-table__meta">{{ lead.email_id }}</span>{% endif %}
+					{%- if lead.mobile_no %}<span class="a3s-table__meta">{{ lead.mobile_no }}</span>{% endif %}
+					{%- if not lead.email_id and not lead.mobile_no %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
+				</td>
+				<td>
+					{%- if lead.solar %}
+					<span class="a3s-table__meta a3s-table__solar">{{ lead.solar | map("e") | join(", ") }}</span>
+					{%- endif %}
+					<span class="a3s-badge a3s-badge--{{ lead.status | lower | replace(' ', '-') }}">{{ lead.status | e }}</span>
+				</td>
+				<td class="a3s-table__num">{{ lead.created }}</td>
+			</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+</div>
+<p class="a3s-list__note">
+	Showing {{ total }} lead{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.
+</p>
+{% else %}
+<div class="a3s-card a3s-empty">
+	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-lead"></use></svg></span>
+	{%- if q or status_filter %}
+	<h3 class="a3s-empty__title">No leads match</h3>
+	<p class="a3s-empty__text">Nothing matches that search. <a href="/a3solaportal/leads">Clear the filters</a> to see every lead.</p>
+	{%- else %}
+	<h3 class="a3s-empty__title">No leads yet</h3>
+	<p class="a3s-empty__text">Capture your first enquiry and it will appear here.</p>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/leads/new">New lead</a>
+	{%- endif %}
+</div>
+{% endif %}
+{% endblock %}

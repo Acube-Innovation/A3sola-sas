@@ -1,0 +1,171 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head a3s-detail__head">
+	<p class="a3s-detail__eyebrow">{{ lead.name | e }}</p>
+	<h2 class="a3s-main__title a3s-detail__title">
+		<span>{{ title | e }}</span>
+		<span class="a3s-badge a3s-badge--{{ status_slug }}">{{ lead.status | e }}</span>
+	</h2>
+	{%- if can_write %}
+	<div class="a3s-detail__actions">
+		<a class="a3s-btn a3s-btn--primary" href="{{ edit_route }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
+			<span>Edit</span>
+		</a>
+	</div>
+	{%- endif %}
+	{%- if subline %}
+	<p class="a3s-main__sub">{{ subline | map("e") | join(" &middot; ") }}</p>
+	{%- endif %}
+</div>
+
+<div class="a3s-edit">
+
+	{#- ================================================= left: the sections ===== #}
+	<div class="a3s-edit__main">
+
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">About</h3>
+			<p class="a3s-edit__about">{{ about | e }}</p>
+			<p class="a3s-edit__meta">
+				<span>Created {{ created }}</span>
+				<span>Updated {{ modified }}</span>
+				{%- if lead.lead_owner %}<span>Owner {{ lead.lead_owner | e }}</span>{% endif %}
+			</p>
+		</section>
+
+		{%- for section in sections %}
+		<section class="a3s-card a3s-edit__card" id="sec-{{ section.key }}" aria-labelledby="sec-{{ section.key }}-title">
+			<h3 class="a3s-edit__card-title" id="sec-{{ section.key }}-title">{{ section.label }}</h3>
+			<div class="a3s-facts">
+				{%- for row in section.rows %}
+				<div class="a3s-fact{% if row.kind == "multiline" %} a3s-fact--wide{% endif %}">
+					<span class="a3s-fact__label">{{ row.label | e }}</span>
+					{%- if row.kind == "empty" %}
+					<span class="a3s-fact__value is-empty">&mdash;</span>
+					{%- elif row.kind == "badge" %}
+					<span class="a3s-fact__value"><span class="a3s-badge a3s-badge--{{ row.slug }}">{{ row.value | e }}</span></span>
+					{%- elif row.kind == "pill" %}
+					<span class="a3s-fact__value"><span class="a3s-pill a3s-pill--amber">{{ row.value | e }}</span></span>
+					{%- elif row.kind == "link" %}
+					<span class="a3s-fact__value"><a href="{{ row.href | e }}"{% if row.external %} target="_blank" rel="noopener"{% endif %}>{{ row.value | e }}</a></span>
+					{%- elif row.kind == "multiline" %}
+					<span class="a3s-fact__value a3s-dl__multiline">{{ row.value | e }}</span>
+					{%- else %}
+					<span class="a3s-fact__value">{{ row.value | e }}</span>
+					{%- endif %}
+				</div>
+				{%- endfor %}
+			</div>
+		</section>
+		{%- endfor %}
+
+		{%- if outreach_log %}
+		<section class="a3s-card a3s-edit__card" aria-labelledby="sec-outreach-log">
+			<h3 class="a3s-edit__card-title" id="sec-outreach-log">Outreach log</h3>
+			<div class="a3s-tablewrap">
+				<table class="a3s-table">
+					<thead>
+						<tr>
+							<th>When</th>
+							<th>Channel</th>
+							<th>Step</th>
+							<th>Call status</th>
+							<th>Outcome</th>
+							<th>Next action</th>
+							<th>Logged by</th>
+						</tr>
+					</thead>
+					<tbody>
+						{%- for row in outreach_log %}
+						<tr>
+							<td>{{ row.when | e }}</td>
+							<td>{{ row.channel | e }}</td>
+							<td>{{ row.step | e }}</td>
+							<td>{{ row.call_status | e }}</td>
+							<td class="a3s-dl__multiline">{{ row.outcome | e }}</td>
+							<td class="a3s-dl__multiline">{{ row.next_action | e }}</td>
+							<td>{{ row.logged_by | e }}</td>
+						</tr>
+						{%- endfor %}
+					</tbody>
+				</table>
+			</div>
+		</section>
+		{%- endif %}
+
+		{%- if notes %}
+		<section class="a3s-card a3s-edit__card" aria-labelledby="sec-notes">
+			<h3 class="a3s-edit__card-title" id="sec-notes">Notes</h3>
+			<ul class="a3s-notes">
+				{%- for n in notes %}
+				<li class="a3s-note">
+					<p class="a3s-note__text">{{ n.text | e }}</p>
+					<p class="a3s-note__meta">{{ n.by | e }}{% if n.by and n.on %} &middot; {% endif %}{{ n.on | e }}</p>
+				</li>
+				{%- endfor %}
+			</ul>
+		</section>
+		{%- endif %}
+	</div>
+
+	{#- ================================================ right: the snapshot ===== #}
+	<aside class="a3s-edit__side">
+
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">Snapshot</h3>
+			<div class="a3s-tiles">
+				<div class="a3s-tile">
+					<span class="a3s-tile__icon a3s-tile__icon--green" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-bolt"></use></svg></span>
+					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.touches }}</span><span class="a3s-tile__label">Touches</span></span>
+				</div>
+				<div class="a3s-tile">
+					<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-doc"></use></svg></span>
+					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.notes }}</span><span class="a3s-tile__label">Notes</span></span>
+				</div>
+				<div class="a3s-tile">
+					<span class="a3s-tile__icon a3s-tile__icon--sky" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-clipboard"></use></svg></span>
+					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.days_open }}</span><span class="a3s-tile__label">Days open</span></span>
+				</div>
+				<div class="a3s-tile">
+					<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-check"></use></svg></span>
+					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ filled_pct }}%</span><span class="a3s-tile__label">Filled</span></span>
+				</div>
+			</div>
+			<div class="a3s-progress" role="progressbar" aria-label="Fields filled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ filled_pct }}">
+				<span class="a3s-progress__fill" style="width: {{ filled_pct }}%"></span>
+			</div>
+			<p class="a3s-edit__hint">{{ filled }} of {{ total }} fields filled.</p>
+		</section>
+
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">At a glance</h3>
+			<dl class="a3s-glance">
+				{%- for g in glance %}
+				<div class="a3s-glance__row">
+					<dt>{{ g.label | e }}</dt>
+					<dd>
+						{%- if g.kind == "badge" %}
+						<span class="a3s-badge a3s-badge--{{ status_slug }}">{{ g.text | e }}</span>
+						{%- elif g.kind == "followup" %}
+						<span class="a3s-pill {{ 'a3s-pill--red' if snapshot.followup_status == 'FOLLOW UP DUE' else 'a3s-pill--green' }}">
+							<span class="a3s-dot {{ 'a3s-dot--red' if snapshot.followup_status == 'FOLLOW UP DUE' else 'a3s-dot--green' }}" aria-hidden="true"></span>
+							{{ (snapshot.followup_status or "OK") | title | e }}
+						</span>
+						{%- else %}
+						<span class="a3s-pill a3s-pill--amber{% if not g.text %} is-empty{% endif %}">{{ g.text | e or "—" }}</span>
+						{%- endif %}
+					</dd>
+				</div>
+				{%- endfor %}
+			</dl>
+			{%- if snapshot.non_connects %}
+			<p class="a3s-edit__hint">{{ snapshot.non_connects }} consecutive non-connect{{ "" if snapshot.non_connects == 1 else "s" }}.</p>
+			{%- endif %}
+		</section>
+
+		{%- include "templates/includes/portal_chain_steps.html" %}
+	</aside>
+</div>
+{% endblock %}

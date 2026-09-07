@@ -1,0 +1,231 @@
+{#- The cost estimate builder: a Quotation assembled from Solar Packages. Context from
+    cost_estimates_seed.seed_builder - `builder_json` carries the catalogue, the lead
+    list and (for an existing estimate) the record; `mode` is new / edit / view. -#}
+<script type="application/json" id="a3s-ce-data">{{ builder_json }}</script>
+
+<div class="a3s-page__head a3s-detail__head">
+	<p class="a3s-detail__eyebrow" id="ce-eyebrow">{% if record %}{{ record.name | e }}{% else %}New cost estimate{% endif %}</p>
+	<h2 class="a3s-main__title a3s-detail__title">
+		<span id="ce-title">{% if record %}{{ (record.header.customer_name or record.name) | e }}{% else %}Cost estimate{% endif %}</span>
+		<span class="a3s-badge" id="ce-status"{% if not record %} hidden{% endif %}>{{ record.status | e if record else "" }}</span>
+	</h2>
+	<div class="a3s-detail__actions" id="ce-actions">
+		{%- if record %}
+		<a class="a3s-btn a3s-btn--ghost" href="{{ record.desk }}" target="_blank" rel="noopener" id="ce-desk">Open in ERPNext</a>
+		{%- endif %}
+	</div>
+	<p class="a3s-main__sub">
+		{%- if mode == "view" %}Stored in ERPNext as a Quotation &middot; read only. Amend it from ERPNext to change it.
+		{%- else %}Pick the packages on the left, price on the right. Saved to ERPNext as a Quotation.{% endif %}
+	</p>
+</div>
+
+<div class="a3s-ce" id="a3s-ce" data-mode="{{ mode }}"{% if mode == "view" %} data-readonly="1"{% endif %}>
+
+	{#- ============================================================ left ===== #}
+	<div class="a3s-ce__main">
+
+		{#- Who it is for, what it refers to, and when. Applies to every tab. -#}
+		<section class="a3s-card a3s-edit__card a3s-ce-head">
+			<h3 class="a3s-edit__card-title">Quotation details</h3>
+			<div class="a3s-ce-head__grid">
+				<div class="a3s-field">
+					<label for="ce-quotation-to">Quotation to</label>
+					<select id="ce-quotation-to">
+						<option value="Lead">Lead</option>
+						<option value="Customer">Customer</option>
+					</select>
+				</div>
+				<div class="a3s-field a3s-ce-head__party a3s-combo">
+					<label for="ce-party"><span id="ce-party-label">Lead</span> <span class="a3s-req">*</span></label>
+					<input type="search" id="ce-party" autocomplete="off" role="combobox" aria-expanded="false"
+					       aria-controls="ce-party-list" aria-autocomplete="list" placeholder="Search by name, phone or email">
+					<div class="a3s-combo__list" id="ce-party-list" role="listbox" hidden></div>
+					<p class="a3s-field__hint" id="ce-party-sub">Start typing to find the lead.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-reference">Reference document</label>
+					<select id="ce-reference"><option value="">&mdash; none on file &mdash;</option></select>
+					<p class="a3s-field__hint">Consumer, design estimate, proposal or eligibility check already on file.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-date">Date</label>
+					<input type="date" id="ce-date">
+				</div>
+				<div class="a3s-field">
+					<label for="ce-valid-till">Valid till</label>
+					<input type="date" id="ce-valid-till">
+				</div>
+			</div>
+		</section>
+
+		<div class="a3s-ce-tabs" role="tablist" aria-label="Cost estimate sections">
+			<button type="button" role="tab" id="ce-tab-items" data-tab="items" aria-selected="true" aria-controls="ce-panel-items">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-clipboard"></use></svg>
+				<span>Items &amp; BOM</span>
+				<span class="a3s-ce-tabs__n" id="ce-tab-items-n">0</span>
+			</button>
+			<button type="button" role="tab" id="ce-tab-solar" data-tab="solar" aria-selected="false" aria-controls="ce-panel-solar" tabindex="-1">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-bolt"></use></svg>
+				<span>Solar details</span>
+			</button>
+			<button type="button" role="tab" id="ce-tab-terms" data-tab="terms" aria-selected="false" aria-controls="ce-panel-terms" tabindex="-1">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+				<span>Terms</span>
+			</button>
+		</div>
+
+		{#- Tab 1: the catalogue. Packages with their bill of materials, then add-ons. -#}
+		<section class="a3s-card a3s-edit__card a3s-ce-panel" id="ce-panel-items" role="tabpanel" aria-labelledby="ce-tab-items">
+			<div class="a3s-ce-cat-head">
+				<h3 class="a3s-edit__card-title">Solar packages</h3>
+				<input type="search" class="a3s-toolbar__search a3s-ce-cat-head__search" id="ce-filter"
+				       placeholder="Filter by size, name or inverter" aria-label="Filter packages">
+			</div>
+			<div class="a3s-ce-cat" id="ce-packages"></div>
+
+			<div class="a3s-ce-cat-head a3s-ce-cat-head--addons">
+				<h3 class="a3s-edit__card-title">Add-on items</h3>
+			</div>
+			<div class="a3s-addons" id="ce-addons"></div>
+		</section>
+
+		{#- Tab 2: the solar layer. Links to the chain, the figures they yield, finance. -#}
+		<section class="a3s-card a3s-edit__card a3s-ce-panel" id="ce-panel-solar" role="tabpanel" aria-labelledby="ce-tab-solar" hidden>
+			<h3 class="a3s-edit__card-title">Solar details</h3>
+			<div class="a3s-form__grid a3s-ce-grid">
+				<div class="a3s-field">
+					<label for="ce-solar-consumer">Solar consumer</label>
+					<select id="ce-solar-consumer" data-solar="solar_consumer"><option value="">&mdash;</option></select>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-solar-estimate">Design estimate</label>
+					<select id="ce-solar-estimate" data-solar="solar_design_estimate"><option value="">&mdash;</option></select>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-selected-option">Selected option</label>
+					<select id="ce-selected-option" data-solar="selected_option"><option value="">&mdash;</option></select>
+					<p class="a3s-field__hint">Mandatory when the estimate quotes more than one option.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-eligibility">Eligibility check</label>
+					<select id="ce-eligibility" data-solar="subsidy_eligibility_check"><option value="">&mdash;</option></select>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-proposal">Solar proposal</label>
+					<select id="ce-proposal" data-solar="solar_proposal"><option value="">&mdash;</option></select>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-solar-package">Solar package</label>
+					<select id="ce-solar-package" data-solar="solar_package"><option value="">&mdash; from the first package line &mdash;</option></select>
+				</div>
+			</div>
+
+			<h4 class="a3s-edit__subtitle">Figures</h4>
+			<p class="a3s-edit__hint a3s-ce-hint">From the design estimate when one is linked, otherwise indicative from the package. The subsidy is paid by the government to the customer after commissioning and is never an item, a tax or a discount.</p>
+			<div class="a3s-ce-facts" id="ce-solar-facts"></div>
+
+			<h4 class="a3s-edit__subtitle">Statutory &amp; net meter</h4>
+			<p class="a3s-edit__hint a3s-ce-hint">DISCOM charges reimbursed against receipts. They print in their own block and never enter the price.</p>
+			<div class="a3s-ce-facts" id="ce-statutory-facts"></div>
+
+			<h4 class="a3s-edit__subtitle">Finance</h4>
+			<label class="a3s-check a3s-ce-check">
+				<input type="checkbox" id="ce-is-financed" data-solar="is_financed">
+				<span>This sale is financed</span>
+			</label>
+			<div class="a3s-form__grid a3s-ce-grid" id="ce-finance" hidden>
+				<div class="a3s-field"><label for="ce-lender">Lender</label><input type="text" id="ce-lender" data-solar="lender"></div>
+				<div class="a3s-field"><label for="ce-lender-branch">Branch</label><input type="text" id="ce-lender-branch" data-solar="lender_branch"></div>
+				<div class="a3s-field">
+					<label for="ce-loan-scheme">Loan scheme</label>
+					<select id="ce-loan-scheme" data-solar="loan_scheme">
+						<option value="">&mdash;</option>
+						<option>PM Surya Ghar via Jan Samarth</option>
+						<option>Bank Own Scheme</option>
+						<option>Other</option>
+					</select>
+				</div>
+				<div class="a3s-field"><label for="ce-jan-samarth">Jan Samarth ID</label><input type="text" id="ce-jan-samarth" data-solar="jan_samarth_id"></div>
+				<div class="a3s-field"><label for="ce-sanction-no">Loan sanction no</label><input type="text" id="ce-sanction-no" data-solar="loan_sanction_no"></div>
+				<div class="a3s-field"><label for="ce-sanctioned">Sanctioned amount</label><input type="number" step="any" min="0" id="ce-sanctioned" data-solar="sanctioned_amount"></div>
+				<div class="a3s-field">
+					<label for="ce-finance-status">Finance status</label>
+					<select id="ce-finance-status" data-solar="finance_status">
+						<option>Not Applied</option>
+						<option>Applied</option>
+						<option>Sanctioned</option>
+						<option>Rejected</option>
+						<option>Disbursed (Advance)</option>
+						<option>Disbursed (Full)</option>
+					</select>
+				</div>
+			</div>
+		</section>
+
+		{#- Tab 3: terms. A template, previewed, plus anything specific to this estimate. -#}
+		<section class="a3s-card a3s-edit__card a3s-ce-panel" id="ce-panel-terms" role="tabpanel" aria-labelledby="ce-tab-terms" hidden>
+			<h3 class="a3s-edit__card-title">Terms &amp; conditions</h3>
+			<div class="a3s-form__grid a3s-ce-grid">
+				<div class="a3s-field a3s-field--wide">
+					<label for="ce-terms-template">Terms template</label>
+					<select id="ce-terms-template"></select>
+				</div>
+			</div>
+			<div class="a3s-ce-terms a3s-prose" id="ce-terms-preview"></div>
+			<div class="a3s-field a3s-ce-terms__notes">
+				<label for="ce-terms-notes">Additional terms for this estimate</label>
+				<textarea id="ce-terms-notes" rows="4" placeholder="One point per line. Printed below the template."></textarea>
+			</div>
+			<div class="a3s-ce-notes">
+				<details class="a3s-ce-note"><summary>Delivery schedule</summary><div class="a3s-prose" id="ce-note-delivery"></div></details>
+				<details class="a3s-ce-note"><summary>GST treatment</summary><div class="a3s-prose" id="ce-note-gst"></div></details>
+				<details class="a3s-ce-note"><summary>Government subsidy</summary><div class="a3s-prose" id="ce-note-subsidy"></div></details>
+			</div>
+		</section>
+	</div>
+
+	{#- ============================================================ right ==== #}
+	<aside class="a3s-ce__side">
+		<section class="a3s-card a3s-edit__card a3s-pos">
+			<div class="a3s-pos__head">
+				<h3 class="a3s-edit__card-title">Cost</h3>
+				<span class="a3s-pos__count" id="ce-count"></span>
+			</div>
+
+			<div class="a3s-pos__lines" id="ce-lines"></div>
+
+			<div class="a3s-pos__adjust">
+				<div class="a3s-field">
+					<label for="ce-tax">GST</label>
+					<select id="ce-tax"></select>
+				</div>
+				<div class="a3s-field">
+					<label for="ce-discount">Discount</label>
+					<div class="a3s-pos__discount">
+						<select id="ce-discount-type" aria-label="Discount type">
+							<option value="amount">&#8377;</option>
+							<option value="percent">%</option>
+						</select>
+						<input type="number" id="ce-discount" min="0" step="any" placeholder="0" inputmode="decimal">
+					</div>
+				</div>
+			</div>
+
+			<div class="a3s-lines" id="ce-totals"></div>
+
+			<div class="a3s-pos__total">
+				<span>Grand total<small id="ce-words"></small></span>
+				<strong id="ce-grand">&#8377;0</strong>
+			</div>
+
+			<div class="a3s-pos__solar" id="ce-pos-solar" hidden></div>
+
+			<div class="a3s-edit__side-actions a3s-pos__actions">
+				<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" id="ce-save">Save draft</button>
+				<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--block" id="ce-submit" hidden>Submit estimate</button>
+				<p class="a3s-form__status" id="ce-msg" role="status" aria-live="polite"></p>
+			</div>
+		</section>
+	</aside>
+</div>

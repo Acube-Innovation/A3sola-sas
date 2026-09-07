@@ -1,0 +1,69 @@
+{%- set s = platform_settings -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Sign in &middot; {{ s.product_name or "a3 sola" }}</title>
+	<meta name="robots" content="noindex, nofollow">
+	{%- if s.brand_favicon %}
+	<link rel="icon" href="{{ s.brand_favicon }}">
+	{%- endif %}
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css?v={{ asset_version }}">
+</head>
+<body class="a3s">
+<main class="a3s-auth" id="main">
+	<div class="a3s-auth__inner">
+		<a class="a3s-logo a3s-auth__brand" href="{{ platform_base }}">
+			{%- if s.brand_logo %}
+			<img src="{{ s.brand_logo }}" alt="{{ s.product_name or 'a3 sola' }}">
+			{%- else %}
+			<span class="a3s-logo__mark" aria-hidden="true">&#9788;</span>
+			{%- endif %}
+			<span>{{ s.product_name or "a3 sola" }}</span>
+		</a>
+
+		<div class="a3s-card a3s-auth__card">
+			<h1 class="a3s-auth__title">Sign in</h1>
+			<p class="a3s-auth__sub">Use your {{ s.product_name or "a3 sola" }} account.</p>
+
+			<form class="a3s-form a3s-auth__form" id="a3s-login-form" method="post" novalidate
+			      data-redirect-to="{{ redirect_to }}">
+				<div class="a3s-field" id="a3s-login-usr-field">
+					<label for="a3s-login-usr">Email or Username</label>
+					<input type="text" id="a3s-login-usr" name="usr"
+					       autocomplete="username" autocapitalize="none"
+					       spellcheck="false" required autofocus>
+				</div>
+
+				<div class="a3s-field" id="a3s-login-pwd-field">
+					<label for="a3s-login-pwd">Password</label>
+					<input type="password" id="a3s-login-pwd" name="pwd"
+					       autocomplete="current-password" required>
+				</div>
+
+				<button type="submit" class="a3s-btn a3s-btn--primary a3s-auth__submit"
+				        id="a3s-login-submit">Sign in</button>
+
+				{#- Announced rather than merely coloured, so a screen reader hears the
+				    failure instead of the visitor being left on a form that did nothing. -#}
+				<p class="a3s-form__status a3s-auth__status" id="a3s-login-status"
+				   role="status" aria-live="polite"></p>
+			</form>
+
+			<p class="a3s-auth__alt">
+				<a href="/login#forgot">Forgot password?</a>
+			</p>
+		</div>
+
+		<p class="a3s-auth__foot">
+			{{ s.product_name or "a3 sola" }} &middot; An Acube Innovations product
+		</p>
+	</div>
+</main>
+<script src="/assets/a3_sola/js/portal_login.js?v={{ asset_version }}"></script>
+</body>
+</html>

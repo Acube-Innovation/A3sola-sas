@@ -477,7 +477,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_installation,spin",
  "description": "Executed on stamp paper with a schedule no other record holds, and a legal life of twenty-five years - so it is a record, not a one-off print."
 }

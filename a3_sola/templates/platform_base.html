@@ -30,7 +30,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css?v={{ asset_version }}">
 
 	<script type="application/ld+json">{{ organization_schema }}</script>
 	{%- block extra_schema %}{% endblock %}
@@ -163,7 +163,7 @@
 </footer>
 {%- endif %}
 
-<script src="/assets/a3_sola/js/platform.js"></script>
+<script src="/assets/a3_sola/js/platform.js?v={{ asset_version }}"></script>
 {%- block extra_scripts %}{% endblock %}
 </body>
 </html>

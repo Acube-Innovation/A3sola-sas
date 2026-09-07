@@ -146,7 +146,10 @@ def apply_outreach_state(doc):
 		return
 
 	last = rows[-1]
-	if last.call_status:
+	# "Not Applicable" is how a WhatsApp or email row says it was not a call at all. The
+	# lead's Call Status answers "how did the last call go", so a non-call must leave it
+	# alone rather than overwrite it - and it is not an option on that field in any case.
+	if last.call_status and last.call_status != "Not Applicable":
 		doc.call_status = last.call_status
 	doc.last_message_date = getdate(last.contact_datetime)
 

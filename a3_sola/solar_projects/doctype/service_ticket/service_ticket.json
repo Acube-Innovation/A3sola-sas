@@ -527,7 +527,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "om_contract,category,severity,status",
  "description": "A breached complaint SLA is a business-continuity risk. The ministry can temporarily deactivate a vendor that fails to resolve consumer complaints."
 }

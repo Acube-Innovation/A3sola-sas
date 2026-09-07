@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sb_1",
+  "lead",
   "solar_consumer",
   "design_estimate",
   "subsidy_scheme",
@@ -15,6 +16,19 @@
   "company",
   "overall_result",
   "amended_from",
+  "consumer_details_section",
+  "consumer_name",
+  "mobile_no",
+  "email_id",
+  "consumer_category",
+  "connection_type",
+  "consumer_details_cb",
+  "discom",
+  "discom_section",
+  "consumer_number",
+  "roof_type",
+  "capacity_kw",
+  "avg_bill_amount",
   "sb_3",
   "rule_results",
   "sb_4",
@@ -31,8 +45,9 @@
    "fieldtype": "Link",
    "label": "Solar Consumer",
    "options": "Solar Consumer",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 0,
+   "in_list_view": 1,
+   "description": "Either a Lead or a Solar Consumer is required. Selecting one fills the other where linked."
   },
   {
    "fieldname": "design_estimate",
@@ -107,11 +122,104 @@
    "fieldname": "summary_remarks",
    "fieldtype": "Small Text",
    "label": "Summary Remarks"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "consumer_details_section",
+   "fieldtype": "Section Break",
+   "label": "Consumer Details",
+   "description": "Filled from the Solar Consumer, or from the Lead when no consumer exists yet. Edit these on the source record."
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "label": "Consumer Name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_category",
+   "fieldtype": "Select",
+   "label": "Consumer Category",
+   "options": "Residential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "\nSingle Phase\nThree Phase",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_details_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discom_section",
+   "fieldtype": "Link",
+   "label": "DISCOM Section",
+   "options": "DISCOM Section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "read_only": 1,
+   "precision": "3",
+   "description": "Final capacity from the design estimate, else the proposed size on the lead."
+  },
+  {
+   "fieldname": "avg_bill_amount",
+   "fieldtype": "Currency",
+   "label": "Avg Bill",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-06 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Subsidy Eligibility Check",
@@ -204,6 +312,7 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_consumer,overall_result"
 }

@@ -1,0 +1,203 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-07 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "version_no",
+  "version_date",
+  "solar_design_estimate",
+  "cb_1",
+  "capacity_label",
+  "capacity_kw",
+  "options_quoted",
+  "recommended_option_cost",
+  "sb_2",
+  "proposal_file_name",
+  "proposal_pdf",
+  "sb_3",
+  "sent_via",
+  "sent_on",
+  "cb_4",
+  "sent_by",
+  "sb_5",
+  "outcome",
+  "responded_on",
+  "cb_6",
+  "client_comments",
+  "lost_reason",
+  "sb_7",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "version_no",
+   "fieldtype": "Int",
+   "label": "Version",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "version_date",
+   "fieldtype": "Datetime",
+   "label": "Raised On",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "solar_design_estimate",
+   "fieldtype": "Link",
+   "label": "Design Estimate",
+   "options": "Solar Design Estimate",
+   "read_only": 1,
+   "description": "The estimate this version quoted. A later version may quote a different one."
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "capacity_label",
+   "fieldtype": "Data",
+   "label": "Capacity",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "options_quoted",
+   "fieldtype": "Int",
+   "label": "Options Quoted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommended_option_cost",
+   "fieldtype": "Currency",
+   "label": "Recommended Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Document"
+  },
+  {
+   "fieldname": "proposal_file_name",
+   "fieldtype": "Data",
+   "label": "File Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposal_pdf",
+   "fieldtype": "Attach",
+   "label": "Proposal PDF",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Dispatch to Client"
+  },
+  {
+   "fieldname": "sent_via",
+   "fieldtype": "Select",
+   "label": "Sent Via",
+   "options": "Not Sent\nWhatsApp\nEmail\nPrinted\nHand Delivered",
+   "default": "Not Sent",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sent_by",
+   "fieldtype": "Link",
+   "label": "Sent By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Response from Client"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "options": "Awaiting Response\nAccepted\nRevision Requested\nRejected\nLost",
+   "default": "Awaiting Response",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "responded_on",
+   "fieldtype": "Datetime",
+   "label": "Responded On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "client_comments",
+   "fieldtype": "Small Text",
+   "label": "Comments from Client",
+   "read_only": 1,
+   "description": "What the customer said about this version, in their words."
+  },
+  {
+   "fieldname": "lost_reason",
+   "fieldtype": "Small Text",
+   "label": "Lost Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_7",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Internal Notes",
+   "read_only": 1,
+   "description": "Why this revision was raised."
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-07 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Proposal Version",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1,
+ "description": "One issue of a proposal to the customer: what was quoted, how it was sent, and what the customer said back. Every field is written by code so the history cannot be edited after the fact."
+}

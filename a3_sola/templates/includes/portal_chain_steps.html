@@ -1,0 +1,40 @@
+{#- The next steps along the solar chain. Each is an offer to create the next record,
+    or - once it exists - the card for the record it became. Context: chain_steps. -#}
+{%- if chain_steps %}
+<section class="a3s-card a3s-edit__card a3s-chain">
+	<h3 class="a3s-edit__card-title">Next steps</h3>
+	{%- for step in chain_steps %}
+
+	{%- if step.done %}
+	<a class="a3s-step-card" href="{{ step.card.route }}">
+		<span class="a3s-step-card__icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ step.icon }}"></use></svg></span>
+		<span class="a3s-step-card__text">
+			<span class="a3s-step-card__title">{{ step.card.title | e }}</span>
+			{%- if step.card.subtitle %}
+			<span class="a3s-step-card__sub">{{ step.card.subtitle_label | e }} {{ step.card.subtitle | e }}</span>
+			{%- endif %}
+		</span>
+		<span class="a3s-step-card__go" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-pen"></use></svg></span>
+		<span class="a3s-sr">Open {{ step.card.title | e }}</span>
+	</a>
+
+	{%- elif not step.can_create %}
+	<p class="a3s-edit__hint">You do not have permission to create a {{ step.doctype | lower }}.</p>
+
+	{%- elif step.blocked %}
+	<span class="a3s-btn a3s-btn--secondary a3s-btn--block" aria-disabled="true">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ step.icon }}"></use></svg>
+		<span>{{ step.label }}</span>
+	</span>
+	{%- if step.note %}<p class="a3s-edit__hint">{{ step.note }}</p>{% endif %}
+
+	{%- else %}
+	<a class="a3s-btn a3s-btn--primary a3s-btn--block" href="{{ step.create_route }}">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ step.icon }}"></use></svg>
+		<span>{{ step.label }}</span>
+	</a>
+	{%- endif %}
+
+	{%- endfor %}
+</section>
+{%- endif %}

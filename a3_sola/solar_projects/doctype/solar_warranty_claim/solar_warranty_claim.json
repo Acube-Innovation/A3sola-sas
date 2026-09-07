@@ -436,7 +436,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "om_contract,serial_no,claim_status",
  "description": "Manufacturer warranty claims are settled between the vendor or customer and the manufacturer; the DISCOM and implementing agencies are excluded."
 }

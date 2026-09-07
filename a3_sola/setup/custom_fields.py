@@ -74,7 +74,10 @@ CUSTOM_FIELDS = {
 	],
 	# --------------------------------------------------------------------- Lead
 	"Lead": [
-		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "type", "collapsible": 1},
+		# Solar Details lives in its own "Solar" tab, placed right after the Details tab
+		# (its last field is `blog_subscriber`, just before ERPNext's `activities_tab`).
+		{"fieldname": "a3s_solar_tab", "fieldtype": "Tab Break", "label": "Solar", "insert_after": "blog_subscriber"},
+		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "a3s_solar_tab", "collapsible": 0},
 		{"fieldname": "subsidy_scheme", "fieldtype": "Link", "options": "Subsidy Scheme", "label": "Subsidy Scheme", "insert_after": "a3s_solar_sb"},
 		{"fieldname": "discom", "fieldtype": "Link", "options": "DISCOM", "label": "DISCOM", "insert_after": "subsidy_scheme"},
 		{"fieldname": "discom_section", "fieldtype": "Link", "options": "DISCOM Section", "label": "DISCOM Section", "insert_after": "discom"},
@@ -89,11 +92,13 @@ CUSTOM_FIELDS = {
 		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "approx_capacity_kw", "read_only": 1},
 		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "solar_consumer", "read_only": 1},
 
+		# Outreach and Outreach Log live in their own "Outreach" tab, right after the Solar tab.
+		{"fieldname": "a3s_outreach_tab", "fieldtype": "Tab Break", "label": "Outreach", "insert_after": "solar_proposal"},
 		{
 			"fieldname": "a3s_outreach_sb",
 			"fieldtype": "Section Break",
 			"label": "Outreach",
-			"insert_after": "solar_proposal",
+			"insert_after": "a3s_outreach_tab",
 			"description": (
 				"Call status, cadence step and lead status are three separate dimensions. A lead "
 				"can be at step 3 of the cadence while the last call went unanswered, and that "
@@ -200,6 +205,11 @@ CUSTOM_FIELDS = {
 			"insert_after": "sanctioned_amount",
 			"depends_on": "eval:doc.is_financed",
 		},
+	],
+	# ----------------------------------------------------------- Quotation Item
+	"Quotation Item": [
+		{"fieldname": "solar_package", "fieldtype": "Link", "options": "Solar Package", "label": "Solar Package", "insert_after": "item_name", "read_only": 1},
+		{"fieldname": "package_option", "fieldtype": "Data", "label": "Package Option", "insert_after": "solar_package", "read_only": 1, "description": "Which inverter option of the package this line prices."},
 	],
 	# --------------------------------------------------------------- Sales Order
 	"Sales Order": [

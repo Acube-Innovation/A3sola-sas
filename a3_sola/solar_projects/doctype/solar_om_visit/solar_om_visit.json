@@ -571,7 +571,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "om_contract,visit_date,technician",
  "description": "Reuses the Phase 2 child doctype Work Order Crew - it was built standalone for exactly this. Do not create a second crew table."
 }

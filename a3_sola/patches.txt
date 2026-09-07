@@ -16,3 +16,4 @@ a3_sola.patches.v1_0.serve_desk_at_site_root
 # Renamed from `seed_starter_dataset`: that one is already in the Patch Log on deployed
 # sites, and Frappe never re-runs a logged patch - so editing it would have done nothing.
 a3_sola.patches.v1_0.install_starter_dataset
+a3_sola.patches.v1_1.backfill_proposal_series_and_lead

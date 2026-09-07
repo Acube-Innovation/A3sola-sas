@@ -43,7 +43,10 @@
   "sent_on",
   "cb_10",
   "sent_by",
-  "lost_reason"
+  "lost_reason",
+  "tab_history",
+  "current_version",
+  "versions"
  ],
  "fields": [
   {
@@ -64,6 +67,7 @@
    "fieldtype": "Int",
    "label": "Sequence",
    "read_only": 1,
+   "no_copy": 1,
    "in_list_view": 1
   },
   {
@@ -260,8 +264,9 @@
    "fieldname": "sent_via",
    "fieldtype": "Select",
    "label": "Sent Via",
-   "options": "Not Sent\nWhatsApp\nEmail\nPrinted",
+   "options": "Not Sent\nWhatsApp\nEmail\nPrinted\nHand Delivered",
    "default": "Not Sent",
+   "read_only": 1,
    "allow_on_submit": 1,
    "in_list_view": 1
   },
@@ -288,7 +293,29 @@
    "fieldname": "lost_reason",
    "fieldtype": "Small Text",
    "label": "Lost Reason",
+   "read_only": 1,
    "allow_on_submit": 1
+  },
+  {
+   "fieldname": "tab_history",
+   "fieldtype": "Tab Break",
+   "label": "History"
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Int",
+   "label": "Current Version",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "versions",
+   "fieldtype": "Table",
+   "label": "Versions",
+   "options": "Solar Proposal Version",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "Every issue of this proposal to the customer, newest last. Raised by the Revise action, never edited by hand."
   }
  ],
  "index_web_pages_for_search": 1,
@@ -385,7 +412,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "title_field": "customer_name",
  "show_title_field_in_link": 1,
  "search_fields": "customer_name,mobile_no,capacity_label",

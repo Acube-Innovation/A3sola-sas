@@ -1,0 +1,159 @@
+{%- set s = platform_settings -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{ page_title }} &middot; {{ s.product_name or "a3 sola" }}</title>
+	<meta name="robots" content="noindex, nofollow">
+	{%- if csrf_token %}
+	<meta name="csrf-token" content="{{ csrf_token }}">
+	{%- endif %}
+	{%- if s.brand_favicon %}
+	<link rel="icon" href="{{ s.brand_favicon }}">
+	{%- endif %}
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css?v={{ asset_version }}">
+	<script>
+	/* The menu's collapsed state is a per-browser preference. Applied here, before the
+	   first paint, so a collapsed menu never flashes open on every page load. */
+	try { if (localStorage.getItem("a3s-side") === "collapsed") document.documentElement.classList.add("a3s-side-collapsed"); } catch (e) {}
+	</script>
+	{%- block portal_head %}{% endblock %}
+</head>
+<body class="a3s a3s-app">
+
+{%- include "templates/includes/portal_icons.html" %}
+
+{#- ---- top bar: logo + heading (left), breadcrumb + sign out (right) -------- #}
+<header class="a3s-topbar">
+	<div class="a3s-topbar__left">
+		{#- The brand column is exactly as wide as the menu below it, and carries the
+		    button that collapses the menu to icons. -#}
+		<div class="a3s-topbar__brand">
+			<a class="a3s-logo" href="/a3solaportal/dashboard" aria-label="{{ s.product_name or 'A3 Sola' }} . AI home">
+				{%- if s.brand_logo %}
+				<img src="{{ s.brand_logo }}" alt="">
+				{%- else %}
+				<span class="a3s-logo__mark" aria-hidden="true">&#9788;</span>
+				{%- endif %}
+				<span class="a3s-logo__text">{{ s.product_name or "A3 Sola" }} <span class="a3s-logo__ai">. AI</span></span>
+			</a>
+			<button type="button" class="a3s-side-toggle" id="a3s-side-toggle" aria-label="Collapse menu" aria-expanded="true" title="Collapse menu">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-sidebar"></use></svg>
+			</button>
+		</div>
+		<h1 class="a3s-topbar__heading a3s-workspace">
+			{%- if workspace_logo %}
+			<img class="a3s-workspace__logo" src="{{ workspace_logo | e }}" alt="">
+			{%- else %}
+			<span class="a3s-workspace__initial" aria-hidden="true">{{ workspace_name[0] | upper | e }}</span>
+			{%- endif %}
+			<span class="a3s-workspace__name">{{ workspace_name | e }}</span>
+		</h1>
+	</div>
+
+	<div class="a3s-topbar__right">
+		<button type="button" class="a3s-btn a3s-btn--primary a3s-topbar__signout" id="a3s-signout" aria-label="Sign out">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-logout"></use></svg>
+			<span>Sign out</span>
+		</button>
+	</div>
+</header>
+
+<div class="a3s-shell">
+
+	{#- ---- left sidebar --------------------------------------------------- #}
+	<aside class="a3s-side" aria-label="Primary">
+		<div class="a3s-side__scroll">
+			{%- for group in nav_groups %}
+			<div class="a3s-side__group">
+				<p class="a3s-side__label">{{ group.label }}</p>
+				<ul class="a3s-side__list">
+					{%- for item in group["items"] %}
+					<li>
+						<a class="a3s-side__item{% if item.route == active_route %} is-active{% endif %}"
+						   href="{{ item.route }}" title="{{ item.title }}"{% if item.route == active_route %} aria-current="page"{% endif %}>
+							<span class="a3s-side__icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ item.ic }}"></use></svg></span>
+							<span class="a3s-side__text">
+								<span class="a3s-side__title">{{ item.title }}</span>
+								<span class="a3s-side__sub">{{ item.sub }}</span>
+							</span>
+						</a>
+					</li>
+					{%- endfor %}
+				</ul>
+			</div>
+			{%- endfor %}
+		</div>
+
+		{#- ---- user details, pinned to the bottom ------------------------- #}
+		<div class="a3s-side__user">
+			<div class="a3s-user">
+				<span class="a3s-user__avatar" aria-hidden="true">{{ user_full_name[0] | upper }}</span>
+				<span class="a3s-user__meta">
+					<span class="a3s-user__name">{{ user_full_name }}</span>
+					<span class="a3s-user__email">{{ user_email }}</span>
+				</span>
+			</div>
+		</div>
+	</aside>
+
+	{#- ---- main content, filled by each page ------------------------------ #}
+	<main class="a3s-main" id="main">
+		{#- The trail sits above the page title, in line with the content it describes,
+		    with the way back out of this record at the far end of the same row. -#}
+		<div class="a3s-main__topline">
+			<nav class="a3s-crumbs a3s-main__crumbs" aria-label="Breadcrumb">
+				<ol>
+					{%- for c in crumbs %}
+					<li{% if loop.last %} aria-current="page"{% endif %}>
+						{%- if c.href and not loop.last %}<a href="{{ c.href }}">{{ c.label | e }}</a>{% else %}{{ c.label | e }}{% endif -%}
+					</li>
+					{%- endfor %}
+				</ol>
+			</nav>
+			{%- if back_link %}
+			<a class="a3s-backlink" href="{{ back_link.href }}">&larr; {{ back_link.label | e }}</a>
+			{%- endif %}
+		</div>
+		{%- block portal_content %}{% endblock %}
+	</main>
+</div>
+
+<script>
+(function () {
+	var toggle = document.getElementById("a3s-side-toggle");
+	if (!toggle) return;
+	var root = document.documentElement;
+	function sync() {
+		var collapsed = root.classList.contains("a3s-side-collapsed");
+		toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+		toggle.setAttribute("aria-label", collapsed ? "Expand menu" : "Collapse menu");
+		toggle.setAttribute("title", collapsed ? "Expand menu" : "Collapse menu");
+	}
+	toggle.addEventListener("click", function () {
+		root.classList.toggle("a3s-side-collapsed");
+		try { localStorage.setItem("a3s-side", root.classList.contains("a3s-side-collapsed") ? "collapsed" : "open"); } catch (e) {}
+		sync();
+	});
+	sync();
+})();
+(function () {
+	var btn = document.getElementById("a3s-signout");
+	if (!btn) return;
+	btn.addEventListener("click", function () {
+		btn.disabled = true;
+		var label = btn.querySelector("span");
+		if (label) label.textContent = "Signing out…";
+		fetch("/api/method/logout", { method: "POST", credentials: "same-origin" })
+			.then(function () { window.location.assign("/a3solaportal/login"); })
+			.catch(function () { window.location.assign("/a3solaportal/login"); });
+	});
+})();
+</script>
+{%- block portal_scripts %}{% endblock %}
+</body>
+</html>
