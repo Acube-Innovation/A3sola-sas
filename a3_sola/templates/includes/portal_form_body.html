@@ -1,0 +1,73 @@
+{#- Generic create form. Fields come from collections.new_context via the doctype meta. -#}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">New {{ collection.singular }}</h2>
+		{%- if source_name %}
+		<p class="a3s-main__sub">From {{ source_title | e }} &middot; details already known are carried across.</p>
+		{%- else %}
+		<p class="a3s-main__sub">Capture a {{ collection.singular }} into ERPNext.</p>
+		{%- endif %}
+	</div>
+</div>
+
+{% if unrenderable %}
+<div class="a3s-notice" role="note">
+	This record also requires {{ unrenderable | join(", ") }}, which must be added from the
+	full record in ERPNext after it is created.
+</div>
+{% endif %}
+
+<div class="a3s-card a3s-formcard">
+	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}"
+	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" novalidate>
+		{%- for f in fields %}
+		<div class="a3s-field" id="f-{{ f.fieldname }}">
+			{%- if f.type == "Check" %}
+			<label class="a3s-check">
+				<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
+				<span>{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
+			</label>
+			{%- else %}
+			<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% else %} <span class="a3s-field__opt">(optional)</span>{% endif %}</label>
+				{%- if f.type == "Select" %}
+				<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+					{%- for opt in f.options %}
+					<option value="{{ opt }}"{% if opt == f.default %} selected{% endif %}>{{ opt or "—" }}</option>
+					{%- endfor %}
+				</select>
+				{%- elif f.type == "Link" %}
+					{%- if f.choices %}
+					<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+						<option value="">—</option>
+						{%- for c in f.choices %}
+						<option value="{{ c }}"{% if c == f.value %} selected{% endif %}>{{ c }}</option>
+						{%- endfor %}
+					</select>
+					{%- else %}
+					<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
+					       placeholder="{{ f.link_doctype }} name">
+					<p class="a3s-field__hint">No {{ f.link_doctype }} records yet{% if f.reqd %} &mdash; one must exist before this can be saved{% endif %}.</p>
+					{%- endif %}
+				{%- elif f.type in ("Small Text", "Text") %}
+				<textarea id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" rows="3">{{ f.value | e }}</textarea>
+				{%- elif f.type == "Date" %}
+				<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+				{%- elif f.type == "Datetime" %}
+				<input type="datetime-local" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+				{%- elif f.type in ("Int", "Float", "Currency", "Percent") %}
+				<input type="number" step="{{ "1" if f.type == "Int" else "any" }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+				{%- else %}
+				<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+				{%- endif %}
+				{%- if f.hint and f.type != "Link" %}<p class="a3s-field__hint">{{ f.hint }}</p>{% endif %}
+			{%- endif %}
+		</div>
+		{%- endfor %}
+
+		<div class="a3s-form__actions">
+			<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-record-submit">Create {{ collection.singular }}</button>
+			<a class="a3s-btn a3s-btn--ghost" href="{{ source_route or ('/a3solaportal/' ~ collection.slug) }}">Cancel</a>
+			<p class="a3s-form__status" id="a3s-record-status" role="status" aria-live="polite"></p>
+		</div>
+	</form>
+</div>

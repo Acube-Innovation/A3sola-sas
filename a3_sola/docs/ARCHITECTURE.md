@@ -104,12 +104,12 @@ decisions and they live in one place.
 ## Data model — the spine
 
 ```
-Lead
- └─ Solar Consumer ──────────────────────────────────┐
+Lead ─────────────────────────────┐
+ └─ Solar Consumer ───────────────┼──────────────────┐
      ├─ Site Survey → Solar Design Estimate          │
      │                 ├─ Subsidy Eligibility Check  │
      │                 └─ Solar Proposal → Quotation │
-     │                                     └─ Sales Order
+     │                     (versions)      └─ Sales Order
      └─────────────────────────────── Solar Installation
           ├─ Installation Work Order → Installation Snag
           ├─ Portal Application → Statutory Fee Payment → Statutory Fee Recovery
@@ -129,6 +129,17 @@ Subscription Signup
  │    └─ Plan / Seat / Cancellation Request
  └─ Provisioning Job → Tenant → Tenant Invitation
 ```
+
+A Solar Design Estimate is raised against a **Lead or a Solar Consumer**. Early in the
+funnel there is no consumer yet, and an enquiry already carries the DISCOM, the category and
+a rough bill - enough to size a system and put a number in front of somebody. The consumer
+arrives with the survey, and brings the sanctioned load and the billing cycle with it.
+
+A lead has **exactly one Solar Proposal**. Re-quoting opens a new version inside it rather
+than raising a second document, because the customer experiences it as the same offer
+changing. Each version records what it quoted, the PDF that went out, how and when it was
+sent, and what the customer said back. Marking a version **Accepted** is what makes the
+commercial Quotation available; the proposal is the offer, the Quotation books it.
 
 Every link above is navigable in the desk: each doctype carries a Connections panel with a
 **+** that creates the next document already linked back.

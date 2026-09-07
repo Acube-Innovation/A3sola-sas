@@ -131,7 +131,11 @@ def create_item_and_bom(solar_package):
 				"is_purchase_item": 0,
 				"description": doc.package_name,
 			}
-		).insert(ignore_permissions=True)
+		)
+		hsn = _package_hsn_code(doc.company)
+		if hsn and item.meta.has_field("gst_hsn_code"):
+			item.gst_hsn_code = hsn
+		item.insert(ignore_permissions=True)
 		doc.db_set("item", item.name, update_modified=False)
 		created["item"] = item.name
 
@@ -156,6 +160,31 @@ def create_item_and_bom(solar_package):
 		created["bom"] = bom.name
 
 	return created or {"message": _("Item and BOM already exist.")}
+
+
+#: Solar photovoltaic modules assembled in panels - the HSN a rooftop package is sold under
+#: when no GST valuation rule has been recorded for the company yet.
+DEFAULT_PACKAGE_HSN = "85414300"
+
+
+def _package_hsn_code(company):
+	"""The goods HSN for a package item.
+
+	India Compliance makes HSN mandatory on every Item, so an item created without one fails
+	on any Indian site. Prefer the company's active Solar GST Valuation Rule - it is the
+	recorded position on how the plant is billed - and fall back to the module HSN.
+	"""
+	from a3_sola.api.gst import resolve_valuation
+
+	try:
+		rule = resolve_valuation(company)
+		hsn = frappe.db.get_value("Solar GST Valuation Rule", rule, "goods_hsn_code")
+	except frappe.ValidationError:
+		hsn = None
+	hsn = hsn or DEFAULT_PACKAGE_HSN
+	if frappe.db.exists("DocType", "GST HSN Code") and not frappe.db.exists("GST HSN Code", hsn):
+		return None
+	return hsn
 
 
 def _ensure_item_group(name):

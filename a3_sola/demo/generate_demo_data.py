@@ -470,6 +470,42 @@ def run_sample(count=5):
 		frappe.flags.a3s_demo_limit = None
 
 
+def run_solar(count=None):
+	"""The three solar modules only - CRM, Operations and Projects - without the platform,
+	payments, provisioning and lifecycle phases. What a tenant site needs for testing.
+
+	    bench --site <site> execute a3_sola.demo.generate_demo_data.run_solar
+
+	Idempotent. Pass `count` to cap each CRM list; Operations and Projects build scenarios
+	and are never capped (see `run_sample`).
+	"""
+	frappe.flags.in_demo = True
+	if count:
+		frappe.flags.a3s_demo_limit = int(count)
+	try:
+		company = default_company()
+		print(f"a3_sola solar demo data for {company}")
+
+		setup_company_identity(company)
+		generate_leads(company)
+		consumers = generate_consumers(company)
+		generate_surveys(company, consumers)
+		estimates = generate_estimates(company, consumers)
+		generate_eligibility(company, consumers)
+		generate_proposals(company, estimates)
+		generate_three_option_proposal(company, consumers)
+
+		from a3_sola.demo import generate_operations_demo, generate_projects_demo
+
+		generate_operations_demo.run(company)
+		generate_projects_demo.run(company)
+
+		frappe.db.commit()
+		print("done")
+	finally:
+		frappe.flags.a3s_demo_limit = None
+
+
 def run():
 	"""Build the whole demo. Idempotent - safe to re-run."""
 	frappe.flags.in_demo = True

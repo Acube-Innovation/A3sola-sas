@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sb_1",
+  "lead",
   "solar_consumer",
   "site_survey",
   "estimate_date",
@@ -90,11 +91,18 @@
    "label": "Reference"
   },
   {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead",
+   "in_list_view": 1,
+   "description": "The enquiry this estimate is for. Either a Lead or a Solar Consumer is required; a lead-only estimate is indicative until the consumer and survey exist."
+  },
+  {
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
    "label": "Solar Consumer",
    "options": "Solar Consumer",
-   "reqd": 1,
    "in_list_view": 1
   },
   {
@@ -233,7 +241,9 @@
    "fieldname": "solar_package",
    "fieldtype": "Link",
    "label": "Solar Package",
-   "options": "Solar Package"
+   "options": "Solar Package",
+   "in_list_view": 1,
+   "description": "The predefined package this estimate is built on. Choosing one prices the first option from it; the survey decides which package fits."
   },
   {
    "fieldname": "system_type",
@@ -665,6 +675,7 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_consumer,final_capacity_kw"
 }

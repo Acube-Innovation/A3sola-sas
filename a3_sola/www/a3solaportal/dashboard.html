@@ -1,0 +1,34 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-main__head">
+	<h2 class="a3s-main__title">Welcome, {{ user_first_name }}</h2>
+	<p class="a3s-main__sub">Here's an overview of {{ workspace_name }}.</p>
+</div>
+
+{#- stat cards -#}
+<section class="a3s-dash-stats" aria-label="Summary">
+	{%- for stat in stats %}
+	<div class="a3s-card a3s-dash-stat">
+		<span class="a3s-dash-stat__icon a3s-dash-stat__icon--{{ stat.tone }}" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ stat.ic }}"></use></svg></span>
+		<div>
+			<span class="a3s-dash-stat__label">{{ stat.label }}</span>
+			<span class="a3s-dash-stat__value">{{ stat.value }}</span>
+			<span class="a3s-dash-stat__note">{{ stat.note }}</span>
+		</div>
+	</div>
+	{%- endfor %}
+</section>
+
+{#- action cards -#}
+<section class="a3s-dash-cards" aria-label="Quick actions">
+	{%- for card in action_cards %}
+	<article class="a3s-card a3s-dash-card">
+		<span class="a3s-dash-card__icon a3s-dash-card__icon--{{ card.tone }}" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ card.ic }}"></use></svg></span>
+		<h3 class="a3s-dash-card__title">{{ card.title }}</h3>
+		<p class="a3s-dash-card__text">{{ card.text }}</p>
+		<a class="a3s-btn a3s-btn--primary a3s-dash-card__cta" href="{{ card.route }}">{{ card.cta }}</a>
+	</article>
+	{%- endfor %}
+</section>
+{% endblock %}

@@ -184,6 +184,25 @@ WEBSITE_ROUTE_RULES = [
 	# Portal pages stay at the root: they are logged-in app surfaces reached from Frappe's
 	# portal menu, not part of the public site.
 	{"from_route": "/account-mapping", "to_route": "account_mapping"},
+	# The portal's per-lead pages. `<name>` is one path segment, and Werkzeug prefers a
+	# static rule over a dynamic one, so `/leads/new` is listed explicitly or the create
+	# page would be read as a lead called "new".
+	{"from_route": "/a3solaportal/leads/new", "to_route": "a3solaportal/leads/new"},
+	{"from_route": "/a3solaportal/leads/<name>", "to_route": "a3solaportal/leads/view"},
+	{"from_route": "/a3solaportal/leads/<name>/edit", "to_route": "a3solaportal/leads/edit"},
+	# Collections with a portal detail page (collections.DETAIL_SLUGS), same shape.
+	{"from_route": "/a3solaportal/consumers/new", "to_route": "a3solaportal/consumers/new"},
+	{"from_route": "/a3solaportal/consumers/<name>", "to_route": "a3solaportal/consumers/view"},
+	{"from_route": "/a3solaportal/consumers/<name>/edit", "to_route": "a3solaportal/consumers/edit"},
+	{"from_route": "/a3solaportal/proposals/new", "to_route": "a3solaportal/proposals/new"},
+	{"from_route": "/a3solaportal/proposals/<name>", "to_route": "a3solaportal/proposals/view"},
+	{"from_route": "/a3solaportal/proposals/<name>/edit", "to_route": "a3solaportal/proposals/edit"},
+	{"from_route": "/a3solaportal/design-estimates/new", "to_route": "a3solaportal/design-estimates/new"},
+	{"from_route": "/a3solaportal/design-estimates/<name>", "to_route": "a3solaportal/design-estimates/view"},
+	{"from_route": "/a3solaportal/design-estimates/<name>/edit", "to_route": "a3solaportal/design-estimates/edit"},
+	# Cost estimates (ERPNext Quotations) open in the builder; there is no separate edit page.
+	{"from_route": "/a3solaportal/cost-estimates/new", "to_route": "a3solaportal/cost-estimates/new"},
+	{"from_route": "/a3solaportal/cost-estimates/<name>", "to_route": "a3solaportal/cost-estimates/view"},
 ]
 
 #: Attached to every website request so a page added later cannot skip the chrome - or,

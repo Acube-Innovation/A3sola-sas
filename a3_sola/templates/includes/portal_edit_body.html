@@ -1,0 +1,106 @@
+{#- Generic record edit form. Context from collections.edit_context: a step per form tab,
+    section headings inside each step, every control in one form. -#}
+<div class="a3s-page__head">
+	<div>
+		<p class="a3s-detail__eyebrow">{{ record.name | e }}</p>
+		<h2 class="a3s-main__title">Edit {{ title | e }}</h2>
+		<p class="a3s-main__sub">Changes are saved to the {{ collection.singular }} in ERPNext.</p>
+	</div>
+</div>
+
+<form class="a3s-edit a3s-edit--single" id="a3s-record-edit-form" data-endpoint="{{ endpoint }}" data-slug="{{ collection.slug }}"
+      data-name="{{ record.name | e }}" data-view="{{ view_route }}" novalidate>
+	<div class="a3s-edit__main">
+
+		<div class="a3s-card a3s-edit__card a3s-edit__nav">
+			<div class="a3s-wizard">
+				<ol class="a3s-wizard__steps" role="tablist" aria-label="Sections" style="--steps: {{ groups | length }};">
+					<li class="a3s-wizard__track" aria-hidden="true"><span class="a3s-wizard__fill" id="a3s-wizard-fill"></span></li>
+					{%- for g in groups %}
+					<li class="a3s-wizard__step{% if loop.first %} is-current{% endif %}" data-step="{{ loop.index0 }}" data-key="{{ g.key }}">
+						<button type="button" role="tab" id="tab-{{ g.key }}" aria-controls="panel-{{ g.key }}"
+						        aria-selected="{{ 'true' if loop.first else 'false' }}" tabindex="{{ '0' if loop.first else '-1' }}">
+							<span class="a3s-wizard__num" aria-hidden="true"><span class="a3s-wizard__n">{{ loop.index }}</span><svg class="a3s-ic a3s-wizard__tick"><use href="#ic-check"></use></svg></span>
+							<span class="a3s-wizard__text">
+								<span class="a3s-wizard__label">{{ g.label | e }}</span>
+								<span class="a3s-wizard__sub" data-count>&nbsp;</span>
+							</span>
+						</button>
+					</li>
+					{%- endfor %}
+				</ol>
+			</div>
+		</div>
+
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">About</h3>
+			<p class="a3s-edit__about">{{ about | e }}</p>
+			<p class="a3s-edit__meta">
+				<span>Created {{ created }}</span>
+				<span>Updated {{ modified }}</span>
+			</p>
+		</section>
+
+		{%- for g in groups %}
+		<section class="a3s-card a3s-edit__card a3s-wizard__panel" id="panel-{{ g.key }}" data-step="{{ loop.index0 }}">
+			<h3 class="a3s-edit__card-title">{{ g.label | e }}</h3>
+			{%- for s in g.sections %}
+			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
+			<div class="a3s-form__grid">
+				{%- for f in s.fields %}
+				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}">
+					{%- if f.type == "Check" %}
+					<label class="a3s-check">
+						<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
+						<span>{{ f.label | e }}</span>
+					</label>
+					{%- else %}
+					<label for="fld-{{ f.fieldname }}">{{ f.label | e }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
+						{%- if f.type == "Select" %}
+						<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+							{%- for opt in f.options %}
+							<option value="{{ opt | e }}"{% if opt == f.value %} selected{% endif %}>{{ (opt | e) or "—" }}</option>
+							{%- endfor %}
+						</select>
+						{%- elif f.type == "Link" %}
+							{%- if f.many %}
+							<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
+							       list="dl-{{ f.fieldname }}" placeholder="{{ f.link_doctype | e }} name" autocomplete="off">
+							<datalist id="dl-{{ f.fieldname }}">
+								{%- for c in f.choices %}<option value="{{ c | e }}"></option>{% endfor %}
+							</datalist>
+							{%- else %}
+							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+								<option value=""{% if not f.value %} selected{% endif %}>—</option>
+								{%- for c in f.choices %}
+								<option value="{{ c | e }}"{% if c == f.value %} selected{% endif %}>{{ c | e }}</option>
+								{%- endfor %}
+							</select>
+							{%- endif %}
+						{%- elif f.type in ("Small Text", "Text") %}
+						<textarea id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" rows="3">{{ f.value | e }}</textarea>
+						{%- elif f.type == "Date" %}
+						<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+						{%- elif f.type == "Datetime" %}
+						<input type="datetime-local" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+						{%- elif f.input == "number" %}
+						<input type="number" step="{{ f.step }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+						{%- else %}
+						<input type="{{ f.input }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
+						       {% if f.input == "email" %}autocomplete="email" spellcheck="false"{% elif f.input == "tel" %}autocomplete="tel"{% endif %}>
+						{%- endif %}
+					{%- endif %}
+				</div>
+				{%- endfor %}
+			</div>
+			{%- endfor %}
+		</section>
+		{%- endfor %}
+
+		<div class="a3s-form__actions a3s-edit__actions">
+			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>Save changes</button>
+			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>
+			<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>
+		</div>
+	</div>
+</form>

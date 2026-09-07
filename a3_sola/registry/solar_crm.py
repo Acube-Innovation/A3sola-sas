@@ -36,6 +36,7 @@ DOCTYPES = [
 	"Subsidy Eligibility Check",
 	"Eligibility Rule Result",
 	"Solar Proposal",
+	"Solar Proposal Version",
 	"Outreach Log",
 ]
 

@@ -19,7 +19,12 @@ from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_float
 
+#: What a lead's consumption is assumed to be quoted against, since a lead records no
+#: billing cycle of its own. Matches the Solar Consumer field default.
+DEFAULT_BILLING_FREQUENCY = "Bimonthly"
+
 LINKS = (
+	("lead", "Lead"),
 	("solar_consumer", "Solar Consumer"),
 	("site_survey", "Site Survey"),
 	("subsidy_scheme", "Subsidy Scheme"),
@@ -33,6 +38,7 @@ class SolarDesignEstimate(Document):
 		set_name(self, "design_series_prefix", ".YYYY.-.#####", fallback="SOL-DSN")
 
 	def validate(self):
+		self.resolve_subject()
 		assert_same_company(self, LINKS)
 		self.load_context()
 		self.compute_sizing()
@@ -43,19 +49,71 @@ class SolarDesignEstimate(Document):
 		self.compute_commercials()
 		self.validate_dcr()
 
+	# ------------------------------------------------------------------ subject
+	def resolve_subject(self):
+		"""An estimate is raised against a lead or against its consumer - one is required.
+
+		Early in the funnel there is no consumer yet: the enquiry has a DISCOM, a category
+		and a rough bill, and that is enough to size a system and put a number in front of
+		somebody. The consumer arrives with the survey, and with it the sanctioned load and
+		the billing cycle. Both cases produce the same figures through the same code; the
+		lead-only case simply has fewer constraints to bind against.
+		"""
+		if self.solar_consumer and not self.lead:
+			# The consumer already knows the enquiry it came from; keep the chain intact.
+			self.lead = frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
+		if not (self.lead or self.solar_consumer):
+			frappe.throw(
+				_("Select a Lead or a Solar Consumer for this estimate."),
+				frappe.MandatoryError,
+				title=_("Nothing to Estimate For"),
+			)
+
+	def subject_context(self):
+		"""The sizing inputs, from the consumer where there is one and the lead otherwise.
+
+		Returned as one shape either way, so nothing downstream has to ask which it got.
+		A lead carries its consumption per billing cycle rather than per year, and has no
+		sanctioned load, so roof area and sanctioned load simply do not bind yet.
+		"""
+		if self.solar_consumer:
+			c = frappe.get_cached_doc("Solar Consumer", self.solar_consumer)
+			return frappe._dict(
+				annual_consumption_units=flt(c.annual_consumption_units),
+				consumer_category=c.consumer_category,
+				connection_type=c.connection_type,
+				discom=c.discom,
+				discom_section=c.discom_section,
+				sanctioned_load_kw=flt(c.sanctioned_load_kw),
+				billing_frequency=c.billing_frequency,
+			)
+
+		lead = frappe.get_cached_doc("Lead", self.lead)
+		cycles = 12 if (lead.get("billing_frequency") or DEFAULT_BILLING_FREQUENCY) == "Monthly" else 6
+		return frappe._dict(
+			annual_consumption_units=flt(lead.get("approx_consumption_units")) * cycles,
+			consumer_category=lead.get("consumer_category"),
+			connection_type=lead.get("connection_type"),
+			discom=lead.get("discom"),
+			discom_section=lead.get("discom_section"),
+			# A lead has no sanctioned load on record, so that constraint does not bind.
+			sanctioned_load_kw=0.0,
+			billing_frequency=DEFAULT_BILLING_FREQUENCY,
+		)
+
 	# ------------------------------------------------------------------ context
 	def load_context(self):
-		self.consumer = frappe.get_cached_doc("Solar Consumer", self.solar_consumer)
+		self.subject = self.subject_context()
 		self.survey = frappe.get_cached_doc("Site Survey", self.site_survey) if self.site_survey else None
-		self.annual_consumption_units = flt(self.consumer.annual_consumption_units)
-		self.consumer_category = self.consumer.consumer_category
+		self.annual_consumption_units = flt(self.subject.annual_consumption_units)
+		self.consumer_category = self.subject.consumer_category
 		if not self.connection_type:
-			self.connection_type = self.consumer.connection_type
+			self.connection_type = self.subject.connection_type
 		if not self.specific_yield:
 			override = 0.0
-			if self.consumer.discom_section:
+			if self.subject.discom_section:
 				override = flt(
-					frappe.db.get_value("DISCOM Section", self.consumer.discom_section, "specific_yield_override")
+					frappe.db.get_value("DISCOM Section", self.subject.discom_section, "specific_yield_override")
 				)
 			self.specific_yield = override or get_float("default_specific_yield", 1500.0)
 		self.average_shading_percent = flt(self.survey.average_shading_percent) if self.survey else 0.0
@@ -64,7 +122,7 @@ class SolarDesignEstimate(Document):
 	def compute_sizing(self):
 		"""Constrain to the lower of consumption, roof and sanctioned load; name the binder."""
 		roof_kw = flt(self.survey.total_usable_kw) if self.survey else 0.0
-		sanctioned_kw = flt(self.consumer.sanctioned_load_kw)
+		sanctioned_kw = flt(self.subject.sanctioned_load_kw)
 
 		sizing = calculations.recommend_capacity(
 			self.annual_consumption_units, roof_kw, sanctioned_kw, self.specific_yield
@@ -107,6 +165,7 @@ class SolarDesignEstimate(Document):
 	# ------------------------------------------------------------------ options
 	def compute_options(self):
 		"""Roll each option's total and fetch its warranty from the make. Never typed."""
+		self.seed_option_from_package()
 		recommended = [row for row in self.options if row.is_recommended]
 		if len(recommended) > 1:
 			frappe.throw(
@@ -132,6 +191,37 @@ class SolarDesignEstimate(Document):
 				return row
 		return self.options[0] if self.options else None
 
+	def seed_option_from_package(self):
+		"""A package chosen with nothing quoted yet is a priced option waiting to happen.
+
+		Estimating here is picking the predefined package that fits what the survey found,
+		not composing a system from parts. So naming the package is enough to get a priced
+		option, and the desk's Add Option dialog stays for quoting a second or third one
+		beside it. Once anything at all is quoted this steps back and never touches the
+		table again - it must not overwrite what somebody priced by hand.
+		"""
+		if self.options or not self.solar_package:
+			return
+		package = frappe.get_cached_doc("Solar Package", self.solar_package)
+		self.append(
+			"options",
+			{
+				"option_name": _("Option 1 - {0}").format(package.inverter_topology or _("Standard")),
+				"inverter_topology": package.inverter_topology or "String",
+				"solar_package": package.name,
+				"is_recommended": 1,
+				"system_cost": flt(package.cost_option_1),
+				"additional_structure_cost": flt(package.additional_structure_and_cable_cost),
+				"module_make": package.module_make,
+				"module_specification": package.module_specification,
+				"module_count": package.module_count,
+				"inverter_make": package.inverter_1_make,
+				"inverter_specification": package.inverter_1_specification,
+				"inverter_count": package.inverter_1_count,
+				"display_order": 1,
+			},
+		)
+
 	# ---------------------------------------------------- generation & savings
 	def compute_generation_and_savings(self):
 		generation = calculations.estimate_generation(
@@ -141,12 +231,12 @@ class SolarDesignEstimate(Document):
 		self.estimated_monthly_generation_kwh = generation["monthly_generation_kwh"]
 
 		band = calculations.estimate_daily_generation_band(
-			self.final_capacity_kw, self.consumer.discom_section
+			self.final_capacity_kw, self.subject.discom_section
 		)
 		self.expected_daily_units_low = band["low_units_per_day"]
 		self.expected_daily_units_high = band["high_units_per_day"]
 
-		cycles = 12 if self.consumer.billing_frequency == "Monthly" else 6
+		cycles = 12 if self.subject.billing_frequency == "Monthly" else 6
 		self.units_offset_per_cycle = flt(self.estimated_annual_generation_kwh / cycles, 2) if cycles else 0.0
 
 		tariff = self.electricity_tariff
@@ -164,8 +254,8 @@ class SolarDesignEstimate(Document):
 	def compute_statutory(self):
 		"""Resolved from the fee schedule. A typed fee is never accepted."""
 		fees = statutory.get_statutory_fees(
-			self.consumer.discom,
-			self.connection_type or self.consumer.connection_type or "Single Phase",
+			self.subject.discom,
+			self.connection_type or self.subject.connection_type or "Single Phase",
 			self.final_capacity_kw,
 			self.net_meter_mode or "Purchased by Customer",
 			self.estimate_date,
@@ -185,8 +275,8 @@ class SolarDesignEstimate(Document):
 		"""Recomputed on every validate, so a lapsed stay changes the estimate without a deploy."""
 		result = regulation.check_connection_type(
 			self.final_capacity_kw,
-			self.connection_type or self.consumer.connection_type,
-			self.consumer.discom,
+			self.connection_type or self.subject.connection_type,
+			self.subject.discom,
 			self.estimate_date,
 			self.company,
 		)
@@ -267,10 +357,15 @@ class SolarDesignEstimate(Document):
 			)
 
 	def on_submit(self):
-		frappe.get_doc("Solar Consumer", self.solar_consumer).set_status("Designed")
+		# A lead-only estimate has no consumer status to advance yet; the consumer picks
+		# the stage up when it is created from the lead.
+		if self.solar_consumer:
+			frappe.get_doc("Solar Consumer", self.solar_consumer).set_status("Designed")
 		self.update_linked_opportunity()
 
 	def update_linked_opportunity(self):
+		if not self.solar_consumer:
+			return
 		opportunity = frappe.db.get_value(
 			"Opportunity", {"solar_consumer": self.solar_consumer, "status": ["!=", "Lost"]}, "name"
 		)

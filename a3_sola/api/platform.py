@@ -499,7 +499,38 @@ def update_website_context(context):
 		route == r or route.startswith(r + "/") for r in NO_INDEX_ROUTES
 	)
 	context.organization_schema = organization_schema(settings)
+	# Cache-buster for the app's own static assets. They are served under stable
+	# filenames with a 12-hour max-age, so without a version token an edit to the
+	# stylesheet is invisible to any browser that already cached it. Derived from
+	# the file's mtime, so the token changes exactly when the file does.
+	context.asset_version = asset_version()
 	return context
+
+
+
+_ASSET_VERSION_CACHE = {}
+
+
+def asset_version():
+	"""A short token that changes whenever the public stylesheet changes.
+
+	Keyed off the file's modification time rather than a build step, so it works the
+	same in development (where the file is edited in place) and after a deploy. Cached
+	per mtime so the stat is cheap on the hot path.
+	"""
+	import os
+
+	path = frappe.get_app_path("a3_sola", "public", "css", "platform.css")
+	try:
+		mtime = os.path.getmtime(path)
+	except OSError:
+		# If the file cannot be stat'd, fall back to no token rather than erroring the
+		# whole page - a missing cache-buster is a cosmetic problem, a 500 is not.
+		return ""
+	cached = _ASSET_VERSION_CACHE.get(path)
+	if not cached or cached[0] != mtime:
+		_ASSET_VERSION_CACHE[path] = (mtime, format(int(mtime), "x"))
+	return _ASSET_VERSION_CACHE[path][1]
 
 
 def platform_route(path=""):

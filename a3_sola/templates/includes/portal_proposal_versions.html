@@ -1,0 +1,90 @@
+{#- The proposal's version history: what was quoted, how it went out, what came back. -#}
+<section class="a3s-card a3s-edit__card" id="sec-versions">
+	<h3 class="a3s-edit__card-title">Version history</h3>
+
+	{%- if has_versions %}
+	<ol class="a3s-versions">
+		{%- for v in versions %}
+		<li class="a3s-version{% if v.is_current %} is-current{% endif %}">
+			<span class="a3s-version__mark" aria-hidden="true">{{ v.version_no }}</span>
+			<div class="a3s-version__body">
+				<p class="a3s-version__head">
+					<span class="a3s-version__title">Version {{ v.version_no }}{% if v.is_current %} <span class="a3s-pill a3s-pill--amber">Current</span>{% endif %}</span>
+					<span class="a3s-pill a3s-pill--{{ v.tone }}">{{ v.outcome | e }}</span>
+				</p>
+				<p class="a3s-version__meta">
+					<span>Raised {{ v.raised }}</span>
+					{%- if v.capacity %}<span>{{ v.capacity | e }}</span>{% endif %}
+					{%- if v.cost %}<span>{{ v.cost | e }}</span>{% endif %}
+					{%- if v.estimate %}<span>{{ v.estimate | e }}</span>{% endif %}
+				</p>
+
+				<dl class="a3s-version__facts">
+					<div>
+						<dt>Dispatch</dt>
+						<dd>
+							{%- if v.sent_on %}
+							{{ v.sent_via | e }} &middot; {{ v.sent_on }}{% if v.sent_by %} &middot; {{ v.sent_by | e }}{% endif %}
+							{%- else %}<span class="is-empty">Not sent yet</span>{% endif %}
+						</dd>
+					</div>
+					<div>
+						<dt>Client response</dt>
+						<dd>
+							{%- if v.responded_on %}{{ v.responded_on }}{% else %}<span class="is-empty">&mdash;</span>{% endif %}
+						</dd>
+					</div>
+					{%- if v.client_comments %}
+					<div class="a3s-version__wide">
+						<dt>Comments from client</dt>
+						<dd class="a3s-dl__multiline">{{ v.client_comments | e }}</dd>
+					</div>
+					{%- endif %}
+					{%- if v.lost_reason %}
+					<div class="a3s-version__wide">
+						<dt>Lost reason</dt>
+						<dd class="a3s-dl__multiline">{{ v.lost_reason | e }}</dd>
+					</div>
+					{%- endif %}
+					{%- if v.notes %}
+					<div class="a3s-version__wide">
+						<dt>Why this version</dt>
+						<dd class="a3s-dl__multiline">{{ v.notes | e }}</dd>
+					</div>
+					{%- endif %}
+				</dl>
+
+				{%- if v.pdf %}
+				<p class="a3s-version__file">
+					<a href="{{ v.pdf | e }}" target="_blank" rel="noopener">{{ v.file_name | e or "Open the PDF" }}</a>
+				</p>
+				{%- endif %}
+			</div>
+		</li>
+		{%- endfor %}
+	</ol>
+	{%- else %}
+	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Generate the proposal to open version one.</p>
+	{%- endif %}
+
+	{%- if can_write %}
+	<div class="a3s-version__actions" id="a3s-proposal-actions"
+	     data-name="{{ record.name | e }}">
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="generate">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+			<span>{{ "Regenerate PDF" if has_versions else "Generate proposal" }}</span>
+		</button>
+		{%- if has_versions %}
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="dispatch">Record dispatch</button>
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="response">Record client response</button>
+		<button type="button" class="a3s-btn a3s-btn--ghost" data-act="revise">Revise</button>
+		{%- endif %}
+		{%- if quotation %}
+		<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/cost-estimates/{{ quotation | e }}">Open quotation</a>
+		{%- elif is_accepted %}
+		<button type="button" class="a3s-btn a3s-btn--primary" data-act="quotation">Create quotation</button>
+		{%- endif %}
+		<p class="a3s-form__status" id="a3s-proposal-status" role="status" aria-live="polite"></p>
+	</div>
+	{%- endif %}
+</section>

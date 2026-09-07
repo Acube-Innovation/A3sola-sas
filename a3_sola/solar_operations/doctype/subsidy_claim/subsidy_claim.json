@@ -456,7 +456,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_installation,claim_status",
  "description": "The subsidy is a Direct Benefit Transfer from the government to the CUSTOMER after commissioning. It is never the company's revenue. Track both claim models; post nothing - Phase 3 owns the ledger."
 }

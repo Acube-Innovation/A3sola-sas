@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_consumer",
   "sb_1",
   "consumer_name",
   "customer",
@@ -18,6 +19,7 @@
   "company",
   "status",
   "lead",
+  "tab_connection",
   "sb_3",
   "discom",
   "discom_section",
@@ -36,6 +38,7 @@
   "cb_6",
   "billing_frequency",
   "annual_consumption_units",
+  "tab_site",
   "sb_7",
   "installation_address",
   "roof_type",
@@ -50,6 +53,7 @@
   "cb_10",
   "survey_number",
   "gps_coordinates",
+  "tab_bank",
   "sb_11",
   "bank_details_note",
   "bank_account_holder_name",
@@ -61,6 +65,7 @@
   "cancelled_cheque",
   "bank_details_verified",
   "bank_details_verified_by",
+  "tab_subsidy",
   "sb_14",
   "has_availed_prior_subsidy",
   "prior_scheme_name",
@@ -75,6 +80,11 @@
   "spin"
  ],
  "fields": [
+  {
+   "fieldname": "tab_consumer",
+   "fieldtype": "Tab Break",
+   "label": "Consumer"
+  },
   {
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
@@ -155,6 +165,11 @@
    "fieldtype": "Link",
    "label": "Lead",
    "options": "Lead"
+  },
+  {
+   "fieldname": "tab_connection",
+   "fieldtype": "Tab Break",
+   "label": "Connection"
   },
   {
    "fieldname": "sb_3",
@@ -271,6 +286,11 @@
    "precision": 2
   },
   {
+   "fieldname": "tab_site",
+   "fieldtype": "Tab Break",
+   "label": "Site"
+  },
+  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
    "label": "Site"
@@ -346,6 +366,11 @@
    "read_only": 1
   },
   {
+   "fieldname": "tab_bank",
+   "fieldtype": "Tab Break",
+   "label": "Bank"
+  },
+  {
    "fieldname": "sb_11",
    "fieldtype": "Section Break",
    "label": "DBT & Refund Bank Details"
@@ -409,6 +434,11 @@
    "options": "User",
    "read_only": 1,
    "permlevel": 1
+  },
+  {
+   "fieldname": "tab_subsidy",
+   "fieldtype": "Tab Break",
+   "label": "Subsidy"
   },
   {
    "fieldname": "sb_14",
@@ -478,7 +508,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-05 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",
@@ -569,7 +599,8 @@
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "title_field": "consumer_name",
  "show_title_field_in_link": 1,
  "search_fields": "consumer_name,consumer_number,mobile_no",

@@ -599,6 +599,7 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_consumer,survey_date"
 }

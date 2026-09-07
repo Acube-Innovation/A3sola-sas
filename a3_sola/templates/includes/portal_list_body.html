@@ -1,0 +1,64 @@
+{#- Generic collection list. Everything comes from context set by collections.list_context. -#}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">{{ collection.title }}</h2>
+		<p class="a3s-main__sub">{{ collection.subtitle }} &middot; stored in ERPNext.</p>
+	</div>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ collection.icon }}"></use></svg>
+		<span>New {{ collection.singular }}</span>
+	</a>
+</div>
+
+<form class="a3s-toolbar" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
+	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
+	       placeholder="Search {{ collection.title | lower }}" aria-label="Search {{ collection.title | lower }}">
+	<button type="submit" class="a3s-btn a3s-btn--ghost">Search</button>
+	{%- if q %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
+</form>
+
+{% if rows %}
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table">
+		<thead>
+			<tr>
+				{%- for h in headers %}
+				<th{% if h.num %} class="a3s-table__num"{% endif %}>{{ h.label }}</th>
+				{%- endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{%- for row in rows %}
+			<tr>
+				{%- for cell in row.cells %}
+				<td{% if cell.num %} class="a3s-table__num"{% endif %}>
+					{%- if cell.primary -%}
+						<a class="a3s-table__link" href="{{ cell.route }}">{{ cell.text }}</a>
+					{%- elif cell.badge -%}
+						<span class="a3s-badge">{{ cell.text }}</span>
+					{%- elif cell.text == "—" -%}
+						<span class="a3s-table__muted">&mdash;</span>
+					{%- else -%}
+						{{ cell.text }}
+					{%- endif -%}
+				</td>
+				{%- endfor %}
+			</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+</div>
+<p class="a3s-list__note">Showing {{ total }} record{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.</p>
+{% else %}
+<div class="a3s-card a3s-empty">
+	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ collection.icon }}"></use></svg></span>
+	{%- if q %}
+	<h3 class="a3s-empty__title">No matches</h3>
+	<p class="a3s-empty__text">Nothing matches that search. <a href="/a3solaportal/{{ collection.slug }}">Clear the search</a> to see everything.</p>
+	{%- else %}
+	<h3 class="a3s-empty__title">No {{ collection.title | lower }} yet</h3>
+	<p class="a3s-empty__text">Create the first one and it will appear here.</p>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">New {{ collection.singular }}</a>
+	{%- endif %}
+</div>
+{% endif %}

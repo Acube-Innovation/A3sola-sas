@@ -27,12 +27,55 @@ def rule(code, description, order=0):
 	return decorator
 
 
+def consumer_view_from_lead(lead):
+	"""A Solar Consumer-shaped view of a Lead, so the rules can run before conversion.
+
+	Field names follow Solar Consumer. Anything a lead does not capture - bank details,
+	prior subsidy, installation address - is absent, and the rules that need it fail with
+	the reason stated, which is exactly what a pre-conversion check should report.
+	"""
+	lead = frappe.get_cached_doc("Lead", lead) if isinstance(lead, str) else lead
+	return frappe._dict(
+		name=None,
+		lead=lead.name,
+		company=lead.company,
+		consumer_name=lead.lead_name,
+		mobile_no=lead.mobile_no or lead.phone,
+		email_id=lead.email_id,
+		consumer_category=lead.get("consumer_category") or "Residential",
+		discom=lead.get("discom"),
+		discom_section=lead.get("discom_section"),
+		consumer_number=lead.get("consumer_number"),
+		connection_type=lead.get("connection_type"),
+		roof_type=lead.get("roof_type"),
+		avg_bill_amount=lead.get("avg_monthly_bill"),
+		avg_consumption_units=lead.get("approx_consumption_units"),
+		capacity_kw=lead.get("approx_capacity_kw"),
+		has_availed_prior_subsidy=0,
+		prior_scheme_name=None,
+		prior_subsidy_year=None,
+		installation_address=None,
+		bank_account_holder_name=None,
+		bank_account_no=None,
+		bank_ifsc_code=None,
+	)
+
+
 class Context:
-	"""Everything a rule may inspect, resolved once."""
+	"""Everything a rule may inspect, resolved once.
+
+	`consumer` is the Solar Consumer where the check has one, and otherwise a view of the
+	Lead shaped like one (see `consumer_view_from_lead`), so every rule reads one object.
+	"""
 
 	def __init__(self, check):
 		self.check = check
-		self.consumer = frappe.get_cached_doc("Solar Consumer", check.solar_consumer)
+		if check.solar_consumer:
+			self.consumer = frappe.get_cached_doc("Solar Consumer", check.solar_consumer)
+		elif check.lead:
+			self.consumer = consumer_view_from_lead(check.lead)
+		else:
+			self.consumer = frappe._dict(name=None)
 		self.scheme = frappe.get_cached_doc("Subsidy Scheme", check.subsidy_scheme) if check.subsidy_scheme else None
 		self.estimate = (
 			frappe.get_cached_doc("Solar Design Estimate", check.design_estimate)
@@ -55,7 +98,14 @@ class Context:
 
 	@property
 	def capacity_kw(self):
-		return flt(self.estimate.final_capacity_kw) if self.estimate else 0.0
+		"""The estimate's final capacity, else the indicative size carried on the check."""
+		if self.estimate:
+			return flt(self.estimate.final_capacity_kw)
+		return flt(self.check.get("capacity_kw"))
+
+	@property
+	def capacity_basis(self):
+		return _("design estimate") if self.estimate else _("indicative size on the lead")
 
 
 @rule("ELG-01", "Consumer category matches the scheme's eligible category.", 1)
@@ -85,11 +135,11 @@ def _prior_subsidy(ctx):
 def _capacity(ctx):
 	if not ctx.scheme or not ctx.scheme.max_eligible_capacity_kw:
 		return "Not Applicable", _("Scheme sets no capacity ceiling.")
-	if not ctx.estimate:
-		return "Not Applicable", _("No design estimate linked.")
+	if not ctx.capacity_kw:
+		return "Not Applicable", _("No design estimate linked and no capacity proposed.")
 	if ctx.capacity_kw <= flt(ctx.scheme.max_eligible_capacity_kw):
-		return "Pass", _("{0} kW is within the {1} kW ceiling.").format(
-			ctx.capacity_kw, ctx.scheme.max_eligible_capacity_kw
+		return "Pass", _("{0} kW ({1}) is within the {2} kW ceiling.").format(
+			ctx.capacity_kw, ctx.capacity_basis, ctx.scheme.max_eligible_capacity_kw
 		)
 	return "Fail", _("{0} kW exceeds the {1} kW ceiling; subsidy applies only up to the ceiling.").format(
 		ctx.capacity_kw, ctx.scheme.max_eligible_capacity_kw
@@ -137,6 +187,8 @@ def _connection(ctx):
 
 @rule("ELG-07", "Installation address is present and matches the consumer's district.", 7)
 def _address(ctx):
+	if not ctx.consumer.get("name"):
+		return "Fail", _("No Solar Consumer yet, so no installation address is on record.")
 	if not ctx.consumer.installation_address:
 		return "Fail", _("No installation address on the consumer record.")
 	district = frappe.db.get_value("DISCOM Section", ctx.consumer.discom_section, "district")
@@ -152,8 +204,8 @@ def _address(ctx):
 
 @rule("ELG-08", "Connection type satisfies the grid regulation in force for this capacity.", 8)
 def _phase(ctx):
-	if not ctx.estimate:
-		return "Not Applicable", _("No design estimate linked.")
+	if not ctx.capacity_kw:
+		return "Not Applicable", _("No design estimate linked and no capacity proposed.")
 	# Evaluate as of the check's own date: a back-dated check must reflect the law that
 	# applied then, not the law today.
 	res = regulation.check_connection_type(
@@ -204,6 +256,8 @@ def _ehs(ctx):
 
 @rule("ELG-11", "Lender, branch and sanction reference recorded where the sale is financed.", 11)
 def _finance(ctx):
+	if not ctx.consumer.get("name"):
+		return "Not Applicable", _("Not yet quoted; financing is checked once a Solar Consumer exists.")
 	quotation = frappe.db.get_value(
 		"Quotation",
 		{"solar_consumer": ctx.consumer.name, "docstatus": ["<", 2], "is_financed": 1},

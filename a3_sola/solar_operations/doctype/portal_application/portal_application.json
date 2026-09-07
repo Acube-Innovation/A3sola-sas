@@ -394,7 +394,8 @@
  "states": [],
  "track_changes": 1,
  "is_submittable": 1,
- "autoname": "Prompt",
+ "autoname": "",
+ "naming_rule": "By script",
  "search_fields": "solar_installation,application_number,application_type",
  "description": "External applications carry their own numbers, dates and statuses. There is no public API, so they are mirrored here. Never scrape or automate a portal."
 }
