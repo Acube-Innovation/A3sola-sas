@@ -2,40 +2,70 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-08-25 13:00:00.000000",
+ "description": "Standalone by design: Phase 3 reuses this on O&M Visit, so no field may reference Installation Work Order.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "party_type",
+  "party",
+  "party_name",
   "technician",
   "role",
   "planned_hours",
   "cb_1",
   "actual_hours",
-  "remarks"
+  "remarks",
+  "contract_amount",
+  "billed_by_invoice"
  ],
  "fields": [
   {
+   "columns": 1,
+   "default": "Employee",
+   "fieldname": "party_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Crew Is",
+   "options": "Employee\nSolar Contractor"
+  },
+  {
+   "columns": 2,
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Employee / Contractor",
+   "options": "party_type"
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "description": "Filled from the party when it is an employee. Kept so hours cost the same way they always did.",
    "fieldname": "technician",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Technician",
    "options": "Employee",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 0
   },
   {
    "fieldname": "role",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Role",
    "options": "Lead Technician\nElectrician\nHelper\nStructural Fitter\nSafety Officer",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "planned_hours",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Planned Hours",
-   "precision": 2,
-   "in_list_view": 1
+   "precision": 2
   },
   {
    "fieldname": "cb_1",
@@ -44,18 +74,32 @@
   {
    "fieldname": "actual_hours",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Actual Hours",
-   "precision": 2,
-   "in_list_view": 1
+   "precision": 2
   },
   {
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
+  },
+  {
+   "description": "A contractor's lump sum for this order. Costed as subcontractor spend unless billed by invoice.",
+   "fieldname": "contract_amount",
+   "fieldtype": "Currency",
+   "label": "Contract Amount",
+   "permlevel": 1
+  },
+  {
+   "description": "Tick when the contractor's Purchase Invoice carries the cost, so it is not counted twice.",
+   "fieldname": "billed_by_invoice",
+   "fieldtype": "Check",
+   "label": "Billed by Invoice"
   }
  ],
+ "istable": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Work Order Crew",
@@ -64,7 +108,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 0,
- "istable": 1,
- "description": "Standalone by design: Phase 3 reuses this on O&M Visit, so no field may reference Installation Work Order."
+ "track_changes": 0
 }

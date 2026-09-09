@@ -1,0 +1,430 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-09-09 13:00:00.000000",
+ "description": "The materials and their serial numbers, mailed to the electrical contractor in the completion-report format before the contractor's certificate comes back.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_ref",
+  "solar_installation",
+  "solar_consumer",
+  "consumer_name",
+  "company",
+  "status",
+  "amended_from",
+  "cb_ref",
+  "solar_contractor",
+  "contractor_email",
+  "contractor_mobile",
+  "cc_emails",
+  "delivery_note",
+  "dispatch_date",
+  "expected_site_date",
+  "sb_task",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_task",
+  "task_due_date",
+  "task_cost",
+  "sb_serials",
+  "serials",
+  "sb_docs",
+  "completion_data_sheet",
+  "generated",
+  "sb_sent",
+  "sent_on",
+  "sent_to",
+  "sent_by",
+  "communication",
+  "cb_sent",
+  "acknowledged_on",
+  "acknowledgement_note",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_ref",
+   "fieldtype": "Section Break",
+   "label": "Dispatch"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_installation.solar_consumer",
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "solar_installation.consumer_name",
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nIn Progress\nCompleted\nSkipped",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Material Dispatch Notice",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_contractor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Electrical Contractor",
+   "options": "Solar Contractor",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_contractor.email_id",
+   "fetch_if_empty": 1,
+   "fieldname": "contractor_email",
+   "fieldtype": "Data",
+   "label": "Contractor Email",
+   "options": "Email"
+  },
+  {
+   "fetch_from": "solar_contractor.mobile_no",
+   "fieldname": "contractor_mobile",
+   "fieldtype": "Data",
+   "label": "Contractor Mobile",
+   "read_only": 1
+  },
+  {
+   "description": "Comma-separated.",
+   "fieldname": "cc_emails",
+   "fieldtype": "Data",
+   "label": "CC"
+  },
+  {
+   "fieldname": "delivery_note",
+   "fieldtype": "Link",
+   "label": "Delivery Note",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "dispatch_date",
+   "fieldtype": "Date",
+   "label": "Dispatched On"
+  },
+  {
+   "fieldname": "expected_site_date",
+   "fieldtype": "Date",
+   "label": "Expected at Site"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_task",
+   "fieldtype": "Section Break",
+   "label": "Task"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_task",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "task_due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "task_cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
+  },
+  {
+   "description": "A snapshot of what was dispatched. Pull it from the installation's register; it does not change after sending.",
+   "fieldname": "sb_serials",
+   "fieldtype": "Section Break",
+   "label": "Serial Numbers"
+  },
+  {
+   "fieldname": "serials",
+   "fieldtype": "Table",
+   "label": "Serials",
+   "options": "Installation Serial Register"
+  },
+  {
+   "fieldname": "sb_docs",
+   "fieldtype": "Section Break",
+   "label": "Sent"
+  },
+  {
+   "fieldname": "completion_data_sheet",
+   "fieldtype": "Attach",
+   "label": "Data Sheet",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "generated",
+   "fieldtype": "Table",
+   "label": "Generated",
+   "options": "Task Generated Document"
+  },
+  {
+   "fieldname": "sb_sent",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sent_to",
+   "fieldtype": "Data",
+   "label": "Sent To",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sent_by",
+   "fieldtype": "Link",
+   "label": "Sent By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "communication",
+   "fieldtype": "Link",
+   "label": "Email",
+   "options": "Communication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_sent",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "acknowledged_on",
+   "fieldtype": "Date",
+   "label": "Acknowledged On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "acknowledgement_note",
+   "fieldtype": "Small Text",
+   "label": "Acknowledgement"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-09 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Material Dispatch Notice",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Documentation Officer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Site Engineer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Executive",
+   "write": 1
+  }
+ ],
+ "search_fields": "solar_installation,consumer_name,solar_contractor",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

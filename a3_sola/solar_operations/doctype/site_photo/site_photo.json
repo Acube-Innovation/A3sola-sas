@@ -1,0 +1,120 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-09 11:00:00.000000",
+ "description": "A photograph taken on site with where and when it was taken. The bank's completion pack and the portal both want the coordinates, not just the picture.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "image",
+  "caption",
+  "work_type",
+  "latitude",
+  "longitude",
+  "accuracy_m",
+  "geo_source",
+  "cb_1",
+  "captured_on",
+  "captured_by",
+  "map_link",
+  "include_in_collage"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "in_list_view": 1,
+   "label": "Photo",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "caption",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Caption"
+  },
+  {
+   "fieldname": "work_type",
+   "fieldtype": "Select",
+   "label": "Work Type",
+   "options": "\nStructure Erection\nModule Mounting\nDC Wiring\nAC Wiring & Earthing\nInverter Installation\nTesting\nRectification"
+  },
+  {
+   "columns": 1,
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Latitude",
+   "precision": 6
+  },
+  {
+   "columns": 1,
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Longitude",
+   "precision": 6
+  },
+  {
+   "fieldname": "accuracy_m",
+   "fieldtype": "Float",
+   "label": "Accuracy (m)",
+   "precision": 1
+  },
+  {
+   "columns": 1,
+   "default": "None",
+   "fieldname": "geo_source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Location From",
+   "options": "None\nBrowser\nEXIF\nManual"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "captured_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Captured On"
+  },
+  {
+   "fieldname": "captured_by",
+   "fieldtype": "Link",
+   "label": "Captured By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "map_link",
+   "fieldtype": "Data",
+   "label": "Map",
+   "options": "URL",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "include_in_collage",
+   "fieldtype": "Check",
+   "label": "In Collage"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-09 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Site Photo",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

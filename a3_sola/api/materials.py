@@ -136,3 +136,114 @@ def check_variance(installation):
 		indicator="orange",
 	)
 	return over
+
+
+# ------------------------------------------------------------------ the procurement and dispatch tasks
+@frappe.whitelist()
+def create_purchase_order(installation, supplier, schedule_days=7):
+	"""A Purchase Order for the job's bill of materials, delivered to the site.
+
+	The PO is the procurement task's document: raising it starts the task, submitting it
+	completes it. Site location, landmark and contact come from the consumer record via
+	`set_site_fields`, so the supplier's driver gets the same pin the survey engineer did.
+	"""
+	doc = frappe.get_doc("Solar Installation", installation)
+	doc.check_permission("write")
+	required = _bom_requirement(doc)
+	if not required:
+		frappe.throw(_("Package {0} has no BOM or component list to buy from.").format(doc.solar_package))
+	schedule = frappe.utils.add_days(frappe.utils.today(), int(schedule_days or 7))
+	warehouse = _warehouse_for(doc.company)
+	order = frappe.get_doc(
+		{
+			"doctype": "Purchase Order",
+			"company": doc.company,
+			"supplier": supplier,
+			"transaction_date": frappe.utils.today(),
+			"schedule_date": schedule,
+			"solar_installation": doc.name,
+			"set_warehouse": warehouse,
+			# ERPNext validates `shipping_address` against the company; the site is the
+			# customer's premises, so it travels as display text and in the site fields.
+			"shipping_address_display": _site_address_display(doc.installation_address),
+			"items": [
+				{"item_code": item, "qty": qty, "schedule_date": schedule, "warehouse": warehouse}
+				for item, qty in required.items()
+			],
+		}
+	)
+	order.flags.ignore_permissions = True
+	order.insert(ignore_permissions=True)
+	return order.name
+
+
+@frappe.whitelist()
+def create_delivery_note(installation):
+	"""A Delivery Note from the job's sales order, to the customer's site.
+
+	The note is the dispatch task's document; its serials feed the register on submit.
+	"""
+	doc = frappe.get_doc("Solar Installation", installation)
+	doc.check_permission("write")
+	if not doc.sales_order:
+		frappe.throw(_("Installation {0} has no sales order to deliver against.").format(doc.name))
+	from erpnext.selling.doctype.sales_order.sales_order import make_delivery_note
+
+	note = make_delivery_note(doc.sales_order)
+	note.solar_installation = doc.name
+	if doc.installation_address:
+		note.shipping_address_name = doc.installation_address
+	note.flags.ignore_permissions = True
+	note.insert(ignore_permissions=True)
+	return note.name
+
+
+def _warehouse_for(company):
+	"""The receiving store: Settings' default when it is this company's, else the company's
+	first leaf warehouse. Settings is one record for every company, so it cannot be trusted
+	blindly on a multi-company site."""
+	preferred = get_value("default_source_warehouse")
+	if preferred and frappe.db.get_value("Warehouse", preferred, "company") == company:
+		return preferred
+	return frappe.db.get_value("Warehouse", {"company": company, "is_group": 0}, "name", order_by="creation asc")
+
+
+def _site_address_display(address):
+	if not address:
+		return None
+	from frappe.contacts.doctype.address.address import get_address_display
+
+	try:
+		return get_address_display(frappe.get_doc("Address", address).as_dict())
+	except Exception:
+		return None
+
+
+def set_site_fields(doc, method=None):
+	"""Purchase Order validate: carry the site's location onto the order."""
+	installation = doc.get("solar_installation")
+	if not installation:
+		return
+	consumer = frappe.db.get_value("Solar Installation", installation, "solar_consumer")
+	if not consumer:
+		return
+	values = frappe.db.get_value(
+		"Solar Consumer", consumer, ["google_location_url", "landmark", "mobile_no", "latitude", "longitude"], as_dict=True
+	) or frappe._dict()
+	location = values.google_location_url
+	if not location and values.latitude and values.longitude:
+		location = f"https://maps.google.com/?q={flt(values.latitude, 6)},{flt(values.longitude, 6)}"
+	for field, value in (("site_google_location", location), ("site_landmark", values.landmark),
+	                     ("site_contact_no", values.mobile_no)):
+		if doc.meta.has_field(field):
+			doc.set(field, value)
+
+
+def bom_lines(installation):
+	"""The bill of materials as rows a document can print."""
+	doc = installation if not isinstance(installation, str) else frappe.get_doc("Solar Installation", installation)
+	rows = []
+	for item, qty in _bom_requirement(doc).items():
+		name, uom, description = frappe.db.get_value("Item", item, ["item_name", "stock_uom", "description"]) or (item, "", "")
+		rows.append({"item": item, "item_name": name, "qty": flt(qty, 3), "uom": uom, "description": description})
+	return rows

@@ -47,15 +47,19 @@ def resolve_valuation(company, consumer_category=None, on_date=None):
 	)
 
 
-def build_invoice_items(project, milestone_amount, rule_name):
+def build_invoice_items(project, milestone_amount, rule_name, capacity_kw=None):
 	"""The item rows a Sales Invoice should carry under a valuation rule.
 
 	Returns one blended row, two split rows, or a single row - whichever the rule says.
+	The project may not exist yet (the advance is billed before commissioning), so the
+	capacity can be given directly.
 	"""
 	rule = frappe.get_cached_doc("Solar GST Valuation Rule", rule_name)
-	doc = frappe.get_doc("Project", project) if isinstance(project, str) else project
+	doc = (frappe.get_doc("Project", project) if isinstance(project, str) else project) if project else None
 	amount = flt(milestone_amount)
-	description = _("Grid connected rooftop solar power plant, {0} kWp").format(flt(doc.capacity_kw))
+	description = _("Grid connected rooftop solar power plant, {0} kWp").format(
+		flt(doc.capacity_kw) if doc else flt(capacity_kw)
+	)
 
 	if rule.valuation_mode == "Separate Line Items":
 		goods = flt(amount * flt(rule.goods_value_percent) / 100.0, 2)

@@ -72,3 +72,25 @@ class TestSeeding(FrappeTestCase):
 		)
 		self.assertIn("DISPLAY ONLY", description)
 		self.assertIn("never appear", description)
+
+
+class TestSharedTaskTemplate(FrappeTestCase):
+	def test_the_shared_task_template_keeps_no_company(self):
+		"""Frappe fills a blank company with the site's default on insert; the shared
+		template must come out of seeding with none, once, however often it is seeded."""
+		from a3_sola.setup import install_ops
+
+		first = install_ops.seed_stage_templates("Starter Solar EPC")
+		second = install_ops.seed_stage_templates(None)
+		self.assertEqual(first, second)
+		doc = frappe.get_doc("Installation Stage Template", first)
+		self.assertEqual((doc.is_shared, doc.company, doc.is_active), (1, None, 1))
+		self.assertEqual(frappe.db.count("Installation Stage Template", {"is_shared": 1}), 1)
+		with self.assertRaises(frappe.ValidationError):
+			frappe.get_doc(
+				{
+					"doctype": "Installation Stage Template", "template_name": "Another shared", "is_shared": 1,
+					"stages": [{"stage_code": "ORD", "stage_name": "Order received", "owner_type": "Internal",
+					            "task_doctype": "Sales Order", "sla_days": 1}],
+				}
+			).insert(ignore_permissions=True)

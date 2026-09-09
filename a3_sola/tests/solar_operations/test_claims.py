@@ -9,17 +9,16 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import today
 
-from a3_sola.api import stages
-from a3_sola.tests.solar_operations.fixtures import (
-	attach_stage_documents,
-	capture_serials,
-	complete_through,
-	make_installation,
-)
+from a3_sola.tests.solar_operations.fixtures import capture_serials, make_installation
+from a3_sola.tests.solar_operations.test_commissioning import make_report
 
-CHAIN_TO_PCR = [
-	"ORD", "NPA", "FEAS", "DSGN", "PROC", "DISP", "INST", "KREG", "NMTR", "KTST", "AGMT", "COMM",
-]
+
+def commission(installation):
+	"""A commissioned job: serials captured, report submitted, COMM complete via the hook."""
+	capture_serials(installation, modules=6, inverters=1)
+	report = make_report(installation)
+	report.submit()
+	return frappe.get_doc("Solar Installation", installation.name)
 
 
 def make_snag(installation, severity="Major", **kwargs):
@@ -60,30 +59,45 @@ class TestSnags(FrappeTestCase):
 		self.assertEqual(doc.open_snag_count, 1)
 		self.assertEqual(doc.critical_snag_count, 1)
 
-	def test_open_major_snag_blocks_pcr(self):
-		"""The ministry can deactivate a vendor over unresolved defects."""
-		capture_serials(self.installation, modules=6, inverters=1)
-		complete_through(self.installation, CHAIN_TO_PCR)
+	def test_open_major_snag_blocks_the_subsidy_claim(self):
+		"""The ministry can deactivate a vendor over unresolved defects, so the claim refuses."""
+		commission(self.installation)
 		make_snag(self.installation, severity="Major")
-
-		attach_stage_documents(self.installation, "PCR")
+		claim = frappe.get_doc(
+			{
+				"doctype": "Subsidy Claim",
+				"company": self.installation.company,
+				"solar_installation": self.installation.name,
+				"expected_subsidy_amount": 78000,
+				"claim_model": "Customer Claims Directly",
+				"pcr_uploaded_on": today(),
+				"pcr_reference_no": "PCR-1",
+			}
+		).insert(ignore_permissions=True)
 		with self.assertRaises(frappe.ValidationError) as ctx:
-			stages.advance_stage(self.installation.name, "PCR")
+			claim.submit()
 		self.assertIn("snag", str(ctx.exception).lower())
 
-	def test_resolved_snag_releases_pcr(self):
-		capture_serials(self.installation, modules=6, inverters=1)
-		complete_through(self.installation, CHAIN_TO_PCR)
+	def test_resolved_snag_releases_the_subsidy_claim(self):
+		commission(self.installation)
 		snag = make_snag(self.installation, severity="Major")
 		snag.status = "Resolved"
 		snag.save(ignore_permissions=True)
-
-		attach_stage_documents(self.installation, "PCR")
-		stages.advance_stage(self.installation.name, "PCR")
+		claim = frappe.get_doc(
+			{
+				"doctype": "Subsidy Claim",
+				"company": self.installation.company,
+				"solar_installation": self.installation.name,
+				"expected_subsidy_amount": 78000,
+				"claim_model": "Customer Claims Directly",
+				"pcr_uploaded_on": today(),
+				"pcr_reference_no": "PCR-1",
+			}
+		).insert(ignore_permissions=True)
+		claim.submit()
 		doc = frappe.get_doc("Solar Installation", self.installation.name)
-		self.assertEqual(
-			next(r.status for r in doc.stages if r.stage_code == "PCR"), "Completed"
-		)
+		self.assertEqual(next(r.status for r in doc.stages if r.stage_code == "SUBREQ"), "Completed")
+		self.assertEqual(next(r.task_document for r in doc.stages if r.stage_code == "SUBREQ"), claim.name)
 
 
 class TestSubsidyClaim(FrappeTestCase):
@@ -209,3 +223,64 @@ class TestStatutoryFeePayment(FrappeTestCase):
 		payment.save(ignore_permissions=True)
 		self.assertEqual(payment.refund_status, "Short Received")
 		self.assertEqual(payment.refund_variance, -1400)
+
+
+class TestSubsidyCorrections(FrappeTestCase):
+	"""A query opens a correction row; corrected and resubmitted closes it."""
+
+	def setUp(self):
+		from a3_sola.tests.solar_operations.test_tasks import task_row
+
+		self.task_row = task_row
+		self.installation = make_installation()
+		capture_serials(self.installation, modules=6, inverters=1)
+		commission(self.installation)
+		self.claim = frappe.get_doc(
+			{
+				"doctype": "Subsidy Claim",
+				"company": self.installation.company,
+				"solar_installation": self.installation.name,
+				"expected_subsidy_amount": 78000,
+				"claim_model": "Customer Claims Directly",
+				"pcr_uploaded_on": today(),
+				"pcr_reference_no": "PCR-CORR-1",
+			}
+		)
+		self.claim.flags.ignore_permissions = True
+		self.claim.insert(ignore_permissions=True)
+		self.claim.submit()
+
+	def _set_status(self, status, **extra):
+		self.claim.reload()
+		self.claim.claim_status = status
+		self.claim.update(extra)
+		self.claim.flags.ignore_validate_update_after_submit = True
+		self.claim.save(ignore_permissions=True)
+		self.claim.reload()
+
+	def test_a_query_opens_a_correction_and_blocks_the_task(self):
+		self._set_status("Query Raised", query_description="Aadhaar name does not match the bill")
+		self.assertEqual(len(self.claim.corrections), 1)
+		self.assertEqual(self.claim.open_corrections, 1)
+		self.assertIn("Aadhaar", self.claim.corrections[0].reason)
+		row, _doc = self.task_row(self.installation, "CORR")
+		self.assertEqual(row.status, "Blocked")
+
+	def test_corrected_and_resubmitted_completes_the_task(self):
+		from a3_sola.solar_operations.doctype.subsidy_claim import subsidy_claim as ctl
+
+		self._set_status("Query Raised", query_description="Bill upload unreadable")
+		with self.assertRaises(frappe.ValidationError):
+			ctl.mark_resubmitted(self.claim.name)  # nothing corrected yet
+		ctl.record_correction(self.claim.name, self.claim.corrections[0].name, attachment="/files/bill.pdf")
+		ctl.mark_resubmitted(self.claim.name)
+		self.claim.reload()
+		self.assertEqual((self.claim.claim_status, self.claim.open_corrections), ("Under Verification", 0))
+		row, doc = self.task_row(self.installation, "CORR")
+		self.assertEqual(row.status, "Completed")
+		self.assertTrue(any(r.attachment == "/files/bill.pdf" and r.stage_code == "CORR" for r in doc.documents))
+
+	def test_approval_without_a_query_skips_the_correction_task(self):
+		self._set_status("Approved")
+		row, _doc = self.task_row(self.installation, "CORR")
+		self.assertEqual(row.status, "Skipped")

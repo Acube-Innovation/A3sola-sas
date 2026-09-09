@@ -31,6 +31,7 @@ def daily_escalation():
 			"refunds": _chase_refunds(company),
 			"loans": _chase_loan_disbursements(company),
 			"claims": _chase_subsidy_claims(company),
+			"form2_windows": _remind_form2_windows(company),
 		}
 	frappe.logger("a3_sola").info({"event": "daily_escalation", "summary": summary})
 	return summary
@@ -119,9 +120,54 @@ def _escalate_stage_breaches(company):
 	return raised
 
 
+def _remind_form2_windows(company):
+	"""Form 2 is due thirty days after the Form 1 payment; remind before the window shuts."""
+	raised = 0
+	horizon = add_days(today(), _reminder_window())
+	for job in frappe.get_all(
+		"Solar Installation",
+		filters={"company": company, "docstatus": 1, "status": ["not in", ["Closed", "Cancelled"]],
+		         "form2_due_on": ["<=", horizon]},
+		fields=["name", "form2_due_on", "project_manager"],
+	):
+		row = frappe.db.get_value(
+			"Installation Stage Log",
+			{"parent": job.name, "parenttype": "Solar Installation", "stage_code": "KFORMS"},
+			["status", "assigned_to"],
+			as_dict=True,
+		)
+		if not row or row.status in ("Completed", "Skipped"):
+			continue
+		marker = f"[FORM2:{job.name}]"
+		if _todo_exists("Solar Installation", job.name, marker):
+			continue
+		days = (getdate(job.form2_due_on) - getdate(today())).days
+		when = _("is due in {0} day(s)").format(days) if days >= 0 else _("was due {0} day(s) ago").format(-days)
+		_raise_todo(
+			row.assigned_to or job.project_manager,
+			"Solar Installation",
+			job.name,
+			_("{0} The Form 2 submission (KSEB pack) {1}, on {2}.").format(
+				marker, when, frappe.utils.formatdate(job.form2_due_on)
+			),
+			priority="High" if days <= 0 else "Medium",
+		)
+		raised += 1
+	return raised
+
+
 def _chase_target(installation, row):
-	"""Name the person to chase - a section office, not an abstraction."""
-	if row.owner_type != "DISCOM" or not installation.discom_section:
+	"""Name the person to chase - the assignee first, then the section office."""
+	parts = []
+	if row.get("assigned_to"):
+		parts.append(_("Assigned to {0}.").format(frappe.utils.get_fullname(row.assigned_to)))
+	if row.owner_type == "DISCOM" and installation.discom_section:
+		parts.append(_section_chase(installation))
+	return " ".join(p for p in parts if p)
+
+
+def _section_chase(installation):
+	if not installation.discom_section:
 		return ""
 	section = frappe.db.get_value(
 		"DISCOM Section",

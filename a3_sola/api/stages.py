@@ -1,11 +1,14 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The installation stage engine, and the extension points later phases register against.
+"""The installation task engine's foundations, and the extension points Projects registers against.
 
-Stages are configured, not coded. An Installation Stage Template defines the chain per
-scheme, system type and consumer category, and a stage that does not apply to a given job
-is created as Skipped with its reason recorded - never omitted, because an auditor asking
-why there is no inspectorate certificate needs to see the answer on the record.
+Tasks are configured, not coded. One Installation Stage Template, shared by every company, lists the
+tasks; a task that does not apply to a given job is created as Skipped with its reason
+recorded - never omitted, because an auditor asking why there is no inspectorate certificate
+needs to see the answer on the record.
+
+This module builds and recomputes. Transitions - completing, skipping, blocking, linking a
+task to the document that carries it out - live in `a3_sola.api.tasks`.
 """
 
 import frappe
@@ -15,50 +18,50 @@ from frappe.utils import add_days, date_diff, flt, getdate, today
 from a3_sola.api.settings import get_value
 
 MANAGER_ROLES = ("Solar Operations Manager", "System Manager")
-EXTERNAL_OWNERS = ("DISCOM", "Inspectorate", "Bank", "Government")
+EXTERNAL_OWNERS = ("DISCOM", "Inspectorate", "Bank", "Government", "Contractor")
+DONE = ("Completed", "Skipped")
 
 
 # --------------------------------------------------------------- template resolution
 def resolve_template(scheme=None, system_type=None, consumer_category=None, company=None):
-	"""Best-matching stage template, falling back to the company default."""
+	"""The task template: one, shared by every company.
+
+	The parameters stay for the callers that pass them. Order: the shared active default
+	(no company); else the template Settings names, if it is live and shared or the
+	company's; else the company's own active default; else the only active one.
+	"""
+	shared = frappe.db.get_value("Installation Stage Template", {"is_shared": 1, "is_active": 1}, "name")
+	if shared:
+		return shared
+
+	preferred = get_value("default_stage_template")
+	if preferred:
+		live = frappe.db.get_value(
+			"Installation Stage Template", preferred, ["is_active", "company"], as_dict=True
+		)
+		if live and live.is_active and (not live.company or not company or live.company == company):
+			return preferred
+
 	filters = {"is_active": 1}
 	if company:
-		filters["company"] = company
-
-	candidates = frappe.get_all(
-		"Installation Stage Template",
-		filters=filters,
-		fields=["name", "applicable_scheme", "applicable_system_type", "consumer_category", "is_default"],
+		filters["company"] = ["in", [company, ""]]
+	default = frappe.get_all(
+		"Installation Stage Template", filters={**filters, "is_default": 1}, pluck="name", limit=1
 	)
-	if not candidates:
+	if default:
+		return default[0]
+
+	active = frappe.get_all(
+		"Installation Stage Template", filters=filters, pluck="name", order_by="creation asc"
+	)
+	if not active:
 		frappe.throw(
-			_("No active Installation Stage Template for {0}. A job cannot be executed without a stage chain.").format(
+			_("No active Installation Stage Template for {0}. A job cannot be executed without its tasks.").format(
 				company or _("this site")
 			),
-			title=_("Stage Template Missing"),
+			title=_("Task Template Missing"),
 		)
-
-	def score(row):
-		points = 0
-		if scheme and row.applicable_scheme == scheme:
-			points += 4
-		elif row.applicable_scheme:
-			points -= 10
-		if system_type and row.applicable_system_type in (system_type, "All"):
-			points += 1
-		if consumer_category and row.consumer_category in (consumer_category, "All"):
-			points += 1
-		if row.is_default:
-			points += 1
-		return points
-
-	best = max(candidates, key=score)
-	if score(best) < 0:
-		default = next((c for c in candidates if c.is_default), None)
-		if not default:
-			frappe.throw(_("No stage template matches and no default is set."), title=_("Stage Template Missing"))
-		return default.name
-	return best.name
+	return active[0]
 
 
 def stage_applies(row, context):
@@ -91,7 +94,11 @@ def stage_applies(row, context):
 
 
 def build_stages(installation):
-	"""Populate the stage log and the document checklist from the resolved template."""
+	"""Populate the task rows and the document register from the resolved template.
+
+	Register rows are created for every task, skipped ones included: a skipped task can be
+	un-skipped later, and its expected documents should already be waiting for it.
+	"""
 	template = frappe.get_cached_doc("Installation Stage Template", installation.stage_template)
 	context = {
 		"is_financed": installation.is_financed,
@@ -115,15 +122,24 @@ def build_stages(installation):
 				"stage_name": row.stage_name,
 				"owner_type": row.owner_type,
 				"responsible_role": row.responsible_role,
+				"task_doctype": row.task_doctype,
 				"sla_days": row.sla_days,
 				"is_mandatory": row.is_mandatory,
+				"due_anchor_task": row.due_anchor_task,
+				"due_anchor_days": row.due_anchor_days,
 				"planned_date": planned,
 				"status": "Pending" if applies else "Skipped",
 				"skip_reason": None if applies else reason,
 			},
 		)
-		if applies and row.document_checklist_template:
-			_append_checklist(installation, row.stage_code, row.document_checklist_template)
+		# The shared template names no checklist; the job's company has its own.
+		checklist = row.document_checklist_template or frappe.db.get_value(
+			"Document Checklist Template",
+			{"stage_code": row.stage_code, "company": installation.company},
+			"name",
+		)
+		if checklist:
+			_append_checklist(installation, row.stage_code, checklist)
 
 	return installation
 
@@ -136,6 +152,7 @@ def _append_checklist(installation, stage_code, checklist_template):
 			{
 				"stage_code": stage_code,
 				"document_name": item.document_name,
+				"document_kind": "Expected",
 				"is_mandatory": item.is_mandatory,
 				"solar_document_template": item.solar_document_template,
 			},
@@ -144,15 +161,19 @@ def _append_checklist(installation, stage_code, checklist_template):
 
 # ------------------------------------------------------------------- recomputation
 def recompute(installation):
-	"""Derive status, current stage, progress and breach flags. Never hand-set."""
+	"""Derive status, focus task, progress, due dates and overdue flags. Never hand-set.
+
+	Tasks are a set, not a sequence, so the "current stage" is a focus, not a position:
+	the first blocked task, else the first in progress, else the first still pending.
+	"""
 	order_date = getdate(installation.order_date or today())
 	installation.days_since_order = date_diff(today(), order_date)
+	by_code = {row.stage_code: row for row in installation.stages}
 
-	current = None
-	blocked = False
 	breached = False
 	completed_mandatory = 0
 	total_mandatory = 0
+	first_blocked = first_active = first_pending = first_breached = None
 
 	for row in installation.stages:
 		if row.is_mandatory and row.status != "Skipped":
@@ -167,48 +188,75 @@ def recompute(installation):
 		elif row.status in ("Pending", "Skipped"):
 			row.days_in_stage = 0
 
+		_derive_due_date(row, by_code)
 		row.is_sla_breached = (
-			1 if row.sla_days and row.status in ("In Progress", "Blocked") and flt(row.days_in_stage) > flt(row.sla_days) else 0
+			1
+			if row.status in ("In Progress", "Blocked") and row.due_date and getdate(today()) > getdate(row.due_date)
+			else 0
 		)
 		if row.is_sla_breached:
 			breached = True
+			first_breached = first_breached or row
 		if row.status == "Blocked":
-			blocked = True
-		if current is None and row.status not in ("Completed", "Skipped"):
-			current = row
+			first_blocked = first_blocked or row
+		elif row.status == "In Progress":
+			first_active = first_active or row
+		elif row.status == "Pending":
+			first_pending = first_pending or row
 
+	focus = first_blocked or first_active or first_pending
 	installation.is_sla_breached = 1 if breached else 0
-	installation.current_stage = current.stage_name if current else None
-	installation.current_stage_owner_type = current.owner_type if current else None
+	installation.current_stage = focus.stage_name if focus else None
+	installation.current_stage_owner_type = focus.owner_type if focus else None
 	installation.overall_progress_percent = (
 		flt(completed_mandatory * 100.0 / total_mandatory, 2) if total_mandatory else 0
 	)
 
-	blocking = None
-	if current and (blocked or current.is_sla_breached):
-		blocking = current.owner_type
-	installation.blocking_party = blocking
+	blocking = first_blocked or first_breached
+	installation.blocking_party = blocking.owner_type if blocking else None
 
-	installation.status = _derive_status(installation, current, blocked)
+	installation.status = _derive_status(installation, focus, bool(first_blocked))
 	return installation
 
 
-def _derive_status(installation, current, blocked):
+def _derive_due_date(row, by_code):
+	"""When a task is due.
+
+	An anchored task's window starts when its anchor completes - the thirty days for Form 2
+	run from the Form 1 fee, not from the order - and that overrides anything else while the
+	task is open. Otherwise the SLA runs from the day the task started, and a due date set
+	by hand (assignment) is left alone.
+	"""
+	if row.due_anchor_task and row.status not in DONE:
+		anchor = by_code.get(row.due_anchor_task)
+		if anchor and anchor.status == "Completed" and anchor.actual_completion_date:
+			row.due_date = add_days(getdate(anchor.actual_completion_date), int(row.due_anchor_days or 0))
+			return
+	if not row.due_date and row.actual_start_date and row.sla_days:
+		row.due_date = add_days(getdate(row.actual_start_date), int(row.sla_days))
+
+
+def _derive_status(installation, focus, blocked):
 	if installation.docstatus == 2:
 		return "Cancelled"
 	if installation.docstatus == 0:
 		return "Draft"
 
-	done = {row.stage_code for row in installation.stages if row.status in ("Completed", "Skipped")}
-	if not current:
+	rows = installation.stages
+	open_mandatory = [r for r in rows if r.is_mandatory and r.status not in DONE]
+	active = [r for r in rows if r.status in ("In Progress", "Blocked")]
+	if not open_mandatory and not active:
 		return "Closed"
 	if blocked:
 		return "Blocked"
-	if "DBT" in done and _stage_status(installation, "DBT") == "Completed":
+	if _stage_status(installation, "DBT") == "Completed":
 		return "Subsidy Claimed"
 	if _stage_status(installation, "COMM") == "Completed":
 		return "Commissioned"
-	if current.owner_type in EXTERNAL_OWNERS:
+	in_progress = [r for r in rows if r.status == "In Progress"]
+	# Only when every task being worked on is somebody else's. "Any external" would hide
+	# the internal work that is also waiting on this office.
+	if in_progress and all(r.owner_type in EXTERNAL_OWNERS for r in in_progress):
 		return "Awaiting External"
 	return "In Progress"
 
@@ -239,183 +287,6 @@ def _save(installation, message):
 	installation.flags.ignore_validate_update_after_submit = True
 	installation.save(ignore_permissions=True)
 	installation.add_comment("Comment", message)
-
-
-# ------------------------------------------------------------------- transitions
-@frappe.whitelist()
-def advance_stage(installation, stage_code, actual_date=None, external_reference=None, remarks=None):
-	"""Complete a stage and start the next.
-
-	BLOCKS when any mandatory document for the stage is missing or unverified, naming each
-	gap. Evidence before progress is the whole point of the chain.
-	"""
-	doc = frappe.get_doc("Solar Installation", installation)
-	doc.check_permission("write")
-	row = _get_stage(doc, stage_code)
-
-	if row.status == "Completed":
-		frappe.throw(_("Stage {0} is already complete.").format(stage_code))
-	if row.status == "Skipped":
-		frappe.throw(_("Stage {0} was skipped: {1}").format(stage_code, row.skip_reason or ""))
-
-	missing = missing_documents(doc, stage_code)
-	if missing:
-		frappe.throw(
-			_("Stage {0} cannot be completed. These documents are missing or unverified: {1}").format(
-				frappe.bold(row.stage_name), "<br>- " + "<br>- ".join(missing)
-			),
-			title=_("Evidence Required"),
-		)
-
-	_check_gates(doc, stage_code)
-
-	row.status = "Completed"
-	row.actual_completion_date = getdate(actual_date or today())
-	row.completed_by = frappe.session.user
-	if external_reference:
-		row.external_reference = external_reference
-	if remarks:
-		row.remarks = remarks
-	if not row.actual_start_date:
-		row.actual_start_date = row.actual_completion_date
-
-	for nxt in doc.stages:
-		if nxt.status == "Pending":
-			nxt.status = "In Progress"
-			nxt.actual_start_date = getdate(actual_date or today())
-			break
-
-	_save(doc, _("Stage {0} completed by {1}.").format(row.stage_name, frappe.session.user))
-	notify_stage_completed(doc, stage_code)
-	return doc.current_stage
-
-
-def _check_gates(doc, stage_code):
-	"""Gates that protect the client's vendor registration."""
-	if stage_code == "PCR":
-		blocking = frappe.get_all(
-			"Installation Snag",
-			filters={
-				"solar_installation": doc.name,
-				"severity": ["in", ["Critical", "Major"]],
-				"status": ["in", ["Open", "In Progress"]],
-				"docstatus": ["<", 2],
-			},
-			pluck="name",
-		)
-		if blocking:
-			frappe.throw(
-				_(
-					"PCR cannot be filed while {0} critical or major snag(s) remain open: {1}. "
-					"The ministry can temporarily deactivate a vendor over unresolved defects."
-				).format(len(blocking), ", ".join(blocking)),
-				title=_("Open Snags"),
-			)
-
-	if stage_code == "COMM" and get_value("require_serials_before_commissioning"):
-		if not doc.serial_capture_complete:
-			frappe.throw(
-				_("Commissioning is blocked: {0} of {1} module serials captured. The national portal rejects submissions with missing or repeated serials.").format(
-					doc.modules_captured or 0, doc.modules_expected or 0
-				),
-				title=_("Serial Capture Incomplete"),
-			)
-
-
-def missing_documents(doc, stage_code):
-	"""Mandatory documents for a stage that are absent or unverified."""
-	gaps = []
-	for row in doc.documents:
-		if row.stage_code != stage_code or not row.is_mandatory:
-			continue
-		if not row.attachment:
-			gaps.append(_("{0} (not attached)").format(row.document_name))
-		elif not row.is_verified:
-			gaps.append(_("{0} (attached but not verified)").format(row.document_name))
-	return gaps
-
-
-@frappe.whitelist()
-def block_stage(installation, stage_code, blocked_reason):
-	if not (blocked_reason or "").strip():
-		frappe.throw(_("A reason is mandatory when blocking a stage."))
-	doc = frappe.get_doc("Solar Installation", installation)
-	doc.check_permission("write")
-	row = _get_stage(doc, stage_code)
-	row.status = "Blocked"
-	row.blocked_reason = blocked_reason.strip()
-	_save(doc, _("Stage {0} blocked: {1}").format(row.stage_name, blocked_reason.strip()))
-	return doc.status
-
-
-@frappe.whitelist()
-def unblock_stage(installation, stage_code, remarks=None):
-	doc = frappe.get_doc("Solar Installation", installation)
-	doc.check_permission("write")
-	row = _get_stage(doc, stage_code)
-	if row.status != "Blocked":
-		frappe.throw(_("Stage {0} is not blocked.").format(stage_code))
-	row.status = "In Progress"
-	row.blocked_reason = None
-	if remarks:
-		row.remarks = remarks
-	_save(doc, _("Stage {0} unblocked.").format(row.stage_name))
-	return doc.status
-
-
-@frappe.whitelist()
-def skip_stage(installation, stage_code, reason):
-	"""Manager-only, and refused for a mandatory stage."""
-	if not (reason or "").strip():
-		frappe.throw(_("A reason is mandatory when skipping a stage."))
-	doc = frappe.get_doc("Solar Installation", installation)
-	doc.check_permission("write")
-	row = _get_stage(doc, stage_code)
-	if row.is_mandatory:
-		_require_manager(_("skip a mandatory stage"))
-	row.status = "Skipped"
-	row.skip_reason = reason.strip()
-	_save(doc, _("Stage {0} skipped: {1}").format(row.stage_name, reason.strip()))
-	return doc.current_stage
-
-
-@frappe.whitelist()
-def revert_stage(installation, stage_code, reason):
-	"""Manager-only. Clears this stage and every stage after it."""
-	_require_manager(_("revert a stage"))
-	if not (reason or "").strip():
-		frappe.throw(_("A reason is mandatory when reverting a stage."))
-
-	doc = frappe.get_doc("Solar Installation", installation)
-	doc.check_permission("write")
-	target = _get_stage(doc, stage_code)
-	reached = False
-	for row in doc.stages:
-		if row.stage_code == stage_code:
-			reached = True
-		if not reached:
-			continue
-		row.status = "Pending"
-		row.actual_start_date = None
-		row.actual_completion_date = None
-		row.completed_by = None
-		row.blocked_reason = None
-		row.days_in_stage = 0
-		row.is_sla_breached = 0
-	target.status = "In Progress"
-	target.actual_start_date = today()
-	_save(doc, _("Reverted to stage {0}: {1}").format(target.stage_name, reason.strip()))
-	return doc.current_stage
-
-
-def notify_stage_completed(doc, stage_code):
-	"""Fan out to the phase extension points. Phase 3 registers against these."""
-	if stage_code == "COMM":
-		report = frappe.db.get_value(
-			"Commissioning Report", {"solar_installation": doc.name, "docstatus": 1}, "name"
-		)
-		if report:
-			on_commissioning_submitted(frappe.get_doc("Commissioning Report", report))
 
 
 # ================================================================ EXTENSION POINTS

@@ -1,0 +1,666 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-09-08 10:00:00.000000",
+ "description": "The agreement for connecting the plant to the licensee's distribution system, executed on stamp paper with a schedule no other record holds and a legal life of twenty-five years. It carries the stamp-paper task and is the record the KSEB submission pack prints from.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_reference",
+  "solar_installation",
+  "solar_consumer",
+  "lead",
+  "site_survey",
+  "cb_reference",
+  "solar_design_estimate",
+  "commissioning_report",
+  "discom",
+  "company",
+  "amended_from",
+  "migrated_from",
+  "sb_stamp",
+  "stamp_paper_status",
+  "stamp_paper_purchased_on",
+  "stamp_paper_value",
+  "cb_stamp",
+  "stamp_paper_serial",
+  "stamp_paper_vendor",
+  "stamp_paper_scan",
+  "stamp_paper_data_sheet",
+  "sb_execution",
+  "agreement_date",
+  "place_of_execution",
+  "validity_years",
+  "agreement_title",
+  "cb_execution",
+  "second_party_legal_name",
+  "second_party_incorporation",
+  "second_party_office",
+  "discom_representative_name",
+  "sb_witness",
+  "first_party_witness_1",
+  "first_party_witness_2",
+  "cb_witness",
+  "second_party_witness_1",
+  "second_party_witness_2",
+  "sb_schedule_1",
+  "consumer_name",
+  "permanent_address",
+  "cb_schedule_1",
+  "consumer_number_and_category",
+  "supply_voltage",
+  "connected_load_or_contract_demand",
+  "sb_schedule_2",
+  "installation_address",
+  "spin",
+  "plant_capacity_kwp",
+  "electrical_section",
+  "cb_schedule_2",
+  "solar_meter_type",
+  "solar_meter_number",
+  "solar_meter_make",
+  "solar_meter_initial_reading",
+  "solar_meter_calibration_certificate",
+  "sb_schedule_2b",
+  "distribution_transformer_details",
+  "ht_feeder_details",
+  "local_body_type",
+  "local_body_name",
+  "cb_schedule_2b",
+  "village",
+  "survey_number",
+  "gps_coordinates",
+  "sb_schedule_3",
+  "wheeling_preferences",
+  "sb_text",
+  "agreement_text",
+  "sb_text_meta",
+  "generated_on",
+  "generated_by",
+  "cb_text_meta",
+  "is_edited",
+  "signed_agreement",
+  "sb_termination",
+  "is_terminated",
+  "terminated_on",
+  "cb_termination",
+  "terminated_by",
+  "termination_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_reference",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "description": "The chain this agreement belongs to. Every value below is read from it.",
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_installation.solar_consumer",
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead",
+   "read_only": 1
+  },
+  {
+   "fieldname": "site_survey",
+   "fieldtype": "Link",
+   "label": "Site Survey",
+   "options": "Site Survey",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_reference",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_design_estimate",
+   "fieldtype": "Link",
+   "label": "Design Estimate",
+   "options": "Solar Design Estimate",
+   "read_only": 1
+  },
+  {
+   "description": "Optional. When present the meter particulars in Schedule II come from it.",
+   "fieldname": "commissioning_report",
+   "fieldtype": "Link",
+   "label": "Commissioning Report",
+   "options": "Commissioning Report"
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Solar Agreement",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "migrated_from",
+   "description": "The Net Metering Agreement this record was carried over from.",
+   "fieldname": "migrated_from",
+   "fieldtype": "Data",
+   "label": "Migrated From",
+   "read_only": 1
+  },
+  {
+   "description": "The stamp paper is purchased at the STMP stage. Recording it here is what releases the agreement text for generation.",
+   "fieldname": "sb_stamp",
+   "fieldtype": "Section Break",
+   "label": "Stamp Paper"
+  },
+  {
+   "allow_on_submit": 0,
+   "default": "Not Purchased",
+   "fieldname": "stamp_paper_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Stamp Paper Status",
+   "options": "Not Purchased\nPurchased",
+   "reqd": 1
+  },
+  {
+   "fieldname": "stamp_paper_purchased_on",
+   "fieldtype": "Date",
+   "label": "Purchased On"
+  },
+  {
+   "fieldname": "stamp_paper_value",
+   "fieldtype": "Currency",
+   "label": "Stamp Paper Value"
+  },
+  {
+   "fieldname": "cb_stamp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stamp_paper_serial",
+   "fieldtype": "Data",
+   "label": "Stamp Paper Serial No"
+  },
+  {
+   "fieldname": "stamp_paper_vendor",
+   "fieldtype": "Data",
+   "label": "Vendor / Treasury"
+  },
+  {
+   "fieldname": "stamp_paper_scan",
+   "fieldtype": "Attach",
+   "label": "Stamp Paper Scan"
+  },
+  {
+   "description": "What the treasury needs to write the paper: the parties, the purpose and the value.",
+   "fieldname": "stamp_paper_data_sheet",
+   "fieldtype": "Attach",
+   "label": "Data Sheet",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_execution",
+   "fieldtype": "Section Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "agreement_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Agreement Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "place_of_execution",
+   "fieldtype": "Data",
+   "label": "Place of Execution"
+  },
+  {
+   "default": "25",
+   "fieldname": "validity_years",
+   "fieldtype": "Int",
+   "label": "Validity (Years)"
+  },
+  {
+   "default": "Agreement for Connecting Solar Energy System to The Distribution System of The Licensee",
+   "fieldname": "agreement_title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_execution",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "second_party_legal_name",
+   "fieldtype": "Data",
+   "label": "Licensee Legal Name"
+  },
+  {
+   "fieldname": "second_party_incorporation",
+   "fieldtype": "Small Text",
+   "label": "Incorporation Recital"
+  },
+  {
+   "fieldname": "second_party_office",
+   "fieldtype": "Small Text",
+   "label": "Registered Office"
+  },
+  {
+   "description": "Include the honorific, e.g. Shri R. Sasikumar.",
+   "fieldname": "discom_representative_name",
+   "fieldtype": "Data",
+   "label": "Represented By"
+  },
+  {
+   "fieldname": "sb_witness",
+   "fieldtype": "Section Break",
+   "label": "Witnesses"
+  },
+  {
+   "fieldname": "first_party_witness_1",
+   "fieldtype": "Data",
+   "label": "First Party Witness 1"
+  },
+  {
+   "fieldname": "first_party_witness_2",
+   "fieldtype": "Data",
+   "label": "First Party Witness 2"
+  },
+  {
+   "fieldname": "cb_witness",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "second_party_witness_1",
+   "fieldtype": "Data",
+   "label": "Second Party Witness 1"
+  },
+  {
+   "fieldname": "second_party_witness_2",
+   "fieldtype": "Data",
+   "label": "Second Party Witness 2"
+  },
+  {
+   "fieldname": "sb_schedule_1",
+   "fieldtype": "Section Break",
+   "label": "Schedule I - Particulars of the Consumer"
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name of the Consumer"
+  },
+  {
+   "fieldname": "permanent_address",
+   "fieldtype": "Small Text",
+   "label": "Permanent Address"
+  },
+  {
+   "fieldname": "cb_schedule_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consumer_number_and_category",
+   "fieldtype": "Data",
+   "label": "Consumer Number / Code & Category"
+  },
+  {
+   "fieldname": "supply_voltage",
+   "fieldtype": "Data",
+   "label": "Voltage at Which Supply Is Availed"
+  },
+  {
+   "fieldname": "connected_load_or_contract_demand",
+   "fieldtype": "Data",
+   "label": "Connected Load / Contract Demand"
+  },
+  {
+   "fieldname": "sb_schedule_2",
+   "fieldtype": "Section Break",
+   "label": "Schedule II - Details of the Premises"
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Small Text",
+   "label": "Address of the Premises"
+  },
+  {
+   "fieldname": "spin",
+   "fieldtype": "Data",
+   "label": "Solar Plant Identification Number (SPIN)"
+  },
+  {
+   "fieldname": "plant_capacity_kwp",
+   "fieldtype": "Float",
+   "label": "Capacity of the Solar Energy System (kWp)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "electrical_section",
+   "fieldtype": "Data",
+   "label": "Name of Electrical Section"
+  },
+  {
+   "fieldname": "cb_schedule_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "solar_meter_type",
+   "fieldtype": "Data",
+   "label": "Solar Meter Details"
+  },
+  {
+   "fieldname": "solar_meter_number",
+   "fieldtype": "Data",
+   "label": "Meter No"
+  },
+  {
+   "fieldname": "solar_meter_make",
+   "fieldtype": "Data",
+   "label": "Meter Make"
+  },
+  {
+   "fieldname": "solar_meter_initial_reading",
+   "fieldtype": "Float",
+   "label": "Initial Reading",
+   "precision": "3"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "solar_meter_calibration_certificate",
+   "fieldtype": "Attach",
+   "label": "Calibration Certificate"
+  },
+  {
+   "fieldname": "sb_schedule_2b",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "For HT prosumers. Left blank on an LT connection.",
+   "fieldname": "distribution_transformer_details",
+   "fieldtype": "Small Text",
+   "label": "Distribution Transformer and HT Feeder"
+  },
+  {
+   "fieldname": "ht_feeder_details",
+   "fieldtype": "Small Text",
+   "label": "HT Feeder"
+  },
+  {
+   "fieldname": "local_body_type",
+   "fieldtype": "Select",
+   "label": "Local Body Type",
+   "options": "\nCorporation\nMunicipality\nPanchayat"
+  },
+  {
+   "fieldname": "local_body_name",
+   "fieldtype": "Data",
+   "label": "Local Body Name"
+  },
+  {
+   "fieldname": "cb_schedule_2b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "village",
+   "fieldtype": "Data",
+   "label": "Village"
+  },
+  {
+   "fieldname": "survey_number",
+   "fieldtype": "Data",
+   "label": "Survey Number"
+  },
+  {
+   "fieldname": "gps_coordinates",
+   "fieldtype": "Data",
+   "label": "GPS Details of the Location"
+  },
+  {
+   "description": "Premises the excess over 500 units may be wheeled to, in order of preference.",
+   "fieldname": "sb_schedule_3",
+   "fieldtype": "Section Break",
+   "label": "Schedule III - Wheeling Preferences"
+  },
+  {
+   "fieldname": "wheeling_preferences",
+   "fieldtype": "Table",
+   "label": "Wheeling Preferences",
+   "options": "Wheeling Preference"
+  },
+  {
+   "fieldname": "sb_text",
+   "fieldtype": "Section Break",
+   "label": "Agreement Text"
+  },
+  {
+   "description": "Generated from the values above. Edit freely - a regenerate overwrites it, and will warn first if you have.",
+   "fieldname": "agreement_text",
+   "fieldtype": "Text Editor",
+   "label": "Agreement Text"
+  },
+  {
+   "fieldname": "sb_text_meta",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "generated_on",
+   "fieldtype": "Datetime",
+   "label": "Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generated_by",
+   "fieldtype": "Link",
+   "label": "Generated By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_text_meta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Set when the text no longer matches what generation would produce.",
+   "fieldname": "is_edited",
+   "fieldtype": "Check",
+   "label": "Edited After Generation",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The executed copy, scanned. Attached after signing.",
+   "fieldname": "signed_agreement",
+   "fieldtype": "Attach",
+   "label": "Signed Agreement"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:doc.docstatus===1 || doc.is_terminated",
+   "fieldname": "sb_termination",
+   "fieldtype": "Section Break",
+   "label": "Termination"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "is_terminated",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Terminated",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "terminated_on",
+   "fieldtype": "Date",
+   "label": "Terminated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_termination",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "terminated_by",
+   "fieldtype": "Select",
+   "label": "Terminated By",
+   "options": "\nConsumer\nDISCOM",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "termination_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-09 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Solar Agreement",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Documentation Officer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Site Engineer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  }
+ ],
+ "search_fields": "solar_installation,consumer_name,spin",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

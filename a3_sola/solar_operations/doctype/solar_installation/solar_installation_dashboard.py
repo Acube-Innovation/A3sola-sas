@@ -15,11 +15,22 @@ def get_data():
 		"transactions": [
 			{
 				"label": _("Execution"),
-				"items": ["Installation Work Order", "Installation Snag", "Commissioning Report"],
+				"items": [
+					"Installation Task",
+					"Installation Work Order",
+					"Material Dispatch Notice",
+					"Document Pack",
+					"Installation Snag",
+					"Commissioning Report",
+				],
 			},
 			{
 				"label": _("Statutory"),
-				"items": ["Portal Application", "Statutory Fee Payment", "Net Metering Agreement"],
+				"items": [
+					"Portal Application",
+					"Statutory Fee Payment",
+					"Solar Agreement",
+				],
 			},
 			{
 				"label": _("Funding"),
@@ -28,6 +39,10 @@ def get_data():
 			{
 				"label": _("Delivery"),
 				"items": ["Project", "Solar Billing Plan", "Solar OM Contract"],
+			},
+			{
+				"label": _("Customer"),
+				"items": ["Customer Review"],
 			},
 			{
 				"label": _("Service"),

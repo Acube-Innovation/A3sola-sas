@@ -2,7 +2,7 @@
 
 Generated from the doctypes by `a3_sola.api.security.matrix`. It describes what is true, not what was intended.
 
-- Doctypes: **127**
+- Doctypes: **146**
 - Roles appearing in them: **29**
 
 ## Findings
@@ -55,6 +55,18 @@ The rules checked:
 | Component Make | Solar Sales Manager | base | read, write, create, report, export, share, print, email |
 | Component Make | Solar Survey Engineer | base | read, report, export, share, print, email |
 | Component Make | System Manager | base | read, write, create, delete, report, export, share, print, email |
+| Customer Review | Accounts Manager | permlevel_1 | read, write |
+| Customer Review | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Customer Review | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Customer Review | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
+| Customer Review | Solar Operations Executive | permlevel_1 | read, write |
+| Customer Review | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Customer Review | Solar Operations Manager | permlevel_1 | read, write |
+| Customer Review | Solar QC Inspector | base | read, report, export, share, print, email |
+| Customer Review | Solar Site Engineer | base | read, report, export, share, print, email |
+| Customer Review | Solar Technician | base | read, report, export, share, print, email |
+| Customer Review | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Customer Review | System Manager | permlevel_1 | read, write |
 | DISCOM | Solar CRM Manager | base | read, write, create, delete, report, export, share, print, email |
 | DISCOM | Solar Design Engineer | base | read, report, export, share, print, email |
 | DISCOM | Solar Sales Executive | base | read, report, export, share, print, email |
@@ -78,6 +90,18 @@ The rules checked:
 | Document Checklist Template | Solar Operations Manager | base | read, write, create, delete, report, export, share, print, email |
 | Document Checklist Template | Solar Site Engineer | base | read, report, export, share, print, email |
 | Document Checklist Template | System Manager | base | read, write, create, delete, report, export, share, print, email |
+| Document Pack | Accounts Manager | permlevel_1 | read, write |
+| Document Pack | Solar Documentation Officer | base | read, write, create, submit, cancel, report, export, share, print, email |
+| Document Pack | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Document Pack | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
+| Document Pack | Solar Operations Executive | permlevel_1 | read, write |
+| Document Pack | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Document Pack | Solar Operations Manager | permlevel_1 | read, write |
+| Document Pack | Solar QC Inspector | base | read, report, export, share, print, email |
+| Document Pack | Solar Site Engineer | base | read, report, export, share, print, email |
+| Document Pack | Solar Technician | base | read, report, export, share, print, email |
+| Document Pack | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Document Pack | System Manager | permlevel_1 | read, write |
 | Document Template Set | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
 | Document Template Set | Solar Liaison Officer | base | read, report, export, share, print, email |
 | Document Template Set | Solar Operations Executive | base | read, report, export, share, print, email |
@@ -120,6 +144,18 @@ The rules checked:
 | Installation Stage Template | Solar Operations Manager | base | read, write, create, delete, report, export, share, print, email |
 | Installation Stage Template | Solar Site Engineer | base | read, report, export, share, print, email |
 | Installation Stage Template | System Manager | base | read, write, create, delete, report, export, share, print, email |
+| Installation Task | Accounts Manager | permlevel_1 | read, write |
+| Installation Task | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Installation Task | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Installation Task | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
+| Installation Task | Solar Operations Executive | permlevel_1 | read, write |
+| Installation Task | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Installation Task | Solar Operations Manager | permlevel_1 | read, write |
+| Installation Task | Solar QC Inspector | base | read, report, export, share, print, email |
+| Installation Task | Solar Site Engineer | base | read, write, create, submit, report, export, share, print, email |
+| Installation Task | Solar Technician | base | read, report, export, share, print, email |
+| Installation Task | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Installation Task | System Manager | permlevel_1 | read, write |
 | Installation Work Order | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
 | Installation Work Order | Solar Liaison Officer | base | read, report, export, share, print, email |
 | Installation Work Order | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
@@ -139,14 +175,26 @@ The rules checked:
 | Loan Application | Solar Technician | base | read, report, export, share, print, email |
 | Loan Application | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Loan Application | System Manager | permlevel_1 | read, write |
-| Net Metering Agreement | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Material Dispatch Notice | Accounts Manager | permlevel_1 | read, write |
+| Material Dispatch Notice | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Material Dispatch Notice | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Material Dispatch Notice | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
+| Material Dispatch Notice | Solar Operations Executive | permlevel_1 | read, write |
+| Material Dispatch Notice | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Material Dispatch Notice | Solar Operations Manager | permlevel_1 | read, write |
+| Material Dispatch Notice | Solar QC Inspector | base | read, report, export, share, print, email |
+| Material Dispatch Notice | Solar Site Engineer | base | read, report, export, share, print, email |
+| Material Dispatch Notice | Solar Technician | base | read, report, export, share, print, email |
+| Material Dispatch Notice | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Material Dispatch Notice | System Manager | permlevel_1 | read, write |
+| Net Metering Agreement | Solar Documentation Officer | base | read, report, export, share, print, email |
 | Net Metering Agreement | Solar Liaison Officer | base | read, report, export, share, print, email |
-| Net Metering Agreement | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
-| Net Metering Agreement | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Net Metering Agreement | Solar Operations Executive | base | read, report, export, share, print, email |
+| Net Metering Agreement | Solar Operations Manager | base | read, report, export, share, print, email |
 | Net Metering Agreement | Solar QC Inspector | base | read, report, export, share, print, email |
 | Net Metering Agreement | Solar Site Engineer | base | read, report, export, share, print, email |
 | Net Metering Agreement | Solar Technician | base | read, report, export, share, print, email |
-| Net Metering Agreement | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Net Metering Agreement | System Manager | base | read, report, export, share, print, email |
 | Outreach Message Template | Solar CRM Manager | base | read, write, create, delete, report, export, share, print, email |
 | Outreach Message Template | Solar Sales Executive | base | read, report, export, share, print, email |
 | Outreach Message Template | Solar Sales Manager | base | read, write, create, report, export, share, print, email |
@@ -255,6 +303,14 @@ The rules checked:
 | Site Survey | Solar Sales Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Site Survey | Solar Survey Engineer | base | read, write, create, submit, report, export, share, print, email |
 | Site Survey | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Solar Agreement | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Solar Agreement | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Solar Agreement | Solar Operations Executive | base | read, write, create, submit, report, export, share, print, email |
+| Solar Agreement | Solar Operations Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
+| Solar Agreement | Solar QC Inspector | base | read, report, export, share, print, email |
+| Solar Agreement | Solar Site Engineer | base | read, report, export, share, print, email |
+| Solar Agreement | Solar Technician | base | read, report, export, share, print, email |
+| Solar Agreement | System Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Solar Billing Plan | Accounts Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Solar Billing Plan | Accounts Manager | permlevel_1 | read, write |
 | Solar Billing Plan | Solar Accounts Executive | base | read, write, create, submit, report, export, share, print, email |
@@ -271,6 +327,18 @@ The rules checked:
 | Solar Consumer | Solar Sales Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Solar Consumer | Solar Survey Engineer | base | read, report, export, share, print, email |
 | Solar Consumer | System Manager | base | read, write, create, delete, cancel, report, export, share, print, email |
+| Solar Contractor | Accounts Manager | permlevel_1 | read, write |
+| Solar Contractor | Solar Documentation Officer | base | read, write, create, report, export, share, print, email |
+| Solar Contractor | Solar Liaison Officer | base | read, report, export, share, print, email |
+| Solar Contractor | Solar Operations Executive | base | read, write, create, report, export, share, print, email |
+| Solar Contractor | Solar Operations Executive | permlevel_1 | read, write |
+| Solar Contractor | Solar Operations Manager | base | read, write, create, delete, report, export, share, print, email |
+| Solar Contractor | Solar Operations Manager | permlevel_1 | read, write |
+| Solar Contractor | Solar QC Inspector | base | read, report, export, share, print, email |
+| Solar Contractor | Solar Site Engineer | base | read, report, export, share, print, email |
+| Solar Contractor | Solar Technician | base | read, report, export, share, print, email |
+| Solar Contractor | System Manager | base | read, write, create, delete, report, export, share, print, email |
+| Solar Contractor | System Manager | permlevel_1 | read, write |
 | Solar Design Estimate | Solar CRM Manager | base | read, write, create, delete, submit, cancel, report, export, share, print, email |
 | Solar Design Estimate | Solar CRM Manager | permlevel_1 | read, write |
 | Solar Design Estimate | Solar Design Engineer | base | read, write, create, submit, report, export, share, print, email |

@@ -152,8 +152,12 @@ Three are seeded from the client's own terms:
 | Standard 70:20:10 - Net Meter from DISCOM | Self funded, meter rented from the DISCOM | 70 / 20 / 10, last on completion documents |
 | Financed (Jan Samarth) 70:30 | Financed | 70 on sanction / 30 on completion report |
 
-Adjust the credit days and the trigger stage codes to match what the client actually
-agrees. Every template must total 100% — a test enforces it.
+Adjust the credit days and the trigger task codes to match what the client actually
+agrees: `IWOI` (installation work order) and `KFORMS` (the KSEB submission pack) are the
+seeded ones; *On Order* and *On Commissioning* need no code. Every template must total
+100%, and every code must be a task — tests enforce both. The billing plan is created at
+the sales order, so the advance milestone exists the day the advance is collected; the
+project is attached to it at commissioning.
 
 ## 13. Cost categories and the pass-through
 
@@ -290,3 +294,40 @@ In **A3 Sola Settings → Provisioning**:
 `throttle_user_limit` in `site_config.json`. Frappe blocks user creation past sixty a minute
 across the whole site, and a provisioning run that trips it leaves a tenant half-built for a
 reason unrelated to the tenant.
+
+## 23. Tasks
+
+In **A3 Sola Settings → Tasks**:
+
+- `form2_window_days` (30) — days from the Form 1 payment to the Form 2 submission; sets
+  `form2_due_on` on the job and the due date of the KSEB pack task.
+- `default_task_due_days` (3) — the due date of a task once it is assigned, when its
+  template row carries no SLA.
+- `min_geotagged_photos` (4) — an installation work order refuses to submit with fewer
+  located photographs. Coordinates come from the browser when the photo is added, from
+  EXIF as a fallback, or are typed. **System Settings → Strip EXIF metadata from uploaded
+  images** (on by default) removes EXIF on upload; leave it on and rely on browser capture,
+  or turn it off for the fallback to work.
+- `kyc_itr_threshold_amount` (2,00,000) — above this loan amount the KYC file needs an
+  income tax return or land tax receipt. `block_sales_order_without_kyc` (off) turns the
+  sales order's KYC warning into a refusal.
+- `collage_columns` (2), `collage_max_photos` (24) — the photo collage in the bank pack.
+- `google_review_message` — the text behind *Send Review Link*; `{consumer_name}`,
+  `{company_name}` and `{review_url}` are filled in.
+- `completion_data_email_subject` / `_body` — the mail that carries the serial data sheet
+  to the electrical contractor; `{consumer_name}`, `{company}`, `{contractor}` are filled.
+- `auto_create_fee_payment_on_stage` — the Task button drafts the Statutory Fee Payment,
+  prefilled from the fee schedule, instead of opening a blank one.
+- Series prefixes: `installation_task_series_prefix` (SOL-TSK), `document_pack_series_prefix`
+  (SOL-PACK), `material_dispatch_notice_series_prefix` (SOL-MDN),
+  `customer_review_series_prefix` (SOL-REV).
+
+On the **Company**: `google_review_url` (printed in the customer's file and behind the
+review button), `support_contacts` (the *Whom to Contact* sheet) and
+`default_electrical_contractor` (the Material Dispatch Notice's default).
+
+There is **one shared Installation Stage Template** for the whole site, marked *Shared by
+Every Company* (the tick is what keeps its company blank; Frappe would otherwise stamp the
+site's default company on it). A company gets its own only if someone deliberately creates
+a variant with a company on it, and then that company's jobs use the variant. Edit SLAs, owners and applicability there - re-seeding
+updates the seed-owned fields and never removes a row.

@@ -23,6 +23,11 @@ from frappe.utils import add_days, cint, flt, getdate, sanitize_html, today
 
 from a3_sola.api.settings import get_value
 from a3_sola.overrides import quotation as quotation_rules
+from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	default_price,
+	default_prices,
+	default_rows,
+)
 
 SLUG = "cost-estimates"
 DEFAULT_VALIDITY_DAYS = 30
@@ -76,6 +81,26 @@ def desk_route(name):
 
 
 # ---------------------------------------------------------------- catalogue
+def _inverter_options(package_names):
+	"""Every inverter option of every package, in one query, in form order.
+
+	Not just the default: the estimator's whole purpose is to show the same array priced
+	three ways, so the customer sees the choice the client actually offers.
+	"""
+	if not package_names:
+		return {}
+	found = {}
+	for row in frappe.get_all(
+		"Solar Package Inverter",
+		filters={"parent": ["in", package_names], "parenttype": "Solar Package"},
+		fields=["parent", "inverter_specification", "inverter_make", "inverter_capacity_kw",
+		        "inverter_count", "cost", "is_default"],
+		order_by="parent asc, idx asc",
+	):
+		found.setdefault(row.parent, []).append(row)
+	return found
+
+
 @frappe.whitelist()
 def catalogue():
 	"""Everything the left-hand side offers: packages with their BOM, add-on items,
@@ -90,11 +115,7 @@ def catalogue():
 		fields=[
 			"name", "specification_code", "package_name", "capacity_kw", "system_type", "connection_type",
 			"inverter_topology", "is_dcr_compliant", "area_required_sqft", "tier", "item",
-			"module_specification", "module_make", "module_wattage", "module_count",
-			"inverter_1_specification", "inverter_1_make", "inverter_1_capacity_kw", "inverter_1_count",
-			"inverter_2_specification", "inverter_2_make", "inverter_2_capacity_kw", "inverter_2_count",
-			"cost_option_1", "cost_option_2", "standard_discount", "indicative_subsidy", "net_rate",
-			"statutory_total", "expected_daily_units_low", "expected_daily_units_high", "warranty_years",
+			"warranty_years",
 		],
 		order_by="capacity_kw asc, package_name asc",
 	)
@@ -102,22 +123,36 @@ def catalogue():
 		m.name: m.make_name
 		for m in frappe.get_all("Component Make", filters={"company": company}, fields=["name", "make_name"])
 	}
+	# The default module option per package, fetched once for the whole list rather than a
+	# query inside the loop - this endpoint renders the public cost estimator.
+	names = [p.name for p in packages]
+	modules = default_rows("modules", names)
+	inverters = _inverter_options(names)
+	# The commercials live on the price row for the configuration the package is offered in.
+	prices = default_prices(names)
 	for pkg in packages:
+		price = prices.get(pkg.name) or frappe._dict()
+		for field in ("standard_discount", "indicative_subsidy", "net_rate", "statutory_total",
+		              "expected_daily_units_low", "expected_daily_units_high"):
+			pkg[field] = flt(price.get(field))
+		module = modules.get(pkg.name) or {}
+		pkg.module_specification = module.get("module_specification")
+		pkg.module_make = module.get("module_make")
+		pkg.module_wattage = module.get("module_wattage")
+		pkg.module_count = module.get("module_count")
 		pkg.module_make_name = makes.get(pkg.module_make, pkg.module_make)
 		pkg.options = []
-		for n in (1, 2):
-			spec = pkg.get(f"inverter_{n}_specification")
-			cost = flt(pkg.get(f"cost_option_{n}"))
-			if not spec and not cost:
+		for n, row in enumerate(inverters.get(pkg.name, []), start=1):
+			if not row.inverter_specification and not flt(row.cost):
 				continue
 			pkg.options.append({
 				"option": n,
 				"label": _("Option {0}").format(n),
-				"inverter_make": makes.get(pkg.get(f"inverter_{n}_make"), pkg.get(f"inverter_{n}_make")) or "",
-				"inverter_specification": spec or "",
-				"inverter_capacity_kw": flt(pkg.get(f"inverter_{n}_capacity_kw")),
-				"inverter_count": cint(pkg.get(f"inverter_{n}_count")),
-				"rate": cost,
+				"inverter_make": makes.get(row.inverter_make, row.inverter_make) or "",
+				"inverter_specification": row.inverter_specification or "",
+				"inverter_capacity_kw": flt(row.inverter_capacity_kw),
+				"inverter_count": cint(row.inverter_count),
+				"rate": flt(row.cost),
 			})
 		pkg.components = [
 			{
@@ -422,13 +457,16 @@ def _solar_figures(doc):
 			category = frappe.db.get_value("Lead", doc.party_name, "consumer_category")
 		subsidised = (category or "Residential") == "Residential"
 		doc.subsidy_scheme = get_value("default_subsidy_scheme") if subsidised else None
+		# The statutory figures and the subsidy belong to a configuration, not to the
+		# package, so they come off the price row the package is offered in.
+		price = default_price(pkg) or frappe._dict()
 		doc.capacity_kw = flt(pkg.capacity_kw)
-		doc.expected_subsidy_to_customer = flt(pkg.indicative_subsidy) if subsidised else 0
-		doc.kseb_application_fee = flt(pkg.kseb_application_fee)
-		doc.kseb_registration_fee = flt(pkg.kseb_registration_fee)
-		doc.kseb_registration_refundable = flt(pkg.kseb_registration_refundable)
-		doc.net_meter_charge = flt(pkg.net_meter_charge)
-		doc.statutory_total = flt(pkg.statutory_total)
+		doc.expected_subsidy_to_customer = flt(price.get("indicative_subsidy")) if subsidised else 0
+		doc.kseb_application_fee = flt(price.get("kseb_application_fee"))
+		doc.kseb_registration_fee = flt(price.get("kseb_registration_fee"))
+		doc.kseb_registration_refundable = flt(price.get("kseb_registration_refundable"))
+		doc.net_meter_charge = flt(price.get("net_meter_charge"))
+		doc.statutory_total = flt(price.get("statutory_total"))
 		doc.net_meter_mode = doc.net_meter_mode or "Purchased by Customer"
 	else:
 		doc.capacity_kw = 0

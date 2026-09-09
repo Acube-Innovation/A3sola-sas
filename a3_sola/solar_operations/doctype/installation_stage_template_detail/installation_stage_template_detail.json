@@ -8,20 +8,20 @@
  "field_order": [
   "stage_code",
   "stage_name",
+  "task_doctype",
   "owner_type",
   "sla_days",
   "cb_1",
   "responsible_role",
   "is_mandatory",
-  "requires_document",
-  "allow_parallel",
   "display_order",
   "sb_2",
   "applicability",
   "applicability_threshold_kw",
   "cb_3",
   "document_checklist_template",
-  "document_template_set",
+  "due_anchor_task",
+  "due_anchor_days",
   "sb_4",
   "stage_description"
  ],
@@ -29,22 +29,31 @@
   {
    "fieldname": "stage_code",
    "fieldtype": "Data",
-   "label": "Code",
+   "label": "Task Code",
    "reqd": 1,
    "in_list_view": 1
   },
   {
    "fieldname": "stage_name",
    "fieldtype": "Data",
-   "label": "Stage",
+   "label": "Task",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "label": "Executed In",
+   "options": "DocType",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The document this task is carried out in. The Task button opens it, and submitting it completes the task."
   },
   {
    "fieldname": "owner_type",
    "fieldtype": "Select",
    "label": "Owner",
-   "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment",
+   "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment\nContractor",
    "reqd": 1,
    "default": "Internal",
    "in_list_view": 1
@@ -73,20 +82,9 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "requires_document",
-   "fieldtype": "Check",
-   "label": "Requires Document",
-   "default": "1"
-  },
-  {
-   "fieldname": "allow_parallel",
-   "fieldtype": "Check",
-   "label": "Allow Parallel"
-  },
-  {
    "fieldname": "display_order",
    "fieldtype": "Int",
-   "label": "Order"
+   "label": "Display Order"
   },
   {
    "fieldname": "sb_2",
@@ -100,7 +98,7 @@
    "options": "Always\nFinanced Sales Only\nSelf-Funded Only\nSubsidised Only\nNon-Subsidised Only\nAbove Capacity Threshold\nNet Meter From DISCOM Only\nNet Meter Purchased Only",
    "reqd": 1,
    "default": "Always",
-   "in_list_view": 1
+   "description": "A task that does not apply is created Skipped with the reason recorded. It can be un-skipped at any time."
   },
   {
    "fieldname": "applicability_threshold_kw",
@@ -116,14 +114,21 @@
   {
    "fieldname": "document_checklist_template",
    "fieldtype": "Link",
-   "label": "Checklist Template",
-   "options": "Document Checklist Template"
+   "label": "Expected Documents",
+   "options": "Document Checklist Template",
+   "description": "Pre-creates rows in the installation's document register. Nothing gates on them."
   },
   {
-   "fieldname": "document_template_set",
-   "fieldtype": "Link",
-   "label": "Documents Generated",
-   "options": "Document Template Set"
+   "fieldname": "due_anchor_task",
+   "fieldtype": "Data",
+   "label": "Due After Task",
+   "description": "Task code whose completion starts this task's window, e.g. F1PAY for the thirty-day Form 2 window."
+  },
+  {
+   "fieldname": "due_anchor_days",
+   "fieldtype": "Int",
+   "label": "Window (Days)",
+   "depends_on": "due_anchor_task"
   },
   {
    "fieldname": "sb_4",
@@ -137,7 +142,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",

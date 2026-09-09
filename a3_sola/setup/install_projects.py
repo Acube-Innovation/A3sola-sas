@@ -32,7 +32,7 @@ MILESTONE_TEMPLATES = [
 		"is_default": 1,
 		"milestones": [
 			("Advance with Purchase Order", "On Order", None, 70, "Customer", 1, 0),
-			("After Delivery and Installation", "On Installation Stage", "INST", 20, "Customer", 0, 15),
+			("After Delivery and Installation", "On Installation Stage", "IWOI", 20, "Customer", 0, 15),
 			("After Commissioning", "On Installation Stage", "COMM", 10, "Customer", 0, 15),
 		],
 	},
@@ -43,9 +43,9 @@ MILESTONE_TEMPLATES = [
 		"is_default": 0,
 		"milestones": [
 			("Advance with Purchase Order", "On Order", None, 70, "Customer", 1, 0),
-			("After Delivery and Installation", "On Installation Stage", "INST", 20, "Customer", 0, 15),
+			("After Delivery and Installation", "On Installation Stage", "IWOI", 20, "Customer", 0, 15),
 			(
-				"After Submission of Completion Documents", "On Installation Stage", "KTST", 10,
+				"After Submission of Completion Documents", "On Installation Stage", "KFORMS", 10,
 				"Customer", 0, 15,
 			),
 		],

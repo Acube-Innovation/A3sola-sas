@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 15:00:00.000000",
+ "description": "One module option on a package. The same array is quoted with different modules - a DCR panel and its non-DCR equivalent, or two makes at the same wattage - and one of them is the default everything downstream uses.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "module_specification",
+  "module_make",
+  "module_wattage",
+  "module_count",
+  "is_default",
+  "cb_1",
+  "module_alternate_makes"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "description": "e.g. 550 Wp Mono PERC Bifacial DCR",
+   "fieldname": "module_specification",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Module Specification",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "module_make",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Make",
+   "options": "Component Make"
+  },
+  {
+   "columns": 1,
+   "fieldname": "module_wattage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Wattage (Wp)",
+   "precision": 2
+  },
+  {
+   "columns": 1,
+   "fieldname": "module_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Nos"
+  },
+  {
+   "columns": 1,
+   "description": "The option the proposal, the cost estimate and the handoff use. Exactly one row carries it.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Printed on the proposal as written, e.g. Rayzon/Vikram/Equivalent",
+   "fieldname": "module_alternate_makes",
+   "fieldtype": "Data",
+   "label": "Alternate Makes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-08 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package Module",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

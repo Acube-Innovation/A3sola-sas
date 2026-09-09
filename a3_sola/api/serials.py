@@ -16,6 +16,7 @@ from frappe import _
 from frappe.utils import flt
 
 from a3_sola.api.settings import get_value
+from a3_sola.solar_crm.doctype.solar_package.solar_package import default_module
 
 
 def validate_serial_uniqueness(serial_no, installation, company=None):
@@ -65,7 +66,9 @@ def validate_register(installation):
 
 	expected = 0
 	if installation.solar_package:
-		expected = flt(frappe.db.get_value("Solar Package", installation.solar_package, "module_count"))
+		# The count now lives on the package's default module option, not on the package.
+		module = default_module(installation.solar_package)
+		expected = flt(module.module_count) if module else 0
 	installation.modules_expected = int(expected or installation.module_count or 0)
 	installation.modules_captured = modules
 	installation.inverters_captured = inverters

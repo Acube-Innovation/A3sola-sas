@@ -112,25 +112,75 @@ class SubsidyClaim(Document):
 		"""Disbursement and recovery are recorded long after submission."""
 		self.compute_ageing()
 		self.compute_recovery()
+		self.handle_status_change()
+
+	def handle_status_change(self):
+		"""A query or rejection opens a correction; the row is the task's evidence.
+
+		The correction task blocks while a row is open and completes when every row has
+		been corrected and resubmitted; `tasks.sync_from_document` reads the rows.
+		"""
+		if self.claim_status in ("Query Raised", "Rejected") and not any(
+			not r.correction_done or not r.resubmitted_on for r in self.corrections
+		):
+			self.append(
+				"corrections",
+				{
+					"raised_on": frappe.utils.today(),
+					"raised_by": "National Portal",
+					"reason": (self.query_description or "").strip() or _("{0} on the national portal").format(self.claim_status),
+				},
+			)
+		self.open_corrections = len([r for r in self.corrections if not (r.correction_done and r.resubmitted_on)])
 
 	def on_update_after_submit(self):
-		if self.claim_status == "Disbursed" and self.disbursed_on:
-			self.close_the_loop()
 		if self.claim_model == "Company Funded Gap" and flt(self.amount_recovered):
 			stages.on_subsidy_recovery_recorded(self)
 
-	def close_the_loop(self):
-		status = frappe.db.get_value(
-			"Installation Stage Log", {"parent": self.solar_installation, "stage_code": "DBT"}, "status"
-		)
-		if status in (None, "Completed", "Skipped"):
-			return
-		try:
-			stages.advance_stage(
-				self.solar_installation,
-				"DBT",
-				actual_date=self.disbursed_on,
-				external_reference=self.disbursement_reference,
+
+# ------------------------------------------------------------------ correction actions
+@frappe.whitelist()
+def record_correction(subsidy_claim, row_name, corrected_on=None, attachment=None, remarks=None):
+	"""One correction made. Resubmission is a separate act; the portal may take several."""
+	doc = frappe.get_doc("Subsidy Claim", subsidy_claim)
+	doc.check_permission("write")
+	row = next((r for r in doc.corrections if r.name == row_name), None)
+	if not row:
+		frappe.throw(_("Correction row not found."))
+	row.correction_done = 1
+	row.corrected_on = corrected_on or frappe.utils.today()
+	if attachment:
+		row.attachment = attachment
+	if remarks:
+		row.remarks = remarks
+	doc.flags.ignore_validate_update_after_submit = True
+	doc.save()
+	return doc.name
+
+
+@frappe.whitelist()
+def mark_resubmitted(subsidy_claim, resubmitted_on=None):
+	"""Every corrected row goes back to the portal together; the claim is under verification again."""
+	from a3_sola.api import documents
+
+	doc = frappe.get_doc("Subsidy Claim", subsidy_claim)
+	doc.check_permission("write")
+	pending = [r for r in doc.corrections if not r.resubmitted_on]
+	if not pending:
+		frappe.throw(_("There is nothing to resubmit."))
+	if any(not r.correction_done for r in pending):
+		frappe.throw(_("Record every correction as done before resubmitting."), title=_("Corrections Open"))
+	on = resubmitted_on or frappe.utils.today()
+	for row in pending:
+		row.resubmitted_on = on
+		if row.attachment:
+			documents.register_document(
+				doc.solar_installation, "CORR", doc.doctype, doc.name,
+				_("Correction proof ({0})").format(frappe.utils.formatdate(row.raised_on)), row.attachment,
+				kind="Uploaded", document_date=row.corrected_on, save=True,
 			)
-		except frappe.ValidationError as exc:
-			frappe.msgprint(_("DBT stage not advanced: {0}").format(exc), indicator="orange")
+	if doc.claim_status in ("Query Raised", "Rejected"):
+		doc.claim_status = "Under Verification"
+	doc.flags.ignore_validate_update_after_submit = True
+	doc.save()
+	return doc.name

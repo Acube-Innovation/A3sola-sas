@@ -284,6 +284,26 @@ REVIEWED_SQL = {
 		"the doctype is interpolated from a literal tuple in the same function; every "
 		"value that comes from data is bound with %s"
 	),
+	# The four package migrations read columns that doctype sync has already removed from
+	# the meta. `get_all` validates fieldnames against the meta and refuses them, so raw SQL
+	# is the only way to reach an orphan column. The names come from a hardcoded tuple in
+	# the same file, filtered through `has_column`; nothing is bound from data at all.
+	"patches/v1_1/move_package_modules_to_a_table.py": (
+		"column names from a literal tuple, filtered by has_column; no data is interpolated"
+	),
+	"patches/v1_1/move_package_inverters_to_a_table.py": (
+		"column names from a literal tuple, filtered by has_column; no data is interpolated"
+	),
+	"patches/v1_1/move_package_system_to_a_table.py": (
+		"column names from a literal tuple, filtered by has_column; no data is interpolated"
+	),
+	"patches/v1_1/move_package_commercials_to_a_price_table.py": (
+		"column names from a literal tuple, filtered by has_column; no data is interpolated"
+	),
+	"tests/platform/provisioning_cleanup.py": (
+		"the doctype is interpolated from a literal two-element tuple in the same function; "
+		"test-only code that never sees a request"
+	),
 }
 
 

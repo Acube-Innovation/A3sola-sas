@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-09 11:00:00.000000",
+ "description": "One kind of work on a work order. A single order carries several - structure one week, modules and wiring the next - so the kinds are rows, not orders.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "work_type",
+  "planned_start",
+  "planned_end",
+  "actual_start",
+  "actual_end",
+  "done",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "work_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Work Type",
+   "options": "Structure Erection\nModule Mounting\nDC Wiring\nAC Wiring & Earthing\nInverter Installation\nTesting\nRectification",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "planned_start",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Planned Start"
+  },
+  {
+   "columns": 2,
+   "fieldname": "planned_end",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Planned End"
+  },
+  {
+   "fieldname": "actual_start",
+   "fieldtype": "Date",
+   "label": "Actual Start"
+  },
+  {
+   "fieldname": "actual_end",
+   "fieldtype": "Date",
+   "label": "Actual End"
+  },
+  {
+   "columns": 1,
+   "fieldname": "done",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Done"
+  },
+  {
+   "columns": 2,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Remarks"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-09 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Work Order Type Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

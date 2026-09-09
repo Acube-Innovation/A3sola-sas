@@ -232,31 +232,87 @@ def _chain_stages(installation):
 
 
 def _advance_all(installation):
-	"""Walk the installation through every stage its template defines.
+	"""Complete every task the job still has open, in template order.
 
-	The demo's `_advance` stops at the first stage that refuses, which is right for it -
-	it is building jobs that are deliberately stuck. Here the point is to reach the end,
-	and a stage can refuse for reasons that say nothing about the ones after it: a small
-	array skips the electrical-inspector stage entirely, and stopping there would leave
-	the job three stages short of commissioning. So every stage is attempted, and the
-	ones that decline are stepped over.
+	The demo's `_advance` stops at the first refusal, which is right for it - it builds
+	jobs that are deliberately stuck. Here the point is to reach the end, so every task is
+	attempted and the ones that decline are stepped over: a task carried by a live
+	document keeps its document, and a task a small array pre-skipped stays skipped.
 	"""
-	from a3_sola.api import stages
+	from a3_sola.api import tasks
 	from a3_sola.demo.generate_operations_demo import _evidence
 
 	doc = frappe.get_doc("Solar Installation", installation)
 	reached = []
 	for code in _chain_stages(doc):
+		row = next(r for r in doc.stages if r.stage_code == code)
+		if row.status in ("Completed", "Skipped"):
+			continue
 		frappe.db.savepoint("starter_stage")
 		try:
 			_evidence(doc, code)
-			stages.advance_stage(doc.name, code, actual_date=today())
+			tasks.complete_task(doc.name, code, actual_date=today(), silent=True)
 			reached.append(code)
 		except Exception:
 			frappe.db.rollback(save_point="starter_stage")
 	return reached
 
+
 CHAIN_TICKET = ("Low Generation", "Major", "Output down since the roof was cleaned.", "No Fault Found")
+
+
+def _solar_agreement(company, installation):
+	"""Buy the stamp paper, generate the agreement onto it, and execute it.
+
+	Three separate acts in the app and three separate acts in life, so the starter shows
+	all three rather than inserting a finished record: the paper is recorded, the body is
+	generated from the chain, and only then is the agreement submitted.
+	"""
+	from a3_sola.api import agreement as builder
+	from a3_sola.solar_operations.doctype.solar_agreement import solar_agreement as ctl
+
+	existing = frappe.db.get_value(
+		"Solar Agreement", {"solar_installation": installation, "docstatus": ["<", 2]}, "name"
+	)
+	name = existing or ctl.create_for_installation(installation)
+	doc = frappe.get_doc("Solar Agreement", name)
+	if doc.docstatus == 1:
+		return name
+
+	doc.commissioning_report = doc.commissioning_report or frappe.db.get_value(
+		"Commissioning Report", {"solar_installation": installation, "docstatus": 1}, "name"
+	)
+	doc.discom_representative_name = doc.discom_representative_name or "Shri R. Sasikumar"
+	doc.first_party_witness_1 = doc.first_party_witness_1 or "Anitha Raveendran"
+	doc.first_party_witness_2 = doc.first_party_witness_2 or "Joseph Mathew"
+	doc.second_party_witness_1 = doc.second_party_witness_1 or "K. Vijayan, Sub Engineer"
+	doc.second_party_witness_2 = doc.second_party_witness_2 or "P. Latha, Overseer"
+	doc.append(
+		"wheeling_preferences",
+		{
+			"preference_order": 1,
+			"consumer_number": "1156540031147",
+			"tariff": "LT-1A Domestic",
+			"electrical_section": doc.electrical_section,
+			"premises_address": "Outhouse, same survey number",
+		},
+	)
+	doc.save()
+
+	ctl.record_stamp_paper(
+		name,
+		purchased_on=_dated(company, 21),
+		serial_no="KL/2026/AB 449213",
+		value=200,
+		vendor="Sub Treasury, Thrissur",
+	)
+	builder.generate(name)
+
+	doc = frappe.get_doc("Solar Agreement", name)
+	doc.spin = doc.spin or frappe.db.get_value("Solar Installation", installation, "spin")
+	doc.save()
+	doc.submit()
+	return name
 
 
 def _drive_chain(context):
@@ -299,12 +355,29 @@ def _drive_chain(context):
 	step("fee_payment", lambda: ops._fee_payment(company, installation))
 	step("portal_application", lambda: ops._raise_query(company, installation.name))
 	step("loan_application", lambda: ops._make_loan(company, installation, disbursed=True))
+	# Two tasks done in their own document before the sweep completes the rest by hand:
+	# Form 1 generated from its template, the advance pulled from the bank's tranche.
+	step("installation_tasks", lambda: ",".join(
+		filter(None, (ops._installation_task(company, installation, code) for code in ("FRM1", "ADV")))
+	))
 	step("stages", lambda: ",".join(_advance_all(name)))
 	installation = frappe.get_doc("Solar Installation", name)
 	step("order_date", lambda: _order_predates_commissioning(name))
 	step("commissioning", lambda: ops._commission(company, installation))
 	# Whatever was waiting on the commissioning report can run now.
 	step("stages_after_commissioning", lambda: ",".join(_advance_all(name)))
+
+	# The stamp paper, the agreement generated onto it, and its execution. It comes after
+	# commissioning so Schedule II can carry the meter particulars the report recorded.
+	step("solar_agreement", lambda: _solar_agreement(company, installation.name))
+
+	# The task documents the job accumulates on its way out: the contractor who certifies
+	# it, the serials mailed to them, the KYC file, the KSEB pack and the customer's word.
+	step("contractor", lambda: ops._contractor(company))
+	step("dispatch_notice", lambda: ops._dispatch_notice(company, installation))
+	step("kyc", lambda: ops._kyc(installation))
+	step("document_pack", lambda: ops._document_pack(installation, "KSEB Submission"))
+	step("customer_review", lambda: ops._customer_review(installation))
 
 	# The snag comes after commissioning on purpose: an open major snag blocks the
 	# project close-out, and a starter dataset that deadlocks itself is no use.
@@ -1415,9 +1488,16 @@ def teardown():
 		("Statutory Fee Recovery", {"company": COMPANY}),
 		("Solar Billing Plan", {"company": COMPANY}),
 		("Project", {"company": COMPANY}),
-		# Execution and statutory.
+		# Execution and statutory, leaf first: the task documents before the job, the
+		# contractor after everything that names one.
+		("Customer Review", {"company": COMPANY}),
+		("Document Pack", {"company": COMPANY}),
+		("Material Dispatch Notice", {"company": COMPANY}),
+		("Installation Task", {"company": COMPANY}),
 		("Installation Snag", {"company": COMPANY}),
 		("Installation Work Order", {"company": COMPANY}),
+		("Solar Contractor", {"company": COMPANY}),
+		("Solar Agreement", {"company": COMPANY}),
 		("Net Metering Agreement", {"company": COMPANY}),
 		("Commissioning Report", {"company": COMPANY}),
 		("Subsidy Claim", {"company": COMPANY}),

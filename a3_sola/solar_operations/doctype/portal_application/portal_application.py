@@ -13,22 +13,15 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, today
 
-from a3_sola.api import documents, stages
+from a3_sola.api import documents
+from a3_sola.api.tasks import PORTAL_TASKS
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 
 LINKS = (("solar_installation", "Solar Installation"), ("solar_consumer", "Solar Consumer"))
 
-#: Which installation stage each application type gates. Held here, not in the controller
-#: body, so a scheme change is an edit rather than a rewrite.
-STAGE_MAP = {
-	"National Portal": "NPA",
-	"DISCOM Feasibility": "FEAS",
-	"Net Meter Application": "NMTR",
-	"Electrical Inspectorate": "CEIG",
-	"Subsidy Redemption": "DBT",
-	"Registration Fee Refund": "RFND",
-}
+#: Which task each application type carries out - owned by the task engine, read here.
+STAGE_MAP = PORTAL_TASKS
 DOCUMENT_MAP = {
 	"National Portal": "NP-APPLICATION",
 	"Net Meter Application": "KSEB-NETMETER-REQUEST",
@@ -132,7 +125,6 @@ class PortalApplication(Document):
 
 	def on_update_after_submit(self):
 		self.write_back_identifiers()
-		self.handle_status_change()
 
 	def on_submit(self):
 		self.generate_letter()
@@ -151,74 +143,24 @@ class PortalApplication(Document):
 					indicator="orange",
 				)
 		try:
-			documents.generate_document(self.solar_installation, template_code)
+			documents.generate_document(
+				self.solar_installation, template_code, source_doctype=self.doctype, source_name=self.name
+			)
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), f"a3_sola: letter for {self.name}")
 
-	def handle_status_change(self):
-		"""Approval offers to advance the stage; a query blocks it."""
-		stage_code = STAGE_MAP.get(self.application_type)
-		if not (stage_code and self.solar_installation):
-			return
-
-		if self.application_status == "Query Raised":
-			open_query = next((q for q in self.queries if not q.is_resolved), None)
-			if open_query:
-				try:
-					stages.block_stage(
-						self.solar_installation,
-						stage_code,
-						_("Query on {0}: {1}").format(self.name, open_query.query_description),
-					)
-				except frappe.ValidationError:
-					pass
-		elif self.application_status in ("Approved", "Under Review"):
-			status = frappe.db.get_value(
-				"Installation Stage Log",
-				{"parent": self.solar_installation, "stage_code": stage_code},
-				"status",
-			)
-			if status == "Blocked":
-				stages.unblock_stage(
-					self.solar_installation, stage_code, _("Query resolved on {0}").format(self.name)
-				)
-
 
 @frappe.whitelist()
-def approve_and_advance(portal_application):
-	"""Approve the application, file its letter and advance the mapped stage."""
+def approve(portal_application, approval_number=None, approval_date=None):
+	"""Record the approval. The task row completes itself, and the approval letter is
+	registered on the installation, when this save is synced."""
 	doc = frappe.get_doc("Portal Application", portal_application)
 	doc.check_permission("write")
-
-	stage_code = STAGE_MAP.get(doc.application_type)
-	if not stage_code:
-		frappe.throw(_("No installation stage is mapped to {0}.").format(doc.application_type))
-
-	if doc.approval_attachment:
-		_file_approval(doc, stage_code)
-
-	doc.db_set("application_status", "Approved", update_modified=False)
-	doc.db_set("status_updated_on", today(), update_modified=False)
-	return stages.advance_stage(
-		doc.solar_installation,
-		stage_code,
-		actual_date=doc.approval_date or today(),
-		external_reference=doc.approval_number or doc.application_number,
-		remarks=_("Approved via {0}").format(doc.name),
-	)
-
-
-def _file_approval(application, stage_code):
-	"""Land the approval letter in the checklist automatically."""
-	installation = frappe.get_doc("Solar Installation", application.solar_installation)
-	for row in installation.documents:
-		if row.stage_code == stage_code and not row.attachment:
-			row.attachment = application.approval_attachment
-			row.document_reference_no = application.approval_number
-			row.document_date = application.approval_date
-			row.is_verified = 1
-			row.verified_by = frappe.session.user
-			row.verified_on = frappe.utils.now_datetime()
-			break
-	installation.flags.ignore_validate_update_after_submit = True
-	installation.save(ignore_permissions=True)
+	if approval_number:
+		doc.approval_number = approval_number
+	doc.approval_date = approval_date or doc.approval_date or today()
+	doc.application_status = "Approved"
+	doc.status_updated_on = today()
+	doc.flags.ignore_validate_update_after_submit = True
+	doc.save()
+	return doc.application_status

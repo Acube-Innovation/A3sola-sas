@@ -27,7 +27,7 @@ def get_data():
 			},
 			{
 				"label": _("Statutory"),
-				"items": ["Portal Application", "Statutory Fee Payment", "Net Metering Agreement"],
+				"items": ["Portal Application", "Statutory Fee Payment", "Solar Agreement"],
 			},
 			{
 				"label": _("Funding"),

@@ -135,18 +135,27 @@ def on_job_end(method=None, result=None, **kwargs):
 		frappe.log_error(frappe.get_traceback(), "a3_sola: heartbeat could not be recorded")
 
 
-def status():
-	"""Per job: when it last ran, whether that is within its cadence, and what it did."""
-	beats = _load()
-	now = now_datetime()
-	# Frappe's own record of the last execution, which exists even for a job that has
-	# never reached our after_job hook - a job that errors before starting, for instance.
-	framework = {
+def _framework_last_runs():
+	"""Frappe's own record of each job's last execution.
+
+	It exists even for a job that never reached our after_job hook - one that errors
+	before starting, for instance - so it is the fallback when we hold no heartbeat. A
+	function of its own so a test can stand in for it: on a live bench the scheduler
+	commits to this table about once a minute, and nothing a test writes can outrun that.
+	"""
+	return {
 		row.method: row.last_execution
 		for row in frappe.get_all("Scheduled Job Type",
 		                          filters={"method": ["like", "a3_sola.%"]},
 		                          fields=["method", "last_execution"])
 	}
+
+
+def status():
+	"""Per job: when it last ran, whether that is within its cadence, and what it did."""
+	beats = _load()
+	now = now_datetime()
+	framework = _framework_last_runs()
 	out = []
 	for method, cadence in sorted(expected_jobs().items()):
 		beat = beats.get(method) or {}

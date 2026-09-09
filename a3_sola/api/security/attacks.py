@@ -689,7 +689,9 @@ REFERENCE_ARGUMENTS = (
 	"consumer", "solar_consumer", "signup", "invitation", "order", "payment_order",
 	"invoice", "reference_name", "suspension", "request", "contract", "om_contract",
 	"ticket", "service_ticket", "estimate", "proposal", "quotation", "billing_plan",
-	"claim", "job", "commissioning_report", "token",
+	"claim", "job", "commissioning_report", "token", "agreement",
+	"task", "installation_task", "pack", "document_pack", "review", "customer_review",
+	"contractor", "dispatch", "notice", "subsidy_claim", "solar_proposal", "portal_application",
 )
 
 

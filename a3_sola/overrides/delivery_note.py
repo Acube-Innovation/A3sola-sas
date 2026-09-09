@@ -8,7 +8,7 @@ difference between a five-minute correction and a rejected claim.
 
 import frappe
 
-from a3_sola.api import serials
+from a3_sola.api import documents, serials
 
 
 def on_submit(doc, method=None):
@@ -19,3 +19,12 @@ def on_submit(doc, method=None):
 			serial = serial.strip()
 			if serial:
 				serials.validate_serial_uniqueness(serial, doc.solar_installation, doc.company)
+	# The dispatch is the job's serial capture: what left the store is what is on the roof.
+	try:
+		serials.pull_serials_from_delivery_note(doc.solar_installation)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: serial pull from {doc.name}")
+	try:
+		documents.register_print(doc, doc.solar_installation, "Delivery note", "DISP")
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: register delivery note {doc.name}")

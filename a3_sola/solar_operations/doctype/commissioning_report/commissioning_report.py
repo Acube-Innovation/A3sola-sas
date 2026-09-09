@@ -18,6 +18,7 @@ from frappe.utils import add_years, flt, getdate
 
 from a3_sola.api import calculations, documents, materials, stages
 from a3_sola.api.naming import set_name
+from a3_sola.api.settings import get_value
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_float, get_value
 
@@ -128,6 +129,38 @@ class CommissioningReport(Document):
 		self.plant_type = {"On-Grid": "On Grid", "Off-Grid": "Off Grid", "Hybrid": "Hybrid"}.get(
 			installation.system_type, self.plant_type or "On Grid"
 		)
+		self.pull_from_tasks(installation)
+
+	def pull_from_tasks(self, installation):
+		"""The meter task and the inspectorate approval already hold these; never retype them."""
+		if not (self.net_meter_serial_no and self.net_meter_make):
+			meter = frappe.db.get_value(
+				"Installation Task",
+				{"solar_installation": installation.name, "task_code": "MTR", "docstatus": 1},
+				["meter_make", "meter_serial", "meter_received_on"],
+				as_dict=True,
+			)
+			if meter:
+				self.net_meter_make = self.net_meter_make or meter.meter_make
+				self.net_meter_serial_no = self.net_meter_serial_no or meter.meter_serial
+				self.net_meter_installation_date = self.net_meter_installation_date or meter.meter_received_on
+		if not self.electrical_inspectorate_approval_no:
+			approval = frappe.db.get_value(
+				"Portal Application",
+				{
+					"solar_installation": installation.name,
+					"application_type": "Electrical Inspectorate",
+					"application_status": "Approved",
+					"docstatus": ["<", 2],
+				},
+				["approval_number", "approval_date"],
+				as_dict=True,
+			)
+			if approval and approval.approval_number:
+				self.electrical_inspectorate_approval_no = approval.approval_number
+				self.electrical_inspectorate_date = self.electrical_inspectorate_date or approval.approval_date
+				if self.meta.has_field("energisation_approval_from_ei"):
+					self.energisation_approval_from_ei = 1
 
 	def compute_tests(self):
 		readings = [r for r in self.test_readings if r.measured_value]
@@ -157,6 +190,7 @@ class CommissioningReport(Document):
 
 	# ------------------------------------------------------------------- gates
 	def before_submit(self):
+		self.gate_serials()
 		self.gate_safety_records()
 		self.gate_protection_settings()
 		self.gate_performance_ratio()
@@ -234,7 +268,6 @@ class CommissioningReport(Document):
 	# ------------------------------------------------------------------ on submit
 	def on_submit(self):
 		self.write_warranty_window()
-		self.advance_stage()
 		self.generate_documents()
 		if flt(self.performance_ratio_at_commissioning) < flt(self.performance_ratio_threshold):
 			self.add_comment(
@@ -248,6 +281,20 @@ class CommissioningReport(Document):
 		materials.check_variance(frappe.get_doc("Solar Installation", self.solar_installation))
 		# PHASE 3 CONTRACT: project creation and the five-year O&M contract register here.
 		stages.on_commissioning_submitted(self)
+
+	def gate_serials(self):
+		"""The national portal rejects submissions with missing or repeated serials, so a
+		plant is not commissioned until its serials are captured - when the setting says so."""
+		if not get_value("require_serials_before_commissioning"):
+			return
+		installation = frappe.get_doc("Solar Installation", self.solar_installation)
+		if not installation.serial_capture_complete:
+			frappe.throw(
+				_("Commissioning is blocked: {0} of {1} module serials captured.").format(
+					installation.modules_captured or 0, installation.modules_expected or 0
+				),
+				title=_("Serial Capture Incomplete"),
+			)
 
 	def write_warranty_window(self):
 		"""Phase 3 consumes these two dates plus the package and the serial register."""
@@ -268,27 +315,13 @@ class CommissioningReport(Document):
 			update_modified=False,
 		)
 
-	def advance_stage(self):
-		status = frappe.db.get_value(
-			"Installation Stage Log", {"parent": self.solar_installation, "stage_code": "COMM"}, "status"
-		)
-		if status in (None, "Completed", "Skipped"):
-			return
-		try:
-			stages.advance_stage(
-				self.solar_installation,
-				"COMM",
-				actual_date=self.commissioning_date,
-				external_reference=self.commissioning_certificate_no,
-			)
-		except frappe.ValidationError as exc:
-			frappe.msgprint(_("COMM stage not advanced: {0}").format(exc), indicator="orange")
-
 	def generate_documents(self):
 		"""The DISCOM checklist stops being a spreadsheet."""
 		for code in ("KSEB-TESTING-CHECKLIST", "CUST-COMMISSIONING-CERTIFICATE", "CUST-HANDOVER-PACK"):
 			try:
-				documents.generate_document(self.solar_installation, code)
+				documents.generate_document(
+					self.solar_installation, code, source_doctype=self.doctype, source_name=self.name
+				)
 			except Exception:
 				frappe.log_error(frappe.get_traceback(), f"a3_sola: commissioning docs for {self.name}")
 

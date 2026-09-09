@@ -143,13 +143,19 @@ class TestOperationsIsolation(FrappeTestCase):
 		self.assertIn(self.installation_b.name, message)
 		self.assertIn(self.company_b, message)
 
-	def test_each_tenant_has_its_own_stage_templates(self):
-		"""Masters are per company - a second tenant needs its own chain."""
+	def test_the_task_template_is_one_shared_by_every_tenant(self):
+		"""The thirty tasks are the same for everyone, so there is one template and it has no
+		company; each tenant's jobs resolve to it, and each tenant keeps its own checklists."""
+		from a3_sola.api import stages
+
+		shared = frappe.get_all(
+			"Installation Stage Template", filters={"is_shared": 1, "is_active": 1}, pluck="name"
+		)
+		self.assertEqual(len(shared), 1, shared)
+		self.assertFalse(frappe.db.get_value("Installation Stage Template", shared[0], "company"))
 		for company in (self.company_a, self.company_b):
-			self.assertTrue(
-				frappe.db.exists("Installation Stage Template", {"company": company, "is_default": 1}),
-				f"{company} has no default stage template",
-			)
+			self.assertEqual(stages.resolve_template(company=company), shared[0])
+			self.assertTrue(frappe.db.exists("Document Checklist Template", {"company": company}))
 
 	def test_each_tenant_has_its_own_document_templates(self):
 		for company in (self.company_a, self.company_b):

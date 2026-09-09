@@ -27,6 +27,8 @@ def _refresh_plan(doc):
 
 
 def _roll_to_project(plan):
+	if not plan.project:
+		return
 	frappe.db.set_value(
 		"Project",
 		plan.project,

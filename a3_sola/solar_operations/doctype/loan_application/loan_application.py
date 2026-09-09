@@ -12,7 +12,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-from a3_sola.api import documents, stages
+from a3_sola.api import documents
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 
@@ -96,7 +96,6 @@ class LoanApplication(Document):
 
 	def on_update_after_submit(self):
 		self.push_to_installation()
-		self.advance_stages()
 
 	def push_to_installation(self):
 		frappe.db.set_value(
@@ -117,34 +116,64 @@ class LoanApplication(Document):
 		)
 
 	def generate_lender_pack(self):
-		"""Vendor feasibility report, EHS checklist and covering letter - all from the survey."""
-		for code in ("BANK-VENDOR-FEASIBILITY", "BANK-EHS-CHECKLIST", "BANK-COVERING-LOAN"):
+		"""Vendor feasibility report, EHS checklist, covering letter and the project proposal.
+
+		Each on its own footing: the bank gets whatever rendered, and the row says what did.
+		"""
+		for code in ("BANK-COVERING-LOAN", "BANK-VENDOR-FEASIBILITY", "BANK-EHS-CHECKLIST"):
 			try:
-				documents.generate_document(self.solar_installation, code)
+				result = documents.generate_document(
+					self.solar_installation, code, source_doctype=self.doctype, source_name=self.name
+				)
+				self._record_generated(code, result["template"], result["file_url"], result["template_name"], result["template_version"])
 			except Exception:
 				frappe.log_error(frappe.get_traceback(), f"a3_sola: lender pack for {self.name}")
-
-	def advance_stages(self):
-		"""The advance tranche advances LOAN; the balance advances BCOM."""
-		tranches = {row.tranche for row in self.disbursements if row.amount}
-		if "Advance" in tranches:
-			self._try_advance("LOAN", _("Advance disbursed by {0}").format(self.lender))
-		if "Balance" in tranches:
-			self._try_advance("BCOM", _("Balance disbursed by {0}").format(self.lender))
-
-	def _try_advance(self, stage_code, remarks):
-		status = frappe.db.get_value(
-			"Installation Stage Log",
-			{"parent": self.solar_installation, "stage_code": stage_code},
-			"status",
-		)
-		if status in (None, "Completed", "Skipped"):
-			return
+				self._record_generated(code, code, None, status="Failed")
 		try:
-			stages.advance_stage(
-				self.solar_installation, stage_code, external_reference=self.loan_sanction_no, remarks=remarks
-			)
-		except frappe.ValidationError as exc:
-			frappe.msgprint(
-				_("Stage {0} was not advanced: {1}").format(stage_code, exc), indicator="orange"
-			)
+			self.attach_project_proposal()
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"a3_sola: proposal for {self.name}")
+			self._record_generated("PROPOSAL", _("Project proposal"), None, status="Failed")
+		if self.generated:
+			self.db_update()
+			for row in self.generated:
+				row.db_update()
+
+	def _record_generated(self, code, document_name, file_url, template_name=None, version=None, status="Generated"):
+		row = next((r for r in self.generated if r.template_code == code), None) or self.append(
+			"generated", {"template_code": code}
+		)
+		row.update(
+			{
+				"document_name": document_name, "file": file_url, "solar_document_template": template_name,
+				"template_version": version, "generated_on": frappe.utils.now_datetime(),
+				"generated_by": frappe.session.user, "status": status, "is_stale": 0,
+			}
+		)
+		return row
+
+	def attach_project_proposal(self):
+		"""The proposal the customer accepted goes to the bank as the project report."""
+		proposal = frappe.db.get_value("Solar Installation", self.solar_installation, "solar_proposal")
+		if not proposal:
+			return None
+		file_url = frappe.db.get_value("Solar Proposal", proposal, "proposal_pdf")
+		if not file_url:
+			from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import generate_proposal
+
+			generate_proposal(proposal)
+			file_url = frappe.db.get_value("Solar Proposal", proposal, "proposal_pdf")
+		if not file_url:
+			return None
+		source = frappe.get_doc("File", {"file_url": file_url})
+		copy = frappe.get_doc(
+			{
+				"doctype": "File", "file_name": f"Proposal-{proposal}.pdf", "attached_to_doctype": self.doctype,
+				"attached_to_name": self.name, "is_private": 1, "content": source.get_content(),
+			}
+		).insert(ignore_permissions=True)
+		self._record_generated("PROPOSAL", _("Project proposal {0}").format(proposal), copy.file_url)
+		documents.register_document(
+			self.solar_installation, "LOAN", self.doctype, self.name, _("Project proposal"), copy.file_url, kind="Generated"
+		)
+		return copy.file_url

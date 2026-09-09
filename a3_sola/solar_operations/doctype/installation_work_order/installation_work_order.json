@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "",
  "creation": "2026-08-25 13:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,7 +12,9 @@
   "solar_consumer",
   "capacity_kw",
   "cb_2",
+  "work_order_kind",
   "work_order_type",
+  "work_types",
   "status",
   "company",
   "amended_from",
@@ -24,6 +27,7 @@
   "vehicle_reference",
   "sb_5",
   "crew",
+  "solar_contractor",
   "sb_6",
   "work_description",
   "work_completed_percent",
@@ -31,13 +35,22 @@
   "work_logs",
   "sb_8",
   "site_photographs",
+  "photos",
+  "geo_photo_count",
   "sb_9",
   "safety_note",
   "safety_briefing_done",
   "ppe_verified",
   "cb_11",
   "height_work_permit",
-  "safety_remarks"
+  "safety_remarks",
+  "sb_task",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_task",
+  "task_due_date",
+  "task_cost"
  ],
  "fields": [
   {
@@ -48,65 +61,85 @@
   {
    "fieldname": "solar_installation",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Solar Installation",
    "options": "Solar Installation",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
+   "fetch_from": "solar_installation.solar_consumer",
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
    "label": "Solar Consumer",
    "options": "Solar Consumer",
-   "fetch_from": "solar_installation.solar_consumer",
    "read_only": 1
   },
   {
+   "fetch_from": "solar_installation.capacity_kw",
    "fieldname": "capacity_kw",
    "fieldtype": "Float",
    "label": "Capacity (kW)",
-   "fetch_from": "solar_installation.capacity_kw",
-   "read_only": 1,
-   "precision": 3
+   "precision": 3,
+   "read_only": 1
   },
   {
    "fieldname": "cb_2",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "work_order_type",
+   "default": "Installation",
+   "description": "Structure and Installation are the two work-order tasks on the job; Rectification is snag work and carries no task.",
+   "fieldname": "work_order_kind",
    "fieldtype": "Select",
-   "label": "Type",
-   "options": "Structure Erection\nModule Mounting\nDC Wiring\nAC Wiring & Earthing\nInverter Installation\nTesting\nRectification",
-   "reqd": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Work Order",
+   "options": "Structure\nInstallation\nRectification",
+   "reqd": 1
   },
   {
+   "description": "Set from the first work type row. Kept for costing and reports.",
+   "fieldname": "work_order_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Primary Type",
+   "options": "Structure Erection\nModule Mounting\nDC Wiring\nAC Wiring & Earthing\nInverter Installation\nTesting\nRectification",
+   "read_only": 1,
+   "reqd": 0
+  },
+  {
+   "description": "Every kind of work this order covers. One order, many types.",
+   "fieldname": "work_types",
+   "fieldtype": "Table",
+   "label": "Work Types",
+   "options": "Work Order Type Item"
+  },
+  {
+   "default": "Planned",
    "fieldname": "status",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "Planned\nIn Progress\nOn Hold\nCompleted\nCancelled",
-   "default": "Planned",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Planned\nIn Progress\nOn Hold\nCompleted\nCancelled"
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
-   "options": "Installation Work Order",
-   "read_only": 1,
    "no_copy": 1,
-   "print_hide": 1
+   "options": "Installation Work Order",
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "sb_3",
@@ -116,9 +149,9 @@
   {
    "fieldname": "planned_start_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Planned Start",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "planned_end_date",
@@ -157,6 +190,13 @@
    "options": "Work Order Crew"
   },
   {
+   "description": "The contractor this order is placed with, when it is not the company's own crew.",
+   "fieldname": "solar_contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Solar Contractor"
+  },
+  {
    "fieldname": "sb_6",
    "fieldtype": "Section Break",
    "label": "Execution"
@@ -169,8 +209,8 @@
   {
    "fieldname": "work_completed_percent",
    "fieldtype": "Percent",
-   "label": "Completed %",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Completed %"
   },
   {
    "fieldname": "sb_7",
@@ -191,8 +231,24 @@
   {
    "fieldname": "site_photographs",
    "fieldtype": "Table",
-   "label": "Site Photographs",
+   "hidden": 1,
+   "label": "Photographs (legacy)",
    "options": "Survey Image"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Photographs with GPS coordinates. An installation order cannot be submitted below the minimum in Settings.",
+   "fieldname": "photos",
+   "fieldtype": "Table",
+   "label": "Site Photos",
+   "options": "Site Photo"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "geo_photo_count",
+   "fieldtype": "Int",
+   "label": "Geo-tagged Photos",
+   "read_only": 1
   },
   {
    "fieldname": "sb_9",
@@ -229,133 +285,173 @@
    "fieldname": "safety_remarks",
    "fieldtype": "Small Text",
    "label": "Safety Remarks"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_task",
+   "fieldtype": "Section Break",
+   "label": "Task"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_task",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "task_due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "description": "What this order cost beyond crew hours - a contractor's lump sum, hire, transport.",
+   "fieldname": "task_cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Work Order",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Operations Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Operations Executive",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "submit": 1
+   "submit": 1,
+   "write": 1
   },
   {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Documentation Officer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1
+   "write": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Site Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
-   "role": "Solar Liaison Officer",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar QC Inspector",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Technician",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Technician",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
    "permlevel": 0,
-   "write": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  },
+  {
    "create": 1,
-   "submit": 1
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
   }
  ],
+ "search_fields": "solar_installation,work_order_type,status",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "is_submittable": 1,
- "autoname": "",
- "naming_rule": "By script",
- "search_fields": "solar_installation,work_order_type,status"
+ "track_changes": 1
 }

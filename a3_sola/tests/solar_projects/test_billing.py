@@ -50,7 +50,7 @@ class TestMilestoneTemplates(FrappeTestCase):
 		)
 		doc = frappe.get_doc("Billing Milestone Template", name)
 		self.assertEqual(doc.template_name, "Standard 70:20:10 - Net Meter from DISCOM")
-		self.assertEqual(doc.milestones[-1].trigger_stage_code, "KTST")
+		self.assertEqual(doc.milestones[-1].trigger_stage_code, "KFORMS")
 
 	def test_self_funded_purchased_meter_is_the_default(self):
 		name = billing.resolve_template(

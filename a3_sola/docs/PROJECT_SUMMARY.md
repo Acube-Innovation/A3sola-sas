@@ -19,7 +19,7 @@ five-year service obligation with SLAs and warranty.
 payments with RBI e-mandate handling, fully automated tenant provisioning, and an automated
 subscription lifecycle that decides daily who still has access.
 
-Delivered across eight phases. **972 tests across 53 modules, all passing in 54 minutes. 127 doctypes, four modules, one app.**
+Delivered across eight phases. **1159 tests across 64 modules, all passing in 44 minutes. 146 doctypes, four modules, one app.**
 
 ## Architecture in one page
 

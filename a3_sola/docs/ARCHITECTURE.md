@@ -110,11 +110,16 @@ Lead ─────────────────────────
      │                 ├─ Subsidy Eligibility Check  │
      │                 └─ Solar Proposal → Quotation │
      │                     (versions)      └─ Sales Order
-     └─────────────────────────────── Solar Installation
-          ├─ Installation Work Order → Installation Snag
+     └─────────────────────────────── Solar Installation   (thirty tasks, one row each)
+          ├─ Installation Task          (status tasks: Form 1, advance, design, certificate,
+          │                              portal update, DISCOM test, meter, balance)
+          ├─ Installation Work Order → Installation Snag      (structure / installation, geo photos)
+          ├─ Purchase Order → Delivery Note → Material Dispatch Notice (serials to the contractor)
           ├─ Portal Application → Statutory Fee Payment → Statutory Fee Recovery
-          ├─ Loan Application, Subsidy Claim
-          ├─ Commissioning Report → Net Metering Agreement
+          ├─ Loan Application, Subsidy Claim (request / correction / disbursement)
+          ├─ Solar Agreement            (stamp paper; body generated, never typed; the KSEB agreement)
+          ├─ Document Pack              (KSEB submission · bank completion pack · customer file)
+          ├─ Commissioning Report, Customer Review (and the Google review)
           └─ Project
               ├─ Solar Billing Plan → Sales Invoice
               └─ Solar OM Contract
@@ -191,6 +196,38 @@ watchdog alerts on absence — the failure mode nobody notices.
 
 ---
 
+## The task engine
+
+A Solar Installation carries the **Installation Stage Template** of thirty tasks (see
+`setup/seed_stages.TASKS`) - one document, shared by every company; the checklists and
+document templates it draws on stay per company. Tasks are independent: there is no next stage to advance to, a
+task can be skipped with a reason, and a job's applicability rules pre-skip what it does
+not need (no loan tasks on a self-funded job, no inspectorate task under 10 kW).
+
+- **Each task is executed in a document.** The template row names the doctype; the
+  installation's row records the executing document's id, assignee, due date and cost.
+  Similar tasks share a doctype: eight status-plus-evidence tasks are one `Installation
+  Task`; the three packs are one `Document Pack`; a Subsidy Claim answers for three rows.
+- **One doc_event drives every row.** `api/tasks.sync_from_document` is bound to
+  `on_update / on_submit / on_update_after_submit / on_cancel` of every executing doctype
+  through the registry. `TASK_DOCTYPES` says, per doctype, which task codes it owns and
+  when it counts as Completed, Blocked or Skipped. Controllers no longer advance stages.
+- **The Task button** on the installation (`api/tasks.open_task`) opens the linked document,
+  or an existing unlinked one for the job, or a new one with the links pre-filled.
+- **The register is not a gate.** Expected documents are created per task from the
+  checklist; generation and uploads happen in the task documents and are registered on the
+  job with their source. Gates live in each document's `before_submit`.
+- **Completion has one extension point**, `api/tasks.notify_task_completed`: billing
+  milestones (`billing.on_stage_completed`) and the Form 2 window fire from there, wrapped
+  so the money layer can never undo an operations user's work.
+- **A row never points at nothing.** Deleting a task document releases its row
+  (`on_trash` is one of the sync events); a document that vanishes behind the engine's
+  back - a purge, a raw delete - is let go of the next time the installation saves, with a
+  comment naming it. A document filed under another company never drives a job's rows,
+  even when its own validation was skipped.
+- **Gotcha:** patches run before `after_migrate` seeding, so a patch that needs the task
+  template must seed it itself (`retire_two_stage_templates_for_one` does).
+
 ## Where the important logic lives
 
 | Concern | Module | Why there |
@@ -199,7 +236,8 @@ watchdog alerts on absence — the failure mode nobody notices.
 | Money | `api/payments.py`, `billing_engine.py`, `accounting*.py` | Postings gated behind two switches and the CA's confirmation |
 | Access control | `api/lifecycle/access.py` | Suspension is never a side effect |
 | Proration | `api/lifecycle/proration.py` | **One function.** There is deliberately no second |
-| Stage chain | `api/stages.py` | Templates are data; a scheme change is a record, not a deploy |
+| Task engine | `api/stages.py` (resolve, build, recompute), `api/tasks.py` (transitions, `sync_from_document`) | Tasks are an independent set, not a chain; each task's document drives its row through one doc_event |
+| Document register | `api/documents.py` (`register_document`, `generate_document(source=…)`) | One write path; every generated or uploaded file names the task document it came from |
 | GST | `api/gst.py`, `api/tax.py` | Refuses to guess a valuation basis |
 | Security evidence | `api/security/` | Walks the registries, so it cannot go stale |
 

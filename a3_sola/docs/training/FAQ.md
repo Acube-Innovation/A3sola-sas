@@ -77,9 +77,10 @@ quoting** → proposal → quotation → order opening the installation.
 design.*
 
 ### 3. Order to commissioning (15 min)
-The stage chain and why it differs by scheme → evidence gates → serial capture and DCR →
-portal application and a query → statutory fees → snags → commissioning opening the project.
-*Talking point: the evidence gate is the product. Collecting it later means guessing.*
+The thirty tasks and the Task button → each task done in its own document → the document
+register → serial capture and DCR → portal application and a query → statutory fees →
+the KSEB pack → snags → commissioning opening the project.
+*Talking point: the job updates itself from the documents. Nobody advances a stage.*
 
 ### 4. Money (10 min)
 Milestone billing → the subsidy rule → statutory fees as pass-through → profitability → the

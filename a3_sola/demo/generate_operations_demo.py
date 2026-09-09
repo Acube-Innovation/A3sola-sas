@@ -23,9 +23,7 @@ def _package(code, company):
 
 
 def _stage_template(company):
-	return frappe.db.get_value(
-		"Installation Stage Template", {"is_default": 1, "company": company}, "name"
-	)
+	return stages.resolve_template(company=company)
 
 
 #: Consumers the Operations demo owns, so it never competes with the CRM demo for estimates.
@@ -183,24 +181,58 @@ def make_installation(company, estimate, **kwargs):
 	return doc
 
 
+#: The chain codes the scenarios were first written in, and the task each one means now.
+#: None: the old stage has no task of its own any more.
+LEGACY_CODES = {
+	"FEAS": None, "VFR": "LOAN", "INST": "IWOI", "KREG": "KFORMS", "NMTR": "MTR", "AGMT": "STMP",
+	"PCR": "SUBREQ", "RFND": None, "HAND": "CFILE",
+}
+
+
+def _task_code(code):
+	return LEGACY_CODES.get(code, code)
+
+
 def _evidence(installation, stage_code):
+	"""Fill a task's expected register rows with the demo file, as an upload would."""
+	code = _task_code(stage_code)
+	if not code:
+		return
 	doc = frappe.get_doc("Solar Installation", installation.name)
+	changed = False
 	for row in doc.documents:
-		if row.stage_code == stage_code and row.is_mandatory:
+		if row.stage_code == code and not row.attachment:
 			row.attachment = "/files/demo-evidence.pdf"
 			row.document_date = today()
-			row.is_verified = 1
-			row.verified_by = frappe.session.user
-			row.verified_on = frappe.utils.now_datetime()
-	doc.flags.ignore_validate_update_after_submit = True
-	doc.save(ignore_permissions=True)
+			row.document_kind = "Uploaded"
+			changed = True
+	if changed:
+		doc.flags.ignore_validate_update_after_submit = True
+		doc.save(ignore_permissions=True)
+
+
+_register_file = _evidence
 
 
 def _advance(installation, codes):
+	"""Complete tasks in the order given. Tasks have no order of their own; a scenario does.
+
+	Stops at the first refusal, which is right for a demo building jobs that are
+	deliberately stuck.
+	"""
+	from a3_sola.api import tasks
+
 	for code in codes:
+		code = _task_code(code)
+		if not code:
+			continue
+		doc = frappe.get_doc("Solar Installation", installation.name)
+		row = next((r for r in doc.stages if r.stage_code == code), None)
+		if not row or row.status in ("Completed", "Skipped"):
+			continue
 		_evidence(installation, code)
 		try:
-			stages.advance_stage(installation.name, code, actual_date=today())
+			tasks.complete_task(installation.name, code, actual_date=today(), silent=True)
 		except frappe.ValidationError as exc:
 			_log(f"stopped at {code}: {exc}")
 			break
@@ -239,7 +271,8 @@ def _serials(installation, modules=6):
 
 
 def _backdate_stage(installation, stage_code, days):
-	"""Make a stage look genuinely old, so the ageing reports have real numbers."""
+	"""Make a task look genuinely old, so the ageing reports have real numbers."""
+	stage_code = _task_code(stage_code) or stage_code
 	frappe.db.sql(
 		"""update `tabInstallation Stage Log`
 		   set actual_start_date = %(start)s, days_in_stage = %(days)s,
@@ -270,11 +303,11 @@ def run(company=None):
 
 	built = []
 
-	# 1 & 2 - stuck at DISCOM feasibility well past SLA, one with an open query.
+	# 1 & 2 - stuck at the national portal well past SLA, one with an open query.
 	for index in range(min(2, len(estimates))):
 		installation = make_installation(company, estimates[index])
-		_advance(installation, ["ORD", "NPA"])
-		_backdate_stage(installation, "FEAS", 75)
+		_advance(installation, ["ORD", "STMP"])
+		_backdate_stage(installation, "NPA", 75)
 		built.append(installation.name)
 	if len(built) >= 1:
 		_raise_query(company, built[0])
@@ -282,14 +315,14 @@ def run(company=None):
 	# 3 - financed job awaiting sanction.
 	if len(estimates) > 2:
 		installation = make_installation(company, estimates[2], is_financed=1)
-		_advance(installation, ["ORD", "NPA", "FEAS", "VFR"])
+		_advance(installation, ["ORD", "STMP", "NPA"])
 		_make_loan(company, installation, disbursed=False)
 		built.append(installation.name)
 
 	# 4 - financed job with the advance received, balance outstanding.
 	if len(estimates) > 3:
 		installation = make_installation(company, estimates[3], is_financed=1)
-		_advance(installation, ["ORD", "NPA", "FEAS", "VFR"])
+		_advance(installation, ["ORD", "STMP", "NPA"])
 		_make_loan(company, installation, disbursed=True)
 		built.append(installation.name)
 
@@ -299,8 +332,8 @@ def run(company=None):
 			company, estimates[4], net_meter_mode="Availed from DISCOM on Rental"
 		)
 		_serials(installation)
-		_advance(installation, ["ORD", "NPA", "FEAS", "DSGN", "PROC", "DISP", "INST", "KREG"])
-		_backdate_stage(installation, "NMTR", 28)
+		_advance(installation, ["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS"])
+		_backdate_stage(installation, "MTR", 28)
 		_fee_payment(company, installation)
 		built.append(installation.name)
 
@@ -310,7 +343,7 @@ def run(company=None):
 		_serials(installation)
 		_advance(
 			installation,
-			["ORD", "NPA", "FEAS", "DSGN", "PROC", "DISP", "INST", "KREG", "NMTR", "KTST"],
+			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS", "MTR", "KTST"],
 		)
 		_commission(company, installation)
 		built.append(installation.name)
@@ -321,7 +354,7 @@ def run(company=None):
 		_serials(installation)
 		_advance(
 			installation,
-			["ORD", "NPA", "FEAS", "DSGN", "PROC", "DISP", "INST", "KREG", "NMTR", "KTST"],
+			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS", "MTR", "KTST"],
 		)
 		_snag(company, installation, "Major")
 		built.append(installation.name)
@@ -331,7 +364,7 @@ def run(company=None):
 		_snag(company, frappe.get_doc("Solar Installation", built[-1]), "Critical", category="Safety")
 
 	frappe.db.commit()
-	_log(f"{len(built)} installations across the chain (feasibility, loan, net meter, commissioned, blocked)")
+	_log(f"{len(built)} installations across the tasks (portal, loan, net meter, commissioned, blocked)")
 
 
 def _raise_query(company, installation_name):
@@ -487,30 +520,39 @@ def _commission(company, installation):
 	report.submit()
 
 	_agreement(company, installation, report)
-	_log("one fully commissioned job with an executed net metering agreement")
+	_log("one fully commissioned job with an executed solar agreement")
 
 
 def _agreement(company, installation, report):
-	if frappe.db.exists("Net Metering Agreement", {"solar_installation": installation.name}):
+	"""The KSEB agreement: stamp paper recorded, text generated, executed - the way the
+	Task button does it."""
+	from a3_sola.api import agreement as builder
+	from a3_sola.solar_operations.doctype.solar_agreement import solar_agreement as agreement_ctl
+
+	if frappe.db.exists("Solar Agreement", {"solar_installation": installation.name, "docstatus": ["<", 2]}):
 		return
-	doc = frappe.get_doc(
+	name = agreement_ctl.create_for_installation(installation.name)
+	doc = frappe.get_doc("Solar Agreement", name)
+	doc.update(
 		{
-			"doctype": "Net Metering Agreement",
-			"company": company,
-			"solar_installation": installation.name,
 			"commissioning_report": report.name,
 			"agreement_date": report.commissioning_date,
 			"place_of_execution": "Ernakulam",
 			"discom_representative_name": "Assistant Engineer, Athani",
-			"witness_1_name": "K. Rajan",
-			"witness_2_name": "S. Meera",
+			"first_party_witness_1": "K. Rajan",
+			"first_party_witness_2": "S. Meera",
 			"spin": f"SPIN{frappe.utils.random_string(8).upper()}",
 			"supply_voltage": "240 V",
-			"stamp_paper_serial": frappe.utils.random_string(10).upper(),
 		}
 	)
 	doc.flags.ignore_permissions = True
-	doc.insert(ignore_permissions=True)
+	doc.save(ignore_permissions=True)
+	agreement_ctl.record_stamp_paper(
+		name, purchased_on=report.commissioning_date, serial_no=frappe.utils.random_string(10).upper()
+	)
+	builder.generate(name)
+	doc = frappe.get_doc("Solar Agreement", name)
+	doc.flags.ignore_permissions = True
 	doc.submit()
 
 
@@ -539,8 +581,171 @@ def _snag(company, installation, severity, category="Cabling"):
 	doc.insert(ignore_permissions=True)
 
 
+def _contractor(company):
+	"""The electrical contractor the completion certificate comes from."""
+	existing = frappe.db.get_value("Solar Contractor", {"contractor_name": "Sparks Electricals", "company": company}, "name")
+	if existing:
+		return existing
+	doc = frappe.get_doc(
+		{
+			"doctype": "Solar Contractor", "contractor_name": "Sparks Electricals", "contractor_type": "Electrical",
+			"licence_no": "KL/EL/2019/0451", "licence_class": "A", "contact_person": "Biju Thomas",
+			"mobile_no": "9447001122", "email_id": "sparks.electricals@example.com", "company": company, "is_active": 1,
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
+	frappe.db.set_value("Company", company, "default_electrical_contractor", doc.name, update_modified=False)
+	return doc.name
+
+
+def _dispatch_notice(company, installation):
+	"""Serials to the contractor. Sent by email when the site can, recorded by hand when not."""
+	from a3_sola.solar_operations.doctype.material_dispatch_notice import material_dispatch_notice as ctl
+
+	existing = frappe.db.get_value("Material Dispatch Notice", {"solar_installation": installation.name, "docstatus": ["<", 2]}, "name")
+	if existing:
+		return existing
+	_serials(installation)
+	doc = frappe.get_doc(
+		{"doctype": "Material Dispatch Notice", "solar_installation": installation.name,
+		 "solar_contractor": _contractor(company), "dispatch_date": today()}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
+	ctl.pull_serials(doc.name)
+	ctl.generate(doc.name)
+	muted = frappe.flags.mute_emails
+	frappe.flags.mute_emails = True
+	try:
+		ctl.send(doc.name)
+	except frappe.ValidationError:
+		doc = frappe.get_doc("Material Dispatch Notice", doc.name)
+		doc.sent_on = frappe.utils.now_datetime()
+		doc.sent_to = doc.contractor_email
+		doc.sent_by = frappe.session.user
+		doc.status = "Completed"
+		doc.remarks = "Handed over in person; no outgoing email account on this site."
+		doc.save(ignore_permissions=True)
+		doc.submit()
+	finally:
+		frappe.flags.mute_emails = muted
+	return doc.name
+
+
+def _kyc(installation):
+	"""The consumer's KYC file, as the order desk collects it - complete, including what a
+	loan above the threshold asks for."""
+	from a3_sola.api import kyc
+
+	consumer = frappe.get_doc("Solar Consumer", installation.solar_consumer)
+	have = {r.kyc_type for r in consumer.kyc_documents}
+	for kyc_type in (
+		"KSEB Bill", "PAN", "Aadhaar Front", "Aadhaar Back", "Bank Passbook", "Pre-Installation Photo",
+		"Income Tax Return",
+	):
+		if kyc_type not in have:
+			consumer.append("kyc_documents", {"kyc_type": kyc_type, "attachment": "/files/demo-evidence.pdf", "is_verified": 1})
+	consumer.email_id = consumer.email_id or "consumer@example.com"
+	consumer.landmark = consumer.landmark or "Opposite the LP school"
+	consumer.taluk = consumer.taluk or "Aluva"
+	if not consumer.google_location_url and not (consumer.latitude and consumer.longitude):
+		consumer.google_location_url = "https://maps.google.com/?q=10.1076,76.3516"
+	consumer.flags.ignore_permissions = True
+	consumer.save(ignore_permissions=True)
+	kyc.register_for_installation(installation.name)
+	return consumer.kyc_status
+
+
+def _installation_task(company, installation, code):
+	"""A status task done in its own document: Form 1 generated, or the advance recorded."""
+	from a3_sola.solar_operations.doctype.installation_task import installation_task as ctl
+
+	existing = frappe.db.get_value(
+		"Installation Task", {"solar_installation": installation.name, "task_code": code, "docstatus": ["<", 2]}, "name"
+	)
+	if existing:
+		return existing
+	row = frappe.db.get_value(
+		"Installation Stage Log", {"parent": installation.name, "stage_code": code}, ["status", "task_document"], as_dict=True
+	)
+	if not row or row.status in ("Completed", "Skipped"):
+		return None
+	doc = frappe.get_doc({"doctype": "Installation Task", "solar_installation": installation.name, "task_code": code})
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
+	if code == "FRM1":
+		ctl.generate(doc.name, "KSEB-FORM-1")
+	elif code in ("ADV", "BAL"):
+		try:
+			ctl.pull_loan_tranche(doc.name)
+		except frappe.ValidationError:
+			doc = frappe.get_doc("Installation Task", doc.name)
+			share = 0.7 if code == "ADV" else 0.3
+			doc.update(
+				{"payer": "Customer", "amount": round(float(installation.gross_contract_value or 0) * share, 2),
+				 "paid_on": today(), "payment_mode": "Bank Transfer", "payment_reference": f"UTR{frappe.utils.random_string(8).upper()}"}
+			)
+			doc.save(ignore_permissions=True)
+	ctl.complete(doc.name)
+	return doc.name
+
+
+def _document_pack(installation, pack_type="KSEB Submission"):
+	"""A pack generated, merged and delivered - the documentation officer's whole job."""
+	from a3_sola.solar_operations.doctype.document_pack import document_pack as ctl
+
+	existing = frappe.db.get_value("Document Pack", {"solar_installation": installation.name, "pack_type": pack_type, "docstatus": ["<", 2]}, "name")
+	if existing:
+		return existing
+	doc = frappe.get_doc({"doctype": "Document Pack", "solar_installation": installation.name, "pack_type": pack_type})
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
+	ctl.generate_pack(doc.name)
+	try:
+		ctl.merge_pdf(doc.name)
+	except frappe.ValidationError as exc:
+		_log(f"pack {doc.name} not merged: {exc}")
+	if pack_type == "KSEB Submission":
+		ctl.mark_acknowledged(doc.name, acknowledgement_no=f"AE/{frappe.utils.random_string(4).upper()}/2026", ae_name="Smt. Latha K.")
+	elif pack_type == "Bank Completion Pack":
+		ctl.mark_sent(doc.name, reference="BR-" + frappe.utils.random_string(6).upper(), via="Email")
+	else:
+		ctl.mark_sent(doc.name, reference=installation.consumer_name, via="By Hand")
+	try:
+		ctl.complete(doc.name)
+	except frappe.ValidationError as exc:
+		_log(f"pack {doc.name} left open: {exc}")
+	return doc.name
+
+
+def _customer_review(installation):
+	from a3_sola.solar_operations.doctype.customer_review import customer_review as ctl
+
+	existing = frappe.db.get_value("Customer Review", {"solar_installation": installation.name, "docstatus": ["<", 2]}, "name")
+	if existing:
+		return existing
+	doc = frappe.get_doc(
+		{
+			"doctype": "Customer Review", "solar_installation": installation.name, "rating": 1.0,
+			"collection_mode": "In Person", "consent_to_publish": 1,
+			"review_text": "Neat work, finished on the day promised, and the KSEB paperwork was handled for us.",
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert(ignore_permissions=True)
+	ctl.complete(doc.name)
+	ctl.mark_posted(doc.name, link="https://maps.app.goo.gl/demo-review")
+	return doc.name
+
+
 def teardown():
 	order = [
+		"Customer Review",
+		"Document Pack",
+		"Material Dispatch Notice",
+		"Installation Task",
+		"Solar Agreement",
 		"Net Metering Agreement",
 		"Commissioning Report",
 		"Statutory Fee Payment",
@@ -549,6 +754,7 @@ def teardown():
 		"Loan Application",
 		"Portal Application",
 		"Installation Work Order",
+		"Solar Contractor",
 		"Solar Installation",
 	]
 	for doctype in order:

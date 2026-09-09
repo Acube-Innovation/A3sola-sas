@@ -153,6 +153,13 @@ def _populate_project(project, installation, report):
 def _create_billing_plan(project, installation):
 	if frappe.db.exists("Solar Billing Plan", {"project": project.name, "docstatus": ["<", 2]}):
 		return None
+	# The plan has existed since the order; commissioning gives it its project.
+	existing = frappe.db.get_value(
+		"Solar Billing Plan", {"solar_installation": installation.name, "docstatus": ["<", 2]}, "name"
+	)
+	if existing:
+		frappe.db.set_value("Solar Billing Plan", existing, "project", project.name, update_modified=False)
+		return existing
 	consumer_category = frappe.db.get_value(
 		"Solar Consumer", installation.solar_consumer, "consumer_category"
 	)
@@ -286,42 +293,69 @@ def _avoid_monsoon(date, monsoon_start, monsoon_end):
 	return date
 
 
-def compute_warranty_terms(contract):
-	"""Read every term from Component Make. Never a constant.
+def warranty_terms_for(installation):
+	"""Every warranty term of a job, read from Component Make. Never a constant.
 
 	The client's proposals state different terms per make - Rayzon at 15/30, Vikram and
 	Renewsys at 12/30, Solinteg at 10, SolarEdge at 8, Hoymiles at 12. A hardcoded 25 here
-	would silently misstate every warranty claim.
+	would silently misstate every warranty claim and every certificate.
 	"""
-	installation = frappe.get_cached_doc("Solar Installation", contract.solar_installation)
-	contract.module_make = installation.module_make
-	contract.inverter_make = installation.inverter_make
-
-	parts = []
-	if installation.module_make:
-		make = frappe.get_cached_doc("Component Make", installation.module_make)
-		contract.module_product_warranty_years = make.product_warranty_years
-		contract.module_performance_warranty_years = make.performance_warranty_years
-		contract.module_performance_floor_10yr = make.performance_floor_10yr_percent
-		contract.module_performance_floor_25yr = make.performance_floor_25yr_percent
-		parts.append(
+	inst = (
+		frappe.get_cached_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	)
+	terms = frappe._dict(
+		module_make=inst.module_make, module_make_name=None, module_product_warranty_years=0,
+		module_performance_warranty_years=0, module_performance_floor_10yr=None,
+		module_performance_floor_25yr=None, inverter_make=inst.inverter_make, inverter_make_name=None,
+		inverter_warranty_years=0, workmanship_warranty_years=None, parts=[],
+	)
+	if inst.module_make:
+		make = frappe.get_cached_doc("Component Make", inst.module_make)
+		terms.update(
+			module_make_name=make.make_name,
+			module_product_warranty_years=make.product_warranty_years,
+			module_performance_warranty_years=make.performance_warranty_years,
+			module_performance_floor_10yr=make.performance_floor_10yr_percent,
+			module_performance_floor_25yr=make.performance_floor_25yr_percent,
+		)
+		terms.parts.append(
 			_("Modules ({0}): {1} years product, {2} years performance").format(
 				make.make_name, make.product_warranty_years, make.performance_warranty_years
 			)
 		)
-	if installation.inverter_make:
-		make = frappe.get_cached_doc("Component Make", installation.inverter_make)
-		contract.inverter_warranty_years = make.product_warranty_years
-		parts.append(_("Inverter ({0}): {1} years").format(make.make_name, make.product_warranty_years))
-
-	if installation.solar_package:
-		contract.workmanship_warranty_years = (
-			frappe.db.get_value("Solar Package", installation.solar_package, "warranty_years") or 5
+	if inst.inverter_make:
+		make = frappe.get_cached_doc("Component Make", inst.inverter_make)
+		terms.update(inverter_make_name=make.make_name, inverter_warranty_years=make.product_warranty_years)
+		terms.parts.append(_("Inverter ({0}): {1} years").format(make.make_name, make.product_warranty_years))
+	if inst.solar_package:
+		terms.workmanship_warranty_years = (
+			frappe.db.get_value("Solar Package", inst.solar_package, "warranty_years") or 5
 		)
-	parts.append(_("System workmanship: {0} years from commissioning").format(
-		contract.workmanship_warranty_years or 5
-	))
-	contract.warranty_summary = ". ".join(parts)
+	terms.summary = ". ".join(
+		terms.parts
+		+ [_("System workmanship: {0} years from commissioning").format(terms.workmanship_warranty_years or 5)]
+	)
+	return terms
+
+
+def compute_warranty_terms(contract):
+	"""Carry the job's warranty terms onto the O&M contract."""
+	terms = warranty_terms_for(contract.solar_installation)
+	contract.module_make = terms.module_make
+	contract.inverter_make = terms.inverter_make
+	if terms.module_make:
+		contract.module_product_warranty_years = terms.module_product_warranty_years
+		contract.module_performance_warranty_years = terms.module_performance_warranty_years
+		contract.module_performance_floor_10yr = terms.module_performance_floor_10yr
+		contract.module_performance_floor_25yr = terms.module_performance_floor_25yr
+	if terms.inverter_make:
+		contract.inverter_warranty_years = terms.inverter_warranty_years
+	if terms.workmanship_warranty_years:
+		contract.workmanship_warranty_years = terms.workmanship_warranty_years
+	contract.warranty_summary = ". ".join(
+		terms.parts
+		+ [_("System workmanship: {0} years from commissioning").format(contract.workmanship_warranty_years or 5)]
+	)
 	return contract
 
 

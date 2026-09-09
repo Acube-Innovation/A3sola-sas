@@ -8,6 +8,8 @@ would fire, and the alert firing is the entire product.
 """
 
 import json
+from contextlib import contextmanager
+from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -15,6 +17,18 @@ from frappe.utils import add_to_date, now_datetime
 
 from a3_sola.api import console, health
 from a3_sola.api.monitoring import alerts, errors, heartbeat
+
+
+@contextmanager
+def nothing_has_run():
+	"""Both places a job's last run can come from, empty - without touching the database.
+
+	The live scheduler on a development bench writes to both from another process, so a
+	test cannot make them empty by writing; it can only stand in for them.
+	"""
+	with mock.patch.object(heartbeat, "_load", return_value={}), \
+	     mock.patch.object(heartbeat, "_framework_last_runs", return_value={}):
+		yield
 
 
 class MonitoringTestCase(FrappeTestCase):
@@ -80,8 +94,8 @@ class TestHeartbeats(MonitoringTestCase):
 	def test_a_job_that_never_ran_is_detected_separately(self):
 		"""Different from stopped, and worth distinguishing: never-run usually means a
 		deployment problem, stopped usually means the scheduler died."""
-		frappe.db.set_single_value("A3 Sola Settings", "job_heartbeats", json.dumps({}))
-		stopped = heartbeat.missing()
+		with nothing_has_run():
+			stopped = heartbeat.missing()
 		self.assertTrue(stopped)
 		self.assertTrue(all(row["never_run"] for row in stopped))
 
@@ -135,8 +149,17 @@ class TestHealthEndpoint(MonitoringTestCase):
 		self.assertIn(health._overall(checks), (health.DEGRADED, health.DOWN))
 
 	def test_everything_stopped_is_down_not_merely_degraded(self):
-		frappe.db.set_single_value("A3 Sola Settings", "job_heartbeats", json.dumps({}))
-		checks = health._collect(shallow=True)
+		"""Nothing has run: not our heartbeats, and not the framework's own record either.
+
+		Patched rather than written, on purpose. `status()` falls back to `Scheduled Job
+		Type.last_execution`, and on a live bench the scheduler commits to that table about
+		once a minute from another process - so a test that wipes the database is racing
+		it and loses. A test that wrote to that table also leaked past the rollback once
+		and stamped thirteen real jobs a month old. Standing in for the two sources is the
+		only way to say "everything stopped" and mean it.
+		"""
+		with nothing_has_run():
+			checks = health._collect(shallow=True)
 		self.assertEqual(checks["background_jobs"]["state"], health.DOWN)
 
 	def test_the_detailed_view_needs_a_role(self):
@@ -224,8 +247,8 @@ class TestBusinessAlerts(MonitoringTestCase):
 				               alerts.DASHBOARD))
 
 	def test_a_stopped_scheduler_raises_a_critical(self):
-		frappe.db.set_single_value("A3 Sola Settings", "job_heartbeats", json.dumps({}))
-		fired = [a for a in alerts.evaluate() if a.code == "scheduler_stopped"]
+		with nothing_has_run():
+			fired = [a for a in alerts.evaluate() if a.code == "scheduler_stopped"]
 		self.assertTrue(fired, "a completely stopped scheduler did not alert")
 		self.assertEqual(fired[0].severity, alerts.CRITICAL)
 

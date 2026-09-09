@@ -78,6 +78,11 @@
   "subsidy_claim_series_prefix",
   "loan_application_series_prefix",
   "net_metering_agreement_series_prefix",
+  "solar_agreement_series_prefix",
+  "installation_task_series_prefix",
+  "document_pack_series_prefix",
+  "material_dispatch_notice_series_prefix",
+  "customer_review_series_prefix",
   "statutory_fee_payment_series_prefix",
   "sb_23",
   "default_stage_template",
@@ -110,6 +115,18 @@
   "letter_head",
   "document_footer_text",
   "stamp_paper_note",
+  "sb_tasks",
+  "form2_window_days",
+  "default_task_due_days",
+  "min_geotagged_photos",
+  "kyc_itr_threshold_amount",
+  "block_sales_order_without_kyc",
+  "cb_tasks",
+  "collage_columns",
+  "collage_max_photos",
+  "google_review_message",
+  "completion_data_email_subject",
+  "completion_data_email_body",
   "sb_32",
   "auto_create_fee_payment_on_stage",
   "refund_follow_up_days",
@@ -829,6 +846,36 @@
    "reqd": 1
   },
   {
+   "default": "SOL-AGR",
+   "fieldname": "solar_agreement_series_prefix",
+   "fieldtype": "Data",
+   "label": "Solar Agreement"
+  },
+  {
+   "default": "SOL-TSK",
+   "fieldname": "installation_task_series_prefix",
+   "fieldtype": "Data",
+   "label": "Installation Task"
+  },
+  {
+   "default": "SOL-PACK",
+   "fieldname": "document_pack_series_prefix",
+   "fieldtype": "Data",
+   "label": "Document Pack"
+  },
+  {
+   "default": "SOL-MDN",
+   "fieldname": "material_dispatch_notice_series_prefix",
+   "fieldtype": "Data",
+   "label": "Material Dispatch Notice"
+  },
+  {
+   "default": "SOL-REV",
+   "fieldname": "customer_review_series_prefix",
+   "fieldtype": "Data",
+   "label": "Customer Review"
+  },
+  {
    "default": "SOL-SFP",
    "fieldname": "statutory_fee_payment_series_prefix",
    "fieldtype": "Data",
@@ -1010,6 +1057,79 @@
    "fieldname": "stamp_paper_note",
    "fieldtype": "Small Text",
    "label": "Stamp Paper Note"
+  },
+  {
+   "fieldname": "sb_tasks",
+   "fieldtype": "Section Break",
+   "label": "Tasks"
+  },
+  {
+   "default": "30",
+   "description": "Days after the Form 1 fee is paid within which Form 2 must be submitted. Sets the KFORMS task's due date.",
+   "fieldname": "form2_window_days",
+   "fieldtype": "Int",
+   "label": "Form 2 Window (Days)"
+  },
+  {
+   "default": "3",
+   "fieldname": "default_task_due_days",
+   "fieldtype": "Int",
+   "label": "Default Task Due (Days)"
+  },
+  {
+   "default": "4",
+   "description": "An installation work order cannot be submitted with fewer geo-tagged photographs than this.",
+   "fieldname": "min_geotagged_photos",
+   "fieldtype": "Int",
+   "label": "Minimum Geo-tagged Photos"
+  },
+  {
+   "default": "200000",
+   "description": "Loan amount above which an income tax return or land tax receipt is part of KYC.",
+   "fieldname": "kyc_itr_threshold_amount",
+   "fieldtype": "Currency",
+   "label": "ITR / Land Tax Required Above"
+  },
+  {
+   "description": "Off: the order warns about missing KYC. On: it refuses to save.",
+   "fieldname": "block_sales_order_without_kyc",
+   "fieldtype": "Check",
+   "label": "Block Sales Order Without Complete KYC"
+  },
+  {
+   "fieldname": "cb_tasks",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "collage_columns",
+   "fieldtype": "Select",
+   "label": "Photo Collage Columns",
+   "options": "2\n3"
+  },
+  {
+   "default": "24",
+   "fieldname": "collage_max_photos",
+   "fieldtype": "Int",
+   "label": "Photo Collage Max Photos"
+  },
+  {
+   "description": "Sent to the customer with the review link. Placeholders: {consumer_name}, {company}, {url}.",
+   "fieldname": "google_review_message",
+   "fieldtype": "Small Text",
+   "label": "Google Review Message"
+  },
+  {
+   "default": "Material and serial details - {consumer_name}",
+   "fieldname": "completion_data_email_subject",
+   "fieldtype": "Data",
+   "label": "Completion Data Email Subject"
+  },
+  {
+   "default": "Please find attached the material and serial number details for the installation at {consumer_name}'s premises.",
+   "fieldname": "completion_data_email_body",
+   "fieldtype": "Small Text",
+   "label": "Completion Data Email Body"
   },
   {
    "fieldname": "sb_32",
@@ -2708,7 +2828,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-28 14:00:00.000000",
+ "modified": "2026-09-09 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

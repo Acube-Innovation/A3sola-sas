@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 18:00:00.000000",
+ "description": "One balance-of-system part on a package: the boards, cables, structure, meters, earthing and protection that turn modules and an inverter into an installation.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "system_type",
+  "specification",
+  "make",
+  "capacity_kw",
+  "qty",
+  "cost",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "DCDB\nACDB\nDC Cable\nAC Cable\nMounting Structure\nSolar Energy Meter\nEarthing\nLightning Protection\nBattery\nOther",
+   "reqd": 1
+  },
+  {
+   "columns": 4,
+   "fieldname": "specification",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Specification"
+  },
+  {
+   "columns": 2,
+   "fieldname": "make",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Make",
+   "options": "Component Make"
+  },
+  {
+   "columns": 1,
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "columns": 1,
+   "default": "1",
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Nos"
+  },
+  {
+   "columns": 1,
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost"
+  },
+  {
+   "columns": 1,
+   "description": "The option quoted for this type. One per type - two DCDB rows can sit side by side with one of them standard and the other an upsell.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-08 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package System Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

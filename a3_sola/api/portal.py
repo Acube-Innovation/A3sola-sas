@@ -36,9 +36,10 @@ INSTALLATION_FIELDS = (
 	"warranty_end_date",
 )
 
-#: Documents that concern the customer. Everything addressed to them, plus the net
-#: metering agreement - which is addressed to the Assistant Engineer but which the customer
-#: signs and is entitled to a copy of. Bank and portal paperwork is deliberately absent.
+#: Documents that concern the customer. Everything addressed to them, plus the stamp-paper
+#: agreement (printed from the Solar Agreement) - which is addressed to the Assistant
+#: Engineer but which the customer signs and is entitled to a copy of. Bank and portal
+#: paperwork is deliberately absent.
 CUSTOMER_RECIPIENTS = ("Consumer",)
 CUSTOMER_EXTRA_DOCUMENTS = ("Net Metering Agreement (Stamp Paper)",)
 
