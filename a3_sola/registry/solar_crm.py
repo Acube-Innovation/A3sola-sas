@@ -24,6 +24,11 @@ DOCTYPES = [
 	"Outreach Message Template",
 	"Solar Package",
 	"Solar Package Component",
+	"Solar Package Module",
+	"Solar Package Inverter",
+	"Solar Package System Item",
+	"Solar Package Price",
+	"Customer KYC Document",
 	"Solar Consumer",
 	"Site Survey",
 	"Roof Segment",
@@ -73,8 +78,11 @@ DOC_EVENTS = {
 		"on_submit": ["a3_sola.overrides.quotation.on_submit"],
 	},
 	"Sales Order": {
+		"validate": ["a3_sola.api.kyc.warn_missing_on_sales_order"],
 		"on_submit": ["a3_sola.overrides.sales_order.on_submit"],
 	},
+	# A KYC file added after the job opened still reaches the job's register.
+	"Solar Consumer": {"on_update": ["a3_sola.api.kyc.sync_register"]},
 	"Company": {
 		"validate": ["a3_sola.overrides.company.validate"],
 	},

@@ -14,6 +14,7 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from a3_sola.api.naming import set_name
+from a3_sola.api import kyc
 from a3_sola.api.permissions import assert_same_company
 
 IFSC_PATTERN = re.compile(r"^[A-Z]{4}0[A-Z0-9]{6}$")
@@ -31,6 +32,7 @@ class SolarConsumer(Document):
 		set_name(self, "consumer_series_prefix", ".YYYY.-.#####", fallback="SOL-CON")
 
 	def validate(self):
+		kyc.stamp(self)
 		assert_same_company(self, LINKS)
 		self.validate_consumer_number_unique()
 		self.compute_annual_consumption()

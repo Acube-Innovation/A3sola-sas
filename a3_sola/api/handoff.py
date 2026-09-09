@@ -14,6 +14,10 @@ import frappe
 from frappe.utils import flt
 
 from a3_sola.api.settings import get_value
+from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	default_inverter,
+	default_module,
+)
 
 
 def build_handoff_payload(sales_order):
@@ -122,6 +126,9 @@ def create_solar_installation(sales_order):
 		if payload["solar_package"]
 		else None
 	)
+	# A package offers several module and inverter options; the job is built with one of each.
+	module = default_module(package) if package else None
+	inverter = default_inverter(package) if package else None
 	template = stages.resolve_template(
 		payload["subsidy_scheme"],
 		package.system_type if package else None,
@@ -144,11 +151,11 @@ def create_solar_installation(sales_order):
 			"capacity_kw": payload["capacity_kw"],
 			"system_type": package.system_type if package else "On-Grid",
 			"is_dcr_compliant": package.is_dcr_compliant if package else 0,
-			"module_make": package.module_make if package else None,
-			"module_wattage": package.module_wattage if package else None,
-			"module_count": package.module_count if package else None,
-			"inverter_make": package.inverter_1_make if package else None,
-			"inverter_capacity_kw": package.inverter_1_capacity_kw if package else None,
+			"module_make": module.module_make if module else None,
+			"module_wattage": module.module_wattage if module else None,
+			"module_count": module.module_count if module else None,
+			"inverter_make": inverter.inverter_make if inverter else None,
+			"inverter_capacity_kw": inverter.inverter_capacity_kw if inverter else None,
 			"installation_address": payload["installation_address"],
 			"discom": payload["discom"],
 			"discom_section": payload["discom_section"],
@@ -181,4 +188,22 @@ def create_solar_installation(sales_order):
 	frappe.db.set_value(
 		"Sales Order", payload["sales_order"], "solar_installation", installation.name, update_modified=False
 	)
+	# The order IS the first task. It is complete the moment the job exists.
+	from a3_sola.api import tasks
+
+	# The billing plan lives from the order, so the advance milestone is there to trigger
+	# the moment the order task completes below. Its failure must never undo a handoff.
+	try:
+		from a3_sola.api import billing
+
+		billing.ensure_plan_for_installation(installation.name, replay=False)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: billing plan at handoff for {installation.name}")
+	tasks.link_document(
+		installation.name, "ORD", "Sales Order", payload["sales_order"], status="Completed",
+		actual_date=installation.order_date, reference=payload["sales_order"],
+	)
+	from a3_sola.api import kyc
+
+	kyc.register_for_installation(installation.name)
 	return installation.name

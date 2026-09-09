@@ -462,10 +462,14 @@ ESSENTIAL_MASTERS = (
 	("Electricity Tariff", "no tariff, so every savings figure is zero"),
 	("Solar Package", "no packages, so there is nothing to quote"),
 	("Component Make", "no makes, so no warranty terms"),
-	("Installation Stage Template", "no stage chain, so no installation can start"),
+	("Installation Stage Template", "no task template, so no installation can start"),
 	("Document Checklist Template", "no checklists, so no document pack"),
 	("Billing Milestone Template", "no milestones, so nothing can be invoiced"),
 )
+
+
+#: Masters one record serves every company: present without a company means present for all.
+SHARED_MASTERS = ("Installation Stage Template",)
 
 
 def _verify_essential_masters(company):
@@ -478,8 +482,11 @@ def _verify_essential_masters(company):
 	for doctype, consequence in ESSENTIAL_MASTERS:
 		if not frappe.db.exists("DocType", doctype):
 			continue
-		if not frappe.db.exists(doctype, {"company": company}):
-			missing.append(f"{doctype} ({consequence})")
+		if frappe.db.exists(doctype, {"company": company}):
+			continue
+		if doctype in SHARED_MASTERS and frappe.db.exists(doctype, {"is_shared": 1, "is_active": 1}):
+			continue
+		missing.append(f"{doctype} ({consequence})")
 	return missing
 
 

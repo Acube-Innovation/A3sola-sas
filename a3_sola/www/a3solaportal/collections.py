@@ -34,7 +34,6 @@ COLLECTIONS = {
 	"installations": {"doctype": "Solar Installation", "title": "Installations", "singular": "installation", "subtitle": "On-site delivery", "icon": "wrench"},
 	"work-orders": {"doctype": "Installation Work Order", "title": "Work Orders", "singular": "work order", "subtitle": "Crew scheduling", "icon": "clipboard"},
 	"commissioning": {"doctype": "Commissioning Report", "title": "Commissioning", "singular": "commissioning report", "subtitle": "Handover reports", "icon": "bolt"},
-	"net-metering": {"doctype": "Net Metering Agreement", "title": "Net Metering", "singular": "net metering agreement", "subtitle": "DISCOM agreements", "icon": "power"},
 	"subsidy-claims": {"doctype": "Subsidy Claim", "title": "Subsidy Claims", "singular": "subsidy claim", "subtitle": "Disbursement tracking", "icon": "wallet"},
 }
 

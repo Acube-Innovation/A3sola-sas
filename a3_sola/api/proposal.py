@@ -10,10 +10,15 @@ in the template computes anything.
 import json
 
 import frappe
-from frappe.utils import flt, getdate
+from frappe.utils import cint, flt, getdate
 
 from a3_sola.api import regulation
 from a3_sola.api.settings import get_settings
+from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	default_inverter,
+	default_module,
+	default_system_items,
+)
 
 
 def proposal_context(proposal):
@@ -102,20 +107,27 @@ def _specification_rows(package, options, packages):
 	if not package:
 		return []
 
+	module = default_module(package)
 	rows = [
 		{
 			"item": "Solar Panels",
-			"specification": package.module_specification,
-			"make": package.module_alternate_makes or _make_name(package.module_make),
-			"nos": package.module_count,
+			"specification": module.module_specification if module else None,
+			"make": (module.module_alternate_makes or _make_name(module.module_make))
+			if module
+			else None,
+			"nos": module.module_count if module else None,
 		}
 	]
 
 	for index, option in enumerate(options, start=1):
 		pkg = packages.get(option.solar_package) or package
-		suffix = "2" if option.inverter_topology in ("String with Optimiser",) and pkg.inverter_2_specification else "1"
-		spec = option.inverter_specification or pkg.get(f"inverter_{suffix}_specification")
-		make = _make_name(option.inverter_make) or _make_name(pkg.get(f"inverter_{suffix}_make"))
+		# The estimate option records the inverter it was quoted with, so it is the answer.
+		# The package's default is only the fallback for an option added before it did.
+		fallback = default_inverter(pkg) if pkg else None
+		spec = option.inverter_specification or (fallback.inverter_specification if fallback else None)
+		make = _make_name(option.inverter_make) or (
+			_make_name(fallback.inverter_make) if fallback else None
+		)
 		rows.append(
 			{
 				"item": "Solar PV Inverter",
@@ -125,38 +137,14 @@ def _specification_rows(package, options, packages):
 			}
 		)
 
-	rows.extend(
-		[
-			{"item": "DCDB", "specification": package.dcdb_specification, "make": "MCBs - ABB/Eaton, Fuses - Mersen, SPD - Mersen", "nos": 1},
-			{"item": "ACDB", "specification": package.acdb_specification, "make": "MCBs - ABB/Eaton, SPD - Mersen/Citel", "nos": 1},
-			{"item": "DC Cables", "specification": package.dc_cable_specification, "make": "Apar / Seichem", "nos": "Ls."},
-			{"item": "AC Cables", "specification": package.ac_cable_specification, "make": "Apar / Polycab", "nos": "Ls."},
-			{
-				"item": "Earthing",
-				"specification": "Maintenance free chemical earthing with 250 micron copper bonded earth rod, 14 mm dia / 1.2 m long",
-				"make": "Excel Earthing",
-				"nos": f"{package.earthing_sets or 2} Sets",
-			},
-			{
-				"item": "Lightning Protection",
-				"specification": "Spike air termination rod with insulated base and chemical earth kit",
-				"make": "Excel Earthing",
-				"nos": f"{package.lightning_protection_sets or 1} Set",
-			},
-			{"item": "Solar Energy Meter", "specification": "Watt-hour meter", "make": "L&T", "nos": package.solar_energy_meter_count or 1},
-			{
-				"item": "Solar PV Roof Mounting Structure",
-				"specification": package.mounting_structure_specification,
-				"make": "Apollo / Equivalent",
-				"nos": f"{flt(package.capacity_kw):g} kWp",
-			},
-			{
-				"item": "Installation, Testing, Commissioning",
-				"specification": "Complying with Electrical Inspectorate & DISCOM standards",
-				"make": "",
-				"nos": "",
-			},
-		]
+	rows.extend(_system_rows(package))
+	rows.append(
+		{
+			"item": "Installation, Testing, Commissioning",
+			"specification": "Complying with Electrical Inspectorate & DISCOM standards",
+			"make": "",
+			"nos": "",
+		}
 	)
 	return rows
 
@@ -169,13 +157,78 @@ def _statutory_rows(estimate):
 	return {"rows": data.get("breakdown", []), "total": data.get("statutory_total", 0)}
 
 
+#: How each balance-of-system part is presented, and what it says when the package's own
+#: row does not. These were literals inside the row builder; they are the client's standing
+#: defaults, so a package whose system table is filled in overrides them and one carried
+#: over from the old fixed fields - which could hold no make at all - reads as it always did.
+#:
+#: (system_type, label, default specification, default make, quantity)
+SYSTEM_PRESENTATION = (
+	("DCDB", "DCDB", None, "MCBs - ABB/Eaton, Fuses - Mersen, SPD - Mersen", 1),
+	("ACDB", "ACDB", None, "MCBs - ABB/Eaton, SPD - Mersen/Citel", 1),
+	("DC Cable", "DC Cables", None, "Apar / Seichem", "Ls."),
+	("AC Cable", "AC Cables", None, "Apar / Polycab", "Ls."),
+	("Earthing", "Earthing",
+	 "Maintenance free chemical earthing with 250 micron copper bonded earth rod, "
+	 "14 mm dia / 1.2 m long", "Excel Earthing", "{qty} Sets"),
+	("Lightning Protection", "Lightning Protection",
+	 "Spike air termination rod with insulated base and chemical earth kit",
+	 "Excel Earthing", "{qty} Set"),
+	("Solar Energy Meter", "Solar Energy Meter", "Watt-hour meter", "L&T", "{qty}"),
+	("Mounting Structure", "Solar PV Roof Mounting Structure", None,
+	 "Apollo / Equivalent", "{capacity} kWp"),
+	("Battery", "Battery Bank", None, None, "{qty}"),
+)
+
+#: Quantities that stand in for a count when the old fields held none.
+FALLBACK_QUANTITY = {"Earthing": 2, "Lightning Protection": 1, "Solar Energy Meter": 1}
+
+
+def _system_rows(package):
+	"""The balance of system, from the package's own table.
+
+	A type the package does not list is omitted rather than printed empty - a proposal that
+	promises a battery bank the package has no row for is worse than one that is silent.
+	The exception is the parts every job has: those keep printing on their standing
+	defaults, because that is what the client's proposal has always said.
+	"""
+	if not package:
+		return []
+	chosen = default_system_items(package)
+	rows = []
+	for system_type, label, specification, make, quantity in SYSTEM_PRESENTATION:
+		row = chosen.get(system_type)
+		if row is None and system_type not in FALLBACK_QUANTITY and not specification:
+			continue
+		if row is None and system_type == "Battery":
+			continue
+		qty = cint(row.qty) if row and cint(row.qty) else FALLBACK_QUANTITY.get(system_type, 1)
+		rows.append(
+			{
+				"item": label,
+				"specification": (row.specification if row else None) or specification,
+				"make": (_make_name(row.make) if row and row.make else None) or make or "",
+				"nos": _quantity(quantity, qty, package),
+			}
+		)
+	return rows
+
+
+def _quantity(template, qty, package):
+	"""`Ls.` stays `Ls.`; a count becomes the row's count; the structure is priced by kWp."""
+	if not isinstance(template, str):
+		return template
+	return template.format(qty=qty, capacity=f"{flt(package.capacity_kw):g}")
+
+
 def _warranty_rows(options, package):
 	"""Warranty by make, read from Component Make. A change of brand cannot leave a stale term."""
 	rows = []
 	seen = set()
 
-	if package and package.module_make:
-		make = frappe.get_cached_doc("Component Make", package.module_make)
+	module = default_module(package) if package else None
+	if module and module.module_make:
+		make = frappe.get_cached_doc("Component Make", module.module_make)
 		rows.append(
 			{
 				"component": "Solar PV Modules",

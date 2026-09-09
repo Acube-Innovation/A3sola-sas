@@ -60,6 +60,12 @@ CUSTOM_FIELDS = {
 		{"fieldname": "payee_bank_branch", "fieldtype": "Data", "label": "Branch", "insert_after": "payee_bank_account_no"},
 		{"fieldname": "payee_bank_ifsc", "fieldtype": "Data", "label": "IFSC Code", "insert_after": "payee_bank_branch"},
 		{"fieldname": "payment_qr_code", "fieldtype": "Attach Image", "label": "Payment QR Code", "insert_after": "payee_bank_ifsc"},
+		{"fieldname": "a3s_customer_care_sb", "fieldtype": "Section Break", "label": "Customer Care", "insert_after": "payment_qr_code", "collapsible": 1,
+		 "description": "What the customer's completion file prints: who to call, and where to leave a review."},
+		{"fieldname": "google_review_url", "fieldtype": "Data", "options": "URL", "label": "Google Review Link", "insert_after": "a3s_customer_care_sb"},
+		{"fieldname": "default_electrical_contractor", "fieldtype": "Link", "options": "Solar Contractor", "label": "Default Electrical Contractor", "insert_after": "google_review_url"},
+		{"fieldname": "a3s_customer_care_cb", "fieldtype": "Column Break", "insert_after": "default_electrical_contractor"},
+		{"fieldname": "support_contacts", "fieldtype": "Table", "options": "Company Support Contact", "label": "Support Contacts", "insert_after": "a3s_customer_care_cb"},
 	],
 	# --------------------------------------------------------------------- Item
 	"Item": [

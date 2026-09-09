@@ -6,6 +6,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import today
 
+from a3_sola.setup import seed_stages
 from a3_sola.tests.fixtures import make_consumer, make_estimate, make_survey
 from a3_sola.tests.test_quotation import ensure_customer, ensure_item, make_quotation
 
@@ -62,7 +63,16 @@ class TestSalesOrderHandoff(FrappeTestCase):
 		self.assertEqual(doc.solar_design_estimate, self.estimate.name)
 		self.assertEqual(doc.capacity_kw, self.estimate.final_capacity_kw)
 		self.assertEqual(doc.docstatus, 1)
-		self.assertEqual(len(doc.stages), 19)
+		self.assertEqual(len(doc.stages), len(seed_stages.TASKS))
+
+	def test_the_order_completes_the_first_task_and_is_its_document(self):
+		order = self.make_sales_order()
+		order.submit()
+		doc = frappe.get_doc("Solar Installation", {"sales_order": order.name})
+		ord_row = next(r for r in doc.stages if r.stage_code == "ORD")
+		self.assertEqual(ord_row.status, "Completed")
+		self.assertEqual((ord_row.task_doctype, ord_row.task_document), ("Sales Order", order.name))
+		self.assertEqual(str(ord_row.actual_completion_date), str(order.transaction_date))
 
 	def test_creation_is_idempotent(self):
 		"""Re-running the handoff must not open a second job."""
@@ -120,3 +130,15 @@ class TestSalesOrderHandoff(FrappeTestCase):
 		order.insert(ignore_permissions=True)
 		order.submit()
 		self.assertFalse(frappe.db.exists("Solar Installation", {"sales_order": order.name}))
+
+
+class TestHandoffBilling(TestSalesOrderHandoff):
+	def test_the_billing_plan_exists_from_the_order_with_the_advance_triggered(self):
+		order = self.make_sales_order()
+		order.submit()
+		installation = frappe.db.get_value("Solar Installation", {"sales_order": order.name}, "name")
+		plan = frappe.db.get_value("Solar Billing Plan", {"solar_installation": installation, "docstatus": 1}, "name")
+		self.assertTrue(plan, "no billing plan created at handoff")
+		doc = frappe.get_doc("Solar Billing Plan", plan)
+		advance = next(r for r in doc.milestones if r.trigger_type == "On Order")
+		self.assertTrue(advance.is_triggered, "the advance did not trigger on the order")

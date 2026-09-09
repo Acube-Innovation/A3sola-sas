@@ -10,7 +10,7 @@ merged into `hooks.py`, which stays thin. There is exactly one settings singleto
 | Module | What it covers | Status |
 |---|---|---|
 | Solar CRM | Leads, consumers, surveys, design estimates, eligibility, proposals, packages | Phase 1 |
-| Solar Operations | The 19-stage execution chain, documents, serials, statutory fees, subsidy claims, loans, commissioning | Phase 2 |
+| Solar Operations | Thirty independent tasks per job, each executed in its own document; the document register, serials, statutory fees, subsidy claims, loans, packs, commissioning | Phase 2 |
 | Solar Projects | Costing, milestone billing, GST, accounting, O&M contracts, visits, tickets, warranty, performance | Phase 3 |
 | Platform | Public marketing site, pricing, signup funnel | Phase 4 |
 | Platform | Razorpay payments, e-mandates, invoicing, dunning, reconciliation | Phase 5 |
@@ -432,6 +432,7 @@ Read [`a3_sola/docs/ACCOUNTING_TREATMENT.md`](a3_sola/docs/ACCOUNTING_TREATMENT.
 | `docs/LIFECYCLE_RUNBOOK.md` | The daily rhythm, handling a gateway outage without suspending anyone, answering "why was I suspended", the kill-switch procedure |
 | `docs/POLICY_GUIDE.md` | Designing a subscription policy, and what each threshold costs you when it is too lax and when it is too aggressive |
 | `docs/UAT_Phase1.md` … `UAT_Phase7.md` | Acceptance cases per phase |
+| **`docs/TEST_DRIVE.md`** | **30 minutes, end to end. Start here to see what was built** |
 | **`docs/UAT_MASTER.md`** | **All acceptance cases grouped by business process, the end-to-end scenarios and their results, and the client sign-off pack** |
 | **`docs/ARCHITECTURE.md`** | **The definitive technical document. Read this first** |
 | **`docs/PROJECT_SUMMARY.md`** | **For leadership: what was built, what is switched off and why, every risk that remains** |
@@ -627,20 +628,26 @@ Child tables: Brand Link, Cashflow Projection, Design Estimate Option, EHS Check
 | Doctype | Kind |
 |---|---|
 | Commissioning Report | Submittable |
+| Customer Review | Submittable |
 | Document Checklist Template | Master |
+| Document Pack | Submittable |
 | Document Template Set | Master |
 | Installation Snag | Submittable |
-| Installation Stage Template | Master |
+| Installation Stage Template | Master (one, shared by every company: the thirty tasks) |
+| Installation Task | Submittable |
 | Installation Work Order | Submittable |
 | Loan Application | Submittable |
-| Net Metering Agreement | Submittable |
+| Material Dispatch Notice | Submittable |
+| Net Metering Agreement | Retired, read-only (migrated into Solar Agreement) |
 | Portal Application | Submittable |
+| Solar Agreement | Submittable |
+| Solar Contractor | Master |
 | Solar Document Template | Master |
 | Solar Installation | Submittable |
 | Statutory Fee Payment | Submittable |
 | Subsidy Claim | Submittable |
 
-Child tables: Application Query, Document Checklist Template Item, Document Template Set Item, Generated Document Log, Installation Document, Installation Serial Register, Installation Stage Log, Installation Stage Template Detail, Inverter Protection Setting, Loan Disbursement, Test Reading, Wheeling Preference, Work Log, Work Order Crew.
+Child tables: Application Query, Company Support Contact, Document Checklist Template Item, Document Template Set Item, Generated Document Log, Installation Document, Installation Serial Register, Installation Stage Log, Installation Stage Template Detail, Inverter Protection Setting, Loan Disbursement, Review Media, Site Photo, Subsidy Correction, Task Attachment, Task Generated Document, Test Reading, Wheeling Preference, Work Log, Work Order Crew, Work Order Type Item.
 
 **Solar Projects**
 

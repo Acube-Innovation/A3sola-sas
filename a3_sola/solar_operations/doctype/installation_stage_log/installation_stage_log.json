@@ -9,17 +9,28 @@
   "stage_code",
   "stage_name",
   "status",
+  "task_doctype",
+  "task_document",
   "owner_type",
-  "planned_date",
+  "assigned_to",
+  "due_date",
   "actual_completion_date",
   "cb_1",
   "responsible_role",
   "sla_days",
+  "planned_date",
+  "actual_start_date",
   "days_in_stage",
   "is_sla_breached",
   "is_mandatory",
-  "actual_start_date",
   "completed_by",
+  "cost",
+  "sb_assignment",
+  "assigned_by",
+  "assigned_on",
+  "cb_assignment",
+  "due_anchor_task",
+  "due_anchor_days",
   "sb_2",
   "external_reference",
   "blocked_reason",
@@ -32,14 +43,16 @@
    "fieldtype": "Data",
    "label": "Code",
    "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "stage_name",
    "fieldtype": "Data",
-   "label": "Stage",
+   "label": "Task",
    "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 2
   },
   {
    "fieldname": "status",
@@ -47,27 +60,54 @@
    "label": "Status",
    "options": "Pending\nIn Progress\nBlocked\nCompleted\nSkipped",
    "default": "Pending",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "label": "Executed In",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task_document",
+   "fieldtype": "Dynamic Link",
+   "label": "Document",
+   "options": "task_doctype",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The document that carried this task out. Set the moment one is created for it."
   },
   {
    "fieldname": "owner_type",
    "fieldtype": "Select",
    "label": "Owner",
-   "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment",
-   "read_only": 1,
-   "in_list_view": 1
+   "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment\nContractor",
+   "read_only": 1
   },
   {
-   "fieldname": "planned_date",
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assignee",
+   "options": "User",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "due_date",
    "fieldtype": "Date",
-   "label": "Planned",
-   "in_list_view": 1
+   "label": "Due",
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "actual_completion_date",
    "fieldtype": "Date",
    "label": "Completed",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "cb_1",
@@ -87,18 +127,26 @@
    "read_only": 1
   },
   {
+   "fieldname": "planned_date",
+   "fieldtype": "Date",
+   "label": "Planned"
+  },
+  {
+   "fieldname": "actual_start_date",
+   "fieldtype": "Date",
+   "label": "Started"
+  },
+  {
    "fieldname": "days_in_stage",
    "fieldtype": "Int",
    "label": "Days",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "is_sla_breached",
    "fieldtype": "Check",
-   "label": "Breached",
-   "read_only": 1,
-   "in_list_view": 1
+   "label": "Overdue",
+   "read_only": 1
   },
   {
    "fieldname": "is_mandatory",
@@ -107,15 +155,52 @@
    "read_only": 1
   },
   {
-   "fieldname": "actual_start_date",
-   "fieldtype": "Date",
-   "label": "Started"
-  },
-  {
    "fieldname": "completed_by",
    "fieldtype": "Link",
    "label": "By",
    "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "read_only": 1,
+   "permlevel": 1,
+   "description": "Rolled from the executing document. Technicians do not see money."
+  },
+  {
+   "fieldname": "sb_assignment",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Datetime",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_assignment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_anchor_task",
+   "fieldtype": "Data",
+   "label": "Due After Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_anchor_days",
+   "fieldtype": "Int",
+   "label": "Window (Days)",
    "read_only": 1
   },
   {
@@ -146,7 +231,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Log",

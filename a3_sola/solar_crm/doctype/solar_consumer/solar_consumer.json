@@ -1,7 +1,9 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "",
  "creation": "2026-08-25 13:00:00.000000",
+ "description": "The consumer is the electricity connection, not the person - one Customer may hold several connections.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -77,7 +79,17 @@
   "discom_id",
   "national_portal_consumer_id",
   "cb_17",
-  "spin"
+  "spin",
+  "tab_kyc",
+  "sb_kyc",
+  "kyc_status",
+  "kyc_missing",
+  "cb_kyc",
+  "landmark",
+  "taluk",
+  "google_location_url",
+  "sb_kyc_docs",
+  "kyc_documents"
  ],
  "fields": [
   {
@@ -93,17 +105,17 @@
   {
    "fieldname": "consumer_name",
    "fieldtype": "Data",
-   "label": "Consumer Name",
-   "reqd": 1,
+   "in_global_search": 1,
    "in_list_view": 1,
-   "in_global_search": 1
+   "label": "Consumer Name",
+   "reqd": 1
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer",
-   "in_list_view": 1
+   "options": "Customer"
   },
   {
    "fieldname": "contact_person",
@@ -114,8 +126,8 @@
   {
    "fieldname": "mobile_no",
    "fieldtype": "Data",
-   "label": "Mobile",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Mobile"
   },
   {
    "fieldname": "email_id",
@@ -133,32 +145,32 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Residential",
    "fieldname": "consumer_category",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Category",
    "options": "Residential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
-   "reqd": 1,
-   "default": "Residential",
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
+   "default": "New",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "New\nSurveyed\nDesigned\nProposed\nQuoted\nConverted\nDropped",
-   "read_only": 1,
-   "default": "New",
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "read_only": 1
   },
   {
    "fieldname": "lead",
@@ -179,66 +191,66 @@
   {
    "fieldname": "discom",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "DISCOM",
    "options": "DISCOM",
-   "reqd": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "discom_section",
    "fieldtype": "Link",
-   "label": "DISCOM Section",
-   "options": "DISCOM Section",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "DISCOM Section",
+   "options": "DISCOM Section"
   },
   {
+   "fetch_from": "discom_section.electrical_division",
    "fieldname": "electrical_division",
    "fieldtype": "Data",
    "label": "Electrical Division",
-   "fetch_from": "discom_section.electrical_division",
    "read_only": 1
   },
   {
+   "fetch_from": "discom_section.electrical_subdivision",
    "fieldname": "electrical_subdivision",
    "fieldtype": "Data",
    "label": "Electrical Sub-Division",
-   "fetch_from": "discom_section.electrical_subdivision",
    "read_only": 1
   },
   {
    "fieldname": "consumer_number",
    "fieldtype": "Data",
-   "label": "Consumer Number",
-   "reqd": 1,
+   "in_global_search": 1,
    "in_list_view": 1,
-   "in_global_search": 1
+   "label": "Consumer Number",
+   "reqd": 1
   },
   {
    "fieldname": "cb_4",
    "fieldtype": "Column Break"
   },
   {
+   "description": "As printed on the DISCOM's forms, e.g. LT-1/Single.",
    "fieldname": "tariff_category",
    "fieldtype": "Data",
-   "label": "Tariff Category",
-   "description": "As printed on the DISCOM's forms, e.g. LT-1/Single."
+   "label": "Tariff Category"
   },
   {
+   "default": "Single Phase",
    "fieldname": "connection_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Connection Type",
-   "options": "Single Phase\nThree Phase",
-   "default": "Single Phase",
-   "in_list_view": 1
+   "options": "Single Phase\nThree Phase"
   },
   {
+   "description": "In watts - the DISCOM inspection checklist asks for watts, not kW.",
    "fieldname": "connected_load_watts",
    "fieldtype": "Float",
    "label": "Connected Load (W)",
-   "precision": 2,
-   "description": "In watts - the DISCOM inspection checklist asks for watts, not kW."
+   "precision": 2
   },
   {
    "fieldname": "sanctioned_load_kw",
@@ -272,18 +284,18 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Bimonthly",
    "fieldname": "billing_frequency",
    "fieldtype": "Select",
    "label": "Billing Frequency",
-   "options": "Monthly\nBimonthly",
-   "default": "Bimonthly"
+   "options": "Monthly\nBimonthly"
   },
   {
    "fieldname": "annual_consumption_units",
    "fieldtype": "Float",
    "label": "Annual Consumption (units)",
-   "read_only": 1,
-   "precision": 2
+   "precision": 2,
+   "read_only": 1
   },
   {
    "fieldname": "tab_site",
@@ -424,16 +436,16 @@
    "fieldname": "bank_details_verified",
    "fieldtype": "Check",
    "label": "Verified",
-   "read_only": 1,
-   "permlevel": 1
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "bank_details_verified_by",
    "fieldtype": "Link",
    "label": "Verified By",
    "options": "User",
-   "read_only": 1,
-   "permlevel": 1
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "tab_subsidy",
@@ -451,33 +463,33 @@
    "label": "Prior Central Subsidy Availed"
   },
   {
+   "depends_on": "eval:doc.has_availed_prior_subsidy",
    "fieldname": "prior_scheme_name",
    "fieldtype": "Data",
-   "label": "Prior Scheme",
-   "depends_on": "eval:doc.has_availed_prior_subsidy"
+   "label": "Prior Scheme"
   },
   {
+   "depends_on": "eval:doc.has_availed_prior_subsidy",
    "fieldname": "prior_subsidy_year",
    "fieldtype": "Int",
-   "label": "Prior Year",
-   "depends_on": "eval:doc.has_availed_prior_subsidy"
+   "label": "Prior Year"
   },
   {
    "fieldname": "cb_15",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.has_availed_prior_subsidy",
    "fieldname": "prior_capacity_kw",
    "fieldtype": "Float",
    "label": "Prior Capacity (kW)",
-   "precision": 3,
-   "depends_on": "eval:doc.has_availed_prior_subsidy"
+   "precision": 3
   },
   {
+   "depends_on": "eval:doc.has_availed_prior_subsidy",
    "fieldname": "prior_subsidy_notes",
    "fieldtype": "Small Text",
-   "label": "Notes",
-   "depends_on": "eval:doc.has_availed_prior_subsidy"
+   "label": "Notes"
   },
   {
    "fieldname": "sb_16",
@@ -485,10 +497,10 @@
    "label": "External Identifiers"
   },
   {
+   "description": "The DISCOM code the national portal uses.",
    "fieldname": "discom_id",
    "fieldtype": "Data",
-   "label": "DISCOM ID",
-   "description": "The DISCOM code the national portal uses."
+   "label": "DISCOM ID"
   },
   {
    "fieldname": "national_portal_consumer_id",
@@ -504,105 +516,161 @@
    "fieldtype": "Data",
    "label": "Solar Plant Identification Number (SPIN)",
    "read_only": 1
+  },
+  {
+   "fieldname": "tab_kyc",
+   "fieldtype": "Tab Break",
+   "label": "KYC"
+  },
+  {
+   "description": "What the order, the bank and the portal ask for. Fetched onto the sales order; registered on the job.",
+   "fieldname": "sb_kyc",
+   "fieldtype": "Section Break",
+   "label": "Know Your Customer"
+  },
+  {
+   "fieldname": "kyc_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "KYC Status",
+   "options": "Incomplete\nComplete",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kyc_missing",
+   "fieldtype": "Small Text",
+   "label": "Missing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_kyc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "landmark",
+   "fieldtype": "Data",
+   "label": "Landmark"
+  },
+  {
+   "fieldname": "taluk",
+   "fieldtype": "Data",
+   "label": "Taluk"
+  },
+  {
+   "description": "Composed from the coordinates when blank. Paste the shared Maps link otherwise.",
+   "fieldname": "google_location_url",
+   "fieldtype": "Data",
+   "label": "Google Location",
+   "options": "URL"
+  },
+  {
+   "fieldname": "sb_kyc_docs",
+   "fieldtype": "Section Break",
+   "label": "Documents"
+  },
+  {
+   "fieldname": "kyc_documents",
+   "fieldtype": "Table",
+   "label": "KYC Documents",
+   "options": "Customer KYC Document",
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-05 12:00:00.000000",
+ "modified": "2026-09-09 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar CRM Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Sales Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
-   "role": "Solar Sales Executive",
-   "read": 1,
-   "print": 1,
+   "create": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
    "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "submit": 1
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Sales Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Design Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
-   "role": "Solar Survey Engineer",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Survey Engineer",
+   "share": 1
   }
  ],
+ "search_fields": "consumer_name,consumer_number,mobile_no",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "autoname": "",
- "naming_rule": "By script",
  "title_field": "consumer_name",
- "show_title_field_in_link": 1,
- "search_fields": "consumer_name,consumer_number,mobile_no",
- "description": "The consumer is the electricity connection, not the person - one Customer may hold several connections."
+ "track_changes": 1
 }

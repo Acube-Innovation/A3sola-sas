@@ -51,11 +51,62 @@ class TestDocumentGeneration(FrappeTestCase):
 		doc = frappe.get_doc("Solar Installation", self.installation.name)
 		self.assertEqual(len(doc.generated_documents), 1)
 
-	def test_generated_document_files_into_the_checklist(self):
+	def test_generated_document_fills_its_expected_register_row(self):
 		documents.generate_document(self.installation.name, "MNRE-CONSUMER-VENDOR-AGREEMENT")
 		doc = frappe.get_doc("Solar Installation", self.installation.name)
-		row = next(r for r in doc.documents if r.stage_code == "ORD" and r.is_mandatory)
+		row = next(r for r in doc.documents if r.stage_code == "ORD" and r.solar_document_template)
 		self.assertTrue(row.attachment)
+		self.assertEqual(row.document_kind, "Generated")
+		self.assertEqual((row.source_doctype, row.source_document), ("Solar Installation", doc.name))
+
+	def test_a_document_generated_from_a_task_attaches_to_the_task_and_names_it(self):
+		"""The register says which document did the work, not just that it was done."""
+		task = frappe.get_doc(
+			{
+				"doctype": "Installation Task",
+				"solar_installation": self.installation.name,
+				"task_code": "FRM1",
+			}
+		).insert(ignore_permissions=True)
+		result = documents.generate_document(
+			self.installation.name, "KSEB-FORM-1", source_doctype="Installation Task", source_name=task.name
+		)
+		attached_to = frappe.db.get_value("File", {"file_url": result["file_url"]}, ["attached_to_doctype", "attached_to_name"])
+		self.assertEqual(tuple(attached_to), ("Installation Task", task.name))
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		row = next(r for r in doc.documents if r.attachment == result["file_url"])
+		self.assertEqual((row.source_doctype, row.source_document), ("Installation Task", task.name))
+		self.assertEqual(row.stage_code, "FRM1")
+
+	def _task(self, code):
+		return frappe.get_doc(
+			{"doctype": "Installation Task", "solar_installation": self.installation.name, "task_code": code}
+		).insert(ignore_permissions=True)
+
+	def test_registering_the_same_file_twice_updates_one_row(self):
+		task = self._task("CCERT")
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		before = len(doc.documents)
+		documents.register_document(doc, "CCERT", "Installation Task", task.name, "Completion certificate", "/files/a.pdf")
+		doc.reload()
+		documents.register_document(doc, "CCERT", "Installation Task", task.name, "Completion certificate", "/files/b.pdf")
+		doc.reload()
+		rows = [r for r in doc.documents if r.source_document == task.name]
+		self.assertEqual(len(rows), 1)
+		self.assertEqual(rows[0].attachment, "/files/b.pdf")
+		# it filled the expected row for CCERT rather than adding one
+		self.assertEqual(len(doc.documents), before)
+
+	def test_an_unexpected_upload_is_appended_and_a_cancel_takes_it_away(self):
+		task = self._task("KTST")
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		before = len(doc.documents)
+		documents.register_document(doc, "KTST", "Installation Task", task.name, "Site photo of meter", "/files/m.jpg")
+		doc.reload()
+		self.assertEqual(len(doc.documents), before + 1)
+		documents.unregister_document(doc, "Installation Task", task.name)
+		doc.reload()
+		self.assertEqual(len(doc.documents), before)
 
 	def test_pack_generates_many_and_reports_per_document(self):
 		results = documents.generate_document_pack(self.installation.name)

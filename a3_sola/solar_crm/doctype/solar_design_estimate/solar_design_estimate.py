@@ -12,12 +12,18 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from a3_sola.api import calculations, regulation, statutory
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_float
+from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	default_inverter,
+	default_module,
+	default_price,
+	default_prices,
+)
 
 #: What a lead's consumption is assumed to be quoted against, since a lead records no
 #: billing cycle of its own. Matches the Solar Consumer field default.
@@ -203,6 +209,9 @@ class SolarDesignEstimate(Document):
 		if self.options or not self.solar_package:
 			return
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
+		module = default_module(package)
+		inverter = default_inverter(package)
+		price = default_price(package) or frappe._dict()
 		self.append(
 			"options",
 			{
@@ -210,14 +219,14 @@ class SolarDesignEstimate(Document):
 				"inverter_topology": package.inverter_topology or "String",
 				"solar_package": package.name,
 				"is_recommended": 1,
-				"system_cost": flt(package.cost_option_1),
-				"additional_structure_cost": flt(package.additional_structure_and_cable_cost),
-				"module_make": package.module_make,
-				"module_specification": package.module_specification,
-				"module_count": package.module_count,
-				"inverter_make": package.inverter_1_make,
-				"inverter_specification": package.inverter_1_specification,
-				"inverter_count": package.inverter_1_count,
+				"system_cost": flt(price.get("system_cost")),
+				"additional_structure_cost": flt(price.get("additional_structure_and_cable_cost")),
+				"module_make": module.module_make if module else None,
+				"module_specification": module.module_specification if module else None,
+				"module_count": module.module_count if module else None,
+				"inverter_make": inverter.inverter_make if inverter else None,
+				"inverter_specification": inverter.inverter_specification if inverter else None,
+				"inverter_count": inverter.inverter_count if inverter else None,
 				"display_order": 1,
 			},
 		)
@@ -397,9 +406,11 @@ def compare_packages(design_estimate):
 			"company": doc.company,
 			"capacity_kw": ["between", [target - 2, target + 2]],
 		},
-		fields=["name", "specification_code", "package_name", "capacity_kw", "cost_option_1", "is_dcr_compliant"],
+		fields=["name", "specification_code", "package_name", "capacity_kw", "is_dcr_compliant"],
 		order_by="capacity_kw",
 	)
+	# The price is the default configuration's, fetched for the whole comparison at once.
+	prices = default_prices([p.name for p in packages])
 
 	rows = []
 	for pkg in packages:
@@ -411,7 +422,7 @@ def compare_packages(design_estimate):
 		generation = calculations.estimate_generation(
 			pkg.capacity_kw, doc.specific_yield, doc.average_shading_percent
 		)
-		cost = flt(pkg.cost_option_1)
+		cost = flt((prices.get(pkg.name) or {}).get("system_cost"))
 		net = cost - flt(subsidy["subsidy_amount"])
 		annual_savings = (
 			flt(doc.estimated_annual_savings) * (flt(pkg.capacity_kw) / flt(doc.final_capacity_kw))
@@ -436,9 +447,30 @@ def compare_packages(design_estimate):
 	return rows
 
 
+def _price_for(package, module, inverter):
+	"""The price row for this module and inverter, whatever boards it names.
+
+	Boards are not part of what the estimate offers - the customer chooses an inverter, not
+	a DCDB - so a row matching on the two that are offered is the right answer. Falls back
+	to the package's default price, because an option with no price at all is worse than
+	one priced as the package normally is.
+	"""
+	wanted_module = module.module_specification if module else None
+	wanted_inverter = inverter.inverter_specification if inverter else None
+	for row in package.prices or []:
+		if row.module == wanted_module and row.inverter == wanted_inverter:
+			return row
+	return default_price(package)
+
+
 @frappe.whitelist()
 def add_option_from_package(design_estimate, solar_package, inverter_option="1", option_name=None):
-	"""Append a priced option from a package, using inverter option 1 or 2.
+	"""Append a priced option from a package, using one of its inverter options.
+
+	`inverter_option` is the position in the package's inverter table, counting from one -
+	it was the 1 or 2 of the old fixed pair, and it now reaches a third option as well.
+	Out of range falls back to the package's default rather than failing: the caller is a
+	button, and an estimate with the wrong inverter is easier to fix than one that refused.
 
 	This is how a three-option proposal like the client's 10 kWp document gets built in
 	three clicks instead of three documents.
@@ -447,11 +479,12 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	doc.check_permission("write")
 	pkg = frappe.get_cached_doc("Solar Package", solar_package)
 
-	suffix = str(inverter_option)
-	make = pkg.get(f"inverter_{suffix}_make")
-	spec = pkg.get(f"inverter_{suffix}_specification")
-	count = pkg.get(f"inverter_{suffix}_count")
-	cost = flt(pkg.cost_option_2) if suffix == "2" and flt(pkg.cost_option_2) else flt(pkg.cost_option_1)
+	position = cint(inverter_option)
+	rows = pkg.inverters or []
+	chosen = rows[position - 1] if 0 < position <= len(rows) else default_inverter(pkg)
+	module = default_module(pkg)
+	# The price of the configuration this option names, not of the package.
+	price = _price_for(pkg, module, chosen) or frappe._dict()
 
 	doc.append(
 		"options",
@@ -459,14 +492,14 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 			"option_name": option_name or f"Option {len(doc.options) + 1} - {pkg.inverter_topology}",
 			"inverter_topology": pkg.inverter_topology,
 			"solar_package": pkg.name,
-			"module_make": pkg.module_make,
-			"module_specification": pkg.module_specification,
-			"module_count": pkg.module_count,
-			"inverter_make": make,
-			"inverter_specification": spec,
-			"inverter_count": count,
-			"system_cost": cost,
-			"additional_structure_cost": flt(pkg.additional_structure_and_cable_cost),
+			"module_make": module.module_make if module else None,
+			"module_specification": module.module_specification if module else None,
+			"module_count": module.module_count if module else None,
+			"inverter_make": chosen.inverter_make if chosen else None,
+			"inverter_specification": chosen.inverter_specification if chosen else None,
+			"inverter_count": chosen.inverter_count if chosen else None,
+			"system_cost": flt(price.get("system_cost")),
+			"additional_structure_cost": flt(price.get("additional_structure_and_cable_cost")),
 			"display_order": len(doc.options) + 1,
 			"is_recommended": 1 if not doc.options else 0,
 		},

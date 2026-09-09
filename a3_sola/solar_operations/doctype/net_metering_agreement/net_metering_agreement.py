@@ -11,7 +11,6 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from a3_sola.api import documents, stages
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_value
@@ -26,6 +25,13 @@ LINKS = (
 class NetMeteringAgreement(Document):
 	def autoname(self):
 		set_name(self, "net_metering_agreement_series_prefix", ".YYYY.-.#####", fallback="SOL-NMA")
+
+	def before_insert(self):
+		if not self.flags.allow_retired:
+			frappe.throw(
+				_("Net Metering Agreement is retired. The KSEB agreement is a task on the Solar Agreement."),
+				title=_("Retired Document"),
+			)
 
 	def validate(self):
 		assert_same_company(self, LINKS)
@@ -114,24 +120,8 @@ class NetMeteringAgreement(Document):
 	def on_submit(self):
 		frappe.db.set_value("Solar Installation", self.solar_installation, "spin", self.spin, update_modified=False)
 		frappe.db.set_value("Solar Consumer", self.solar_consumer, "spin", self.spin, update_modified=False)
-		self.advance_stage()
-		try:
-			documents.generate_document(self.solar_installation, "KSEB-NETMETER-AGREEMENT")
-		except Exception:
-			frappe.log_error(frappe.get_traceback(), f"a3_sola: agreement for {self.name}")
-
-	def advance_stage(self):
-		status = frappe.db.get_value(
-			"Installation Stage Log", {"parent": self.solar_installation, "stage_code": "AGMT"}, "status"
-		)
-		if status in (None, "Completed", "Skipped"):
-			return
-		try:
-			stages.advance_stage(
-				self.solar_installation, "AGMT", actual_date=self.agreement_date, external_reference=self.spin
-			)
-		except frappe.ValidationError as exc:
-			frappe.msgprint(_("AGMT stage not advanced: {0}").format(exc), indicator="orange")
+		# Retired: nothing downstream reads this document any more. The Solar Agreement
+		# carries the task, prints the text and files the copy.
 
 
 @frappe.whitelist()

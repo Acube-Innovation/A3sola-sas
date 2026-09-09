@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2026-08-25 13:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -9,6 +10,9 @@
   "naming_series",
   "discom_name",
   "state",
+  "legal_name",
+  "registered_office",
+  "incorporation_recital",
   "portal_url",
   "cb_1",
   "company",
@@ -19,27 +23,45 @@
  ],
  "fields": [
   {
+   "default": "SOL-DISCOM-.#####",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
    "options": "SOL-DISCOM-.#####",
-   "reqd": 1,
-   "default": "SOL-DISCOM-.#####",
-   "hidden": 1
+   "reqd": 1
   },
   {
    "fieldname": "discom_name",
    "fieldtype": "Data",
-   "label": "DISCOM Name",
-   "reqd": 1,
+   "in_global_search": 1,
    "in_list_view": 1,
-   "in_global_search": 1
+   "label": "DISCOM Name",
+   "reqd": 1
   },
   {
    "fieldname": "state",
    "fieldtype": "Data",
-   "label": "State",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "State"
+  },
+  {
+   "description": "The name the licensee signs agreements under, e.g. Kerala State Electricity Board Limited.",
+   "fieldname": "legal_name",
+   "fieldtype": "Data",
+   "label": "Legal Name"
+  },
+  {
+   "description": "Recited in the net-metering agreement as the second party's address.",
+   "fieldname": "registered_office",
+   "fieldtype": "Small Text",
+   "label": "Registered Office"
+  },
+  {
+   "description": "e.g. a company incorporated under the Indian Companies Act, 1956 (Central Act 1 of 1956).",
+   "fieldname": "incorporation_recital",
+   "fieldtype": "Small Text",
+   "label": "Incorporation Recital"
   },
   {
    "fieldname": "portal_url",
@@ -53,24 +75,24 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
+   "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "label": "Active",
-   "default": "1",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Active"
   },
   {
+   "description": "Regex the portal application ID is validated against. Warn only never block.",
    "fieldname": "portal_id_regex",
    "fieldtype": "Data",
-   "label": "Portal Application ID Pattern",
-   "description": "Regex the portal application ID is validated against. Warn only never block."
+   "label": "Portal Application ID Pattern"
   },
   {
    "fieldname": "sb_2",
@@ -85,88 +107,87 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-08 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "DISCOM",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1
+   "write": 1
   },
   {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar CRM Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
    "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1
+   "write": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Sales Executive",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
-   "role": "Solar Design Engineer",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Survey Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Solar Sales Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
    "permlevel": 0,
-   "write": 1,
-   "create": 1
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Design Engineer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Survey Engineer",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Sales Manager",
+   "share": 1,
+   "write": 1
   }
  ],
+ "search_fields": "discom_name,state",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "autoname": "naming_series:",
- "naming_rule": "By \"Naming Series\" field",
  "title_field": "discom_name",
- "show_title_field_in_link": 1,
- "search_fields": "discom_name,state"
+ "track_changes": 1
 }

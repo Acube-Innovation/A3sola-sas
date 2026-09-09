@@ -22,62 +22,169 @@ from a3_sola.api.uniqueness import assert_unique_in_company
 class SolarPackage(Document):
 	def validate(self):
 		assert_unique_in_company(self, ["specification_code"])
-		self.resolve_subsidy()
-		self.resolve_statutory()
-		self.compute_generation_band()
-		self.compute_net_rate()
 		self.validate_dcr_items()
+		self.validate_one_default("modules", _("module"))
+		self.validate_one_default("inverters", _("inverter"))
+		self.validate_one_default_per_type()
+		self.validate_prices()
+		self.price_the_configurations()
 		self.check_regulation()
 
-	def resolve_subsidy(self):
-		"""Indicative only, and resolved from the scheme - never typed."""
-		scheme = get_value("default_subsidy_scheme")
-		if not scheme or not frappe.db.exists("Subsidy Scheme", scheme):
-			self.indicative_subsidy = 0.0
-			return
-		category = frappe.db.get_value("Subsidy Scheme", scheme, "consumer_category")
-		result = calculations.get_subsidy_amount(scheme, self.capacity_kw, category)
-		self.indicative_subsidy = flt(result["subsidy_amount"])
+	def validate_one_default(self, fieldname, noun):
+		"""Exactly one option is the default, because everything downstream reads one.
 
-	def resolve_statutory(self):
+		The proposal prints one module and one inverter, the cost estimate prices one, the
+		handoff copies one onto the installation. If nobody has chosen, the first row is it -
+		silently picking is better than a package that cannot be quoted, and the tick is
+		visible on the form either way.
+		"""
+		rows = self.get(fieldname) or []
+		if not rows:
+			return
+		defaults = [row for row in rows if row.is_default]
+		if len(defaults) > 1:
+			frappe.throw(
+				_("{0} {1} options are marked default. Exactly one row can be, because the "
+				  "proposal, the estimate and the handoff each read a single {1}.").format(
+					len(defaults), noun
+				),
+				title=_("More Than One Default"),
+			)
+		if not defaults:
+			rows[0].is_default = 1
+
+	def validate_one_default_per_type(self):
+		"""Balance of system is different: the default is per type, not per table.
+
+		A package has a DCDB *and* an ACDB *and* a meter, so "the default row" is
+		meaningless across the whole table. What can be offered as alternatives is two
+		boards of the same type, and exactly one of those is the one quoted.
+		"""
+		seen = {}
+		for row in self.system_items or []:
+			if not row.system_type:
+				continue
+			seen.setdefault(row.system_type, []).append(row)
+		for system_type, rows in seen.items():
+			defaults = [row for row in rows if row.is_default]
+			if len(defaults) > 1:
+				frappe.throw(
+					_("{0} {1} rows are marked default. One per type is quoted; the rest are "
+					  "alternatives.").format(len(defaults), system_type),
+					title=_("More Than One Default"),
+				)
+			if not defaults:
+				rows[0].is_default = 1
+
+	def validate_prices(self):
+		"""Every price row names a real configuration, and no two name the same one.
+
+		The five choices are what a price is a price *of*. A row that names a module the
+		package no longer offers is not a stale label - it is a figure attached to nothing,
+		and it would go on a quotation looking exactly as authoritative as the rest.
+		"""
+		available = self.available_choices()
+		seen = {}
+		for row in self.prices or []:
+			for fieldname, label, choices in available:
+				value = row.get(fieldname)
+				if value and value not in choices:
+					frappe.throw(
+						_("Price row {0} is for {1} {2}, which this package no longer offers. "
+						  "Choose one of: {3}").format(
+							row.idx, label, frappe.bold(value),
+							", ".join(sorted(choices)) or _("none - add one first"),
+						),
+						title=_("Configuration Not Offered"),
+					)
+			key = tuple(row.get(fieldname) for fieldname, _label, _choices in available)
+			if not all(key):
+				continue
+			if key in seen:
+				frappe.throw(
+					_("Price rows {0} and {1} are for the same configuration. One combination "
+					  "has one price.").format(seen[key], row.idx),
+					title=_("Duplicate Configuration"),
+				)
+			seen[key] = row.idx
+
+	def available_choices(self):
+		"""What each of the five selections may be, read off this package's own tables."""
+		system = {}
+		for row in self.system_items or []:
+			if row.system_type and row.specification:
+				system.setdefault(row.system_type, set()).add(row.specification)
+		return (
+			("module", _("module"),
+			 {r.module_specification for r in self.modules or [] if r.module_specification}),
+			("inverter", _("inverter"),
+			 {r.inverter_specification for r in self.inverters or [] if r.inverter_specification}),
+			("dcdb", _("DCDB"), system.get("DCDB", set())),
+			("acdb", _("ACDB"), system.get("ACDB", set())),
+			("energy_meter", _("energy meter"), system.get("Solar Energy Meter", set())),
+		)
+
+	def price_the_configurations(self):
+		"""Resolve the subsidy, the statutory fees and the generation band onto every row.
+
+		Resolved rather than typed, exactly as they were when they sat on the package, and
+		from the same inputs: the package's rated capacity and connection type. They live on
+		the row because the row is what gets quoted - not because they differ between rows.
+		"""
+		scheme = get_value("default_subsidy_scheme")
+		category = (
+			frappe.db.get_value("Subsidy Scheme", scheme, "consumer_category")
+			if scheme and frappe.db.exists("Subsidy Scheme", scheme)
+			else None
+		)
+		fees = self._statutory_fees()
+		capacity = flt(self.capacity_kw)
+		for row in self.prices or []:
+			row.indicative_subsidy = (
+				flt(calculations.get_subsidy_amount(scheme, capacity, category)["subsidy_amount"])
+				if category
+				else 0.0
+			)
+			if fees:
+				row.kseb_application_fee = fees["application_fee_gross"]
+				row.kseb_registration_fee = fees["registration_fee_gross"]
+				row.kseb_registration_refundable = fees["registration_refundable"]
+				row.net_meter_charge = fees["net_meter_charge"]
+				row.statutory_total = fees["statutory_total"]
+			band = calculations.estimate_daily_generation_band(capacity)
+			row.expected_daily_units_low = band["low_units_per_day"]
+			row.expected_daily_units_high = band["high_units_per_day"]
+			row.net_rate = self._net_rate(row)
+
+	def _statutory_fees(self):
 		"""Every statutory figure comes from the fee schedule. None is editable."""
 		discom = get_value("default_discom")
 		if not discom:
-			return
+			return None
 		try:
-			fees = statutory.get_statutory_fees(
-				discom, self.connection_type or "Single Phase", self.capacity_kw, "Purchased by Customer",
-				company=self.company,
+			return statutory.get_statutory_fees(
+				discom, self.connection_type or "Single Phase", self.capacity_kw,
+				"Purchased by Customer", company=self.company,
 			)
 		except frappe.ValidationError:
 			# A package may be defined before the fee schedule exists on a fresh install.
-			return
-		self.kseb_application_fee = fees["application_fee_gross"]
-		self.kseb_registration_fee = fees["registration_fee_gross"]
-		self.kseb_registration_refundable = fees["registration_refundable"]
-		self.net_meter_charge = fees["net_meter_charge"]
-		self.statutory_total = fees["statutory_total"]
+			return None
 
-	def compute_generation_band(self):
-		band = calculations.estimate_daily_generation_band(self.capacity_kw)
-		self.expected_daily_units_low = band["low_units_per_day"]
-		self.expected_daily_units_high = band["high_units_per_day"]
-
-	def compute_net_rate(self):
+	def _net_rate(self, row):
 		"""Net of subsidy, but only once a price is actually recorded.
 
 		Packages ship with their pricing blank - the client's workbook holds the live
 		figures. Subtracting the subsidy from a blank price would publish a negative net
-		rate onto every proposal, so an unpriced package stays at zero.
+		rate onto every proposal, so an unpriced row stays at zero.
 		"""
-		if not flt(self.cost_option_1):
-			self.net_rate = 0.0
-			return
-		self.net_rate = (
-			flt(self.cost_option_1)
-			- flt(self.indicative_subsidy)
-			- flt(self.standard_discount)
-			+ flt(self.additional_structure_and_cable_cost)
+		cost = flt(row.system_cost)
+		if not cost:
+			return 0.0
+		return (
+			cost
+			- flt(row.indicative_subsidy)
+			- flt(row.standard_discount)
+			+ flt(row.additional_structure_and_cable_cost)
 		)
 
 	def validate_dcr_items(self):
@@ -108,6 +215,157 @@ class SolarPackage(Document):
 			title=_("Grid Regulation"),
 			indicator="orange",
 		)
+
+
+def _default_row(package, fieldname):
+	"""The row marked default, else the first row, else None.
+
+	`package` may be a name or a loaded document. None is a real answer: a draft package
+	with nothing filled in yet is allowed to exist, so every caller copes with it.
+
+	One function per table, because a package offering a DCR panel and its non-DCR
+	equivalent must not be read as the DCR one by the proposal and the other by the handoff.
+	"""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	rows = doc.get(fieldname) or []
+	for row in rows:
+		if row.is_default:
+			return row
+	return rows[0] if rows else None
+
+
+def default_module(package):
+	"""The module option a package is quoted, priced and built with."""
+	return _default_row(package, "modules")
+
+
+def default_inverter(package):
+	"""The inverter option a package is quoted, priced and built with.
+
+	Its `cost` is the package price: what the array costs built that way.
+	"""
+	return _default_row(package, "inverters")
+
+
+def default_system_items(package):
+	"""The balance-of-system parts a package is quoted with - one per type.
+
+	Returns a dict keyed by type, because that is how the specification reads: one DCDB,
+	one ACDB, one meter, whichever of each was ticked.
+	"""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	chosen = {}
+	for row in doc.get("system_items") or []:
+		if not row.system_type:
+			continue
+		if row.is_default or row.system_type not in chosen:
+			if row.system_type in chosen and not row.is_default:
+				continue
+			chosen[row.system_type] = row
+	return chosen
+
+
+def system_cost(package):
+	"""What the balance of system adds, counting only the rows actually quoted."""
+	return sum(flt(row.cost) for row in default_system_items(package).values())
+
+
+def default_price(package):
+	"""The price row for the package as it is offered by default.
+
+	Derived, not flagged: it is the row whose five choices are the default module, the
+	default inverter and the default DCDB, ACDB and meter. There is deliberately no
+	"default price" tick, because that would be a sixth place to disagree with the five
+	that already say which configuration is standard.
+
+	Falls back to the first row, so a package whose defaults have moved since its prices
+	were entered still quotes something rather than nothing.
+	"""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	rows = doc.get("prices") or []
+	if not rows:
+		return None
+
+	module = default_module(doc)
+	inverter = default_inverter(doc)
+	system = default_system_items(doc)
+	wanted = (
+		module.module_specification if module else None,
+		inverter.inverter_specification if inverter else None,
+		(system.get("DCDB") or frappe._dict()).get("specification"),
+		(system.get("ACDB") or frappe._dict()).get("specification"),
+		(system.get("Solar Energy Meter") or frappe._dict()).get("specification"),
+	)
+	for row in rows:
+		if (row.module, row.inverter, row.dcdb, row.acdb, row.energy_meter) == wanted:
+			return row
+	return rows[0]
+
+
+def default_prices(package_names):
+	"""The default price row of each package, in one query.
+
+	`default_price` matches the row against the package's default module, inverter and
+	boards; doing that per package would be a document load each. Here the whole catalogue
+	is being rendered, so the first row of each package is taken and then corrected by the
+	defaults where they are known - the same answer, one query.
+	"""
+	if not package_names:
+		return {}
+	modules = default_rows("modules", package_names)
+	inverters = default_rows("inverters", package_names)
+	found, first = {}, {}
+	for row in frappe.get_all(
+		"Solar Package Price",
+		filters={"parent": ["in", list(package_names)], "parenttype": "Solar Package"},
+		fields=["*"],
+		order_by="parent asc, idx asc",
+	):
+		first.setdefault(row.parent, row)
+		module = modules.get(row.parent)
+		inverter = inverters.get(row.parent)
+		matches = (
+			(not module or row.module == module.module_specification)
+			and (not inverter or row.inverter == inverter.inverter_specification)
+		)
+		if matches:
+			found.setdefault(row.parent, row)
+	for parent, row in first.items():
+		found.setdefault(parent, row)
+	return found
+
+
+def default_rows(fieldname, package_names):
+	"""The default row of `fieldname` for many packages, in one query.
+
+	Same rule as `_default_row` - ticked wins, else the first - applied in bulk, because
+	the public cost estimator and the package comparison both read a whole catalogue and
+	must not issue a query per package.
+	"""
+	if not package_names:
+		return {}
+	doctype = {"modules": "Solar Package Module", "inverters": "Solar Package Inverter"}[fieldname]
+	found = {}
+	for row in frappe.get_all(
+		doctype,
+		filters={"parent": ["in", list(package_names)], "parenttype": "Solar Package"},
+		fields=["*"],
+		order_by="parent asc, is_default desc, idx asc",
+	):
+		found.setdefault(row.parent, row)
+	return found
 
 
 @frappe.whitelist()

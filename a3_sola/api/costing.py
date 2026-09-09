@@ -48,6 +48,7 @@ def recalculate_project_costs(project):
 	entries = []
 	entries += _material_cost(doc)
 	entries += _labour_cost(doc)
+	entries += _contractor_crew_cost(doc)
 	entries += _subcontractor_cost(doc)
 	entries += _expense_cost(doc)
 	entries += _rework_cost(doc)
@@ -181,6 +182,7 @@ def _labour_cost(doc):
 		from `tabInstallation Work Order` wo
 		join `tabWork Order Crew` crew on crew.parent = wo.name
 		where wo.solar_installation = %s and wo.docstatus = 1 and crew.actual_hours > 0
+		  and ifnull(crew.party_type, 'Employee') = 'Employee'
 		""",
 		(doc.solar_installation,),
 		as_dict=True,
@@ -200,6 +202,55 @@ def _labour_cost(doc):
 					f"{row.technician}: {flt(row.actual_hours)}h @ {flt(rate)}",
 				)
 			)
+	return entries
+
+
+def _contractor_crew_cost(doc):
+	"""Contractor rows on submitted work orders: a lump sum, or hours at the contractor's rate.
+
+	Rows billed by a Purchase Invoice are left out - the invoice already carries that cost
+	into the material/subcontractor lines, and counting it twice is the classic error.
+	"""
+	if not doc.solar_installation:
+		return []
+	rows = frappe.db.sql(
+		"""
+		select wo.name, wo.actual_end_date, wo.task_cost, crew.party, crew.party_name,
+		       crew.contract_amount, crew.actual_hours
+		from `tabInstallation Work Order` wo
+		join `tabWork Order Crew` crew on crew.parent = wo.name
+		where wo.solar_installation = %s and wo.docstatus = 1
+		  and crew.party_type = 'Solar Contractor' and ifnull(crew.billed_by_invoice, 0) = 0
+		""",
+		(doc.solar_installation,),
+		as_dict=True,
+	)
+	entries = []
+	for row in rows:
+		amount = flt(row.contract_amount)
+		if not amount and flt(row.actual_hours):
+			rate = flt(frappe.db.get_value("Solar Contractor", row.party, "rate_per_hour"))
+			amount = flt(row.actual_hours) * rate
+		if amount:
+			entries.append(
+				_entry(
+					"Subcontractor", "Installation Work Order", row.name,
+					row.actual_end_date or today(), amount,
+					f"{row.party_name or row.party}: " + (
+						f"lump sum" if flt(row.contract_amount) else f"{flt(row.actual_hours)}h"
+					),
+				)
+			)
+	# A work order's own cost line - hire, transport, a contractor sum typed on the order.
+	for row in frappe.get_all(
+		"Installation Work Order",
+		filters={"solar_installation": doc.solar_installation, "docstatus": 1, "task_cost": [">", 0]},
+		fields=["name", "actual_end_date", "task_cost"],
+	):
+		entries.append(
+			_entry("Subcontractor", "Installation Work Order", row.name, row.actual_end_date or today(),
+			       flt(row.task_cost), "work order cost")
+		)
 	return entries
 
 
@@ -279,7 +330,8 @@ def _rework_cost(doc):
 	for work_order, snag in _rectification_work_orders(doc).items():
 		crew = frappe.get_all(
 			"Work Order Crew",
-			filters={"parent": work_order, "parenttype": "Installation Work Order"},
+			filters={"parent": work_order, "parenttype": "Installation Work Order",
+			         "party_type": ["in", ["Employee", "", None]]},
 			fields=["technician", "actual_hours"],
 		)
 		amount = sum(

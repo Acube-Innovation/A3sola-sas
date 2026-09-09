@@ -139,7 +139,6 @@ class TestSeededMasters(CompanyProvisioningTestCase):
 			("Subsidy Scheme", "no subsidy scheme, so no eligibility check"),
 			("Electricity Tariff", "no tariff, so no savings calculation"),
 			("Solar Package", "no packages, so nothing to quote"),
-			("Installation Stage Template", "no stage chain, so Phase 2 cannot run"),
 			("Document Checklist Template", "no checklists"),
 			("Component Make", "no makes, so no warranty terms"),
 		)
@@ -148,6 +147,12 @@ class TestSeededMasters(CompanyProvisioningTestCase):
 				frappe.db.exists(doctype, {"company": company}),
 				f"{tenant.tenant_code} has {why}",
 			)
+		# The task template is the one every company shares; it must resolve for the new one.
+		from a3_sola.api import stages
+
+		self.assertFalse(
+			frappe.db.get_value("Installation Stage Template", stages.resolve_template(company=company), "company")
+		)
 
 	def test_every_seeded_master_carries_the_new_company(self):
 		_job, tenant = self.provision()

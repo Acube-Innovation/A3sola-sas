@@ -1,0 +1,112 @@
+{%- macro blank() -%}…………………………{%- endmacro -%}
+{%- macro cell(v) -%}{{ v if v is not none and v != "" else "" }}{%- endmacro -%}
+
+<div class="a3a">
+
+{# --- the generated body: preamble, sixteen clauses, attestation ------------- #}
+{% if doc.agreement_text %}
+  {{ doc.agreement_text }}
+{% else %}
+  <p class="warn">The agreement text has not been generated yet.</p>
+{% endif %}
+
+{# --- signatures ------------------------------------------------------------ #}
+<table class="sig">
+  <tr>
+    <td>
+      <p>Sd/ …………………………………… <span class="party">(1st party)</span></p>
+      <p class="who">{{ doc.consumer_name or "" }}</p>
+      <p>Witness 1 …………………………… {{ doc.first_party_witness_1 or "" }}</p>
+      <p>Witness 2 …………………………… {{ doc.first_party_witness_2 or "" }}</p>
+    </td>
+    <td>
+      <p>Sd/ …………………………………… <span class="party">(2nd party)</span></p>
+      <p class="who">{{ doc.discom_representative_name or "" }}{% if doc.second_party_legal_name %},
+        {{ doc.second_party_legal_name }}{% endif %}</p>
+      <p>Witness 1 …………………………… {{ doc.second_party_witness_1 or "" }}</p>
+      <p>Witness 2 …………………………… {{ doc.second_party_witness_2 or "" }}</p>
+    </td>
+  </tr>
+</table>
+
+<h2 class="a3a-break">Schedule to Solar Net Metering Agreement</h2>
+
+{# --- Schedule I ------------------------------------------------------------ #}
+<h3>(I) Particulars regarding the consumer at whose premises the solar energy system is installed</h3>
+<table class="sch">
+  <tr><th>Name of the consumer</th><td>{{ cell(doc.consumer_name) }}</td></tr>
+  <tr><th>Permanent address of the consumer</th><td>{{ cell(doc.permanent_address) }}</td></tr>
+  <tr><th>Consumer number/Code &amp; Category</th><td>{{ cell(doc.consumer_number_and_category) }}</td></tr>
+  <tr><th>Voltage at which supply is availed</th><td>{{ cell(doc.supply_voltage) }}</td></tr>
+  <tr><th>Connected load/Contract demand</th><td>{{ cell(doc.connected_load_or_contract_demand) }}</td></tr>
+</table>
+
+{# --- Schedule II ----------------------------------------------------------- #}
+<h3>(II) Details of premises where the solar energy system is installed</h3>
+<table class="sch">
+  <tr><th>Address of the premises where the solar energy system is installed</th>
+      <td>{{ cell(doc.installation_address) }}</td></tr>
+  <tr><th>Solar Meter details</th><td>{{ cell(doc.solar_meter_type) }}</td></tr>
+  <tr><th>Meter No &amp; Make</th>
+      <td>{{ [doc.solar_meter_number, doc.solar_meter_make] | select | join(" / ") }}</td></tr>
+  <tr><th>Initial Reading</th>
+      <td>{% if doc.solar_meter_initial_reading %}{{ "%g"|format(doc.solar_meter_initial_reading) }}{% endif %}</td></tr>
+  <tr><th>Particulars of Solar energy system</th>
+      <td>{% if doc.plant_capacity_kwp %}Grid-interactive rooftop solar photovoltaic system,
+          {{ "%g"|format(doc.plant_capacity_kwp) }} kWp{% endif %}</td></tr>
+  <tr><th>Solar Plant Identification Number (SPIN)</th><td>{{ cell(doc.spin) }}</td></tr>
+  <tr><th>Capacity of the Solar energy system</th>
+      <td>{% if doc.plant_capacity_kwp %}{{ "%g"|format(doc.plant_capacity_kwp) }}kWp{% endif %}</td></tr>
+  <tr><th>Name of Electrical Section</th><td>{{ cell(doc.electrical_section) }}</td></tr>
+  <tr><th>Details of Distribution Transformer and HT feeder (for HT prosumer) to which the plant is connected</th>
+      <td>{{ cell(doc.distribution_transformer_details) }}</td></tr>
+  <tr><th>Name of Corporation/Municipality/Panchayath</th>
+      <td>{{ [doc.local_body_name, doc.local_body_type] | select | join(" ") }}</td></tr>
+  <tr><th>Village &amp; Survey Number</th>
+      <td>{{ [doc.village, doc.survey_number] | select | join(" - ") }}</td></tr>
+  <tr><th>GPS details of the Location</th><td>{{ cell(doc.gps_coordinates) }}</td></tr>
+</table>
+
+{# --- Schedule III ---------------------------------------------------------- #}
+<h3>(III) Particulars of premises to which the excess energy generated from the solar energy
+system detailed in (II) above is to be wheeled in accordance with KSERC (RE &amp; Net Metering)
+Regulations, 2020 as amended from time to time</h3>
+<table class="sch wheel">
+  <tr>
+    <th>Order of preferred premises</th>
+    <th>Consumer Number of the premises</th>
+    <th>Tariff</th>
+    <th>Name of Electrical Section</th>
+  </tr>
+  {%- set rows = doc.wheeling_preferences or [] %}
+  {%- for row in rows %}
+  <tr>
+    <td>Preference {{ row.preference_order }}</td>
+    <td>{{ cell(row.consumer_number) }}</td>
+    <td>{{ cell(row.tariff) }}</td>
+    <td>{{ cell(row.electrical_section) }}</td>
+  </tr>
+  {%- endfor %}
+  {#- The document always shows three preference slots, filled or not. `range` is not
+      available in Frappe's Jinja sandbox, so the remaining slots come from a slice. -#}
+  {%- for order in [1, 2, 3][rows | length:] %}
+  <tr><td>Preference {{ order }}</td><td></td><td></td><td></td></tr>
+  {%- endfor %}
+</table>
+
+<table class="sig">
+  <tr>
+    <td><p>…………………………………</p><p class="party">1st Party</p></td>
+    <td><p>…………………………………</p><p class="party">2nd Party</p></td>
+  </tr>
+</table>
+
+{% if doc.stamp_paper_serial or doc.stamp_paper_value %}
+<p class="stamp">Executed on stamp paper
+  {%- if doc.stamp_paper_serial %} bearing serial no. {{ doc.stamp_paper_serial }}{% endif %}
+  {%- if doc.stamp_paper_value %} of value {{ frappe.utils.fmt_money(doc.stamp_paper_value, currency="INR") }}{% endif %}
+  {%- if doc.stamp_paper_purchased_on %}, purchased on
+    {{ frappe.utils.formatdate(doc.stamp_paper_purchased_on, "dd/MM/yyyy") }}{% endif %}.</p>
+{% endif %}
+
+</div>

@@ -229,6 +229,13 @@ def make_work_order(installation, hours=8.0, ctc=520000, **kwargs):
 		"work_description": "Structure and module mounting.",
 	}
 	values.update({k: v for k, v in kwargs.items() if k != "technician"})
+	# An installation order cannot be submitted without located photographs; the costing
+	# tests are about hours, not photos, so a compliant set comes free unless overridden.
+	if values["work_order_type"] != "Rectification" and "photos" not in values:
+		values["photos"] = [
+			{"image": f"/files/site-{i}.jpg", "latitude": 10.09, "longitude": 76.34, "geo_source": "Manual"}
+			for i in range(4)
+		]
 	doc = frappe.get_doc(values)
 	# A fresh technician each time: the work order guards against double-booking a crew
 	# member over the same dates, which is exactly what a shared one would trip.

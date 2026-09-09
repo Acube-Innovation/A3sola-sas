@@ -199,6 +199,12 @@ def seed_discom(company):
 			"doctype": "DISCOM",
 			"discom_name": "KSEB",
 			"state": "Kerala",
+			"legal_name": "Kerala State Electricity Board Limited",
+			"incorporation_recital": (
+				"a company incorporated under the Indian Companies Act, 1956 "
+				"(Central Act 1 of 1956)"
+			),
+			"registered_office": "Vydyuthi Bhavanam, Pattom, Thiruvananthapuram",
 			"portal_url": "https://pmsuryaghar.gov.in",
 			"company": company,
 			"portal_id_regex": r"^NP-[A-Z]+\d{2}-\d+$",
@@ -467,27 +473,72 @@ def seed_packages(company):
 				"inverter_topology": topology,
 				"is_dcr_compliant": dcr,
 				"area_required_sqft": area,
-				"module_specification": mod_spec,
-				"module_make": _make(mod_make, "Module"),
-				"module_alternate_makes": mod_alt,
-				"module_wattage": wattage,
-				"module_count": count,
-				"inverter_1_specification": i1_spec,
-				"inverter_1_make": _make(i1_make, "Inverter"),
-				"inverter_1_capacity_kw": i1_kw,
-				"inverter_1_count": i1_n,
-				"inverter_2_specification": i2_spec,
-				"inverter_2_make": _make(i2_make, "Inverter"),
-				"inverter_2_capacity_kw": i2_kw,
-				"inverter_2_count": i2_n,
-				"solar_energy_meter_count": meters,
-				"earthing_sets": earthing,
-				"lightning_protection_sets": la,
-				"dcdb_specification": "With PV fuses at input, DC isolator and Type 2 DC SPD in IP65 rated enclosure",
-				"acdb_specification": "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated enclosure",
-				"dc_cable_specification": "UV rated solar copper cable with e-beam cross linked sheath and insulation",
-				"ac_cable_specification": "PVC/XLPE aluminium",
-				"mounting_structure_specification": "Epoxy coated GI tubes for flat roof",
+				"modules": [
+					{
+						"module_specification": mod_spec,
+						"module_make": _make(mod_make, "Module"),
+						"module_alternate_makes": mod_alt,
+						"module_wattage": wattage,
+						"module_count": count,
+						"is_default": 1,
+					}
+				],
+				"inverters": [
+					row
+					for row in (
+						{
+							"inverter_specification": i1_spec,
+							"inverter_make": _make(i1_make, "Inverter"),
+							"inverter_capacity_kw": i1_kw,
+							"inverter_count": i1_n,
+							"is_default": 1,
+						},
+						{
+							"inverter_specification": i2_spec,
+							"inverter_make": _make(i2_make, "Inverter"),
+							"inverter_capacity_kw": i2_kw,
+							"inverter_count": i2_n,
+						},
+					)
+					# The second option is real for some packages and absent for others.
+					if row["inverter_specification"]
+				],
+				"system_items": [
+					{"system_type": "DCDB", "qty": 1, "is_default": 1,
+					 "specification": "With PV fuses at input, DC isolator and Type 2 DC SPD "
+					                  "in IP65 rated enclosure"},
+					{"system_type": "ACDB", "qty": 1, "is_default": 1,
+					 "specification": "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated "
+					                  "enclosure"},
+					{"system_type": "DC Cable", "qty": 1, "is_default": 1,
+					 "specification": "UV rated solar copper cable with e-beam cross linked "
+					                  "sheath and insulation"},
+					{"system_type": "AC Cable", "qty": 1, "is_default": 1,
+					 "specification": "PVC/XLPE aluminium"},
+					{"system_type": "Mounting Structure", "qty": 1, "is_default": 1,
+					 "specification": "Epoxy coated GI tubes for flat roof"},
+					# A specification, not just a count: the price rows select a meter by
+					# name, so a nameless one cannot be chosen.
+					{"system_type": "Solar Energy Meter", "qty": meters, "is_default": 1,
+					 "specification": "Watt-hour meter"},
+					{"system_type": "Earthing", "qty": earthing, "is_default": 1},
+					{"system_type": "Lightning Protection", "qty": la, "is_default": 1},
+				],
+				# One priced configuration: the default module, the default inverter and
+				# the standard boards. The price itself stays blank - the client's workbook
+				# holds the live figures, and a seeded number would look like a quote.
+				"prices": [
+					{
+						"module": mod_spec,
+						"inverter": i1_spec,
+						"dcdb": "With PV fuses at input, DC isolator and Type 2 DC SPD "
+						        "in IP65 rated enclosure",
+						"acdb": "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated "
+						        "enclosure",
+						"energy_meter": "Watt-hour meter",
+						"system_cost": 0,
+					}
+				],
 				"warranty_years": 5,
 				"is_active": 1,
 				"company": company,

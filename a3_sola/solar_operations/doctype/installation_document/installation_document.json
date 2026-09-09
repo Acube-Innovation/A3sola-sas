@@ -8,10 +8,13 @@
  "field_order": [
   "stage_code",
   "document_name",
-  "is_mandatory",
+  "document_kind",
   "attachment",
+  "source_doctype",
+  "source_document",
   "is_verified",
   "cb_1",
+  "is_mandatory",
   "document_date",
   "document_reference_no",
   "verified_by",
@@ -23,39 +26,70 @@
   {
    "fieldname": "stage_code",
    "fieldtype": "Data",
-   "label": "Stage",
+   "label": "Task",
    "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "document_name",
    "fieldtype": "Data",
    "label": "Document",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 3
   },
   {
-   "fieldname": "is_mandatory",
-   "fieldtype": "Check",
-   "label": "Mandatory",
+   "fieldname": "document_kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Expected\nGenerated\nUploaded",
+   "default": "Expected",
    "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Expected rows are created from the task template and filled when a document arrives."
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Attach",
-   "label": "Attachment",
-   "in_list_view": 1
+   "label": "File",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "label": "Source Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_document",
+   "fieldtype": "Dynamic Link",
+   "label": "Source",
+   "options": "source_doctype",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The document this file was generated in or uploaded to."
   },
   {
    "fieldname": "is_verified",
    "fieldtype": "Check",
    "label": "Verified",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "cb_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "read_only": 1
   },
   {
    "fieldname": "document_date",
@@ -94,7 +128,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Document",

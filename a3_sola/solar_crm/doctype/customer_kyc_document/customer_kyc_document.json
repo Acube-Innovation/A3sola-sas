@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-09 12:00:00.000000",
+ "description": "One KYC document of a consumer: the KSEB bill, PAN, Aadhaar, bank proof, land or income proof, the pre-installation photograph. Fetched onto the sales order and registered on the job.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "kyc_type",
+  "attachment",
+  "document_no",
+  "document_date",
+  "valid_till",
+  "cb_1",
+  "is_verified",
+  "verified_by",
+  "verified_on",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "kyc_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Document",
+   "options": "KSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\nIncome Tax Return\nLand Tax Receipt\nPre-Installation Photo\nOther",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "File",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "description": "An Aadhaar number is kept as its last four digits only.",
+   "fieldname": "document_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Number"
+  },
+  {
+   "fieldname": "document_date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "valid_till",
+   "fieldtype": "Date",
+   "label": "Valid Till"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Verified"
+  },
+  {
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_on",
+   "fieldtype": "Datetime",
+   "label": "Verified On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Customer KYC Document",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

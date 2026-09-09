@@ -22,9 +22,11 @@ def get_columns(filters):
 	return [
 		{"label": _("Installation"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Installation", "width": 150},
 		{"label": _("Consumer"), "fieldname": "consumer_name", "fieldtype": "Data", "width": 160},
-		{"label": _("Current Stage"), "fieldname": "current_stage", "fieldtype": "Data", "width": 180},
-		{"label": _("Stage Owner"), "fieldname": "current_stage_owner_type", "fieldtype": "Data", "width": 110},
-		{"label": _("Days in Stage"), "fieldname": "days_in_stage", "fieldtype": "Int", "width": 110},
+		{"label": _("Focus Task"), "fieldname": "current_stage", "fieldtype": "Data", "width": 180},
+		{"label": _("Assignee"), "fieldname": "assigned_to", "fieldtype": "Link", "options": "User", "width": 140},
+		{"label": _("Open Tasks"), "fieldname": "open_tasks", "fieldtype": "Data", "width": 220},
+		{"label": _("Task Owner"), "fieldname": "current_stage_owner_type", "fieldtype": "Data", "width": 110},
+		{"label": _("Days Open"), "fieldname": "days_in_stage", "fieldtype": "Int", "width": 100},
 		{"label": _("SLA"), "fieldname": "sla_days", "fieldtype": "Int", "width": 70},
 		{"label": _("Breached"), "fieldname": "is_sla_breached", "fieldtype": "Check", "width": 80},
 		{"label": _("Blocking Party"), "fieldname": "blocking_party", "fieldtype": "Data", "width": 120},
@@ -57,13 +59,17 @@ def get_data(filters):
 		limit_page_length=0,
 	)
 	for row in rows:
-		current = frappe.db.get_value(
+		open_rows = frappe.get_all(
 			"Installation Stage Log",
-			{"parent": row.name, "status": ["in", ["In Progress", "Blocked"]]},
-			["days_in_stage", "sla_days"],
-			as_dict=True,
+			filters={"parent": row.name, "parenttype": "Solar Installation", "status": ["in", ["In Progress", "Blocked"]]},
+			fields=["stage_code", "status", "days_in_stage", "sla_days", "assigned_to"],
 			order_by="idx asc",
 		)
-		row["days_in_stage"] = current.days_in_stage if current else 0
-		row["sla_days"] = current.sla_days if current else 0
+		focus = next((r for r in open_rows if r.status == "Blocked"), None) or (open_rows[0] if open_rows else None)
+		row["days_in_stage"] = focus.days_in_stage if focus else 0
+		row["sla_days"] = focus.sla_days if focus else 0
+		row["assigned_to"] = focus.assigned_to if focus else None
+		row["open_tasks"] = ", ".join(
+			f"{r.stage_code}{' (blocked)' if r.status == 'Blocked' else ''}" for r in open_rows
+		)
 	return rows

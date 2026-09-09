@@ -22,13 +22,14 @@ def get_columns(filters):
 	return [
 		{"label": _("Installation"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Installation", "width": 150},
 		{"label": _("Consumer"), "fieldname": "consumer_name", "fieldtype": "Data", "width": 160},
-		{"label": _("Current Stage"), "fieldname": "current_stage", "fieldtype": "Data", "width": 170},
-		{"label": _("Due"), "fieldname": "due", "fieldtype": "Int", "width": 70},
+		{"label": _("Focus Task"), "fieldname": "current_stage", "fieldtype": "Data", "width": 170},
+		{"label": _("Expected"), "fieldname": "due", "fieldtype": "Int", "width": 90},
 		{"label": _("Attached"), "fieldname": "attached", "fieldtype": "Int", "width": 90},
 		{"label": _("Verified"), "fieldname": "verified", "fieldtype": "Int", "width": 90},
 		{"label": _("Missing"), "fieldname": "missing_count", "fieldtype": "Int", "width": 90},
 		{"label": _("Stale"), "fieldname": "stale_document_count", "fieldtype": "Int", "width": 80},
 		{"label": _("Outstanding Documents"), "fieldname": "missing", "fieldtype": "Data", "width": 420},
+		{"label": _("Sources"), "fieldname": "sources", "fieldtype": "Data", "width": 260},
 	]
 
 
@@ -43,17 +44,15 @@ def get_data(filters):
 	out = []
 	for row in installations:
 		doc = frappe.get_doc("Solar Installation", row.name)
-		current_code = None
-		for stage in doc.stages:
-			if stage.status in ("In Progress", "Blocked"):
-				current_code = stage.stage_code
-				break
-		due = [d for d in doc.documents if d.is_mandatory and (not current_code or d.stage_code == current_code)]
-		missing = [d.document_name for d in due if not d.attachment or not d.is_verified]
+		# The register expects a document per task; a skipped task owes nothing.
+		skipped = {s.stage_code for s in doc.stages if s.status == "Skipped"}
+		due = [d for d in doc.documents if d.stage_code not in skipped]
+		missing = [f"{d.stage_code}: {d.document_name}" for d in due if not d.attachment]
 		row["due"] = len(due)
 		row["attached"] = len([d for d in due if d.attachment])
 		row["verified"] = len([d for d in due if d.is_verified])
 		row["missing_count"] = len(missing)
 		row["missing"] = ", ".join(missing)
+		row["sources"] = ", ".join(sorted({d.source_document for d in due if d.source_document}))
 		out.append(row)
 	return sorted(out, key=lambda r: -r["missing_count"])

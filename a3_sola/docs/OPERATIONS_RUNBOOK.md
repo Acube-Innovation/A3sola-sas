@@ -22,21 +22,39 @@ Weekly: **Bank Disbursement Tracker**, **Statutory Fee and Refund Register**,
 3. Query cycles are counted on the application. If a job has three or more, escalate — the
    application is probably wrong, not slow.
 
-## When a stage breaches its SLA
+## Working a job task by task
+
+A job is thirty tasks, not a chain. On the installation, **Task** lists them with their
+status and assignee; pick one and its document opens - the Statutory Fee Payment for the
+Form 1 fee, the Solar Agreement for the stamp paper, an Installation Task for the advance,
+a Document Pack for the Form 2/3 submission. Do the work there. When the document is
+submitted (or reaches its completed state) the task row on the job updates itself with the
+document id, the date, the reference and the cost. Nothing has to be done in order; a task
+the job does not need is skipped with a reason, and a document that appears for a skipped
+task puts it back.
+
+The **Document Register** on the job lists every file generated or uploaded across all the
+tasks, each naming the document it came from. It does not gate anything: the gates are in
+the documents (a work order needs four geo-tagged photographs; a KSEB pack needs the
+Assistant Engineer's acknowledgement; a claim needs its snags closed).
+
+## When a task breaches its SLA
 
 The daily escalation job raises one ToDo per breach per reminder window (three days by
-default) and addresses it to the **named Assistant Engineer** on the DISCOM Section record,
-not to a generic address. If that name is missing, fix the section master — a chase without
-a name does not get answered.
+default). It goes to the task's **assignee** first, then the project manager; for a DISCOM
+task it also names the **Assistant Engineer** on the DISCOM Section record. If that name is
+missing, fix the section master - a chase without a name does not get answered. The Form 2
+window (thirty days from the Form 1 payment) gets its own reminder before it shuts.
 
 ## Re-baselining SLAs from real data
 
 After six months, open **Stage Cycle Time Analysis**. It reports the average, median and
 90th percentile against the current SLA and suggests a new one covering 90% of observed
-reality. Edit the Installation Stage Template; do not edit individual jobs.
+reality. Edit the task's SLA on the Installation Stage Template (re-seeding never removes
+a row); do not edit individual jobs.
 
-Seventy-five days at feasibility is normal in Kerala. If your template says 45 and your
-90th percentile says 78, the template is wrong, not the DISCOM.
+Seventy-five days waiting on the portal is normal in Kerala. If your template says 45 and
+your 90th percentile says 78, the template is wrong, not the DISCOM.
 
 ## When a serial is rejected by the portal
 

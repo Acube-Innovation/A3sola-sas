@@ -15,7 +15,7 @@ def get_data():
 		"transactions": [
 			{
 				"label": _("Grid connection"),
-				"items": ["Net Metering Agreement"],
+				"items": ["Solar Agreement"],
 			},
 		],
 	}

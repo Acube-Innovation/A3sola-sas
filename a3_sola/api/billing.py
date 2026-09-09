@@ -160,22 +160,111 @@ def _recompute_statutory(plan):
 
 
 # ------------------------------------------------------------------- triggering
+#: Trigger types that name a task without carrying its code.
+IMPLIED_TRIGGER_CODES = {"On Order": "ORD", "On Commissioning": "COMM"}
+#: Old chain codes still found on templates and untriggered plans, and the task they mean.
+TRIGGER_CODE_MAP = {"INST": "IWOI", "KTST": "KFORMS", "AGMT": "STMP", "PCR": "SUBREQ"}
+
+
+def _milestone_matches(row, task_code):
+	if row.trigger_stage_code:
+		return TRIGGER_CODE_MAP.get(row.trigger_stage_code, row.trigger_stage_code) == task_code
+	return IMPLIED_TRIGGER_CODES.get(row.trigger_type) == task_code
+
+
+def ensure_plan_for_installation(installation, replay=True):
+	"""The job's billing plan, created at the order so the advance milestone exists when
+	the advance is collected. Idempotent. Returns the plan name, or None when the job
+	cannot carry one yet (no customer, no contract value, no milestone template).
+
+	`replay` fires the milestones of tasks already completed - a job picked up mid-way -
+	without the accounts ToDos or auto-invoices a live completion would raise.
+	"""
+	doc = (
+		frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	)
+	existing = frappe.db.get_value(
+		"Solar Billing Plan", {"solar_installation": doc.name, "docstatus": ["<", 2]}, "name"
+	)
+	if existing:
+		return existing
+	if not (doc.customer and flt(doc.gross_contract_value)):
+		return None
+	consumer_category = frappe.db.get_value("Solar Consumer", doc.solar_consumer, "consumer_category")
+	plan = frappe.get_doc(
+		{
+			"doctype": "Solar Billing Plan",
+			"company": doc.company,
+			"project": doc.get("project") or None,
+			"solar_installation": doc.name,
+			"customer": doc.customer,
+			"sales_order": doc.sales_order,
+			"consumer_category": consumer_category,
+			"net_meter_mode": doc.net_meter_mode,
+			"is_financed": doc.is_financed,
+			"gross_contract_value": doc.gross_contract_value,
+			"expected_subsidy_amount": doc.expected_subsidy_amount,
+		}
+	)
+	plan.flags.ignore_permissions = True
+	try:
+		plan.insert(ignore_permissions=True)
+		plan.submit()
+	except frappe.ValidationError:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: billing plan for {doc.name}")
+		return None
+	if replay:
+		replay_completed_tasks(doc)
+	return plan.name
+
+
+def replay_completed_tasks(installation):
+	"""Fire what has already happened, quietly: no ToDos, no invoices."""
+	doc = (
+		frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	)
+	previous = frappe.flags.a3s_replaying_triggers
+	frappe.flags.a3s_replaying_triggers = True
+	try:
+		for row in doc.stages:
+			if row.status == "Completed":
+				on_stage_completed(doc.name, row.stage_code)
+		for task in frappe.get_all(
+			"Installation Task",
+			filters={"solar_installation": doc.name, "docstatus": 1, "status": "Completed",
+			         "task_code": ["in", ["ADV", "BAL"]], "payer": "Bank"},
+			fields=["name", "task_code", "amount", "payment_reference"],
+		):
+			if flt(task.amount):
+				on_loan_disbursed(
+					doc.name, "Advance" if task.task_code == "ADV" else "Balance", task.amount,
+					task.payment_reference or task.name,
+				)
+	finally:
+		frappe.flags.a3s_replaying_triggers = previous
+
+
 def on_stage_completed(installation, stage_code):
-	"""Mark the mapped milestone triggered when a Phase 2 stage completes."""
+	"""Mark the mapped milestone triggered when a task completes."""
 	plans = frappe.get_all(
 		"Solar Billing Plan",
 		filters={"solar_installation": installation, "docstatus": 1},
 		pluck="name",
 	)
+	replaying = bool(frappe.flags.a3s_replaying_triggers)
 	for name in plans:
 		plan = frappe.get_doc("Solar Billing Plan", name)
 		changed = False
 		for row in plan.milestones:
-			if row.is_triggered or row.trigger_stage_code != stage_code:
+			if row.is_triggered or row.trigger_type in ("On Date", "Manual", "On Loan Disbursement"):
+				continue
+			if not _milestone_matches(row, stage_code):
 				continue
 			row.is_triggered = 1
 			row.triggered_on = today()
 			changed = True
+			if replaying:
+				continue
 			_notify_accounts(plan, row)
 			if get_value("auto_create_invoice_on_milestone"):
 				try:
@@ -229,7 +318,8 @@ def _notify_accounts(plan, row):
 			"date": today(),
 			"priority": "Medium",
 			"description": _("Milestone {0} triggered on {1} - {2} is now billable.").format(
-				row.milestone_name, plan.project, frappe.utils.fmt_money(row.milestone_amount, currency="INR")
+				row.milestone_name, plan.project or plan.solar_installation,
+				frappe.utils.fmt_money(row.milestone_amount, currency="INR")
 			),
 			"reference_type": "Solar Billing Plan",
 			"reference_name": plan.name,
@@ -255,7 +345,12 @@ def create_milestone_invoice(billing_plan, milestone_name):
 	_check_predecessors(plan, row)
 
 	rule = plan.gst_valuation_rule or gst.resolve_valuation(plan.company, plan.consumer_category)
-	items = gst.build_invoice_items(plan.project, row.milestone_amount, rule)
+	capacity = (
+		frappe.db.get_value("Solar Installation", plan.solar_installation, "capacity_kw")
+		if plan.solar_installation
+		else None
+	)
+	items = gst.build_invoice_items(plan.project, row.milestone_amount, rule, capacity_kw=capacity)
 
 	invoice = frappe.get_doc(
 		{
@@ -264,7 +359,8 @@ def create_milestone_invoice(billing_plan, milestone_name):
 			"customer": plan.customer,
 			"posting_date": today(),
 			"due_date": row.due_date or today(),
-			"project": plan.project,
+			"project": plan.project or None,
+			"solar_installation": plan.solar_installation,
 			"solar_billing_plan": plan.name,
 			"billing_milestone": row.milestone_name,
 			"items": items,
@@ -378,3 +474,74 @@ def refresh_billing_summaries():
 			plan.save(ignore_permissions=True)
 		summary[company] = len(plans)
 	return summary
+
+
+# --------------------------------------------------------------------- the customer's statement
+def customer_statement(inst):
+	"""What the customer was billed and what was received, as a running ledger - the
+	Statement of Account in the customer's completion file.
+
+	ERPNext's invoices and the payments allocated to them first; receipts recorded on the
+	advance and balance tasks count only when no Payment Entry stands behind them, so a
+	payment is never shown twice.
+	"""
+	invoices = frappe.get_all(
+		"Sales Invoice",
+		filters={"solar_installation": inst.name, "docstatus": 1},
+		fields=["name", "posting_date", "grand_total"],
+		order_by="posting_date asc",
+		ignore_permissions=True,
+	)
+	rows = [
+		{"date": i.posting_date, "particulars": _("Invoice {0}").format(i.name), "debit": flt(i.grand_total), "credit": 0}
+		for i in invoices
+	]
+	if invoices:
+		for ref in frappe.get_all(
+			"Payment Entry Reference",
+			filters={
+				"reference_doctype": "Sales Invoice",
+				"reference_name": ["in", [i.name for i in invoices]],
+				"docstatus": 1,
+			},
+			fields=["parent", "allocated_amount"],
+			ignore_permissions=True,
+		):
+			entry = frappe.db.get_value(
+				"Payment Entry", ref.parent, ["posting_date", "mode_of_payment"], as_dict=True
+			) or frappe._dict()
+			mode = f" ({entry.mode_of_payment})" if entry.mode_of_payment else ""
+			rows.append(
+				{"date": entry.posting_date, "particulars": _("Payment {0}{1}").format(ref.parent, mode),
+				 "debit": 0, "credit": flt(ref.allocated_amount)}
+			)
+	for task in frappe.get_all(
+		"Installation Task",
+		filters={"solar_installation": inst.name, "docstatus": 1, "task_code": ["in", ["ADV", "BAL"]], "status": "Completed"},
+		fields=["task_code", "amount", "paid_on", "payer", "payment_mode", "payment_entry"],
+		ignore_permissions=True,
+	):
+		if task.payment_entry or not flt(task.amount):
+			continue
+		label = _("Advance received") if task.task_code == "ADV" else _("Balance received")
+		mode = f" ({task.payment_mode})" if task.payment_mode else ""
+		rows.append(
+			{"date": task.paid_on, "particulars": f"{label} - {task.payer or _('Customer')}{mode}",
+			 "debit": 0, "credit": flt(task.amount)}
+		)
+	if not invoices and flt(inst.gross_contract_value):
+		rows.insert(
+			0, {"date": inst.order_date, "particulars": _("Contract value"), "debit": flt(inst.gross_contract_value), "credit": 0}
+		)
+	rows.sort(key=lambda r: str(r["date"] or ""))
+	balance = 0.0
+	for row in rows:
+		balance += row["debit"] - row["credit"]
+		row["balance"] = balance
+		row["date"] = frappe.utils.formatdate(row["date"], "dd-MM-yyyy") if row["date"] else ""
+	return frappe._dict(
+		rows=rows,
+		total_invoiced=sum(r["debit"] for r in rows),
+		total_received=sum(r["credit"] for r in rows),
+		balance=balance,
+	)

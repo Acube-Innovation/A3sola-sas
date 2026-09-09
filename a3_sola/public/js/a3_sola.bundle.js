@@ -2,3 +2,4 @@
 // For license information, please see license.txt
 import "./lead_outreach.js";
 import "./audit_trail.js";
+import "./sales_order_kyc.js";

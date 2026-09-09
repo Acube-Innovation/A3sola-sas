@@ -124,6 +124,7 @@ end of the warranty, i.e. 5 years from the date of commissioning.</li>
 		"category": "National Portal",
 		"recipient": "National Portal",
 		"stage_code": "NPA",
+		"source_doctype": "Portal Application",
 		"notes": "Data sheet for keying into pmsuryaghar.gov.in. Never automate the portal.",
 		"body": """<h3>National Portal Application &ndash; Data Sheet</h3>
 <p class="text-muted">Prepared for manual submission. Do not automate the portal.</p>
@@ -151,7 +152,8 @@ end of the warranty, i.e. 5 years from the date of commissioning.</li>
 		"document_name": "Project Completion Report (National Portal)",
 		"category": "National Portal",
 		"recipient": "National Portal",
-		"stage_code": "PCR",
+		"stage_code": "SUBREQ",
+		"source_doctype": "Subsidy Claim",
 		"signatory": "Both",
 		"notes": "SOURCE: the PCR data the client uploads after commissioning.",
 		"body": """<h3 style="text-align:center">Project Completion Report</h3>
@@ -209,7 +211,7 @@ TEMPLATES += [
 		"document_name": "Residential Rooftop Solar Vendor Feasibility Report",
 		"category": "Bank",
 		"recipient": "Bank Manager",
-		"stage_code": "VFR",
+		"stage_code": "LOAN",
 		"source_doctype": "Loan Application",
 		"signatory": "Authorised Signatory",
 		"requires_company_seal": 1,
@@ -246,7 +248,8 @@ TEMPLATES += [
 		"document_name": "EHS Guidance Checklist",
 		"category": "Bank",
 		"recipient": "Bank Manager",
-		"stage_code": "VFR",
+		"stage_code": "LOAN",
+		"source_doctype": "Loan Application",
 		"signatory": "Authorised Signatory",
 		"notes": "SOURCE: RTS Vendor Feasibility Report PG 2.docx. Rendered from the Phase 1 site survey.",
 		"body": """<h4>Guidance Checklist and Consumer Education for verification of adequacy on Environmental,
@@ -282,6 +285,7 @@ funded under the Rooftop Solar Program for the Residential Sector.</p>
 		"category": "Bank",
 		"recipient": "Bank Manager",
 		"stage_code": "BCOM",
+		"source_doctype": "Document Pack",
 		"signatory": "Authorised Signatory",
 		"requires_company_seal": 1,
 		"notes": "SOURCE: 03_Completion Report for Bank.docx and 06_DATA FOR COMPLETION REPORT.docx",
@@ -332,7 +336,7 @@ funded under the Rooftop Solar Program for the Residential Sector.</p>
 		"category": "Bank",
 		"recipient": "Bank Manager",
 		"stage_code": "BCOM",
-		"source_doctype": "Loan Application",
+		"source_doctype": "Document Pack",
 		"notes": "SOURCE: 04_Bank Covering Letter_Completion.docx",
 		"attachment_checklist": "Completion report\nInstallation pictures\nInvoice",
 		"body": """<div style="text-align:right">{{ today }}</div>
@@ -361,7 +365,8 @@ TEMPLATES += [
 		"document_name": "Covering Letter to the Assistant Engineer - Registration and Completion",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KTST",
+		"stage_code": "KFORMS",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: To The Asst. Engineer-Covering Letter.docx",
 		"attachment_checklist": (
@@ -393,7 +398,8 @@ under service connection bearing Consumer No. {{ installation.consumer_number }}
 		"document_name": "Request for Allocation of Bidirectional Meter",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "NMTR",
+		"stage_code": "KFORMS",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: To The Asst. Engineer-Net Meter.docx",
 		"body": _LETTERHEAD + """
@@ -412,7 +418,8 @@ energy meter on my own.</p>
 		"document_name": "Request for Refund of Registration Fee",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "RFND",
+		"stage_code": "CFILE",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: To The Asst. Engineer_Refund.docx",
 		"attachment_checklist": "Cancelled cheque",
@@ -442,7 +449,8 @@ above-mentioned account.</p>
 		"document_name": "Annexure / Form 1",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KTST",
+		"stage_code": "FRM1",
+		"source_doctype": "Installation Task",
 		"signatory": "Consumer",
 		"notes": "SOURCE: KSEBL Form 1.docx",
 		"body": """<h4 style="text-align:center">Annexure 1</h4>
@@ -467,7 +475,8 @@ above-mentioned account.</p>
 		"document_name": "Annexure / Form 2",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KTST",
+		"stage_code": "KFORMS",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: KSEBL Form 2.docx",
 		"body": """<h4 style="text-align:center">Annexure 2</h4>
@@ -491,7 +500,8 @@ above-mentioned account.</p>
 		"document_name": "Annexure / Form 3",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KTST",
+		"stage_code": "KFORMS",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: KSEBL Form 3.docx",
 		"body": """<h4 style="text-align:center">Annexure 3 &ndash; Completion</h4>
@@ -512,8 +522,8 @@ above-mentioned account.</p>
 		"document_name": "Installation and Inverter Testing Checklist",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KTST",
-		"source_doctype": "Commissioning Report",
+		"stage_code": "KFORMS",
+		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
 		"notes": "SOURCE: KSEB/CHECKLIST.xlsx - the form the Assistant Engineer inspects against.",
 		"body": """<h4 style="text-align:center">DETAILS OF INSTALLATION &amp; CHECKLIST TO BE FURNISHED ALONG WITH
@@ -604,8 +614,8 @@ out with a calibrated test kit, witnessed by the DISCOM.</p>
 		"document_name": "Net Metering Agreement (Stamp Paper)",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "AGMT",
-		"source_doctype": "Net Metering Agreement",
+		"stage_code": "KFORMS",
+		"source_doctype": "Solar Agreement",
 		"requires_stamp_paper": 1,
 		"signatory": "Consumer and Two Witnesses",
 		"notes": "SOURCE: KSEB Agreement.docx, including the full schedule.",
@@ -715,7 +725,8 @@ installed, tested and commissioned in accordance with the standards of the
 		"document_name": "Customer Handover Pack",
 		"category": "Customer",
 		"recipient": "Consumer",
-		"stage_code": "COMM",
+		"stage_code": "CFILE",
+		"source_doctype": "Document Pack",
 		"signatory": "Both",
 		"notes": "Warranty by make, net meter details and the O&M contact.",
 		"body": """<h3 style="text-align:center">Customer Handover Pack</h3>
@@ -761,6 +772,192 @@ any issue.</p>
 We will advise you on best practice at handover.</p>
 """ + _EPC_SIGNOFF,
 	},
+	{
+		"template_code": "COMPLETION-REPORT-DATA",
+		"document_name": "Data for Completion Report",
+		"category": "Internal",
+		"recipient": "Electrical Contractor",
+		"stage_code": "MATL",
+		"source_doctype": "Material Dispatch Notice",
+		"notes": "SOURCE: 06_DATA FOR COMPLETION REPORT.docx / DATA FOR COMPLETION REPORT.pdf",
+		"body": """<h3 style="text-align:center;margin:0 0 10px">DATA FOR COMPLETION REPORT</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+{% set cd = completion_data %}
+{% macro row(label, value) -%}
+<tr><td style="border:1px solid #444;padding:5px;width:38%"><b>{{ label }}</b></td>
+    <td style="border:1px solid #444;padding:5px">{{ value or "" }}</td></tr>
+{%- endmacro %}
+{{ row("Consumer Name", cd.consumer_name) }}
+{{ row("Address", address_text or cd.address) }}
+{{ row("Consumer Number", cd.consumer_number) }}
+{{ row("KSEB Section", cd.electrical_section) }}
+{{ row("Service Connection Type", cd.service_connection_type) }}
+{{ row("Solar Plant Capacity", cd.plant_capacity) }}
+{{ row("PV Module Make &amp; Wattage", cd.module_make_and_wattage) }}
+<tr><td style="border:1px solid #444;padding:5px;vertical-align:top"><b>PV Module Serial Numbers</b>
+    <div style="font-size:10px;color:#555">{{ cd.module_count }} modules</div></td>
+    <td style="border:1px solid #444;padding:0">
+    <table style="width:100%;border-collapse:collapse">
+    {% for serial in cd.module_serial_numbers %}
+      <tr><td style="border-bottom:1px solid #bbb;padding:3px 5px">{{ loop.index }}. {{ serial }}</td></tr>
+    {% else %}<tr><td style="padding:5px;color:#888">No module serials captured yet</td></tr>{% endfor %}
+    </table></td></tr>
+{{ row("Inverter Make &amp; Capacity", cd.inverter_make_and_capacity) }}
+{{ row("Inverter Serial Number", cd.inverter_serial_number) }}
+</table>
+{% if contractor %}<p style="font-size:11px;margin-top:10px">For: {{ contractor.contractor_name }}{% if contractor.licence_no %} · Licence {{ contractor.licence_no }}{% endif %}</p>{% endif %}
+<p style="font-size:11px">Prepared by {{ company.epc_name or company.company_name }} on {{ today }}.</p>
+""",
+	},
+	{
+		"template_code": "STAMP-PAPER-DATA",
+		"document_name": "Data for Stamp Paper",
+		"category": "KSEB",
+		"recipient": "Internal",
+		"stage_code": "STMP",
+		"source_doctype": "Solar Agreement",
+		"notes": "SOURCE: Data for Stamp Paper_rAJAGOPALAN.pdf",
+		"body": """<h3 style="text-align:center;margin:0 0 12px">DATA FOR STAMP PAPER</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr><td style="border:1px solid #444;padding:6px;width:30%"><b>1st Party</b></td>
+    <td style="border:1px solid #444;padding:6px">{{ consumer.consumer_name }}<br>{{ address_text }}{% if address and address.pincode %}, PIN {{ address.pincode }}{% endif %}</td></tr>
+<tr><td style="border:1px solid #444;padding:6px"><b>2nd Party</b></td>
+    <td style="border:1px solid #444;padding:6px">The Assistant Engineer, {{ discom_name or "KSEB" }} Section - {{ section.section_name if section else "" }}</td></tr>
+<tr><td style="border:1px solid #444;padding:6px"><b>Purpose</b></td>
+    <td style="border:1px solid #444;padding:6px">Solar Agreement{% if installation.capacity_kw %} - {{ "%g"|format(installation.capacity_kw) }} kWp rooftop solar plant, Consumer No. {{ installation.consumer_number or consumer.consumer_number }}{% endif %}</td></tr>
+<tr><td style="border:1px solid #444;padding:6px"><b>Value</b></td>
+    <td style="border:1px solid #444;padding:6px">{{ fmt_money((task.stamp_paper_value if task and task.stamp_paper_value else settings.stamp_paper_denomination) or 200) }}</td></tr>
+</table>
+<p style="font-size:11px;margin-top:10px">Prepared by {{ company.epc_name or company.company_name }} on {{ today }}.</p>
+""",
+	},
+	{
+		"template_code": "WARRANTY-CERTIFICATE",
+		"document_name": "Warranty Certificate",
+		"category": "Customer",
+		"recipient": "Consumer",
+		"stage_code": "CFILE",
+		"source_doctype": "Document Pack",
+		"requires_company_seal": 1,
+		"signatory": "Authorised Signatory",
+		"notes": "Terms come from Component Make and the package; nothing here is typed.",
+		"body": """<h2 style="text-align:center;margin:0">WARRANTY CERTIFICATE</h2>
+<p style="text-align:center;margin:2px 0 14px;font-size:12px">{{ company.epc_name or company.company_name }}</p>
+{% set w = warranty %}
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+{% macro row(label, value) -%}
+<tr><td style="border:1px solid #444;padding:5px;width:36%"><b>{{ label }}</b></td>
+    <td style="border:1px solid #444;padding:5px">{{ value if value is not none else "" }}</td></tr>
+{%- endmacro %}
+{{ row("Customer", consumer.consumer_name) }}
+{{ row("Site", address_text) }}
+{{ row("Consumer Number", installation.consumer_number or consumer.consumer_number) }}
+{{ row("Plant Capacity", ("%g kWp"|format(installation.capacity_kw)) if installation.capacity_kw else "") }}
+{{ row("Commissioned On", commissioning.commissioning_date if commissioning else "") }}
+{% if w.module_make_name %}
+{{ row("PV Modules", w.module_make_name ~ " - " ~ w.module_product_warranty_years ~ " years product warranty, " ~ w.module_performance_warranty_years ~ " years linear performance warranty") }}
+{% if w.module_performance_floor_10yr or w.module_performance_floor_25yr %}
+{{ row("Performance Floor", (("%g%% at 10 years"|format(w.module_performance_floor_10yr)) if w.module_performance_floor_10yr else "") ~ ((", %g%% at 25 years"|format(w.module_performance_floor_25yr)) if w.module_performance_floor_25yr else "")) }}
+{% endif %}{% endif %}
+{% if w.inverter_make_name %}{{ row("Inverter", w.inverter_make_name ~ " - " ~ w.inverter_warranty_years ~ " years") }}{% endif %}
+{{ row("Workmanship", (w.workmanship_warranty_years or 5) ~ " years from commissioning, covering structure, cabling and installation") }}
+</table>
+<h4 style="margin:12px 0 4px">Covered Serial Numbers</h4>
+<table style="width:100%;border-collapse:collapse;font-size:11px">
+<tr><th style="border:1px solid #444;padding:4px;text-align:left">Component</th><th style="border:1px solid #444;padding:4px;text-align:left">Serial Numbers</th></tr>
+<tr><td style="border:1px solid #444;padding:4px;vertical-align:top">Modules ({{ module_serials|length }})</td><td style="border:1px solid #444;padding:4px">{{ module_serials|join(", ") or "-" }}</td></tr>
+<tr><td style="border:1px solid #444;padding:4px">Inverter</td><td style="border:1px solid #444;padding:4px">{{ inverter_serials|join(", ") or "-" }}</td></tr>
+</table>
+<p style="font-size:11px;margin-top:10px">Manufacturer warranties are as issued by the respective manufacturers and are serviced through {{ company.epc_name or company.company_name }}. Workmanship warranty excludes damage from acts of nature, tampering or unauthorised modification.</p>
+<table style="width:100%;margin-top:24px;font-size:11px"><tr>
+<td style="width:60%">Issued on {{ today }}</td>
+<td style="text-align:right">{% if company.epc_signature_image %}<img src="{{ company.epc_signature_image }}" style="height:40px"><br>{% endif %}
+{{ company.epc_authorised_signatory or "" }}<br>{{ company.epc_signatory_designation or "Authorised Signatory" }}</td></tr></table>
+""",
+	},
+	{
+		"template_code": "CUSTOMER-CONTACTS",
+		"document_name": "Whom to Contact",
+		"category": "Customer",
+		"recipient": "Consumer",
+		"stage_code": "CFILE",
+		"source_doctype": "Document Pack",
+		"notes": "Support contacts come from the Company record; the review link too.",
+		"body": """<h2 style="text-align:center;margin:0 0 12px">WHOM TO CONTACT</h2>
+<p style="font-size:12px">Dear {{ consumer.consumer_name }}, your {{ ("%g kWp"|format(installation.capacity_kw)) if installation.capacity_kw else "" }} rooftop solar plant is now yours to enjoy. Keep this sheet handy.</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr><th style="border:1px solid #444;padding:5px;text-align:left">For</th><th style="border:1px solid #444;padding:5px;text-align:left">Contact</th><th style="border:1px solid #444;padding:5px;text-align:left">Mobile</th><th style="border:1px solid #444;padding:5px;text-align:left">Email</th><th style="border:1px solid #444;padding:5px;text-align:left">Hours</th></tr>
+{% for c in contacts %}
+<tr><td style="border:1px solid #444;padding:5px">{{ c.contact_type }}</td><td style="border:1px solid #444;padding:5px">{{ c.person_name }}{% if c.designation %}<br><span style="font-size:10px;color:#555">{{ c.designation }}</span>{% endif %}</td>
+<td style="border:1px solid #444;padding:5px">{{ c.mobile_no or "" }}</td><td style="border:1px solid #444;padding:5px">{{ c.email_id or "" }}</td><td style="border:1px solid #444;padding:5px">{{ c.available_hours or "" }}</td></tr>
+{% else %}
+<tr><td style="border:1px solid #444;padding:5px">Service &amp; Support</td><td style="border:1px solid #444;padding:5px">{{ company.epc_name or company.company_name }}</td>
+<td style="border:1px solid #444;padding:5px">{{ company.epc_contact_no or "" }}</td><td style="border:1px solid #444;padding:5px">{{ company.epc_email or "" }}</td><td style="border:1px solid #444;padding:5px"></td></tr>
+{% endfor %}
+</table>
+<h4 style="margin:14px 0 4px">Before you call</h4>
+<ul style="font-size:12px;margin:0 0 0 18px">
+<li>Note the fault light or message on the inverter display.</li>
+<li>Check the AC and DC isolators are on and the KSEB supply is live.</li>
+<li>Keep your consumer number {{ installation.consumer_number or consumer.consumer_number or "" }} ready.</li>
+</ul>
+{% if google_review_url %}<p style="font-size:12px;margin-top:14px">Happy with the work? A Google review helps the next family decide: <a href="{{ google_review_url }}">{{ google_review_url }}</a></p>{% endif %}
+<p style="font-size:11px;margin-top:10px">{{ company.epc_name or company.company_name }} · {{ today }}</p>
+""",
+	},
+	{
+		"template_code": "CUSTOMER-STATEMENT",
+		"document_name": "Statement of Account",
+		"category": "Customer",
+		"recipient": "Consumer",
+		"stage_code": "CFILE",
+		"source_doctype": "Document Pack",
+		"notes": "Invoices and allocated payments from ERPNext; task receipts only when no Payment Entry stands behind them.",
+		"body": """<h2 style="text-align:center;margin:0 0 4px">STATEMENT OF ACCOUNT</h2>
+<p style="text-align:center;font-size:12px;margin:0 0 12px">{{ consumer.consumer_name }} · {{ address_text }}</p>
+{% set st = statement %}
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr><th style="border:1px solid #444;padding:5px;text-align:left">Date</th><th style="border:1px solid #444;padding:5px;text-align:left">Particulars</th><th style="border:1px solid #444;padding:5px;text-align:right">Billed</th><th style="border:1px solid #444;padding:5px;text-align:right">Received</th><th style="border:1px solid #444;padding:5px;text-align:right">Balance</th></tr>
+{% for r in st.rows %}
+<tr><td style="border:1px solid #444;padding:5px">{{ r.date }}</td><td style="border:1px solid #444;padding:5px">{{ r.particulars }}</td>
+<td style="border:1px solid #444;padding:5px;text-align:right">{{ fmt_money(r.debit) if r.debit else "" }}</td>
+<td style="border:1px solid #444;padding:5px;text-align:right">{{ fmt_money(r.credit) if r.credit else "" }}</td>
+<td style="border:1px solid #444;padding:5px;text-align:right">{{ fmt_money(r.balance) }}</td></tr>
+{% else %}<tr><td colspan="5" style="border:1px solid #444;padding:5px;color:#888">No invoices or receipts recorded yet</td></tr>{% endfor %}
+<tr><td colspan="2" style="border:1px solid #444;padding:5px"><b>Total</b></td>
+<td style="border:1px solid #444;padding:5px;text-align:right"><b>{{ fmt_money(st.total_invoiced) }}</b></td>
+<td style="border:1px solid #444;padding:5px;text-align:right"><b>{{ fmt_money(st.total_received) }}</b></td>
+<td style="border:1px solid #444;padding:5px;text-align:right"><b>{{ fmt_money(st.balance) }}</b></td></tr>
+</table>
+{% if installation.expected_subsidy_amount %}<p style="font-size:11px;margin-top:8px">Central financial assistance of {{ fmt_money(installation.expected_subsidy_amount) }} is claimed on your behalf and credited by the national portal directly to your bank account; it is not part of this statement.</p>{% endif %}
+<p style="font-size:11px">Statement as on {{ today }} · {{ company.epc_name or company.company_name }}</p>
+""",
+	},
+	{
+		"template_code": "BOM-SUMMARY",
+		"document_name": "Bill of Materials",
+		"category": "Internal",
+		"recipient": "Internal",
+		"stage_code": "DSGN",
+		"source_doctype": "Installation Task",
+		"notes": "The design freeze: what goes to site, exploded from the package to the installed capacity.",
+		"body": """<h2 style="text-align:center;margin:0 0 4px">BILL OF MATERIALS</h2>
+<p style="text-align:center;font-size:12px;margin:0 0 12px">{{ consumer.consumer_name }} · {{ ("%g kWp"|format(installation.capacity_kw)) if installation.capacity_kw else "" }} {{ installation.system_type or "" }} · {{ installation.name }}</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">
+<tr><td style="border:1px solid #444;padding:5px;width:30%"><b>Modules</b></td><td style="border:1px solid #444;padding:5px">{{ installation.module_make or "" }} {{ ("%g Wp x %d"|format(installation.module_wattage, installation.module_count)) if installation.module_wattage and installation.module_count else "" }}</td></tr>
+<tr><td style="border:1px solid #444;padding:5px"><b>Inverter</b></td><td style="border:1px solid #444;padding:5px">{{ installation.inverter_make or "" }} {{ ("%g kW"|format(installation.inverter_capacity_kw)) if installation.inverter_capacity_kw else "" }}</td></tr>
+{% if task and task.bom %}<tr><td style="border:1px solid #444;padding:5px"><b>BOM</b></td><td style="border:1px solid #444;padding:5px">{{ task.bom }}</td></tr>{% endif %}
+{% if task and task.design_frozen_on %}<tr><td style="border:1px solid #444;padding:5px"><b>Frozen On</b></td><td style="border:1px solid #444;padding:5px">{{ task.design_frozen_on }}{% if task.design_verified_by %} - verified by {{ task.design_verified_by }}{% endif %}</td></tr>{% endif %}
+</table>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr><th style="border:1px solid #444;padding:5px;text-align:left">#</th><th style="border:1px solid #444;padding:5px;text-align:left">Item</th><th style="border:1px solid #444;padding:5px;text-align:left">Description</th><th style="border:1px solid #444;padding:5px;text-align:right">Qty</th><th style="border:1px solid #444;padding:5px;text-align:left">UOM</th></tr>
+{% for b in bom_items %}
+<tr><td style="border:1px solid #444;padding:5px">{{ loop.index }}</td><td style="border:1px solid #444;padding:5px">{{ b.item_name or b.item }}</td><td style="border:1px solid #444;padding:5px">{{ (b.description or "")|striptags|truncate(80) }}</td><td style="border:1px solid #444;padding:5px;text-align:right">{{ "%g"|format(b.qty) }}</td><td style="border:1px solid #444;padding:5px">{{ b.uom or "" }}</td></tr>
+{% else %}<tr><td colspan="5" style="border:1px solid #444;padding:5px;color:#888">The package has no BOM or component items yet</td></tr>{% endfor %}
+</table>
+<p style="font-size:11px;margin-top:10px">Prepared {{ today }} · {{ company.epc_name or company.company_name }}</p>
+""",
+	},
 ]
 
 #: Which templates belong to which set.
@@ -771,17 +968,20 @@ TEMPLATE_SETS = {
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
 		"CUST-HANDOVER-PACK", "BANK-COMPLETION-REPORT", "BANK-COVERING-COMPLETION",
-		"NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST",
+		"NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 	"PM Surya Ghar Residential - Self Funded": [
 		"MNRE-CONSUMER-VENDOR-AGREEMENT", "NP-APPLICATION", "KSEB-NETMETER-REQUEST",
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
-		"CUST-HANDOVER-PACK", "NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST",
+		"CUST-HANDOVER-PACK", "NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 	"Commercial / Non-Subsidy": [
 		"KSEB-NETMETER-REQUEST", "KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION",
 		"KSEB-FORM-1", "KSEB-FORM-2", "KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT",
-		"CUST-COMMISSIONING-CERTIFICATE", "CUST-HANDOVER-PACK", "KSEB-REFUND-REQUEST",
+		"CUST-COMMISSIONING-CERTIFICATE", "CUST-HANDOVER-PACK", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 }

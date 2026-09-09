@@ -27,13 +27,34 @@ class SolarBillingPlan(Document):
 
 	def validate(self):
 		assert_same_company(self, LINKS)
+		if not (self.project or self.solar_installation):
+			frappe.throw(_("A billing plan belongs to an installation or a project."))
 		self.validate_one_per_project()
+		self.validate_one_per_installation()
 		self.resolve_gst_rule()
 		billing.build_plan(self)
 		self.validate_total()
 		billing.recompute_summary(self)
 
+	def validate_one_per_installation(self):
+		"""One plan per job. It is created at the order and picks up the project later."""
+		if not self.solar_installation:
+			return
+		existing = frappe.db.get_value(
+			"Solar Billing Plan",
+			{"solar_installation": self.solar_installation, "name": ["!=", self.name], "docstatus": ["<", 2]},
+			"name",
+		)
+		if existing:
+			frappe.throw(
+				_("Installation {0} already has billing plan {1}.").format(
+					self.solar_installation, frappe.utils.get_link_to_form("Solar Billing Plan", existing)
+				)
+			)
+
 	def validate_one_per_project(self):
+		if not self.project:
+			return
 		existing = frappe.db.get_value(
 			"Solar Billing Plan",
 			{"project": self.project, "name": ["!=", self.name], "docstatus": ["<", 2]},

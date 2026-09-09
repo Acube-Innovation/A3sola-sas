@@ -1,7 +1,9 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "",
  "creation": "2026-08-25 13:00:00.000000",
+ "description": "Retired. The KSEB agreement is a Solar Agreement task now; these records are kept read-only until their migrated copies have been checked, and are deleted by a later, confirmed patch.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -69,17 +71,17 @@
   {
    "fieldname": "solar_installation",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Solar Installation",
    "options": "Solar Installation",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
+   "fetch_from": "solar_installation.solar_consumer",
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
    "label": "Solar Consumer",
    "options": "Solar Consumer",
-   "fetch_from": "solar_installation.solar_consumer",
    "read_only": 1
   },
   {
@@ -95,9 +97,9 @@
   {
    "fieldname": "agreement_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Agreement Date",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "place_of_execution",
@@ -105,28 +107,28 @@
    "label": "Place"
   },
   {
+   "default": "25",
    "fieldname": "validity_years",
    "fieldtype": "Int",
    "label": "Validity (years)",
-   "read_only": 1,
-   "default": "25"
+   "read_only": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
-   "options": "Net Metering Agreement",
-   "read_only": 1,
    "no_copy": 1,
-   "print_hide": 1
+   "options": "Net Metering Agreement",
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "sb_3",
@@ -219,16 +221,16 @@
   {
    "fieldname": "spin",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Solar Plant Identification Number (SPIN)",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "plant_capacity_kwp",
    "fieldtype": "Float",
    "label": "Capacity (kWp)",
-   "read_only": 1,
-   "precision": 3
+   "precision": 3,
+   "read_only": 1
   },
   {
    "fieldname": "electrical_section",
@@ -241,10 +243,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Unidirectional Energy Meter",
    "fieldname": "solar_meter_type",
    "fieldtype": "Data",
-   "label": "Solar Meter Type",
-   "default": "Unidirectional Energy Meter"
+   "label": "Solar Meter Type"
   },
   {
    "fieldname": "solar_meter_number",
@@ -333,152 +335,134 @@
    "label": "Termination"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "is_terminated",
    "fieldtype": "Check",
    "label": "Terminated",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "terminated_on",
    "fieldtype": "Date",
    "label": "Terminated On",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "cb_13",
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "terminated_by",
    "fieldtype": "Select",
    "label": "Terminated By",
    "options": "Consumer\nDISCOM",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "termination_reason",
    "fieldtype": "Small Text",
    "label": "Reason",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Net Metering Agreement",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "System Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "share": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Operations Manager",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "share": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Operations Executive",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0,
-   "write": 1,
-   "create": 1,
-   "submit": 1
+   "share": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Documentation Officer",
-   "read": 1,
-   "print": 1,
+   "share": 1
+  },
+  {
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
    "permlevel": 0,
-   "write": 1,
-   "create": 1
-  },
-  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Site Engineer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar Liaison Officer",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
    "role": "Solar QC Inspector",
-   "read": 1,
-   "print": 1,
-   "email": 1,
-   "share": 1,
-   "report": 1,
-   "export": 1,
-   "permlevel": 0
+   "share": 1
   },
   {
-   "role": "Solar Technician",
-   "read": 1,
-   "print": 1,
    "email": 1,
-   "share": 1,
-   "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
   }
  ],
+ "search_fields": "solar_installation,spin",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "is_submittable": 1,
- "autoname": "",
- "naming_rule": "By script",
- "search_fields": "solar_installation,spin",
- "description": "Executed on stamp paper with a schedule no other record holds, and a legal life of twenty-five years - so it is a record, not a one-off print."
+ "track_changes": 1
 }

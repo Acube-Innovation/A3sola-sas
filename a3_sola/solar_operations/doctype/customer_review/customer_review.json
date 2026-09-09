@@ -1,0 +1,431 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-09-09 16:00:00.000000",
+ "description": "The customer's word on the job - collected once, with their consent to use it - and whether it reached Google.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_ref",
+  "solar_installation",
+  "solar_consumer",
+  "consumer_name",
+  "company",
+  "amended_from",
+  "cb_ref",
+  "status",
+  "review_date",
+  "collected_by",
+  "collection_mode",
+  "completed_on",
+  "skip_reason",
+  "sb_task",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_task",
+  "due_date",
+  "task_cost",
+  "sb_review",
+  "rating",
+  "consent_to_publish",
+  "cb_review",
+  "review_text",
+  "sb_media",
+  "media",
+  "sb_google",
+  "google_review_status",
+  "requested_on",
+  "requested_via",
+  "cb_google",
+  "posted_on",
+  "google_review_link",
+  "google_review_screenshot",
+  "decline_reason",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_ref",
+   "fieldtype": "Section Break",
+   "label": "Review"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_installation.solar_consumer",
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "solar_installation.consumer_name",
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Customer Review",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nIn Progress\nCompleted\nSkipped",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_date",
+   "fieldtype": "Date",
+   "label": "Review Date"
+  },
+  {
+   "fieldname": "collected_by",
+   "fieldtype": "Link",
+   "label": "Collected By",
+   "options": "User"
+  },
+  {
+   "fieldname": "collection_mode",
+   "fieldtype": "Select",
+   "label": "Collected",
+   "options": "\nIn Person\nPhone\nWhatsApp\nEmail"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.status=='Skipped'",
+   "fieldname": "skip_reason",
+   "fieldtype": "Small Text",
+   "label": "Skip Reason"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_task",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_task",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "task_cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_review",
+   "fieldtype": "Section Break",
+   "label": "What the Customer Said"
+  },
+  {
+   "fieldname": "rating",
+   "fieldtype": "Rating",
+   "in_list_view": 1,
+   "label": "Rating"
+  },
+  {
+   "description": "The customer agrees to the review and media being used in marketing.",
+   "fieldname": "consent_to_publish",
+   "fieldtype": "Check",
+   "label": "Consent to Publish"
+  },
+  {
+   "fieldname": "cb_review",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "review_text",
+   "fieldtype": "Text",
+   "label": "Review"
+  },
+  {
+   "fieldname": "sb_media",
+   "fieldtype": "Section Break",
+   "label": "Photos and Videos"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "media",
+   "fieldtype": "Table",
+   "label": "Media",
+   "options": "Review Media"
+  },
+  {
+   "fieldname": "sb_google",
+   "fieldtype": "Section Break",
+   "label": "Google Review"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Not Requested",
+   "fieldname": "google_review_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Google Review",
+   "options": "Not Requested\nRequested\nPosted\nDeclined"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "requested_on",
+   "fieldtype": "Date",
+   "label": "Requested On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "requested_via",
+   "fieldtype": "Select",
+   "label": "Requested Via",
+   "options": "\nWhatsApp\nEmail\nIn Person",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_google",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "posted_on",
+   "fieldtype": "Date",
+   "label": "Posted On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "google_review_link",
+   "fieldtype": "Data",
+   "label": "Review Link",
+   "options": "URL"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "google_review_screenshot",
+   "fieldtype": "Attach",
+   "label": "Screenshot"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "decline_reason",
+   "fieldtype": "Small Text",
+   "label": "Declined Because"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-09 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Customer Review",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Documentation Officer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Site Engineer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Executive",
+   "write": 1
+  }
+ ],
+ "search_fields": "solar_installation,consumer_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

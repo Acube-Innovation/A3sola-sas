@@ -1,0 +1,200 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 19:00:00.000000",
+ "description": "One priced configuration of a package: a module, an inverter and the boards and meter it is built with, and what that combination costs. A package is quoted as a handful of these, not as one price.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "module",
+  "inverter",
+  "sb_parts",
+  "dcdb",
+  "acdb",
+  "cb_parts",
+  "energy_meter",
+  "sb_rates",
+  "system_cost",
+  "standard_discount",
+  "additional_structure_and_cable_cost",
+  "cb_rates",
+  "indicative_subsidy",
+  "net_rate",
+  "sb_statutory",
+  "kseb_application_fee",
+  "kseb_registration_fee",
+  "cb_statutory",
+  "kseb_registration_refundable",
+  "net_meter_charge",
+  "statutory_total",
+  "sb_generation",
+  "expected_daily_units_low",
+  "cb_generation",
+  "expected_daily_units_high"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "description": "One of the package's module options.",
+   "fieldname": "module",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Module",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "description": "One of the package's inverter options.",
+   "fieldname": "inverter",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Inverter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_parts",
+   "fieldtype": "Section Break",
+   "label": "Balance of System"
+  },
+  {
+   "fieldname": "dcdb",
+   "fieldtype": "Select",
+   "label": "DCDB",
+   "reqd": 1
+  },
+  {
+   "fieldname": "acdb",
+   "fieldtype": "Select",
+   "label": "ACDB",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_parts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "energy_meter",
+   "fieldtype": "Select",
+   "label": "Energy Meter",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_rates",
+   "fieldtype": "Section Break",
+   "label": "Commercials"
+  },
+  {
+   "columns": 2,
+   "description": "What the package costs in this configuration.",
+   "fieldname": "system_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost",
+   "reqd": 1
+  },
+  {
+   "fieldname": "standard_discount",
+   "fieldtype": "Currency",
+   "label": "Standard Discount"
+  },
+  {
+   "fieldname": "additional_structure_and_cable_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Structure & Cable Cost"
+  },
+  {
+   "fieldname": "cb_rates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Resolved from the scheme. Never typed.",
+   "fieldname": "indicative_subsidy",
+   "fieldtype": "Currency",
+   "label": "Indicative Subsidy",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "net_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_statutory",
+   "fieldtype": "Section Break",
+   "label": "Statutory (resolved from the fee schedule)"
+  },
+  {
+   "fieldname": "kseb_application_fee",
+   "fieldtype": "Currency",
+   "label": "Application Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kseb_registration_fee",
+   "fieldtype": "Currency",
+   "label": "Registration Fee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_statutory",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kseb_registration_refundable",
+   "fieldtype": "Currency",
+   "label": "Registration Refundable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_meter_charge",
+   "fieldtype": "Currency",
+   "label": "Net Meter Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "statutory_total",
+   "fieldtype": "Currency",
+   "label": "Statutory Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_generation",
+   "fieldtype": "Section Break",
+   "label": "Generation"
+  },
+  {
+   "fieldname": "expected_daily_units_low",
+   "fieldtype": "Float",
+   "label": "Expected Units/day (low)",
+   "precision": 2,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_generation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_daily_units_high",
+   "fieldtype": "Float",
+   "label": "Expected Units/day (high)",
+   "precision": 2,
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-08 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package Price",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

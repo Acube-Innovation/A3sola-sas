@@ -25,6 +25,7 @@ class StatutoryFeePayment(Document):
 		set_name(self, "statutory_fee_payment_series_prefix", ".YYYY.-.#####", fallback="SOL-SFP")
 
 	def validate(self):
+		self.stamp_task()
 		assert_same_company(self, LINKS)
 		self.resolve_amounts()
 		self.compute_reimbursement()
@@ -110,6 +111,19 @@ class StatutoryFeePayment(Document):
 				title=_("Receipt Required"),
 			)
 
+	def stamp_task(self):
+		"""Which task this payment is, and the window it opens. Derived, not chosen."""
+		from a3_sola.api.tasks import FEE_TASKS
+		from a3_sola.api.settings import get_int
+
+		self.task_code = FEE_TASKS.get(self.fee_type)
+		if not self.assigned_by:
+			self.assigned_by = frappe.session.user
+		if self.fee_type == "Application Fee" and self.payment_date:
+			self.form2_due_date = frappe.utils.add_days(self.payment_date, get_int("form2_window_days") or 30)
+		else:
+			self.form2_due_date = None
+
 	def on_submit(self):
 		self.push_to_installation()
 		# PHASE 3 CONTRACT: the reimbursement receivable registers here.
@@ -124,7 +138,6 @@ class StatutoryFeePayment(Document):
 		self.push_to_installation()
 		if self.refund_received_on:
 			stages.on_statutory_refund_received(self)
-			self.advance_refund_stage()
 
 	def push_to_installation(self):
 		updates = {"refund_status": self.refund_status}
@@ -132,16 +145,3 @@ class StatutoryFeePayment(Document):
 			updates["registration_fee_paid_on"] = self.payment_date
 			updates["refund_received_amount"] = flt(self.refund_received_amount)
 		frappe.db.set_value("Solar Installation", self.solar_installation, updates, update_modified=False)
-
-	def advance_refund_stage(self):
-		status = frappe.db.get_value(
-			"Installation Stage Log", {"parent": self.solar_installation, "stage_code": "RFND"}, "status"
-		)
-		if status in (None, "Completed", "Skipped"):
-			return
-		try:
-			stages.advance_stage(
-				self.solar_installation, "RFND", actual_date=self.refund_received_on
-			)
-		except frappe.ValidationError as exc:
-			frappe.msgprint(_("RFND stage not advanced: {0}").format(exc), indicator="orange")

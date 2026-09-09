@@ -17,3 +17,48 @@ a3_sola.patches.v1_0.serve_desk_at_site_root
 # sites, and Frappe never re-runs a logged patch - so editing it would have done nothing.
 a3_sola.patches.v1_0.install_starter_dataset
 a3_sola.patches.v1_1.backfill_proposal_series_and_lead
+
+# The stamp paper somebody has to go and buy, which until now lived in nobody's queue.
+a3_sola.patches.v1_1.add_stamp_paper_stage
+
+# The licensee the net-metering agreement names as its second party, which until now
+# existed only as a record id.
+a3_sola.patches.v1_1.backfill_discom_legal_identity
+
+# One package, several module options - the DCR panel and its non-DCR equivalent - rather
+# than a duplicated package per panel.
+a3_sola.patches.v1_1.move_package_modules_to_a_table
+
+# Each inverter option now carries its own price, so a package can be quoted three ways.
+a3_sola.patches.v1_1.move_package_inverters_to_a_table
+
+# Balance of system becomes typed rows carrying a make, a rating and a price, rather than
+# ten fixed fields that could hold none of those.
+a3_sola.patches.v1_1.move_package_system_to_a_table
+
+# A package is quoted as a handful of priced configurations, not as one price for a
+# combination nobody had named.
+a3_sola.patches.v1_1.move_package_commercials_to_a_price_table
+
+# One task template per company. The residential/commercial pair is retired, not deleted:
+# open installations still link them until the rebuild patch re-points every job.
+a3_sola.patches.v1_2.retire_two_stage_templates_for_one
+
+
+# Every open job is rebuilt on the task template; its documents claim their task rows.
+a3_sola.patches.v1_2.rebuild_installation_tasks
+
+# Billing milestones key to tasks, and every open job gets its plan from the order onward.
+a3_sola.patches.v1_2.retarget_billing_milestone_codes
+a3_sola.patches.v1_2.create_billing_plans_for_open_installations
+
+# The Net Metering Agreement and the Solar Agreement described the same stamp-paper instrument.
+# Executed records are copied into Solar Agreements; the originals stay read-only until the
+# user has checked the copies and asks for them to be removed.
+a3_sola.patches.v1_2.migrate_net_metering_agreement_into_solar_agreement
+
+# Task rows never point at a document that no longer exists.
+a3_sola.patches.v1_2.release_dangling_task_links
+
+# The thirty tasks are the same for every company: one shared template, the copies removed.
+a3_sola.patches.v1_2.one_task_template_for_all_companies

@@ -10,21 +10,21 @@ both phases. Cases marked **manual** need a human at the screen or a printed doc
 
 | ID | Steps | Expected | Automated |
 |---|---|---|---|
-| U2-01 | Submit a Sales Order from a Phase 1 solar quotation | One Solar Installation, submitted, with the resolved chain | `test_handoff` |
+| U2-01 | Submit a Sales Order from a Phase 1 solar quotation | One Solar Installation, submitted, with its thirty task rows; ORD Completed with the order as its document; a billing plan with the advance triggered | `test_handoff` |
 | U2-02 | Re-run the handoff on the same order | Returns the existing installation; no second job | `test_handoff` |
-| U2-03 | Inspect a financed residential job | 19 stages, none skipped for finance | `test_installation` |
-| U2-04 | Inspect a self-funded job | VFR, LOAN and BCOM marked **Skipped** with "Self-funded sale" as the reason | `test_installation` |
-| U2-05 | Inspect an unsubsidised job | PCR and DBT skipped | `test_installation` |
+| U2-03 | Inspect a financed residential job | Thirty tasks, none skipped for finance; nothing In Progress until a document opens | `test_installation`, `test_tasks` |
+| U2-04 | Inspect a self-funded job | LOAN and BCOM marked **Skipped** with the reason | `test_installation` |
+| U2-05 | Inspect an unsubsidised job | NPA, PORTUPD, SUBREQ, CORR and DBT skipped | `test_installation` |
 | U2-06 | Inspect a 3 kW job | CEIG skipped — below the capacity threshold | `test_installation` |
-| U2-07 | Advance a stage with no evidence attached | Blocked, naming each missing document | `test_installation` |
-| U2-08 | Attach evidence but do not verify it, then advance | Blocked, naming it as unverified | `test_installation` |
-| U2-09 | Attach and verify, then advance | Stage completes, next stage starts | `test_installation` |
-| U2-10 | Block a stage without a reason | Refused | `test_installation` |
+| U2-07 | Press **Task** on the job and pick a task | Its document opens (existing, or new with the links filled); the row turns In Progress and names the document | `test_tasks` |
+| U2-08 | Submit the task document | The row completes with date, reference and cost; a cancel reopens it | `test_tasks` |
+| U2-09 | Complete a task by hand while its document is live, as an executive | Refused; a manager may | `test_tasks` |
+| U2-10 | Block a task without a reason | Refused | `test_tasks` |
 | U2-11 | Block, then unblock | Status returns to In Progress | `test_installation` |
-| U2-12 | Skip a mandatory stage as an Operations Executive | Refused — manager only | `test_installation` |
-| U2-13 | Revert to an earlier stage | That stage and everything after it clears | `test_installation` |
-| U2-14 | Reach a DISCOM-owned stage | Status becomes Awaiting External; blocking party named | `test_installation` |
-| U2-15 | Open the stage chain on the form | Coloured chips, skipped stages struck through with the reason on hover | **manual** |
+| U2-12 | Skip a mandatory task as an Operations Executive | Refused — manager only | `test_tasks` |
+| U2-13 | Reopen a completed task | Only that row resets; a document for a skipped task puts it back | `test_tasks` |
+| U2-14 | Only DISCOM-owned tasks are in progress | Status becomes Awaiting External; blocking party named | `test_installation` |
+| U2-15 | Open the task grid and the Document Register on the form | One chip per task with assignee, due date and document link; every generated or uploaded file names its source document | **manual** |
 
 ## Document engine (P2-A3S-001)
 
@@ -75,9 +75,9 @@ both phases. Cases marked **manual** need a human at the screen or a printed doc
 | U2-43 | Submit with an expired sensor calibration | Blocked | `test_commissioning` |
 | U2-44 | Submit below a 75% performance ratio | Blocked without a recorded reason | `test_commissioning` |
 | U2-45 | Same, with a manager's reason | Allowed; the reason is written to the timeline | `test_commissioning` |
-| U2-46 | Submit a valid report | Warranty window written; PR carried to the installation; COMM advances | `test_commissioning` |
+| U2-46 | Submit a valid report | Warranty window written; PR carried to the installation; COMM completes; meter and inspectorate particulars pulled from their tasks | `test_commissioning` |
 | U2-47 | Generate the DISCOM testing checklist | Complete, and visually equivalent to the client's spreadsheet | **manual** |
-| U2-48 | Execute the net metering agreement without a SPIN | Blocked | **manual** |
+| U2-48 | Execute the Solar Agreement without a SPIN, or without the stamp paper recorded | Blocked | `test_agreement` |
 | U2-49 | Print the agreement | Stamp paper flagged, full schedule including wheeling preferences | **manual** |
 
 ## Snags, claims and fees (P2-A3S-003)
@@ -102,7 +102,7 @@ both phases. Cases marked **manual** need a human at the screen or a printed doc
 | U2-60 | Run the registry guard | Every Operations doctype registered, every company-bearing one isolated | `test_tenancy` |
 | U2-61 | Open a Company B installation as a Company A user | Denied | `test_tenancy` |
 | U2-62 | Link a Company B installation from a Company A application | Rejected, naming both | `test_tenancy` |
-| U2-63 | Check each tenant's masters | Each has its own stage chain and document templates | `test_tenancy` |
+| U2-63 | Check each tenant's masters | Each has its own checklists and document templates; the task template is the one shared by all | `test_tenancy` |
 | U2-64 | Check the five extension points | Present, documented, inert | `test_tenancy` |
 | U2-65 | Run all ten Operations reports | All execute | **manual / smoke** |
 | U2-66 | Log in as a Solar Technician | No contract value, no subsidy figure, no consumer bank account, no Subsidy Claim | **manual** |

@@ -1,0 +1,78 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-08 16:00:00.000000",
+ "description": "One inverter option on a package, with what the package costs built that way. The same array is quoted with a string inverter, with panel-level optimisers and with microinverters - three prices, one package.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "inverter_specification",
+  "inverter_make",
+  "inverter_capacity_kw",
+  "inverter_count",
+  "cost",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "inverter_specification",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Specification",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Make",
+   "options": "Component Make"
+  },
+  {
+   "columns": 1,
+   "fieldname": "inverter_capacity_kw",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Capacity (kW)",
+   "precision": 3
+  },
+  {
+   "columns": 1,
+   "fieldname": "inverter_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Nos"
+  },
+  {
+   "columns": 2,
+   "description": "What the package costs built with this inverter. The default row's cost is the one the net rate is computed from.",
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost"
+  },
+  {
+   "columns": 1,
+   "description": "The option quoted unless another is chosen. Exactly one row carries it.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-08 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package Inverter",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

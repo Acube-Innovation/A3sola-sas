@@ -1,0 +1,752 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-09-09 09:00:00.000000",
+ "description": "One task of an installation that has no document of its own: a status, an assignee, a date, what it cost, and the evidence it produced or received.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_ref",
+  "naming_series",
+  "solar_installation",
+  "solar_consumer",
+  "consumer_name",
+  "company",
+  "cb_ref",
+  "task_code",
+  "task_name",
+  "status",
+  "amended_from",
+  "sb_assign",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_assign",
+  "due_date",
+  "started_on",
+  "completed_on",
+  "skip_reason",
+  "sb_cost",
+  "cost",
+  "cost_category",
+  "cb_cost",
+  "cost_remarks",
+  "sb_payment",
+  "payer",
+  "amount",
+  "paid_on",
+  "payment_mode",
+  "payment_reference",
+  "cb_payment",
+  "payment_entry",
+  "sales_invoice",
+  "loan_application",
+  "loan_tranche",
+  "bank_advice",
+  "sb_frm1",
+  "form1_submitted_on",
+  "cb_frm1",
+  "ae_acknowledgement_no",
+  "sb_dsgn",
+  "bom",
+  "design_verified_by",
+  "design_frozen_on",
+  "cb_dsgn",
+  "sld_attachment",
+  "structure_drawing_attachment",
+  "module_layout_attachment",
+  "design_notes",
+  "sb_ccert",
+  "solar_contractor",
+  "certificate_no",
+  "cb_ccert",
+  "certificate_date",
+  "certificate",
+  "sb_portupd",
+  "portal_reference",
+  "portal_updated_on",
+  "installation_photos_uploaded",
+  "cb_portupd",
+  "dcr_certificate_no",
+  "dcr_certificate",
+  "sb_ktst",
+  "inspection_date",
+  "inspector_name",
+  "inspector_designation",
+  "cb_ktst",
+  "result",
+  "observations",
+  "signed_checklist",
+  "sb_mtr",
+  "meter_source",
+  "meter_make",
+  "meter_model",
+  "meter_serial",
+  "cb_mtr",
+  "meter_cost",
+  "meter_purchase_reference",
+  "meter_received_on",
+  "meter_test_certificate",
+  "sb_uploads",
+  "uploads",
+  "sb_generated",
+  "generated",
+  "sb_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_ref",
+   "fieldtype": "Section Break",
+   "label": "Task"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Series",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_installation.solar_consumer",
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "solar_installation.consumer_name",
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Which of the installation's tasks this document carries out.",
+   "fieldname": "task_code",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Task",
+   "options": "\nFRM1\nADV\nDSGN\nCCERT\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_name",
+   "fieldtype": "Data",
+   "label": "Task Name",
+   "read_only_depends_on": "eval:doc.task_code!='OTHER'"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nIn Progress\nCompleted\nSkipped",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Installation Task",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_assign",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_assign",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Date",
+   "label": "Started On"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Completed On"
+  },
+  {
+   "depends_on": "eval:doc.status=='Skipped'",
+   "fieldname": "skip_reason",
+   "fieldtype": "Small Text",
+   "label": "Skip Reason",
+   "mandatory_depends_on": "eval:doc.status=='Skipped'"
+  },
+  {
+   "fieldname": "sb_cost",
+   "fieldtype": "Section Break",
+   "label": "Cost Updation"
+  },
+  {
+   "description": "What this task cost the company. Rolled onto the installation's task row.",
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cost_category",
+   "fieldtype": "Select",
+   "label": "Cost Category",
+   "options": "\nLabour\nSubcontractor\nStatutory\nLogistics\nLiaison\nMaterial\nOther",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_cost",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_remarks",
+   "fieldtype": "Small Text",
+   "label": "Cost Remarks",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:['ADV','BAL'].includes(doc.task_code)",
+   "fieldname": "sb_payment",
+   "fieldtype": "Section Break",
+   "label": "Payment"
+  },
+  {
+   "fieldname": "payer",
+   "fieldtype": "Select",
+   "label": "Paid By",
+   "mandatory_depends_on": "eval:['ADV','BAL'].includes(doc.task_code)",
+   "options": "\nCustomer\nBank"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Date",
+   "label": "Paid On"
+  },
+  {
+   "fieldname": "payment_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "\nBank Transfer\nUPI\nCheque\nCash\nLoan Disbursement"
+  },
+  {
+   "fieldname": "payment_reference",
+   "fieldtype": "Data",
+   "label": "Reference / UTR"
+  },
+  {
+   "fieldname": "cb_payment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_entry",
+   "fieldtype": "Link",
+   "label": "Payment Entry",
+   "options": "Payment Entry"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "depends_on": "eval:doc.payer=='Bank'",
+   "description": "Set by Pull Bank Tranche, or pick the loan the money came from.",
+   "fieldname": "loan_application",
+   "fieldtype": "Link",
+   "label": "Loan Application",
+   "options": "Loan Application"
+  },
+  {
+   "depends_on": "eval:doc.payer=='Bank'",
+   "fieldname": "loan_tranche",
+   "fieldtype": "Select",
+   "label": "Tranche",
+   "options": "\nAdvance\nBalance"
+  },
+  {
+   "depends_on": "eval:doc.payer=='Bank'",
+   "fieldname": "bank_advice",
+   "fieldtype": "Attach",
+   "label": "Bank Advice"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='FRM1'",
+   "fieldname": "sb_frm1",
+   "fieldtype": "Section Break",
+   "label": "Form 1"
+  },
+  {
+   "fieldname": "form1_submitted_on",
+   "fieldtype": "Date",
+   "label": "Submitted to Section On"
+  },
+  {
+   "fieldname": "cb_frm1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ae_acknowledgement_no",
+   "fieldtype": "Data",
+   "label": "AE Acknowledgement No"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='DSGN'",
+   "fieldname": "sb_dsgn",
+   "fieldtype": "Section Break",
+   "label": "Design Freeze"
+  },
+  {
+   "fieldname": "bom",
+   "fieldtype": "Link",
+   "label": "Bill of Materials",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "design_verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User"
+  },
+  {
+   "fieldname": "design_frozen_on",
+   "fieldtype": "Date",
+   "label": "Frozen On"
+  },
+  {
+   "fieldname": "cb_dsgn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sld_attachment",
+   "fieldtype": "Attach",
+   "label": "Single Line Diagram"
+  },
+  {
+   "fieldname": "structure_drawing_attachment",
+   "fieldtype": "Attach",
+   "label": "Structure Drawing"
+  },
+  {
+   "fieldname": "module_layout_attachment",
+   "fieldtype": "Attach",
+   "label": "Module Layout"
+  },
+  {
+   "fieldname": "design_notes",
+   "fieldtype": "Small Text",
+   "label": "Design Notes"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='CCERT'",
+   "fieldname": "sb_ccert",
+   "fieldtype": "Section Break",
+   "label": "Completion Certificate"
+  },
+  {
+   "fieldname": "solar_contractor",
+   "fieldtype": "Link",
+   "label": "Electrical Contractor",
+   "options": "Solar Contractor"
+  },
+  {
+   "fieldname": "certificate_no",
+   "fieldtype": "Data",
+   "label": "Certificate No"
+  },
+  {
+   "fieldname": "cb_ccert",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "certificate_date",
+   "fieldtype": "Date",
+   "label": "Certificate Date"
+  },
+  {
+   "fieldname": "certificate",
+   "fieldtype": "Attach",
+   "label": "Certificate"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='PORTUPD'",
+   "fieldname": "sb_portupd",
+   "fieldtype": "Section Break",
+   "label": "Portal Update"
+  },
+  {
+   "fetch_from": "solar_installation.national_portal_application_id",
+   "fieldname": "portal_reference",
+   "fieldtype": "Data",
+   "label": "Portal Application ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "portal_updated_on",
+   "fieldtype": "Date",
+   "label": "Updated On"
+  },
+  {
+   "fieldname": "installation_photos_uploaded",
+   "fieldtype": "Check",
+   "label": "Installation Photos Uploaded"
+  },
+  {
+   "fieldname": "cb_portupd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dcr_certificate_no",
+   "fieldtype": "Data",
+   "label": "DCR Certificate No"
+  },
+  {
+   "fieldname": "dcr_certificate",
+   "fieldtype": "Attach",
+   "label": "DCR Certificate"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='KTST'",
+   "fieldname": "sb_ktst",
+   "fieldtype": "Section Break",
+   "label": "DISCOM Inspection"
+  },
+  {
+   "fieldname": "inspection_date",
+   "fieldtype": "Date",
+   "label": "Inspection Date"
+  },
+  {
+   "fieldname": "inspector_name",
+   "fieldtype": "Data",
+   "label": "Inspector"
+  },
+  {
+   "default": "Assistant Engineer",
+   "fieldname": "inspector_designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fieldname": "cb_ktst",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "options": "\nPassed\nPassed with Observations\nFailed\nRe-inspection Required"
+  },
+  {
+   "fieldname": "observations",
+   "fieldtype": "Small Text",
+   "label": "Observations"
+  },
+  {
+   "fieldname": "signed_checklist",
+   "fieldtype": "Attach",
+   "label": "Signed Checklist"
+  },
+  {
+   "depends_on": "eval:doc.task_code=='MTR'",
+   "fieldname": "sb_mtr",
+   "fieldtype": "Section Break",
+   "label": "Meter Purchase"
+  },
+  {
+   "fieldname": "meter_source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "\nKSEB\nVendor"
+  },
+  {
+   "fieldname": "meter_make",
+   "fieldtype": "Data",
+   "label": "Make"
+  },
+  {
+   "fieldname": "meter_model",
+   "fieldtype": "Data",
+   "label": "Model"
+  },
+  {
+   "fieldname": "meter_serial",
+   "fieldtype": "Data",
+   "label": "Serial No"
+  },
+  {
+   "fieldname": "cb_mtr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "meter_cost",
+   "fieldtype": "Currency",
+   "label": "Meter Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "meter_purchase_reference",
+   "fieldtype": "Data",
+   "label": "Purchase / Allocation Reference"
+  },
+  {
+   "fieldname": "meter_received_on",
+   "fieldtype": "Date",
+   "label": "Received On"
+  },
+  {
+   "fieldname": "meter_test_certificate",
+   "fieldtype": "Attach",
+   "label": "Test Certificate"
+  },
+  {
+   "fieldname": "sb_uploads",
+   "fieldtype": "Section Break",
+   "label": "Uploaded Documents"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "uploads",
+   "fieldtype": "Table",
+   "label": "Uploads",
+   "options": "Task Attachment"
+  },
+  {
+   "fieldname": "sb_generated",
+   "fieldtype": "Section Break",
+   "label": "Generated Documents"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "generated",
+   "fieldtype": "Table",
+   "label": "Generated",
+   "options": "Task Generated Document"
+  },
+  {
+   "fieldname": "sb_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-09 11:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Installation Task",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Documentation Officer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Site Engineer",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Executive",
+   "write": 1
+  }
+ ],
+ "search_fields": "solar_installation,task_code,consumer_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "task_name",
+ "track_changes": 1
+}

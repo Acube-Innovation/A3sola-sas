@@ -15,8 +15,11 @@ from a3_sola.tests.fixtures import (
 )
 
 
-def stage_template(company=None, name="PM Surya Ghar Residential (Default)"):
-	return name_of("Installation Stage Template", "template_name", name, company)
+def stage_template(company=None, name="Solar Installation Tasks"):
+	"""The shared task template; a company's own variant only when one exists."""
+	return frappe.db.get_value(
+		"Installation Stage Template", {"is_shared": 1, "is_active": 1}, "name"
+	) or name_of("Installation Stage Template", "template_name", name, company)
 
 
 def make_installation(consumer=None, estimate=None, submit=True, **kwargs):
@@ -55,7 +58,10 @@ def make_installation(consumer=None, estimate=None, submit=True, **kwargs):
 
 
 def attach_stage_documents(installation, stage_code, verified=True):
-	"""Satisfy the evidence gate for a stage so a test can move past it."""
+	"""Fill a task's expected register rows, as a test double for uploads.
+
+	Nothing gates on these any more; the helper stays for tests that read the register.
+	"""
 	doc = frappe.get_doc("Solar Installation", installation.name)
 	for row in doc.documents:
 		if row.stage_code != stage_code or not row.is_mandatory:
@@ -72,13 +78,15 @@ def attach_stage_documents(installation, stage_code, verified=True):
 
 
 def complete_through(installation, stage_codes):
-	"""Advance a chain of stages, attaching evidence for each."""
-	from a3_sola.api import stages
+	"""Complete tasks by hand, in the order given. Tasks have no order of their own."""
+	from a3_sola.api import tasks
 
 	for code in stage_codes:
-		attach_stage_documents(installation, code)
-		stages.advance_stage(installation.name, code)
+		tasks.complete_task(installation.name, code, silent=True)
 	return frappe.get_doc("Solar Installation", installation.name)
+
+
+complete_tasks = complete_through
 
 
 def capture_serials(installation, modules=6, inverters=1):

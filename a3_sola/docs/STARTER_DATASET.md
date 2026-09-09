@@ -37,8 +37,9 @@ current one already filled in — the same route a real job takes.
          │       └─ Solar Proposal               the offer that goes to the customer
          │           └─ Quotation                the priced offer, figures fetched
          │               └─ Sales Order          submitting this opens the job
-         └─ Solar Installation                   ten stages, ordered to tested
-             ├─ Installation Work Order  (×5)    the crew's day, with real hours
+         └─ Solar Installation                   thirty tasks, each carried by its document
+             ├─ Installation Task  (×n)           Form 1, advance, design freeze, meter, balance…
+             ├─ Installation Work Order  (×5)    the crew's day, with real hours and geo photos
              │   └─ Installation Snag            found at QC, rectified under a work order
              │       └─ Service Ticket           the same defect once the job was live
              ├─ Portal Application               the DISCOM's file, and its query
@@ -46,8 +47,12 @@ current one already filled in — the same route a real job takes.
              │       └─ Statutory Fee Recovery   and recovered from the customer
              ├─ Loan Application                 sanctioned and part-disbursed
              ├─ Subsidy Claim                    company-funded gap, recovered
+             ├─ Material Dispatch Notice         serials mailed to the electrical contractor
+             │   └─ Solar Contractor             who certifies the completion
              ├─ Commissioning Report             the inspection, protection settings and all
-             │   └─ Net Metering Agreement       executed with the DISCOM
+             ├─ Solar Agreement                  the KSEB agreement, on stamp paper, executed
+             │   └─ Document Pack                the Form 2/3 submission, acknowledged by the AE
+             ├─ Customer Review                  the customer's word, and the Google review
              └─ Project                          opened automatically on commissioning
                  ├─ Solar Billing Plan           milestones, two of them triggered
                  └─ Solar OM Contract            five years of preventive maintenance
@@ -65,7 +70,9 @@ first invited user:
      ├─ Platform Subscription    ─ Payment Mandate (auto debit)
      └─ Provisioning Job         ─ Tenant ─ Tenant Invitation
 
-**42 documents across 34 doctypes**, all reachable from those two starting points.
+**71 of the app's 72 doctypes hold at least one record** after the install (only the
+platform's Seat Change Request is left untouched), all reachable from those two starting
+points; `bench --site local execute a3_sola.setup.starter.install` prints the exact reach.
 
 ---
 

@@ -14,6 +14,10 @@ from frappe.utils import flt
 from a3_sola.api import documents, serials, stages, statutory
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
+from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	default_inverter,
+	default_module,
+)
 
 LINKS = (
 	("solar_consumer", "Solar Consumer"),
@@ -41,6 +45,7 @@ class SolarInstallation(Document):
 		self.apply_package_defaults()
 		if not self.stages:
 			stages.build_stages(self)
+		self.release_dangling_links()
 		self.validate_capacity()
 		self.resolve_statutory()
 		serials.validate_register(self)
@@ -75,15 +80,21 @@ class SolarInstallation(Document):
 		and every warranty term downstream. Site-specific overrides are respected; only
 		blanks are filled.
 		"""
-		if not self.solar_package:
+		if not self.solar_package or not frappe.db.exists("Solar Package", self.solar_package):
+			# A job whose package was later deleted must still open and save; the link
+			# validation says what is missing, this must not crash before it gets the chance.
 			return
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
+		# A package offers several module and inverter options; the job is built with one
+		# of each, and which one is the package's own decision, not this form's.
+		module = default_module(package)
+		inverter = default_inverter(package)
 		mapping = {
-			"module_make": package.module_make,
-			"module_wattage": package.module_wattage,
-			"module_count": package.module_count,
-			"inverter_make": package.inverter_1_make,
-			"inverter_capacity_kw": package.inverter_1_capacity_kw,
+			"module_make": module.module_make if module else None,
+			"module_wattage": module.module_wattage if module else None,
+			"module_count": module.module_count if module else None,
+			"inverter_make": inverter.inverter_make if inverter else None,
+			"inverter_capacity_kw": inverter.inverter_capacity_kw if inverter else None,
 			"system_type": package.system_type,
 			"connection_type": package.connection_type,
 		}
@@ -159,11 +170,8 @@ class SolarInstallation(Document):
 					self.flags.capacity_overridden, self.capacity_kw, frappe.session.user
 				),
 			)
-		for row in self.stages:
-			if row.status == "Pending":
-				row.status = "In Progress"
-				row.actual_start_date = self.order_date
-				break
+		# Nothing starts on submit. Tasks are independent: a task begins when somebody opens
+		# the document that carries it out, and the job is In Progress from the order.
 		stages.recompute(self)
 
 	def before_update_after_submit(self):
@@ -177,8 +185,17 @@ class SolarInstallation(Document):
 		has already been written, so anything computed there is silently discarded.
 		"""
 		serials.validate_register(self)
+		self.release_dangling_links()
 		self.roll_counts()
 		stages.recompute(self)
+
+	def release_dangling_links(self):
+		"""A task document deleted behind the engine's back must not make the job unsaveable."""
+		if self.is_new():
+			return
+		from a3_sola.api import tasks
+
+		tasks.release_dangling_links(self)
 
 	def on_cancel(self):
 		self.status = "Cancelled"
@@ -206,8 +223,9 @@ def verify_document(installation, row_name):
 
 
 @frappe.whitelist()
-def get_stage_chain_html(installation):
-	"""The visual stage chain rendered on the form."""
+def get_task_grid_html(installation):
+	"""The task board rendered on the form: one chip per task, coloured by status, with
+	the assignee, the due date and the document that carries it out."""
 	doc = frappe.get_doc("Solar Installation", installation)
 	doc.check_permission("read")
 	colours = {
@@ -217,16 +235,36 @@ def get_stage_chain_html(installation):
 		"Completed": ("#d1e7dd", "#0f5132"),
 		"Skipped": ("#f1f3f5", "#868e96"),
 	}
-	chips = []
+	esc = frappe.utils.escape_html
+	cells = []
 	for row in doc.stages:
 		bg, fg = colours.get(row.status, ("#e9ecef", "#495057"))
 		if row.is_sla_breached:
 			bg, fg = "#f8d7da", "#842029"
+		bits = [row.status]
+		if row.assigned_to:
+			bits.append(esc(frappe.utils.get_fullname(row.assigned_to)))
+		if row.due_date and row.status not in ("Completed", "Skipped"):
+			bits.append(_("due {0}").format(frappe.utils.formatdate(row.due_date, "dd MMM")))
+		link = ""
+		if row.task_document and frappe.db.exists(row.task_doctype, row.task_document):
+			link = (
+				f'<a href="/app/{frappe.scrub(row.task_doctype).replace("_", "-")}/{esc(row.task_document)}" '
+				f'style="color:{fg};text-decoration:underline">{esc(row.task_document)}</a>'
+			)
 		title = row.skip_reason or row.blocked_reason or f"{row.status} - SLA {row.sla_days or 0}d"
-		chips.append(
-			f'<span title="{frappe.utils.escape_html(title)}" style="display:inline-block;margin:2px 4px 2px 0;'
-			f'padding:3px 9px;border-radius:11px;font-size:11px;background:{bg};color:{fg};'
-			f'{"text-decoration:line-through;" if row.status == "Skipped" else ""}">'
-			f"{frappe.utils.escape_html(row.stage_code)} · {frappe.utils.escape_html(row.stage_name)}</span>"
+		cells.append(
+			f'<div title="{esc(title)}" style="display:inline-block;width:230px;margin:3px;padding:6px 9px;'
+			f'border-radius:6px;font-size:11px;background:{bg};color:{fg};vertical-align:top;'
+			f'{"opacity:.6;" if row.status == "Skipped" else ""}">'
+			f"<b>{esc(row.stage_code)}</b> · {esc(row.stage_name)}<br>"
+			f'<span style="font-size:10px">{" · ".join(bits)}</span>'
+			f'{"<br>" + link if link else ""}</div>'
 		)
-	return "<div style='line-height:2'>" + "".join(chips) + "</div>"
+	return "<div style='line-height:1.4'>" + "".join(cells) + "</div>"
+
+
+@frappe.whitelist()
+def get_stage_chain_html(installation):
+	"""Kept for anything still calling the old name; renders the task grid."""
+	return get_task_grid_html(installation)

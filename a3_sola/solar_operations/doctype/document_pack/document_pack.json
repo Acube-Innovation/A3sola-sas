@@ -1,0 +1,612 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-09-09 15:00:00.000000",
+ "description": "A set of documents that leaves together: the Form 2/3 submission to KSEB, the completion pack to the bank, the completion file for the customer. Each item is generated on its own, merged into one PDF, and the pack completes when the recipient has it.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_ref",
+  "solar_installation",
+  "solar_consumer",
+  "consumer_name",
+  "company",
+  "amended_from",
+  "cb_ref",
+  "pack_type",
+  "task_code",
+  "status",
+  "completed_on",
+  "skip_reason",
+  "sb_task",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_task",
+  "due_date",
+  "task_cost",
+  "sb_kseb",
+  "solar_agreement",
+  "form2_due_date",
+  "submitted_to_ae_on",
+  "cb_kseb",
+  "ae_name",
+  "ae_acknowledgement_no",
+  "acknowledged_on",
+  "ae_acknowledgement",
+  "sb_bank",
+  "loan_application",
+  "lender_name",
+  "lender_branch",
+  "cb_bank",
+  "sent_to_bank_on",
+  "sent_via",
+  "bank_reference",
+  "balance_requested_amount",
+  "sb_customer",
+  "sales_invoice",
+  "quotation",
+  "solar_om_contract",
+  "cb_customer",
+  "handed_over_on",
+  "handed_over_to",
+  "handover_mode",
+  "customer_acknowledgement",
+  "sb_contents",
+  "generated",
+  "uploads",
+  "generation_notes",
+  "sb_merge",
+  "include_uploads_in_merge",
+  "merged_pdf",
+  "cb_merge",
+  "merged_on",
+  "merge_notes",
+  "sb_sent",
+  "sent_on",
+  "sent_to",
+  "cb_sent",
+  "communication",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_ref",
+   "fieldtype": "Section Break",
+   "label": "Pack"
+  },
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Installation",
+   "options": "Solar Installation",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "solar_installation.solar_consumer",
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "solar_installation.consumer_name",
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Document Pack",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_ref",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pack_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pack",
+   "options": "KSEB Submission\nBank Completion Pack\nCustomer Completion File",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "task_code",
+   "fieldtype": "Data",
+   "label": "Task",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nIn Progress\nCompleted\nSkipped",
+   "reqd": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.status=='Skipped'",
+   "fieldname": "skip_reason",
+   "fieldtype": "Small Text",
+   "label": "Skip Reason"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_task",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_task",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "description": "Courier, printing, notary - whatever the pack cost to put together.",
+   "fieldname": "task_cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.pack_type=='KSEB Submission'",
+   "fieldname": "sb_kseb",
+   "fieldtype": "Section Break",
+   "label": "KSEB Submission"
+  },
+  {
+   "fieldname": "solar_agreement",
+   "fieldtype": "Link",
+   "label": "Executed Agreement",
+   "mandatory_depends_on": "eval:doc.pack_type=='KSEB Submission'",
+   "options": "Solar Agreement"
+  },
+  {
+   "description": "Thirty days from the Form 1 payment.",
+   "fieldname": "form2_due_date",
+   "fieldtype": "Date",
+   "label": "Form 2 Due On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "submitted_to_ae_on",
+   "fieldtype": "Date",
+   "label": "Submitted to AE On"
+  },
+  {
+   "fieldname": "cb_kseb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ae_name",
+   "fieldtype": "Data",
+   "label": "Assistant Engineer"
+  },
+  {
+   "fieldname": "ae_acknowledgement_no",
+   "fieldtype": "Data",
+   "label": "Acknowledgement No"
+  },
+  {
+   "fieldname": "acknowledged_on",
+   "fieldtype": "Date",
+   "label": "Acknowledged On"
+  },
+  {
+   "fieldname": "ae_acknowledgement",
+   "fieldtype": "Attach",
+   "label": "Acknowledged Copy"
+  },
+  {
+   "depends_on": "eval:doc.pack_type=='Bank Completion Pack'",
+   "fieldname": "sb_bank",
+   "fieldtype": "Section Break",
+   "label": "Bank Completion Pack"
+  },
+  {
+   "fieldname": "loan_application",
+   "fieldtype": "Link",
+   "label": "Loan Application",
+   "options": "Loan Application"
+  },
+  {
+   "fieldname": "lender_name",
+   "fieldtype": "Data",
+   "label": "Lender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lender_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_bank",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sent_to_bank_on",
+   "fieldtype": "Date",
+   "label": "Sent to Bank On"
+  },
+  {
+   "fieldname": "sent_via",
+   "fieldtype": "Select",
+   "label": "Sent Via",
+   "options": "\nEmail\nBank Portal\nBy Hand\nCourier"
+  },
+  {
+   "fieldname": "bank_reference",
+   "fieldtype": "Data",
+   "label": "Bank Reference"
+  },
+  {
+   "fieldname": "balance_requested_amount",
+   "fieldtype": "Currency",
+   "label": "Balance Requested",
+   "permlevel": 1
+  },
+  {
+   "depends_on": "eval:doc.pack_type=='Customer Completion File'",
+   "fieldname": "sb_customer",
+   "fieldtype": "Section Break",
+   "label": "Customer Completion File"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Tax Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "fieldname": "quotation",
+   "fieldtype": "Link",
+   "label": "Quotation",
+   "options": "Quotation"
+  },
+  {
+   "fieldname": "solar_om_contract",
+   "fieldtype": "Link",
+   "label": "O&M Contract",
+   "options": "Solar OM Contract"
+  },
+  {
+   "fieldname": "cb_customer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "handed_over_on",
+   "fieldtype": "Date",
+   "label": "Handed Over On"
+  },
+  {
+   "fieldname": "handed_over_to",
+   "fieldtype": "Data",
+   "label": "Handed Over To"
+  },
+  {
+   "fieldname": "handover_mode",
+   "fieldtype": "Select",
+   "label": "Handover Mode",
+   "options": "\nBy Hand\nEmail\nWhatsApp\nCourier"
+  },
+  {
+   "fieldname": "customer_acknowledgement",
+   "fieldtype": "Attach",
+   "label": "Customer Acknowledgement"
+  },
+  {
+   "fieldname": "sb_contents",
+   "fieldtype": "Section Break",
+   "label": "Contents"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "generated",
+   "fieldtype": "Table",
+   "label": "Generated",
+   "options": "Task Generated Document"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "uploads",
+   "fieldtype": "Table",
+   "label": "Uploaded",
+   "options": "Task Attachment"
+  },
+  {
+   "fieldname": "generation_notes",
+   "fieldtype": "Small Text",
+   "label": "Generation Notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_merge",
+   "fieldtype": "Section Break",
+   "label": "Merged PDF"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_uploads_in_merge",
+   "fieldtype": "Check",
+   "label": "Include Uploads in the Merge"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "merged_pdf",
+   "fieldtype": "Attach",
+   "label": "Merged PDF",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_merge",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "merged_on",
+   "fieldtype": "Datetime",
+   "label": "Merged On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "merge_notes",
+   "fieldtype": "Small Text",
+   "label": "Merge Notes",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_sent",
+   "fieldtype": "Section Break",
+   "label": "Sent"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sent_to",
+   "fieldtype": "Data",
+   "label": "Sent To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_sent",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "communication",
+   "fieldtype": "Link",
+   "label": "Email",
+   "options": "Communication",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-09 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Document Pack",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Operations Executive",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Documentation Officer",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Site Engineer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Liaison Officer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar QC Inspector",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Solar Technician",
+   "share": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Solar Operations Executive",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  }
+ ],
+ "search_fields": "solar_installation,consumer_name,pack_type",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "pack_type",
+ "track_changes": 1
+}

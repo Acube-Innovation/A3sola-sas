@@ -100,7 +100,10 @@ COMPLETED_JOBS_B = [
 	("Geetha Ravindran", 5.0, "Purchased by Customer", 324000),
 ]
 
-FULL_CHAIN = ["ORD", "NPA", "FEAS", "DSGN", "PROC", "DISP", "INST", "KREG", "NMTR", "KTST"]
+from a3_sola.setup.seed_stages import CODES_TO_COMMISSIONING
+
+#: Every task before commissioning; the commissioning report completes COMM itself.
+FULL_CHAIN = [code for code in CODES_TO_COMMISSIONING if code != "COMM"]
 
 
 def _build_completed_book(company, jobs=None):
@@ -169,12 +172,20 @@ def _book_costs(company, project, index=0):
 		("AC Wiring & Earthing", 9.0, -15),
 		("Testing", 4.0, -12),
 	):
+		order_kind = "Structure" if kind == "Structure Erection" else "Installation"
 		doc = frappe.get_doc(
 			{
 				"doctype": "Installation Work Order",
 				"company": company,
 				"solar_installation": installation,
+				"work_order_kind": order_kind,
 				"work_order_type": kind,
+				# An installation order cannot be submitted without located photographs.
+				"photos": [
+					{"image": f"/files/demo-site-{i}.jpg", "latitude": 10.1076 + i * 0.0001, "longitude": 76.3516,
+					 "geo_source": "Manual", "caption": f"{kind} - photo {i + 1}", "include_in_collage": 1}
+					for i in range(4)
+				] if order_kind == "Installation" else [],
 				"planned_start_date": add_days(today(), offset),
 				"planned_end_date": add_days(today(), offset + 1),
 				"actual_start_date": add_days(today(), offset),

@@ -33,11 +33,12 @@ index, the ID scheme and the sign-off record; the phase documents are the script
 > paperwork they use today.
 
 Enquiry → outreach cadence → proposal → order → consumer-vendor agreement → national portal
-application → DISCOM feasibility → vendor feasibility report and EHS checklist → loan
-sanction and advance → installation → KSEB registration fee → net meter request → KSEB
-inspection and testing checklist → net metering agreement on stamp paper → commissioning →
-completion reports to KSEB and to the lender → balance disbursement → PCR → DBT → the
-registration fee refund.
+application → Form 1 and its fee → vendor feasibility report and EHS checklist → loan
+sanction and advance → stamp paper and the KSEB agreement → design freeze → materials and
+the serials to the contractor → installation with geo-tagged photographs → inspectorate
+approval → Form 2/3 pack to KSEB → commissioning → DISCOM test → meter → completion pack
+to the bank → balance → the customer's completion file → subsidy request, correction and
+disbursement → the customer's review.
 
 A form that is subtly wrong is rejected at a counter weeks later, and that is exactly the
 failure this product exists to prevent. **Sign off per document.**
@@ -47,14 +48,14 @@ failure this product exists to prevent. **Sign off per document.**
 | 1 | Proposal | | | | ☐ |
 | 2 | Consumer-vendor agreement | | | | ☐ |
 | 3 | National portal application | | | | ☐ |
-| 4 | DISCOM feasibility application | | | | ☐ |
+| 4 | Form 1 and the stamp paper data sheet | | | | ☐ |
 | 5 | Vendor feasibility report | | | | ☐ |
 | 6 | EHS checklist | | | | ☐ |
 | 7 | Loan application pack | | | | ☐ |
 | 8 | KSEB registration fee receipt | | | | ☐ |
 | 9 | Net meter request | | | | ☐ |
 | 10 | KSEB inspection and testing checklist | | | | ☐ |
-| 11 | Net metering agreement (stamp paper) | | | | ☐ |
+| 11 | Solar Agreement (stamp paper) and the Form 2/3 pack | | | | ☐ |
 | 12 | Commissioning report | | | | ☐ |
 | 13 | Completion report — KSEB | | | | ☐ |
 | 14 | Completion report — lender | | | | ☐ |

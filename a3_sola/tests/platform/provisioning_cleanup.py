@@ -135,7 +135,7 @@ def purge_company(company, expect_tenant=None):
 	for doctype in COMPANY_SCOPED:
 		if not frappe.db.exists("DocType", doctype):
 			continue
-		for name in frappe.get_all(doctype, filters={"company": company}, pluck="name"):
+		for name in _names_to_delete(doctype, company):
 			_delete(doctype, name)
 
 	frappe.db.delete("User Permission", {"allow": "Company", "for_value": company})
@@ -151,6 +151,26 @@ def purge_company(company, expect_tenant=None):
 	_delete("Company", company)
 
 
+#: Company-scoped doctypes that are nested sets. A group node refuses to go while it still
+#: has children, so these come back deepest-first - the same reason the accounts do.
+TREE_SCOPED = ("Warehouse", "Cost Center")
+
+
+def _names_to_delete(doctype, company):
+	"""A company's rows of `doctype`, deepest-first where the doctype is a tree.
+
+	Getting this wrong is not merely untidy. A group warehouse that refuses to delete used
+	to take the whole teardown transaction down with it, so the company went and its
+	warehouses stayed - and months later a recycled abbreviation collided with one of those
+	orphans and every provisioning test in the suite failed at "create the company".
+	"""
+	if doctype in TREE_SCOPED:
+		return frappe.get_all(
+			doctype, filters={"company": company}, pluck="name", order_by="lft desc"
+		)
+	return frappe.get_all(doctype, filters={"company": company}, pluck="name")
+
+
 def _delete_company_accounts(company):
 	"""Delete a company's accounts leaf-first, so no parent blocks on its children."""
 	rows = frappe.get_all(
@@ -163,13 +183,20 @@ def _delete_company_accounts(company):
 
 
 def _delete(doctype, name):
+	"""Delete one row, and if it refuses, lose only that row.
+
+	The savepoint is the point. A bare `rollback()` here discarded every delete the
+	teardown had already made in the same transaction, so a single stubborn record left
+	the whole company behind - which is exactly how the orphans accumulated.
+	"""
+	frappe.db.savepoint("a3s_purge")
 	try:
 		frappe.delete_doc(
 			doctype, name, force=True, ignore_permissions=True,
 			ignore_on_trash=True, delete_permanently=True,
 		)
 	except Exception:
-		frappe.db.rollback()
+		frappe.db.rollback(save_point="a3s_purge")
 
 
 def purge_all_test_residue():
@@ -241,6 +268,7 @@ def purge_all_test_residue():
 		   WHERE a.company IS NOT NULL AND a.company != '' AND c.name IS NULL"""
 	)
 	del orphan_accounts
+	orphan_trees = _purge_orphan_trees()
 
 	frappe.db.commit()
 	return {
@@ -248,6 +276,49 @@ def purge_all_test_residue():
 		"orphan_companies_purged": len(orphans),
 		"fixture_companies_purged": len(direct),
 		"stranded_jobs_purged": stranded_jobs,
+		"orphan_tree_nodes_purged": orphan_trees,
 		"companies_remaining": frappe.db.count("Company"),
 		"accounts_remaining": frappe.db.count("Account"),
 	}
+
+
+def _purge_orphan_trees():
+	"""Warehouses and cost centres whose company no longer exists.
+
+	These are not merely untidy. A warehouse is named `<name> - <abbr>`, so an orphan holds
+	its company's abbreviation hostage: the next tenant whose name derives the same
+	abbreviation gets a primary-key collision inside ERPNext's own `create_default_
+	warehouses`, and every provisioning test fails at "create the company". That is what
+	happened, and it is why this sweep exists.
+
+	Deepest-first, and never one that anything still refers to - an orphan with a stock
+	ledger entry behind it is not residue, it is a question for a person.
+	"""
+	removed = 0
+	for doctype, guards in (
+		("Warehouse", ("Stock Ledger Entry", "Bin", "Stock Entry Detail")),
+		("Cost Center", ("GL Entry",)),
+	):
+		if not frappe.db.exists("DocType", doctype):
+			continue
+		field = "warehouse" if doctype == "Warehouse" else "cost_center"
+		rows = frappe.db.sql(
+			"""select w.name from `tab{0}` w
+			   left join `tabCompany` c on c.name = w.company
+			   where w.company is not null and w.company != '' and c.name is null
+			   order by w.lft desc""".format(doctype),
+			as_dict=True,
+		)
+		for row in rows:
+			if any(
+				frappe.db.exists("DocType", guard) and frappe.db.exists(guard, {field: row.name})
+				for guard in guards
+			):
+				frappe.logger("a3_sola").info(
+					{"event": "orphan_kept", "doctype": doctype, "name": row.name,
+					 "reason": "still referenced"}
+				)
+				continue
+			_delete(doctype, row.name)
+			removed += 1
+	return removed

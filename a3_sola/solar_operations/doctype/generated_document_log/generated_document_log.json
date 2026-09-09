@@ -13,6 +13,8 @@
   "is_stale",
   "cb_1",
   "file",
+  "source_doctype",
+  "source_document",
   "generated_on",
   "generated_by",
   "issued_on",
@@ -68,6 +70,21 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "label": "Source Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_document",
+   "fieldtype": "Dynamic Link",
+   "label": "Source",
+   "options": "source_doctype",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
    "fieldname": "generated_on",
    "fieldtype": "Datetime",
    "label": "Generated",
@@ -97,7 +114,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-09 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Generated Document Log",
