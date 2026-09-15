@@ -62,3 +62,7 @@ a3_sola.patches.v1_2.release_dangling_task_links
 
 # The thirty tasks are the same for every company: one shared template, the copies removed.
 a3_sola.patches.v1_2.one_task_template_for_all_companies
+
+# Project carried two fields named total_billed_amount; the duplicate blocked other apps
+# from installing. ERPNext's own field keeps the permlevel guard.
+a3_sola.patches.v1_2.drop_duplicate_project_billed_amount_field

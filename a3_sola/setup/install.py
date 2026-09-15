@@ -26,6 +26,7 @@ from a3_sola.setup.custom_fields_ops import CUSTOM_FIELDS as OPS_CUSTOM_FIELDS
 from a3_sola.setup.custom_fields_ops import MODULE as OPS_MODULE
 from a3_sola.setup.custom_fields_projects import CUSTOM_FIELDS as PROJ_CUSTOM_FIELDS
 from a3_sola.setup.custom_fields_projects import MODULE as PROJ_MODULE
+from a3_sola.setup.custom_fields_projects import PROPERTY_SETTERS as PROJ_PROPERTY_SETTERS
 from a3_sola.setup.roles import create_roles
 
 
@@ -128,6 +129,32 @@ def install_custom_fields():
 				name = f"{doctype}-{field['fieldname']}"
 				if frappe.db.exists("Custom Field", name):
 					frappe.db.set_value("Custom Field", name, "module", module, update_modified=False)
+
+	install_property_setters()
+
+
+def install_property_setters():
+	"""Re-grade standard fields the module guards but does not own.
+
+	A Custom Field that repeats a fieldname the doctype already ships is not an override -
+	it is a second DocField with the same name. create_custom_fields(ignore_validate=True)
+	accepts it quietly, and then every app that later touches that doctype fails
+	validate_fields() and cannot install. A Property Setter changes the standard field in
+	place, which is what "ERPNext's billed amount, but permlevel 1" actually means.
+	"""
+	from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+	for setter in PROJ_PROPERTY_SETTERS:
+		doc = make_property_setter(
+			setter["doctype"],
+			setter["fieldname"],
+			setter["property"],
+			setter["value"],
+			setter["property_type"],
+			validate_fields_for_doctype=False,
+		)
+		# Module-scoped like the Custom Fields above, so export-fixtures still picks it up.
+		frappe.db.set_value("Property Setter", doc.name, "module", PROJ_MODULE, update_modified=False)
 
 
 def default_company():

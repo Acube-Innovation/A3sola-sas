@@ -59,8 +59,13 @@ CUSTOM_FIELDS = {
 		_pl1("subsidy_receivable_amount", "Subsidy Receivable", "net_payable_by_customer", read_only=1),
 		{"fieldname": "a3s_commercials_cb", "fieldtype": "Column Break",
 		 "insert_after": "subsidy_receivable_amount", "permlevel": 1},
-		_pl1("total_billed_amount", "Billed", "a3s_commercials_cb", read_only=1),
-		_pl1("total_collected_amount", "Collected", "total_billed_amount", read_only=1),
+		# total_billed_amount is deliberately NOT declared here. ERPNext already ships it
+		# on Project as "Total Billed Amount (via Sales Invoice)"; declaring it again put
+		# two DocFields with one fieldname on the doctype. create_custom_fields(
+		# ignore_validate=True) accepted it, but the duplicate then failed
+		# validate_fields() for every app that later touched Project. The permlevel
+		# guarantee is kept on the standard field by PROPERTY_SETTERS below.
+		_pl1("total_collected_amount", "Collected", "a3s_commercials_cb", read_only=1),
 		_pl1("outstanding_amount", "Outstanding", "total_collected_amount", read_only=1),
 		_pl1("om_provision_amount", "O&M Provision", "outstanding_amount", read_only=1),
 		_pl1("om_provision_released", "Provision Released", "om_provision_amount", read_only=1),
@@ -137,3 +142,14 @@ CUSTOM_FIELDS = {
 		 "read_only": 1},
 	],
 }
+
+
+#: Standard ERPNext fields this module re-grades rather than redefines.
+#:
+#: Project.total_billed_amount is ERPNext's own field. The module still needs it guarded -
+#: test_permissions asserts every Currency field on Project sits at permlevel 1 - so the
+#: grade is applied to the standard field instead of shadowing it with a Custom Field.
+PROPERTY_SETTERS = [
+	{"doctype": "Project", "fieldname": "total_billed_amount",
+	 "property": "permlevel", "value": 1, "property_type": "Int"},
+]
