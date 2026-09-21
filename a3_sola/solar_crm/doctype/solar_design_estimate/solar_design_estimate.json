@@ -28,6 +28,7 @@
   "binding_constraint",
   "override_capacity_kw",
   "final_capacity_kw",
+  "tab_system",
   "sb_5",
   "solar_package",
   "system_type",
@@ -58,6 +59,8 @@
   "subsidy_slab_used",
   "net_cost_to_customer",
   "cost_per_kw",
+  "sb_quoted",
+  "quoted_options",
   "sb_14",
   "statutory_note",
   "net_meter_mode",
@@ -233,6 +236,11 @@
    "precision": 3
   },
   {
+   "fieldname": "tab_system",
+   "fieldtype": "Tab Break",
+   "label": "System & Options"
+  },
+  {
    "fieldname": "sb_5",
    "fieldtype": "Section Break",
    "label": "System"
@@ -376,7 +384,8 @@
    "fieldname": "additional_civil_cost",
    "fieldtype": "Currency",
    "label": "Additional Civil Cost",
-   "permlevel": 1
+   "permlevel": 1,
+   "description": "Civil work quoted on top of the system, entered by hand."
   },
   {
    "fieldname": "total_project_cost",
@@ -414,6 +423,19 @@
    "label": "Cost per kW",
    "read_only": 1,
    "permlevel": 1
+  },
+  {
+   "fieldname": "sb_quoted",
+   "fieldtype": "Section Break",
+   "label": "Quoted Options",
+   "description": "One line per option as the customer sees it. Rebuilt from the Options table on every save."
+  },
+  {
+   "fieldname": "quoted_options",
+   "fieldtype": "Table",
+   "options": "Design Estimate Quoted Option",
+   "label": "Quoted Options",
+   "read_only": 1
   },
   {
    "fieldname": "sb_14",

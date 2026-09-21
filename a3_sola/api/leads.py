@@ -40,7 +40,8 @@ LEAD_SECTIONS = [
 	{
 		"key": "address",
 		"label": "Location",
-		"fields": ["city", "state", "country"],
+		# State first: the district list is the districts of whatever state is chosen.
+		"fields": ["state", "district", "city", "country"],
 	},
 	{
 		"key": "solar",
@@ -209,7 +210,7 @@ def edit_fields(doc):
 				continue
 			if df.read_only and df.fieldname not in EDITABLE_READ_ONLY:
 				continue
-			specs.append(edit_spec(df, doc.get(df.fieldname)))
+			specs.append(edit_spec(df, doc.get(df.fieldname), doc))
 		if specs:
 			sections.append({"key": section["key"], "label": section["label"], "fields": specs})
 	return sections

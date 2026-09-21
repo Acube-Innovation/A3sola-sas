@@ -67,18 +67,37 @@
 							<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
 							       list="dl-{{ f.fieldname }}" placeholder="{{ f.link_doctype | e }} name" autocomplete="off">
 							<datalist id="dl-{{ f.fieldname }}">
-								{%- for c in f.choices %}<option value="{{ c | e }}"></option>{% endfor %}
+								{%- for c in f.choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
 							</datalist>
 							{%- else %}
-							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}"
+							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}" data-doctype="{{ record.doctype | e }}"{% endif %}>
 								<option value=""{% if not f.value %} selected{% endif %}>—</option>
 								{%- for c in f.choices %}
-								<option value="{{ c | e }}"{% if c == f.value %} selected{% endif %}>{{ c | e }}</option>
+								{#- The option's value is the record's id, its text the record's name. -#}
+								<option value="{{ c.value | e }}"{% if c.value == f.value %} selected{% endif %}>{{ c.label | e }}</option>
 								{%- endfor %}
 							</select>
 							{%- endif %}
 						{%- elif f.type in ("Small Text", "Text") %}
 						<textarea id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" rows="3">{{ f.value | e }}</textarea>
+						{%- elif f.type == "Attach Image" %}
+						{#- The picture uploads as soon as it is chosen; the hidden input carries the URL the
+						    upload returned, so the form posts it like any other value. -#}
+						<div class="a3s-imagefield" data-imagefield data-fieldname="{{ f.fieldname }}">
+							<span class="a3s-imagefield__preview">
+								<img src="{{ f.value | e }}" alt=""{% if not f.value %} hidden{% endif %} data-preview>
+								<span class="a3s-imagefield__empty"{% if f.value %} hidden{% endif %} data-empty aria-hidden="true">
+									<svg class="a3s-ic"><use href="#ic-user"></use></svg>
+								</span>
+							</span>
+							<span class="a3s-imagefield__controls">
+								<input type="file" id="fld-{{ f.fieldname }}" accept="image/png,image/jpeg,image/webp,image/gif" data-file>
+								<input type="hidden" name="{{ f.fieldname }}" value="{{ f.value | e }}" data-value>
+								<button type="button" class="a3s-btn a3s-btn--ghost" data-clear{% if not f.value %} hidden{% endif %}>Remove</button>
+								<span class="a3s-field__hint" data-status></span>
+							</span>
+						</div>
 						{%- elif f.type == "Date" %}
 						<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
 						{%- elif f.type == "Datetime" %}
@@ -104,3 +123,96 @@
 		</div>
 	</div>
 </form>
+
+{#- Uploads any picture field on this form. Renders on every form and exits at once when
+    there is no image field, which keeps it in one place rather than in each page. -#}
+<script>
+(function () {
+	var fields = document.querySelectorAll("[data-imagefield]");
+	if (!fields.length) return;
+	var form = document.querySelector("[data-slug]") || document.querySelector("form");
+	var slug = (form && form.dataset.slug) || "";
+	var recordName = (form && form.dataset.name) || "";
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+
+	Array.prototype.forEach.call(fields, function (root) {
+		var file = root.querySelector("[data-file]");
+		var value = root.querySelector("[data-value]");
+		var preview = root.querySelector("[data-preview]");
+		var empty = root.querySelector("[data-empty]");
+		var clear = root.querySelector("[data-clear]");
+		var status = root.querySelector("[data-status]");
+
+		function show(url) {
+			value.value = url || "";
+			if (url) { preview.src = url; preview.hidden = false; empty.hidden = true; clear.hidden = false; }
+			else { preview.removeAttribute("src"); preview.hidden = true; empty.hidden = false; clear.hidden = true; }
+		}
+
+		file.addEventListener("change", function () {
+			var chosen = file.files && file.files[0];
+			if (!chosen) return;
+			status.textContent = "Uploading\u2026";
+			var body = new FormData();
+			body.append("file", chosen);
+			body.append("slug", slug);
+			body.append("fieldname", root.dataset.fieldname);
+			if (recordName) body.append("name", recordName);
+			fetch("/api/method/a3_sola.api.portal_crud.upload_image", {
+				method: "POST", credentials: "same-origin",
+				headers: { "X-Frappe-CSRF-Token": csrf }, body: body
+			}).then(function (r) {
+				return r.json().then(function (b) { return { ok: r.ok, body: b }; });
+			}).then(function (res) {
+				var url = res.ok && res.body && res.body.message && res.body.message.file_url;
+				if (!url) throw new Error(((res.body || {})._server_messages) || "Upload failed.");
+				show(url);
+				status.textContent = "";
+			}).catch(function (e) {
+				file.value = "";
+				status.textContent = String(e.message || e).replace(/[\[\]"\\]|\{.*?"message":\s*/g, "").slice(0, 160);
+			});
+		});
+
+		clear.addEventListener("click", function () { file.value = ""; show(""); status.textContent = ""; });
+	});
+})();
+</script>
+
+{#- Keeps a dependent dropdown honest: choose a state and the district list becomes that
+    state's districts, without a reload and without offering a district from elsewhere. -#}
+<script>
+(function () {
+	var dependents = document.querySelectorAll("select[data-depends-on]");
+	if (!dependents.length) return;
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	Array.prototype.forEach.call(dependents, function (select) {
+		var source = document.getElementById("fld-" + select.dataset.dependsOn);
+		if (!source) return;
+		source.addEventListener("change", function () {
+			var keep = select.value;
+			select.disabled = true;
+			fetch("/api/method/a3_sola.api.portal_fields.dependent_options", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value })
+			}).then(function (r) { return r.json(); }).then(function (body) {
+				var choices = (body && body.message && body.message.choices) || [];
+				select.innerHTML = "";
+				var blank = document.createElement("option");
+				blank.value = ""; blank.textContent = "\u2014";
+				select.appendChild(blank);
+				choices.forEach(function (c) {
+					var o = document.createElement("option");
+					o.value = c.value; o.textContent = c.label;
+					if (c.value === keep) o.selected = true;
+					select.appendChild(o);
+				});
+			}).catch(function () { /* leave the list as it was */ })
+			  .then(function () { select.disabled = false; });
+		});
+	});
+})();
+</script>

@@ -127,10 +127,16 @@ def enforce_gates(doc, submitting=True):
 
 	check = doc.get("subsidy_eligibility_check")
 	if check:
-		result = frappe.db.get_value("Subsidy Eligibility Check", check, "overall_result")
+		# The manual override wins where one was recorded, so a job a manager passed by
+		# hand is not stopped here by the rules it was passed in spite of.
+		from a3_sola.solar_crm.doctype.subsidy_eligibility_check.subsidy_eligibility_check import (
+			effective_result,
+		)
+
+		result = effective_result(check)
 		if result == "Not Eligible" and submitting:
 			frappe.throw(
-				_("Eligibility check {0} returned Not Eligible. Resolve the failing rules or record a waiver before submitting.").format(
+				_("Eligibility check {0} returned Not Eligible. Resolve the failing rules, record a waiver, or override the result before submitting.").format(
 					frappe.utils.get_link_to_form("Subsidy Eligibility Check", check)
 				),
 				title=_("Not Eligible"),

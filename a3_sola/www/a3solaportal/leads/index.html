@@ -36,7 +36,7 @@
 				<th>Name</th>
 				<th>Contact</th>
 				<th>Status</th>
-				<th class="a3s-table__num">Created</th>
+				<th>Assignment</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -66,7 +66,26 @@
 					{%- endif %}
 					<span class="a3s-badge a3s-badge--{{ lead.status | lower | replace(' ', '-') }}">{{ lead.status | e }}</span>
 				</td>
-				<td class="a3s-table__num">{{ lead.created }}</td>
+				<td>
+					<div class="a3s-assigncell">
+						{#- Who raised it, and how long it has been open. -#}
+						<span class="a3s-assigncell__line">
+							Created by <strong>{{ lead.created_by | e }}</strong> on {{ lead.created }}
+							<span class="a3s-pill--days">{{ lead.age_days }} day{{ "" if lead.age_days == 1 else "s" }}</span>
+						</span>
+						<span class="a3s-assigncell__rule" aria-hidden="true"></span>
+						{%- if lead.assigned_to %}
+						<span class="a3s-assigncell__line">
+							Assigned to
+							<button type="button" class="a3s-pill--who" data-todo="{{ lead.assigned_todo | e }}"
+							        title="View this assignment">{{ lead.assigned_to | e }}</button>
+							on {{ lead.assigned_on }}{% if lead.assigned_for %} for &ldquo;{{ lead.assigned_for | e }}&rdquo;{% endif %}
+						</span>
+						{%- else %}
+						<span class="a3s-assigncell__line a3s-table__muted">Not assigned</span>
+						{%- endif %}
+					</div>
+				</td>
 			</tr>
 			{%- endfor %}
 		</tbody>
@@ -88,4 +107,74 @@
 	{%- endif %}
 </div>
 {% endif %}
+
+{#- ---- the popup one assignment opens into ------------------------------- #}
+<div class="a3s-modal" data-todo-modal hidden role="dialog" aria-modal="true" aria-labelledby="a3s-todo-title">
+	<div class="a3s-modal__panel">
+		<div class="a3s-assign__head">
+			<h3 class="a3s-modal__title" id="a3s-todo-title">Assignment</h3>
+			<button type="button" class="a3s-assign__x" data-todo-close aria-label="Close">&times;</button>
+		</div>
+		<div data-todo-body><p class="a3s-edit__hint">Loading&hellip;</p></div>
+	</div>
+</div>
+
+<script>
+(function () {
+	var buttons = document.querySelectorAll("[data-todo]");
+	if (!buttons.length) return;
+	var modal = document.querySelector("[data-todo-modal]");
+	var body = modal.querySelector("[data-todo-body]");
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+
+	function row(label, value) {
+		if (!value) return "";
+		var dt = document.createElement("dt"); dt.textContent = label;
+		var dd = document.createElement("dd"); dd.textContent = value;
+		var wrap = document.createElement("div");
+		wrap.className = "a3s-glance__row";
+		wrap.appendChild(dt); wrap.appendChild(dd);
+		return wrap;
+	}
+
+	Array.prototype.forEach.call(buttons, function (btn) {
+		btn.addEventListener("click", function () {
+			modal.hidden = false;
+			body.innerHTML = '<p class="a3s-edit__hint">Loading\u2026</p>';
+			fetch("/api/method/a3_sola.api.assignments.todo", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ name: btn.dataset.todo })
+			}).then(function (r) { return r.json(); }).then(function (b) {
+				var d = b && b.message;
+				if (!d) throw new Error("Could not load that assignment.");
+				body.innerHTML = "";
+				var dl = document.createElement("dl");
+				dl.className = "a3s-glance";
+				[["Assigned to", d.full_name], ["Designation", d.designation],
+				 ["Assigned on", d.assigned_on], ["Assigned by", d.assigned_by],
+				 ["Complete by", d.complete_by], ["Priority", d.priority],
+				 ["Status", d.status], ["Record", d.reference],
+				 ["Remarks", d.remarks]].forEach(function (pair) {
+					var r = row(pair[0], pair[1]);
+					if (r) dl.appendChild(r);
+				});
+				body.appendChild(dl);
+			}).catch(function (e) {
+				body.innerHTML = "";
+				var p = document.createElement("p");
+				p.className = "a3s-edit__hint";
+				p.textContent = String(e.message || e);
+				body.appendChild(p);
+			});
+		});
+	});
+	Array.prototype.forEach.call(modal.querySelectorAll("[data-todo-close]"), function (b) {
+		b.addEventListener("click", function () { modal.hidden = true; });
+	});
+	modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
+	document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.hidden = true; });
+})();
+</script>
 {% endblock %}

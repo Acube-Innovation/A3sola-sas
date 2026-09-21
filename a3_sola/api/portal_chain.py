@@ -15,13 +15,20 @@ module what to carry across; the pages ask it what to show.
 import frappe
 from frappe import _
 
-# One entry per source doctype, in the order the steps happen.
+# The chain is linear: Lead > Solar Consumer > Site Survey > Solar Design Estimate >
+# Subsidy Eligibility Check > Solar Proposal > Quotation > Sales Order. Each source
+# doctype therefore declares exactly one step - the record made next from it - so a page
+# offers one thing to do and the sequence cannot be taken out of order.
 #
 #   slug/doctype   where the step leads
 #   link_field     the field ON THE SOURCE that points at the target, when there is one.
 #                  Its absence means the link lives on the target instead, and the target
 #                  is found by searching for it.
-#   requires       the `key` of a step that must be done first
+#   child_link     where the target records the source in a child table instead of a
+#                  field of its own, as ERPNext's Sales Order Item does for a Quotation.
+#   via            a dotted path to an ERPNext mapper. Its presence means the step is a
+#                  POST that builds the whole document, not a create form.
+#   needs_submit   the source must be submitted before the step is offered.
 #   map            target fieldname -> source fieldname, or a tuple of source fieldnames
 #                  meaning "the first of these that has a value"
 #   defaults       target fieldname -> a literal, used only when the map produced nothing
@@ -32,7 +39,7 @@ CHAIN = {
 			"key": "consumer",
 			"slug": "consumers",
 			"doctype": "Solar Consumer",
-			"label": "Create consumer",
+			"label": "Create solar consumer",
 			"icon": "user",
 			"link_field": "solar_consumer",
 			"card_title": "consumer_name",
@@ -55,51 +62,35 @@ CHAIN = {
 			},
 			"defaults": {"consumer_category": "Residential", "billing_frequency": "Bimonthly"},
 		},
-		{
-			"key": "estimate",
-			"slug": "design-estimates",
-			"doctype": "Solar Design Estimate",
-			"label": "Create design estimate",
-			"icon": "pen",
-			"card_title": "name",
-			"card_subtitle": "binding_constraint",
-			"card_subtitle_label": "Sized by",
-			"map": {
-				"lead": "name",
-				"solar_consumer": "solar_consumer",
-				"company": "company",
-			},
-		},
-		{
-			"key": "proposal",
-			"slug": "proposals",
-			"doctype": "Solar Proposal",
-			"label": "Create proposal",
-			"icon": "doc",
-			"link_field": "solar_proposal",
-			"requires": "estimate",
-			"requires_note": "A proposal quotes a design estimate, so make that first.",
-			"card_title": "name",
-			"card_subtitle": "status",
-			"card_subtitle_label": "Status",
-			"map": {
-				"lead": "name",
-				"solar_consumer": "solar_consumer",
-				"customer_name": ("lead_name", "company_name"),
-				"mobile_no": ("mobile_no", "phone"),
-				"email_id": "email_id",
-				"location": "city",
-				"district": "state",
-				"company": "company",
-			},
-		},
 	],
 	"Solar Consumer": [
 		{
+			"key": "survey",
+			"slug": "site-surveys",
+			"doctype": "Site Survey",
+			"label": "Create site survey",
+			"icon": "pin",
+			"card_title": "name",
+			"card_subtitle": "feasibility_status",
+			"card_subtitle_label": "Feasibility",
+			"map": {
+				"solar_consumer": "name",
+				"customer_name": "consumer_name",
+				"discom": "discom",
+				"discom_section": "discom_section",
+				"roof_type": "roof_type",
+				"company": "company",
+			},
+		},
+		# The consumer is the one record the whole job hangs off, so its page offers the
+		# three documents that name it directly as well as the survey that follows it.
+		# Everywhere else the chain stays linear; here a person picks up wherever the job
+		# actually is, which is not always the next step in the sequence.
+		{
 			"key": "estimate",
 			"slug": "design-estimates",
 			"doctype": "Solar Design Estimate",
-			"label": "Create design estimate",
+			"label": "Create solar design estimate",
 			"icon": "pen",
 			"card_title": "name",
 			"card_subtitle": "binding_constraint",
@@ -107,6 +98,32 @@ CHAIN = {
 			"map": {
 				"solar_consumer": "name",
 				"lead": "lead",
+				"connection_type": "connection_type",
+				"company": "company",
+			},
+		},
+		{
+			"key": "eligibility",
+			"slug": "subsidy-eligibility",
+			"doctype": "Subsidy Eligibility Check",
+			"label": "Create subsidy eligibility check",
+			"icon": "check",
+			"card_title": "name",
+			"card_subtitle": "overall_result",
+			"card_subtitle_label": "Result",
+			"map": {
+				"solar_consumer": "name",
+				"lead": "lead",
+				"consumer_name": "consumer_name",
+				"mobile_no": "mobile_no",
+				"email_id": "email_id",
+				"consumer_category": "consumer_category",
+				"connection_type": "connection_type",
+				"discom": "discom",
+				"discom_section": "discom_section",
+				"consumer_number": "consumer_number",
+				"roof_type": "roof_type",
+				"avg_bill_amount": "avg_bill_amount",
 				"company": "company",
 			},
 		},
@@ -114,8 +131,10 @@ CHAIN = {
 			"key": "proposal",
 			"slug": "proposals",
 			"doctype": "Solar Proposal",
-			"label": "Create proposal",
+			"label": "Create solar proposal",
 			"icon": "doc",
+			# A proposal quotes a design estimate - the field is mandatory on it - so the
+			# step is shown but held until there is one to quote.
 			"requires": "estimate",
 			"requires_note": "A proposal quotes a design estimate, so make that first.",
 			"card_title": "name",
@@ -132,22 +151,97 @@ CHAIN = {
 			},
 		},
 	],
+	"Site Survey": [
+		{
+			"key": "estimate",
+			"slug": "design-estimates",
+			"doctype": "Solar Design Estimate",
+			"label": "Create solar design estimate",
+			"icon": "pen",
+			"card_title": "name",
+			"card_subtitle": "binding_constraint",
+			"card_subtitle_label": "Sized by",
+			"map": {
+				"site_survey": "name",
+				"solar_consumer": "solar_consumer",
+				"company": "company",
+			},
+		},
+	],
 	"Solar Design Estimate": [
+		{
+			"key": "eligibility",
+			"slug": "subsidy-eligibility",
+			"doctype": "Subsidy Eligibility Check",
+			"label": "Create subsidy eligibility check",
+			"icon": "check",
+			"card_title": "name",
+			"card_subtitle": "overall_result",
+			"card_subtitle_label": "Result",
+			"map": {
+				"design_estimate": "name",
+				"solar_consumer": "solar_consumer",
+				"lead": "lead",
+				"subsidy_scheme": "subsidy_scheme",
+				"capacity_kw": "final_capacity_kw",
+				"company": "company",
+			},
+		},
+	],
+	"Subsidy Eligibility Check": [
 		{
 			"key": "proposal",
 			"slug": "proposals",
 			"doctype": "Solar Proposal",
-			"label": "Create proposal",
+			"label": "Create solar proposal",
 			"icon": "doc",
 			"card_title": "name",
 			"card_subtitle": "status",
 			"card_subtitle_label": "Status",
 			"map": {
-				"solar_design_estimate": "name",
-				"lead": "lead",
+				"solar_design_estimate": "design_estimate",
 				"solar_consumer": "solar_consumer",
+				"lead": "lead",
+				"customer_name": "consumer_name",
+				"mobile_no": "mobile_no",
 				"company": "company",
 			},
+		},
+	],
+	"Solar Proposal": [
+		{
+			"key": "quotation",
+			"slug": "quotations",
+			"doctype": "Quotation",
+			"label": "Create quotation",
+			"icon": "calc",
+			"card_title": "name",
+			"card_subtitle": "status",
+			"card_subtitle_label": "Status",
+			"map": {
+				"solar_proposal": "name",
+				"solar_consumer": "solar_consumer",
+				"solar_design_estimate": "solar_design_estimate",
+				"company": "company",
+			},
+		},
+	],
+	"Quotation": [
+		{
+			"key": "sales-order",
+			"slug": "sales-orders",
+			"doctype": "Sales Order",
+			"label": "Create sales order",
+			"icon": "cart",
+			# ERPNext already knows how to turn a quotation into an order, items, taxes
+			# and all. Re-deriving that here would be a second, worse implementation of it.
+			"via": "erpnext.selling.doctype.quotation.quotation.make_sales_order",
+			"needs_submit": True,
+			"needs_submit_note": "A sales order is raised from a submitted quotation, so submit this one first.",
+			"child_link": {"doctype": "Sales Order Item", "field": "prevdoc_docname"},
+			"card_title": "name",
+			"card_subtitle": "status",
+			"card_subtitle_label": "Status",
 		},
 	],
 }
@@ -190,6 +284,20 @@ def find_target(step, doc):
 			return name
 		if name:
 			return None
+
+	child = step.get("child_link")
+	if child:
+		# ERPNext records a quotation on the order's item rows, not on the order itself.
+		try:
+			found = frappe.get_all(
+				child["doctype"], filters={child["field"]: doc.name, "docstatus": ["<", 2]},
+				pluck="parent", order_by="creation desc", limit_page_length=1,
+			)
+		except frappe.PermissionError:
+			return None
+		if found and frappe.db.exists(step["doctype"], found[0]):
+			return found[0]
+		return None
 
 	field = _backlink_field(step, doc.doctype)
 	if not field:
@@ -243,6 +351,10 @@ def _card(step, target_name):
 
 	return {
 		"name": target_name,
+		# The card names the kind of document as well as the document, so a person
+		# scanning a record's next steps can tell a quotation from a sales order without
+		# recognising the numbering series.
+		"doctype_label": _(doctype),
 		"title": pick("card_title") or target_name,
 		"subtitle": pick("card_subtitle"),
 		"subtitle_label": step.get("card_subtitle_label", ""),
@@ -267,16 +379,27 @@ def steps_for(doc):
 
 		blocked_by = step.get("requires")
 		blocked = bool(blocked_by) and blocked_by not in done_keys
+		note = step.get("requires_note", "") if blocked else ""
+		# A mapper reads a submitted document. Offering the step on a draft would only
+		# produce an error on the other side, so it is shown disabled with the reason.
+		if step.get("needs_submit") and frappe.utils.cint(doc.get("docstatus")) != 1:
+			blocked = True
+			note = step.get("needs_submit_note", "")
+
 		out.append({
 			"key": step["key"],
+			"slug": step["slug"],
 			"label": step["label"],
 			"icon": step["icon"],
 			"doctype": step["doctype"],
+			"doctype_label": _(step["doctype"]),
 			"done": bool(target),
 			"card": _card(step, target) if target else None,
 			"blocked": blocked and not target,
-			"note": step.get("requires_note", "") if blocked and not target else "",
+			"note": note if blocked and not target else "",
 			"can_create": frappe.has_permission(step["doctype"], "create"),
+			# A mapped step is a write, so it is posted rather than followed as a link.
+			"posts": bool(step.get("via")),
 			"create_route": "/a3solaportal/{0}/new?source_dt={1}&source={2}".format(
 				step["slug"], frappe.utils.quote(doc.doctype), frappe.utils.quote(doc.name)
 			),

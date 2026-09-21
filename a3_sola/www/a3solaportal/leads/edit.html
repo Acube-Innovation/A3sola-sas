@@ -71,13 +71,15 @@
 							<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
 							       list="dl-{{ f.fieldname }}" placeholder="{{ f.link_doctype | e }} name" autocomplete="off">
 							<datalist id="dl-{{ f.fieldname }}">
-								{%- for c in f.choices %}<option value="{{ c | e }}"></option>{% endfor %}
+								{%- for c in f.choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
 							</datalist>
 							{%- else %}
-							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}"
+							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}" data-doctype="Lead"{% endif %}>
 								<option value=""{% if not f.value %} selected{% endif %}>—</option>
 								{%- for c in f.choices %}
-								<option value="{{ c | e }}"{% if c == f.value %} selected{% endif %}>{{ c | e }}</option>
+								{#- The option's value is the record's id, its text the record's name. -#}
+								<option value="{{ c.value | e }}"{% if c.value == f.value %} selected{% endif %}>{{ c.label | e }}</option>
 								{%- endfor %}
 							</select>
 							{%- endif %}
@@ -112,4 +114,40 @@
 
 {% block portal_scripts %}
 <script src="/assets/a3_sola/js/portal_record_edit.js?v={{ asset_version }}"></script>
+{#- Keeps a dependent dropdown honest: choose a state and the district list becomes that
+    state's districts, without a reload and without offering a district from elsewhere. -#}
+<script>
+(function () {
+	var dependents = document.querySelectorAll("select[data-depends-on]");
+	if (!dependents.length) return;
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	Array.prototype.forEach.call(dependents, function (select) {
+		var source = document.getElementById("fld-" + select.dataset.dependsOn);
+		if (!source) return;
+		source.addEventListener("change", function () {
+			var keep = select.value;
+			select.disabled = true;
+			fetch("/api/method/a3_sola.api.portal_fields.dependent_options", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value })
+			}).then(function (r) { return r.json(); }).then(function (body) {
+				var choices = (body && body.message && body.message.choices) || [];
+				select.innerHTML = "";
+				var blank = document.createElement("option");
+				blank.value = ""; blank.textContent = "\u2014";
+				select.appendChild(blank);
+				choices.forEach(function (c) {
+					var o = document.createElement("option");
+					o.value = c.value; o.textContent = c.label;
+					if (c.value === keep) o.selected = true;
+					select.appendChild(o);
+				});
+			}).catch(function () { /* leave the list as it was */ })
+			  .then(function () { select.disabled = false; });
+		});
+	});
+})();
+</script>
 {% endblock %}

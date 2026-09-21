@@ -1,2 +1,204 @@
 {% extends "templates/portal_shell.html" %}
-{% block portal_content %}{% include "templates/includes/portal_list_body.html" %}{% endblock %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">{{ collection.title }}</h2>
+		<p class="a3s-main__sub">{{ collection.subtitle }} &middot; stored in ERPNext.</p>
+	</div>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ collection.icon }}"></use></svg>
+		<span>New {{ collection.singular }}</span>
+	</a>
+</div>
+
+<form class="a3s-toolbar" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
+	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
+	       placeholder="Search consumers" aria-label="Search consumers">
+	<select name="status" aria-label="Status">
+		<option value="">All statuses</option>
+		{%- for s in statuses %}
+		<option value="{{ s }}"{% if s == status %} selected{% endif %}>{{ s }}</option>
+		{%- endfor %}
+	</select>
+	<button type="submit" class="a3s-btn a3s-btn--ghost">Search</button>
+	{%- if q or status %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
+</form>
+
+{% if rows %}
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Customer</th>
+				<th>Category</th>
+				<th>DISCOM</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{%- for r in rows %}
+			<tr>
+				{#- ---- 1. the consumer, with its picture and number ---------------- #}
+				<td>
+					<a class="a3s-table__record" href="{{ r.route }}">
+						{%- if r.consumer_photo %}
+						<img class="a3s-avatar" src="{{ r.consumer_photo | e }}" alt="" loading="lazy">
+						{%- else %}
+						<span class="a3s-avatar a3s-avatar--initials" aria-hidden="true">{{ r.initials }}</span>
+						{%- endif %}
+						<span class="a3s-table__record-text">
+							<span class="a3s-table__link">{{ r.consumer_name | e }}</span>
+							{%- if r.consumer_number %}<span class="a3s-table__sub">{{ r.consumer_number | e }}</span>{% endif %}
+						</span>
+					</a>
+				</td>
+
+				{#- ---- 2. one way to reach them: who, by mail, by phone ------------ #}
+				<td>
+					<div class="a3s-stack">
+						{%- if r.customer_name %}
+						<a class="a3s-table__link" href="{{ r.customer_route }}">{{ r.customer_name | e }}</a>
+						{%- else %}
+						<span class="a3s-table__muted">No customer yet</span>
+						{%- endif %}
+						{%- if r.email_id %}
+						<a class="a3s-stack__line" href="mailto:{{ r.email_id | e }}">{{ r.email_id | e }}</a>
+						{%- endif %}
+						{%- if r.mobile_no %}
+						{#- A number in a list is there to be rung. -#}
+						<a class="a3s-calllink" href="tel:{{ r.tel | e }}" title="Call {{ r.mobile_no | e }}">
+							<svg class="a3s-ic" aria-hidden="true"><use href="#ic-phone"></use></svg>
+							<span>{{ r.mobile_no | e }}</span>
+						</a>
+						{%- endif %}
+					</div>
+				</td>
+
+				{#- ---- 3. where it came from and what it is ------------------------ #}
+				<td>
+					<div class="a3s-stack">
+						{%- if r.lead %}
+						<a class="a3s-table__link" href="{{ r.lead_route }}">{{ r.lead | e }}</a>
+						{%- else %}
+						<span class="a3s-table__muted">No lead</span>
+						{%- endif %}
+						{%- if r.scheme_name %}<span class="a3s-stack__line">{{ r.scheme_name | e }}</span>{% endif %}
+						<span class="a3s-stack__line">
+							{%- if r.consumer_category %}<span class="a3s-pill--grey">{{ r.consumer_category | e }}</span>{% endif %}
+							{%- if r.roof_name %} <span class="a3s-stack__muted">{{ r.roof_name | e }}</span>{% endif %}
+						</span>
+					</div>
+				</td>
+
+				{#- ---- 4. the licensee and the section that serves the roof -------- #}
+				<td>
+					<div class="a3s-stack">
+						{%- if r.discom_name %}
+						<span>{{ r.discom_name | e }}</span>
+						{%- else %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
+						{%- if r.section_name %}<span class="a3s-stack__line">{{ r.section_name | e }}</span>{% endif %}
+					</div>
+				</td>
+
+				{#- ---- 5. where it stands, and with whom -------------------------- #}
+				<td>
+					<div class="a3s-stack">
+						<span class="a3s-badge a3s-badge--{{ r.status_slug }}">{{ r.status | e }}</span>
+						{%- if r.assigned_to %}
+						<button type="button" class="a3s-pill--who" data-todo="{{ r.assigned_todo | e }}"
+						        title="View this assignment">{{ r.assigned_to | e }}</button>
+						{%- endif %}
+					</div>
+				</td>
+			</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+</div>
+<p class="a3s-list__note">Showing {{ total }} consumer{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.</p>
+{% else %}
+<div class="a3s-card a3s-empty">
+	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ collection.icon }}"></use></svg></span>
+	{%- if q or status %}
+	<h3 class="a3s-empty__title">No matches</h3>
+	<p class="a3s-empty__text">Nothing matches that search. <a href="/a3solaportal/{{ collection.slug }}">Clear it</a> to see everything.</p>
+	{%- else %}
+	<h3 class="a3s-empty__title">No consumers yet</h3>
+	<p class="a3s-empty__text">Create the first one and it will appear here.</p>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">New consumer</a>
+	{%- endif %}
+</div>
+{% endif %}
+
+{#- ---- the popup an assignment opens into -------------------------------- #}
+<div class="a3s-modal" data-todo-modal hidden role="dialog" aria-modal="true" aria-labelledby="a3s-todo-title">
+	<div class="a3s-modal__panel">
+		<div class="a3s-assign__head">
+			<h3 class="a3s-modal__title" id="a3s-todo-title">Assignment</h3>
+			<button type="button" class="a3s-assign__x" data-todo-close aria-label="Close">&times;</button>
+		</div>
+		<div data-todo-body><p class="a3s-edit__hint">Loading&hellip;</p></div>
+	</div>
+</div>
+
+<script>
+(function () {
+	var buttons = document.querySelectorAll("[data-todo]");
+	if (!buttons.length) return;
+	var modal = document.querySelector("[data-todo-modal]");
+	var body = modal.querySelector("[data-todo-body]");
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+
+	function row(label, value) {
+		if (!value) return null;
+		var wrap = document.createElement("div");
+		wrap.className = "a3s-glance__row";
+		var dt = document.createElement("dt"); dt.textContent = label;
+		var dd = document.createElement("dd"); dd.textContent = value;
+		wrap.appendChild(dt); wrap.appendChild(dd);
+		return wrap;
+	}
+
+	Array.prototype.forEach.call(buttons, function (btn) {
+		btn.addEventListener("click", function () {
+			modal.hidden = false;
+			body.innerHTML = '<p class="a3s-edit__hint">Loading…</p>';
+			fetch("/api/method/a3_sola.api.assignments.todo", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ name: btn.dataset.todo })
+			}).then(function (r) { return r.json(); }).then(function (b) {
+				var d = b && b.message;
+				if (!d) throw new Error("Could not load that assignment.");
+				body.innerHTML = "";
+				var dl = document.createElement("dl");
+				dl.className = "a3s-glance";
+				[["Assigned to", d.full_name], ["Designation", d.designation],
+				 ["Assigned on", d.assigned_on], ["Assigned by", d.assigned_by],
+				 ["Complete by", d.complete_by], ["Priority", d.priority],
+				 ["Status", d.status], ["Record", d.reference],
+				 ["Remarks", d.remarks]].forEach(function (pair) {
+					var r = row(pair[0], pair[1]);
+					if (r) dl.appendChild(r);
+				});
+				body.appendChild(dl);
+			}).catch(function (e) {
+				body.innerHTML = "";
+				var p = document.createElement("p");
+				p.className = "a3s-edit__hint";
+				p.textContent = String(e.message || e);
+				body.appendChild(p);
+			});
+		});
+	});
+	Array.prototype.forEach.call(modal.querySelectorAll("[data-todo-close]"), function (b) {
+		b.addEventListener("click", function () { modal.hidden = true; });
+	});
+	modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
+	document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.hidden = true; });
+})();
+</script>
+{% endblock %}

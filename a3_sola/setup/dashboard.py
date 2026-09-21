@@ -103,7 +103,8 @@ NOTIFICATIONS = [
 		"document_type": "Subsidy Eligibility Check",
 		"event": "Value Change",
 		"value_changed": "overall_result",
-		"condition": 'doc.overall_result == "Not Eligible"',
+		# An override to Not Eligible is just as much a rejection as a failing rule.
+		"condition": '(doc.result_override or doc.overall_result) == "Not Eligible"',
 		"message": "This job failed one or more subsidy eligibility rules. Review the failing "
 		"rules and either resolve them or record a waiver.",
 		"recipients_role": "Solar Sales Manager",

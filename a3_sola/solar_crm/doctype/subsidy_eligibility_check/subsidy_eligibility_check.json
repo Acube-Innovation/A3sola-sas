@@ -15,6 +15,12 @@
   "check_date",
   "company",
   "overall_result",
+  "a3s_override_sb",
+  "result_override",
+  "grid_balance_available",
+  "ineligible_reason",
+  "override_by",
+  "override_on",
   "amended_from",
   "consumer_details_section",
   "consumer_name",
@@ -91,6 +97,55 @@
    "read_only": 1,
    "in_list_view": 1,
    "in_standard_filter": 1
+  },
+  {
+   "fieldname": "a3s_override_sb",
+   "fieldtype": "Section Break",
+   "label": "Manual Result",
+   "collapsible": 0,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "result_override",
+   "fieldtype": "Select",
+   "label": "Result Override",
+   "options": "\nEligible\nNot Eligible",
+   "in_list_view": 1,
+   "description": "Set this to decide the result by hand. It wins over the rules above, and only a Solar CRM / Sales Manager may set it.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "grid_balance_available",
+   "fieldtype": "Small Text",
+   "label": "Grid Balance Available",
+   "depends_on": "eval:doc.result_override==\"Eligible\"",
+   "description": "What the section office confirmed about available grid balance.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "ineligible_reason",
+   "fieldtype": "Select",
+   "label": "Reason Not Eligible",
+   "options": "\nGrid Balance Not Available\nFull Shade Issue",
+   "depends_on": "eval:doc.result_override==\"Not Eligible\"",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "override_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Overridden By",
+   "read_only": 1,
+   "depends_on": "eval:doc.result_override",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "override_on",
+   "fieldtype": "Datetime",
+   "label": "Overridden On",
+   "read_only": 1,
+   "depends_on": "eval:doc.result_override",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "amended_from",

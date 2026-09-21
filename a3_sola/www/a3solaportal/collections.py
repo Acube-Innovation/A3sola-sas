@@ -12,36 +12,79 @@ The create write path lives in `a3_sola.api.portal_crud`, which reuses `form_fie
 here as its allow-list, so the browser can only ever set fields this module renders.
 """
 
+import re
+
 import frappe
 from frappe import _
 from frappe.model.base_document import get_controller
 
-from a3_sola.api import portal_chain
+from a3_sola.api import assignments, portal_chain
 from a3_sola.www.a3solaportal import fill_shell
 
 
 # slug -> doctype and its labels. `singular` names the create page ("New consumer").
 # title/subtitle/icon mirror the sidebar so the page and the menu never disagree.
 COLLECTIONS = {
-	"consumers": {"doctype": "Solar Consumer", "title": "Consumers", "singular": "consumer", "subtitle": "Homes and businesses", "icon": "user"},
-	"proposals": {"doctype": "Solar Proposal", "title": "Proposals", "singular": "proposal", "subtitle": "Quotes and estimates", "icon": "doc"},
+	"consumers": {"doctype": "Solar Consumer", "title": "Solar Consumer", "singular": "consumer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number"},
+	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
-	# detail pages are the cost estimate builder (www/a3solaportal/cost-estimates).
-	"cost-estimates": {"doctype": "Quotation", "title": "Cost Estimates", "singular": "cost estimate", "subtitle": "Priced quotations", "icon": "calc"},
-	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Design Estimates", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen"},
-	"site-surveys": {"doctype": "Site Survey", "title": "Site Surveys", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin"},
-	"subsidy-eligibility": {"doctype": "Subsidy Eligibility Check", "title": "Subsidy Eligibility", "singular": "eligibility check", "subtitle": "PM Surya Ghar", "icon": "check"},
-	"installations": {"doctype": "Solar Installation", "title": "Installations", "singular": "installation", "subtitle": "On-site delivery", "icon": "wrench"},
-	"work-orders": {"doctype": "Installation Work Order", "title": "Work Orders", "singular": "work order", "subtitle": "Crew scheduling", "icon": "clipboard"},
-	"commissioning": {"doctype": "Commissioning Report", "title": "Commissioning", "singular": "commissioning report", "subtitle": "Handover reports", "icon": "bolt"},
-	"subsidy-claims": {"doctype": "Subsidy Claim", "title": "Subsidy Claims", "singular": "subsidy claim", "subtitle": "Disbursement tracking", "icon": "wallet"},
+	# detail pages are the pricing builder (www/a3solaportal/quotations).
+	"quotations": {"doctype": "Quotation", "title": "Quotation", "singular": "quotation", "subtitle": "Priced offer", "icon": "calc"},
+	# An ERPNext Sales Order. Created from a quotation by ERPNext's own mapping, so the
+	# items and taxes arrive intact; the portal only ever reads and edits the draft.
+	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart"},
+	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen"},
+	"site-surveys": {"doctype": "Site Survey", "title": "Site Survey", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin"},
+	# `form_extra` names fields the create form must render beyond the mandatory ones:
+	# the manual result and the reason that goes with it are the point of this form,
+	# and neither is mandatory, so neither would be picked up on its own.
+	"subsidy-eligibility": {"doctype": "Subsidy Eligibility Check", "title": "Subsidy Eligibility Check", "singular": "eligibility check", "subtitle": "PM Surya Ghar", "icon": "check",
+	                        "form_extra": ["result_override", "grid_balance_available", "ineligible_reason"]},
+	# ---------------------------------------------------- Solar Operations
+	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The job itself", "icon": "wrench"},
+	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist"},
+	"fee-payments": {"doctype": "Statutory Fee Payment", "title": "Statutory Fee Payment", "singular": "fee payment", "subtitle": "Form 1, Form 2, meter", "icon": "cash"},
+	"portal-applications": {"doctype": "Portal Application", "title": "Portal Application", "singular": "portal application", "subtitle": "PM Surya Ghar, CEIG", "icon": "globe"},
+	"loan-applications": {"doctype": "Loan Application", "title": "Loan Application", "singular": "loan application", "subtitle": "Financed jobs", "icon": "bank"},
+	"agreements": {"doctype": "Solar Agreement", "title": "Solar Agreement", "singular": "agreement", "subtitle": "Stamp paper and terms", "icon": "scroll"},
+	"work-orders": {"doctype": "Installation Work Order", "title": "Installation Work Order", "singular": "work order", "subtitle": "Structure and install", "icon": "clipboard"},
+	"purchase-orders": {"doctype": "Purchase Order", "title": "Purchase Order", "singular": "purchase order", "subtitle": "Material procurement", "icon": "box"},
+	"delivery-notes": {"doctype": "Delivery Note", "title": "Delivery Note", "singular": "delivery note", "subtitle": "Material dispatch", "icon": "truck"},
+	"dispatch-notices": {"doctype": "Material Dispatch Notice", "title": "Material Dispatch Notice", "singular": "dispatch notice", "subtitle": "Serials to contractor", "icon": "package"},
+	"document-packs": {"doctype": "Document Pack", "title": "Document Pack", "singular": "document pack", "subtitle": "Form 2 and 3, handover", "icon": "stack"},
+	"commissioning": {"doctype": "Commissioning Report", "title": "Commissioning Report", "singular": "commissioning report", "subtitle": "Handover reports", "icon": "bolt"},
+	"installation-snags": {"doctype": "Installation Snag", "title": "Installation Snag", "singular": "snag", "subtitle": "Defects and rectification", "icon": "alert"},
+	"customer-reviews": {"doctype": "Customer Review", "title": "Customer Review", "singular": "customer review", "subtitle": "Feedback and Google", "icon": "star"},
+	"subsidy-claims": {"doctype": "Subsidy Claim", "title": "Subsidy Claim", "singular": "subsidy claim", "subtitle": "Request to disbursement", "icon": "wallet"},
+
+	# --------------------------------------------- ERPNext stores and accounts
+	# Standard ERPNext documents the operations team works in daily. The app puts its
+	# own fields on each of these, which is what makes them part of a solar job
+	# rather than generic stock movements.
+	"material-requests": {"doctype": "Material Request", "title": "Material Request", "singular": "material request", "subtitle": "Procurement raised", "icon": "request"},
+	"purchase-receipts": {"doctype": "Purchase Receipt", "title": "Purchase Receipt", "singular": "purchase receipt", "subtitle": "Goods received", "icon": "inbox"},
+	"stock-entries": {"doctype": "Stock Entry", "title": "Stock Entry", "singular": "stock entry", "subtitle": "Issued to site", "icon": "transfer"},
+	"serial-numbers": {"doctype": "Serial No", "title": "Serial No", "singular": "serial number", "subtitle": "Modules and inverters", "icon": "barcode"},
+	"journal-entries": {"doctype": "Journal Entry", "title": "Journal Entry", "singular": "journal entry", "subtitle": "Accounting adjustments", "icon": "ledger"},
+
+	# ----------------------------------------------------- Solar Projects
+	"projects": {"doctype": "Project", "title": "Project", "singular": "project", "subtitle": "Delivery and service", "icon": "briefcase"},
+	"billing-plans": {"doctype": "Solar Billing Plan", "title": "Solar Billing Plan", "singular": "billing plan", "subtitle": "Milestones to invoice", "icon": "calendar"},
+	"sales-invoices": {"doctype": "Sales Invoice", "title": "Sales Invoice", "singular": "sales invoice", "subtitle": "Raised against milestones", "icon": "receipt"},
+	"payment-entries": {"doctype": "Payment Entry", "title": "Payment Entry", "singular": "payment entry", "subtitle": "Money received", "icon": "wallet"},
+	"om-contracts": {"doctype": "Solar OM Contract", "title": "Solar OM Contract", "singular": "O&M contract", "subtitle": "Service cover", "icon": "scroll"},
+	"om-visits": {"doctype": "Solar OM Visit", "title": "Solar OM Visit", "singular": "O&M visit", "subtitle": "Scheduled maintenance", "icon": "pin"},
+	"service-tickets": {"doctype": "Service Ticket", "title": "Service Ticket", "singular": "service ticket", "subtitle": "Faults and requests", "icon": "ticket"},
+	"warranty-claims": {"doctype": "Solar Warranty Claim", "title": "Solar Warranty Claim", "singular": "warranty claim", "subtitle": "Against the supplier", "icon": "shield"},
+	"generation-readings": {"doctype": "Generation Reading", "title": "Generation Reading", "singular": "generation reading", "subtitle": "Output vs guarantee", "icon": "gauge"},
+	"fee-recoveries": {"doctype": "Statutory Fee Recovery", "title": "Statutory Fee Recovery", "singular": "fee recovery", "subtitle": "Fees fronted, recovered", "icon": "refund"},
 }
 
 # Company is a tenant concern, set from the user's default rather than asked for.
 AUTO_FIELDS = {"company"}
 # Field types a plain form can capture. Attach, Table and the rest are handled by noting
 # them, not by pretending to render them.
-INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone"}
+INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone", "Attach Image"}
 DISPLAY_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Phone"}
 TEXTUAL = {"Data", "Select", "Link", "Small Text", "Phone"}
 NUMERIC = {"Int", "Float", "Currency", "Percent", "Date", "Datetime"}
@@ -74,6 +117,16 @@ def _list_columns(meta):
 	return cols
 
 
+def initials(text):
+	"""Up to two initials for an avatar, from the first two words of a name.
+
+	A record with no picture still needs something recognisable in the list, and the
+	first letters of the name are what a person scans for.
+	"""
+	words = [w for w in (text or "").replace("-", " ").split() if w[:1].isalnum()]
+	return "".join(w[0] for w in words[:2]).upper() or "?"
+
+
 def _format(value, fieldtype):
 	if value in (None, ""):
 		return "—"
@@ -99,7 +152,15 @@ def list_context(context, slug):
 	columns = _list_columns(meta)
 
 	q = (frappe.form_dict.get("q") or "").strip()
+	# A doctype that names an `image_field` gets a picture in its list; one that names a
+	# `list_sub` field gets a second line under the record's name. Both are read from
+	# metadata and config, so this stays one list page for every collection.
+	image_field = meta.get("image_field") or None
+	sub_field = cfg.get("list_sub")
+	if sub_field and not meta.get_field(sub_field):
+		sub_field = None
 	fieldnames = ["name"] + ([meta.title_field] if meta.title_field else []) + [c.fieldname for c in columns]
+	fieldnames += [f for f in (image_field, sub_field) if f]
 	# de-duplicate while preserving order
 	seen, fields = set(), []
 	for fn in fieldnames:
@@ -127,6 +188,9 @@ def list_context(context, slug):
 		cells.append({
 			"text": primary_text, "primary": True, "num": False, "badge": False,
 			"route": record_route(slug, rec.get("name")) if has_detail(slug) else desk_route(doctype, rec.get("name")),
+			"image": (rec.get(image_field) or "") if image_field else "",
+			"initials": initials(primary_text),
+			"sub": (rec.get(sub_field) or "") if sub_field else "",
 		})
 		for c in columns:
 			if c.fieldname == title_field:
@@ -180,7 +244,21 @@ def needs_prompt_name(meta):
 		return True
 
 
-def form_fields(meta, prefill=None):
+def show_when(df):
+	"""A simple `depends_on` the portal form can act on, or "" when it cannot.
+
+	Frappe's depends_on is arbitrary JavaScript. The portal evaluates only the one shape
+	these forms use - `eval:doc.field=="value"` - and shows the field unconditionally for
+	anything else, which errs towards a field being visible rather than silently missing.
+	"""
+	expr = (df.get("depends_on") or "").strip()
+	match = re.match(r'^eval:doc\.([a-z0-9_]+)\s*==\s*["\'](.*)["\']$', expr)
+	if not match:
+		return ""
+	return "{0}={1}".format(match.group(1), match.group(2))
+
+
+def form_fields(meta, prefill=None, extra=()):
 	"""The fields the create form renders, and the mandatory ones it cannot.
 
 	Reused verbatim by the write endpoint as its allow-list, so the two never drift: a
@@ -198,34 +276,42 @@ def form_fields(meta, prefill=None):
 		})
 
 	optional = 0
+	wanted = set(extra or ())
 	for f in meta.fields:
 		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only:
 			continue
-		reqd = bool(f.reqd)
+		reqd = bool(f.reqd) or f.fieldname in wanted
 		if f.fieldtype not in INPUT_TYPES:
 			if reqd and f.fieldtype in ("Attach", "Attach Image", "Table", "Table MultiSelect", "Signature", "Geolocation"):
 				unrenderable.append(f.label or f.fieldname)
 			continue
-		if not reqd:
+		if not reqd and f.fieldtype != "Attach Image":
 			if not f.in_list_view or optional >= MAX_OPTIONAL_FORM:
 				continue
 			optional += 1
 
-		spec = {"fieldname": f.fieldname, "label": f.label, "type": f.fieldtype, "reqd": reqd}
+		# A field named in `form_extra` is rendered but not demanded.
+		spec = {
+			"fieldname": f.fieldname, "label": f.label, "type": f.fieldtype,
+			"reqd": bool(f.reqd), "show_when": show_when(f),
+		}
 		seed = (prefill or {}).get(f.fieldname)
 		spec["value"] = "" if seed is None else seed
+		if f.fieldtype == "Attach Image":
+			spec["input"] = "image"
 		if f.fieldtype == "Select":
 			opts = [o for o in (f.options or "").split("\n")]
 			spec["options"] = opts
-			spec["default"] = seed or f.default or next((o for o in opts if o), "")
+			# A mandatory Select has to start somewhere, so it falls back to the first real
+			# option. An optional one must not: its blank means "not answered", and
+			# pre-selecting an option answers it on the person's behalf.
+			fallback = next((o for o in opts if o), "") if f.reqd else ""
+			spec["default"] = seed or f.default or fallback
 		elif f.fieldtype == "Link":
 			spec["link_doctype"] = f.options
-			try:
-				choices = frappe.get_list(f.options, pluck="name", limit_page_length=LINK_CHOICE_LIMIT)
-			except frappe.PermissionError:
-				choices = []
-			if seed and seed not in choices:
-				choices.insert(0, seed)
+			choices = link_choices(f.options)
+			if seed and not any(c["value"] == seed for c in choices):
+				choices.insert(0, {"value": seed, "label": link_title(f.options, seed)})
 			spec["choices"] = choices
 		specs.append(spec)
 
@@ -267,7 +353,7 @@ def new_context(context, slug):
 			{"label": "New"},
 		],
 	)
-	fields, unrenderable = form_fields(meta, prefill)
+	fields, unrenderable = form_fields(meta, prefill, cfg.get("form_extra") or ())
 	context.collection = {**cfg, "slug": slug}
 	context.fields = fields
 	context.unrenderable = unrenderable
@@ -292,7 +378,31 @@ def new_context(context, slug):
 # page is built from the doctype's own form: each Tab Break is a card, each Section Break
 # inside it a sub-heading, so the portal reads the way the ERPNext form does. The desk's
 # automatic "Connections" and "Dashboard" tabs are not fields and never appear.
-DETAIL_SLUGS = {"consumers", "proposals", "design-estimates", "cost-estimates"}
+# Every collection has a portal detail page: a record you can open from the menu is a
+# record you can read, and one you can edit while it is still a draft.
+DETAIL_SLUGS = {
+	"consumers", "site-surveys", "design-estimates", "subsidy-eligibility",
+	"proposals", "quotations", "sales-orders", "installations",
+	"installation-tasks", "fee-payments", "portal-applications", "loan-applications",
+	"agreements", "work-orders", "purchase-orders", "delivery-notes",
+	"dispatch-notices", "document-packs", "commissioning", "customer-reviews",
+	"subsidy-claims", "projects", "billing-plans", "sales-invoices",
+	"payment-entries", "om-contracts", "om-visits", "service-tickets",
+	"warranty-claims", "generation-readings", "fee-recoveries", "installation-snags",
+	"material-requests", "purchase-receipts", "stock-entries", "serial-numbers",
+	"journal-entries",
+}
+
+#: Slugs whose record may be submitted from the portal. Only the sales order: submitting
+#: it is the handoff into Operations - it opens the Solar Installation, its document
+#: register and its billing plan - and that is the one place the portal needs to trigger.
+#: The CRM steps before it are submitted on the desk, as they always have been.
+SUBMIT_SLUGS = {"sales-orders"}
+
+#: Slugs whose detail and create pages are bespoke rather than metadata-driven, so the
+#: generic `detail_context` is not what renders them. Quotations open in the pricing
+#: builder; they still take part in the chain and in `SLUG_OF_DOCTYPE`.
+BESPOKE_SLUGS = {"quotations"}
 
 #: doctype -> slug, for the collections that have a portal detail page.
 SLUG_OF_DOCTYPE = {COLLECTIONS[s]["doctype"]: s for s in DETAIL_SLUGS}
@@ -312,6 +422,19 @@ RECORD_LINKS = {
 		("Solar Proposal", "Proposals", "doc", "amber"),
 		("Quotation", "Quotations", "doc", "sky"),
 	],
+	"site-surveys": [
+		("Solar Design Estimate", "Design estimates", "pen", "amber"),
+	],
+	"subsidy-eligibility": [
+		("Solar Proposal", "Proposals", "doc", "amber"),
+		("Quotation", "Quotations", "calc", "sky"),
+	],
+	# No tile for the sales order a quotation became: ERPNext records that link on the
+	# order's item rows, not on the order, and these tiles count a Link field. The chain's
+	# next-step card finds it by the child row instead, and shows it there.
+	"sales-orders": [
+		("Solar Installation", "Installations", "wrench", "green"),
+	],
 }
 
 SKIP_TABS = {"connections", "dashboard"}
@@ -326,11 +449,24 @@ def record_route(slug, name):
 	return "/a3solaportal/{0}/{1}".format(slug, frappe.utils.quote(name))
 
 
+def is_editable(doc):
+	"""Whether the portal's edit form may be pointed at this record.
+
+	Write permission is not the whole answer for a submittable doctype: a submitted
+	Quotation or Sales Order is closed to `save`, so offering an Edit button on one would
+	lead to a form that cannot be saved. A doctype that is not submittable sits at
+	docstatus 0 for its whole life, so this is simply write permission for those.
+	"""
+	return bool(doc.has_permission("write")) and frappe.utils.cint(doc.get("docstatus")) == 0
+
+
 def load_record(slug, name, permtype="read"):
 	"""Load one record of the collection and check the caller may `permtype` it.
 
 	Raises `DoesNotExistError` for an unknown name and `PermissionError` for a record the
-	user may not see, which the website renderer turns into a 404 and a 403 page.
+	user may not see, which the website renderer turns into a 404 and a 403 page. Asking
+	to write a submitted record is refused here rather than at `save`, so the person gets
+	the reason instead of a validation error at the end of a form.
 	"""
 	doctype = get_collection(slug)["doctype"]
 	name = (name or "").strip()
@@ -338,6 +474,11 @@ def load_record(slug, name, permtype="read"):
 		raise frappe.DoesNotExistError(_("That record does not exist."))
 	doc = frappe.get_doc(doctype, name)
 	doc.check_permission(permtype)
+	if permtype == "write" and frappe.utils.cint(doc.get("docstatus")) != 0:
+		frappe.throw(
+			_("{0} has been submitted and can no longer be edited here.").format(name),
+			frappe.PermissionError,
+		)
 	return doc
 
 
@@ -393,6 +534,7 @@ def form_groups(meta):
 
 from a3_sola.api.portal_fields import (  # noqa: E402  - grouped with the code that uses it
 	DISPLAY_TYPES as DISPLAY_TYPES_ALL, INPUT_TYPES as INPUT_TYPES_ALL, detail_row, edit_spec,
+	link_choices, link_title,
 )
 
 
@@ -490,11 +632,26 @@ def detail_context(context, slug, name):
 	context.tiles = record_snapshot(slug, doc)
 	context.glance = record_glance(doc)
 	context.update(_record_about(doc))
-	context.can_write = doc.has_permission("write")
+	context.can_write = is_editable(doc)
 	context.edit_route = record_route(slug, doc.name) + "/edit"
 	context.list_route = f"/a3solaportal/{slug}"
+	# The desk is where a submitted document is amended, so the page still offers a way in.
+	context.desk_route = desk_route(doc.doctype, doc.name)
+	context.submitted = frappe.utils.cint(doc.get("docstatus")) == 1
+	context.can_submit = (
+		slug in SUBMIT_SLUGS
+		and frappe.utils.cint(doc.get("docstatus")) == 0
+		and bool(doc.meta.is_submittable)
+		and bool(doc.has_permission("submit"))
+	)
 	context.back_link = {"href": context.list_route, "label": "Back to " + cfg["title"].lower()}
 	context.chain_steps = portal_chain.steps_for(doc)
+	# A chain step that ERPNext maps for us is posted from this page, so it needs the
+	# record's identity and a CSRF token.
+	context.record_doctype = doc.doctype
+	context.record_name = doc.name
+	context.assignees = assignments.assignees(doc.doctype, doc.name)
+	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
 
 
@@ -512,7 +669,7 @@ def edit_fields_for(doc):
 			for df in s["fields"]:
 				if df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS:
 					continue
-				specs.append(edit_spec(df, doc.get(df.fieldname)))
+				specs.append(edit_spec(df, doc.get(df.fieldname), doc))
 			if specs:
 				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "fields": specs})
 		if sections:

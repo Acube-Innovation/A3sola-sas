@@ -1,5 +1,5 @@
 {#- The cost estimate builder: a Quotation assembled from Solar Packages. Context from
-    cost_estimates_seed.seed_builder - `builder_json` carries the catalogue, the lead
+    quotations_seed.seed_builder - `builder_json` carries the catalogue, the lead
     list and (for an existing estimate) the record; `mode` is new / edit / view. -#}
 <script type="application/json" id="a3s-ce-data">{{ builder_json }}</script>
 
@@ -227,5 +227,10 @@
 				<p class="a3s-form__status" id="ce-msg" role="status" aria-live="polite"></p>
 			</div>
 		</section>
+
+		{#- A saved quotation is a record in the chain like any other, so it carries the
+		    same snapshot, at-a-glance and next-step boxes as every other page. A builder
+		    that has not saved anything yet has no record to describe. -#}
+		{%- if record %}{% include "templates/includes/portal_record_aside.html" %}{% endif %}
 	</aside>
 </div>

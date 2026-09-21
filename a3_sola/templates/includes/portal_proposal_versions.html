@@ -80,7 +80,7 @@
 		<button type="button" class="a3s-btn a3s-btn--ghost" data-act="revise">Revise</button>
 		{%- endif %}
 		{%- if quotation %}
-		<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/cost-estimates/{{ quotation | e }}">Open quotation</a>
+		<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/quotations/{{ quotation | e }}">Open quotation</a>
 		{%- elif is_accepted %}
 		<button type="button" class="a3s-btn a3s-btn--primary" data-act="quotation">Create quotation</button>
 		{%- endif %}

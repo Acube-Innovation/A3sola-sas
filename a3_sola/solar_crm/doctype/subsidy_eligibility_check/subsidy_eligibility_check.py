@@ -41,6 +41,54 @@ class SubsidyEligibilityCheck(Document):
 		self.resolve_references()
 		assert_same_company(self, LINKS)
 		self.recompute()
+		self.apply_override()
+
+	def before_update_after_submit(self):
+		"""A submitted check is the normal case for an override, and `validate` does not
+		run on one - so the same rule is applied on this path too."""
+		self.apply_override()
+
+	def apply_override(self):
+		"""Record a result decided by hand, without letting it rewrite the rules.
+
+		The rule table and `overall_result` stay exactly what the rules said - that is the
+		evidence, and an override must not erase it. `result_override` sits beside them
+		and wins wherever the answer is acted on, which is what `effective_result` returns.
+
+		Only a manager may set it, and setting it is stamped with who and when, for the
+		same reason a waiver is: somebody will ask why this job was passed.
+		"""
+		before = self.get_doc_before_save()
+		previous = before.get("result_override") if before else None
+		if (self.result_override or None) == (previous or None):
+			return
+
+		if self.result_override and not set(frappe.get_roles()).intersection(WAIVER_ROLES):
+			frappe.throw(
+				_("Only {0} may override an eligibility result.").format(", ".join(WAIVER_ROLES)),
+				frappe.PermissionError,
+			)
+
+		if self.result_override:
+			self.override_by = frappe.session.user
+			self.override_on = frappe.utils.now_datetime()
+		else:
+			# Cleared: the stamps and the reasons go with it rather than lingering as
+			# evidence of a decision that no longer stands.
+			self.override_by = None
+			self.override_on = None
+			self.grid_balance_available = None
+			self.ineligible_reason = None
+
+		if self.result_override == "Eligible":
+			self.ineligible_reason = None
+		elif self.result_override == "Not Eligible":
+			self.grid_balance_available = None
+
+	@property
+	def effective_result(self):
+		"""What the rest of the app should act on: the override if set, else the rules."""
+		return self.result_override or self.overall_result
 
 	def resolve_references(self):
 		"""Either reference is enough; the other is filled in where the link exists."""
@@ -178,3 +226,21 @@ def waive_rule(eligibility_check, rule_code, reason):
 		_("Rule {0} waived by {1}: {2}").format(rule_code, frappe.session.user, reason.strip()),
 	)
 	return doc.overall_result
+
+
+def effective_result(check):
+	"""The result to act on for one check, by name or document.
+
+	A single place for "override if set, else what the rules said", so a caller never has
+	to know that there are two fields.
+	"""
+	if not check:
+		return None
+	if isinstance(check, str):
+		row = frappe.db.get_value(
+			"Subsidy Eligibility Check", check, ["overall_result", "result_override"], as_dict=True
+		)
+		if not row:
+			return None
+		return row.result_override or row.overall_result
+	return check.get("result_override") or check.get("overall_result")

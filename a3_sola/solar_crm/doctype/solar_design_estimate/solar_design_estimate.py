@@ -68,12 +68,63 @@ class SolarDesignEstimate(Document):
 		if self.solar_consumer and not self.lead:
 			# The consumer already knows the enquiry it came from; keep the chain intact.
 			self.lead = frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
+		self.pull_from_lead()
 		if not (self.lead or self.solar_consumer):
 			frappe.throw(
 				_("Select a Lead or a Solar Consumer for this estimate."),
 				frappe.MandatoryError,
 				title=_("Nothing to Estimate For"),
 			)
+
+	def pull_from_lead(self):
+		"""Fill what the lead already knows, so picking a lead is one choice and not five.
+
+		Only into empty fields: a value set on the estimate is a decision somebody made
+		here, and re-deriving it from the lead on the next save would quietly undo it.
+		"""
+		if not self.lead:
+			return
+		lead = frappe.db.get_value(
+			"Lead", self.lead, ["solar_consumer", "subsidy_scheme"], as_dict=True
+		)
+		if not lead:
+			return
+
+		if not self.solar_consumer and lead.solar_consumer:
+			self.solar_consumer = lead.solar_consumer
+		if not self.subsidy_scheme and lead.subsidy_scheme:
+			self.subsidy_scheme = lead.subsidy_scheme
+
+		# The tariff the DISCOM bills this consumer under, from whichever record has one.
+		if not self.electricity_tariff:
+			self.electricity_tariff = self.tariff_for_subject()
+
+		# The survey, once one has been done for this consumer. The submitted one wins;
+		# a draft survey is still being written and should not be quoted against.
+		if not self.site_survey and self.solar_consumer:
+			surveys = frappe.get_all(
+				"Site Survey",
+				filters={"solar_consumer": self.solar_consumer, "docstatus": ("<", 2)},
+				fields=["name"], order_by="docstatus desc, creation desc", limit=1,
+			)
+			if surveys:
+				self.site_survey = surveys[0].name
+
+	def tariff_for_subject(self):
+		"""The electricity tariff to size savings against, or None to leave it unset."""
+		discom = None
+		if self.solar_consumer:
+			discom = frappe.db.get_value("Solar Consumer", self.solar_consumer, "discom")
+		if not discom and self.lead:
+			discom = frappe.db.get_value("Lead", self.lead, "discom")
+		filters = {"is_active": 1} if frappe.get_meta("Electricity Tariff").has_field("is_active") else {}
+		if discom and frappe.get_meta("Electricity Tariff").has_field("discom"):
+			filters["discom"] = discom
+		rows = frappe.get_all("Electricity Tariff", filters=filters, pluck="name",
+		                      order_by="modified desc", limit=1)
+		if not rows and filters:
+			rows = frappe.get_all("Electricity Tariff", pluck="name", order_by="modified desc", limit=1)
+		return rows[0] if rows else None
 
 	def subject_context(self):
 		"""The sizing inputs, from the consumer where there is one and the lead otherwise.
@@ -182,6 +233,8 @@ class SolarDesignEstimate(Document):
 			self.options[0].is_recommended = 1
 			recommended = [self.options[0]]
 
+		self.resolve_option_components()
+		self.number_options()
 		for row in self.options:
 			row.total_option_cost = flt(row.system_cost) + flt(row.additional_structure_cost)
 			if row.inverter_make:
@@ -190,12 +243,99 @@ class SolarDesignEstimate(Document):
 				)
 
 		self.recommended_option = recommended[0].option_name if recommended else None
+		self.build_quoted_options()
 
 	def recommended_row(self):
 		for row in self.options:
 			if row.is_recommended:
 				return row
 		return self.options[0] if self.options else None
+
+	def resolve_option_components(self):
+		"""Fill each option from the component and make chosen on it.
+
+		A row states a component type and a make; everything priced follows from that.
+		The package is the one this estimate is built on, narrowed to a package that
+		actually carries that make where more than one is on file, and the cost is the
+		package's price for that make. None of it is typed, so a price cannot drift from
+		the package it is supposed to have come from.
+		"""
+		for row in self.options:
+			if not row.component_make:
+				continue
+			make = frappe.db.get_value(
+				"Component Make", row.component_make,
+				["make_name", "component_type", "technology", "product_warranty_years"], as_dict=True,
+			)
+			if not make:
+				continue
+			if not row.component_type:
+				row.component_type = make.component_type
+			row.technology = make.technology
+
+			package = package_for_component(
+				row.component_make, make.component_type, self.solar_package,
+				self.capacity_for_package(), self.connection_type,
+			)
+			if package:
+				row.solar_package = package
+			cost = package_price_for_make(row.solar_package, make.component_type, make.make_name)
+			if cost is not None:
+				row.system_cost = cost
+			if not row.option_name:
+				row.option_name = make.technology or make.make_name
+
+			# The hidden module and inverter fields stay filled: the proposal, the
+			# quotation builder and the print format all read them, and they are what a
+			# customer-facing document says about the kit. They are no longer typed here.
+			if make.component_type == "Inverter":
+				row.inverter_make = row.component_make
+				row.inverter_specification = make.technology
+				row.inverter_count = cint(row.units) or 1
+				row.inverter_warranty_years = make.product_warranty_years or 0
+			elif make.component_type == "Module":
+				row.module_make = row.component_make
+				row.module_specification = make.technology
+				row.module_count = cint(row.units) or 0
+
+	def capacity_for_package(self):
+		return flt(self.final_capacity_kw) or flt(self.override_capacity_kw) or flt(self.recommended_capacity_kw)
+
+	def number_options(self):
+		"""Number the options 1, 2, 3 within each component type, in row order.
+
+		The numbering is per type because that is how the quote reads: three inverter
+		options are Option 1, 2 and 3, and the modules start again at 1.
+		"""
+		counters = {}
+		for row in self.options:
+			key = row.component_type or ""
+			counters[key] = counters.get(key, 0) + 1
+			row.option_number = counters[key]
+
+	def build_quoted_options(self):
+		"""The customer-facing table, rebuilt from the options on every save.
+
+		A presentation of the options and never a second place to type, so it is cleared
+		and written fresh rather than merged - there is nothing here to preserve.
+		"""
+		self.set("quoted_options", [])
+		serials, next_serial = {}, 0
+		for row in self.options:
+			kind = row.component_type or _("Other")
+			if kind not in serials:
+				next_serial += 1
+				serials[kind] = next_serial
+			self.append("quoted_options", {
+				"sl_no": serials[kind],
+				"component_type": kind,
+				"option_label": _("Option {0}").format(row.option_number or 1),
+				"option_description": row.option_name or row.technology or "",
+				"make": frappe.db.get_value("Component Make", row.component_make, "make_name")
+				        if row.component_make else "",
+				"units": cint(row.units),
+				"system_cost": flt(row.system_cost),
+			})
 
 	def seed_option_from_package(self):
 		"""A package chosen with nothing quoted yet is a priced option waiting to happen.
@@ -506,3 +646,59 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	)
 	doc.save()
 	return doc.name
+
+
+def package_for_component(component_make, component_type, current_package, capacity_kw, connection_type):
+	"""The package to price this component against.
+
+	The estimate's own package when it already carries this make, because that is the
+	system being quoted. Otherwise a package of the same size and phase that does carry
+	it - a microinverter option is a different package from a string one, and choosing
+	the make is how a person picks between them.
+	"""
+	if current_package and _package_has_make(current_package, component_make):
+		return current_package
+
+	filters = {"is_active": 1}
+	if capacity_kw:
+		filters["capacity_kw"] = capacity_kw
+	if connection_type:
+		filters["connection_type"] = connection_type
+	candidates = frappe.get_all("Solar Package", filters=filters, pluck="name",
+	                            order_by="modified desc", limit_page_length=0)
+	for name in candidates:
+		if _package_has_make(name, component_make):
+			return name
+	return current_package
+
+
+def _package_has_make(package, component_make):
+	return bool(frappe.db.exists(
+		"Solar Package Component", {"parent": package, "make": component_make}
+	))
+
+
+#: Which column of a package's price row carries which component type's make.
+PRICE_COLUMN = {
+	"Module": "module", "Inverter": "inverter", "DCDB": "dcdb",
+	"ACDB": "acdb", "Energy Meter": "energy_meter",
+}
+
+
+def package_price_for_make(package, component_type, make_name):
+	"""The package's system cost for this make, or None when it does not price it.
+
+	A package's price rows are one per combination of makes, so the cost of choosing
+	Solinteg over SolarEdge is a different row rather than a different package. None
+	rather than zero when nothing matches: zero is a price, and a missing price is not.
+	"""
+	if not package or not make_name:
+		return None
+	column = PRICE_COLUMN.get(component_type)
+	if not column:
+		return None
+	rows = frappe.get_all(
+		"Solar Package Price", filters={"parent": package, column: make_name},
+		fields=["system_cost"], order_by="idx", limit=1,
+	)
+	return flt(rows[0].system_cost) if rows else None
