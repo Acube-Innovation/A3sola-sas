@@ -46,10 +46,12 @@ def run():
 		order_by="creation asc",
 	):
 		doc = frappe.get_doc("Solar Installation", name)
+		# The task template is seeded shared (no company), so it is not looked up by company.
 		template = frappe.db.get_value(
 			"Installation Stage Template",
-			{"template_name": TASK_TEMPLATE_NAME, "company": doc.company, "is_active": 1},
+			{"template_name": TASK_TEMPLATE_NAME, "is_active": 1},
 			"name",
+			order_by="creation asc",
 		)
 		if not template:
 			skipped += 1
