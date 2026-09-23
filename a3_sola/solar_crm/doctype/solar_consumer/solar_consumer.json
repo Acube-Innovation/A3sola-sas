@@ -11,6 +11,7 @@
   "tab_consumer",
   "sb_1",
   "consumer_name",
+  "consumer_photo",
   "customer",
   "contact_person",
   "mobile_no",
@@ -109,6 +110,12 @@
    "in_list_view": 1,
    "label": "Consumer Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "consumer_photo",
+   "fieldtype": "Attach Image",
+   "label": "Photograph",
+   "description": "Shown as the consumer's avatar in lists, here and on the portal."
   },
   {
    "fieldname": "customer",
@@ -672,5 +679,6 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "consumer_name",
- "track_changes": 1
+ "track_changes": 1,
+ "image_field": "consumer_photo"
 }

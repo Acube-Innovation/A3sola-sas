@@ -1,0 +1,209 @@
+{#- Who this record is assigned to, and the dialog that adds someone.
+
+    Context: record_doctype, record_name, assignees, csrf_token. The dialog is the desk's
+    own "Add to ToDo" - the same fields, writing through the same endpoint - so an
+    assignment made here is the assignment the desk shows. -#}
+{%- if record_doctype and record_name %}
+<section class="a3s-card a3s-edit__card a3s-assign" data-assign
+         data-doctype="{{ record_doctype | e }}" data-name="{{ record_name | e }}">
+	<h3 class="a3s-edit__card-title">Assigned to</h3>
+
+	<div class="a3s-assign__list" data-assign-list>
+		{%- for a in assignees %}
+		<div class="a3s-assign__row" data-user="{{ a.user | e }}">
+			<span class="a3s-avatar a3s-avatar--initials a3s-avatar--sm" aria-hidden="true">{{ a.initials }}</span>
+			<span class="a3s-assign__text">
+				<span class="a3s-assign__name">{{ a.full_name | e }}</span>
+				{%- if a.designation %}<span class="a3s-assign__role">{{ a.designation | e }}</span>{% endif %}
+				<span class="a3s-assign__meta">
+					{{ a.assigned_on }}{% if a.complete_by %} &middot; due {{ a.complete_by }}{% endif %}
+					{%- if a.priority %} &middot; {{ a.priority }}{% endif %}
+				</span>
+				{%- if a.remarks %}<span class="a3s-assign__remark">{{ a.remarks | e }}</span>{% endif %}
+			</span>
+			<button type="button" class="a3s-assign__x" data-assign-remove="{{ a.user | e }}"
+			        title="Remove {{ a.full_name | e }}" aria-label="Remove {{ a.full_name | e }}">&times;</button>
+		</div>
+		{%- else %}
+		<p class="a3s-edit__hint" data-assign-empty>Nobody yet.</p>
+		{%- endfor %}
+	</div>
+
+	<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--block" data-assign-open>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg>
+		<span>Assign people</span>
+	</button>
+	<p class="a3s-edit__hint" data-assign-error hidden></p>
+</section>
+
+{#- ---- the dialog, a copy of the desk's Add to ToDo ------------------------- #}
+<div class="a3s-modal" data-assign-modal hidden role="dialog" aria-modal="true" aria-labelledby="a3s-assign-title">
+	<div class="a3s-modal__panel a3s-assign__panel">
+		<div class="a3s-assign__head">
+			<h3 class="a3s-modal__title" id="a3s-assign-title">Add to ToDo</h3>
+			<button type="button" class="a3s-assign__x" data-assign-close aria-label="Close">&times;</button>
+		</div>
+
+		<div class="a3s-modal__form">
+			<label class="a3s-check a3s-assign__me">
+				<input type="checkbox" data-assign-me>
+				<span>Assign to me</span>
+			</label>
+
+			<div class="a3s-field">
+				<label for="a3s-assign-users">Assign To <span class="a3s-req">*</span></label>
+				<select id="a3s-assign-users" multiple size="5" data-assign-users></select>
+				<p class="a3s-field__hint">Hold Ctrl (or Cmd) to choose more than one.</p>
+			</div>
+
+			<div class="a3s-field">
+				<label for="a3s-assign-group">Assign To User Group</label>
+				<select id="a3s-assign-group" data-assign-group><option value="">—</option></select>
+			</div>
+
+			<div class="a3s-assign__pair">
+				<div class="a3s-field">
+					<label for="a3s-assign-date">Complete By</label>
+					<input type="date" id="a3s-assign-date" data-assign-date>
+				</div>
+				<div class="a3s-field">
+					<label for="a3s-assign-priority">Priority</label>
+					<select id="a3s-assign-priority" data-assign-priority></select>
+				</div>
+			</div>
+
+			<div class="a3s-field">
+				<label for="a3s-assign-comment">Comment</label>
+				<textarea id="a3s-assign-comment" rows="4" data-assign-comment></textarea>
+			</div>
+
+			<div class="a3s-form__actions">
+				<button type="button" class="a3s-btn a3s-btn--primary" data-assign-submit>Add</button>
+				<button type="button" class="a3s-btn a3s-btn--ghost" data-assign-close>Cancel</button>
+				<p class="a3s-form__status" data-assign-status role="status" aria-live="polite"></p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+(function () {
+	var root = document.querySelector("[data-assign]");
+	if (!root) return;
+	var modal = document.querySelector("[data-assign-modal]");
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	var doctype = root.dataset.doctype, name = root.dataset.name;
+	var loaded = false;
+
+	function post(method, body) {
+		return fetch("/api/method/a3_sola.api.assignments." + method, {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+			body: JSON.stringify(body)
+		}).then(function (r) {
+			return r.json().then(function (b) {
+				if (!r.ok || !b || !b.message) throw new Error((b || {})._server_messages || "That did not work.");
+				return b.message;
+			});
+		});
+	}
+	function clean(e) {
+		return String(e.message || e).replace(/[\[\]"\\]|\{.*?"message":\s*/g, "").slice(0, 200);
+	}
+	function fill(select, rows, selected) {
+		select.innerHTML = "";
+		rows.forEach(function (r) {
+			var o = document.createElement("option");
+			o.value = r.value; o.textContent = r.label;
+			if (r.value === selected) o.selected = true;
+			select.appendChild(o);
+		});
+	}
+
+	root.querySelector("[data-assign-open]").addEventListener("click", function () {
+		modal.hidden = false;
+		if (loaded) return;
+		post("candidates", { doctype: doctype, name: name }).then(function (d) {
+			fill(modal.querySelector("[data-assign-users]"), d.users);
+			var group = modal.querySelector("[data-assign-group]");
+			fill(group, [{ value: "", label: "—" }].concat(d.groups));
+			fill(modal.querySelector("[data-assign-priority]"),
+			     d.priorities.map(function (p) { return { value: p, label: p }; }), "Medium");
+			loaded = true;
+		}).catch(function (e) { modal.querySelector("[data-assign-status]").textContent = clean(e); });
+	});
+
+	Array.prototype.forEach.call(modal.querySelectorAll("[data-assign-close]"), function (b) {
+		b.addEventListener("click", function () { modal.hidden = true; });
+	});
+	modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
+	document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.hidden = true; });
+
+	function render(rows) {
+		var list = root.querySelector("[data-assign-list]");
+		list.innerHTML = "";
+		if (!rows.length) {
+			list.innerHTML = '<p class="a3s-edit__hint">Nobody yet.</p>';
+			return;
+		}
+		rows.forEach(function (a) {
+			var row = document.createElement("div");
+			row.className = "a3s-assign__row";
+			var bits = [a.assigned_on];
+			if (a.complete_by) bits.push("due " + a.complete_by);
+			if (a.priority) bits.push(a.priority);
+			row.innerHTML = '<span class="a3s-avatar a3s-avatar--initials a3s-avatar--sm" aria-hidden="true"></span>'
+				+ '<span class="a3s-assign__text"><span class="a3s-assign__name"></span>'
+				+ '<span class="a3s-assign__role"></span><span class="a3s-assign__meta"></span>'
+				+ '<span class="a3s-assign__remark"></span></span>'
+				+ '<button type="button" class="a3s-assign__x" aria-label="Remove">&times;</button>';
+			row.querySelector(".a3s-avatar").textContent = a.initials;
+			row.querySelector(".a3s-assign__name").textContent = a.full_name;
+			row.querySelector(".a3s-assign__role").textContent = a.designation || "";
+			row.querySelector(".a3s-assign__meta").textContent = bits.join(" · ");
+			row.querySelector(".a3s-assign__remark").textContent = a.remarks || "";
+			row.querySelector("button").addEventListener("click", function () {
+				post("remove", { doctype: doctype, name: name, user: a.user })
+					.then(function (d) { render(d.assignees); })
+					.catch(function (e) { root.querySelector("[data-assign-error]").textContent = clean(e); });
+			});
+			list.appendChild(row);
+		});
+	}
+
+	Array.prototype.forEach.call(root.querySelectorAll("[data-assign-remove]"), function (b) {
+		b.addEventListener("click", function () {
+			post("remove", { doctype: doctype, name: name, user: b.dataset.assignRemove })
+				.then(function (d) { render(d.assignees); })
+				.catch(function (e) { root.querySelector("[data-assign-error]").textContent = clean(e); });
+		});
+	});
+
+	modal.querySelector("[data-assign-submit]").addEventListener("click", function () {
+		var btn = this;
+		var status = modal.querySelector("[data-assign-status]");
+		var chosen = Array.prototype.slice.call(modal.querySelectorAll("[data-assign-users] option:checked"))
+			.map(function (o) { return o.value; });
+		btn.disabled = true; status.textContent = "Adding\u2026";
+		post("assign", {
+			doctype: doctype, name: name,
+			assign_to_users: chosen,
+			assign_to_me: modal.querySelector("[data-assign-me]").checked ? 1 : 0,
+			user_group: modal.querySelector("[data-assign-group]").value || null,
+			complete_by: modal.querySelector("[data-assign-date]").value || null,
+			priority: modal.querySelector("[data-assign-priority]").value || null,
+			comment: modal.querySelector("[data-assign-comment]").value || null
+		}).then(function (d) {
+			render(d.assignees);
+			modal.hidden = true;
+			status.textContent = "";
+			modal.querySelector("[data-assign-comment]").value = "";
+			modal.querySelector("[data-assign-me]").checked = false;
+		}).catch(function (e) {
+			status.textContent = clean(e);
+		}).then(function () { btn.disabled = false; });
+	});
+})();
+</script>
+{%- endif %}

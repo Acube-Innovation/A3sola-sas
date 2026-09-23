@@ -69,9 +69,14 @@
 	<aside class="a3s-side" aria-label="Primary">
 		<div class="a3s-side__scroll">
 			{%- for group in nav_groups %}
-			<div class="a3s-side__group">
-				<p class="a3s-side__label">{{ group.label }}</p>
-				<ul class="a3s-side__list">
+			<div class="a3s-side__group" data-group="{{ group.key }}">
+				{#- The head is the control: it opens and closes the group under it. -#}
+				<button type="button" class="a3s-side__label" data-group-toggle
+				        aria-expanded="true" aria-controls="a3s-nav-{{ group.key }}">
+					<span class="a3s-side__label-text">{{ group.label }}</span>
+					<svg class="a3s-ic a3s-side__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</button>
+				<ul class="a3s-side__list" id="a3s-nav-{{ group.key }}">
 					{%- for item in group["items"] %}
 					<li>
 						<a class="a3s-side__item{% if item.route == active_route %} is-active{% endif %}"
@@ -88,6 +93,21 @@
 			</div>
 			{%- endfor %}
 		</div>
+		<script>
+		/* Which groups are closed is a per-browser preference, like the menu's own
+		   collapsed state. Applied here, inline with the markup it acts on, so a closed
+		   group is never painted open first and then snapped shut. */
+		(function () {
+			var closed = {};
+			try { closed = JSON.parse(localStorage.getItem("a3s-nav-groups") || "{}") || {}; } catch (e) {}
+			var groups = document.querySelectorAll(".a3s-side__group[data-group]");
+			for (var i = 0; i < groups.length; i++) {
+				if (!closed[groups[i].getAttribute("data-group")]) continue;
+				groups[i].classList.add("is-collapsed");
+				groups[i].querySelector("[data-group-toggle]").setAttribute("aria-expanded", "false");
+			}
+		})();
+		</script>
 
 		{#- ---- user details, pinned to the bottom ------------------------- #}
 		<div class="a3s-side__user">
@@ -140,6 +160,26 @@
 		sync();
 	});
 	sync();
+})();
+(function () {
+	var groups = document.querySelectorAll(".a3s-side__group[data-group]");
+	if (!groups.length) return;
+	function remember() {
+		var closed = {};
+		for (var i = 0; i < groups.length; i++) {
+			if (groups[i].classList.contains("is-collapsed")) closed[groups[i].getAttribute("data-group")] = 1;
+		}
+		try { localStorage.setItem("a3s-nav-groups", JSON.stringify(closed)); } catch (e) {}
+	}
+	Array.prototype.forEach.call(groups, function (group) {
+		var head = group.querySelector("[data-group-toggle]");
+		if (!head) return;
+		head.addEventListener("click", function () {
+			var collapsed = group.classList.toggle("is-collapsed");
+			head.setAttribute("aria-expanded", collapsed ? "false" : "true");
+			remember();
+		});
+	});
 })();
 (function () {
 	var btn = document.getElementById("a3s-signout");

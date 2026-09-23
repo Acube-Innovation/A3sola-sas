@@ -80,6 +80,12 @@ CUSTOM_FIELDS = {
 	],
 	# --------------------------------------------------------------------- Lead
 	"Lead": [
+		# Location: the standard `state` field is re-graded to a Link by PROPERTY_SETTERS
+		# below, and the district sits beside it. Both are masters rather than free text
+		# so a place is chosen once and reports group by it.
+		{"fieldname": "district", "fieldtype": "Link", "options": "Indian District",
+		 "label": "District", "insert_after": "city",
+		 "description": "Districts are offered for the chosen state."},
 		# Solar Details lives in its own "Solar" tab, placed right after the Details tab
 		# (its last field is `blog_subscriber`, just before ERPNext's `activities_tab`).
 		{"fieldname": "a3s_solar_tab", "fieldtype": "Tab Break", "label": "Solar", "insert_after": "blog_subscriber"},
@@ -223,3 +229,19 @@ CUSTOM_FIELDS = {
 		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "a3s_solar_sb", "read_only": 1},
 	],
 }
+
+
+#: Standard fields this module re-grades rather than duplicates. A Custom Field that
+#: repeats a fieldname the doctype already ships is a second DocField with the same name,
+#: which breaks every app that later validates that doctype; a Property Setter changes the
+#: standard field in place, which is what is meant here.
+#:
+#: `Lead.state` ships as free text. It becomes a Link to Indian State - whose records are
+#: named by the state itself, so the stored value is still "Kerala" and ERPNext's address
+#: handling reads exactly what it read before.
+PROPERTY_SETTERS = [
+	{"doctype": "Lead", "fieldname": "state", "property": "fieldtype", "value": "Link", "property_type": "Data"},
+	{"doctype": "Lead", "fieldname": "state", "property": "options", "value": "Indian State", "property_type": "Text"},
+	{"doctype": "Lead", "fieldname": "state", "property": "default", "value": "Kerala", "property_type": "Text"},
+	{"doctype": "Lead", "fieldname": "city", "property": "label", "value": "City / Town", "property_type": "Data"},
+]

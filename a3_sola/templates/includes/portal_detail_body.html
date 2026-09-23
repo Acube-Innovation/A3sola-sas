@@ -6,13 +6,67 @@
 		<span>{{ title | e }}</span>
 		{%- if status %}<span class="a3s-badge a3s-badge--{{ status_slug }}">{{ status | e }}</span>{% endif %}
 	</h2>
-	{%- if can_write %}
 	<div class="a3s-detail__actions">
-		<a class="a3s-btn a3s-btn--primary" href="{{ edit_route }}">
+		{%- if can_write %}
+		<a class="a3s-btn a3s-btn--secondary" href="{{ edit_route }}">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
 			<span>Edit</span>
 		</a>
+		{%- if can_submit %}
+		{#- Submitting the order is the handoff into Operations: it opens the Solar
+		    Installation, its document register and its billing plan. The button posts to
+		    the same `submit` the desk calls, so both run one code path. -#}
+		<button type="button" class="a3s-btn a3s-btn--primary" id="a3s-submit-record"
+		        data-slug="{{ collection.slug | e }}" data-name="{{ record.name | e }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg>
+			<span>Submit order</span>
+		</button>
+		{%- endif %}
+		{%- elif submitted %}
+		{#- Submitted documents are closed to `save`, so the only honest offer is the desk,
+		    where they can be amended or cancelled. -#}
+		<a class="a3s-btn a3s-btn--secondary" href="{{ desk_route }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
+			<span>Amend in ERPNext</span>
+		</a>
+		{%- endif %}
 	</div>
+	{%- if can_submit %}
+	<p class="a3s-edit__hint" id="a3s-submit-error" hidden></p>
+	<script>
+	(function () {
+		var btn = document.getElementById("a3s-submit-record");
+		if (!btn) return;
+		var error = document.getElementById("a3s-submit-error");
+		btn.addEventListener("click", function () {
+			btn.disabled = true;
+			var label = btn.querySelector("span");
+			var was = label ? label.textContent : "";
+			if (label) label.textContent = "Submitting\u2026";
+			if (error) { error.hidden = true; error.textContent = ""; }
+			fetch("/api/method/a3_sola.api.portal_crud.submit_record", {
+				method: "POST",
+				credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": "{{ csrf_token }}" },
+				body: JSON.stringify({ slug: btn.dataset.slug, name: btn.dataset.name }),
+			}).then(function (r) {
+				return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+			}).then(function (res) {
+				if (!res.ok || !res.body || !res.body.message) {
+					throw new Error(((res.body || {})._server_messages) || "That did not work.");
+				}
+				window.location.reload();
+			}).catch(function (e) {
+				btn.disabled = false;
+				if (label) label.textContent = was;
+				if (error) {
+					error.textContent = String(e.message || e).replace(/[\[\]"\\]|\{.*?"message":\s*/g, "").slice(0, 300);
+					error.hidden = false;
+				}
+			});
+		});
+	})();
+	</script>
 	{%- endif %}
 	<p class="a3s-main__sub">{{ collection.singular | capitalize }} &middot; stored in ERPNext.</p>
 </div>
@@ -63,46 +117,6 @@
 	</div>
 
 	<aside class="a3s-edit__side">
-		<section class="a3s-card a3s-edit__card">
-			<h3 class="a3s-edit__card-title">Snapshot</h3>
-			<div class="a3s-tiles">
-				{%- for t in tiles %}
-				<div class="a3s-tile">
-					<span class="a3s-tile__icon a3s-tile__icon--{{ t.tone }}" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ t.icon }}"></use></svg></span>
-					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ t.value }}</span><span class="a3s-tile__label">{{ t.label | e }}</span></span>
-				</div>
-				{%- endfor %}
-				<div class="a3s-tile">
-					<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-check"></use></svg></span>
-					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ filled_pct }}%</span><span class="a3s-tile__label">Filled</span></span>
-				</div>
-			</div>
-			<div class="a3s-progress" role="progressbar" aria-label="Fields filled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ filled_pct }}">
-				<span class="a3s-progress__fill" style="width: {{ filled_pct }}%"></span>
-			</div>
-			<p class="a3s-edit__hint">{{ filled }} of {{ total }} fields filled.</p>
-		</section>
-
-		{%- if glance %}
-		<section class="a3s-card a3s-edit__card">
-			<h3 class="a3s-edit__card-title">At a glance</h3>
-			<dl class="a3s-glance">
-				{%- for g in glance %}
-				<div class="a3s-glance__row">
-					<dt>{{ g.label | e }}</dt>
-					<dd>
-						{%- if g.kind == "badge" %}
-						<span class="a3s-badge a3s-badge--{{ g.slug }}">{{ g.text | e }}</span>
-						{%- else %}
-						<span class="a3s-pill a3s-pill--amber{% if g.kind == "empty" %} is-empty{% endif %}">{{ g.text | e or "—" }}</span>
-						{%- endif %}
-					</dd>
-				</div>
-				{%- endfor %}
-			</dl>
-		</section>
-		{%- endif %}
-
-		{%- include "templates/includes/portal_chain_steps.html" %}
+		{%- include "templates/includes/portal_record_aside.html" %}
 	</aside>
 </div>

@@ -54,6 +54,11 @@
 	};
 	SOLAR_LINKS.concat(FINANCE).forEach(function (f) { state.solar[f] = null; });
 	state.solar.finance_status = "Not Applied";
+	// Opened from the record the chain led here from: the links it carries across are
+	// seeded so the builder starts already attached to the proposal it prices.
+	SOLAR_LINKS.forEach(function (f) {
+		if (data.prefill && data.prefill[f]) state.solar[f] = data.prefill[f];
+	});
 	var firstTerms = (cat.terms_templates || [])[0];
 	if (firstTerms) { state.terms.tc_name = firstTerms.name; state.terms.html = firstTerms.terms || ""; }
 
@@ -523,7 +528,7 @@
 		var btn = el("ce-submit"); btn.disabled = true; setMsg("Submitting…");
 		call("submit", { name: state.name }).then(function (s) {
 			setMsg("Submitted.", "success");
-			window.location.assign(s.route || (data.list_route || "/a3solaportal/cost-estimates"));
+			window.location.assign(s.route || (data.list_route || "/a3solaportal/quotations"));
 		}).catch(function (e) { setMsg(e.message, "error"); btn.disabled = false; });
 	}
 

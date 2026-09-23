@@ -29,7 +29,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_rows,
 )
 
-SLUG = "cost-estimates"
+SLUG = "quotations"
 DEFAULT_VALIDITY_DAYS = 30
 PARTY_TYPES = ("Lead", "Customer")
 PARTY_LIMIT = 300

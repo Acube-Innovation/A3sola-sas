@@ -6,11 +6,15 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "option_number",
+  "component_type",
+  "component_make",
+  "technology",
   "option_name",
-  "inverter_topology",
   "solar_package",
   "is_recommended",
   "cb_1",
+  "units",
   "system_cost",
   "additional_structure_cost",
   "total_option_cost",
@@ -20,6 +24,7 @@
   "module_specification",
   "module_count",
   "sb_3",
+  "inverter_topology",
   "inverter_make",
   "inverter_specification",
   "cb_4",
@@ -30,18 +35,42 @@
  ],
  "fields": [
   {
-   "fieldname": "option_name",
-   "fieldtype": "Data",
+   "fieldname": "option_number",
+   "fieldtype": "Int",
    "label": "Option",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Numbered 1, 2, 3 within each component type."
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "label": "Component Type",
+   "options": "\nModule\nInverter\nMounting Structure\nCable\nACDB\nDCDB\nEarthing\nLightning Protection\nEnergy Meter\nOther",
    "reqd": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "inverter_topology",
-   "fieldtype": "Select",
-   "label": "Topology",
-   "options": "String\nString with Optimiser\nMicroinverter\nHybrid",
-   "reqd": 1,
+   "fieldname": "component_make",
+   "fieldtype": "Link",
+   "options": "Component Make",
+   "label": "Make",
+   "in_list_view": 1,
+   "description": "Makes offered are those of the chosen component type."
+  },
+  {
+   "fieldname": "technology",
+   "fieldtype": "Data",
+   "label": "Technology",
+   "read_only": 1,
+   "fetch_from": "component_make.technology",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "option_name",
+   "fieldtype": "Data",
+   "label": "Description",
+   "reqd": 0,
    "in_list_view": 1
   },
   {
@@ -49,7 +78,9 @@
    "fieldtype": "Link",
    "label": "Package",
    "options": "Solar Package",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "read_only": 1,
+   "description": "Resolved from the component type and make."
   },
   {
    "fieldname": "is_recommended",
@@ -62,11 +93,20 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "units",
+   "fieldtype": "Int",
+   "label": "Units",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
    "fieldname": "system_cost",
    "fieldtype": "Currency",
    "label": "System Cost",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 0,
+   "in_list_view": 1,
+   "read_only": 1,
+   "description": "Taken from the package's price for this make."
   },
   {
    "fieldname": "additional_structure_cost",
@@ -88,55 +128,83 @@
   {
    "fieldname": "sb_2",
    "fieldtype": "Section Break",
-   "label": "Modules"
+   "label": "Modules",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "module_make",
    "fieldtype": "Link",
    "label": "Module Make",
-   "options": "Component Make"
+   "options": "Component Make",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "module_specification",
    "fieldtype": "Small Text",
-   "label": "Module Specification"
+   "label": "Module Specification",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "module_count",
    "fieldtype": "Int",
-   "label": "Modules"
+   "label": "Modules",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "sb_3",
    "fieldtype": "Section Break",
-   "label": "Inverter"
+   "label": "Inverter",
+   "hidden": 1,
+   "reqd": 0
+  },
+  {
+   "fieldname": "inverter_topology",
+   "fieldtype": "Select",
+   "label": "Topology",
+   "options": "String\nString with Optimiser\nMicroinverter\nHybrid",
+   "reqd": 0,
+   "hidden": 1
   },
   {
    "fieldname": "inverter_make",
    "fieldtype": "Link",
    "label": "Inverter Make",
-   "options": "Component Make"
+   "options": "Component Make",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "inverter_specification",
    "fieldtype": "Small Text",
-   "label": "Inverter Specification"
+   "label": "Inverter Specification",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "cb_4",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "inverter_count",
    "fieldtype": "Int",
-   "label": "Nos"
+   "label": "Nos",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "inverter_warranty_years",
    "fieldtype": "Int",
    "label": "Inverter Warranty (years)",
    "read_only": 1,
-   "description": "Fetched from the make, never typed."
+   "description": "Fetched from the make, never typed.",
+   "hidden": 1,
+   "reqd": 0
   },
   {
    "fieldname": "sb_5",

@@ -26,6 +26,7 @@ from a3_sola.setup.custom_fields_ops import CUSTOM_FIELDS as OPS_CUSTOM_FIELDS
 from a3_sola.setup.custom_fields_ops import MODULE as OPS_MODULE
 from a3_sola.setup.custom_fields_projects import CUSTOM_FIELDS as PROJ_CUSTOM_FIELDS
 from a3_sola.setup.custom_fields_projects import MODULE as PROJ_MODULE
+from a3_sola.setup.custom_fields import PROPERTY_SETTERS as CRM_PROPERTY_SETTERS
 from a3_sola.setup.custom_fields_projects import PROPERTY_SETTERS as PROJ_PROPERTY_SETTERS
 from a3_sola.setup.roles import create_roles
 
@@ -144,7 +145,7 @@ def install_property_setters():
 	"""
 	from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
-	for setter in PROJ_PROPERTY_SETTERS:
+	for setter in CRM_PROPERTY_SETTERS + PROJ_PROPERTY_SETTERS:
 		doc = make_property_setter(
 			setter["doctype"],
 			setter["fieldname"],
@@ -154,7 +155,8 @@ def install_property_setters():
 			validate_fields_for_doctype=False,
 		)
 		# Module-scoped like the Custom Fields above, so export-fixtures still picks it up.
-		frappe.db.set_value("Property Setter", doc.name, "module", PROJ_MODULE, update_modified=False)
+		module = MODULE if setter in CRM_PROPERTY_SETTERS else PROJ_MODULE
+		frappe.db.set_value("Property Setter", doc.name, "module", module, update_modified=False)
 
 
 def default_company():

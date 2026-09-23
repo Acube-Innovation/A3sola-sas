@@ -1,0 +1,54 @@
+{#- The three boxes every record in the chain carries: what links to it, what it says,
+    and what comes next. Shared by the metadata-driven detail page and by the quotation
+    builder, so a record reads the same way whichever page renders it.
+
+    Context: tiles, glance, chain_steps. `total` is optional - the builder has no field
+    count to report, so it simply omits the filled-in progress. -#}
+{%- if tiles %}
+<section class="a3s-card a3s-edit__card">
+	<h3 class="a3s-edit__card-title">Snapshot</h3>
+	<div class="a3s-tiles">
+		{%- for t in tiles %}
+		<div class="a3s-tile">
+			<span class="a3s-tile__icon a3s-tile__icon--{{ t.tone }}" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ t.icon }}"></use></svg></span>
+			<span class="a3s-tile__text"><span class="a3s-tile__value">{{ t.value }}</span><span class="a3s-tile__label">{{ t.label | e }}</span></span>
+		</div>
+		{%- endfor %}
+		{%- if total %}
+		<div class="a3s-tile">
+			<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-check"></use></svg></span>
+			<span class="a3s-tile__text"><span class="a3s-tile__value">{{ filled_pct }}%</span><span class="a3s-tile__label">Filled</span></span>
+		</div>
+		{%- endif %}
+	</div>
+	{%- if total %}
+	<div class="a3s-progress" role="progressbar" aria-label="Fields filled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ filled_pct }}">
+		<span class="a3s-progress__fill" style="width: {{ filled_pct }}%"></span>
+	</div>
+	<p class="a3s-edit__hint">{{ filled }} of {{ total }} fields filled.</p>
+	{%- endif %}
+</section>
+{%- endif %}
+
+{%- if glance %}
+<section class="a3s-card a3s-edit__card">
+	<h3 class="a3s-edit__card-title">At a glance</h3>
+	<dl class="a3s-glance">
+		{%- for g in glance %}
+		<div class="a3s-glance__row">
+			<dt>{{ g.label | e }}</dt>
+			<dd>
+				{%- if g.kind == "badge" %}
+				<span class="a3s-badge a3s-badge--{{ g.slug }}">{{ g.text | e }}</span>
+				{%- else %}
+				<span class="a3s-pill a3s-pill--amber{% if g.kind == "empty" %} is-empty{% endif %}">{{ g.text | e or "—" }}</span>
+				{%- endif %}
+			</dd>
+		</div>
+		{%- endfor %}
+	</dl>
+</section>
+{%- endif %}
+
+{%- include "templates/includes/portal_chain_steps.html" %}
+{%- include "templates/includes/portal_assignment.html" %}

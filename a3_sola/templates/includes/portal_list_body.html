@@ -33,7 +33,19 @@
 				{%- for cell in row.cells %}
 				<td{% if cell.num %} class="a3s-table__num"{% endif %}>
 					{%- if cell.primary -%}
-						<a class="a3s-table__link" href="{{ cell.route }}">{{ cell.text }}</a>
+						{#- The record's picture when it has one, its initials when it does not, so
+						    the column scans the same way either way. -#}
+						<a class="a3s-table__record" href="{{ cell.route }}">
+							{%- if cell.image %}
+							<img class="a3s-avatar" src="{{ cell.image | e }}" alt="" loading="lazy">
+							{%- else %}
+							<span class="a3s-avatar a3s-avatar--initials" aria-hidden="true">{{ cell.initials }}</span>
+							{%- endif %}
+							<span class="a3s-table__record-text">
+								<span class="a3s-table__link">{{ cell.text }}</span>
+								{%- if cell.sub %}<span class="a3s-table__sub">{{ cell.sub }}</span>{% endif %}
+							</span>
+						</a>
 					{%- elif cell.badge -%}
 						<span class="a3s-badge">{{ cell.text }}</span>
 					{%- elif cell.text == "—" -%}

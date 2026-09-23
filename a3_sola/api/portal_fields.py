@@ -19,6 +19,10 @@ INPUT_TYPES = {
 }
 # Field types a detail page can show as text or a link.
 DISPLAY_TYPES = INPUT_TYPES | {"Attach", "Attach Image", "Read Only", "Long Text"}
+
+#: A picture is the one attachment a portal form can capture: it uploads on choice
+#: and the form then carries the resulting file URL like any other value.
+INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
 NUMERIC_TYPES = {"Int", "Float", "Currency", "Percent"}
 LINK_CHOICE_LIMIT = 300
 TRUE = {"1", "true", "on", "yes"}
@@ -108,21 +112,60 @@ def link_title(doctype, name):
 	return cache[key]
 
 
-def link_choices(doctype):
-	"""Names to offer for a Link field, permission-checked, capped."""
-	filters = None
+def link_choices(doctype, filters=None, limit=None):
+	"""Options for a Link field as {value, label}, permission-checked, capped.
+
+	The value is the record's id, because that is what the field stores; the label is its
+	title, because SOL-DISCOM-00001 tells a person nothing and "KSEB" tells them
+	everything. `filters` narrows the list where one field depends on another - the
+	districts of the chosen state, say.
+	"""
 	if doctype == "User":
 		# Only people who can own a record: real, enabled system users.
-		filters = [["enabled", "=", 1], ["user_type", "=", "System User"], ["name", "not in", ["Guest", "Administrator"]]]
+		filters = (filters or []) + [
+			["enabled", "=", 1], ["user_type", "=", "System User"],
+			["name", "not in", ["Guest", "Administrator"]],
+		]
 	try:
-		return frappe.get_list(
-			doctype, pluck="name", filters=filters, order_by="name", limit_page_length=LINK_CHOICE_LIMIT
+		meta = frappe.get_meta(doctype)
+		title_field = meta.title_field if meta.title_field and meta.title_field != "name" else None
+		fields = ["name"] + ([title_field] if title_field else [])
+		rows = frappe.get_list(
+			doctype, fields=fields, filters=filters, order_by=title_field or "name",
+			limit_page_length=limit or LINK_CHOICE_LIMIT,
 		)
 	except frappe.PermissionError:
 		return []
+	return [
+		{"value": r["name"], "label": str((r.get(title_field) if title_field else None) or r["name"])}
+		for r in rows
+	]
 
 
-def edit_spec(df, value):
+#: Link fields whose options depend on another field of the same document.
+#: fieldname -> (field on the linked doctype, fieldname on this document to match).
+DEPENDENT_LINKS = {
+	"district": ("state", "state"),
+	"a3s_district": ("state", "state"),
+	"discom_section": ("discom", "discom"),
+}
+
+
+def link_filters(df, doc=None):
+	"""Narrow a Link field's options by another field of the same record.
+
+	A district belongs to a state and a section belongs to a DISCOM, so offering all of
+	them would make the person find the right one rather than be given it.
+	"""
+	rule = DEPENDENT_LINKS.get(df.fieldname)
+	if not rule or doc is None:
+		return None
+	target_field, source_field = rule
+	value = doc.get(source_field) if hasattr(doc, "get") else None
+	return [[target_field, "=", value]] if value else None
+
+
+def edit_spec(df, value, doc=None):
 	"""What a form needs to render one field with its current value."""
 	spec = {
 		"fieldname": df.fieldname,
@@ -132,16 +175,20 @@ def edit_spec(df, value):
 		"value": "" if value is None else value,
 		"input": "text",
 	}
-	if df.fieldtype == "Select":
+	if df.fieldtype == "Attach Image":
+		spec["input"] = "image"
+	elif df.fieldtype == "Select":
 		spec["options"] = (df.options or "").split("\n")
 	elif df.fieldtype == "Link":
 		spec["link_doctype"] = df.options
-		choices = link_choices(df.options)
+		rule = DEPENDENT_LINKS.get(df.fieldname)
+		spec["depends_field"] = rule[1] if rule else ""
+		choices = link_choices(df.options, filters=link_filters(df, doc))
 		# Past the limit the list is not the whole table, so offer a free-text field with
 		# the fetched names as suggestions rather than a dropdown that hides the rest.
 		spec["many"] = len(choices) >= LINK_CHOICE_LIMIT
-		if value and value not in choices:
-			choices.insert(0, value)
+		if value and not any(c["value"] == value for c in choices):
+			choices.insert(0, {"value": value, "label": link_title(df.options, value)})
 		spec["choices"] = choices
 	elif df.fieldtype == "Check":
 		spec["value"] = cint(value)
@@ -161,3 +208,22 @@ def edit_spec(df, value):
 	elif df.options == "Phone" or df.fieldtype == "Phone":
 		spec["input"] = "tel"
 	return spec
+
+
+@frappe.whitelist()
+def dependent_options(doctype=None, fieldname=None, value=None):
+	"""The options for a dependent Link field, given what its source field now holds.
+
+	Called when the form's source field changes - pick a state, get that state's
+	districts. Only fields `DEPENDENT_LINKS` declares, so this cannot be used to list an
+	arbitrary doctype, and the listing itself is permission-checked like any other.
+	"""
+	rule = DEPENDENT_LINKS.get(fieldname)
+	if not rule:
+		frappe.throw(frappe._("{0} does not depend on another field.").format(fieldname))
+	df = frappe.get_meta(doctype).get_field(fieldname)
+	if not df or df.fieldtype != "Link":
+		frappe.throw(frappe._("{0} is not a link field.").format(fieldname))
+	target_field = rule[0]
+	filters = [[target_field, "=", value]] if value else None
+	return {"choices": link_choices(df.options, filters=filters)}

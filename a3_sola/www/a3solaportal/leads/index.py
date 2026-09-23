@@ -56,7 +56,7 @@ def get_context(context):
 		"Lead",
 		fields=[
 			"name", "lead_name", "company_name",
-			"email_id", "mobile_no", "status", "creation",
+			"email_id", "mobile_no", "status", "creation", "owner",
 		] + extra,
 		filters=filters,
 		or_filters=or_filters,
@@ -86,6 +86,8 @@ def get_context(context):
 		lead["solar"] = [p for p in (lead["scheme_name"], lead["size_kw"]) if p]
 		lead["created"] = frappe.utils.format_date(lead.get("creation"), "medium")
 
+	_add_assignment(leads)
+
 	context.leads = leads
 	context.total = len(leads)
 	context.limit = LIMIT
@@ -97,3 +99,55 @@ def get_context(context):
 		"Lost Quotation", "Interested", "Converted", "Do Not Contact",
 	]
 	return context
+
+
+def _add_assignment(leads):
+	"""Who raised each lead and who it now sits with.
+
+	Both halves in one column, because the question a person asks of a list is "whose is
+	this and how long has it been waiting" - which is two facts, not two columns. The
+	names and the assignments are fetched once for the whole page rather than per row.
+	"""
+	if not leads:
+		return
+
+	owners = {l.get("owner") for l in leads if l.get("owner")}
+	names = dict(
+		frappe.get_all("User", filters={"name": ("in", list(owners))},
+		               fields=["name", "full_name"], as_list=True)
+	) if owners else {}
+
+	# The newest open assignment per lead, in one query rather than one per row.
+	todos = frappe.get_all(
+		"ToDo",
+		filters={"reference_type": "Lead", "reference_name": ("in", [l["name"] for l in leads]),
+		         "status": ("!=", "Cancelled")},
+		fields=["name", "reference_name", "allocated_to", "description", "creation"],
+		order_by="creation asc",
+		limit_page_length=0,
+		ignore_permissions=True,
+	)
+	latest = {}
+	for row in todos:
+		latest[row.reference_name] = row  # ascending, so the last one written wins
+	assignee_ids = {r.allocated_to for r in latest.values() if r.allocated_to}
+	if assignee_ids:
+		names.update(dict(
+			frappe.get_all("User", filters={"name": ("in", list(assignee_ids))},
+			               fields=["name", "full_name"], as_list=True)
+		))
+
+	today = frappe.utils.today()
+	for lead in leads:
+		lead["created_by"] = names.get(lead.get("owner")) or lead.get("owner") or "—"
+		days = frappe.utils.date_diff(today, lead.get("creation"))
+		lead["age_days"] = max(frappe.utils.cint(days), 0)
+		row = latest.get(lead["name"])
+		if row:
+			lead["assigned_to"] = names.get(row.allocated_to) or row.allocated_to or ""
+			lead["assigned_on"] = frappe.utils.format_date(row.creation, "medium")
+			lead["assigned_for"] = frappe.utils.strip_html(row.description or "").strip()
+			lead["assigned_todo"] = row.name
+		else:
+			lead["assigned_to"] = ""
+			lead["assigned_todo"] = ""
