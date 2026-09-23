@@ -98,6 +98,10 @@ def _insert_into(doc):
 			existing.display_order = index
 
 	doc.flags.ignore_validate_update_after_submit = True
+	# v1.2 made task_doctype mandatory on stage rows, and this patch runs against that
+	# schema. The legacy rows it touches have none; the v1.2 patches that follow retire
+	# these templates and rebuild the open jobs on the task template anyway.
+	doc.flags.ignore_mandatory = True
 	doc.save(ignore_permissions=True)
 	return True
 
