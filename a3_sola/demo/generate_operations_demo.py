@@ -10,7 +10,7 @@ awaiting a net meter, fully commissioned, blocked by a snag, and a refund short-
 import frappe
 from frappe.utils import add_days, flt, today
 
-from a3_sola.api import stages
+from a3_sola.api import installation_lead, stages
 from a3_sola.tests.fixtures import name_of
 
 
@@ -46,6 +46,8 @@ def _consumers_with_estimates(company, needed=7):
 		if not frappe.db.exists("Solar Installation", {"solar_design_estimate": row.name})
 		# Never adopt a test fixture's estimate - demo data must read as real jobs.
 		and not (frappe.db.get_value("Solar Consumer", row.solar_consumer, "consumer_name") or "").startswith("Test ")
+		# An installation needs the lead it came from.
+		and installation_lead.lead_of(row.solar_consumer, row.name)
 	]
 	while len(spare) < needed:
 		built = _build_estimate(company, OPS_CONSUMERS[len(spare) % len(OPS_CONSUMERS)])
@@ -90,6 +92,12 @@ def _build_estimate(company, consumer_name):
 	)
 	consumer.flags.ignore_permissions = True
 	consumer.insert(ignore_permissions=True)
+	# An installation is opened from a lead, so the demo consumer is converted from one.
+	lead = frappe.get_doc({"doctype": "Lead", "lead_name": consumer.consumer_name, "company": company})
+	lead.flags.ignore_permissions = True
+	lead.insert(ignore_permissions=True)
+	consumer.db_set("lead", lead.name, update_modified=False)
+	lead.db_set("solar_consumer", consumer.name, update_modified=False)
 
 	survey = frappe.get_doc(
 		{

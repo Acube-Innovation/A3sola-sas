@@ -6,59 +6,57 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_details",
   "sb_1",
   "lead",
   "solar_consumer",
   "site_survey",
   "estimate_date",
   "cb_2",
-  "subsidy_scheme",
   "electricity_tariff",
   "consumer_category",
   "connection_type",
   "company",
   "amended_from",
-  "sb_3",
+  "cb_sizing",
   "annual_consumption_units",
   "consumption_based_capacity_kw",
   "roof_limited_capacity_kw",
   "sanctioned_load_capacity_kw",
-  "cb_4",
   "recommended_capacity_kw",
   "binding_constraint",
   "override_capacity_kw",
-  "final_capacity_kw",
-  "tab_system",
-  "sb_5",
+  "sb_3",
+  "subsidy_option",
+  "subsidy_scheme",
   "solar_package",
-  "system_type",
+  "tariff_category",
+  "cb_4",
   "is_dcr_compliant",
-  "cb_6",
-  "specific_yield",
-  "average_shading_percent",
+  "final_capacity_kw",
+  "system_type",
+  "tab_system",
+  "sb_panels",
+  "panels",
+  "sb_inverters",
+  "inverters",
+  "sb_batteries",
+  "batteries",
+  "sb_bos",
+  "bos_package",
+  "bos_basis",
+  "bos_items",
+  "sb_kseb",
+  "kseb_expenses",
+  "sb_mounting",
+  "roof_type",
+  "mounting_expenses",
+  "sb_installation",
+  "installation_expenses",
   "sb_7",
   "options",
   "recommended_option",
-  "sb_8",
-  "estimated_annual_generation_kwh",
-  "estimated_monthly_generation_kwh",
-  "units_offset_per_cycle",
-  "cb_9",
-  "expected_daily_units_low",
-  "expected_daily_units_high",
-  "estimated_annual_savings",
-  "sb_10",
-  "savings_breakdown",
   "tab_11",
-  "sb_12",
-  "gross_system_cost",
-  "additional_civil_cost",
-  "total_project_cost",
-  "cb_13",
-  "applicable_subsidy_amount",
-  "subsidy_slab_used",
-  "net_cost_to_customer",
-  "cost_per_kw",
   "sb_quoted",
   "quoted_options",
   "sb_14",
@@ -79,19 +77,46 @@
   "required_connection_type",
   "cb_19",
   "regulation_message",
+  "sb_12",
+  "gross_system_cost",
+  "additional_civil_cost",
+  "total_project_cost",
+  "cb_13",
+  "applicable_subsidy_amount",
+  "subsidy_slab_used",
+  "net_cost_to_customer",
+  "cost_per_kw",
   "tab_20",
+  "sb_8",
+  "estimated_annual_generation_kwh",
+  "estimated_monthly_generation_kwh",
+  "units_offset_per_cycle",
+  "cb_9",
+  "expected_daily_units_low",
+  "expected_daily_units_high",
+  "estimated_annual_savings",
+  "sb_10",
+  "savings_breakdown",
   "sb_21",
   "simple_payback_years",
+  "specific_yield",
   "cb_22",
   "lifetime_savings",
+  "average_shading_percent",
   "sb_23",
-  "cashflow"
+  "cashflow",
+  "connections_tab"
  ],
  "fields": [
   {
+   "fieldname": "tab_details",
+   "fieldtype": "Tab Break",
+   "label": "Estimate Details"
+  },
+  {
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
-   "label": "Reference"
+   "label": "Consumer Documents"
   },
   {
    "fieldname": "lead",
@@ -125,12 +150,6 @@
   {
    "fieldname": "cb_2",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "subsidy_scheme",
-   "fieldtype": "Link",
-   "label": "Subsidy Scheme",
-   "options": "Subsidy Scheme"
   },
   {
    "fieldname": "electricity_tariff",
@@ -171,9 +190,8 @@
    "print_hide": 1
   },
   {
-   "fieldname": "sb_3",
-   "fieldtype": "Section Break",
-   "label": "Sizing Constraints"
+   "fieldname": "cb_sizing",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "annual_consumption_units",
@@ -204,10 +222,6 @@
    "precision": 3
   },
   {
-   "fieldname": "cb_4",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "recommended_capacity_kw",
    "fieldtype": "Float",
    "label": "Recommended (kW)",
@@ -228,22 +242,26 @@
    "precision": 3
   },
   {
-   "fieldname": "final_capacity_kw",
-   "fieldtype": "Float",
-   "label": "Final Capacity (kW)",
-   "read_only": 1,
-   "in_list_view": 1,
-   "precision": 3
-  },
-  {
-   "fieldname": "tab_system",
-   "fieldtype": "Tab Break",
-   "label": "System & Options"
-  },
-  {
-   "fieldname": "sb_5",
+   "fieldname": "sb_3",
    "fieldtype": "Section Break",
-   "label": "System"
+   "label": "Package Details"
+  },
+  {
+   "fieldname": "subsidy_option",
+   "fieldtype": "Select",
+   "label": "Subsidy",
+   "options": "With Subsidy\nWithout Subsidy",
+   "default": "With Subsidy",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme",
+   "depends_on": "eval:doc.subsidy_option==\"With Subsidy\"",
+   "mandatory_depends_on": "eval:doc.subsidy_option==\"With Subsidy\""
   },
   {
    "fieldname": "solar_package",
@@ -254,40 +272,158 @@
    "description": "The predefined package this estimate is built on. Choosing one prices the first option from it; the survey decides which package fits."
   },
   {
-   "fieldname": "system_type",
-   "fieldtype": "Select",
-   "label": "System Type",
-   "options": "On-Grid\nOff-Grid\nHybrid",
-   "default": "On-Grid"
+   "fieldname": "tariff_category",
+   "fieldtype": "Data",
+   "label": "Consumer Tariff Category",
+   "fetch_from": "solar_consumer.tariff_category",
+   "read_only": 1,
+   "description": "With subsidy, the consumer must be on LT-1A (set in A3 Sola Settings)."
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "is_dcr_compliant",
    "fieldtype": "Check",
    "label": "DCR Compliant",
    "fetch_from": "solar_package.is_dcr_compliant",
+   "read_only": 1,
+   "description": "With subsidy, the package must be DCR compliant."
+  },
+  {
+   "fieldname": "final_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Proposed System Size (kW)",
+   "read_only": 1,
+   "in_list_view": 1,
+   "precision": 3,
+   "description": "With subsidy, at most the limit set in A3 Sola Settings (10 kW)."
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System Type",
+   "options": "On-Grid\nOff-Grid\nHybrid",
+   "default": "On-Grid",
+   "description": "With subsidy, the system cannot be Off-Grid."
+  },
+  {
+   "fieldname": "tab_system",
+   "fieldtype": "Tab Break",
+   "label": "System & Options"
+  },
+  {
+   "fieldname": "sb_panels",
+   "fieldtype": "Section Break",
+   "label": "Solar Panel"
+  },
+  {
+   "fieldname": "panels",
+   "fieldtype": "Table",
+   "label": "Solar Panels",
+   "options": "Design Estimate Panel"
+  },
+  {
+   "fieldname": "sb_inverters",
+   "fieldtype": "Section Break",
+   "label": "Inverter"
+  },
+  {
+   "fieldname": "inverters",
+   "fieldtype": "Table",
+   "label": "Inverters",
+   "options": "Design Estimate Inverter"
+  },
+  {
+   "fieldname": "sb_batteries",
+   "fieldtype": "Section Break",
+   "label": "Battery",
+   "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type)",
+   "description": "Only for Off-Grid and Hybrid systems."
+  },
+  {
+   "fieldname": "batteries",
+   "fieldtype": "Table",
+   "label": "Batteries",
+   "options": "Design Estimate Battery"
+  },
+  {
+   "fieldname": "sb_bos",
+   "fieldtype": "Section Break",
+   "label": "Balance of System",
+   "description": "Filled from the Balance of System Package of the first inverter's type, and refilled when that type or phase changes."
+  },
+  {
+   "fieldname": "bos_package",
+   "fieldtype": "Link",
+   "label": "Balance of System Package",
+   "options": "Balance of System Package",
    "read_only": 1
   },
   {
-   "fieldname": "cb_6",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "specific_yield",
-   "fieldtype": "Float",
-   "label": "Specific Yield",
-   "precision": 2
-  },
-  {
-   "fieldname": "average_shading_percent",
-   "fieldtype": "Float",
-   "label": "Average Shading %",
+   "fieldname": "bos_basis",
+   "fieldtype": "Data",
+   "label": "BOS Basis",
+   "hidden": 1,
    "read_only": 1,
-   "precision": 2
+   "no_copy": 0
+  },
+  {
+   "fieldname": "bos_items",
+   "fieldtype": "Table",
+   "label": "Balance of System Components",
+   "options": "Design Estimate BOS Item"
+  },
+  {
+   "fieldname": "sb_kseb",
+   "fieldtype": "Section Break",
+   "label": "KSEB Expenses",
+   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the consumer's single or three phase connection, and follow it on every save. Registration is charged on inverter capacity. Add rows for any other KSEB expense."
+  },
+  {
+   "fieldname": "kseb_expenses",
+   "fieldtype": "Table",
+   "label": "KSEB Expenses",
+   "options": "Design Estimate KSEB Expense"
+  },
+  {
+   "fieldname": "sb_mounting",
+   "fieldtype": "Section Break",
+   "label": "Mounting Structure Expenses",
+   "description": "The first row fills in from the Roof Type: panel capacity x its mounting structure rate, refreshed on every save. Add rows for any other structure work."
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type",
+   "hidden": 1,
+   "description": "From the site survey, else the consumer. Mounting and installation are priced on it."
+  },
+  {
+   "fieldname": "mounting_expenses",
+   "fieldtype": "Table",
+   "label": "Mounting Structure Expenses",
+   "options": "Design Estimate Mounting Expense"
+  },
+  {
+   "fieldname": "sb_installation",
+   "fieldtype": "Section Break",
+   "label": "Installation Expenses",
+   "description": "From the Roof Type: panel capacity x its installation rate. The specification is yours to edit."
+  },
+  {
+   "fieldname": "installation_expenses",
+   "fieldtype": "Table",
+   "label": "Installation Expenses",
+   "options": "Design Estimate Installation Expense"
   },
   {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
-   "label": "Options"
+   "label": "Options",
+   "hidden": 1
   },
   {
    "fieldname": "options",
@@ -302,133 +438,15 @@
    "read_only": 1
   },
   {
-   "fieldname": "sb_8",
-   "fieldtype": "Section Break",
-   "label": "Generation & Savings"
-  },
-  {
-   "fieldname": "estimated_annual_generation_kwh",
-   "fieldtype": "Float",
-   "label": "Annual Generation (kWh)",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "estimated_monthly_generation_kwh",
-   "fieldtype": "Float",
-   "label": "Monthly Generation (kWh)",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "units_offset_per_cycle",
-   "fieldtype": "Float",
-   "label": "Units Offset per Cycle",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "cb_9",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "expected_daily_units_low",
-   "fieldtype": "Float",
-   "label": "Daily Units (low)",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "expected_daily_units_high",
-   "fieldtype": "Float",
-   "label": "Daily Units (high)",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "estimated_annual_savings",
-   "fieldtype": "Currency",
-   "label": "Annual Savings",
-   "read_only": 1
-  },
-  {
-   "fieldname": "sb_10",
-   "fieldtype": "Section Break",
-   "label": "Savings Breakdown"
-  },
-  {
-   "fieldname": "savings_breakdown",
-   "fieldtype": "Long Text",
-   "label": "Savings Breakdown (JSON)",
-   "read_only": 1,
-   "print_hide": 1
-  },
-  {
    "fieldname": "tab_11",
    "fieldtype": "Tab Break",
    "label": "Commercials"
   },
   {
-   "fieldname": "sb_12",
-   "fieldtype": "Section Break",
-   "label": "Cost"
-  },
-  {
-   "fieldname": "gross_system_cost",
-   "fieldtype": "Currency",
-   "label": "Gross System Cost",
-   "read_only": 1,
-   "permlevel": 1
-  },
-  {
-   "fieldname": "additional_civil_cost",
-   "fieldtype": "Currency",
-   "label": "Additional Civil Cost",
-   "permlevel": 1,
-   "description": "Civil work quoted on top of the system, entered by hand."
-  },
-  {
-   "fieldname": "total_project_cost",
-   "fieldtype": "Currency",
-   "label": "Total Project Cost",
-   "read_only": 1,
-   "permlevel": 1
-  },
-  {
-   "fieldname": "cb_13",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "applicable_subsidy_amount",
-   "fieldtype": "Currency",
-   "label": "Applicable Subsidy",
-   "read_only": 1
-  },
-  {
-   "fieldname": "subsidy_slab_used",
-   "fieldtype": "Data",
-   "label": "Slab Used",
-   "read_only": 1
-  },
-  {
-   "fieldname": "net_cost_to_customer",
-   "fieldtype": "Currency",
-   "label": "Net Cost to Customer",
-   "read_only": 1,
-   "permlevel": 1
-  },
-  {
-   "fieldname": "cost_per_kw",
-   "fieldtype": "Currency",
-   "label": "Cost per kW",
-   "read_only": 1,
-   "permlevel": 1
-  },
-  {
    "fieldname": "sb_quoted",
    "fieldtype": "Section Break",
    "label": "Quoted Options",
-   "description": "One line per option as the customer sees it. Rebuilt from the Options table on every save."
+   "description": "One line per row of the System & Options tab - solar panels, inverters, batteries, balance of system, KSEB, mounting and installation. Rebuilt on every save."
   },
   {
    "fieldname": "quoted_options",
@@ -505,14 +523,16 @@
   {
    "fieldname": "sb_17",
    "fieldtype": "Section Break",
-   "label": "Statutory Breakdown"
+   "label": "Statutory Breakdown",
+   "hidden": 1
   },
   {
    "fieldname": "statutory_breakdown",
    "fieldtype": "Long Text",
    "label": "Statutory Breakdown (JSON)",
    "read_only": 1,
-   "print_hide": 1
+   "print_hide": 1,
+   "hidden": 1
   },
   {
    "fieldname": "sb_18",
@@ -542,14 +562,136 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_12",
+   "fieldtype": "Section Break",
+   "label": "Cost"
+  },
+  {
+   "fieldname": "gross_system_cost",
+   "fieldtype": "Currency",
+   "label": "Gross System Cost",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "additional_civil_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Civil Cost",
+   "permlevel": 1,
+   "description": "Civil work quoted on top of the system, entered by hand."
+  },
+  {
+   "fieldname": "total_project_cost",
+   "fieldtype": "Currency",
+   "label": "Total Project Cost",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cb_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "applicable_subsidy_amount",
+   "fieldtype": "Currency",
+   "label": "Applicable Subsidy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subsidy_slab_used",
+   "fieldtype": "Data",
+   "label": "Slab Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_cost_to_customer",
+   "fieldtype": "Currency",
+   "label": "Net Cost to Customer",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "cost_per_kw",
+   "fieldtype": "Currency",
+   "label": "Cost per kW",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
    "fieldname": "tab_20",
    "fieldtype": "Tab Break",
-   "label": "Returns"
+   "label": "Returns",
+   "hidden": 1
+  },
+  {
+   "fieldname": "sb_8",
+   "fieldtype": "Section Break",
+   "label": "Generation & Savings",
+   "hidden": 1
+  },
+  {
+   "fieldname": "estimated_annual_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Annual Generation (kWh)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "estimated_monthly_generation_kwh",
+   "fieldtype": "Float",
+   "label": "Monthly Generation (kWh)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "units_offset_per_cycle",
+   "fieldtype": "Float",
+   "label": "Units Offset per Cycle",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_daily_units_low",
+   "fieldtype": "Float",
+   "label": "Daily Units (low)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "expected_daily_units_high",
+   "fieldtype": "Float",
+   "label": "Daily Units (high)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "estimated_annual_savings",
+   "fieldtype": "Currency",
+   "label": "Annual Savings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_10",
+   "fieldtype": "Section Break",
+   "label": "Savings Breakdown",
+   "hidden": 1
+  },
+  {
+   "fieldname": "savings_breakdown",
+   "fieldtype": "Long Text",
+   "label": "Savings Breakdown (JSON)",
+   "read_only": 1,
+   "print_hide": 1
   },
   {
    "fieldname": "sb_21",
    "fieldtype": "Section Break",
-   "label": "Payback"
+   "label": "Payback",
+   "hidden": 1
   },
   {
    "fieldname": "simple_payback_years",
@@ -558,6 +700,12 @@
    "read_only": 1,
    "precision": 2,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "specific_yield",
+   "fieldtype": "Float",
+   "label": "Specific Yield",
+   "precision": 2
   },
   {
    "fieldname": "cb_22",
@@ -571,9 +719,17 @@
    "permlevel": 1
   },
   {
+   "fieldname": "average_shading_percent",
+   "fieldtype": "Float",
+   "label": "Average Shading %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
    "fieldname": "sb_23",
    "fieldtype": "Section Break",
-   "label": "Cashflow"
+   "label": "Cashflow",
+   "hidden": 1
   },
   {
    "fieldname": "cashflow",
@@ -582,11 +738,17 @@
    "options": "Cashflow Projection",
    "read_only": 1,
    "permlevel": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-01 16:55:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

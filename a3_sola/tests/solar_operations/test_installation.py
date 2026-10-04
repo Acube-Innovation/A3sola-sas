@@ -8,6 +8,7 @@ in test_tasks.py. This file holds the engine to the shape of the task set.
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, getdate
 
 from a3_sola.setup import seed_stages
 from a3_sola.tests.fixtures import make_consumer, make_estimate, make_survey
@@ -74,8 +75,26 @@ class TestTaskSet(FrappeTestCase):
 
 	def test_planned_dates_accumulate_from_the_order_date(self):
 		installation = make_installation()
-		dates = [r.planned_date for r in installation.stages]
-		self.assertEqual(dates, sorted(dates))
+		planned = [r for r in installation.stages if r.status != "Skipped"]
+		self.assertEqual(getdate(planned[0].planned_start_date), getdate(installation.order_date))
+		for before, after in zip(planned, planned[1:]):
+			self.assertEqual(getdate(after.planned_start_date), getdate(before.planned_date))
+		for row in planned:
+			self.assertEqual(getdate(row.planned_date), add_days(getdate(row.planned_start_date), row.sla_days or 0))
+
+	def test_skipped_tasks_take_no_time_in_the_plan(self):
+		installation = make_installation(is_financed=0)
+		row = task(installation, "LOAN")
+		self.assertEqual(row.status, "Skipped")
+		self.assertIsNone(row.planned_start_date)
+		self.assertIsNone(row.planned_date)
+
+	def test_moving_the_start_date_replans_every_task(self):
+		installation = make_installation()
+		first = task(installation, "ORD")
+		installation.execution_start_date = add_days(getdate(installation.order_date), 10)
+		installation.save()
+		self.assertEqual(getdate(first.planned_start_date), getdate(installation.execution_start_date))
 
 	def test_the_register_expects_documents_for_every_task_skipped_ones_included(self):
 		"""A skipped task can be un-skipped; its expected documents should be waiting."""

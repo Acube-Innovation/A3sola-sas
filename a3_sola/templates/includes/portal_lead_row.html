@@ -1,0 +1,48 @@
+{#- One lead as a table row: name and place, contact, status, and who raised it and holds it.
+    `lead` is a row from leads/index.lead_rows. Used by the Leads list and the project page;
+    the assignment pill opens portal_todo_popup.html, which the page includes once. -#}
+			<tr>
+				<td>
+					<a class="a3s-table__link" href="{{ lead.route }}">{{ lead.display | e }}</a>
+					{%- if lead.company_name and lead.company_name != lead.display %}
+					<span class="a3s-table__meta">{{ lead.company_name | e }}</span>
+					{%- endif %}
+					{%- if lead.place %}
+					<span class="a3s-table__meta a3s-table__place">
+						{%- if lead.city %}<span class="a3s-tag">{{ lead.city | e }}</span>{% endif -%}
+						{%- if lead.city and lead.state %}, {% endif -%}
+						{%- if lead.state %}{{ lead.state | e }}{% endif -%}
+					</span>
+					{%- endif %}
+				</td>
+				<td>
+					{%- if lead.email_id %}<span class="a3s-table__meta">{{ lead.email_id }}</span>{% endif %}
+					{%- if lead.mobile_no %}<span class="a3s-table__meta">{{ lead.mobile_no }}</span>{% endif %}
+					{%- if not lead.email_id and not lead.mobile_no %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
+				</td>
+				<td class="a3s-table__status">
+					{%- if lead.solar %}
+					<span class="a3s-table__meta a3s-table__solar">{{ lead.solar | map("e") | join(", ") }}</span>
+					{%- endif %}
+					<span class="a3s-badge a3s-badge--{{ lead.status | lower | replace(' ', '-') }}">{{ lead.status | e }}</span>
+				</td>
+				<td>
+					<div class="a3s-assigncell">
+						{#- Who raised it, and how long it has been open. -#}
+						<span class="a3s-assigncell__line">
+							Created by <strong>{{ lead.created_by | e }}</strong> on {{ lead.created }}
+							<span class="a3s-pill--days">{{ lead.age_days }} day{{ "" if lead.age_days == 1 else "s" }}</span>
+						</span>
+						{%- if lead.assigned_to %}
+						<span class="a3s-assigncell__line">
+							Assigned to
+							<button type="button" class="a3s-pill--who" data-todo="{{ lead.assigned_todo | e }}"
+							        title="View this assignment">{{ lead.assigned_to | e }}</button>
+							on {{ lead.assigned_on }}{% if lead.assigned_for %} for &ldquo;{{ lead.assigned_for | e }}&rdquo;{% endif %}
+						</span>
+						{%- else %}
+						<span class="a3s-assigncell__line a3s-table__muted">Not assigned</span>
+						{%- endif %}
+					</div>
+				</td>
+			</tr>

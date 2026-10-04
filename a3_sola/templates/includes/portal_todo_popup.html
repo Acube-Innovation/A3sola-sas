@@ -1,0 +1,69 @@
+{#- ---- the popup one assignment opens into ------------------------------- #}
+<div class="a3s-modal" data-todo-modal hidden role="dialog" aria-modal="true" aria-labelledby="a3s-todo-title">
+	<div class="a3s-modal__panel">
+		<div class="a3s-assign__head">
+			<h3 class="a3s-modal__title" id="a3s-todo-title">Assignment</h3>
+			<button type="button" class="a3s-assign__x" data-todo-close aria-label="Close">&times;</button>
+		</div>
+		<div data-todo-body><p class="a3s-edit__hint">Loading&hellip;</p></div>
+	</div>
+</div>
+
+<script>
+(function () {
+	var buttons = document.querySelectorAll("[data-todo]");
+	if (!buttons.length) return;
+	var modal = document.querySelector("[data-todo-modal]");
+	var body = modal.querySelector("[data-todo-body]");
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+
+	function row(label, value) {
+		if (!value) return "";
+		var dt = document.createElement("dt"); dt.textContent = label;
+		var dd = document.createElement("dd"); dd.textContent = value;
+		var wrap = document.createElement("div");
+		wrap.className = "a3s-glance__row";
+		wrap.appendChild(dt); wrap.appendChild(dd);
+		return wrap;
+	}
+
+	Array.prototype.forEach.call(buttons, function (btn) {
+		btn.addEventListener("click", function () {
+			modal.hidden = false;
+			body.innerHTML = '<p class="a3s-edit__hint">Loading\u2026</p>';
+			fetch("/api/method/a3_sola.api.assignments.todo", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ name: btn.dataset.todo })
+			}).then(function (r) { return r.json(); }).then(function (b) {
+				var d = b && b.message;
+				if (!d) throw new Error("Could not load that assignment.");
+				body.innerHTML = "";
+				var dl = document.createElement("dl");
+				dl.className = "a3s-glance";
+				[["Assigned to", d.full_name], ["Designation", d.designation],
+				 ["Assigned on", d.assigned_on], ["Assigned by", d.assigned_by],
+				 ["Complete by", d.complete_by], ["Priority", d.priority],
+				 ["Status", d.status], ["Record", d.reference],
+				 ["Remarks", d.remarks]].forEach(function (pair) {
+					var r = row(pair[0], pair[1]);
+					if (r) dl.appendChild(r);
+				});
+				body.appendChild(dl);
+			}).catch(function (e) {
+				body.innerHTML = "";
+				var p = document.createElement("p");
+				p.className = "a3s-edit__hint";
+				p.textContent = String(e.message || e);
+				body.appendChild(p);
+			});
+		});
+	});
+	Array.prototype.forEach.call(modal.querySelectorAll("[data-todo-close]"), function (b) {
+		b.addEventListener("click", function () { modal.hidden = true; });
+	});
+	modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
+	document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.hidden = true; });
+})();
+</script>

@@ -15,6 +15,10 @@
   "company",
   "sb_2",
   "mounting_structure_specification",
+  "mounting_structure_make",
+  "mounting_structure_rate_per_kw",
+  "installation_specification",
+  "installation_rate_per_kw",
   "notes"
  ],
  "fields": [
@@ -80,6 +84,30 @@
    "label": "Mounting Structure Specification"
   },
   {
+   "fieldname": "mounting_structure_make",
+   "fieldtype": "Link",
+   "label": "Mounting Structure Make",
+   "options": "Component Make"
+  },
+  {
+   "fieldname": "mounting_structure_rate_per_kw",
+   "fieldtype": "Currency",
+   "label": "Mounting Structure Rate (per kW)",
+   "description": "Mounting structure expense = panel capacity (kW) x this rate."
+  },
+  {
+   "fieldname": "installation_specification",
+   "fieldtype": "Small Text",
+   "label": "Installation Specification",
+   "description": "Starting text for Installation, Testing and Commissioning on an estimate; editable there."
+  },
+  {
+   "fieldname": "installation_rate_per_kw",
+   "fieldtype": "Currency",
+   "label": "Installation Rate (per kW)",
+   "description": "Installation expense = panel capacity (kW) x this rate."
+  },
+  {
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
@@ -87,7 +115,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-28 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Roof Type",

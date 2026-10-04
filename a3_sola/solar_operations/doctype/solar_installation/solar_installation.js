@@ -5,7 +5,46 @@ const TASKS = "a3_sola.api.tasks";
 const DOCS = "a3_sola.api.documents";
 const MANAGER_ROLES = ["Solar Operations Manager", "System Manager"];
 
+// The references a lead decides. Picking another lead replaces them; the rest of the form
+// is only filled where it is still blank, so a value chosen here is not overwritten.
+const LEAD_LINKS = [
+	"solar_consumer", "site_survey", "subsidy_eligibility_check", "solar_design_estimate", "solar_proposal",
+];
+
 frappe.ui.form.on("Solar Installation", {
+	setup(frm) {
+		const by_lead_or_consumer = () => ({
+			filters: frm.doc.solar_consumer
+				? { solar_consumer: frm.doc.solar_consumer, docstatus: ["<", 2] }
+				: { lead: frm.doc.lead, docstatus: ["<", 2] },
+		});
+		frm.set_query("site_survey", () => ({
+			filters: { solar_consumer: frm.doc.solar_consumer, docstatus: ["<", 2] },
+		}));
+		frm.set_query("solar_design_estimate", by_lead_or_consumer);
+		frm.set_query("subsidy_eligibility_check", by_lead_or_consumer);
+	},
+
+	lead(frm) {
+		if (!frm.doc.lead || frm.doc.docstatus !== 0) return;
+		frappe.call({
+			method: "a3_sola.api.installation_lead.get_lead_context",
+			args: { lead: frm.doc.lead },
+			callback(r) {
+				const context = r.message || {};
+				if (!context.solar_consumer) {
+					frappe.msgprint(__("This lead has no Solar Consumer yet. Create the Solar Consumer from the lead first."));
+				}
+				const values = {};
+				Object.entries(context).forEach(([field, value]) => {
+					if (LEAD_LINKS.includes(field)) values[field] = value || "";
+					else if (value && !frm.doc[field]) values[field] = value;
+				});
+				frm.set_value(values);
+			},
+		});
+	},
+
 	refresh(frm) {
 		if (frm.doc.docstatus !== 1) return;
 

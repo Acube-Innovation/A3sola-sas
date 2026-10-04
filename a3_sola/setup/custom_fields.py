@@ -101,7 +101,10 @@ CUSTOM_FIELDS = {
 		{"fieldname": "approx_consumption_units", "fieldtype": "Float", "label": "Approx Units per Cycle", "insert_after": "roof_type"},
 		{"fieldname": "avg_monthly_bill", "fieldtype": "Currency", "label": "Avg Monthly Bill", "insert_after": "approx_consumption_units", "in_list_view": 1},
 		{"fieldname": "approx_capacity_kw", "fieldtype": "Float", "label": "Proposed System Size (kW)", "insert_after": "avg_monthly_bill", "precision": "3", "in_list_view": 1},
-		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "approx_capacity_kw", "read_only": 1},
+		# Whether the customer means to finance the system. Known at enquiry, long before the
+		# quotation carries a lender, and read by the installation's Details tab.
+		{"fieldname": "loan_required", "fieldtype": "Select", "options": "\nYes\nNo", "label": "Loan Required", "insert_after": "approx_capacity_kw"},
+		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "loan_required", "read_only": 1},
 		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "solar_consumer", "read_only": 1},
 
 		# Outreach and Outreach Log live in their own "Outreach" tab, right after the Solar tab.

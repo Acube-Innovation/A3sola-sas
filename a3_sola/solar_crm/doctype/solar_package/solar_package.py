@@ -12,9 +12,10 @@ packages.
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from a3_sola.api import calculations, regulation, statutory
+from a3_sola.api.expenses import fill_expense_tables
 from a3_sola.api.settings import get_value
 from a3_sola.api.uniqueness import assert_unique_in_company
 
@@ -28,6 +29,8 @@ class SolarPackage(Document):
 		self.validate_one_default_per_type()
 		self.validate_prices()
 		self.price_the_configurations()
+		self.compute_batteries()
+		self.compute_expenses()
 		self.check_regulation()
 
 	def validate_one_default(self, fieldname, noun):
@@ -156,14 +159,54 @@ class SolarPackage(Document):
 			row.expected_daily_units_high = band["high_units_per_day"]
 			row.net_rate = self._net_rate(row)
 
-	def _statutory_fees(self):
+	def compute_batteries(self):
+		"""Batteries belong to off-grid and hybrid packages only; the count is typed."""
+		if self.system_type not in ("Off-Grid", "Hybrid"):
+			# The tab is hidden for On-Grid, so rows left behind would be invisible.
+			self.set("batteries", [])
+			return
+		for row in self.get("batteries"):
+			if not row.battery_phase:
+				row.battery_phase = self.connection_type or "Single Phase"
+			row.total_energy_kwh = flt(
+				flt(row.battery_voltage) * flt(row.battery_capacity_ah) * cint(row.nos) / 1000, 3
+			)
+
+	def compute_expenses(self):
+		"""The same KSEB, mounting and installation tables as the estimate, on the default build.
+
+		Panel capacity is the default module row's; registration is charged on the default
+		inverter row's capacity, as the estimate charges it. Either falls back to the rated
+		capacity while its table is empty.
+		"""
+		module = _default_row(self, "modules")
+		inverter = _default_row(self, "inverters")
+		panel_kw = (
+			flt(flt(module.module_wattage) * cint(module.module_count) / 1000, 3) if module else 0.0
+		) or flt(self.capacity_kw)
+		inverter_kw = (
+			flt(flt(inverter.inverter_capacity_kw) * (cint(inverter.inverter_count) or 1), 3) if inverter else 0.0
+		) or flt(self.capacity_kw)
+		fees = self._statutory_fees(inverter_kw) or {}
+		fill_expense_tables(
+			self,
+			roof_type=self.roof_type,
+			panel_kw=panel_kw,
+			fees={
+				"application_fee": fees.get("application_fee_gross"),
+				"registration_fee": fees.get("registration_fee_gross"),
+				"net_meter_charge": fees.get("net_meter_charge"),
+			},
+		)
+
+	def _statutory_fees(self, capacity_kw=None):
 		"""Every statutory figure comes from the fee schedule. None is editable."""
 		discom = get_value("default_discom")
 		if not discom:
 			return None
 		try:
 			return statutory.get_statutory_fees(
-				discom, self.connection_type or "Single Phase", self.capacity_kw,
+				discom, self.connection_type or "Single Phase", capacity_kw or self.capacity_kw,
 				"Purchased by Customer", company=self.company,
 			)
 		except frappe.ValidationError:

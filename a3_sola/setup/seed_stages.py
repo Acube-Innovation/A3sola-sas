@@ -23,6 +23,22 @@ DOCS = "Solar Documentation Officer"
 SITE = "Solar Site Engineer"
 LIAISON = "Solar Liaison Officer"
 
+#: Activity scopes - who a task is carried out with. A row cannot be saved without one.
+COMPANY = "Company Activity"
+KSEB = "KSEB Activity"
+SCHEME = "Scheme Activity"
+BANK = "Bank Activity"
+
+#: The scope each task is seeded with. Seeded once: a scope changed on the template stays.
+SCOPES = {
+	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "LOAN": BANK, "ADV": COMPANY,
+	"STMP": KSEB, "DSGN": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
+	"MATL": COMPANY, "CCERT": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
+	"KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
+	"BCOM": BANK, "BAL": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
+	"CORR": SCHEME, "DBT": SCHEME, "GREV": COMPANY,
+}
+
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,
           applicability="Always", threshold_kw=0, task_type=None, due_anchor_task=None,
@@ -30,6 +46,7 @@ def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandat
 	return {
 		"code": code,
 		"name": name,
+		"activity_scope": SCOPES[code],
 		"owner_type": owner_type,
 		"sla_days": sla_days,
 		"task_doctype": task_doctype,

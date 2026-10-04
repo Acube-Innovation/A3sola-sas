@@ -65,6 +65,7 @@ def setup():
 	backfill_settings_defaults()
 	seed_all_companies()
 	seed_settings()
+	seed_expense_items()
 	# Platform is not tenant-scoped: it is the product's own marketing and funnel data,
 	# so it seeds once per site rather than once per company.
 	install_platform.setup()
@@ -450,7 +451,7 @@ def seed_component_makes(company):
 				"doctype": "Component Make",
 				"make_name": make,
 				"component_type": ctype,
-				"technology": tech,
+				"technology": _technology(tech, ctype, company),
 				"is_dcr": is_dcr,
 				"product_warranty_years": product,
 				"performance_warranty_years": performance,
@@ -459,6 +460,16 @@ def seed_component_makes(company):
 				"company": company,
 			}
 		)
+
+
+def _technology(technology_name, component_type, company):
+	"""The company's Component Technology of this name and type, created on first use."""
+	if not technology_name:
+		return None
+	filters = {"technology_name": technology_name, "component_type": component_type, "company": company}
+	return frappe.db.get_value("Component Technology", filters) or _insert(
+		{"doctype": "Component Technology", "is_active": 1, **filters}
+	).name
 
 
 def seed_outreach_templates(company):
@@ -616,6 +627,43 @@ def apply_field_defaults(settings):
 
 	frappe.db.set_default(INITIALISED_KEY, ",".join(sorted(initialised)))
 	return filled
+
+
+def seed_expense_items():
+	"""The Items the package's and the design estimate's expense rows link to.
+
+	One group per expense table under a common parent, so each dropdown offers only its own
+	kind. Items are not tenant-scoped, so this seeds once per site. Non-stock services: they
+	are quoted, never held.
+	"""
+	from a3_sola.api.expenses import EXPENSE_GROUPS, EXPENSE_ITEM_GROUP, EXPENSE_ITEMS
+
+	root = frappe.db.get_value("Item Group", {"is_group": 1, "parent_item_group": ""}, "name")
+	if not frappe.db.exists("Item Group", EXPENSE_ITEM_GROUP):
+		_insert({"doctype": "Item Group", "item_group_name": EXPENSE_ITEM_GROUP, "parent_item_group": root, "is_group": 1})
+	elif not frappe.db.get_value("Item Group", EXPENSE_ITEM_GROUP, "is_group"):
+		# First seeded as a leaf holding the mounting item, which is moved out below.
+		frappe.db.set_value("Item Group", EXPENSE_ITEM_GROUP, "is_group", 1)
+	for table, group in EXPENSE_GROUPS.items():
+		if not frappe.db.exists("Item Group", group):
+			_insert({"doctype": "Item Group", "item_group_name": group, "parent_item_group": EXPENSE_ITEM_GROUP})
+		for code in EXPENSE_ITEMS[table].values():
+			if frappe.db.exists("Item", code):
+				# Seeded into the parent before the groups were split; move it to its own.
+				if frappe.db.get_value("Item", code, "item_group") == EXPENSE_ITEM_GROUP:
+					frappe.db.set_value("Item", code, "item_group", group)
+				continue
+			_insert(
+				{
+					"doctype": "Item",
+					"item_code": code,
+					"item_name": code,
+					"item_group": group,
+					"stock_uom": "Nos",
+					"is_stock_item": 0,
+					"is_sales_item": 1,
+				}
+			)
 
 
 def seed_settings():

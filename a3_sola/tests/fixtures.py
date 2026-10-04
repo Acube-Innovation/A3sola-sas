@@ -85,7 +85,17 @@ def make_address(city="Ernakulam", state="Kerala"):
 	return doc.insert(ignore_permissions=True).name
 
 
+def make_lead(company=None, lead_name="Test Consumer"):
+	doc = frappe.get_doc({"doctype": "Lead", "lead_name": lead_name, "company": company or default_company()})
+	doc.flags.ignore_permissions = True
+	return doc.insert(ignore_permissions=True).name
+
+
 def make_consumer(company=None, **kwargs):
+	"""A Solar Consumer converted from its own Lead, as the desk's Create button makes one.
+
+	Pass `lead=None` for a consumer created without one.
+	"""
 	company = company or default_company()
 	values = {
 		"doctype": "Solar Consumer",
@@ -106,9 +116,14 @@ def make_consumer(company=None, **kwargs):
 	}
 	values.setdefault("installation_address", make_address())
 	values.update(kwargs)
+	if "lead" not in kwargs:
+		values["lead"] = make_lead(company, values["consumer_name"])
 	doc = frappe.get_doc(values)
 	doc.flags.ignore_permissions = True
-	return doc.insert(ignore_permissions=True)
+	doc.insert(ignore_permissions=True)
+	if doc.lead:
+		frappe.db.set_value("Lead", doc.lead, "solar_consumer", doc.name, update_modified=False)
+	return doc
 
 
 def make_survey(consumer, segments=((400, True),), shading=0, submit=True, **kwargs):

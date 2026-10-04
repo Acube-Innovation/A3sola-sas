@@ -8,9 +8,61 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "sb_lead",
+  "lead",
+  "cb_lead",
+  "lead_name",
+  "lead_mobile",
+  "sb_consumer",
+  "consumer_name",
+  "consumer_mobile",
+  "consumer_email",
+  "consumer_category",
+  "cb_consumer",
+  "consumer_number",
+  "consumer_customer",
+  "consumer_kyc_status",
+  "consumer_status",
+  "sb_site",
+  "site_survey",
+  "survey_date",
+  "survey_feasibility",
+  "site_address",
+  "survey_roof_type",
+  "cb_site",
+  "survey_usable_area_sqft",
+  "survey_shading_percent",
+  "survey_structure_type",
+  "survey_installable_kw",
+  "site_latitude",
+  "site_longitude",
+  "sb_scheme",
+  "lead_subsidy_scheme",
+  "eligibility_result",
+  "consumer_discom",
+  "consumer_discom_section",
+  "consumer_connection_type",
+  "cb_scheme",
+  "tariff_category",
+  "sanctioned_load_kw",
+  "connected_load_watts",
+  "consumer_avg_bill",
+  "consumer_avg_units",
+  "sb_proposal",
+  "proposal_status",
+  "proposal_date",
+  "estimate_capacity_kw",
+  "estimate_system_type",
+  "estimate_package",
+  "cb_proposal",
+  "estimate_project_cost",
+  "estimate_subsidy",
+  "estimate_net_cost",
+  "loan_required",
+  "quoted_lender",
+  "quoted_finance_status",
   "sb_1",
   "solar_consumer",
-  "consumer_name",
   "customer",
   "sales_order",
   "quotation",
@@ -23,7 +75,6 @@
   "amended_from",
   "sb_3",
   "identifier_note",
-  "consumer_number",
   "discom_id",
   "national_portal_application_id",
   "cb_5",
@@ -31,6 +82,20 @@
   "loan_sanction_no",
   "spin",
   "tab_6",
+  "sb_panels",
+  "panels",
+  "sb_inverters",
+  "inverters",
+  "sb_batteries",
+  "batteries",
+  "sb_bos",
+  "bos_items",
+  "sb_kseb_expenses",
+  "kseb_expenses",
+  "sb_mounting_expenses",
+  "mounting_expenses",
+  "sb_installation_expenses",
+  "installation_expenses",
   "sb_7",
   "solar_package",
   "capacity_kw",
@@ -42,6 +107,10 @@
   "module_count",
   "inverter_make",
   "inverter_capacity_kw",
+  "sb_11",
+  "project_manager",
+  "cb_12",
+  "site_engineer",
   "sb_9",
   "installation_address",
   "discom",
@@ -51,14 +120,11 @@
   "roof_type",
   "latitude",
   "longitude",
-  "sb_11",
-  "project_manager",
-  "cb_12",
-  "site_engineer",
   "tab_13",
   "sb_14",
   "stage_template",
   "order_date",
+  "execution_start_date",
   "target_commissioning_date",
   "cb_15",
   "current_stage",
@@ -129,21 +195,46 @@
   "critical_snag_count",
   "cb_39",
   "total_labour_hours",
-  "performance_ratio_at_commissioning"
+  "performance_ratio_at_commissioning",
+  "connections_tab"
  ],
  "fields": [
   {
-   "fieldname": "sb_1",
+   "fieldname": "sb_lead",
    "fieldtype": "Section Break",
-   "label": "Reference"
+   "label": "Lead"
   },
   {
-   "fieldname": "solar_consumer",
+   "fieldname": "lead",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Solar Consumer",
-   "options": "Solar Consumer",
-   "reqd": 1
+   "label": "Lead",
+   "options": "Lead",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "description": "Pick the lead first. Its consumer, site survey, eligibility check, design estimate and proposal are filled in from it."
+  },
+  {
+   "fieldname": "cb_lead",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lead_name",
+   "fieldtype": "Data",
+   "label": "Lead Name",
+   "fetch_from": "lead.lead_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead_mobile",
+   "fieldtype": "Data",
+   "label": "Lead Mobile",
+   "fetch_from": "lead.mobile_no",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_consumer",
+   "fieldtype": "Section Break",
+   "label": "Consumer Details"
   },
   {
    "fetch_from": "solar_consumer.consumer_name",
@@ -152,6 +243,342 @@
    "in_list_view": 1,
    "label": "Consumer",
    "read_only": 1
+  },
+  {
+   "fieldname": "consumer_mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "fetch_from": "solar_consumer.mobile_no",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "fetch_from": "solar_consumer.email_id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_category",
+   "fieldtype": "Data",
+   "label": "Consumer Category",
+   "fetch_from": "solar_consumer.consumer_category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_consumer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "solar_consumer.consumer_number",
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Consumer Number"
+  },
+  {
+   "fieldname": "consumer_customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "fetch_from": "solar_consumer.customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_kyc_status",
+   "fieldtype": "Data",
+   "label": "KYC Status",
+   "fetch_from": "solar_consumer.kyc_status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_status",
+   "fieldtype": "Data",
+   "label": "Consumer Status",
+   "fetch_from": "solar_consumer.status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_site",
+   "fieldtype": "Section Break",
+   "label": "Solar Site Details"
+  },
+  {
+   "fieldname": "site_survey",
+   "fieldtype": "Link",
+   "label": "Site Survey",
+   "options": "Site Survey",
+   "description": "The consumer's latest survey, a submitted one first."
+  },
+  {
+   "fieldname": "survey_date",
+   "fieldtype": "Date",
+   "label": "Survey Date",
+   "fetch_from": "site_survey.survey_date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "survey_feasibility",
+   "fieldtype": "Data",
+   "label": "Feasibility",
+   "fetch_from": "site_survey.feasibility_status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "site_address",
+   "fieldtype": "Link",
+   "label": "Site Address",
+   "options": "Address",
+   "fetch_from": "solar_consumer.installation_address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "survey_roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type",
+   "fetch_from": "site_survey.roof_type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_site",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "survey_usable_area_sqft",
+   "fieldtype": "Float",
+   "label": "Usable Roof Area (sq ft)",
+   "fetch_from": "site_survey.total_usable_area_sqft",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "survey_shading_percent",
+   "fieldtype": "Float",
+   "label": "Average Shading %",
+   "fetch_from": "site_survey.average_shading_percent",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "survey_structure_type",
+   "fieldtype": "Data",
+   "label": "Structure Required",
+   "fetch_from": "site_survey.structure_type_required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "survey_installable_kw",
+   "fieldtype": "Float",
+   "label": "Installable Capacity (kW)",
+   "fetch_from": "site_survey.capacity_installable_kw",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "site_latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "fetch_from": "solar_consumer.latitude",
+   "read_only": 1,
+   "precision": "6"
+  },
+  {
+   "fieldname": "site_longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "fetch_from": "solar_consumer.longitude",
+   "read_only": 1,
+   "precision": "6"
+  },
+  {
+   "fieldname": "sb_scheme",
+   "fieldtype": "Section Break",
+   "label": "Scheme / Load / DISCOM Details"
+  },
+  {
+   "fieldname": "lead_subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme",
+   "fetch_from": "lead.subsidy_scheme",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligibility_result",
+   "fieldtype": "Data",
+   "label": "Eligibility Result",
+   "fetch_from": "subsidy_eligibility_check.overall_result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "options": "DISCOM",
+   "fetch_from": "solar_consumer.discom",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_discom_section",
+   "fieldtype": "Link",
+   "label": "DISCOM Section",
+   "options": "DISCOM Section",
+   "fetch_from": "solar_consumer.discom_section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_connection_type",
+   "fieldtype": "Data",
+   "label": "Connection Type",
+   "fetch_from": "solar_consumer.connection_type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_scheme",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tariff_category",
+   "fieldtype": "Data",
+   "label": "Tariff Category",
+   "fetch_from": "solar_consumer.tariff_category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sanctioned_load_kw",
+   "fieldtype": "Float",
+   "label": "Sanctioned Load (kW)",
+   "fetch_from": "solar_consumer.sanctioned_load_kw",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "connected_load_watts",
+   "fieldtype": "Float",
+   "label": "Connected Load (W)",
+   "fetch_from": "solar_consumer.connected_load_watts",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "consumer_avg_bill",
+   "fieldtype": "Currency",
+   "label": "Avg Bill",
+   "fetch_from": "solar_consumer.avg_bill_amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_avg_units",
+   "fieldtype": "Float",
+   "label": "Avg Units",
+   "fetch_from": "solar_consumer.avg_consumption_units",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "sb_proposal",
+   "fieldtype": "Section Break",
+   "label": "Proposal & Loan Details"
+  },
+  {
+   "fieldname": "proposal_status",
+   "fieldtype": "Data",
+   "label": "Proposal Status",
+   "fetch_from": "solar_proposal.status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposal_date",
+   "fieldtype": "Date",
+   "label": "Proposal Date",
+   "fetch_from": "solar_proposal.proposal_date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimate_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Proposed System Size (kW)",
+   "fetch_from": "solar_design_estimate.final_capacity_kw",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "estimate_system_type",
+   "fieldtype": "Data",
+   "label": "System Type",
+   "fetch_from": "solar_design_estimate.system_type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimate_package",
+   "fieldtype": "Link",
+   "label": "Estimate Package",
+   "options": "Solar Package",
+   "fetch_from": "solar_design_estimate.solar_package",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_proposal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "estimate_project_cost",
+   "fieldtype": "Currency",
+   "label": "Total Project Cost",
+   "fetch_from": "solar_design_estimate.total_project_cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimate_subsidy",
+   "fieldtype": "Currency",
+   "label": "Applicable Subsidy",
+   "fetch_from": "solar_design_estimate.applicable_subsidy_amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimate_net_cost",
+   "fieldtype": "Currency",
+   "label": "Net Cost to Customer",
+   "fetch_from": "solar_design_estimate.net_cost_to_customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "loan_required",
+   "fieldtype": "Data",
+   "label": "Loan Required",
+   "fetch_from": "lead.loan_required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quoted_lender",
+   "fieldtype": "Data",
+   "label": "Lender (as quoted)",
+   "fetch_from": "quotation.lender",
+   "read_only": 1,
+   "depends_on": "eval:doc.loan_required=='Yes'"
+  },
+  {
+   "fieldname": "quoted_finance_status",
+   "fieldtype": "Data",
+   "label": "Finance Status",
+   "fetch_from": "quotation.finance_status",
+   "read_only": 1,
+   "depends_on": "eval:doc.loan_required=='Yes'"
+  },
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "References"
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Solar Consumer",
+   "options": "Solar Consumer",
+   "reqd": 1
   },
   {
    "fieldname": "customer",
@@ -233,13 +660,6 @@
    "options": "<p class=\"text-muted small\">Five numbers follow one job through five systems. Each is captured once here and every generated document reads it from here.</p>"
   },
   {
-   "fetch_from": "solar_consumer.consumer_number",
-   "fieldname": "consumer_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Consumer Number"
-  },
-  {
    "allow_on_submit": 1,
    "fieldname": "discom_id",
    "fieldtype": "Data",
@@ -281,9 +701,96 @@
    "label": "System"
   },
   {
+   "fieldname": "sb_panels",
+   "fieldtype": "Section Break",
+   "label": "Solar Panels",
+   "description": "Copied from the Design Estimate. Edit the design there; the installation keeps the snapshot it was opened with."
+  },
+  {
+   "fieldname": "panels",
+   "fieldtype": "Table",
+   "label": "Solar Panels",
+   "options": "Design Estimate Panel",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_inverters",
+   "fieldtype": "Section Break",
+   "label": "Inverters"
+  },
+  {
+   "fieldname": "inverters",
+   "fieldtype": "Table",
+   "label": "Inverters",
+   "options": "Design Estimate Inverter",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_batteries",
+   "fieldtype": "Section Break",
+   "label": "Batteries",
+   "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type) || (doc.batteries || []).length"
+  },
+  {
+   "fieldname": "batteries",
+   "fieldtype": "Table",
+   "label": "Batteries",
+   "options": "Design Estimate Battery",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_bos",
+   "fieldtype": "Section Break",
+   "label": "Balance of System"
+  },
+  {
+   "fieldname": "bos_items",
+   "fieldtype": "Table",
+   "label": "Balance of System Components",
+   "options": "Design Estimate BOS Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_kseb_expenses",
+   "fieldtype": "Section Break",
+   "label": "KSEB Expenses"
+  },
+  {
+   "fieldname": "kseb_expenses",
+   "fieldtype": "Table",
+   "label": "KSEB Expenses",
+   "options": "Design Estimate KSEB Expense",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_mounting_expenses",
+   "fieldtype": "Section Break",
+   "label": "Mounting Structure Expenses"
+  },
+  {
+   "fieldname": "mounting_expenses",
+   "fieldtype": "Table",
+   "label": "Mounting Structure Expenses",
+   "options": "Design Estimate Mounting Expense",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_installation_expenses",
+   "fieldtype": "Section Break",
+   "label": "Installation Expenses"
+  },
+  {
+   "fieldname": "installation_expenses",
+   "fieldtype": "Table",
+   "label": "Installation Expenses",
+   "options": "Design Estimate Installation Expense",
+   "read_only": 1
+  },
+  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
-   "label": "System Details"
+   "label": "System Summary",
+   "description": "Module and inverter details follow the first panel and inverter rows above."
   },
   {
    "fieldname": "solar_package",
@@ -345,9 +852,32 @@
    "precision": 3
   },
   {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break",
+   "label": "Team"
+  },
+  {
+   "fieldname": "project_manager",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project Manager",
+   "options": "User"
+  },
+  {
+   "fieldname": "cb_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_engineer",
+   "fieldtype": "Link",
+   "label": "Site Engineer",
+   "options": "User"
+  },
+  {
    "fieldname": "sb_9",
    "fieldtype": "Section Break",
-   "label": "Site"
+   "label": "Site (on this job)",
+   "collapsible": 1
   },
   {
    "fieldname": "installation_address",
@@ -399,28 +929,6 @@
    "precision": 6
   },
   {
-   "fieldname": "sb_11",
-   "fieldtype": "Section Break",
-   "label": "Team"
-  },
-  {
-   "fieldname": "project_manager",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Project Manager",
-   "options": "User"
-  },
-  {
-   "fieldname": "cb_12",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "site_engineer",
-   "fieldtype": "Link",
-   "label": "Site Engineer",
-   "options": "User"
-  },
-  {
    "fieldname": "tab_13",
    "fieldtype": "Tab Break",
    "label": "Execution"
@@ -443,6 +951,13 @@
    "fieldtype": "Date",
    "label": "Order Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "execution_start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "allow_on_submit": 1,
+   "description": "The task plan runs from here: each task starts when the one before it is due to end, and takes its SLA days. Defaults to the order date."
   },
   {
    "fieldname": "target_commissioning_date",
@@ -897,12 +1412,18 @@
    "fieldtype": "Percent",
    "label": "PR at Commissioning",
    "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 20:00:00.000000",
+ "modified": "2026-10-02 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Installation",

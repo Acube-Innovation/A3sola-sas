@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-28 11:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "specification",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "Item"
+  },
+  {
+   "fieldname": "specification",
+   "fieldtype": "Small Text",
+   "label": "Specification",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Panel capacity x the Roof Type's installation rate."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Installation Expense",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "Installation, testing and commissioning of an estimate, priced from the Roof Type."
+}

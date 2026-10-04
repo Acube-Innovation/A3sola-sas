@@ -23,7 +23,7 @@
 		<thead>
 			<tr>
 				{%- for h in headers %}
-				<th{% if h.num %} class="a3s-table__num"{% endif %}>{{ h.label }}</th>
+				<th{% if h.num %} class="a3s-table__num"{% elif h.status %} class="a3s-table__status"{% endif %}>{{ h.label }}</th>
 				{%- endfor %}
 			</tr>
 		</thead>
@@ -31,7 +31,7 @@
 			{%- for row in rows %}
 			<tr>
 				{%- for cell in row.cells %}
-				<td{% if cell.num %} class="a3s-table__num"{% endif %}>
+				<td{% if cell.num %} class="a3s-table__num"{% elif cell.status %} class="a3s-table__status"{% endif %}>
 					{%- if cell.primary -%}
 						{#- The record's picture when it has one, its initials when it does not, so
 						    the column scans the same way either way. -#}

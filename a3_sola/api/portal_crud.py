@@ -19,8 +19,8 @@ from frappe.utils import cint, flt
 from a3_sola.api import portal_chain
 from a3_sola.api.portal_fields import NUMERIC_TYPES
 from a3_sola.www.a3solaportal.collections import (
-	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_fields, desk_route,
-	load_record, edit_allowlist, needs_prompt_name, record_route,
+	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
+	load_record, edit_allowlist, lead_first_allowlist, needs_prompt_name, record_route,
 )
 
 TRUE = {"1", "true", "on", "yes"}
@@ -31,7 +31,7 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 	cfg = get_collection(slug)
 	doctype = cfg["doctype"]
 	meta = frappe.get_meta(doctype)
-	specs, _unrenderable = form_fields(meta, None, cfg.get("form_extra") or ())
+	specs, _unrenderable = form_fields(meta, None, form_extra(cfg, meta))
 	allowed = {s["fieldname"]: s for s in specs}
 
 	doc = frappe.new_doc(doctype)
@@ -80,6 +80,78 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 
 	route = record_route(slug, doc.name) if slug in DETAIL_SLUGS else f"/a3solaportal/{slug}"
 	return {"name": doc.name, "route": route, "desk": desk_route(doctype, doc.name)}
+
+
+@frappe.whitelist()
+def create_from_lead(slug=None, tables=None, **values):
+	"""Create a project from the lead-first form, then open it.
+
+	The allow-list is the editable fields that form renders. Values the desk derives -
+	the fetched details, the fees - are not taken from the browser; the installation's own
+	`validate` fills them from the lead, exactly as on the desk.
+
+	`tables` carries the System tables the person changed in the add-row popups, keyed by
+	table. Each row keeps only the fields that popup asks for; the counts and amounts are
+	worked out again on save, and the estimate's own computed rows are kept from the
+	estimate, not from the browser.
+	"""
+	if slug != "projects":
+		frappe.throw(_("A {0} is not created from a lead here.").format(slug), frappe.ValidationError)
+	cfg = get_collection(slug)
+	meta = frappe.get_meta(cfg["doctype"])
+	allowed = lead_first_allowlist(meta)
+	if not (values.get("lead") or "").strip():
+		frappe.throw(_("Choose the lead this project is for."), frappe.MandatoryError)
+
+	doc = frappe.new_doc(cfg["doctype"])
+	for fieldname, spec in allowed.items():
+		value = values.get(fieldname)
+		if spec["type"] == "Check":
+			doc.set(fieldname, 1 if str(value).lower() in TRUE else 0)
+		elif value not in (None, ""):
+			doc.set(fieldname, value)
+	if not doc.get("company"):
+		doc.company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	doc.flags.portal_design_rows = _design_rows(tables)
+	doc.flags.portal_task_rows = _task_rows(tables)
+
+	doc.insert()
+	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(cfg["doctype"], doc.name)}
+
+
+def _design_rows(tables):
+	"""The hand-entered rows of each editable System table, reduced to the popup's fields."""
+	from a3_sola.api.portal_estimate import SECTION_BY_KEY
+	from a3_sola.www.a3solaportal.collections import EDITABLE_TABLES
+
+	tables = frappe.parse_json(tables) if tables else {}
+	out = {}
+	for key, rows in (tables or {}).items():
+		if key not in EDITABLE_TABLES or not isinstance(rows, list):
+			continue
+		allowed = [f["fieldname"] for f in SECTION_BY_KEY[key]["fields"]]
+		out[key] = [
+			{f: (row.get(f) if row.get(f) not in ("",) else None) for f in allowed}
+			for row in rows if isinstance(row, dict)
+		]
+	return out
+
+
+def _task_rows(tables):
+	"""The task rows from the create page, if they were changed there, reduced to what a
+	person may set: the job's own fields on a template task, everything on an added one."""
+	from a3_sola.api.stages import TASK_JOB_FIELDS, TASK_OWN_FIELDS
+
+	rows = ((frappe.parse_json(tables) if tables else None) or {}).get("stages")
+	if not isinstance(rows, list):
+		return None
+	out = []
+	for row in rows:
+		if not isinstance(row, dict):
+			continue
+		fields = TASK_JOB_FIELDS + (("stage_code",) if row.get("__template") else TASK_OWN_FIELDS)
+		out.append({"__template": bool(row.get("__template")), **{f: row.get(f) for f in fields if f in row}})
+	return out
 
 
 def _load_source(slug, source_dt, source):

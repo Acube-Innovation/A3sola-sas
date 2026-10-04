@@ -1,0 +1,59 @@
+{#- Step two of the design estimate builder, in three columns at 20:50:30 - the System &
+    Options tables, the chosen table's saved rows, and the commercials. A row is added or
+    changed in a popup over the page.
+    `builder_json` is portal_estimate.builder_state; portal_estimate_builder.js paints it. -#}
+<script type="application/json" id="a3s-de-data">{{ builder_json }}</script>
+
+<div class="a3s-page__head a3s-de-head">
+	<div>
+		<p class="a3s-de-steps"><span>1 &middot; Estimate details</span><span class="is-current">2 &middot; System &amp; commercials</span></p>
+		<h2 class="a3s-main__title" id="de-title">{{ record_name | e }}</h2>
+		<dl class="a3s-de-summary" id="de-summary"></dl>
+	</div>
+	<div class="a3s-de-head__actions">
+		<a class="a3s-btn a3s-btn--ghost" id="de-details-link" href="#">Back to details</a>
+		<a class="a3s-btn a3s-btn--ghost" id="de-view-link" href="#">Done</a>
+	</div>
+</div>
+
+<div class="a3s-de-builder" id="a3s-de-builder">
+	<nav class="a3s-card a3s-de-nav" aria-label="System and options">
+		<ul id="de-nav" role="tablist"></ul>
+	</nav>
+
+	<div class="a3s-de-work">
+		<section class="a3s-card a3s-de-saved" aria-labelledby="de-saved-title">
+			<header class="a3s-de-saved__head">
+				<h3 id="de-saved-title"></h3>
+				<span class="a3s-de-saved__total" id="de-saved-total"></span>
+				<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" id="de-add">Add</button>
+			</header>
+			<p class="a3s-form__status" id="de-page-status" role="status" aria-live="polite"></p>
+			<div class="a3s-de-saved__body" id="de-saved"></div>
+		</section>
+
+	</div>
+
+	<aside class="a3s-card a3s-de-commercials" aria-labelledby="de-com-title">
+		<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
+		<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
+		<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
+	</aside>
+</div>
+
+<div class="a3s-modal" id="de-modal" hidden role="dialog" aria-modal="true" aria-labelledby="de-form-title">
+	<div class="a3s-modal__panel a3s-de-modal">
+		<div class="a3s-de-modal__head">
+			<h3 class="a3s-modal__title" id="de-form-title"></h3>
+			<button type="button" class="a3s-de-modal__x" id="de-close" aria-label="Close">&times;</button>
+		</div>
+		<form class="a3s-modal__form" id="de-form" novalidate>
+			<div class="a3s-de-fields" id="de-fields"></div>
+			<div class="a3s-de-actions">
+				<p class="a3s-form__status" id="de-status" role="status" aria-live="polite"></p>
+				<button type="button" class="a3s-btn a3s-btn--ghost" id="de-cancel">Cancel</button>
+				<button type="submit" class="a3s-btn a3s-btn--primary" id="de-submit">Add</button>
+			</div>
+		</form>
+	</div>
+</div>

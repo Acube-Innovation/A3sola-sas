@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-28 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "inverter_type",
+  "inverter_capacity_kw",
+  "inverter_phase",
+  "inverter_make",
+  "nos",
+  "total_capacity_kw",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "inverter_type",
+   "fieldtype": "Link",
+   "label": "Inverter Type",
+   "options": "Component Technology",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "String, Optimiser or Micro. Choose first; Inverter Make then lists only makes of this type."
+  },
+  {
+   "fieldname": "inverter_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Inverter Capacity (kW)",
+   "reqd": 1,
+   "precision": "3",
+   "in_list_view": 1,
+   "description": "e.g. 5, 4 or 1 kW. Total inverter capacity must be 0.85x to 2x the total panel capacity."
+  },
+  {
+   "fieldname": "inverter_phase",
+   "fieldtype": "Select",
+   "label": "Inverter Phase",
+   "options": "\nSingle Phase\nThree Phase",
+   "in_list_view": 1,
+   "description": "Left blank, it is set from the connection. Single phase users: single phase inverters up to 5 kW each. Three phase users: inverters above 5 kW must be three phase."
+  },
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "label": "Inverter Make",
+   "options": "Component Make",
+   "in_list_view": 1,
+   "description": "Makes of the chosen Inverter Type only."
+  },
+  {
+   "fieldname": "nos",
+   "fieldtype": "Int",
+   "label": "Nos",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Total panel capacity / Inverter Capacity, rounded up."
+  },
+  {
+   "fieldname": "total_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Total Capacity (kW)",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "description": "Price per unit."
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "description": "Rate x nos."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 19:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Inverter",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "The inverters an estimate is designed with; the count follows from the total panel capacity."
+}

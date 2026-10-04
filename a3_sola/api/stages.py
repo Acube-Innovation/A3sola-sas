@@ -109,17 +109,16 @@ def build_stages(installation):
 
 	installation.set("stages", [])
 	installation.set("documents", [])
-	planned = getdate(installation.order_date or today())
 
 	rows = sorted(template.stages, key=lambda r: (r.display_order or 0, r.idx))
 	for row in rows:
 		applies, reason = stage_applies(row, context)
-		planned = add_days(planned, int(row.sla_days or 0))
 		installation.append(
 			"stages",
 			{
 				"stage_code": row.stage_code,
 				"stage_name": row.stage_name,
+				"activity_scope": row.activity_scope,
 				"owner_type": row.owner_type,
 				"responsible_role": row.responsible_role,
 				"task_doctype": row.task_doctype,
@@ -127,7 +126,6 @@ def build_stages(installation):
 				"is_mandatory": row.is_mandatory,
 				"due_anchor_task": row.due_anchor_task,
 				"due_anchor_days": row.due_anchor_days,
-				"planned_date": planned,
 				"status": "Pending" if applies else "Skipped",
 				"skip_reason": None if applies else reason,
 			},
@@ -141,7 +139,85 @@ def build_stages(installation):
 		if checklist:
 			_append_checklist(installation, row.stage_code, checklist)
 
+	plan_dates(installation)
 	return installation
+
+
+#: Task fields that belong to the job, which a person may set on any task row.
+TASK_JOB_FIELDS = (
+	"status", "assigned_to", "due_date", "actual_start_date", "actual_completion_date",
+	"external_reference", "blocked_reason", "remarks",
+)
+#: What a task added by hand is described by - on a template task these come from the template.
+TASK_OWN_FIELDS = ("stage_code", "stage_name", "activity_scope", "owner_type", "responsible_role", "sla_days", "is_mandatory")
+
+
+def apply_entered_tasks(installation, entered):
+	"""Fold tasks typed on the portal's create page into the rows the template just built.
+
+	A template task keeps the template's definition and takes only the job's own fields
+	(status, assignee, dates, references); a task added by hand is appended after them.
+	The plan is then laid again, so the added tasks take their place in it.
+	"""
+	by_code = {row.stage_code: row for row in installation.stages}
+	for values in entered:
+		code = (values.get("stage_code") or "").strip()
+		if values.get("__template"):
+			row = by_code.get(code)
+			if row:
+				for field in TASK_JOB_FIELDS:
+					if field in values:
+						row.set(field, values.get(field) or None)
+			continue
+		if not code or not values.get("stage_name"):
+			frappe.throw(_("Each added task needs a code and a name."), title=_("Task Incomplete"))
+		if code in by_code:
+			frappe.throw(_("Task code {0} is already used on this job.").format(code), title=_("Duplicate Task"))
+		row = installation.append("stages", {
+			field: values.get(field) or None for field in TASK_OWN_FIELDS + TASK_JOB_FIELDS
+		})
+		row.status = row.status or "Pending"
+		by_code[code] = row
+	plan_dates(installation)
+
+
+#: Task fields the template owns. A template edit reaches every job's task rows on its next save.
+TEMPLATE_ROW_FIELDS = ("stage_name", "activity_scope", "sla_days")
+
+
+def sync_from_template(installation):
+	"""Refresh the template-owned fields of each task row from the job's template.
+
+	Status, assignment, documents and dates belong to the job and are never touched.
+	"""
+	if not installation.stage_template or not frappe.db.exists(
+		"Installation Stage Template", installation.stage_template
+	):
+		return
+	template = frappe.get_cached_doc("Installation Stage Template", installation.stage_template)
+	by_code = {row.stage_code: row for row in template.stages}
+	for row in installation.stages:
+		source = by_code.get(row.stage_code)
+		if not source:
+			continue
+		for field in TEMPLATE_ROW_FIELDS:
+			if row.get(field) != source.get(field):
+				row.set(field, source.get(field))
+
+
+def plan_dates(installation):
+	"""Lay the tasks end to end from the job's start date, each taking its SLA days.
+
+	The plan is a baseline: it follows the task order, a skipped task takes no time and
+	carries no dates, and actual progress does not move it - the Due column does that.
+	"""
+	cursor = getdate(installation.get("execution_start_date") or installation.order_date or today())
+	for row in installation.stages:
+		if row.status == "Skipped":
+			row.planned_start_date = row.planned_date = None
+			continue
+		row.planned_start_date = cursor
+		row.planned_date = cursor = add_days(cursor, int(row.sla_days or 0))
 
 
 def _append_checklist(installation, stage_code, checklist_template):
@@ -168,6 +244,8 @@ def recompute(installation):
 	"""
 	order_date = getdate(installation.order_date or today())
 	installation.days_since_order = date_diff(today(), order_date)
+	sync_from_template(installation)
+	plan_dates(installation)
 	by_code = {row.stage_code: row for row in installation.stages}
 
 	breached = False

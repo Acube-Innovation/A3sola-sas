@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-28 11:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "particulars",
+  "amount",
+  "source"
+ ],
+ "fields": [
+  {
+   "fieldname": "particulars",
+   "fieldtype": "Link",
+   "label": "Specification / Item Particulars",
+   "in_list_view": 1,
+   "columns": 7,
+   "reqd": 1,
+   "options": "Item"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Set on the rows the estimate fills in itself; blank on rows added by hand."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate KSEB Expense",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "One KSEB charge of an estimate, as the Statutory Fee Schedule resolves it for the consumer's connection."
+}

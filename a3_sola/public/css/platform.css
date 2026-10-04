@@ -1336,7 +1336,6 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 /* ---- list: the assignment column ---- */
 .a3s-assigncell { display: grid; gap: 0.35rem; justify-items: flex-start; }
 .a3s-assigncell__line { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.5; }
-.a3s-assigncell__rule { width: 100%; height: 1px; background: var(--color-border); margin: 0.1rem 0; }
 .a3s-pill--days {
 	display: inline-block;
 	padding: 0.05rem 0.5rem;
@@ -1434,6 +1433,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 2rem;
 	max-width: 82rem;
 }
+/* A page laid out as a dashboard - the project's boxes and task table - takes the full width. */
+.a3s-main--wide { max-width: none; }
 .a3s-main__head { margin-bottom: 1.75rem; }
 .a3s-main__title { margin: 0 0 0.35rem; font-size: 1.75rem; }
 .a3s-main__sub { margin: 0; color: var(--color-text-muted); }
@@ -1583,15 +1584,21 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 1rem 1.25rem;
 	border-bottom: 1px solid var(--color-border);
 	white-space: nowrap;
+	vertical-align: top;
 }
+/* Every column reads from the top left, numbers included, so a row of uneven cells
+   lines up along its top edge. The one exception is a status column, whose badge sits
+   mid-row; it is marked a3s-table__status wherever a table has one. */
 .a3s-table tbody td {
 	padding: 0.9rem 1.25rem;
 	border-bottom: 1px solid var(--color-border);
-	vertical-align: middle;
+	text-align: left;
+	vertical-align: top;
 }
+.a3s-table tbody td.a3s-table__status { vertical-align: middle; }
 .a3s-table tbody tr:last-child td { border-bottom: 0; }
 .a3s-table tbody tr:hover { background: var(--color-bg); }
-.a3s-table__num { text-align: right; white-space: nowrap; color: var(--color-text-muted); }
+.a3s-table__num { white-space: nowrap; color: var(--color-text-muted); }
 .a3s-table__link { font-weight: 600; color: var(--color-text); }
 .a3s-table__link:hover { color: var(--color-accent); }
 .a3s-table__meta { display: block; font-size: 0.8125rem; color: var(--color-text-muted); }
@@ -2552,3 +2559,306 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em;
 	text-transform: uppercase; color: var(--color-text);
 }
+
+/* ------------------------------------------------- design estimate builder */
+/* Step one: the Estimate Details tab as two equal columns. Step two: the System & Options
+   tables at 20:50:30 - sections, the chosen one's saved rows, then the commercials - with
+   a row added or changed in a popup. */
+.a3s-de-steps { display: flex; gap: 0.5rem; margin: 0 0 0.4rem; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); }
+.a3s-de-steps span { padding: 0.2rem 0.7rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.06); }
+.a3s-de-steps .is-current { background-image: var(--color-accent-gradient); color: #fff; }
+/* min-width: 0 all the way down: a card is a flex column, and without it a wide table
+   stretches the card past its grid track and under the column beside it. */
+.a3s-de-card, .a3s-de-nav, .a3s-de-saved, .a3s-de-commercials { height: auto; min-width: 0; padding: 1.25rem; }
+.a3s-de-card:hover, .a3s-de-nav:hover, .a3s-de-saved:hover, .a3s-de-commercials:hover { transform: none; box-shadow: var(--shadow-soft); }
+.a3s-de-card__title { margin: 0 0 0.9rem; font-size: 1rem; font-weight: 700; }
+.a3s-de-split { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) { .a3s-de-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.a3s-de-fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.a3s-de-fields .a3s-field__hint { margin: 0; font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-fields__wide { grid-column: 1 / -1; }
+.a3s-de-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.75rem; margin-top: 1.1rem; }
+.a3s-de-actions .a3s-form__status { margin-right: auto; }
+
+.a3s-de-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.a3s-de-head__actions { display: flex; gap: 0.5rem; }
+.a3s-de-summary { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin: 0.4rem 0 0; font-size: 0.8125rem; }
+.a3s-de-summary div { display: flex; gap: 0.35rem; }
+.a3s-de-summary dt { color: var(--color-text-muted); }
+.a3s-de-summary dd { margin: 0; font-weight: 700; }
+
+.a3s-de-builder { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+/* Too narrow for three: sections beside the rows, the commercials across the bottom. */
+@media (min-width: 900px) {
+	.a3s-de-builder { grid-template-columns: minmax(0, 2fr) minmax(0, 5fr); }
+	.a3s-de-commercials { grid-column: 1 / -1; }
+}
+@media (min-width: 1200px) {
+	.a3s-de-builder { grid-template-columns: minmax(0, 2fr) minmax(0, 5fr) minmax(0, 3fr); }
+	.a3s-de-commercials { grid-column: auto; }
+	.a3s-de-nav, .a3s-de-commercials { position: sticky; top: calc(var(--a3s-topbar-h) + 1.5rem); }
+}
+.a3s-de-work { display: grid; gap: 1.25rem; min-width: 0; }
+
+.a3s-de-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.a3s-de-nav__item {
+	display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.6rem 0.75rem;
+	border: 0; border-radius: 0.7rem; background: transparent; color: var(--color-text-muted);
+	font: inherit; font-size: 0.875rem; font-weight: 600; text-align: left; cursor: pointer;
+}
+.a3s-de-nav__item:hover { color: var(--color-text); background: var(--color-accent-soft); }
+.a3s-de-nav__item[aria-selected="true"] { background-image: var(--color-accent-gradient); color: #fff; }
+.a3s-de-nav__item .a3s-ic { width: 1rem; height: 1rem; flex: none; }
+.a3s-de-nav__label { flex: 1; min-width: 0; }
+.a3s-de-nav__n { font-size: 0.7rem; font-weight: 800; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.08); }
+.a3s-de-nav__item[aria-selected="true"] .a3s-de-nav__n { background: rgba(255, 255, 255, 0.25); }
+
+.a3s-de-saved__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.a3s-de-saved__head h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.a3s-de-saved__total { margin-left: auto; font-weight: 800; }
+.a3s-de-saved > .a3s-form__status:not(:empty) { margin: 0 0 0.75rem; }
+.a3s-de-saved__body { min-width: 0; }
+.a3s-de-empty { margin: 0; padding: 1rem; border: 1px dashed var(--color-border-strong); border-radius: 0.7rem; color: var(--color-text-muted); font-size: 0.875rem; text-align: center; }
+.a3s-de-table { overflow-x: auto; }
+.a3s-de-table table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.a3s-de-table th { text-align: left; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.a3s-de-table td { padding: 0.5rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.a3s-de-saved__actions { white-space: nowrap; text-align: right; }
+.a3s-btn--sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+.a3s-de-com__lines { list-style: none; margin: 0; padding: 0; display: grid; }
+.a3s-de-com__lines li { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0.5rem; border-bottom: 1px solid var(--color-border); font-size: 0.875rem; }
+.a3s-de-com__lines li.is-active { background: var(--color-accent-soft); border-radius: 0.5rem; }
+.a3s-de-com__totals { margin: 0.9rem 0 0; display: grid; gap: 0.35rem; }
+.a3s-de-com__totals div { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.875rem; }
+.a3s-de-com__totals dt { color: var(--color-text-muted); }
+.a3s-de-com__totals dd { margin: 0; font-weight: 700; }
+.a3s-de-com__totals .is-grand { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 2px solid var(--color-text); font-size: 1rem; }
+.a3s-de-com__totals .is-grand dt, .a3s-de-com__totals .is-grand dd { color: var(--color-text); font-weight: 800; }
+.a3s-de-com__totals .a3s-field__hint { margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-modal { width: min(46rem, 100%); }
+.a3s-de-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.a3s-de-modal__head .a3s-modal__title { margin: 0; }
+.a3s-de-modal__x { border: 0; background: transparent; font-size: 1.5rem; line-height: 1; color: var(--color-text-muted); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.5rem; }
+.a3s-de-modal__x:hover { color: var(--color-text); background: var(--color-accent-soft); }
+
+/* ---- project page overview: three boxes, then the tasks by party ---- */
+.a3s-proj { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
+.a3s-proj__top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+@media (min-width: 900px) { .a3s-proj__top { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1400px) { .a3s-proj__top { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.a3s-proj .a3s-card { padding: 1.5rem; }
+.a3s-proj .a3s-card:hover { transform: none; box-shadow: var(--shadow-soft); }
+.a3s-proj h3.a3s-edit__card-title { margin: 0 0 0.9rem; font-size: 0.8125rem; line-height: 1.4; }
+.a3s-proj a { color: var(--color-sky-ink); font-weight: 600; text-decoration: none; }
+.a3s-proj a:hover { text-decoration: underline; }
+.a3s-proj .is-empty { color: var(--color-text-muted); }
+
+/* Consumer: the photo, or the initials where there is none. */
+.a3s-proj__who { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.1rem; min-width: 0; }
+.a3s-proj__photo, img.a3s-proj__photo {
+	flex: none;
+	width: 4rem; height: 4rem;
+	border-radius: 1rem;
+	object-fit: cover;
+	background: var(--color-bg);
+}
+.a3s-proj__photo--initials {
+	display: grid; place-items: center;
+	background-image: var(--color-accent-gradient);
+	color: #fff;
+	font-size: 1.15rem;
+	font-weight: 800;
+}
+.a3s-proj__who-text { min-width: 0; }
+.a3s-proj__name { display: block; font-size: 1.125rem; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+.a3s-proj a.a3s-proj__name { color: var(--color-text); font-weight: 800; }
+
+/* Label-over-value facts, two to a row; one to a row in the narrow solar box. */
+.a3s-proj__facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; margin: 0; }
+.a3s-proj__facts--single { grid-template-columns: 1fr; gap: 0.6rem; }
+.a3s-proj__facts div { min-width: 0; }
+.a3s-proj__facts dt {
+	font-size: 0.6875rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
+.a3s-proj__facts dd { margin: 0.15rem 0 0; font-size: 0.9375rem; overflow-wrap: anywhere; }
+
+/* Solar: the size as the headline, the progress bar at the foot of the box. */
+.a3s-proj__capacity { display: flex; align-items: baseline; gap: 0.35rem; margin-bottom: 1rem; }
+.a3s-proj__kw { font-size: 2.5rem; font-weight: 800; line-height: 1; color: var(--color-text); }
+.a3s-proj__unit { font-size: 1rem; font-weight: 700; color: var(--color-text-muted); margin-right: 0.5rem; }
+.a3s-proj__progress { margin-top: auto; padding-top: 1.1rem; }
+.a3s-proj__progress-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.65rem; }
+.a3s-proj__percent { font-size: 1.5rem; font-weight: 800; color: var(--color-accent-hover); }
+.a3s-proj__progress-sub { font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-proj__progress-head .a3s-badge { margin-left: auto; }
+.a3s-proj__progress .a3s-progress { height: 0.65rem; margin-top: 0.6rem; }
+.a3s-proj__progress .a3s-progress__fill.is-overdue { background: var(--color-danger); }
+.a3s-proj__progress-meta {
+	display: flex; flex-wrap: wrap; gap: 0.25rem 1rem;
+	margin: 0.6rem 0 0;
+	font-size: 0.8125rem;
+	color: var(--color-text-muted);
+}
+.a3s-proj__progress-meta strong { color: var(--color-text); font-weight: 700; }
+.a3s-proj__overdue { color: #c0392b; font-weight: 700; }
+
+/* Proposal: the reference, its figures, the net cost called out, then the loan. */
+.a3s-proj__ref { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 1.0625rem; }
+.a3s-proj__sub { margin: 0.35rem 0 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-proj__net {
+	display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+	margin-top: 1rem; padding: 0.75rem 0.9rem;
+	border-radius: var(--radius-tile);
+	background: var(--color-accent-soft);
+	font-size: 0.8125rem; font-weight: 700;
+}
+.a3s-proj__net strong { font-size: 1.125rem; font-weight: 800; color: var(--color-accent-hover); }
+.a3s-proj__loan {
+	display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+	margin: 0.75rem 0 0;
+	font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.a3s-proj__loan .a3s-pill, .a3s-proj__loan .a3s-badge { font-size: 0.75rem; letter-spacing: 0; text-transform: none; white-space: normal; }
+.a3s-proj .a3s-pill--sky { background: rgba(41, 171, 226, 0.14); color: var(--color-sky-ink); }
+
+/* Status colours for tasks, the job and the proposal. */
+.a3s-proj__status--in-progress, .a3s-proj__status--sent, .a3s-proj__status--generated { background: rgba(41, 171, 226, 0.14); color: var(--color-sky-ink); }
+.a3s-proj__status--completed, .a3s-proj__status--accepted, .a3s-proj__status--commissioned, .a3s-proj__status--closed { background: rgba(40, 200, 64, 0.16); color: #1a7a2b; }
+.a3s-proj__status--blocked, .a3s-proj__status--lost { background: rgba(255, 95, 87, 0.14); color: #c0392b; }
+.a3s-proj__status--pending, .a3s-proj__status--draft { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+
+/* The task board: a column per party, ruled like a table; a small card per task. */
+.a3s-proj .a3s-proj__board { padding: 0; overflow: hidden; }
+.a3s-proj__cols { display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .a3s-proj__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .a3s-proj__cols { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.a3s-proj__col { min-width: 0; border-bottom: 1px solid var(--color-border); }
+@media (min-width: 700px) {
+	.a3s-proj__col:nth-child(odd) { border-right: 1px solid var(--color-border); }
+}
+@media (min-width: 1200px) {
+	.a3s-proj__col { border-bottom: 0; border-right: 1px solid var(--color-border); }
+	.a3s-proj__col:last-child { border-right: 0; }
+}
+.a3s-proj__col-head {
+	display: flex; align-items: center; gap: 0.6rem;
+	margin: 0; padding: 0.85rem 1rem;
+	border-bottom: 1px solid var(--color-border);
+	background: var(--color-bg);
+	font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.a3s-proj__col-icon {
+	flex: none; width: 1.75rem; height: 1.75rem;
+	display: grid; place-items: center;
+	border-radius: 0.55rem;
+	background-image: var(--color-accent-gradient);
+	color: #fff;
+}
+.a3s-proj__col--discom-activity .a3s-proj__col-icon,
+.a3s-proj__col--bank-activity .a3s-proj__col-icon { background-image: var(--color-sky-gradient); }
+.a3s-proj__col-icon .a3s-ic { width: 0.95rem; height: 0.95rem; }
+.a3s-proj__col-label { flex: 1; min-width: 0; }
+.a3s-proj__count { font-size: 0.6875rem; letter-spacing: 0; color: var(--color-text-muted); }
+
+/* Cards are deliberately small, so a column of fifteen stays on a screen or two. Three
+   columns: an icon tile, the name over its date, the status. Each status sets one palette -
+   the tile, the card, its border and the status text - so a column reads at a glance:
+   pending orange, in progress yellow, blocked red, completed green, skipped grey. */
+.a3s-proj__tasks { list-style: none; margin: 0; padding: 0.6rem; display: grid; gap: 0.45rem; }
+.a3s-proj__task {
+	--tk-ink: #b8650a; --tk-tile: #fde3c2; --tk-card: #fff; --tk-line: #fbd3a1;
+	display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.6rem;
+	min-height: 3.4rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--tk-line);
+	border-radius: 0.65rem;
+	background: var(--tk-card);
+}
+.a3s-proj__task.is-in-progress { --tk-ink: #8a6a00; --tk-tile: #fdf0b0; --tk-card: #fffbe6; --tk-line: #f3df84; }
+.a3s-proj__task.is-blocked { --tk-ink: #c0392b; --tk-tile: #ffd9d6; --tk-card: #fff1f0; --tk-line: #ffc4c0; }
+.a3s-proj__task.is-completed { --tk-ink: #1a7a2b; --tk-tile: #cdf2d4; --tk-card: #effbf1; --tk-line: #b7e9c0; }
+.a3s-proj__task.is-skipped { --tk-ink: #6b7383; --tk-tile: rgba(42, 51, 66, 0.08); --tk-card: var(--color-bg); --tk-line: var(--color-border); }
+
+/* The tile is a 2rem square at the card's top left. */
+.a3s-proj__task-icon {
+	align-self: start; justify-self: start; height: 2rem; max-height: 2rem; aspect-ratio: 1;
+	display: grid; place-items: center;
+	border-radius: 0.5rem;
+	background: var(--tk-tile);
+	color: var(--tk-ink);
+}
+.a3s-proj__task-icon .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-proj__task-body { min-width: 0; }
+.a3s-proj__task-name { margin: 0; font-size: 0.8125rem; font-weight: 700; line-height: 1.25; color: var(--color-text); }
+.a3s-proj__task-meta {
+	display: flex; flex-wrap: wrap; gap: 0.1rem 0.6rem;
+	margin: 0.2rem 0 0;
+	font-size: 0.6875rem; color: var(--color-text-muted);
+}
+.a3s-proj__task-meta a { font-size: 0.6875rem; }
+/* White, lettered in the status's own colour. */
+.a3s-proj__task-status {
+	padding: 0.15rem 0.55rem;
+	border: 1px solid var(--tk-line);
+	border-radius: var(--radius-pill);
+	background: #fff;
+	color: var(--tk-ink);
+	font-size: 0.625rem; font-weight: 800; white-space: nowrap;
+}
+/* Skipped: not needed on this job, so its name is struck through - and an SLA that ran
+   out on it is not shown as overdue. */
+.a3s-proj__task.is-skipped .a3s-proj__task-name { color: var(--color-text-muted); font-weight: 600; text-decoration: line-through; text-decoration-color: rgba(42, 51, 66, 0.35); }
+.a3s-proj__task.is-skipped .a3s-proj__overdue { color: inherit; font-weight: inherit; }
+.a3s-proj__when:empty { display: none; }
+.a3s-proj__none { margin: 0; padding: 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+
+/* The job's lead above the boxes, as its row in the Leads list. */
+.a3s-proj__leadrow .a3s-table tbody tr:last-child td { border-bottom: 0; }
+
+/* The DISCOM's name as the electricity box's headline. */
+.a3s-proj__headline { margin: 0 0 1rem; font-size: 1.0625rem; font-weight: 800; line-height: 1.3; }
+.a3s-proj__status--eligible { background: rgba(40, 200, 64, 0.16); color: #1a7a2b; }
+.a3s-proj__status--eligible-with-conditions { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-proj__status--not-eligible { background: rgba(255, 95, 87, 0.14); color: #c0392b; }
+
+/* ---- lead-first create form (projects/new): three columns, like the desk's sections ---- */
+.a3s-form__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .a3s-form__grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .a3s-form__grid--3 { grid-template-columns: 1fr; } }
+.a3s-lf #a3s-lf-body { display: grid; gap: 1.5rem; min-width: 0; }
+.a3s-lf #a3s-lf-body[hidden] { display: none; }
+.a3s-lf .a3s-edit__card[hidden], .a3s-lf .a3s-lf__section[hidden], .a3s-lf .a3s-field[hidden], .a3s-lf [data-table][hidden] { display: none; }
+.a3s-lf .a3s-edit__card .a3s-lf__section + .a3s-lf__section { margin-top: 0.5rem; }
+.a3s-lf .a3s-field input[readonly] { background: var(--color-bg); color: var(--color-text-muted); cursor: default; }
+.a3s-lf .a3s-field input[readonly]:focus { box-shadow: none; border-color: inherit; }
+.a3s-lf__table { margin-top: 0.75rem; }
+.a3s-lf__table-title { margin: 0 0 0.4rem; font-size: 0.85rem; font-weight: 600; }
+.a3s-lf__table .a3s-tablewrap { overflow-x: auto; }
+.a3s-lf__table .a3s-table { font-size: 0.85rem; }
+.a3s-lf #a3s-lf-lead-status:empty { display: none; }
+.a3s-lf__tabs button[hidden], .a3s-lf [data-panel][hidden] { display: none; }
+.a3s-lf__panel { display: grid; gap: 1.5rem; min-width: 0; }
+.a3s-lf__panel[hidden] { display: none; }
+.a3s-lf__card[hidden] { display: none; }
+/* A box without a heading starts with its first section's sub-heading: no rule above it. */
+.a3s-lf__card > .a3s-lf__section:first-child > .a3s-edit__subtitle { margin-top: 0; padding-top: 0; border-top: 0; }
+.a3s-lf .a3s-btn[hidden] { display: none; }
+/* Editable System tables: a row is added or changed in the popup. */
+.a3s-lf__add { margin-top: 0.6rem; }
+.a3s-lf__table-empty { margin: 0; padding: 0.8rem; border: 1px dashed var(--color-border-strong); border-radius: 0.7rem; color: var(--color-text-muted); font-size: 0.85rem; text-align: center; }
+.a3s-lf__table-empty[hidden], .a3s-lf__table .a3s-tablewrap[hidden] { display: none; }
+.a3s-lf__row-actions { white-space: nowrap; text-align: right; }
+.a3s-lf__row-actions .a3s-btn + .a3s-btn { margin-left: 0.35rem; }
+.a3s-lf__remove { color: #b42318; }
+.a3s-lf__auto { font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); padding: 0.15rem 0.5rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.06); }
+
+/* ---- project list: four stacked columns and the job's latest task as its status ---- */
+.a3s-projlist .a3s-stack > span:first-child, .a3s-projlist .a3s-stack > .a3s-table__link { font-size: 0.9375rem; }
+.a3s-projlist__status { min-width: 17rem; }
+.a3s-projlist__status .a3s-proj__task { min-height: 3.1rem; }
+.a3s-projlist__proposal { white-space: nowrap; }

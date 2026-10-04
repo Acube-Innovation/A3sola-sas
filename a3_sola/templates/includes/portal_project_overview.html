@@ -1,0 +1,154 @@
+{#- Project overview. Context from project_overview.project_overview: the lead as a row, four
+    boxes - consumer, electricity and DISCOM, solar, proposal - then the task board: a
+    column per party, a card per task. -#}
+{%- set c = overview.consumer %}{%- set e = overview.electricity %}{%- set s = overview.solar %}{%- set p = overview.proposal %}
+<div class="a3s-proj">
+	{#- The lead the job was opened from, as its row in the Leads list. -#}
+	{%- if overview.lead %}{%- set lead = overview.lead %}
+	<div class="a3s-card a3s-tablewrap a3s-proj__leadrow">
+		<table class="a3s-table">
+			<tbody>
+			{%- include "templates/includes/portal_lead_row.html" %}
+			</tbody>
+		</table>
+	</div>
+	{%- endif %}
+
+	<div class="a3s-proj__top">
+		{#- 1 - who the job is for -#}
+		<section class="a3s-card a3s-proj__box" aria-labelledby="proj-consumer">
+			<h3 class="a3s-edit__card-title" id="proj-consumer">Consumer Details</h3>
+			<div class="a3s-proj__who">
+				{%- if c.photo %}
+				<img class="a3s-proj__photo" src="{{ c.photo | e }}" alt="{{ c.name | e }}">
+				{%- else %}
+				<span class="a3s-proj__photo a3s-proj__photo--initials" aria-hidden="true">{{ c.initials }}</span>
+				{%- endif %}
+				<div class="a3s-proj__who-text">
+					{%- if c.route %}
+					<a class="a3s-proj__name" href="{{ c.route | e }}">{{ c.name | e }}</a>
+					{%- else %}
+					<span class="a3s-proj__name">{{ c.name | e }}</span>
+					{%- endif %}
+				</div>
+			</div>
+			<dl class="a3s-proj__facts">
+				{%- for label, value in c.facts %}
+				<div><dt>{{ label }}</dt><dd{% if not value %} class="is-empty"{% endif %}>{{ (value or "—") | e }}</dd></div>
+				{%- endfor %}
+			</dl>
+		</section>
+
+		{#- 2 - the connection the system will sit on -#}
+		<section class="a3s-card a3s-proj__box" aria-labelledby="proj-electricity">
+			<h3 class="a3s-edit__card-title" id="proj-electricity">Electricity &amp; DISCOM</h3>
+			<p class="a3s-proj__headline">{{ (e.discom or "—") | e }}</p>
+			<dl class="a3s-proj__facts">
+				{%- for label, value in e.facts %}
+				<div><dt>{{ label }}</dt><dd{% if not value %} class="is-empty"{% endif %}>{{ (value or "—") | e }}</dd></div>
+				{%- endfor %}
+			</dl>
+			<p class="a3s-proj__loan">
+				<span>Eligibility</span>
+				{%- if e.eligibility %}
+				<span class="a3s-badge a3s-proj__status a3s-proj__status--{{ e.eligibility_slug }}">{{ e.eligibility | e }}</span>
+				{%- else %}
+				<span class="a3s-pill a3s-pill--grey">Not checked</span>
+				{%- endif %}
+			</p>
+		</section>
+
+		{#- 3 - what is being built, and how far the job has got -#}
+		<section class="a3s-card a3s-proj__box" aria-labelledby="proj-solar">
+			<h3 class="a3s-edit__card-title" id="proj-solar">Solar Details</h3>
+			<div class="a3s-proj__capacity">
+				<span class="a3s-proj__kw">{{ s.capacity or "—" }}</span><span class="a3s-proj__unit">kW</span>
+				{%- if s.system_type %}<span class="a3s-pill a3s-pill--amber">{{ s.system_type | e }}</span>{% endif %}
+			</div>
+			<dl class="a3s-proj__facts a3s-proj__facts--single">
+				<div><dt>Package</dt><dd{% if not s.package %} class="is-empty"{% endif %}>{{ (s.package or "—") | e }}</dd></div>
+				<div><dt>Modules</dt><dd{% if not s.modules %} class="is-empty"{% endif %}>{{ (s.modules or "—") | e }}</dd></div>
+				<div><dt>Inverter</dt><dd{% if not s.inverters %} class="is-empty"{% endif %}>{{ (s.inverters or "—") | e }}</dd></div>
+			</dl>
+			<div class="a3s-proj__progress">
+				<div class="a3s-proj__progress-head">
+					<span class="a3s-proj__percent">{{ s.percent }}%</span>
+					<span class="a3s-proj__progress-sub">{{ s.done }} of {{ s.total }} tasks done</span>
+					{%- if s.status %}<span class="a3s-badge a3s-proj__status a3s-proj__status--{{ s.status_slug }}">{{ s.status | e }}</span>{% endif %}
+				</div>
+				<div class="a3s-progress" role="progressbar" aria-label="Project progress"
+				     aria-valuenow="{{ s.percent }}" aria-valuemin="0" aria-valuemax="100">
+					<span class="a3s-progress__fill{% if s.overdue %} is-overdue{% endif %}" style="width: {{ s.percent }}%"></span>
+				</div>
+				<p class="a3s-proj__progress-meta">
+					{%- if s.focus %}<span>Focus: <strong>{{ s.focus | e }}</strong></span>{% endif %}
+					<span>Started {{ s.start or "—" }}</span>
+					<span>Day {{ s.days }}</span>
+					{%- if s.overdue %}<span class="a3s-proj__overdue">Overdue tasks</span>{% endif %}
+				</p>
+			</div>
+		</section>
+
+		{#- 4 - what was offered -#}
+		<section class="a3s-card a3s-proj__box" aria-labelledby="proj-proposal">
+			<h3 class="a3s-edit__card-title" id="proj-proposal">Proposal Details</h3>
+			<div class="a3s-proj__ref">
+				{%- if p.name %}
+				<a href="{{ p.route | e }}">{{ p.name | e }}</a>
+				{%- else %}<span class="is-empty">No proposal</span>{% endif %}
+				{%- if p.status %}<span class="a3s-badge a3s-proj__status a3s-proj__status--{{ p.status_slug }}">{{ p.status | e }}</span>{% endif %}
+			</div>
+			{%- if p.estimate %}
+			<p class="a3s-proj__sub">Design estimate <a href="{{ p.estimate_route | e }}">{{ p.estimate | e }}</a></p>
+			{%- endif %}
+			<dl class="a3s-proj__facts">
+				{%- for label, value in p.facts %}
+				<div><dt>{{ label }}</dt><dd{% if not value %} class="is-empty"{% endif %}>{{ (value or "—") | e }}</dd></div>
+				{%- endfor %}
+			</dl>
+			<div class="a3s-proj__net">
+				<span>Net cost to customer</span>
+				<strong>{{ p.net_cost or "—" }}</strong>
+			</div>
+			<p class="a3s-proj__loan">
+				<span>Loan</span>
+				{%- if p.loan == "Yes" %}
+				<span class="a3s-pill a3s-pill--sky">Required{% if p.lender %} · {{ p.lender | e }}{% endif %}</span>
+				{%- elif p.loan == "No" %}
+				<span class="a3s-pill a3s-pill--grey">Not required</span>
+				{%- else %}
+				<span class="a3s-pill a3s-pill--grey">Not stated</span>
+				{%- endif %}
+			</p>
+		</section>
+	</div>
+
+	{#- The tasks: a column per party, a small card per task with its status and dates. -#}
+	<section class="a3s-card a3s-proj__board" aria-label="Tasks by activity">
+		<div class="a3s-proj__cols">
+			{%- for col in overview.columns %}
+			<div class="a3s-proj__col a3s-proj__col--{{ col.key }}">
+				<h4 class="a3s-proj__col-head">
+					<span class="a3s-proj__col-icon"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ col.icon }}"></use></svg></span>
+					<span class="a3s-proj__col-label">{{ col.label }}</span>
+					<span class="a3s-proj__count">{{ col.done }}/{{ col.total }}</span>
+				</h4>
+				{%- if col.tasks %}
+				<ol class="a3s-proj__tasks">
+					{%- for t in col.tasks %}
+					{#- Three columns: the task's icon, its name over its date, its status. -#}
+					<li class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}"
+					    title="{{ t.code | e }}{% if t.reason %} &middot; {{ t.reason | e }}{% endif %}">
+						{%- include "templates/includes/portal_task_card.html" %}
+					</li>
+					{%- endfor %}
+				</ol>
+				{%- else %}
+				<p class="a3s-proj__none">No tasks</p>
+				{%- endif %}
+			</div>
+			{%- endfor %}
+		</div>
+	</section>
+</div>
+{%- if overview.lead %}{% include "templates/includes/portal_todo_popup.html" %}{% endif %}

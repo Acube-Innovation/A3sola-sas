@@ -8,6 +8,7 @@
  "field_order": [
   "stage_code",
   "stage_name",
+  "activity_scope",
   "task_doctype",
   "owner_type",
   "sla_days",
@@ -31,14 +32,26 @@
    "fieldtype": "Data",
    "label": "Task Code",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "stage_name",
    "fieldtype": "Data",
    "label": "Task",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "activity_scope",
+   "fieldtype": "Select",
+   "label": "Activity Scope",
+   "options": "\nCompany Activity\nKSEB Activity\nScheme Activity\nBank Activity",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Who the task is carried out with: the company itself, KSEB, the subsidy scheme or the bank.",
+   "columns": 2
   },
   {
    "fieldname": "task_doctype",
@@ -47,7 +60,8 @@
    "options": "DocType",
    "reqd": 1,
    "in_list_view": 1,
-   "description": "The document this task is carried out in. The Task button opens it, and submitting it completes the task."
+   "description": "The document this task is carried out in. The Task button opens it, and submitting it completes the task.",
+   "columns": 2
   },
   {
    "fieldname": "owner_type",
@@ -56,13 +70,15 @@
    "options": "Internal\nDISCOM\nInspectorate\nBank\nCustomer\nGovernment\nContractor",
    "reqd": 1,
    "default": "Internal",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "sla_days",
    "fieldtype": "Int",
    "label": "SLA Days",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "cb_1",
@@ -79,7 +95,8 @@
    "fieldtype": "Check",
    "label": "Mandatory",
    "default": "1",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "display_order",
@@ -142,7 +159,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-09 09:00:00.000000",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",
