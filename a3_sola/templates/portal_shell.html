@@ -122,7 +122,7 @@
 	</aside>
 
 	{#- ---- main content, filled by each page ------------------------------ #}
-	<main class="a3s-main" id="main">
+	<main class="a3s-main{% if main_wide %} a3s-main--wide{% endif %}" id="main">
 		{#- The trail sits above the page title, in line with the content it describes,
 		    with the way back out of this record at the far end of the same row. -#}
 		<div class="a3s-main__topline">

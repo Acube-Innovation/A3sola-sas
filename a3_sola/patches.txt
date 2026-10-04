@@ -66,3 +66,24 @@ a3_sola.patches.v1_2.one_task_template_for_all_companies
 # Project carried two fields named total_billed_amount; the duplicate blocked other apps
 # from installing. ERPNext's own field keeps the permlevel guard.
 a3_sola.patches.v1_2.drop_duplicate_project_billed_amount_field
+
+# Component Make technology is a master now; existing values become its records.
+a3_sola.patches.v1_2.component_technology_master
+
+# Expense particulars and installation items are Item links; computed rows point at their Item.
+a3_sola.patches.v1_2.expense_particulars_are_items
+
+# Options priced on a whole package carry no component type; they are its inverter alternatives.
+a3_sola.patches.v1_2.package_options_are_inverter_options
+
+# Template tasks carry a mandatory activity scope: Company, KSEB, Scheme or Bank.
+a3_sola.patches.v1_2.task_activity_scope
+
+# Installations open from a lead; their Details tab shows the consumer, site, scheme and proposal.
+a3_sola.patches.v1_2.installation_lead_and_site_survey
+
+# The installation System tab shows the Design Estimate's panels, inverters, batteries, BOS and expenses.
+a3_sola.patches.v1_2.installation_design_tables
+
+# Installation tasks show their activity scope and a sequential plan from the job's start date.
+a3_sola.patches.v1_2.installation_task_plan

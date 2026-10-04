@@ -1,0 +1,151 @@
+{#- Lead-first create form. Context from collections.lead_first_context: the lead on its
+    own, then every tab of the desk form, hidden until a lead is chosen and filled from it.
+    Read-only controls carry no name, so they are shown but never posted. -#}
+{%- macro control(f) -%}
+	{%- if f.type == "Check" %}
+	<label class="a3s-check">
+		<input type="checkbox" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} value="1" data-field="{{ f.fieldname }}"{% if f.readonly %} disabled{% endif %}>
+		<span>{{ f.label | e }}</span>
+	</label>
+	{%- else %}
+	<label for="fld-{{ f.fieldname }}">{{ f.label | e }}{% if f.reqd and not f.readonly %} <span class="a3s-req">*</span>{% endif %}</label>
+		{%- if f.readonly %}
+		<input type="text" id="fld-{{ f.fieldname }}" data-field="{{ f.fieldname }}" data-type="{{ f.type }}" readonly tabindex="-1">
+		{%- elif f.type == "Select" %}
+		<select id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}">
+			{%- for opt in f.options %}
+			<option value="{{ opt | e }}"{% if opt == f.value %} selected{% endif %}>{{ (opt | e) or "—" }}</option>
+			{%- endfor %}
+		</select>
+		{%- elif f.type == "Link" %}
+			{%- if f.many %}
+			<input type="text" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" value="{{ f.value | e }}"
+			       list="dl-{{ f.fieldname }}" placeholder="{{ f.link_doctype | e }} name" autocomplete="off">
+			<datalist id="dl-{{ f.fieldname }}">
+				{%- for c in f.choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
+			</datalist>
+			{%- else %}
+			<select id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}">
+				<option value="">—</option>
+				{%- for c in f.choices %}
+				<option value="{{ c.value | e }}"{% if c.value == f.value %} selected{% endif %}>{{ c.label | e }}{% if c.label != c.value %} · {{ c.value | e }}{% endif %}</option>
+				{%- endfor %}
+			</select>
+			{%- endif %}
+		{%- elif f.type in ("Small Text", "Text") %}
+		<textarea id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" rows="3">{{ f.value | e }}</textarea>
+		{%- elif f.type == "Date" %}
+		<input type="date" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" value="{{ f.value | e }}">
+		{%- elif f.type == "Datetime" %}
+		<input type="datetime-local" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" value="{{ f.value | e }}">
+		{%- elif f.input == "number" %}
+		<input type="number" step="{{ f.step }}" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" value="{{ f.value | e }}">
+		{%- else %}
+		<input type="{{ f.input }}" id="fld-{{ f.fieldname }}" {% if not f.readonly %}name="{{ f.fieldname }}"{% endif %} data-field="{{ f.fieldname }}" value="{{ f.value | e }}">
+		{%- endif %}
+	{%- endif %}
+{%- endmacro -%}
+
+{%- macro section_body(s) -%}
+				{%- if s.fields %}
+				<div class="a3s-form__grid a3s-form__grid--3">
+					{%- for f in s.fields %}
+					<div class="a3s-field{% if f.type in ('Small Text', 'Text') %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"
+					     {% if f.readonly %}data-readonly{% endif %}{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>{{ control(f) }}</div>
+					{%- endfor %}
+				</div>
+				{%- endif %}
+				{%- for t in s.tables %}
+				<div class="a3s-lf__table" data-table="{{ t.fieldname }}"{% if t.editable %} data-editable{% endif %}>
+					{%- if t.label != s.label %}<p class="a3s-lf__table-title">{{ t.label | e }}</p>{% endif %}
+					<div class="a3s-tablewrap">
+						<table class="a3s-table">
+							<thead><tr><th>#</th>{% for c in t.columns %}<th data-col="{{ c.fieldname }}" data-type="{{ c.type }}">{{ c.label | e }}</th>{% endfor %}{% if t.editable %}<th aria-label="Actions"></th>{% endif %}</tr></thead>
+							<tbody></tbody>
+						</table>
+					</div>
+					{%- if t.editable %}
+					<p class="a3s-lf__table-empty" data-empty-note hidden>No rows yet.</p>
+					<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm a3s-lf__add" data-add-row="{{ t.fieldname }}">+ Add row</button>
+					{%- endif %}
+				</div>
+				{%- endfor %}
+{%- endmacro -%}
+
+
+<script type="application/json" id="a3s-lf-rows">{{ row_editor_json }}</script>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">New {{ collection.singular }}</h2>
+		<p class="a3s-main__sub">Choose the lead. Everything the lead already has is filled in from it.</p>
+	</div>
+</div>
+
+<form class="a3s-edit a3s-edit--single a3s-lf" id="a3s-lead-first-form" data-slug="{{ collection.slug }}" novalidate>
+	<div class="a3s-edit__main">
+
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">Lead</h3>
+			<div class="a3s-form__grid a3s-form__grid--3">
+				<div class="a3s-field" id="f-{{ lead_field.fieldname }}">{{ control(lead_field) }}</div>
+				{%- for f in lead_field.companions %}
+				<div class="a3s-field" id="f-{{ f.fieldname }}"{% if f.readonly %} data-readonly{% endif %} data-companion hidden>{{ control(f) }}</div>
+				{%- endfor %}
+			</div>
+			<p class="a3s-form__status" id="a3s-lf-lead-status" role="status" aria-live="polite"></p>
+		</section>
+
+		<div id="a3s-lf-body" hidden>
+		{#- One tab per tab of the desk form. A tab with nothing to show for this lead is hidden. -#}
+		<div class="a3s-ce-tabs a3s-lf__tabs" role="tablist" aria-label="Project sections">
+			{%- for g in groups %}
+			<button type="button" role="tab" id="tab-{{ g.key }}" data-tab="{{ g.key }}" aria-controls="panel-{{ g.key }}"
+			        aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ g.label | e }}</button>
+			{%- endfor %}
+		</div>
+		{%- for g in groups %}
+		<div class="a3s-lf__panel" id="panel-{{ g.key }}" role="tabpanel" aria-labelledby="tab-{{ g.key }}" data-panel="{{ g.key }}">
+			{%- for box in g.boxes %}
+			<section class="a3s-card a3s-edit__card a3s-lf__card">
+				{%- if box.title %}<h3 class="a3s-edit__card-title">{{ box.title | e }}</h3>{% endif %}
+				{%- for s in box.sections %}
+				<div class="a3s-lf__section"{% if s.show_when %} data-show-when="{{ s.show_when | e }}"{% endif %}>
+					{%- if s.label and s.label != box.title %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
+					{{ section_body(s) }}
+				</div>
+				{%- endfor %}
+			</section>
+			{%- endfor %}
+		</div>
+		{%- endfor %}
+
+		<div class="a3s-form__actions a3s-edit__actions">
+			{#- Back and Next walk the tabs; Create appears on the last one only. -#}
+			<button type="button" class="a3s-btn a3s-btn--ghost" data-prev hidden>Back</button>
+			<button type="button" class="a3s-btn a3s-btn--primary" data-next>Next</button>
+			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit hidden>Create {{ collection.singular }}</button>
+			<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Cancel</a>
+			<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>
+		</div>
+		</div>
+	</div>
+</form>
+
+{#- The add-row popup, shared by every editable table; portal_lead_first_form.js fills it. -#}
+<div class="a3s-modal" id="a3s-lf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="a3s-lf-modal-title">
+	<div class="a3s-modal__panel a3s-de-modal">
+		<div class="a3s-de-modal__head">
+			<h3 class="a3s-modal__title" id="a3s-lf-modal-title"></h3>
+			<button type="button" class="a3s-de-modal__x" data-modal-close aria-label="Close">&times;</button>
+		</div>
+		<form class="a3s-modal__form" id="a3s-lf-row-form" novalidate>
+			<div class="a3s-de-fields" id="a3s-lf-row-fields"></div>
+			<div class="a3s-de-actions">
+				<p class="a3s-form__status" id="a3s-lf-row-status" role="status" aria-live="polite"></p>
+				<button type="button" class="a3s-btn a3s-btn--ghost" data-modal-close>Cancel</button>
+				<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-lf-row-submit">Add</button>
+			</div>
+		</form>
+	</div>
+</div>

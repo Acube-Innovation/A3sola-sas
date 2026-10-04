@@ -12,6 +12,7 @@ The create write path lives in `a3_sola.api.portal_crud`, which reuses `form_fie
 here as its allow-list, so the browser can only ever set fields this module renders.
 """
 
+import os
 import re
 
 import frappe
@@ -68,7 +69,11 @@ COLLECTIONS = {
 	"journal-entries": {"doctype": "Journal Entry", "title": "Journal Entry", "singular": "journal entry", "subtitle": "Accounting adjustments", "icon": "ledger"},
 
 	# ----------------------------------------------------- Solar Projects
-	"projects": {"doctype": "Project", "title": "Project", "singular": "project", "subtitle": "Delivery and service", "icon": "briefcase"},
+	# What the portal calls a project is the Solar Installation - the job, as the desk keeps
+	# it. `first_tab_first` puts every field of the desk form's first tab at the head of the
+	# create form, so the references and identifiers are captured before anything else.
+	"projects": {"doctype": "Solar Installation", "title": "Project", "singular": "project", "subtitle": "Delivery and service", "icon": "briefcase",
+	             "first_tab_first": True},
 	"billing-plans": {"doctype": "Solar Billing Plan", "title": "Solar Billing Plan", "singular": "billing plan", "subtitle": "Milestones to invoice", "icon": "calendar"},
 	"sales-invoices": {"doctype": "Sales Invoice", "title": "Sales Invoice", "singular": "sales invoice", "subtitle": "Raised against milestones", "icon": "receipt"},
 	"payment-entries": {"doctype": "Payment Entry", "title": "Payment Entry", "singular": "payment entry", "subtitle": "Money received", "icon": "wallet"},
@@ -223,6 +228,8 @@ def list_context(context, slug):
 	context.total = len(rows)
 	context.limit = 100
 	context.q = q
+	# A list runs the full width of the page.
+	context.main_wide = True
 	return context
 
 
@@ -318,6 +325,28 @@ def form_fields(meta, prefill=None, extra=()):
 	return specs, unrenderable
 
 
+def first_tab_fieldnames(meta):
+	"""Every field before the doctype's first Tab Break - the desk form's opening tab."""
+	names = []
+	for df in meta.fields:
+		if df.fieldtype == "Tab Break":
+			break
+		names.append(df.fieldname)
+	return names
+
+
+def form_extra(cfg, meta):
+	"""The fields a collection's create form renders beyond the mandatory ones.
+
+	The first tab's fields lead the doctype's field order, so naming them here is enough to
+	render them first. `form_fields` still skips the read-only and hidden ones among them.
+	"""
+	extra = list(cfg.get("form_extra") or ())
+	if cfg.get("first_tab_first"):
+		extra += first_tab_fieldnames(meta)
+	return extra
+
+
 def source_prefill(slug):
 	"""(source doc, step, values) when the create page was reached from another record.
 
@@ -353,7 +382,7 @@ def new_context(context, slug):
 			{"label": "New"},
 		],
 	)
-	fields, unrenderable = form_fields(meta, prefill, cfg.get("form_extra") or ())
+	fields, unrenderable = form_fields(meta, prefill, form_extra(cfg, meta))
 	context.collection = {**cfg, "slug": slug}
 	context.fields = fields
 	context.unrenderable = unrenderable
@@ -404,8 +433,9 @@ SUBMIT_SLUGS = {"sales-orders"}
 #: builder; they still take part in the chain and in `SLUG_OF_DOCTYPE`.
 BESPOKE_SLUGS = {"quotations"}
 
-#: doctype -> slug, for the collections that have a portal detail page.
-SLUG_OF_DOCTYPE = {COLLECTIONS[s]["doctype"]: s for s in DETAIL_SLUGS}
+#: doctype -> slug, for the collections that have a portal detail page. Solar Installation
+#: is listed twice - as "installations" and as "projects" - and opens as a project.
+SLUG_OF_DOCTYPE = {COLLECTIONS[s]["doctype"]: s for s in DETAIL_SLUGS if s != "installations"}
 
 # Snapshot tiles: records that link back to this one. (doctype, label, icon, tone).
 RECORD_LINKS = {
@@ -487,12 +517,12 @@ def record_title(doc):
 	return (doc.get(title_field) if title_field else None) or doc.name
 
 
-def form_groups(meta):
+def form_groups(meta, first_label=None):
 	"""The form's layout as [{key, label, sections: [{label, fields: [df]}]}].
 
-	Fields before the first Tab Break form a group named after the doctype; a Section
-	Break without a label continues the section before it. Only fields a person can read
-	are kept - no hidden fields, no child tables, no HTML blocks.
+	Fields before the first Tab Break form a group named `first_label`, or after the
+	doctype; a Section Break without a label continues the section before it. Only fields a
+	person can read are kept - no hidden fields, no child tables, no HTML blocks.
 	"""
 	groups, group, section = [], None, None
 
@@ -509,8 +539,9 @@ def form_groups(meta):
 			group = new_group(df.label or "Details", frappe.scrub(df.label or df.fieldname))
 			section = None
 			continue
-		if group is None and df.fieldtype not in ("Section Break", "Column Break") and not groups:
-			group = new_group(meta.name, "details")
+		# Opened on the form's first Section Break too, so that section keeps its heading.
+		if group is None and df.fieldtype != "Column Break" and not groups:
+			group = new_group(first_label or meta.name, "details")
 		if group is None:
 			continue  # inside a skipped tab
 		if df.fieldtype == "Section Break":
@@ -611,10 +642,10 @@ def detail_context(context, slug, name):
 		],
 	)
 	groups = []
-	for g in form_groups(doc.meta):
+	for g in form_groups(doc.meta, cfg["title"]):
 		sections = []
 		for s in g["sections"]:
-			rows = [detail_row(df, doc.get(df.fieldname)) for df in s["fields"]]
+			rows =[detail_row(df, doc.get(df.fieldname)) for df in s["fields"]]
 			sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "rows": rows})
 		groups.append({"key": g["key"], "label": g["label"], "sections": sections})
 
@@ -633,7 +664,8 @@ def detail_context(context, slug, name):
 	context.glance = record_glance(doc)
 	context.update(_record_about(doc))
 	context.can_write = is_editable(doc)
-	context.edit_route = record_route(slug, doc.name) + "/edit"
+	# A design estimate is edited in its builder, where the system and the prices live.
+	context.edit_route = record_route(slug, doc.name) + ("/design" if slug == "design-estimates" else "/edit")
 	context.list_route = f"/a3solaportal/{slug}"
 	# The desk is where a submitted document is amended, so the page still offers a way in.
 	context.desk_route = desk_route(doc.doctype, doc.name)
@@ -655,14 +687,14 @@ def detail_context(context, slug, name):
 	return context
 
 
-def edit_fields_for(doc):
+def edit_fields_for(doc, first_label=None):
 	"""The fields the edit form renders, grouped like the form, with current values.
 
 	Reused verbatim by the update endpoint as its allow-list, so the two never drift: a
 	field the form does not render is a field the endpoint refuses to set.
 	"""
 	groups = []
-	for g in form_groups(doc.meta):
+	for g in form_groups(doc.meta, first_label):
 		sections = []
 		for s in g["sections"]:
 			specs = []
@@ -699,7 +731,7 @@ def edit_context(context, slug, name):
 	context.collection = {**cfg, "slug": slug}
 	context.record = doc
 	context.title = title
-	context.groups = edit_fields_for(doc)
+	context.groups = edit_fields_for(doc, cfg["title"])
 	context.view_route = record_route(slug, doc.name)
 	context.back_link = {"href": context.view_route, "label": "Back to " + cfg["singular"]}
 	context.endpoint = "a3_sola.api.portal_crud.update_record"
@@ -707,3 +739,268 @@ def edit_context(context, slug, name):
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
+
+
+# ================================================================ lead-first create form
+# The project create page mirrors the desk's Solar Installation form: the Lead is asked for
+# first and alone, and once it is chosen every tab of the form appears already filled in
+# from the records the lead has built up. Fields the desk fetches or computes are shown
+# read-only; tables the desk copies from the estimate are shown as they will be copied.
+
+LEAD_FIRST_FIELD = "lead"
+#: Estimate tables the project page lets a person add rows to, in a popup, as the estimate does.
+EDITABLE_TABLES = ("panels", "inverters", "kseb_expenses", "mounting_expenses", "installation_expenses")
+#: Sections the page narrows: only these fields are asked for, and the section leads its tab
+#: as a box of its own. The rest of the section is filled on save from the package, the
+#: estimate and the panel rows, so it is not put in front of the person.
+NARROWED_SECTIONS = {"System Summary": ("solar_package", "capacity_kw")}
+#: Sections left off the create page: all worked out once the job is saved and running.
+SKIPPED_SECTIONS = ("Progress",)
+#: Tabs whose every section is a box of its own.
+SPLIT_TABS = ("details", "system", "execution", "commercials")
+#: The job's task table: built from the stage template, and added to in a popup.
+TASK_TABLE = "stages"
+#: Task columns the table shows. The document a task runs in exists only once the job does.
+TASK_COLUMNS = ("stage_code", "stage_name", "activity_scope", "status", "planned_start_date", "planned_date",
+	"assigned_to", "due_date")
+
+
+def _child_columns(child_doctype, every_field=False):
+	"""Columns for a child table: its list-view fields (else its first few), or all of them."""
+	meta = frappe.get_meta(child_doctype)
+	usable = [df for df in meta.fields if not df.hidden and df.fieldtype in DISPLAY_TYPES_ALL]
+	listed = usable if every_field else ([df for df in usable if df.in_list_view] or usable[:5])
+	return [{"fieldname": df.fieldname, "label": df.label, "type": df.fieldtype} for df in listed]
+
+
+def lead_first_groups(meta):
+	"""Every tab and section of the desk form, as specs the create page can render.
+
+	Editable fields become inputs, read-only ones become read-only inputs that only show
+	once they hold a value (as the desk hides an empty read-only field), and read-only
+	tables become display tables. The lead field itself is returned separately, carrying
+	the fields that share its section (the lead's name and mobile) as `companions`, so they
+	sit beside it in the first box.
+	"""
+	lead_spec, groups, group, section, lead_section = None, [], None, None, None
+
+	def open_group(label, key):
+		g = {"key": key, "label": label, "sections": []}
+		groups.append(g)
+		return g
+
+	def open_section(label):
+		s = {"label": label or "", "fields": [], "tables": [], "show_when": ""}
+		group["sections"].append(s)
+		return s
+
+	for df in meta.fields:
+		if df.fieldtype == "Tab Break":
+			if (df.label or "").strip().lower() in SKIP_TABS:
+				group = section = None
+				continue
+			group, section = open_group(df.label or "Details", frappe.scrub(df.label or df.fieldname)), None
+			continue
+		if group is None and not groups:
+			group = open_group("Details", "details")
+		if group is None:
+			continue
+		if df.fieldtype == "Section Break":
+			if df.label or section is None:
+				section = open_section(df.label)
+				section["show_when"] = show_when_expr(df)
+			continue
+		if df.fieldtype == "Column Break" or df.hidden or df.fieldname in AUTO_FIELDS:
+			continue
+		if df.fieldname == "amended_from":
+			continue
+		if df.fieldname == LEAD_FIRST_FIELD:
+			lead_spec = edit_spec(df, None)
+			lead_spec["companions"] = []
+			lead_section = section
+			continue
+		if section is None:
+			section = open_section("")
+
+		# Read-only tables are copied from the estimate on save, so they are shown as they
+		# will arrive. Tables the job builds for itself (tasks, documents, serials) are not.
+		if df.fieldtype in ("Table", "Table MultiSelect"):
+			if df.fieldname == TASK_TABLE:
+				child = frappe.get_meta(df.options)
+				section["tables"].append({
+					"fieldname": df.fieldname, "label": df.label, "editable": True,
+					"columns": [{"fieldname": f, "label": child.get_field(f).label, "type": child.get_field(f).fieldtype}
+						for f in TASK_COLUMNS],
+				})
+			elif df.read_only:
+				editable = df.fieldname in EDITABLE_TABLES
+				section["tables"].append({
+					"fieldname": df.fieldname, "label": df.label, "editable": editable,
+					"columns": _child_columns(df.options, every_field=editable),
+				})
+			continue
+		if df.fieldtype not in INPUT_TYPES_ALL or df.fieldtype == "Attach Image":
+			continue
+		spec = edit_spec(df, None)
+		spec["readonly"] = bool(df.read_only)
+		spec["show_when"] = show_when_expr(df)
+		if spec["readonly"] and df.fieldtype == "Link":
+			spec["choices"], spec["many"] = [], True  # displayed, never chosen
+		narrowed = NARROWED_SECTIONS.get(section["label"])
+		if narrowed and df.fieldname not in narrowed:
+			continue
+		if lead_section is not None and section is lead_section:
+			lead_spec["companions"].append(spec)
+		else:
+			section["fields"].append(spec)
+
+	for g in groups:
+		g["sections"] = [
+			s for s in g["sections"] if (s["fields"] or s["tables"]) and s["label"] not in SKIPPED_SECTIONS
+		]
+	# A tab with nothing to type (Documents, Warranty & Serials) holds only what the job
+	# works out once saved, so a new project has nothing to put there.
+	groups = [g for g in groups if any(not f["readonly"] for s in g["sections"] for f in s["fields"])]
+	for g in groups:
+		g["boxes"] = _boxes(g, every_section=g["key"] in SPLIT_TABS)
+	return lead_spec, groups
+
+
+def _boxes(group, every_section=False):
+	"""How a tab's sections are laid out as boxes (cards), each with an optional heading.
+
+	A narrowed section (`NARROWED_SECTIONS`) leads its tab in a box of its own. A tab in
+	`SPLIT_TABS` gives every section a box of its own. Elsewhere a table - the panels,
+	the inverters, each list of expenses - gets its own box headed by its section, and the
+	sections between them share one box. That shared box keeps the tab's name as its
+	heading only when nothing on the tab was boxed apart, since the tab bar already says it.
+	"""
+	boxes, shared = [], None
+	leading = [s for s in group["sections"] if s["label"] in NARROWED_SECTIONS]
+	for s in leading:
+		boxes.append({"title": s["label"], "sections": [s]})
+	for s in group["sections"]:
+		if s in leading:
+			continue
+		if every_section or (s["tables"] and not s["fields"]):
+			boxes.append({"title": s["label"] or group["label"], "sections": [s]})
+			shared = None
+		else:
+			if shared is None:
+				shared = {"title": "", "sections": []}
+				boxes.append(shared)
+			shared["sections"].append(s)
+	if len(boxes) == 1 and not boxes[0]["title"]:
+		boxes[0]["title"] = group["label"]
+	return boxes
+
+
+def lead_first_allowlist(meta):
+	"""The fields the lead-first create endpoint may set: the editable ones on the page."""
+	lead_spec, groups = lead_first_groups(meta)
+	allowed = {lead_spec["fieldname"]: lead_spec} if lead_spec else {}
+	for spec in (lead_spec or {}).get("companions", []):
+		if not spec["readonly"]:
+			allowed[spec["fieldname"]] = spec
+	for g in groups:
+		for s in g["sections"]:
+			for spec in s["fields"]:
+				if not spec["readonly"]:
+					allowed[spec["fieldname"]] = spec
+	return allowed
+
+
+def show_when_expr(df):
+	"""`show_when` plus the bare truthy form `eval:doc.field`, which the desk uses for checks."""
+	rule = show_when(df)
+	if rule:
+		return rule
+	match = re.match(r"^eval:doc\.([a-z0-9_]+)$", (df.get("depends_on") or "").strip())
+	return match.group(1) if match else ""
+
+
+def lead_first_context(context, slug):
+	cfg = get_collection(slug)
+	meta = frappe.get_meta(cfg["doctype"])
+	fill_shell(
+		context,
+		active_route=f"/a3solaportal/{slug}",
+		page_title="New " + cfg["singular"],
+		crumbs=[
+			{"label": "Home", "href": "/a3solaportal/dashboard"},
+			{"label": cfg["title"], "href": f"/a3solaportal/{slug}"},
+			{"label": "New"},
+		],
+	)
+	context.collection = {**cfg, "slug": slug}
+	context.lead_field, context.groups = lead_first_groups(meta)
+	# Arrived from a lead's page: start with it chosen.
+	preset = (frappe.form_dict.get("lead") or "").strip()
+	if not preset and frappe.form_dict.get("source_dt") == "Lead":
+		preset = (frappe.form_dict.get("source") or "").strip()
+	if preset and context.lead_field and frappe.db.exists("Lead", preset):
+		context.lead_field = {
+			**edit_spec(meta.get_field(LEAD_FIRST_FIELD), preset),
+			"companions": context.lead_field["companions"],
+		}
+	# Versioned by the script's own change time: the site's asset version only moves on a
+	# build, so an edited script would otherwise be served from the browser's cache.
+	context.script_version = int(os.path.getmtime(frappe.get_app_path("a3_sola", "public", "js", "portal_lead_first_form.js")))
+	context.row_editor_json = frappe.as_json(row_editor(meta))
+	context.csrf_token = frappe.sessions.get_csrf_token()
+	return context
+
+
+def row_editor(meta):
+	"""What the add-row popup needs for each editable table, and the dropdowns it offers.
+
+	The fields, their choices and which make list follows which variant are the design
+	estimate builder's own (`portal_estimate.SECTIONS`), so a row added on the project is
+	asked for exactly as it is on the estimate. `computed` are worked out on save.
+	"""
+	from a3_sola.api.portal_estimate import INPUT, SECTION_BY_KEY, _choices
+
+	company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	tables = {}
+	for key in EDITABLE_TABLES:
+		spec = SECTION_BY_KEY[key]
+		child = frappe.get_meta(meta.get_field(key).options)
+		fields = []
+		for f in spec["fields"]:
+			df = child.get_field(f["fieldname"])
+			fields.append({
+				"fieldname": df.fieldname, "label": _(df.label), "reqd": bool(df.reqd),
+				"input": "select" if f.get("choices") else INPUT.get(df.fieldtype, "text"),
+				"choices": f.get("choices"), "filter_by": f.get("filter_by"), "default": df.default or "",
+			})
+		tables[key] = {"label": _(spec["label"]), "fields": fields}
+	choices = _choices(frappe._dict(company=company))
+	tables[TASK_TABLE] = _task_editor(meta, choices)
+	return {"tables": tables, "choices": choices}
+
+
+def _task_editor(meta, choices):
+	"""The task popup: every field a person sets on a task. On a task the template gave the
+	job, the template's own fields are shown locked; a task added by hand sets them all."""
+	from a3_sola.api.stages import TASK_JOB_FIELDS, TASK_OWN_FIELDS
+
+	child = frappe.get_meta(meta.get_field(TASK_TABLE).options)
+	inputs = {"Date": "date", "Int": "number", "Float": "number", "Currency": "number",
+		"Check": "check", "Small Text": "textarea", "Text": "textarea"}
+	fields = []
+	for fieldname in TASK_OWN_FIELDS + TASK_JOB_FIELDS:
+		df = child.get_field(fieldname)
+		spec = {
+			"fieldname": fieldname, "label": _(df.label), "default": df.default or "",
+			"reqd": fieldname in ("stage_code", "stage_name"), "locked_on_template": fieldname in TASK_OWN_FIELDS,
+			"input": inputs.get(df.fieldtype, "text"),
+		}
+		if df.fieldtype in ("Select", "Link"):
+			key = "task_" + fieldname
+			choices[key] = (
+				[{"value": o, "label": o} for o in (df.options or "").split("\n") if o]
+				if df.fieldtype == "Select" else link_choices(df.options)
+			)
+			spec.update({"input": "select", "choices": key})
+		fields.append(spec)
+	return {"label": _("Task"), "fields": fields}

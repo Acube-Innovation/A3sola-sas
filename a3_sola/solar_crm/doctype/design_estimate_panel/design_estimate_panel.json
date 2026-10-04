@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-28 08:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "panel_type",
+  "panel_capacity_wp",
+  "panel_variant",
+  "panel_make",
+  "nos",
+  "total_capacity_kwp",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "panel_type",
+   "fieldtype": "Select",
+   "label": "Panel Type",
+   "options": "DCR\nNon-DCR",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Set from the make's DCR flag when a make is chosen."
+  },
+  {
+   "fieldname": "panel_capacity_wp",
+   "fieldtype": "Float",
+   "label": "Panel Capacity (Wp)",
+   "default": "550",
+   "reqd": 1,
+   "precision": "2",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "panel_variant",
+   "fieldtype": "Link",
+   "label": "Panel Variant",
+   "in_list_view": 1,
+   "options": "Component Technology",
+   "reqd": 1,
+   "description": "Choose first; Panel Make then lists only makes of this variant."
+  },
+  {
+   "fieldname": "panel_make",
+   "fieldtype": "Link",
+   "label": "Panel Make",
+   "options": "Component Make",
+   "in_list_view": 1,
+   "description": "Makes of the chosen Panel Variant only."
+  },
+  {
+   "fieldname": "nos",
+   "fieldtype": "Int",
+   "label": "Nos",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Proposed System Size (kW) / Panel Capacity, rounded up: 18.15 becomes 19."
+  },
+  {
+   "fieldname": "total_capacity_kwp",
+   "fieldtype": "Float",
+   "label": "Total Capacity (kWp)",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "description": "Price per unit."
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "description": "Rate x nos."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 19:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Panel",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "The solar panels an estimate is designed with; the count follows from the proposed system size."
+}

@@ -22,7 +22,7 @@
 			<span>Submit order</span>
 		</button>
 		{%- endif %}
-		{%- elif submitted %}
+		{%- elif submitted and not hide_desk_amend %}
 		{#- Submitted documents are closed to `save`, so the only honest offer is the desk,
 		    where they can be amended or cancelled. -#}
 		<a class="a3s-btn a3s-btn--secondary" href="{{ desk_route }}">
@@ -71,6 +71,11 @@
 	<p class="a3s-main__sub">{{ collection.singular | capitalize }} &middot; stored in ERPNext.</p>
 </div>
 
+{#- A collection may put its own overview above the record - the project's boxes and board. -#}
+{%- if top_template %}{% include top_template %}{% endif %}
+
+{#- A page whose overview says everything - the project's - leaves out the field cards. -#}
+{%- if not hide_record_body %}
 <div class="a3s-edit">
 	<div class="a3s-edit__main">
 		<section class="a3s-card a3s-edit__card">
@@ -120,3 +125,4 @@
 		{%- include "templates/includes/portal_record_aside.html" %}
 	</aside>
 </div>
+{%- endif %}

@@ -1,0 +1,47 @@
+{#- Step one of the design estimate builder: the Estimate Details tab, split into two equal
+    columns so the whole form sits on one screen. Context from design-estimates/new.py and
+    details.py - `columns` from portal_estimate.detail_columns. -#}
+<div class="a3s-page__head">
+	<div>
+		<p class="a3s-de-steps"><span class="is-current">1 &middot; Estimate details</span><span>2 &middot; System &amp; commercials</span></p>
+		<h2 class="a3s-main__title">{% if record_name %}{{ record_name | e }}{% else %}New design estimate{% endif %}</h2>
+		<p class="a3s-main__sub">Who the estimate is for and what is being proposed. Next takes you to the system.</p>
+	</div>
+</div>
+
+<form class="a3s-de-details" id="a3s-de-details" data-name="{{ record_name | e }}" novalidate>
+	<div class="a3s-de-split">
+		{%- for column in columns %}
+		<section class="a3s-card a3s-de-card">
+			<h3 class="a3s-de-card__title">{{ column.title }}</h3>
+			<div class="a3s-de-fields">
+				{%- for f in column.fields %}
+				<div class="a3s-field" id="f-{{ f.fieldname }}"{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
+					<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
+					{%- if f.input == "select" %}
+					<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
+						{%- for o in f.options %}
+						<option value="{{ o.value | e }}"{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
+						{%- endfor %}
+					</select>
+					{%- elif f.input == "number" %}
+					<input type="number" step="any" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+					{%- elif f.input == "date" %}
+					<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+					{%- else %}
+					<input type="text" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+					{%- endif %}
+					{%- if f.hint %}<p class="a3s-field__hint">{{ f.hint | striptags }}</p>{% endif %}
+				</div>
+				{%- endfor %}
+			</div>
+		</section>
+		{%- endfor %}
+	</div>
+
+	<div class="a3s-de-actions">
+		<p class="a3s-form__status" id="a3s-de-status" role="status" aria-live="polite"></p>
+		<a class="a3s-btn a3s-btn--ghost" href="{{ cancel_route }}">Cancel</a>
+		<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-de-next">Next</button>
+	</div>
+</form>

@@ -62,10 +62,11 @@
   },
   {
    "fieldname": "technology",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Technology",
    "in_list_view": 1,
-   "description": "e.g. Mono PERC Bifacial, TopCon Bifacial"
+   "description": "Technologies of this make's component type, from the Component Technology master.",
+   "options": "Component Technology"
   },
   {
    "fieldname": "cb_1",
@@ -154,7 +155,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-28 08:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Component Make",

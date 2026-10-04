@@ -201,6 +201,8 @@ WEBSITE_ROUTE_RULES = [
 	{"from_route": "/a3solaportal/design-estimates/new", "to_route": "a3solaportal/design-estimates/new"},
 	{"from_route": "/a3solaportal/design-estimates/<name>", "to_route": "a3solaportal/design-estimates/view"},
 	{"from_route": "/a3solaportal/design-estimates/<name>/edit", "to_route": "a3solaportal/design-estimates/edit"},
+	{"from_route": "/a3solaportal/design-estimates/<name>/details", "to_route": "a3solaportal/design-estimates/details"},
+	{"from_route": "/a3solaportal/design-estimates/<name>/design", "to_route": "a3solaportal/design-estimates/design"},
 	{"from_route": "/a3solaportal/subsidy-eligibility/new", "to_route": "a3solaportal/subsidy-eligibility/new"},
 	{"from_route": "/a3solaportal/subsidy-eligibility/<name>", "to_route": "a3solaportal/subsidy-eligibility/view"},
 	{"from_route": "/a3solaportal/subsidy-eligibility/<name>/edit", "to_route": "a3solaportal/subsidy-eligibility/edit"},

@@ -47,6 +47,28 @@ def get_context(context):
 			["name", "like", like],
 		]
 
+	leads = lead_rows(filters, or_filters)
+
+	context.leads = leads
+	context.total = len(leads)
+	context.limit = LIMIT
+	context.q = q
+	context.status_filter = status
+	# Ordered for the dropdown; the set is unordered.
+	context.status_options = [
+		"Lead", "Open", "Replied", "Opportunity", "Quotation",
+		"Lost Quotation", "Interested", "Converted", "Do Not Contact",
+	]
+	# A list runs the full width of the page.
+	context.main_wide = True
+	return context
+
+
+def lead_rows(filters=None, or_filters=None, limit=LIMIT):
+	"""Leads as the list shows them, one dict per row: name, place, contact, status, solar
+	details, who raised it and who it now sits with. Read with `frappe.get_list`, so the
+	caller's own permissions decide which leads come back. The project page shows its lead
+	as one of these rows, through the same template the list uses."""
 	# The solar columns are custom fields; ask only for the ones this site has installed
 	# so the list still renders on a site where the fixtures have not run yet.
 	meta = frappe.get_meta("Lead")
@@ -61,7 +83,7 @@ def get_context(context):
 		filters=filters,
 		or_filters=or_filters,
 		order_by="creation desc",
-		limit_page_length=LIMIT,
+		limit_page_length=limit,
 	)
 	# Subsidy Scheme is a link to a series-named record; the person wants the scheme's
 	# name, not its id, so resolve every scheme on the page in one query.
@@ -87,18 +109,7 @@ def get_context(context):
 		lead["created"] = frappe.utils.format_date(lead.get("creation"), "medium")
 
 	_add_assignment(leads)
-
-	context.leads = leads
-	context.total = len(leads)
-	context.limit = LIMIT
-	context.q = q
-	context.status_filter = status
-	# Ordered for the dropdown; the set is unordered.
-	context.status_options = [
-		"Lead", "Open", "Replied", "Opportunity", "Quotation",
-		"Lost Quotation", "Interested", "Converted", "Do Not Contact",
-	]
-	return context
+	return leads
 
 
 def _add_assignment(leads):

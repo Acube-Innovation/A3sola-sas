@@ -128,4 +128,6 @@ def get_context(context):
 	context.status = status
 	context.statuses = STATUSES
 	context.csrf_token = frappe.sessions.get_csrf_token()
+	# A list runs the full width of the page.
+	context.main_wide = True
 	return context

@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-28 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "battery_voltage",
+  "battery_phase",
+  "battery_capacity_ah",
+  "battery_variant",
+  "battery_make",
+  "nos",
+  "total_energy_kwh",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "battery_voltage",
+   "fieldtype": "Float",
+   "label": "Battery Voltage (V)",
+   "reqd": 1,
+   "precision": "2",
+   "in_list_view": 1,
+   "description": "The battery type is its voltage and phase, e.g. 48 V single phase."
+  },
+  {
+   "fieldname": "battery_phase",
+   "fieldtype": "Select",
+   "label": "Battery Phase",
+   "options": "\nSingle Phase\nThree Phase",
+   "in_list_view": 1,
+   "description": "Left blank, it is set from the connection."
+  },
+  {
+   "fieldname": "battery_capacity_ah",
+   "fieldtype": "Float",
+   "label": "Battery Capacity (Ah)",
+   "reqd": 1,
+   "precision": "2",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "battery_variant",
+   "fieldtype": "Link",
+   "label": "Battery Variant",
+   "options": "Component Technology",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Choose first; Battery Make then lists only makes of this variant."
+  },
+  {
+   "fieldname": "battery_make",
+   "fieldtype": "Link",
+   "label": "Battery Make",
+   "options": "Component Make",
+   "in_list_view": 1,
+   "description": "Makes of the chosen Battery Variant only."
+  },
+  {
+   "fieldname": "nos",
+   "fieldtype": "Int",
+   "label": "Nos",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_energy_kwh",
+   "fieldtype": "Float",
+   "label": "Total Energy (kWh)",
+   "read_only": 1,
+   "precision": "3",
+   "description": "Voltage x Capacity x Nos / 1000."
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "description": "Price per unit."
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "description": "Rate x nos."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 19:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Battery",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "The batteries of an off-grid or hybrid estimate."
+}

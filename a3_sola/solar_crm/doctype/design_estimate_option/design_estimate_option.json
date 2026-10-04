@@ -63,7 +63,6 @@
    "fieldtype": "Data",
    "label": "Technology",
    "read_only": 1,
-   "fetch_from": "component_make.technology",
    "in_list_view": 1
   },
   {
@@ -218,7 +217,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-09-28 08:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate Option",

@@ -8,7 +8,10 @@
  "field_order": [
   "stage_code",
   "stage_name",
+  "activity_scope",
   "status",
+  "planned_start_date",
+  "planned_date",
   "task_doctype",
   "task_document",
   "owner_type",
@@ -18,7 +21,6 @@
   "cb_1",
   "responsible_role",
   "sla_days",
-  "planned_date",
   "actual_start_date",
   "days_in_stage",
   "is_sla_breached",
@@ -52,7 +54,17 @@
    "label": "Task",
    "read_only": 1,
    "in_list_view": 1,
-   "columns": 2
+   "columns": 2,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "activity_scope",
+   "fieldtype": "Data",
+   "label": "Scope",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "status",
@@ -62,6 +74,24 @@
    "default": "Pending",
    "in_list_view": 1,
    "columns": 1
+  },
+  {
+   "fieldname": "planned_start_date",
+   "fieldtype": "Date",
+   "label": "Planned Start",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "planned_date",
+   "fieldtype": "Date",
+   "label": "Planned End",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "task_doctype",
@@ -77,7 +107,7 @@
    "options": "task_doctype",
    "read_only": 1,
    "in_list_view": 1,
-   "columns": 2,
+   "columns": 1,
    "description": "The document that carried this task out. Set the moment one is created for it."
   },
   {
@@ -106,7 +136,6 @@
    "fieldname": "actual_completion_date",
    "fieldtype": "Date",
    "label": "Completed",
-   "in_list_view": 1,
    "columns": 1
   },
   {
@@ -124,12 +153,8 @@
    "fieldname": "sla_days",
    "fieldtype": "Int",
    "label": "SLA",
-   "read_only": 1
-  },
-  {
-   "fieldname": "planned_date",
-   "fieldtype": "Date",
-   "label": "Planned"
+   "read_only": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "actual_start_date",
@@ -231,7 +256,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-09 09:00:00.000000",
+ "modified": "2026-10-02 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Log",

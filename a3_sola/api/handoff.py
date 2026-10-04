@@ -89,7 +89,7 @@ def create_solar_installation(sales_order):
 	"""
 	from frappe import _
 
-	from a3_sola.api import stages
+	from a3_sola.api import installation_lead, stages
 
 	payload = build_handoff_payload(sales_order)
 	if not payload:
@@ -120,6 +120,19 @@ def create_solar_installation(sales_order):
 			title=_("Incomplete Handoff"),
 		)
 
+	# Every installation is opened from a lead; the handoff reads it back from the records
+	# the quotation carries.
+	lead = installation_lead.lead_of(
+		payload["solar_consumer"], payload["solar_design_estimate"], payload["solar_proposal"]
+	)
+	if not lead:
+		frappe.throw(
+			_("Sales Order {0} cannot open an installation: Solar Consumer {1} is not linked to a Lead.").format(
+				payload["sales_order"], payload["solar_consumer"]
+			),
+			title=_("Incomplete Handoff"),
+		)
+
 	consumer = frappe.get_cached_doc("Solar Consumer", payload["solar_consumer"])
 	package = (
 		frappe.get_cached_doc("Solar Package", payload["solar_package"])
@@ -140,6 +153,7 @@ def create_solar_installation(sales_order):
 		{
 			"doctype": "Solar Installation",
 			"company": payload["company"],
+			"lead": lead,
 			"solar_consumer": payload["solar_consumer"],
 			"customer": payload["customer"],
 			"sales_order": payload["sales_order"],

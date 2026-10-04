@@ -33,9 +33,22 @@
   "tab_inverter",
   "sb_4",
   "inverters",
+  "tab_battery",
+  "sb_battery",
+  "batteries",
   "tab_system",
   "sb_8",
   "system_items",
+  "tab_kseb",
+  "sb_kseb",
+  "kseb_expenses",
+  "tab_mounting",
+  "sb_mounting",
+  "roof_type",
+  "mounting_expenses",
+  "tab_installation",
+  "sb_installation",
+  "installation_expenses",
   "tab_components",
   "sb_10",
   "components",
@@ -183,7 +196,7 @@
   {
    "fieldname": "tab_modules",
    "fieldtype": "Tab Break",
-   "label": "Modules"
+   "label": "Solar Panel"
   },
   {
    "fieldname": "sb_2",
@@ -193,7 +206,7 @@
    "description": "The module options this package may be built with. Tick one as the default - the proposal, the cost estimate and the handoff read that row.",
    "fieldname": "modules",
    "fieldtype": "Table",
-   "label": "Modules",
+   "label": "Solar Panels",
    "options": "Solar Package Module"
   },
   {
@@ -213,9 +226,26 @@
    "options": "Solar Package Inverter"
   },
   {
+   "fieldname": "tab_battery",
+   "fieldtype": "Tab Break",
+   "label": "Battery",
+   "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type)"
+  },
+  {
+   "fieldname": "sb_battery",
+   "fieldtype": "Section Break",
+   "description": "Only for Off-Grid and Hybrid packages. Energy is volts x Ah x nos."
+  },
+  {
+   "fieldname": "batteries",
+   "fieldtype": "Table",
+   "label": "Batteries",
+   "options": "Design Estimate Battery"
+  },
+  {
    "fieldname": "tab_system",
    "fieldtype": "Tab Break",
-   "label": "System"
+   "label": "Balance"
   },
   {
    "fieldname": "sb_8",
@@ -225,44 +255,105 @@
    "description": "The boards, cables, structure, meters, earthing and protection this package includes, each with its own price. Tick one row per type as the one quoted.",
    "fieldname": "system_items",
    "fieldtype": "Table",
-   "label": "Balance of System",
+   "label": "Balance of System Components",
    "options": "Solar Package System Item"
+  },
+  {
+   "fieldname": "tab_kseb",
+   "fieldtype": "Tab Break",
+   "label": "KSEB"
+  },
+  {
+   "fieldname": "sb_kseb",
+   "fieldtype": "Section Break",
+   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the package's single or three phase connection, and follow it on every save. Registration is charged on the default inverter's capacity. Add rows for any other KSEB expense."
+  },
+  {
+   "fieldname": "kseb_expenses",
+   "fieldtype": "Table",
+   "label": "KSEB Expenses",
+   "options": "Design Estimate KSEB Expense"
+  },
+  {
+   "fieldname": "tab_mounting",
+   "fieldtype": "Tab Break",
+   "label": "Mounting"
+  },
+  {
+   "fieldname": "sb_mounting",
+   "fieldtype": "Section Break",
+   "description": "The first row fills in from the Roof Type: panel capacity x its mounting structure rate, refreshed on every save. Add rows for any other structure work."
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type",
+   "description": "Mounting and installation are priced on it."
+  },
+  {
+   "fieldname": "mounting_expenses",
+   "fieldtype": "Table",
+   "label": "Mounting Structure Expenses",
+   "options": "Design Estimate Mounting Expense"
+  },
+  {
+   "fieldname": "tab_installation",
+   "fieldtype": "Tab Break",
+   "label": "Installation"
+  },
+  {
+   "fieldname": "sb_installation",
+   "fieldtype": "Section Break",
+   "description": "From the Roof Type on the Mounting tab: panel capacity x its installation rate. The specification is yours to edit."
+  },
+  {
+   "fieldname": "installation_expenses",
+   "fieldtype": "Table",
+   "label": "Installation Expenses",
+   "options": "Design Estimate Installation Expense"
   },
   {
    "fieldname": "tab_components",
    "fieldtype": "Tab Break",
-   "label": "Components"
+   "label": "Components",
+   "hidden": 1
   },
   {
    "fieldname": "sb_10",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "components",
    "fieldtype": "Table",
    "label": "Components",
-   "options": "Solar Package Component"
+   "options": "Solar Package Component",
+   "hidden": 1
   },
   {
    "fieldname": "tab_commercial",
    "fieldtype": "Tab Break",
-   "label": "Commercial"
+   "label": "Commercial",
+   "hidden": 1
   },
   {
    "fieldname": "sb_11",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "description": "One row per configuration the package is offered in - a module, an inverter, the boards and the meter - and what that costs. The subsidy, the statutory fees and the generation band are resolved per row, never typed.",
    "fieldname": "prices",
    "fieldtype": "Table",
    "label": "Price List",
-   "options": "Solar Package Price"
+   "options": "Solar Package Price",
+   "hidden": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-08 19:00:00.000000",
+ "modified": "2026-10-01 16:20:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

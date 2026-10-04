@@ -31,6 +31,44 @@ function refresh_price_choices(frm) {
 }
 
 frappe.ui.form.on("Solar Package", {
+	setup(frm) {
+		// Each expense table offers only the Items of its own group (seeded by install.py).
+		[
+			["kseb_expenses", "particulars", "KSEB Expenses"],
+			["mounting_expenses", "item", "Mounting Structure Expenses"],
+			["installation_expenses", "item", "Installation Expenses"],
+		].forEach(([table, field, group]) => {
+			frm.set_query(field, table, () => ({ filters: { item_group: group, disabled: 0 } }));
+		});
+		frm.set_query("roof_type", () => ({ filters: { company: frm.doc.company } }));
+		frm.set_query("battery_variant", "batteries", () => ({
+			filters: { component_type: "Battery", is_active: 1, company: frm.doc.company },
+		}));
+		frm.set_query("battery_make", "batteries", (doc, cdt, cdn) => ({
+			filters: {
+				component_type: "Battery",
+				is_active: 1,
+				company: frm.doc.company,
+				technology: locals[cdt][cdn].battery_variant || "",
+			},
+		}));
+	},
+
+	before_save(frm) {
+		// Opened from an estimate's Create Package: remember it is this save that answers it.
+		const pending = frappe.a3s_package_for_estimate;
+		if (pending && pending.package === frm.doc.name) pending.saving = true;
+	},
+
+	after_save(frm) {
+		const pending = frappe.a3s_package_for_estimate;
+		if (!(pending && pending.saving)) return;
+		delete frappe.a3s_package_for_estimate;
+		frappe.set_route("Form", "Solar Design Estimate", pending.estimate).then(() => {
+			frappe.model.set_value("Solar Design Estimate", pending.estimate, "solar_package", frm.doc.name);
+		});
+	},
+
 	refresh(frm) {
 		refresh_price_choices(frm);
 		if (frm.doc.__islocal) return;

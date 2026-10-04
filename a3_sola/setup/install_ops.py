@@ -47,6 +47,9 @@ SYNCED_ROW_FIELDS = (
 	"due_anchor_days", "stage_description", "document_checklist_template", "display_order",
 )
 
+#: Fields the seed fills only while blank. The tenant decides them after that.
+SEEDED_ONCE_ROW_FIELDS = ("activity_scope",)
+
 
 def setup(company=None):
 	create_roles()
@@ -199,6 +202,7 @@ def _task_row(task, index, company=None):
 	return {
 		"stage_code": task["code"],
 		"stage_name": task["name"],
+		"activity_scope": task["activity_scope"],
 		"owner_type": task["owner_type"],
 		"sla_days": task["sla_days"],
 		"responsible_role": task["default_assignee_role"]
@@ -241,6 +245,10 @@ def _sync_task_rows(doc, company=None):
 			continue
 		for field in SYNCED_ROW_FIELDS:
 			if (row.get(field) or None) != (wanted.get(field) or None):
+				row.set(field, wanted.get(field))
+				changed = True
+		for field in SEEDED_ONCE_ROW_FIELDS:
+			if not row.get(field):
 				row.set(field, wanted.get(field))
 				changed = True
 	return changed

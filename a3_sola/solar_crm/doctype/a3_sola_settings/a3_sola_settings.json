@@ -24,6 +24,12 @@
   "sb_7",
   "default_discom",
   "default_subsidy_scheme",
+  "subsidy_tariff_category",
+  "subsidy_max_capacity_kw",
+  "inverter_min_capacity_factor",
+  "inverter_max_capacity_factor",
+  "single_phase_inverter_max_kw",
+  "estimate_gst_percent",
   "default_tariff",
   "default_fee_schedule",
   "cb_8",
@@ -525,6 +531,51 @@
    "fieldtype": "Link",
    "label": "Default Subsidy Scheme",
    "options": "Subsidy Scheme"
+  },
+  {
+   "fieldname": "subsidy_tariff_category",
+   "fieldtype": "Data",
+   "label": "Subsidy Tariff Category",
+   "default": "LT-1A",
+   "description": "A subsidised design estimate needs the consumer on this tariff category. Compared ignoring case, spaces and hyphens."
+  },
+  {
+   "fieldname": "subsidy_max_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Subsidy Max System Size (kW)",
+   "default": "10",
+   "precision": "3",
+   "description": "The largest system a subsidised design estimate may propose."
+  },
+  {
+   "fieldname": "inverter_min_capacity_factor",
+   "fieldtype": "Float",
+   "label": "Inverter Min Capacity (x Panel)",
+   "default": "0.85",
+   "precision": "3",
+   "description": "Total inverter capacity must be at least this times the total panel capacity."
+  },
+  {
+   "fieldname": "inverter_max_capacity_factor",
+   "fieldtype": "Float",
+   "label": "Inverter Max Capacity (x Panel)",
+   "default": "2",
+   "precision": "3",
+   "description": "Total inverter capacity may be at most this times the total panel capacity."
+  },
+  {
+   "fieldname": "single_phase_inverter_max_kw",
+   "fieldtype": "Float",
+   "label": "Single Phase Inverter Limit (kW)",
+   "default": "5",
+   "precision": "3",
+   "description": "Single phase users are allowed single phase inverters up to this size; three phase users above it need a three phase inverter."
+  },
+  {
+   "fieldname": "estimate_gst_percent",
+   "fieldtype": "Percent",
+   "label": "Estimate GST %",
+   "description": "Tax shown on a design estimate's commercials: this % of the equipment, mounting and installation total. KSEB fees are excluded - they are already gross. Confirm the rate with the CA."
   },
   {
    "fieldname": "default_tariff",
@@ -2828,7 +2879,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-09 09:00:00.000000",
+ "modified": "2026-10-01 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
