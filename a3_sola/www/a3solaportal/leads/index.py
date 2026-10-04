@@ -11,6 +11,7 @@ widened by the client.
 import frappe
 
 from a3_sola.www.a3solaportal import fill_shell, require_login
+from a3_sola.www.a3solaportal.collections import initials
 from a3_sola.api.leads import LEAD_STATUSES, lead_route
 
 no_cache = 1
@@ -77,7 +78,7 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 	leads = frappe.get_list(
 		"Lead",
 		fields=[
-			"name", "lead_name", "company_name",
+			"name", "lead_name", "company_name", "image",
 			"email_id", "mobile_no", "status", "creation", "owner",
 		] + extra,
 		filters=filters,
@@ -97,6 +98,7 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 
 	for lead in leads:
 		lead["display"] = lead.get("lead_name") or lead.get("company_name") or lead["name"]
+		lead["initials"] = initials(lead["display"])
 		lead["route"] = lead_route(lead["name"])
 		# "City, State" under the name; "Scheme, 3 kW" above the status. Either half may
 		# be missing, so each line is joined from whatever is present.

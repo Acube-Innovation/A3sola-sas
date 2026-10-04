@@ -122,6 +122,43 @@ def _list_columns(meta):
 	return cols
 
 
+def _link_titles(doctype, names):
+	"""name -> title for the records of `doctype` a page shows, in one query.
+
+	A doctype with no title field - a survey, say - keeps its ids; they are what it is called.
+	"""
+	names = {n for n in names if n}
+	if not names:
+		return {}
+	try:
+		title_field = frappe.get_meta(doctype).title_field
+	except Exception:
+		return {}
+	if not title_field or title_field == "name":
+		return {}
+	rows = frappe.get_all(doctype, filters={"name": ("in", list(names))}, fields=["name", title_field], limit_page_length=0)
+	return {r["name"]: r.get(title_field) or r["name"] for r in rows}
+
+
+def _link_images(doctype, names):
+	"""name -> picture URL for the records of `doctype` a page shows, in one query.
+
+	Read from the doctype's own `image_field` - a consumer's photograph, a lead's image -
+	so a survey or an estimate listed under a person shows the same face their page does.
+	"""
+	names = {n for n in names if n}
+	if not names:
+		return {}
+	try:
+		image_field = frappe.get_meta(doctype).get("image_field")
+	except Exception:
+		return {}
+	if not image_field:
+		return {}
+	rows = frappe.get_all(doctype, filters={"name": ("in", list(names))}, fields=["name", image_field], limit_page_length=0)
+	return {r["name"]: r.get(image_field) or "" for r in rows}
+
+
 def _is_status(df):
 	"""A status column - `status`, or one named after it, such as `kyc_status` - which the
 	list aligns differently from every other column."""
@@ -170,8 +207,12 @@ def list_context(context, slug):
 	sub_field = cfg.get("list_sub")
 	if sub_field and not meta.get_field(sub_field):
 		sub_field = None
-	fieldnames = ["name"] + ([meta.title_field] if meta.title_field else []) + [c.fieldname for c in columns]
-	fieldnames += [f for f in (image_field, sub_field) if f]
+	# A doctype with no title of its own is listed under the person it is for, with its
+	# id beneath - the way a survey or an estimate is spoken of.
+	title_field = meta.title_field if meta.title_field and meta.title_field != "name" else None
+	person = person_link(meta) if not title_field else None
+	fieldnames = ["name"] + ([title_field] if title_field else []) + [c.fieldname for c in columns]
+	fieldnames += [f for f in (image_field, sub_field, person.fieldname if person else None) if f]
 	# de-duplicate while preserving order
 	seen, fields = set(), []
 	for fn in fieldnames:
@@ -190,37 +231,55 @@ def list_context(context, slug):
 		order_by="modified desc", limit_page_length=100,
 	)
 
-	title_field = meta.title_field
+	# Every linked record on the page, named: one query per linked doctype, not one per cell.
+	link_columns = [c for c in columns if c.fieldtype == "Link"] + ([person] if person else [])
+	titles = {}
+	for df in link_columns:
+		titles.setdefault(df.options, {}).update(
+			_link_titles(df.options, {rec.get(df.fieldname) for rec in records})
+		)
+
+	# A record named after a person wears that person's picture, as the Consumer list does.
+	images = _link_images(person.options, {rec.get(person.fieldname) for rec in records}) if person else {}
+
+	# The person column says what the primary cell already says, so it is not repeated.
+	shown = [c for c in columns if c.fieldname != title_field and not (person and c.fieldname == person.fieldname)]
+
 	rows = []
 	for rec in records:
 		cells = []
-		# primary cell: the doctype's title, or its name, linked to the record
-		primary_text = (rec.get(title_field) if title_field else None) or rec.get("name")
+		# primary cell: the record's title, else who it is for, else its id - linked to it
+		name = rec.get("name")
+		primary_text = (rec.get(title_field) if title_field else None) or (
+			titles.get(person.options, {}).get(rec.get(person.fieldname)) if person and rec.get(person.fieldname) else None
+		) or name
 		cells.append({
 			"text": primary_text, "primary": True, "num": False, "badge": False,
-			"route": record_route(slug, rec.get("name")) if has_detail(slug) else desk_route(doctype, rec.get("name")),
-			"image": (rec.get(image_field) or "") if image_field else "",
+			"route": record_route(slug, name) if has_detail(slug) else desk_route(doctype, name),
+			"image": ((rec.get(image_field) or "") if image_field else "")
+				or (images.get(rec.get(person.fieldname)) or "" if person else ""),
 			"initials": initials(primary_text),
-			"sub": (rec.get(sub_field) or "") if sub_field else "",
+			"sub": ((rec.get(sub_field) or "") if sub_field else "") or (name if primary_text != name else ""),
 		})
-		for c in columns:
-			if c.fieldname == title_field:
-				continue
+		for c in shown:
+			value = rec.get(c.fieldname)
+			if c.fieldtype == "Link" and value:
+				text = titles.get(c.options, {}).get(value) or value
+			else:
+				text = _format(value, c.fieldtype)
 			cells.append({
-				"text": _format(rec.get(c.fieldname), c.fieldtype),
+				"text": text,
 				"primary": False,
 				"num": c.fieldtype in NUMERIC,
 				"status": _is_status(c),
-				"badge": c.fieldtype == "Select" and rec.get(c.fieldname) not in (None, ""),
+				"badge": c.fieldtype == "Select" and value not in (None, ""),
 				"route": None,
 			})
 		rows.append({"cells": cells})
 
-	# headers, matching the cell order above (primary first, then non-title columns)
-	headers = [{"label": _("Record"), "num": False, "status": False}]
-	for c in columns:
-		if c.fieldname == title_field:
-			continue
+	# headers, matching the cell order above (primary first, then the columns shown)
+	headers = [{"label": _("Name"), "num": False, "status": False}]
+	for c in shown:
 		headers.append({"label": c.label, "num": c.fieldtype in NUMERIC, "status": _is_status(c)})
 
 	fill_shell(
@@ -519,9 +578,30 @@ def load_record(slug, name, permtype="read"):
 	return doc
 
 
+#: Who a record is for, in the order a person would name it: the consumer, else the lead,
+#: else the customer. A record with no title of its own - a survey, an estimate, a check -
+#: is shown under this name, the way the Lead and Consumer pages show theirs.
+PERSON_DOCTYPES = ("Solar Consumer", "Lead", "Customer")
+
+
+def person_link(meta):
+	"""The Link field that names who the record is for, or None."""
+	for doctype in PERSON_DOCTYPES:
+		for df in meta.fields:
+			if df.fieldtype == "Link" and df.options == doctype and not df.hidden:
+				return df
+	return None
+
+
 def record_title(doc):
+	"""What the record is called on the page: its title, else who it is for, else its id."""
 	title_field = doc.meta.title_field
-	return (doc.get(title_field) if title_field else None) or doc.name
+	title = doc.get(title_field) if title_field and title_field != "name" else None
+	if not title:
+		df = person_link(doc.meta)
+		if df and doc.get(df.fieldname):
+			title = link_title(df.options, doc.get(df.fieldname))
+	return title or doc.name
 
 
 def form_groups(meta, first_label=None):

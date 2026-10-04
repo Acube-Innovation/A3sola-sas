@@ -258,6 +258,8 @@
 	box-shadow: var(--shadow-soft);
 }
 .a3s-btn--primary:hover { color: #fff; transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+/* As a link, the page-wide `.a3s a:hover` would turn its text orange; it stays white. */
+.a3s a.a3s-btn--primary:hover, a.a3s-btn--primary:hover { color: #fff; }
 .a3s-btn--secondary {
 	background: var(--color-surface);
 	border-color: var(--color-border-strong);
@@ -2235,7 +2237,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 /* ---- next steps along the chain: an offer to create, or the record it became ---- */
 .a3s-chain { display: grid; gap: 0.75rem; }
 .a3s-chain .a3s-edit__card-title { margin-bottom: 0.25rem; }
-.a3s-chain .a3s-btn--block { justify-content: center; }
+.a3s-chain .a3s-btn--block { justify-content: flex-start; text-align: left; }
 .a3s-chain .a3s-btn[aria-disabled="true"] { pointer-events: none; }
 .a3s-chain .a3s-edit__hint { margin: 0; }
 
