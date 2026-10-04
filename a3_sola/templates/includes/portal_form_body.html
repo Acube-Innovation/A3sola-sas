@@ -20,8 +20,10 @@
 <div class="a3s-card a3s-formcard">
 	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}"
 	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" novalidate>
+		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
+		<div class="a3s-form__grid">
 		{%- for f in fields %}
-		<div class="a3s-field" id="f-{{ f.fieldname }}"
+		<div class="a3s-field{% if f.type in ('Small Text', 'Text', 'Attach Image') %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"
 		     {% if f.show_when %}data-show-when="{{ f.show_when | e }}" hidden{% endif %}>
 			{%- if f.type == "Check" %}
 			<label class="a3s-check">
@@ -83,6 +85,7 @@
 			{%- endif %}
 		</div>
 		{%- endfor %}
+		</div>
 
 		<div class="a3s-form__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-record-submit">Create {{ collection.singular }}</button>
