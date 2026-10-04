@@ -122,6 +122,12 @@ def _list_columns(meta):
 	return cols
 
 
+def _is_status(df):
+	"""A status column - `status`, or one named after it, such as `kyc_status` - which the
+	list aligns differently from every other column."""
+	return df.fieldname == "status" or df.fieldname.endswith("_status")
+
+
 def initials(text):
 	"""Up to two initials for an avatar, from the first two words of a name.
 
@@ -204,17 +210,18 @@ def list_context(context, slug):
 				"text": _format(rec.get(c.fieldname), c.fieldtype),
 				"primary": False,
 				"num": c.fieldtype in NUMERIC,
+				"status": _is_status(c),
 				"badge": c.fieldtype == "Select" and rec.get(c.fieldname) not in (None, ""),
 				"route": None,
 			})
 		rows.append({"cells": cells})
 
 	# headers, matching the cell order above (primary first, then non-title columns)
-	headers = [{"label": _("Record"), "num": False}]
+	headers = [{"label": _("Record"), "num": False, "status": False}]
 	for c in columns:
 		if c.fieldname == title_field:
 			continue
-		headers.append({"label": c.label, "num": c.fieldtype in NUMERIC})
+		headers.append({"label": c.label, "num": c.fieldtype in NUMERIC, "status": _is_status(c)})
 
 	fill_shell(
 		context,

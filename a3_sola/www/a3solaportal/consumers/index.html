@@ -34,7 +34,7 @@
 				<th>Customer</th>
 				<th>Category</th>
 				<th>DISCOM</th>
-				<th>Status</th>
+				<th class="a3s-table__status">Status</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -103,7 +103,7 @@
 				</td>
 
 				{#- ---- 5. where it stands, and with whom -------------------------- #}
-				<td>
+				<td class="a3s-table__status">
 					<div class="a3s-stack">
 						<span class="a3s-badge a3s-badge--{{ r.status_slug }}">{{ r.status | e }}</span>
 						{%- if r.assigned_to %}

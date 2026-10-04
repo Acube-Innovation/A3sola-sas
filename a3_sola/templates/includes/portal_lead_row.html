@@ -20,7 +20,7 @@
 					{%- if lead.mobile_no %}<span class="a3s-table__meta">{{ lead.mobile_no }}</span>{% endif %}
 					{%- if not lead.email_id and not lead.mobile_no %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
 				</td>
-				<td>
+				<td class="a3s-table__status">
 					{%- if lead.solar %}
 					<span class="a3s-table__meta a3s-table__solar">{{ lead.solar | map("e") | join(", ") }}</span>
 					{%- endif %}

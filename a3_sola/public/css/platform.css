@@ -1584,16 +1584,21 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 1rem 1.25rem;
 	border-bottom: 1px solid var(--color-border);
 	white-space: nowrap;
+	vertical-align: top;
 }
+/* Every column reads from the top left, numbers included, so a row of uneven cells
+   lines up along its top edge. The one exception is a status column, whose badge sits
+   mid-row; it is marked a3s-table__status wherever a table has one. */
 .a3s-table tbody td {
 	padding: 0.9rem 1.25rem;
 	border-bottom: 1px solid var(--color-border);
-	vertical-align: middle;
+	text-align: left;
+	vertical-align: top;
 }
+.a3s-table tbody td.a3s-table__status { vertical-align: middle; }
 .a3s-table tbody tr:last-child td { border-bottom: 0; }
-.a3s-table--top tbody td { vertical-align: top; text-align: left; }
 .a3s-table tbody tr:hover { background: var(--color-bg); }
-.a3s-table__num { text-align: right; white-space: nowrap; color: var(--color-text-muted); }
+.a3s-table__num { white-space: nowrap; color: var(--color-text-muted); }
 .a3s-table__link { font-weight: 600; color: var(--color-text); }
 .a3s-table__link:hover { color: var(--color-accent); }
 .a3s-table__meta { display: block; font-size: 0.8125rem; color: var(--color-text-muted); }
@@ -2779,9 +2784,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-proj__task.is-completed { --tk-ink: #1a7a2b; --tk-tile: #cdf2d4; --tk-card: #effbf1; --tk-line: #b7e9c0; }
 .a3s-proj__task.is-skipped { --tk-ink: #6b7383; --tk-tile: rgba(42, 51, 66, 0.08); --tk-card: var(--color-bg); --tk-line: var(--color-border); }
 
-/* The tile is square and stands 80% of the card's height. */
+/* The tile is a 2rem square at the card's top left. */
 .a3s-proj__task-icon {
-	align-self: center; height: 80%; min-height: 2rem; aspect-ratio: 1;
+	align-self: start; justify-self: start; height: 2rem; max-height: 2rem; aspect-ratio: 1;
 	display: grid; place-items: center;
 	border-radius: 0.5rem;
 	background: var(--tk-tile);
@@ -2851,3 +2856,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-lf__row-actions .a3s-btn + .a3s-btn { margin-left: 0.35rem; }
 .a3s-lf__remove { color: #b42318; }
 .a3s-lf__auto { font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); padding: 0.15rem 0.5rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.06); }
+
+/* ---- project list: four stacked columns and the job's latest task as its status ---- */
+.a3s-projlist .a3s-stack > span:first-child, .a3s-projlist .a3s-stack > .a3s-table__link { font-size: 0.9375rem; }
+.a3s-projlist__status { min-width: 17rem; }
+.a3s-projlist__status .a3s-proj__task { min-height: 3.1rem; }
+.a3s-projlist__proposal { white-space: nowrap; }

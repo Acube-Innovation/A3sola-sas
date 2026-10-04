@@ -1,0 +1,18 @@
+{#- The inside of one task card: icon tile, name over its date, status pill. `t` is a
+    task from project_overview._task. The caller supplies the wrapper - an <li> on the
+    project board, a <div> in the consumer list - carrying the classes
+    "a3s-proj__task is-<status>" that pick the card's colours. -#}
+<span class="a3s-proj__task-icon"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ t.icon }}"></use></svg></span>
+<div class="a3s-proj__task-body">
+	<p class="a3s-proj__task-name">{{ t.name | e }}</p>
+	<p class="a3s-proj__task-meta">
+		<span class="a3s-proj__when{% if t.overdue %} a3s-proj__overdue{% endif %}">
+			{%- if t.completed %}Done {{ t.completed }}
+			{%- elif t.due %}Due {{ t.due }}
+			{%- elif t.plan %}{{ t.plan }}
+			{%- elif t.status == "Skipped" %}Not needed{% endif %}
+		</span>
+		{%- if t.document %}<a href="{{ t.document_route | e }}">{{ t.document | e }}</a>{% endif %}
+	</p>
+</div>
+<span class="a3s-proj__task-status">{{ t.status | e }}</span>

@@ -71,7 +71,7 @@
 							<th>When</th>
 							<th>Channel</th>
 							<th>Step</th>
-							<th>Call status</th>
+							<th class="a3s-table__status">Call status</th>
 							<th>Outcome</th>
 							<th>Next action</th>
 							<th>Logged by</th>
@@ -83,7 +83,7 @@
 							<td>{{ row.when | e }}</td>
 							<td>{{ row.channel | e }}</td>
 							<td>{{ row.step | e }}</td>
-							<td>{{ row.call_status | e }}</td>
+							<td class="a3s-table__status">{{ row.call_status | e }}</td>
 							<td class="a3s-dl__multiline">{{ row.outcome | e }}</td>
 							<td class="a3s-dl__multiline">{{ row.next_action | e }}</td>
 							<td>{{ row.logged_by | e }}</td>

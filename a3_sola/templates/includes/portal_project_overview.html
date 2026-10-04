@@ -6,7 +6,7 @@
 	{#- The lead the job was opened from, as its row in the Leads list. -#}
 	{%- if overview.lead %}{%- set lead = overview.lead %}
 	<div class="a3s-card a3s-tablewrap a3s-proj__leadrow">
-		<table class="a3s-table a3s-table--top">
+		<table class="a3s-table">
 			<tbody>
 			{%- include "templates/includes/portal_lead_row.html" %}
 			</tbody>
@@ -139,20 +139,7 @@
 					{#- Three columns: the task's icon, its name over its date, its status. -#}
 					<li class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}"
 					    title="{{ t.code | e }}{% if t.reason %} &middot; {{ t.reason | e }}{% endif %}">
-						<span class="a3s-proj__task-icon"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ t.icon }}"></use></svg></span>
-						<div class="a3s-proj__task-body">
-							<p class="a3s-proj__task-name">{{ t.name | e }}</p>
-							<p class="a3s-proj__task-meta">
-								<span class="a3s-proj__when{% if t.overdue %} a3s-proj__overdue{% endif %}">
-									{%- if t.completed %}Done {{ t.completed }}
-									{%- elif t.due %}Due {{ t.due }}
-									{%- elif t.plan %}{{ t.plan }}
-									{%- elif t.status == "Skipped" %}Not needed{% endif %}
-								</span>
-								{%- if t.document %}<a href="{{ t.document_route | e }}">{{ t.document | e }}</a>{% endif %}
-							</p>
-						</div>
-						<span class="a3s-proj__task-status">{{ t.status | e }}</span>
+						{%- include "templates/includes/portal_task_card.html" %}
 					</li>
 					{%- endfor %}
 				</ol>
