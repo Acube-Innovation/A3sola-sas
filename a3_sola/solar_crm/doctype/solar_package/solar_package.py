@@ -25,6 +25,7 @@ class SolarPackage(Document):
 		assert_unique_in_company(self, ["specification_code"])
 		self.validate_dcr_items()
 		self.validate_one_default("modules", _("module"))
+		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
 		self.validate_one_default_per_type()
 		self.validate_prices()
@@ -32,6 +33,22 @@ class SolarPackage(Document):
 		self.compute_batteries()
 		self.compute_expenses()
 		self.check_regulation()
+
+	def on_update(self):
+		"""Drop the cached copy once the save is committed.
+
+		Validating reads this package back by name through the default-row helpers, which
+		caches the copy still in the database - the one from before this save. Left there,
+		every estimate priced from the cache would see the old prices and options.
+		"""
+		frappe.clear_document_cache(self.doctype, self.name)
+		frappe.db.after_commit.add(lambda: frappe.clear_document_cache(self.doctype, self.name))
+
+	def fill_inverter_phases(self):
+		"""An inverter row without a phase is for the package's own connection type."""
+		for row in self.get("inverters") or []:
+			if not row.inverter_phase:
+				row.inverter_phase = self.connection_type
 
 	def validate_one_default(self, fieldname, noun):
 		"""Exactly one option is the default, because everything downstream reads one.
@@ -279,6 +296,33 @@ def _default_row(package, fieldname):
 		if row.is_default:
 			return row
 	return rows[0] if rows else None
+
+
+def inverter_phase(package, row):
+	"""The connection an inverter row is for: its own phase, else the package's."""
+	return row.get("inverter_phase") or package.get("connection_type") or ""
+
+
+def package_phases(package):
+	"""Every connection type the package offers an inverter for, else its own."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	phases = {inverter_phase(doc, row) for row in doc.get("inverters") or []} - {""}
+	return phases or ({doc.connection_type} if doc.connection_type else set())
+
+
+def inverters_for_phase(package, phase):
+	"""The package's inverter rows for this connection type; all of them when none is given."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	rows = doc.get("inverters") or []
+	return [row for row in rows if not phase or inverter_phase(doc, row) == phase]
 
 
 def default_module(package):

@@ -27,6 +27,15 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_module,
 	default_price,
 	default_prices,
+	default_system_items,
+	inverter_phase,
+	inverters_for_phase,
+	package_phases,
+)
+
+#: The package and sizing fields a sizing option row carries, and the recommended row sets.
+SIZING_FIELDS = (
+	"connection_type", "override_capacity_kw", "subsidy_option", "subsidy_scheme", "solar_package", "system_type",
 )
 
 #: What a lead's consumption is assumed to be quoted against, since a lead records no
@@ -48,10 +57,12 @@ class SolarDesignEstimate(Document):
 		set_name(self, "design_series_prefix", ".YYYY.-.#####", fallback="SOL-DSN")
 
 	def validate(self):
+		self.apply_sizing_options()
 		self.resolve_subject()
 		assert_same_company(self, LINKS)
 		self.load_context()
 		self.compute_sizing()
+		self.fill_from_package()
 		self.compute_panels()
 		self.compute_inverters()
 		self.compute_batteries()
@@ -65,6 +76,53 @@ class SolarDesignEstimate(Document):
 		self.check_regulation()
 		self.compute_commercials()
 		self.validate_subsidy_conditions()
+
+	# ---------------------------------------------------------- sizing options
+	def apply_sizing_options(self):
+		"""Make the recommended sizing option the estimate's own package and sizing.
+
+		An estimate may offer several combinations of package and sizing side by side. The
+		system, the commercials and every check are worked out for one of them - the
+		recommended row - so its values are copied into the header fields that all of that
+		already reads. An estimate with no rows yet gets one from its header, so the table
+		always says what the estimate is built on.
+		"""
+		if not self.get("sizing_options"):
+			if self.solar_package or flt(self.override_capacity_kw) or self.connection_type:
+				self.append("sizing_options", {field: self.get(field) for field in SIZING_FIELDS})
+				self.sizing_options[0].is_recommended = 1
+			return
+
+		recommended = [row for row in self.sizing_options if row.is_recommended]
+		if len(recommended) > 1:
+			frappe.throw(
+				_("Only one sizing option can be recommended; rows {0} are.").format(
+					", ".join(str(row.idx) for row in recommended)
+				),
+				title=_("Sizing Options"),
+			)
+		if not recommended:
+			self.sizing_options[0].is_recommended = 1
+			recommended = [self.sizing_options[0]]
+
+		problems = []
+		for row in self.sizing_options:
+			if row.subsidy_option != "With Subsidy":
+				row.subsidy_scheme = None
+			elif row.system_type == "Off-Grid":
+				problems.append(_("Row {0}: with subsidy, the system cannot be Off-Grid.").format(row.idx))
+			if flt(row.override_capacity_kw) < 0:
+				problems.append(_("Row {0}: capacity cannot be negative.").format(row.idx))
+			if row.solar_package and row.connection_type:
+				phases = package_phases(row.solar_package)
+				if phases and row.connection_type not in phases:
+					problems.append(_("Row {0}: package {1} has no {2} inverter; it is for {3}.").format(
+						row.idx, row.solar_package, row.connection_type, " / ".join(sorted(phases))))
+		if problems:
+			frappe.throw("<br>".join(problems), title=_("Sizing Options"))
+
+		for field in SIZING_FIELDS:
+			self.set(field, recommended[0].get(field))
 
 	# ------------------------------------------------------------------ subject
 	def resolve_subject(self):
@@ -242,8 +300,66 @@ class SolarDesignEstimate(Document):
 			self.final_capacity_kw = self.recommended_capacity_kw
 
 	# ------------------------------------------------------------------ options
+	def fill_from_package(self):
+		"""Start the System & Options tables from the chosen package's default kit.
+
+		Picking a package on the details step is picking its panels and inverter, so the
+		system step should open with them in place rather than empty. Done once per package
+		choice - `equipment_package` remembers which package the tables were filled from -
+		so rows changed or removed afterwards stay as left, and choosing a different package
+		replaces them with that package's kit. Counts and amounts are then worked out as for
+		any typed row; the panel and inverter counts are the package's.
+		"""
+		if not self.solar_package or self.equipment_package == self.solar_package:
+			return
+		package = frappe.get_cached_doc("Solar Package", self.solar_package)
+
+		def make_of(name):
+			if not name:
+				return None
+			return frappe.db.get_value("Component Make", name, ["technology", "is_dcr"], as_dict=True)
+
+		module = default_module(package)
+		module_make = make_of(module.module_make) if module else None
+		self.set("panels", [])
+		if module and module_make and module_make.technology and flt(module.module_wattage):
+			self.append("panels", {
+				"panel_type": "DCR" if module_make.is_dcr or package.is_dcr_compliant else "Non-DCR",
+				"panel_capacity_wp": module.module_wattage,
+				"panel_count": cint(module.module_count) or None,
+				"panel_variant": module_make.technology,
+				"panel_make": module.module_make,
+			})
+
+		# The package's default inverter for this connection, else the first of its phase.
+		matching = inverters_for_phase(package, self.connection_type)
+		inverter = next((row for row in matching if row.is_default), None) or (matching[0] if matching else None)
+		inverter_make = make_of(inverter.inverter_make) if inverter else None
+		self.set("inverters", [])
+		if inverter and inverter_make and inverter_make.technology and flt(inverter.inverter_capacity_kw):
+			self.append("inverters", {
+				"inverter_type": inverter_make.technology,
+				"inverter_capacity_kw": inverter.inverter_capacity_kw,
+				"inverter_count": cint(inverter.inverter_count) or None,
+				"inverter_phase": inverter_phase(package, inverter) or None,
+				"inverter_make": inverter.inverter_make,
+			})
+
+		if self.system_type in ("Off-Grid", "Hybrid"):
+			self.set("batteries", [])
+			for row in package.get("batteries") or []:
+				values = row.as_dict()
+				for key in ("name", "parent", "parentfield", "parenttype", "idx", "doctype", "owner", "creation", "modified", "modified_by", "docstatus"):
+					values.pop(key, None)
+				self.append("batteries", values)
+
+		# The balance of system follows the inverter it is filled for, below.
+		self.bos_basis = None
+		self.equipment_package = self.solar_package
+
 	def compute_panels(self):
-		"""Panels needed to reach the proposed size, always rounded up: 18.15 is 19."""
+		"""Panels needed to reach the proposed size, always rounded up (18.15 is 19), unless
+		the row says how many."""
 		for row in self.get("panels"):
 			mismatch = make_mismatch(row.panel_make, row.panel_variant)
 			if mismatch:
@@ -253,7 +369,8 @@ class SolarDesignEstimate(Document):
 			if row.panel_make and not row.panel_type:
 				is_dcr = frappe.db.get_value("Component Make", row.panel_make, "is_dcr")
 				row.panel_type = "DCR" if is_dcr else "Non-DCR"
-			row.nos = unit_count(flt(self.final_capacity_kw) * 1000, row.panel_capacity_wp)
+			# A count typed on the row stands; otherwise enough panels to reach the proposed size.
+			row.nos = cint(row.panel_count) or unit_count(flt(self.final_capacity_kw) * 1000, row.panel_capacity_wp)
 			row.total_capacity_kwp = flt(cint(row.nos) * flt(row.panel_capacity_wp) / 1000, 3)
 
 	def compute_inverters(self):
@@ -272,7 +389,8 @@ class SolarDesignEstimate(Document):
 
 		problems = []
 		for row in self.inverters:
-			row.nos = unit_count(panel_kwp, row.inverter_capacity_kw)
+			# A count typed on the row (or carried from the package) stands.
+			row.nos = cint(row.inverter_count) or unit_count(panel_kwp, row.inverter_capacity_kw)
 			row.total_capacity_kw = flt(cint(row.nos) * flt(row.inverter_capacity_kw), 3)
 			# The phase limit is per inverter: 7 x 1 kW micros are seven small units.
 			unit_kw = flt(row.inverter_capacity_kw)
@@ -346,24 +464,32 @@ class SolarDesignEstimate(Document):
 			)
 
 	def compute_balance_of_system(self):
-		"""Copy the Balance of System Package of the first inverter's type.
+		"""Copy the Balance of System Package for the first inverter's type and capacity.
 
-		Refilled only when the package or the inverter phase changes, so edits made here
-		to specifications or numbers survive every other save. The Solar Energy Meter row
-		taken is the one of the inverter's phase: single phase inverter, single phase meter.
+		The package is the one whose inverter capacity band holds this design's inverter
+		capacity (the first inverter row's units times its kW), so a 3 kW and a 10 kW job get
+		the cables, DB and earthing sized for each. Refilled only when the package or the
+		inverter phase changes, so edits made here to specifications or numbers survive every
+		other save. The Solar Energy Meter row taken is the one of the inverter's phase.
 		"""
 		inverter = next((row for row in self.get("inverters") if row.inverter_type), None)
 		if not inverter:
 			return
-		package = package_for(inverter.inverter_type, self.company)
+		capacity = flt(inverter.total_capacity_kw) or flt(inverter.inverter_capacity_kw)
+		package = package_for(inverter.inverter_type, self.company, capacity)
+		if not package and self.solar_package:
+			# No package for this inverter capacity: the chosen solar package's own balance
+			# of system is the next best answer, and better than an empty section.
+			self.fill_bos_from_solar_package(inverter)
+			return
 		if not package:
 			self.bos_package = None
 			self.bos_basis = None
 			self.set("bos_items", [])
 			if not self.flags.in_test:
 				frappe.msgprint(
-					_("No active Balance of System Package for inverter type {0}.").format(
-						frappe.bold(technology_name(inverter.inverter_type))
+					_("No active Balance of System Package for inverter type {0} at {1} kW.").format(
+						frappe.bold(technology_name(inverter.inverter_type)), "{0:g}".format(capacity)
 					),
 					title=_("Balance of System"),
 					indicator="orange",
@@ -390,22 +516,103 @@ class SolarDesignEstimate(Document):
 				},
 			)
 
+	def fill_bos_from_solar_package(self, inverter):
+		"""The solar package's default balance-of-system parts, one per type, as BOS rows.
+
+		Refilled, like the BOS package, only when its basis changes, so edits survive saves.
+		"""
+		basis = f"solar-package:{self.solar_package}|{inverter.inverter_phase or ''}"
+		if basis == self.bos_basis and self.get("bos_items"):
+			return
+		options = frappe.get_meta("Design Estimate BOS Item").get_field("item").options or ""
+		allowed = {o for o in options.split("\n") if o}
+		self.bos_package = None
+		self.bos_basis = basis
+		self.set("bos_items", [])
+		for item, row in default_system_items(self.solar_package).items():
+			if item not in allowed:
+				continue
+			self.append("bos_items", {
+				"item": item,
+				"phase": (inverter.inverter_phase or self.connection_type) if item == "Solar Energy Meter" else None,
+				"specification": row.specification,
+				"make": row.make,
+				"numbers": row.qty,
+			})
+
 	def price_equipment(self):
-		"""Each equipment row's amount is its rate times its count."""
+		"""Each equipment row's amount is its rate times its count.
+
+		A row with no rate of its own is priced from the backend: a panel at the solar
+		package's rate for that module, an inverter at the package's rate for that inverter,
+		a balance-of-system part at its Balance of System Package's rate. A rate typed on
+		the row is the row's and is kept; clearing it brings the backend price back.
+		"""
+		self.price_rows_from_backend()
 		for table, count in EQUIPMENT_COUNT.items():
 			for row in self.get(table):
 				row.amount = flt(flt(row.rate) * flt(row.get(count)), 2)
 
+	def price_rows_from_backend(self):
+		# Read fresh, not from the cache: these are prices, and a stale copy prices wrongly.
+		package = frappe.get_doc("Solar Package", self.solar_package) if self.solar_package else None
+		if package:
+			modules = package.get("modules") or []
+			for row in self.get("panels"):
+				if flt(row.rate):
+					continue
+				match = (
+					next((m for m in modules if m.module_make == row.panel_make
+						and flt(m.module_wattage) == flt(row.panel_capacity_wp)), None)
+					or next((m for m in modules if m.module_make == row.panel_make), None)
+				)
+				if match and flt(match.rate):
+					row.rate = flt(match.rate)
+			inverters = package.get("inverters") or []
+			for row in self.get("inverters"):
+				if flt(row.rate):
+					continue
+				same_make = [i for i in inverters if i.inverter_make == row.inverter_make]
+				match = (
+					next((i for i in same_make if flt(i.inverter_capacity_kw) == flt(row.inverter_capacity_kw)
+						and (not row.inverter_phase or inverter_phase(package, i) == row.inverter_phase)), None)
+					or next((i for i in same_make if flt(i.inverter_capacity_kw) == flt(row.inverter_capacity_kw)), None)
+				)
+				if match and flt(match.unit_rate):
+					row.rate = flt(match.unit_rate)
+
+		bos_rates = {}
+		if self.bos_package and frappe.db.exists("Balance of System Package", self.bos_package):
+			for item in frappe.get_cached_doc("Balance of System Package", self.bos_package).items:
+				if flt(item.rate):
+					bos_rates.setdefault((item.item, item.phase or ""), flt(item.rate))
+		elif package:
+			# Filled from the solar package's own parts: their cost is the line's, per its qty.
+			for item, part in default_system_items(package).items():
+				if flt(part.cost):
+					bos_rates[(item, "")] = flt(part.cost) / (flt(part.qty) or 1)
+		for row in self.get("bos_items"):
+			if flt(row.rate):
+				continue
+			rate = bos_rates.get((row.item, row.phase or "")) or bos_rates.get((row.item, ""))
+			if rate:
+				row.rate = rate
+
 	def commercials(self):
 		"""Each System & Options table's total, the tax on them and the grand total.
 
-		Tax is the Estimate GST % in A3 Sola Settings on everything but the KSEB fees, which
+		The additional structure, cable and special discount raised against the estimate
+		follow its own tables, the discount taken off. Tax is the Estimate GST % in A3 Sola Settings on everything but the KSEB fees, which
 		the fee schedule already resolves gross.
 		"""
 		lines = [
 			{"key": table, "label": label, "amount": flt(sum(flt(row.amount) for row in self.get(table)), 2)}
 			for table, label in COMMERCIAL_LINES
 			if table != "batteries" or self.get("batteries")
+		]
+		lines += [
+			{"key": key, "label": doctype, "amount": self.linked_charge(doctype) * sign or 0.0}
+			for key, doctype, sign in LINKED_CHARGES
 		]
 		subtotal = flt(sum(line["amount"] for line in lines), 2)
 		taxable = flt(subtotal - sum(line["amount"] for line in lines if line["key"] == "kseb_expenses"), 2)
@@ -419,6 +626,13 @@ class SolarDesignEstimate(Document):
 			"gst_amount": gst_amount,
 			"total": flt(subtotal + gst_amount, 2),
 		}
+
+	def linked_charge(self, doctype):
+		"""The total of the records of `doctype` raised against this estimate."""
+		if self.is_new():
+			return 0.0
+		amounts = frappe.get_all(doctype, filters={"solar_design_estimate": self.name}, pluck="total_amount")
+		return flt(sum(flt(a) for a in amounts), 2)
 
 	def compute_options(self):
 		"""Roll each option's total and fetch its warranty from the make. Never typed."""
@@ -567,45 +781,69 @@ class SolarDesignEstimate(Document):
 			})
 
 	def seed_option_from_package(self):
-		"""A package chosen with nothing quoted yet is a priced option waiting to happen.
+		"""A package's inverter alternatives are the estimate's priced options.
 
 		Estimating here is picking the predefined package that fits what the survey found,
-		not composing a system from parts. So naming the package is enough to get a priced
-		option, and the desk's Add Option dialog stays for quoting a second or third one
-		beside it. Once anything at all is quoted this steps back and never touches the
-		table again - it must not overwrite what somebody priced by hand.
+		not composing a system from parts. So naming the package is enough: each of its
+		inverter alternatives becomes an option, priced as the package prices it - the same
+		options and prices the quotation offers - with the package's default recommended.
 
-		The table is hidden on the form, so a lone option priced on another package is the
-		seed of an earlier package choice: it is replaced, or the price would go stale.
+		Options taken from the package carry no component make; they are rewritten from the
+		package on every save, so they follow a change of package or of its prices, and the
+		one recommended stays recommended while its make is still offered. An option added
+		by hand (the desk's Add Option dialog) carries a make, and once there is one this
+		steps back and never touches the table: it must not overwrite what somebody priced.
 		"""
-		if len(self.options) == 1 and self.solar_package and self.options[0].solar_package != self.solar_package:
-			self.set("options", [])
-		if self.options or not self.solar_package:
+		if any(row.component_make for row in self.options):
 			return
+		if not self.solar_package:
+			self.set("options", [])
+			return
+		recommended = self.flags.get("recommend_inverter_make") or next(
+			(row.inverter_make for row in self.options if row.is_recommended), None
+		)
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
 		module = default_module(package)
-		inverter = default_inverter(package)
 		price = default_price(package) or frappe._dict()
-		self.append(
-			"options",
-			{
-				"option_name": _("Option 1 - {0}").format(package.inverter_topology or _("Standard")),
-				# A package's options are its inverter alternatives, side by side.
+		# The alternatives unticked on the design step are not offered, so they are not options.
+		excluded = self.excluded_makes()
+		alternatives = [
+			row for row in package_inverter_alternatives(package, self.connection_type)
+			if row.inverter_make not in excluded
+		]
+		if not any(row.inverter_make == recommended for row in alternatives):
+			recommended = next((row.inverter_make for row in alternatives if row.is_default), None)
+		makes = {
+			m.name: m.make_name
+			for m in frappe.get_all("Component Make", filters={"name": ["in", [r.inverter_make for r in alternatives if r.inverter_make]]},
+				fields=["name", "make_name"])
+		}
+		self.set("options", [])
+		for n, row in enumerate(alternatives, start=1):
+			self.append("options", {
+				"option_name": _("Option {0} - {1}").format(n, makes.get(row.inverter_make) or package.inverter_topology or _("Standard")),
 				"component_type": "Inverter",
 				"inverter_topology": package.inverter_topology or "String",
 				"solar_package": package.name,
-				"is_recommended": 1,
-				"system_cost": flt(price.get("system_cost")),
+				"is_recommended": 1 if row.inverter_make == recommended else 0,
+				# The inverter row's cost is the package price built with that inverter; the
+				# default row's may be left blank, the price table then holds it.
+				"system_cost": flt(row.cost) or (flt(price.get("system_cost")) if row.is_default else 0.0),
 				"additional_structure_cost": flt(price.get("additional_structure_and_cable_cost")),
 				"module_make": module.module_make if module else None,
 				"module_specification": module.module_specification if module else None,
 				"module_count": module.module_count if module else None,
-				"inverter_make": inverter.inverter_make if inverter else None,
-				"inverter_specification": inverter.inverter_specification if inverter else None,
-				"inverter_count": inverter.inverter_count if inverter else None,
-				"display_order": 1,
-			},
-		)
+				"inverter_make": row.inverter_make,
+				"inverter_specification": row.inverter_specification,
+				"inverter_count": row.inverter_count,
+				"display_order": n,
+			})
+		if self.options and not any(row.is_recommended for row in self.options):
+			self.options[0].is_recommended = 1
+
+	def excluded_makes(self):
+		"""The package inverter alternatives not offered on this estimate, as make names."""
+		return {line.strip() for line in (self.excluded_inverter_makes or "").splitlines() if line.strip()}
 
 	# ---------------------------------------------------- generation & savings
 	def compute_generation_and_savings(self):
@@ -837,6 +1075,14 @@ COMMERCIAL_LINES = (
 	("installation_expenses", "Installation Expenses"),
 )
 
+# Charges kept in their own records, raised against the estimate, and priced after its own
+# tables: (commercials key, doctype, sign). A discount takes away.
+LINKED_CHARGES = (
+	("additional_structure", "Additional Structure", 1),
+	("additional_cable", "Additional Cable", 1),
+	("special_discount", "Special Discount", -1),
+)
+
 
 # Inverter technology names as the package's topology choices.
 TOPOLOGY_BY_TECHNOLOGY = {
@@ -1051,6 +1297,16 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	)
 	doc.save()
 	return doc.name
+
+
+def package_inverter_alternatives(package, phase=None):
+	"""A package's inverter rows that are offered as options: the default, and any other
+	with a specification or a price - the same rows the quotation lists - narrowed to the
+	inverters for this connection type when one is given."""
+	return [
+		row for row in inverters_for_phase(package, phase)
+		if row.is_default or row.inverter_specification or flt(row.cost)
+	]
 
 
 def package_for_component(component_make, component_type, current_package, capacity_kw, connection_type):

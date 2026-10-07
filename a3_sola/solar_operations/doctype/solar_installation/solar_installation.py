@@ -168,13 +168,13 @@ class SolarInstallation(Document):
 				if row.panel_make and not row.panel_type:
 					is_dcr = frappe.db.get_value("Component Make", row.panel_make, "is_dcr")
 					row.panel_type = "DCR" if is_dcr else "Non-DCR"
-				row.nos = unit_count(flt(self.capacity_kw) * 1000, row.panel_capacity_wp)
+				row.nos = cint(row.panel_count) or unit_count(flt(self.capacity_kw) * 1000, row.panel_capacity_wp)
 				row.total_capacity_kwp = flt(cint(row.nos) * flt(row.panel_capacity_wp) / 1000, 3)
 				row.amount = flt(flt(row.rate) * flt(row.nos), 2)
 		panel_kwp = flt(sum(flt(row.total_capacity_kwp) for row in self.panels), 3)
 		if "inverters" in entered:
 			for row in self.inverters:
-				row.nos = unit_count(panel_kwp, row.inverter_capacity_kw)
+				row.nos = cint(row.inverter_count) or unit_count(panel_kwp, row.inverter_capacity_kw)
 				row.total_capacity_kw = flt(cint(row.nos) * flt(row.inverter_capacity_kw), 3)
 				row.amount = flt(flt(row.rate) * flt(row.nos), 2)
 		if "installation_expenses" in entered:

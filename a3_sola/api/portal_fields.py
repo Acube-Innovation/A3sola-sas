@@ -126,6 +126,10 @@ def link_choices(doctype, filters=None, limit=None):
 			["enabled", "=", 1], ["user_type", "=", "System User"],
 			["name", "not in", ["Guest", "Administrator"]],
 		]
+	# Checked first rather than left to get_list: its PermissionError is caught below, but
+	# the message it queues is not, and the form then reports it in place of the real error.
+	if not frappe.has_permission(doctype, "read"):
+		return []
 	try:
 		meta = frappe.get_meta(doctype)
 		title_field = meta.title_field if meta.title_field and meta.title_field != "name" else None

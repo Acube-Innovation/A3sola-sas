@@ -114,18 +114,20 @@
 				el("span", { class: "a3s-de-nav__label", text: s.label }),
 				el("span", { class: "a3s-de-nav__n", text: String(s.rows.length) })
 			]);
-			// Choosing a table shows its saved rows and opens the popup to add one.
+			// Choosing a table shows its saved rows; Add (or Edit on a row) opens the popup.
 			button.addEventListener("click", function () {
 				active = s.key;
 				setStatus("", null, pageStatus);
 				paint();
-				openModal(null);
 			});
 			nav.appendChild(el("li", {}, [button]));
 		});
 	}
 
 	/* ------------------------------------------------- middle: saved box */
+	/* Amounts stay on one line: "₹ 1,95,000.00" broken after the sign reads as two numbers. */
+	var MONEY = { rate: true, amount: true, system_cost: true };
+
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
@@ -133,13 +135,82 @@
 		$("de-add").hidden = !state.editable;
 		var body = $("de-saved");
 		body.innerHTML = "";
-		if (!s.rows.length) {
-			body.appendChild(el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing saved yet. Use Add to enter the first one." : "Nothing saved." }));
-			return;
+		body.appendChild(s.rows.length
+			? savedTable(s)
+			: el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing saved yet. Use Add to enter the first one." : "Nothing saved." }));
+		/* Under the inverters: the package's inverter options, ticked to offer them, and
+		   the package itself, which can be chosen or changed here. */
+		if (s.options) body.appendChild(optionsBlock(s.options));
+	}
+
+	function optionsBlock(o) {
+		var parts = [el("div", { class: "a3s-de-options__head" }, [
+			el("h4", { class: "a3s-de-options__title", text: o.label }),
+			o.rows.length ? el("strong", { text: money.format(o.total || 0) }) : null
+		])];
+		if (o.packages && o.packages.length && state.editable) {
+			var pick = el("select", { id: "de-package", "aria-label": "Solar package" });
+			pick.appendChild(el("option", { value: "", text: "— choose a package —" }));
+			o.packages.forEach(function (p) {
+				pick.appendChild(el("option", { value: p.value, text: p.label, selected: p.value === o.package ? "selected" : null }));
+			});
+			pick.addEventListener("change", function () {
+				if (!pick.value) { pick.value = o.package; return; }
+				setStatus("Saving…", null, pageStatus);
+				call("save_row", { name: state.name, section: "options", values: { solar_package: pick.value }, row: null })
+					.then(function (next) { apply(next, "Package changed. Its inverter options are below."); })
+					.catch(function (error) { pick.value = o.package; fail(error); });
+			});
+			parts.push(el("div", { class: "a3s-field a3s-de-options__package" }, [
+				el("label", { for: "de-package", text: "Solar package" }), pick,
+				el("p", { class: "a3s-field__hint", text: "Choosing a package fills the panel and inverter rows with its kit." })
+			]));
 		}
+		if (o.rows.length) {
+			parts.push(el("p", { class: "a3s-field__hint", text: "Tick the options to offer the customer. Recommending one puts its inverter in the table above, priced from the package. System cost is the package's whole-system price with that inverter." }));
+			parts.push(optionsTable(o));
+		} else {
+			parts.push(el("p", { class: "a3s-de-empty", text: o.package
+				? "This package has no inverter options on file."
+				: (o.packages && o.packages.length ? "No solar package yet. Choose one above to see its inverter options."
+					: "No solar package fits this estimate's connection and system type.") }));
+		}
+		return el("div", { class: "a3s-de-options" }, parts);
+	}
+
+	/* The inverter options: a checkbox to offer each, and among those offered, one recommended. */
+	function optionsTable(o) {
+		var head = el("tr", {}, ["Option", "Nos", "System cost", ""].map(function (t) { return el("th", { scope: "col", text: t }); }));
+		var rows = o.rows.map(function (row) {
+			var box = el("input", { type: "checkbox", "aria-label": "Offer " + row.title, checked: row.offered ? "checked" : null, disabled: state.editable ? null : "disabled" });
+			box.addEventListener("change", function () { chooseOption(row, { offered: box.checked ? 1 : 0 }, box); });
+			var name = el("td", {}, [el("label", { class: "a3s-de-option__name" }, [box, el("span", { text: row.title })])]);
+			if (row.specification) name.appendChild(el("small", { class: "a3s-de-sub", text: row.specification }));
+			var actions = el("td", { class: "a3s-de-saved__actions" });
+			if (row.recommended) {
+				actions.appendChild(el("span", { class: "a3s-badge a3s-badge--recommended", title: "The system cost is taken from this option", text: "Recommended" }));
+			} else if (row.offered && state.editable) {
+				var pick = el("button", { type: "button", class: "a3s-btn a3s-btn--ghost a3s-btn--sm", text: "Recommend" });
+				pick.addEventListener("click", function () { chooseOption(row, { is_recommended: 1 }); });
+				actions.appendChild(pick);
+			}
+			return el("tr", { class: row.offered ? "" : "is-off" }, [
+				name,
+				el("td", { text: row.count ? String(row.count) : "" }),
+				el("td", { class: "a3s-de-money", text: money.format(row.cost || 0) }),
+				actions
+			]);
+		});
+		return el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
+	}
+
+	/* One table of saved rows, with Edit and Remove on each row typed here. */
+	function savedTable(s) {
 		var head = el("tr", {}, s.columns.map(function (c) { return el("th", { scope: "col", text: c.label }); }).concat([el("th", { "aria-label": "Actions" })]));
 		var rows = s.rows.map(function (row) {
-			var cells = s.columns.map(function (c) { return el("td", { text: row.display[c.fieldname] || "" }); });
+			var cells = s.columns.map(function (c) {
+				return el("td", { class: MONEY[c.fieldname] ? "a3s-de-money" : null, text: row.display[c.fieldname] || "" });
+			});
 			var actions = el("td", { class: "a3s-de-saved__actions" });
 			if (row.computed) {
 				actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every save", text: "Auto" }));
@@ -154,7 +225,7 @@
 			cells.push(actions);
 			return el("tr", {}, cells);
 		});
-		body.appendChild(el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]));
+		return el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
 	}
 
 	/* ------------------------------------------------------ middle: form */
@@ -211,7 +282,9 @@
 			}
 			var label = el("label", { for: id, text: f.label });
 			if (f.reqd) label.appendChild(el("span", { class: "a3s-req", text: " *" }));
-			holder.appendChild(el("div", { class: "a3s-field" + (f.input === "textarea" ? " a3s-de-fields__wide" : "") }, [label, input]));
+			var parts = [label, input];
+			if (f.hint) parts.push(el("p", { class: "a3s-field__hint", text: f.hint }));
+			holder.appendChild(el("div", { class: "a3s-field" + (f.input === "textarea" ? " a3s-de-fields__wide" : "") }, parts));
 		});
 
 		/* A make list follows the variant, type or item chosen beside it. */
@@ -301,6 +374,16 @@
 			.then(function (next) { submit.disabled = false; apply(next, "Saved."); })
 			.catch(fail);
 	});
+
+	function chooseOption(row, values, box) {
+		setStatus("Saving…", null, pageStatus);
+		call("save_row", { name: state.name, section: "options", values: values, row: row.name })
+			.then(function (next) { apply(next, "Inverter options updated."); })
+			.catch(function (error) {
+				if (box) box.checked = !box.checked;  // the server said no: put the tick back
+				fail(error);
+			});
+	}
 
 	function removeRow(row) {
 		setStatus("Removing…", null, pageStatus);

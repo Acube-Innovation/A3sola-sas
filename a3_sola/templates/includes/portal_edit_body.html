@@ -116,6 +116,9 @@
 		</section>
 		{%- endfor %}
 
+		{#- A collection with a rows table (Additional Structure, ...) edits it here, in the form. -#}
+		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
+
 		<div class="a3s-form__actions a3s-edit__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>Save changes</button>
 			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>

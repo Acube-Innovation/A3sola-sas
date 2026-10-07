@@ -17,7 +17,7 @@
 </div>
 {% endif %}
 
-<div class="a3s-card a3s-formcard">
+<div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}">
 	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}"
 	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" novalidate>
 		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
@@ -86,6 +86,9 @@
 		</div>
 		{%- endfor %}
 		</div>
+
+		{#- A collection with a rows table (Additional Structure, ...) edits it here, in the form. -#}
+		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
 
 		<div class="a3s-form__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-record-submit">Create {{ collection.singular }}</button>

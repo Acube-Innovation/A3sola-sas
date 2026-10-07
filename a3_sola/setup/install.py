@@ -66,6 +66,7 @@ def setup():
 	seed_all_companies()
 	seed_settings()
 	seed_expense_items()
+	seed_kseb_tariff_categories()
 	# Platform is not tenant-scoped: it is the product's own marketing and funnel data,
 	# so it seeds once per site rather than once per company.
 	install_platform.setup()
@@ -77,6 +78,27 @@ def setup():
 	dashboard_projects.install()
 	dashboard_platform.install()
 	frappe.db.commit()
+
+
+def seed_kseb_tariff_categories():
+	"""KSEB's tariff categories, from the board's published list (setup/kseb_tariff_categories.json).
+
+	Regulatory and the same for every company, so seeded once per site. Existing codes are
+	brought up to date; codes added by hand are left alone.
+	"""
+	import json
+	import os
+
+	path = os.path.join(os.path.dirname(__file__), "kseb_tariff_categories.json")
+	with open(path) as f:
+		rows = json.load(f)
+	for row in rows:
+		if frappe.db.exists("KSEB Tariff Category", row["category_code"]):
+			doc = frappe.get_doc("KSEB Tariff Category", row["category_code"])
+			doc.update(row)
+			doc.save(ignore_permissions=True)
+		else:
+			frappe.get_doc({"doctype": "KSEB Tariff Category", **row}).insert(ignore_permissions=True)
 
 
 def backfill_settings_defaults():

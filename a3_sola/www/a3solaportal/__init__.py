@@ -32,6 +32,8 @@ NAV_GROUPS = [
 			{"title": "Solar Proposal", "sub": "Offer document", "ic": "doc", "route": "/a3solaportal/proposals"},
 			{"title": "Quotation", "sub": "Priced offer", "ic": "calc", "route": "/a3solaportal/quotations"},
 			{"title": "Sales Order", "sub": "Confirmed orders", "ic": "cart", "route": "/a3solaportal/sales-orders"},
+			# Additional Structure, Additional Cable and Special Discount are entered in the design
+			# estimate's System & commercials step, so they have no menu entry of their own.
 		],
 	},
 	{

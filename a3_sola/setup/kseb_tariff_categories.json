@@ -1,0 +1,258 @@
+[
+ {
+  "category_code": "LT-I",
+  "category_name": "Domestic",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Houses, residential flats, BPL households, and Tourism Department-approved homestays.",
+  "sort_order": 1
+ },
+ {
+  "category_code": "LT-II",
+  "category_name": "Colonies",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Single-point LT supply to staff quarters and residential colonies of HT/EHT consumers.",
+  "sort_order": 2
+ },
+ {
+  "category_code": "LT-III",
+  "category_name": "Temporary Connections",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Illumination, temporary construction, exhibitions, and seasonal carnivals.",
+  "sort_order": 3
+ },
+ {
+  "category_code": "LT-IV(A)",
+  "category_name": "Industrial (Low/Medium Power)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Manufacturing units, workshops, cottage industries, IT industries, software units, food processing.",
+  "sort_order": 4
+ },
+ {
+  "category_code": "LT-IV(B)",
+  "category_name": "IT & ITES",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Dedicated information technology and software production/service facilities.",
+  "sort_order": 5
+ },
+ {
+  "category_code": "LT-V(A)",
+  "category_name": "Agriculture & Irrigation",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Farming, lift irrigation, agricultural pumping, and nurseries.",
+  "sort_order": 6
+ },
+ {
+  "category_code": "LT-V(B)",
+  "category_name": "Agro-Based Allied Activities",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Poultry farms, dairy farms, piggery/goat farms, milk chilling plants, rubber processing.",
+  "sort_order": 7
+ },
+ {
+  "category_code": "LT-VI(A)",
+  "category_name": "General (Govt / Aided)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Government offices, government schools, aided schools/colleges, and public libraries.",
+  "sort_order": 8
+ },
+ {
+  "category_code": "LT-VI(B)",
+  "category_name": "General (Private & Charitable)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Private schools, colleges, hostels, orphanages, old age homes, charitable institutions.",
+  "sort_order": 9
+ },
+ {
+  "category_code": "LT-VI(C)",
+  "category_name": "General (Hospitals & Research)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Government/private hospitals, clinics, diagnostic centers, research laboratories.",
+  "sort_order": 10
+ },
+ {
+  "category_code": "LT-VI(D)",
+  "category_name": "General (Religious & Cultural)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Temples, churches, mosques, ashrams, and cultural centers.",
+  "sort_order": 11
+ },
+ {
+  "category_code": "LT-VI(E)",
+  "category_name": "General (Public Utilities)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Street lighting, public parks, crematoriums, public fountains.",
+  "sort_order": 12
+ },
+ {
+  "category_code": "LT-VI(F)",
+  "category_name": "General (Commercial / Offices)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Offices, banks, insurance companies, post offices, telecommunications, non-retail admin buildings.",
+  "sort_order": 13
+ },
+ {
+  "category_code": "LT-VII(A)",
+  "category_name": "Commercial (Standard)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Shops, retail outlets, hotels, restaurants, shopping malls, multiplexes, internet cafes.",
+  "sort_order": 14
+ },
+ {
+  "category_code": "LT-VII(B)",
+  "category_name": "Commercial (Small Traders)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Small shops, street vendors, micro establishments with connected load up to 2000W.",
+  "sort_order": 15
+ },
+ {
+  "category_code": "LT-VII(C)",
+  "category_name": "Commercial (Cinema Theatres)",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Movie halls, multiplexes, and auditoriums.",
+  "sort_order": 16
+ },
+ {
+  "category_code": "LT-VIII",
+  "category_name": "Public Lighting",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Panchayats, Municipalities, and Corporations for public thoroughfares.",
+  "sort_order": 17
+ },
+ {
+  "category_code": "LT-IX",
+  "category_name": "Display Lighting & Hoardings",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Illuminated advertising boards, hoardings, neon signboards.",
+  "sort_order": 18
+ },
+ {
+  "category_code": "LT-X",
+  "category_name": "EV Charging Stations",
+  "supply_group": "LT",
+  "voltage_level": "LT (< 11 kV)",
+  "usage": "Public Electric Vehicle (EV) charging stations and battery swapping facilities.",
+  "sort_order": 19
+ },
+ {
+  "category_code": "HT-I(A)",
+  "category_name": "Industrial",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Large-scale manufacturing plants, processing factories, tea/coffee processing.",
+  "sort_order": 20
+ },
+ {
+  "category_code": "HT-I(B)",
+  "category_name": "IT & ITES",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Large IT parks, software tech parks, and data centers.",
+  "sort_order": 21
+ },
+ {
+  "category_code": "HT-II(A)",
+  "category_name": "General",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Government HT installations, non-commercial institutions, hospitals, educational institutions.",
+  "sort_order": 22
+ },
+ {
+  "category_code": "HT-II(B)",
+  "category_name": "Commercial",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Shopping malls, hotel complexes, commercial towers, banks, private hospitals, office complexes.",
+  "sort_order": 23
+ },
+ {
+  "category_code": "HT-III(A)",
+  "category_name": "Agriculture",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Large agricultural pumps and lift irrigation projects operating at HT voltage.",
+  "sort_order": 24
+ },
+ {
+  "category_code": "HT-III(B)",
+  "category_name": "Agro-Industrial",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Large-scale dairy complexes, poultry farms, and cold storage chains.",
+  "sort_order": 25
+ },
+ {
+  "category_code": "HT-IV",
+  "category_name": "Seasonal Consumers",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Plantation factories and processing units with seasonal operations (rubber, tea, cashew).",
+  "sort_order": 26
+ },
+ {
+  "category_code": "HT-V",
+  "category_name": "EV Charging Infrastructure",
+  "supply_group": "HT",
+  "voltage_level": "11 kV / 33 kV",
+  "usage": "Bulk HT supply for multi-bay EV charging stations.",
+  "sort_order": 27
+ },
+ {
+  "category_code": "EHT - 66 kV",
+  "category_name": "Bulk Industrial (66 kV)",
+  "supply_group": "EHT & Special",
+  "voltage_level": "66 kV",
+  "usage": "Large bulk industrial consumers, heavy manufacturing, metal refineries, chemical plants.",
+  "sort_order": 28
+ },
+ {
+  "category_code": "EHT - 110 kV",
+  "category_name": "Heavy Industrial (110 kV)",
+  "supply_group": "EHT & Special",
+  "voltage_level": "110 kV",
+  "usage": "Ultra-large industrial complexes, railways/traction power, bulk supply licensees.",
+  "sort_order": 29
+ },
+ {
+  "category_code": "EHT - 220 kV",
+  "category_name": "Grid Connected Heavy Industry",
+  "supply_group": "EHT & Special",
+  "voltage_level": "220 kV",
+  "usage": "Major energy-intensive heavy industries connected directly to the 220 kV transmission grid.",
+  "sort_order": 30
+ },
+ {
+  "category_code": "Railway Traction",
+  "category_name": "Railway Traction",
+  "supply_group": "EHT & Special",
+  "voltage_level": "HT / EHT",
+  "usage": "Dedicated high-voltage supply for electric train traction systems.",
+  "sort_order": 31
+ },
+ {
+  "category_code": "Bulk Supply Licensees",
+  "category_name": "Licensee Bulk Supply",
+  "supply_group": "EHT & Special",
+  "voltage_level": "HT / EHT",
+  "usage": "Electricity supply to private distribution licensees (e.g., Technopark, Infopark, Cochin Port Authority).",
+  "sort_order": 32
+ }
+]

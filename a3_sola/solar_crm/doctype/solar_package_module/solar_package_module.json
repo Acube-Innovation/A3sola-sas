@@ -11,6 +11,7 @@
   "module_make",
   "module_wattage",
   "module_count",
+  "rate",
   "is_default",
   "cb_1",
   "module_alternate_makes"
@@ -49,6 +50,14 @@
    "label": "Nos"
   },
   {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate per Panel",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "What one panel costs. A design estimate's panel row with no rate of its own is priced at this."
+  },
+  {
    "columns": 1,
    "description": "The option the proposal, the cost estimate and the handoff use. Exactly one row carries it.",
    "fieldname": "is_default",
@@ -69,7 +78,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-09-08 15:00:00.000000",
+ "modified": "2026-10-07 17:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package Module",

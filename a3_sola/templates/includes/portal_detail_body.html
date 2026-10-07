@@ -7,6 +7,12 @@
 		{%- if status %}<span class="a3s-badge a3s-badge--{{ status_slug }}">{{ status | e }}</span>{% endif %}
 	</h2>
 	<div class="a3s-detail__actions">
+		{%- if pdf_route %}
+		<a class="a3s-btn a3s-btn--secondary" href="{{ pdf_route }}" download>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+			<span>Export PDF</span>
+		</a>
+		{%- endif %}
 		{%- if can_write %}
 		<a class="a3s-btn a3s-btn--secondary" href="{{ edit_route }}">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>

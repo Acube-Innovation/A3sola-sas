@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-10-06 11:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cable_type",
+  "cable_size",
+  "description",
+  "length",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "cable_type",
+   "fieldtype": "Select",
+   "label": "Cable Type",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "DC Cable\nAC Cable\nEarthing Cable\nLightning Arrester Cable\nCommunication Cable\nOther"
+  },
+  {
+   "fieldname": "cable_size",
+   "fieldtype": "Data",
+   "label": "Size (sq mm)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "length",
+   "fieldtype": "Float",
+   "label": "Length (m)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate per m",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-06 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Additional Cable Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

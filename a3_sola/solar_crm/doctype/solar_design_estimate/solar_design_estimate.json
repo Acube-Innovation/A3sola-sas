@@ -14,6 +14,7 @@
   "estimate_date",
   "cb_2",
   "electricity_tariff",
+  "tariff_code",
   "consumer_category",
   "connection_type",
   "company",
@@ -30,11 +31,14 @@
   "subsidy_option",
   "subsidy_scheme",
   "solar_package",
+  "equipment_package",
   "tariff_category",
   "cb_4",
   "is_dcr_compliant",
   "final_capacity_kw",
   "system_type",
+  "sb_sizing_options",
+  "sizing_options",
   "tab_system",
   "sb_panels",
   "panels",
@@ -55,6 +59,7 @@
   "installation_expenses",
   "sb_7",
   "options",
+  "excluded_inverter_makes",
   "recommended_option",
   "tab_11",
   "sb_quoted",
@@ -158,6 +163,13 @@
    "options": "Electricity Tariff"
   },
   {
+   "fieldname": "tariff_code",
+   "fieldtype": "Link",
+   "label": "KSEB Tariff Code",
+   "options": "KSEB Tariff Category",
+   "description": "The KSEB tariff category the consumer is billed under, e.g. LT-I Domestic."
+  },
+  {
    "fieldname": "consumer_category",
    "fieldtype": "Select",
    "label": "Category",
@@ -170,7 +182,8 @@
    "fieldtype": "Select",
    "label": "Connection Type",
    "options": "Single Phase\nThree Phase",
-   "fetch_from": "solar_consumer.connection_type"
+   "fetch_from": "solar_consumer.connection_type",
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
   },
   {
    "fieldname": "company",
@@ -239,7 +252,8 @@
    "fieldname": "override_capacity_kw",
    "fieldtype": "Float",
    "label": "Override Capacity (kW)",
-   "precision": 3
+   "precision": 3,
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
   },
   {
    "fieldname": "sb_3",
@@ -253,7 +267,8 @@
    "options": "With Subsidy\nWithout Subsidy",
    "default": "With Subsidy",
    "reqd": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
   },
   {
    "fieldname": "subsidy_scheme",
@@ -261,7 +276,8 @@
    "label": "Subsidy Scheme",
    "options": "Subsidy Scheme",
    "depends_on": "eval:doc.subsidy_option==\"With Subsidy\"",
-   "mandatory_depends_on": "eval:doc.subsidy_option==\"With Subsidy\""
+   "mandatory_depends_on": "eval:doc.subsidy_option==\"With Subsidy\"",
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
   },
   {
    "fieldname": "solar_package",
@@ -269,7 +285,18 @@
    "label": "Solar Package",
    "options": "Solar Package",
    "in_list_view": 1,
-   "description": "The predefined package this estimate is built on. Choosing one prices the first option from it; the survey decides which package fits."
+   "description": "The predefined package this estimate is built on. Choosing one prices the first option from it; the survey decides which package fits.",
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
+  },
+  {
+   "fieldname": "equipment_package",
+   "fieldtype": "Link",
+   "options": "Solar Package",
+   "label": "Equipment Filled From",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The package the panel, inverter and battery tables were last filled from."
   },
   {
    "fieldname": "tariff_category",
@@ -306,7 +333,20 @@
    "label": "System Type",
    "options": "On-Grid\nOff-Grid\nHybrid",
    "default": "On-Grid",
-   "description": "With subsidy, the system cannot be Off-Grid."
+   "description": "With subsidy, the system cannot be Off-Grid.",
+   "read_only_depends_on": "eval:(doc.sizing_options || []).length"
+  },
+  {
+   "fieldname": "sb_sizing_options",
+   "fieldtype": "Section Break",
+   "label": "Package & Sizing with Options"
+  },
+  {
+   "fieldname": "sizing_options",
+   "fieldtype": "Table",
+   "label": "Sizing Options",
+   "options": "Design Estimate Sizing Option",
+   "description": "Each row is one combination offered. The recommended row sets the package and sizing above, and the system is designed for it."
   },
   {
    "fieldname": "tab_system",
@@ -430,6 +470,14 @@
    "fieldtype": "Table",
    "label": "Priced Options",
    "options": "Design Estimate Option"
+  },
+  {
+   "fieldname": "excluded_inverter_makes",
+   "fieldtype": "Small Text",
+   "label": "Inverter Options Not Offered",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Component Make names, one per line: the package's inverter alternatives unticked on the design step. Priced Options leaves them out."
   },
   {
    "fieldname": "recommended_option",
@@ -748,7 +796,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-01 16:55:00.000000",
+ "modified": "2026-10-07 16:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

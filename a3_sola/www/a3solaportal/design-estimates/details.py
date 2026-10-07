@@ -28,6 +28,7 @@ def get_context(context):
 	)
 	context.record_name = doc.name
 	context.columns = portal_estimate.detail_columns(doc)
+	context.profile = portal_estimate.subject_profile(doc.lead, doc.solar_consumer)
 	context.cancel_route = portal_estimate.design_route(doc.name)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

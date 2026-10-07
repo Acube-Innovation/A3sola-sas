@@ -20,7 +20,7 @@ from a3_sola.api import portal_chain
 from a3_sola.api.portal_fields import NUMERIC_TYPES
 from a3_sola.www.a3solaportal.collections import (
 	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
-	load_record, edit_allowlist, lead_first_allowlist, needs_prompt_name, record_route,
+	load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
 )
 
 TRUE = {"1", "true", "on", "yes"}
@@ -71,6 +71,7 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 		if company:
 			doc.company = company
 
+	_set_item_rows(doc, slug, values)
 	doc.insert()
 
 	# Only once the record exists: the source now points at it, so the button on the
@@ -294,5 +295,21 @@ def update_record(slug=None, name=None, **values):
 			doc.set(fieldname, (cint(text) if spec["type"] == "Int" else flt(text)) if text else None)
 		else:
 			doc.set(fieldname, text or None)
+	_set_item_rows(doc, slug, values)
 	doc.save()
 	return {"name": doc.name, "route": record_route(slug, doc.name)}
+
+
+def _set_item_rows(doc, slug, values):
+	"""Replace the collection's rows table with the posted rows, when it has one and they
+	were posted. The rows are cut down to the grid's editable columns by `item_rows`; the
+	amounts and the total are the controller's to work out."""
+	if "__items" not in values:
+		return
+	table = item_rows(slug, values.get("__items"))
+	if not table:
+		return
+	fieldname, rows = table
+	doc.set(fieldname, [])
+	for row in rows:
+		doc.append(fieldname, row)
