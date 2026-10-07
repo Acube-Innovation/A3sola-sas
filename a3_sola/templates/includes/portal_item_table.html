@@ -1,0 +1,44 @@
+{#- A collection's rows table (`collections.item_table`). Editable on the create and edit
+    pages, where it sits inside the form and posts its rows as JSON in `__items`; read-only
+    on the detail page. portal_item_table.js drives the editable grid. -#}
+{%- set t = item_table %}
+<section class="a3s-card a3s-edit__card a3s-items" id="sec-{{ t.fieldname }}"{% if t.editable %} data-item-table{% endif %}>
+	<h3 class="a3s-edit__card-title">{{ t.label | e }}{% if t.editable and t.reqd %} <span class="a3s-req">*</span>{% endif %}</h3>
+	<div class="a3s-tablewrap">
+		<table class="a3s-table a3s-items__table">
+			<thead>
+				<tr>
+					<th class="a3s-items__idx">#</th>
+					{%- for c in t.columns %}
+					<th{% if c.numeric %} class="a3s-items__num"{% endif %}>{{ c.label | e }}{% if t.editable and c.reqd and not c.readonly %} <span class="a3s-req">*</span>{% endif %}</th>
+					{%- endfor %}
+					{%- if t.editable %}<th aria-label="Remove"></th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-rows>
+				{%- if not t.editable %}
+				{%- for cells in t.display %}
+				<tr>
+					<td class="a3s-items__idx">{{ loop.index }}</td>
+					{%- for c in t.columns %}
+					<td data-label="{{ c.label | e }}"{% if c.numeric %} class="a3s-items__num"{% endif %}>{{ (cells[loop.index0] | e) or "—" }}</td>
+					{%- endfor %}
+				</tr>
+				{%- else %}
+				<tr><td colspan="{{ t.columns | length + 1 }}" class="a3s-table__muted">No rows yet.</td></tr>
+				{%- endfor %}
+				{%- endif %}
+			</tbody>
+		</table>
+	</div>
+	<div class="a3s-items__foot">
+		{%- if t.editable %}
+		<button type="button" class="a3s-btn a3s-btn--ghost" data-add-row>+ Add row</button>
+		{%- else %}<span></span>{% endif %}
+		<p class="a3s-items__total">{{ t.total_label | e }}: <strong data-total>{{ t.total | e }}</strong></p>
+	</div>
+	{%- if t.editable %}
+	<input type="hidden" name="__items" value="">
+	<script type="application/json" data-item-spec>{{ t.json }}</script>
+	{%- endif %}
+</section>

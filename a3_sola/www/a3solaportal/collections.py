@@ -41,6 +41,19 @@ COLLECTIONS = {
 	# and neither is mandatory, so neither would be picked up on its own.
 	"subsidy-eligibility": {"doctype": "Subsidy Eligibility Check", "title": "Subsidy Eligibility Check", "singular": "eligibility check", "subtitle": "PM Surya Ghar", "icon": "check",
 	                        "form_extra": ["result_override", "grid_balance_available", "ineligible_reason"]},
+	# Priced extras and concessions on a lead or consumer. Each is a header plus a table of
+	# rows: `item_table` names the table the portal edits in place, and `row_amount` tells
+	# the page how a row's amount is reached, mirroring the controller, so the running total
+	# on screen is the one validate() will save.
+	"additional-structures": {"doctype": "Additional Structure", "title": "Additional Structure", "singular": "additional structure",
+	                          "subtitle": "Extra mounting work", "icon": "box", "item_table": "items", "row_amount": "qty*rate",
+	                          "form_extra": ["solar_design_estimate", "remarks"]},
+	"additional-cables": {"doctype": "Additional Cable", "title": "Additional Cable", "singular": "additional cable",
+	                      "subtitle": "Extra cable runs", "icon": "bolt", "item_table": "items", "row_amount": "length*rate",
+	                      "form_extra": ["solar_design_estimate", "remarks"]},
+	"special-discounts": {"doctype": "Special Discount", "title": "Special Discount", "singular": "special discount",
+	                      "subtitle": "Approved concessions", "icon": "refund", "item_table": "items", "row_amount": "discount",
+	                      "form_extra": ["solar_design_estimate", "approved_by", "reason"]},
 	# ---------------------------------------------------- Solar Operations
 	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The job itself", "icon": "wrench"},
 	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist"},
@@ -392,7 +405,11 @@ def new_context(context, slug):
 	fields, unrenderable = form_fields(meta, prefill, form_extra(cfg, meta))
 	context.collection = {**cfg, "slug": slug}
 	context.fields = fields
-	context.unrenderable = unrenderable
+	context.item_table = item_table(slug, editable=True)
+	context.unrenderable = [
+		label for label in unrenderable
+		if not context.item_table or label != context.item_table["label"]
+	]
 	# Carried on the form so the write endpoint can apply the rest of the mapping and
 	# record the new document back on the record it came from.
 	context.source_dt = source_doc.doctype if source_doc else ""
@@ -426,7 +443,7 @@ DETAIL_SLUGS = {
 	"payment-entries", "om-contracts", "om-visits", "service-tickets",
 	"warranty-claims", "generation-readings", "fee-recoveries", "installation-snags",
 	"material-requests", "purchase-receipts", "stock-entries", "serial-numbers",
-	"journal-entries",
+	"journal-entries", "additional-structures", "additional-cables", "special-discounts",
 }
 
 #: Slugs whose record may be submitted from the portal. Only the sales order: submitting
@@ -673,6 +690,8 @@ def detail_context(context, slug, name):
 	context.can_write = is_editable(doc)
 	# A design estimate is edited in its builder, where the system and the prices live.
 	context.edit_route = record_route(slug, doc.name) + ("/design" if slug == "design-estimates" else "/edit")
+	if slug == "design-estimates":
+		context.pdf_route = "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name)
 	context.list_route = f"/a3solaportal/{slug}"
 	# The desk is where a submitted document is amended, so the page still offers a way in.
 	context.desk_route = desk_route(doc.doctype, doc.name)
@@ -691,6 +710,9 @@ def detail_context(context, slug, name):
 	context.record_name = doc.name
 	context.assignees = assignments.assignees(doc.doctype, doc.name)
 	context.csrf_token = frappe.sessions.get_csrf_token()
+	context.item_table = item_table(slug, doc)
+	if context.item_table:
+		context.extra_template = "templates/includes/portal_item_table.html"
 	return context
 
 
@@ -742,10 +764,100 @@ def edit_context(context, slug, name):
 	context.view_route = record_route(slug, doc.name)
 	context.back_link = {"href": context.view_route, "label": "Back to " + cfg["singular"]}
 	context.endpoint = "a3_sola.api.portal_crud.update_record"
+	context.item_table = item_table(slug, doc, editable=True)
 	context.update(_record_about(doc))
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
+
+
+# ================================================================ line-item tables
+# A collection with `item_table` edits that child table on its own create and edit pages,
+# as rows in a grid, and shows it on its detail page. The columns are the child doctype's
+# own fields; the read-only ones (the row amount) are worked out, never posted.
+
+#: Child field types the rows grid can take as input.
+ITEM_INPUT_TYPES = {"Data", "Select", "Int", "Float", "Currency", "Percent"}
+ITEM_NUMERIC = {"Int", "Float", "Currency", "Percent"}
+
+
+def item_table(slug, doc=None, editable=False):
+	"""The rows grid for this collection, with `doc`'s rows when there is one, or None.
+
+	`editable` renders it as inputs inside the page's form; otherwise it is a read-only table.
+	"""
+	cfg = get_collection(slug)
+	fieldname = cfg.get("item_table")
+	if not fieldname:
+		return None
+	parent = frappe.get_meta(cfg["doctype"])
+	table_df = parent.get_field(fieldname)
+	child = frappe.get_meta(table_df.options)
+	columns = []
+	for df in child.fields:
+		if df.hidden or df.fieldtype not in ITEM_INPUT_TYPES:
+			continue
+		columns.append({
+			"fieldname": df.fieldname, "label": _(df.label), "type": df.fieldtype,
+			"reqd": bool(df.reqd), "readonly": bool(df.read_only), "default": df.default or "",
+			"options": (df.options or "").split("\n") if df.fieldtype == "Select" else None,
+			"numeric": df.fieldtype in ITEM_NUMERIC,
+		})
+	rows, display = [], []
+	for row in (doc.get(fieldname) if doc else None) or []:
+		rows.append({c["fieldname"]: row.get(c["fieldname"]) for c in columns})
+		display.append([
+			frappe.format_value(row.get(c["fieldname"]), child.get_field(c["fieldname"]), row) if c["numeric"]
+			else (row.get(c["fieldname"]) or "")
+			for c in columns
+		])
+	total = doc.get("total_amount") if doc else 0
+	spec = {
+		"fieldname": fieldname, "label": _(table_df.label), "reqd": bool(table_df.reqd), "editable": editable,
+		"columns": columns, "rows": rows, "display": display, "rule": cfg.get("row_amount") or "",
+		"total_label": _(parent.get_label("total_amount")),
+		"total": frappe.format_value(total, parent.get_field("total_amount"), doc) if doc else "",
+	}
+	# What the grid's script starts from, embedded in a <script> tag: "</" is escaped so a
+	# row's text can never close that tag.
+	spec["json"] = frappe.as_json({k: spec[k] for k in ("columns", "rows", "rule")}).replace("</", "<\\/")
+	return spec
+
+
+def item_rows(slug, posted):
+	"""The posted rows, kept to the grid's editable columns: the browser sets nothing else.
+
+	`posted` is the JSON the grid carries in its hidden `__items` input. Blank rows are
+	dropped so an untouched last line does not fail validation.
+	"""
+	spec = item_table(slug)
+	if not spec:
+		return None
+	editable = [c for c in spec["columns"] if not c["readonly"]]
+	rows = frappe.parse_json(posted) if isinstance(posted, str) else posted
+	out = []
+	for row in rows or []:
+		if not isinstance(row, dict):
+			continue
+		clean = {}
+		for c in editable:
+			value = row.get(c["fieldname"])
+			if c["numeric"]:
+				clean[c["fieldname"]] = frappe.utils.flt(value) if value not in (None, "") else None
+			else:
+				clean[c["fieldname"]] = (str(value).strip() or None) if value is not None else None
+		# A field still at its default (a unit of "Nos", a type of "Amount") is not an entry.
+		if any(not _at_default(c, v) for c, v in zip(editable, clean.values())):
+			out.append(clean)
+	return spec["fieldname"], out
+
+
+def _at_default(column, value):
+	if value in (None, ""):
+		return True
+	if column["numeric"]:
+		return frappe.utils.flt(value) == frappe.utils.flt(column["default"])
+	return str(value) == column["default"]
 
 
 # ================================================================ lead-first create form

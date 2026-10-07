@@ -14,6 +14,7 @@ DOCTYPES = [
 	"Subsidy Slab",
 	"Electricity Tariff",
 	"Tariff Slab",
+	"KSEB Tariff Category",
 	"Statutory Fee Schedule",
 	"Net Meter Charge",
 	"Grid Regulation Rule",
@@ -37,12 +38,19 @@ DOCTYPES = [
 	"EHS Checklist Item",
 	"Solar Design Estimate",
 	"Design Estimate Option",
+	"Design Estimate Sizing Option",
 	"Cashflow Projection",
 	"Subsidy Eligibility Check",
 	"Eligibility Rule Result",
 	"Solar Proposal",
 	"Solar Proposal Version",
 	"Outreach Log",
+	"Additional Structure",
+	"Additional Structure Item",
+	"Additional Cable",
+	"Additional Cable Item",
+	"Special Discount",
+	"Special Discount Item",
 ]
 
 #: Doctypes that carry a company field and therefore need tenant isolation hooks.
@@ -64,6 +72,9 @@ PERMISSION_DOCTYPES = [
 	"Solar Design Estimate",
 	"Subsidy Eligibility Check",
 	"Solar Proposal",
+	"Additional Structure",
+	"Additional Cable",
+	"Special Discount",
 ]
 
 DOC_EVENTS = {

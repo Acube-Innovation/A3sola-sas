@@ -11,6 +11,8 @@
   "naming_series",
   "package_name",
   "inverter_type",
+  "min_inverter_capacity_kw",
+  "max_inverter_capacity_kw",
   "cb_1",
   "is_active",
   "company",
@@ -45,6 +47,22 @@
    "description": "One active package per inverter type."
   },
   {
+   "fieldname": "min_inverter_capacity_kw",
+   "fieldtype": "Float",
+   "label": "From Inverter Capacity (kW)",
+   "non_negative": 1,
+   "in_list_view": 1,
+   "description": "The package applies to designs whose total inverter capacity is at least this."
+  },
+  {
+   "fieldname": "max_inverter_capacity_kw",
+   "fieldtype": "Float",
+   "label": "To Inverter Capacity (kW)",
+   "non_negative": 1,
+   "in_list_view": 1,
+   "description": "And at most this. Leave blank for no upper limit."
+  },
+  {
    "fieldname": "cb_1",
    "fieldtype": "Column Break"
   },
@@ -76,7 +94,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-28 10:30:00.000000",
+ "modified": "2026-10-06 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Balance of System Package",

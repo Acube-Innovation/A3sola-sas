@@ -10,7 +10,8 @@
   "phase",
   "specification",
   "make",
-  "numbers"
+  "numbers",
+  "rate"
  ],
  "fields": [
   {
@@ -48,11 +49,19 @@
    "label": "Numbers",
    "precision": "2",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "What one costs. A design estimate's balance-of-system row with no rate of its own is priced at this."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-09-28 10:30:00.000000",
+ "modified": "2026-10-07 17:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Balance of System Package Item",

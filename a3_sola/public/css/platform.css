@@ -266,7 +266,11 @@
 .a3s-btn--secondary:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .a3s-btn--ghost { background: transparent; color: var(--color-text); }
 .a3s-btn--ghost:hover { color: var(--color-accent); }
+/* A button made of a link: `.a3s a` would otherwise hand it the text colour around it. */
+.a3s a.a3s-btn--primary, .a3s a.a3s-btn--primary:hover { color: #fff; }
+.a3s a.a3s-btn--secondary:hover, .a3s a.a3s-btn--ghost:hover { color: var(--color-accent); }
 .a3s-btn--block { width: 100%; }
+.a3s-btn[hidden] { display: none; }
 .a3s-btn[disabled], .a3s-btn[aria-disabled="true"] {
 	opacity: 0.55;
 	cursor: not-allowed;
@@ -1619,7 +1623,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-badge--lead, .a3s-badge--open, .a3s-badge--replied {
 	background: rgba(41, 171, 226, 0.14); color: #1b8dc0;
 }
-.a3s-badge--opportunity, .a3s-badge--quotation {
+.a3s-badge--opportunity, .a3s-badge--quotation, .a3s-badge--recommended {
 	background: var(--color-accent-soft); color: var(--color-accent-hover);
 }
 .a3s-badge--interested, .a3s-badge--converted {
@@ -2443,6 +2447,42 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-combo__opt:hover, .a3s-combo__opt.is-active { background: var(--color-accent-soft); }
 .a3s-combo__none { margin: 0; padding: 0.6rem 0.7rem; font-size: 0.85rem; color: var(--color-text-muted); }
 .a3s-combo__none a { color: var(--color-sky-ink); font-weight: 700; }
+/* a combobox over a select, with no hint under it: the list opens just below the box */
+.a3s-combo--field .a3s-combo__list { top: calc(100% + 0.25rem); }
+.a3s-combo__native { display: none !important; }
+.a3s-de-money { white-space: nowrap; text-align: right; }
+.a3s-de-options { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px dashed var(--color-border); }
+.a3s-de-options__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.a3s-de-options__title { margin: 0; font-size: 1rem; }
+.a3s-de-options__package { margin: 0.75rem 0 0.5rem; max-width: 28rem; }
+.a3s-de-option__name { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
+.a3s-de-option__name input { width: 1rem; height: 1rem; accent-color: var(--color-accent); }
+.a3s-de-options .a3s-de-sub { padding-left: 1.5rem; }
+.a3s-de-options tr.is-off td { color: var(--color-text-muted); }
+.a3s-de-options .a3s-field__hint { margin: 0.2rem 0 0.5rem; }
+.a3s-de-sub { display: block; margin-top: 0.2rem; font-size: 0.75rem; color: var(--color-text-muted); }
+
+/* a "?" beside a field label, opening a short explanation of the chosen value */
+.a3s-help { display: flex; align-items: center; gap: 0.4rem; }
+.a3s-field:has(> .a3s-help) { position: relative; }
+.a3s-help__btn {
+	width: 1.15rem; height: 1.15rem; padding: 0; display: inline-grid; place-items: center; cursor: pointer;
+	border: 1px solid var(--color-border-strong); border-radius: 50%; background: var(--color-surface);
+	font: inherit; font-size: 0.7rem; font-weight: 800; line-height: 1; color: var(--color-text-muted);
+}
+.a3s-help__btn:hover, .a3s-help__btn[aria-expanded="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.a3s-help__pop {
+	position: absolute; z-index: 30; top: calc(100% + 0.35rem); left: 0; width: min(22rem, 80vw); padding: 0.85rem 1rem;
+	background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0.85rem; box-shadow: var(--shadow-raised);
+	font-size: 0.8125rem; line-height: 1.45;
+}
+.a3s-help__pop[hidden] { display: none; }
+.a3s-help__code { margin: 0; font-weight: 800; }
+.a3s-help__name { margin: 0.1rem 0 0.5rem; font-weight: 600; }
+.a3s-help__rows { margin: 0; display: grid; gap: 0.35rem; }
+.a3s-help__rows dt { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); }
+.a3s-help__rows dd { margin: 0; }
+.a3s-help__empty { margin: 0; color: var(--color-text-muted); }
 
 /* solar and terms panels */
 .a3s-ce-facts { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); margin-bottom: 1.25rem; }
@@ -2577,6 +2617,49 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
 .a3s-de-fields .a3s-field__hint { margin: 0; font-size: 0.75rem; color: var(--color-text-muted); }
 .a3s-de-fields__wide { grid-column: 1 / -1; }
+/* Step one: the consumer across the top, fields on the left and their details on the right. */
+.a3s-de-consumer { margin-bottom: 1.25rem; }
+.a3s-de-consumer__body { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1000px) { .a3s-de-consumer__body { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.a3s-de-profile { padding: 1rem 1.1rem; border-radius: var(--radius-tile); background: var(--color-bg); border: 1px solid var(--color-border); transition: opacity var(--duration) var(--ease); }
+.a3s-de-profile.is-loading { opacity: 0.55; }
+.a3s-de-profile__source { margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); }
+.a3s-de-profile__name { margin: 0.2rem 0 0.75rem; font-size: 1.15rem; font-weight: 700; }
+.a3s-de-profile__empty { margin: 0; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-de-profile__rows { display: grid; gap: 0.55rem 1rem; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); margin: 0; }
+.a3s-de-profile__rows dt { font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-profile__rows dd { margin: 0.1rem 0 0; font-size: 0.875rem; font-weight: 600; overflow-wrap: anywhere; }
+/* Package and sizing: one table row of options under their headings. */
+.a3s-de-sizing .a3s-tablewrap { border: 1px solid var(--color-border); border-radius: var(--radius-tile); }
+.a3s-table.a3s-de-sizing__table thead th { padding: 0.7rem 0.75rem; white-space: nowrap; }
+.a3s-table.a3s-de-sizing__table tbody td { padding: 0.75rem 0.5rem; vertical-align: top; min-width: 10rem; }
+.a3s-table.a3s-de-sizing__table tbody td.a3s-de-sizing__number { min-width: 7rem; }
+.a3s-table.a3s-de-sizing__table thead th { padding-left: 0.5rem; padding-right: 0.5rem; }
+.a3s-de-sizing__table select, .a3s-de-sizing__table input[type=number] { padding-left: 0.6rem; padding-right: 1.3rem; font-size: 0.875rem; }
+.a3s-de-sizing__table input[type=number] { padding-right: 0.5rem; }
+.a3s-table.a3s-de-sizing__table tbody tr:hover { background: transparent; }
+.a3s-de-sizing__table .a3s-field { margin: 0; }
+.a3s-table.a3s-de-sizing__table td.a3s-de-sizing__pick { white-space: nowrap; vertical-align: middle; padding-left: 0.75rem; }
+.a3s-de-sizing__radio { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
+.a3s-de-sizing__radio input { width: 1.05rem; height: 1.05rem; accent-color: var(--color-accent); }
+.a3s-de-sizing__num { font-weight: 700; font-size: 0.9rem; }
+.a3s-de-sizing__badge { display: none; white-space: nowrap; margin-top: 0.3rem; padding: 0.1rem 0.4rem; border-radius: var(--radius-pill); font-size: 0.6rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
+.a3s-de-sizing__pick:has(input:checked) .a3s-de-sizing__badge { display: table; }
+.a3s-table.a3s-de-sizing__table td.a3s-de-sizing__remove { vertical-align: middle; }
+/* Fixed proportions, so spare width goes to the package name rather than to whichever
+   column the browser picks; the scheme sits under Subsidy in the same cell. */
+.a3s-table.a3s-de-sizing__table { table-layout: fixed; width: 100%; min-width: 56rem; }
+.a3s-table.a3s-de-sizing__table tbody td { min-width: 0; padding-left: 0.35rem; padding-right: 0.35rem; }
+.a3s-table.a3s-de-sizing__table thead th { padding-left: 0.35rem; padding-right: 0.35rem; white-space: normal; }
+.a3s-table.a3s-de-sizing__table th.a3s-de-sizing__pick { width: 11%; padding-left: 0.75rem; }
+.a3s-de-sizing__h-connection_type { width: 14%; }
+.a3s-de-sizing__h-override_capacity_kw { width: 9%; }
+.a3s-de-sizing__h-subsidy_option { width: 17%; }
+.a3s-de-sizing__h-solar_package { width: 32%; }
+.a3s-de-sizing__h-system_type { width: 12%; }
+.a3s-de-sizing__h-remove { width: 5%; }
+.a3s-de-sizing__scheme { margin-top: 0.4rem; }
+.a3s-de-sizing__notes { margin: 0.85rem 0 0; padding-left: 1.1rem; font-size: 0.75rem; color: var(--color-text-muted); display: grid; gap: 0.25rem; }
 .a3s-de-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.75rem; margin-top: 1.1rem; }
 .a3s-de-actions .a3s-form__status { margin-right: auto; }
 
@@ -2862,3 +2945,38 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-projlist__status { min-width: 17rem; }
 .a3s-projlist__status .a3s-proj__task { min-height: 3.1rem; }
 .a3s-projlist__proposal { white-space: nowrap; }
+
+/* ---- rows table: Additional Structure, Additional Cable, Special Discount ---- */
+.a3s-items { min-width: 0; }
+.a3s-items .a3s-tablewrap { margin-top: 0.75rem; max-width: 100%; overflow-x: auto; }
+.a3s-table.a3s-items__table thead th, .a3s-table.a3s-items__table tbody td { padding: 0.6rem 0.5rem; }
+.a3s-table.a3s-items__table tbody td { vertical-align: middle; font-size: 0.875rem; }
+.a3s-items__table .a3s-items__idx { width: 2rem; color: var(--color-text-muted); }
+.a3s-items__table .a3s-items__num { text-align: right; white-space: nowrap; }
+.a3s-items__input {
+	font-family: inherit;
+	font-size: 0.875rem;
+	color: var(--color-text);
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: 0.6rem;
+	padding: 0.5rem 0.6rem;
+	width: 100%;
+	min-width: 5.5rem;
+	transition: border-color var(--duration) var(--ease);
+}
+.a3s-items__input:focus { outline: none; border-color: var(--color-accent); background: var(--color-surface); }
+select.a3s-items__input { min-width: 9rem; }
+.a3s-items__num .a3s-items__input { text-align: right; min-width: 5rem; }
+.a3s-items__remove { padding: 0.25rem 0.6rem; font-size: 1.1rem; line-height: 1; }
+.a3s-items__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+.a3s-items__total { margin: 0; font-size: 1rem; }
+.a3s-items__total strong { font-size: 1.15rem; margin-left: 0.35rem; }
+/* Inside the create form's own card the table is a section of it, not a second card. */
+.a3s-formcard .a3s-items { box-shadow: none; border: 0; padding: 0; margin: 1.5rem 0 0; background: transparent; }
+.a3s-formcard .a3s-items:hover { transform: none; }
+.a3s-formcard .a3s-form { min-width: 0; }
+
+/* Estimate popup: a field with a hint (No. of Panels) must not stretch its neighbours' inputs. */
+#de-fields { align-items: start; }
+#de-fields .a3s-field { align-content: start; }

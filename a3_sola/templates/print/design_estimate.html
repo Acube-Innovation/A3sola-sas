@@ -1,0 +1,106 @@
+{#- A design estimate as a PDF: who it is for, the system and what it costs. Rendered by
+    portal_estimate.download_pdf from the same state the builder paints, so the PDF and the
+    Commercials panel always agree. Plain tables and inline styles: wkhtmltopdf is old. -#}
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+	body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5px; color: #2a3342; margin: 0; }
+	h1 { font-size: 20px; margin: 0; }
+	h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #e8840c; margin: 18px 0 6px; }
+	table { width: 100%; border-collapse: collapse; }
+	th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 5px 6px; }
+	td { padding: 5px 6px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+	tr { page-break-inside: avoid; }
+	.head td { border: 0; padding: 0; }
+	.muted { color: #5b6575; }
+	.right { text-align: right; }
+	.nowrap { white-space: nowrap; }
+	.keep { page-break-inside: avoid; }
+	.facts td { border: 0; padding: 2px 12px 2px 0; }
+	.facts .label { color: #5b6575; width: 30%; }
+	.money td { padding: 6px; }
+	.money .grand td { font-size: 13px; font-weight: bold; border-top: 2px solid #2a3342; border-bottom: 0; }
+	.rule { border-top: 3px solid #f5a524; margin: 10px 0 4px; }
+	.note { font-size: 9px; color: #5b6575; margin-top: 6px; }
+</style>
+</head>
+<body>
+	<table class="head">
+		<tr>
+			<td>
+				<h1>{{ company | e }}</h1>
+				<div class="muted">{{ _("Solar Design Estimate") }}</div>
+			</td>
+			<td class="right">
+				<div><strong>{{ doc.name | e }}</strong></div>
+				<div class="muted">{{ _("Date") }}: {{ frappe.utils.formatdate(doc.estimate_date or doc.creation) }}</div>
+			</td>
+		</tr>
+	</table>
+	<div class="rule"></div>
+
+	<h2>{{ _("Prepared for") }}</h2>
+	<table class="facts">
+		<tr><td class="label">{{ _("Name") }}</td><td><strong>{{ state.title | e }}</strong></td></tr>
+		{%- if profile %}
+		{%- for r in profile.rows %}
+		<tr><td class="label">{{ r.label | e }}</td><td>{{ r.value | e }}</td></tr>
+		{%- endfor %}
+		{%- endif %}
+	</table>
+
+	<h2>{{ _("Proposed system") }}</h2>
+	<table class="facts">
+		{%- for item in state.summary %}
+		<tr><td class="label">{{ item.label | e }}</td><td>{{ (item.value or "—") | e }}</td></tr>
+		{%- endfor %}
+	</table>
+
+	{%- set money_fields = ("rate", "amount") %}
+	{%- for s in state.sections if s.rows %}
+	<h2>{{ s.label | e }}</h2>
+	<table>
+		<tr>
+			{%- for c in s.columns %}<th{% if c.fieldname in money_fields %} class="right"{% endif %}>{{ c.label | e }}</th>{% endfor %}
+		</tr>
+		{%- for row in s.rows %}
+		<tr>
+			{%- for c in s.columns %}<td{% if c.fieldname in money_fields %} class="right nowrap"{% endif %}>{{ (row.display[c.fieldname] or "") | e }}</td>{% endfor %}
+		</tr>
+		{%- endfor %}
+	</table>
+	{%- set offered = s.options.rows | selectattr("offered") | list if s.options else [] %}
+	{%- if offered %}
+	<h2>{{ s.options.label | e }}</h2>
+	<table>
+		<tr><th>{{ _("Option") }}</th><th>{{ _("Specification") }}</th><th class="right">{{ _("System Cost") }}</th><th></th></tr>
+		{%- for row in offered %}
+		<tr>
+			<td>{{ row.title | e }}</td>
+			<td>{{ row.specification | e }}</td>
+			<td class="right nowrap">{{ money(row.cost) }}</td>
+			<td>{% if row.recommended %}<strong>{{ _("Recommended") }}</strong>{% endif %}</td>
+		</tr>
+		{%- endfor %}
+	</table>
+	{%- endif %}
+	{%- endfor %}
+
+	<div class="keep">
+	<h2>{{ _("Commercials") }}</h2>
+	<table class="money">
+		{%- for line in state.commercials.lines %}
+		<tr><td>{{ line.label | e }}</td><td class="right">{{ money(line.amount) }}</td></tr>
+		{%- endfor %}
+		<tr><td><strong>{{ _("Subtotal") }}</strong></td><td class="right"><strong>{{ money(state.commercials.subtotal) }}</strong></td></tr>
+		<tr><td>{{ _("GST") }}{% if state.commercials.gst_percent %} ({{ "%g" | format(state.commercials.gst_percent) }}%){% endif %}</td><td class="right">{{ money(state.commercials.gst_amount) }}</td></tr>
+		<tr class="grand"><td>{{ _("Total") }}</td><td class="right">{{ money(state.commercials.total) }}</td></tr>
+	</table>
+	{%- if state.commercials.gst_percent %}
+	<p class="note">{{ _("GST on {0}; KSEB fees are already gross.").format(money(state.commercials.taxable)) }}</p>
+	{%- endif %}
+	</div>
+</body>
+</html>

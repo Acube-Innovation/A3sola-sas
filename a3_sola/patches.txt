@@ -87,3 +87,9 @@ a3_sola.patches.v1_2.installation_design_tables
 
 # Installation tasks show their activity scope and a sequential plan from the job's start date.
 a3_sola.patches.v1_2.installation_task_plan
+
+# Draft design estimates carry every inverter alternative of their package as an option.
+a3_sola.patches.v1_2.estimate_inverter_options
+
+# Package inverter rows state the connection they are for.
+a3_sola.patches.v1_2.package_inverter_phase

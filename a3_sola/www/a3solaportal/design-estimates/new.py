@@ -25,6 +25,7 @@ def get_context(context):
 	)
 	context.record_name = ""
 	context.columns = portal_estimate.detail_columns()
+	context.profile = None
 	context.cancel_route = "/a3solaportal/design-estimates"
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

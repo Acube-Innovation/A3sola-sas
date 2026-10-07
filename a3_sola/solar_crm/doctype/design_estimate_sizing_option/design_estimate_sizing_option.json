@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2026-10-06 21:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "description": "One combination of package and sizing offered on a design estimate.",
+ "field_order": [
+  "is_recommended",
+  "connection_type",
+  "override_capacity_kw",
+  "subsidy_option",
+  "subsidy_scheme",
+  "solar_package",
+  "system_type",
+  "option_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "is_recommended",
+   "fieldtype": "Check",
+   "label": "Recommended",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
+   "options": "Single Phase\nThree Phase",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "override_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "precision": 3,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "subsidy_option",
+   "fieldtype": "Select",
+   "label": "Subsidy",
+   "options": "With Subsidy\nWithout Subsidy",
+   "default": "With Subsidy",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "subsidy_scheme",
+   "fieldtype": "Link",
+   "label": "Subsidy Scheme",
+   "options": "Subsidy Scheme",
+   "in_list_view": 1,
+   "columns": 2,
+   "depends_on": "eval:doc.subsidy_option==\"With Subsidy\""
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "label": "Solar Package",
+   "options": "Solar Package",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System Type",
+   "options": "On-Grid\nOff-Grid\nHybrid",
+   "default": "On-Grid",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "option_notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-06 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Design Estimate Sizing Option",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
