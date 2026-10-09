@@ -34,7 +34,8 @@ COLLECTIONS = {
 	# An ERPNext Sales Order. Created from a quotation by ERPNext's own mapping, so the
 	# items and taxes arrive intact; the portal only ever reads and edits the draft.
 	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart"},
-	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen"},
+	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
+	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID"},
 	"site-surveys": {"doctype": "Site Survey", "title": "Site Survey", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin"},
 	# `form_extra` names fields the create form must render beyond the mandatory ones:
 	# the manual result and the reason that goes with it are the point of this form,
@@ -206,6 +207,23 @@ def _format(value, fieldtype):
 	return value
 
 
+def _names_like(doctype, like, limit=200):
+	"""The records of `doctype` whose name, title or search fields match, read with the
+	caller's own permissions. For a Lead, its person's name and its company's."""
+	meta = frappe.get_meta(doctype)
+	fields = [meta.title_field] + [f.strip() for f in (meta.search_fields or "").split(",")]
+	if doctype == "Lead":
+		fields += ["lead_name", "company_name"]
+	fields = [f for f in dict.fromkeys(fields) if f and f != "name" and meta.get_field(f)
+		and meta.get_field(f).fieldtype in ("Data", "Small Text", "Phone", "Select")]
+	if not fields:
+		return []
+	try:
+		return frappe.get_list(doctype, or_filters=[[f, "like", like] for f in fields], pluck="name", limit_page_length=limit)
+	except frappe.PermissionError:
+		return []
+
+
 def list_context(context, slug):
 	cfg = get_collection(slug)
 	doctype = cfg["doctype"]
@@ -238,9 +256,27 @@ def list_context(context, slug):
 		like = f"%{q}%"
 		searchable = ["name"] + [c.fieldname for c in columns if c.fieldtype in TEXTUAL]
 		or_filters = [[fn, "like", like] for fn in dict.fromkeys(searchable)]
+		# A linked record is searched by its name as well as its id: "Shiju" finds the
+		# estimates of the consumer Mr Shiju, not only those whose ids contain it.
+		for df in [c for c in columns if c.fieldtype == "Link"] + ([person] if person else []):
+			matches = _names_like(df.options, like)
+			if matches:
+				or_filters.append([df.fieldname, "in", matches])
+
+	# Narrowed to one linked record - the consumer, say - chosen from the list's filter.
+	filters, list_filters = {}, []
+	for fieldname in cfg.get("list_filters") or []:
+		df = meta.get_field(fieldname)
+		if not df or df.fieldtype != "Link":
+			continue
+		chosen = (frappe.form_dict.get(fieldname) or "").strip()
+		if chosen:
+			filters[fieldname] = chosen
+		list_filters.append({"fieldname": fieldname, "label": _(df.label), "value": chosen,
+			"choices": link_choices(df.options)})
 
 	records = frappe.get_list(
-		doctype, fields=fields, or_filters=or_filters,
+		doctype, fields=fields, filters=filters, or_filters=or_filters,
 		order_by="modified desc", limit_page_length=100,
 	)
 
@@ -307,6 +343,8 @@ def list_context(context, slug):
 	context.total = len(rows)
 	context.limit = 100
 	context.q = q
+	context.list_filters = list_filters
+	context.filtered = bool(filters)
 	# A list runs the full width of the page.
 	context.main_wide = True
 	return context
@@ -395,7 +433,14 @@ def form_fields(meta, prefill=None, extra=()):
 			spec["default"] = seed or f.default or fallback
 		elif f.fieldtype == "Link":
 			spec["link_doctype"] = f.options
-			choices = link_choices(f.options)
+			if not seed:
+				seed = default_for(f)
+				if seed:
+					spec["value"] = seed
+			rule = DEPENDENT_LINKS.get(f.fieldname)
+			spec["depends_field"] = rule[1] if rule else ""
+			spec["depends_also"] = ",".join(source for _t, source, _r in DEPENDENT_ALSO.get(f.fieldname, ()))
+			choices = link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
 			if seed and not any(c["value"] == seed for c in choices):
 				choices.insert(0, {"value": seed, "label": link_title(f.options, seed)})
 			spec["choices"] = choices
@@ -462,6 +507,9 @@ def new_context(context, slug):
 		],
 	)
 	fields, unrenderable = form_fields(meta, prefill, form_extra(cfg, meta))
+	# The record a create form is filled from is asked for first: the lead, then the consumer.
+	first = ("lead", "solar_consumer")
+	fields.sort(key=lambda f: first.index(f["fieldname"]) if f["fieldname"] in first else len(first))
 	context.collection = {**cfg, "slug": slug}
 	context.fields = fields
 	context.item_table = item_table(slug, editable=True)
@@ -670,6 +718,7 @@ def form_groups(meta, first_label=None):
 from a3_sola.api.portal_fields import (  # noqa: E402  - grouped with the code that uses it
 	DISPLAY_TYPES as DISPLAY_TYPES_ALL, INPUT_TYPES as INPUT_TYPES_ALL, detail_row, edit_spec,
 	link_choices, link_title,
+	DEPENDENT_ALSO, DEPENDENT_LINKS, default_for, link_filters,
 )
 
 
@@ -796,6 +845,17 @@ def detail_context(context, slug, name):
 	return context
 
 
+#: Show-when rules the portal's edit form adds to a doctype's own, as {doctype: {field: rule}}.
+#: The consumer's external identifiers belong with the subsidy history on the portal; the
+#: desk keeps showing them.
+PORTAL_SHOW_WHEN = {
+	"Solar Consumer": {
+		"discom_id": "has_availed_prior_subsidy",
+		"national_portal_consumer_id": "has_availed_prior_subsidy",
+	},
+}
+
+
 def edit_fields_for(doc, first_label=None):
 	"""The fields the edit form renders, grouped like the form, with current values.
 
@@ -810,7 +870,10 @@ def edit_fields_for(doc, first_label=None):
 			for df in s["fields"]:
 				if df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS:
 					continue
-				specs.append(edit_spec(df, doc.get(df.fieldname), doc))
+				spec = edit_spec(df, doc.get(df.fieldname), doc)
+				# Shown only with the answer it belongs to, as the desk's depends_on does.
+				spec["show_when"] = PORTAL_SHOW_WHEN.get(doc.doctype, {}).get(df.fieldname) or show_when_expr(df)
+				specs.append(spec)
 			if specs:
 				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "fields": specs})
 		if sections:

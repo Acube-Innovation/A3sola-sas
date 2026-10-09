@@ -71,7 +71,7 @@ def _build_estimate(company, consumer_name):
 			"discom": name_of("DISCOM", "discom_name", "KSEB", company),
 			"discom_section": name_of("DISCOM Section", "section_name", "Athani", company),
 			"consumer_number": f"11565{frappe.utils.random_string(8).upper()[:8]}",
-			"tariff_category": "LT-1/Single",
+			"tariff_category": "LT-I",
 			"connection_type": "Single Phase",
 			"connected_load_watts": 2300,
 			"sanctioned_load_kw": 5,

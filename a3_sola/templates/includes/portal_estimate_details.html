@@ -14,9 +14,9 @@
 <form class="a3s-de-details" id="a3s-de-details" data-name="{{ record_name | e }}" novalidate>
 	{%- macro control(f) %}
 		{%- if f.input == "select" %}
-		<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" aria-label="{{ f.label | e }}">
+		<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if f.subsidy_tariff %} data-subsidy-tariff="{{ f.subsidy_tariff | e }}"{% endif %}>
 			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.lead %} data-lead="{{ o.lead | e }}"{% endif %}{% if o.consumer %} data-consumer="{{ o.consumer | e }}"{% endif %}{% if o.show_id %} data-show-id="1"{% endif %}{% if o.tariff %} data-tariff="{{ o.tariff | e }}"{% endif %}{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
 		</select>
 		{%- elif f.input == "number" %}
@@ -28,31 +28,34 @@
 		{%- endif %}
 	{%- endmacro %}
 	{%- set consumer = columns[0] %}
-	{%- set sizing = columns[1] %}
-
-	<section class="a3s-card a3s-de-card a3s-de-consumer">
-		<h3 class="a3s-de-card__title">{{ consumer.title }}</h3>
-		<div class="a3s-de-consumer__body">
-			<div class="a3s-de-fields">
-				{%- for f in consumer.fields %}
+	{%- set package = columns[1] %}
+	{%- macro field_cell(f) %}
 				<div class="a3s-field{% if f.searchable %} a3s-combo a3s-combo--field{% endif %}" id="f-{{ f.fieldname }}"{% if f.searchable %} data-combo{% endif %}{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
+					<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
 					{%- if f.help %}
-					{#- A "?" beside the label opens what the chosen code covers, from KSEB's list. -#}
-					<div class="a3s-help">
-						<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
+					{#- A "?" after the box opens what the chosen code covers, from KSEB's list. -#}
+					<div class="a3s-help-row">
+						{{ control(f) }}
 						<button type="button" class="a3s-help__btn" data-help="{{ f.fieldname }}" aria-expanded="false"
-						        aria-controls="help-{{ f.fieldname }}" title="What does this tariff cover?">?</button>
+						        aria-controls="help-{{ f.fieldname }}" title="What does this tariff cover?" aria-label="What does this tariff cover?">?</button>
 					</div>
 					{%- else %}
-					<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
-					{%- endif %}
 					{{ control(f) }}
+					{%- endif %}
 					{%- if f.help %}
 					{#- Opens under the box, so the field stays in reach while it is open. -#}
 					<div class="a3s-help__pop" id="help-{{ f.fieldname }}" role="dialog" aria-label="{{ f.label | e }} details" hidden></div>
 					<script type="application/json" id="help-data-{{ f.fieldname }}">{{ f.help | tojson }}</script>
 					{%- endif %}
 				</div>
+	{%- endmacro %}
+
+	<section class="a3s-card a3s-de-card a3s-de-consumer">
+		<h3 class="a3s-de-card__title">{{ consumer.title }}</h3>
+		<div class="a3s-de-consumer__body">
+			<div class="a3s-de-fields">
+				{%- for f in consumer.fields %}
+				{{ field_cell(f) }}
 				{%- endfor %}
 				{#- Hints go under the fields, so a long one does not push its neighbours down. -#}
 				{%- for f in consumer.fields if f.hint %}
@@ -75,74 +78,20 @@
 		</div>
 	</section>
 
-	{#- One row per sizing option. The controls carry `data-field`, not `name`: the script
-	    posts the rows as a list, and the recommended row becomes the estimate's own. -#}
-	{%- macro option_control(f, value) %}
-		{%- if f.input == "select" %}
-		<select data-field="{{ f.fieldname }}" aria-label="{{ f.label | e }}">
-			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
+	<section class="a3s-card a3s-de-card a3s-de-package" id="a3s-de-package">
+		<h3 class="a3s-de-card__title">{{ package.title }}</h3>
+		<div class="a3s-de-fields">
+			{%- for f in package.fields %}
+			{{ field_cell(f) }}
 			{%- endfor %}
-		</select>
-		{%- elif f.input == "number" %}
-		<input type="number" step="any" min="0" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}">
-		{%- else %}
-		<input type="text" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}">
-		{%- endif %}
-	{%- endmacro %}
-	{%- macro option_row(row) %}
-		<tr data-option>
-			<td class="a3s-de-sizing__pick">
-				<label class="a3s-de-sizing__radio" title="Make this the recommended option">
-					<input type="radio" name="recommended_option" data-recommended{% if row.recommended %} checked{% endif %}>
-					<span class="a3s-de-sizing__num" data-option-number></span>
-				</label>
-				<span class="a3s-de-sizing__badge">Recommended</span>
-			</td>
-			{#- The subsidy scheme only applies with subsidy, so it sits under Subsidy in the same
-			    cell rather than holding an empty column open on every other row. -#}
-			{%- for f in sizing.fields if f.fieldname != "subsidy_scheme" %}
-			<td data-label="{{ f.label | e }}" class="a3s-de-sizing__{{ f.input }} a3s-de-sizing__f-{{ f.fieldname }}">
-				<div class="a3s-field">{{ option_control(f, row["values"][f.fieldname]) }}</div>
-				{%- if f.fieldname == "subsidy_option" %}
-				{%- for g in sizing.fields if g.fieldname == "subsidy_scheme" %}
-				<div class="a3s-field a3s-de-sizing__scheme" data-row-show-when="{{ g.show_when | e }}">
-					{{ option_control(g, row["values"][g.fieldname]) }}
-				</div>
-				{%- endfor %}
-				{%- endif %}
-			</td>
+			{%- for fact in package.facts %}
+			<div class="a3s-field a3s-de-fact">
+				<span class="a3s-de-fact__label">{{ fact.label | e }}</span>
+				<strong>{{ fact.value | e }}</strong>
+			</div>
 			{%- endfor %}
-			<td class="a3s-de-sizing__remove">
-				<button type="button" class="a3s-btn a3s-btn--ghost a3s-items__remove" data-remove-option aria-label="Remove this option">&times;</button>
-			</td>
-		</tr>
-	{%- endmacro %}
-
-	<section class="a3s-card a3s-de-card a3s-de-sizing" id="a3s-de-sizing">
-		<h3 class="a3s-de-card__title">{{ sizing.title }}</h3>
-		<div class="a3s-tablewrap">
-			<table class="a3s-table a3s-de-sizing__table">
-				<thead>
-					<tr>
-						<th scope="col" class="a3s-de-sizing__pick">Option</th>
-						{%- for f in sizing.fields if f.fieldname != "subsidy_scheme" %}
-						<th scope="col" class="a3s-de-sizing__h-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}{% if f.fieldname == "subsidy_option" %} / Scheme{% endif %}</th>
-						{%- endfor %}
-						<th aria-label="Remove" class="a3s-de-sizing__h-remove"></th>
-					</tr>
-				</thead>
-				<tbody data-options>
-					{%- for row in sizing.rows %}{{ option_row(row) }}{% endfor %}
-				</tbody>
-			</table>
 		</div>
-		<template id="a3s-de-option-template">{{ option_row(sizing.rows[0]) }}</template>
-		<div class="a3s-items__foot">
-			<button type="button" class="a3s-btn a3s-btn--ghost" data-add-option>+ Add option</button>
-			<p class="a3s-field__hint">The recommended option is the one the system and commercials are designed for.</p>
-		</div>
-		{%- set notes = sizing.fields | selectattr("hint") | list %}
+		{%- set notes = package.fields | selectattr("hint") | list %}
 		{%- if notes %}
 		<ul class="a3s-de-sizing__notes">
 			{%- for f in notes %}<li><strong>{{ f.label }}:</strong> {{ f.hint | striptags }}</li>{% endfor %}

@@ -31,7 +31,8 @@
   "inverter_count",
   "inverter_warranty_years",
   "sb_5",
-  "option_notes"
+  "option_notes",
+  "from_package"
  ],
  "fields": [
   {
@@ -214,10 +215,18 @@
    "fieldname": "option_notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "from_package",
+   "fieldtype": "Check",
+   "label": "From Package",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Built from the estimate's solar package and rebuilt from it on every save. Options without it were added by hand and are left as they are."
   }
  ],
  "links": [],
- "modified": "2026-09-28 08:30:00.000000",
+ "modified": "2026-10-08 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate Option",

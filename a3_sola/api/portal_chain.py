@@ -75,10 +75,12 @@ CHAIN = {
 			"card_subtitle_label": "Feasibility",
 			"map": {
 				"solar_consumer": "name",
+				"lead": "lead",
 				"customer_name": "consumer_name",
 				"discom": "discom",
 				"discom_section": "discom_section",
 				"roof_type": "roof_type",
+				"total_roof_area_sqft": "approx_roof_area_sqft",
 				"company": "company",
 			},
 		},

@@ -1,0 +1,4910 @@
+[
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Cantonment",
+  "section_code": "4501"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Fort",
+  "section_code": "4503"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Beach",
+  "section_code": "4505"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Karamana",
+  "section_code": "4507"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Manacaud",
+  "section_code": "4509"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Pettah",
+  "section_code": "4511"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Vanchiyoor",
+  "section_code": "4513"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Peroorkada",
+  "section_code": "4515"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Thirumala",
+  "section_code": "4517"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Nemom",
+  "section_code": "4519"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Sreekariam",
+  "section_code": "4521"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Kazhakkuttom",
+  "section_code": "4523"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kaniyapuram",
+  "section_code": "4525"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Kulathur",
+  "section_code": "4527"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Pothencode",
+  "section_code": "4529"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Attingal",
+  "section_code": "4531"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Avanavanchery",
+  "section_code": "4533"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Chirayinkeezhu",
+  "section_code": "4535"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Kadakkavoor",
+  "section_code": "4537"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Varkala",
+  "section_code": "4539"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kallambalam",
+  "section_code": "4541"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Neyyattinkara",
+  "section_code": "4543"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Balaramapuram",
+  "section_code": "4545"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Kanjiramkulam",
+  "section_code": "4547"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kattakada",
+  "section_code": "4549"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Malayinkeezhu",
+  "section_code": "4551"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Nedumangad",
+  "section_code": "4553"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Vithura",
+  "section_code": "4555"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Aryanad",
+  "section_code": "4557"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Palode",
+  "section_code": "4559"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Venjaramoodu",
+  "section_code": "4561"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Vizhinjam",
+  "section_code": "4563"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Poovar",
+  "section_code": "4565"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Parassala",
+  "section_code": "4567"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Amaravila",
+  "section_code": "4569"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Uchakkada",
+  "section_code": "4571"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Cantonment (North)",
+  "section_code": "4573"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Fort (North)",
+  "section_code": "4575"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Beach (North)",
+  "section_code": "4577"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Karamana (North)",
+  "section_code": "4579"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Manacaud (North)",
+  "section_code": "4581"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Pettah (North)",
+  "section_code": "4583"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Vanchiyoor (North)",
+  "section_code": "4585"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Peroorkada (North)",
+  "section_code": "4587"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Thirumala (North)",
+  "section_code": "4589"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Nemom (North)",
+  "section_code": "4591"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Sreekariam (North)",
+  "section_code": "4593"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Kazhakkuttom (North)",
+  "section_code": "4595"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kaniyapuram (North)",
+  "section_code": "4597"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Kulathur (North)",
+  "section_code": "4599"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Pothencode (North)",
+  "section_code": "4601"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Attingal (North)",
+  "section_code": "4603"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Avanavanchery (North)",
+  "section_code": "4605"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Chirayinkeezhu (North)",
+  "section_code": "4607"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Kadakkavoor (North)",
+  "section_code": "4609"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Varkala (North)",
+  "section_code": "4611"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kallambalam (North)",
+  "section_code": "4613"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Neyyattinkara (North)",
+  "section_code": "4615"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Balaramapuram (North)",
+  "section_code": "4617"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Kanjiramkulam (North)",
+  "section_code": "4619"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Kattakada (North)",
+  "section_code": "4621"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Malayinkeezhu (North)",
+  "section_code": "4623"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Nedumangad (North)",
+  "section_code": "4625"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Vithura (North)",
+  "section_code": "4627"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Aryanad (North)",
+  "section_code": "4629"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Palode (North)",
+  "section_code": "4631"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Venjaramoodu (North)",
+  "section_code": "4633"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Vizhinjam (North)",
+  "section_code": "4635"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Thiruvananthapuram",
+  "section_name": "Poovar (North)",
+  "section_code": "4637"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Kazhakkuttom",
+  "section_name": "Parassala (North)",
+  "section_code": "4639"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Attingal",
+  "section_name": "Amaravila (North)",
+  "section_code": "4641"
+ },
+ {
+  "district": "Thiruvananthapuram",
+  "circle_division": "Neyyattinkara",
+  "section_name": "Uchakkada (North)",
+  "section_code": "4643"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Cantonment",
+  "section_code": "4555"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kadappakada",
+  "section_code": "4557"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Ayathil",
+  "section_code": "4559"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Anachal",
+  "section_code": "4561"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Eravipuram",
+  "section_code": "4563"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kottiyam",
+  "section_code": "4565"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chathannoor",
+  "section_code": "4567"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Paravur",
+  "section_code": "4569"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Karunagappally",
+  "section_code": "4571"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Chavara",
+  "section_code": "4573"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Oachira",
+  "section_code": "4575"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Kunnathur",
+  "section_code": "4577"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Kottarakkara",
+  "section_code": "4579"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Ezhukone",
+  "section_code": "4581"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chengamanad",
+  "section_code": "4583"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Neduvathoor",
+  "section_code": "4585"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Punalur",
+  "section_code": "4587"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Anchal",
+  "section_code": "4589"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Kadakkal",
+  "section_code": "4591"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Pathanapuram",
+  "section_code": "4593"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Kulathupuzha",
+  "section_code": "4595"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Thenmala",
+  "section_code": "4597"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chadayamangalam",
+  "section_code": "4599"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Valakom",
+  "section_code": "4601"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Cantonment (North)",
+  "section_code": "4603"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kadappakada (North)",
+  "section_code": "4605"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Ayathil (North)",
+  "section_code": "4607"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Anachal (North)",
+  "section_code": "4609"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Eravipuram (North)",
+  "section_code": "4611"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kottiyam (North)",
+  "section_code": "4613"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chathannoor (North)",
+  "section_code": "4615"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Paravur (North)",
+  "section_code": "4617"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Karunagappally (North)",
+  "section_code": "4619"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Chavara (North)",
+  "section_code": "4621"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Oachira (North)",
+  "section_code": "4623"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Kunnathur (North)",
+  "section_code": "4625"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Kottarakkara (North)",
+  "section_code": "4627"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Ezhukone (North)",
+  "section_code": "4629"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chengamanad (North)",
+  "section_code": "4631"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Neduvathoor (North)",
+  "section_code": "4633"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Punalur (North)",
+  "section_code": "4635"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Anchal (North)",
+  "section_code": "4637"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Kadakkal (North)",
+  "section_code": "4639"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Pathanapuram (North)",
+  "section_code": "4641"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Kulathupuzha (North)",
+  "section_code": "4643"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Thenmala (North)",
+  "section_code": "4645"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chadayamangalam (North)",
+  "section_code": "4647"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Valakom (North)",
+  "section_code": "4649"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Cantonment (South)",
+  "section_code": "4651"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kadappakada (South)",
+  "section_code": "4653"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Ayathil (South)",
+  "section_code": "4655"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Anachal (South)",
+  "section_code": "4657"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Eravipuram (South)",
+  "section_code": "4659"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Kottiyam (South)",
+  "section_code": "4661"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chathannoor (South)",
+  "section_code": "4663"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Paravur (South)",
+  "section_code": "4665"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Karunagappally (South)",
+  "section_code": "4667"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Chavara (South)",
+  "section_code": "4669"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Oachira (South)",
+  "section_code": "4671"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Kunnathur (South)",
+  "section_code": "4673"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kollam",
+  "section_name": "Kottarakkara (South)",
+  "section_code": "4675"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Kottarakkara",
+  "section_name": "Ezhukone (South)",
+  "section_code": "4677"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Karunagappally",
+  "section_name": "Chengamanad (South)",
+  "section_code": "4679"
+ },
+ {
+  "district": "Kollam",
+  "circle_division": "Punalur",
+  "section_name": "Neduvathoor (South)",
+  "section_code": "4681"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Pathanamthitta Town",
+  "section_code": "4601"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Kozhencherry",
+  "section_code": "4603"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Konny",
+  "section_code": "4605"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Ranni",
+  "section_code": "4607"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Vadasserikkara",
+  "section_code": "4609"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Adoor",
+  "section_code": "4611"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Ezhamkulam",
+  "section_code": "4613"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Enathu",
+  "section_code": "4615"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Pandalam",
+  "section_code": "4617"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Elavumthitta",
+  "section_code": "4619"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Thiruvalla",
+  "section_code": "4621"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Mallappally",
+  "section_code": "4623"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Kumbanad",
+  "section_code": "4625"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Aranmula",
+  "section_code": "4627"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Kaviyoor",
+  "section_code": "4629"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Puramattom",
+  "section_code": "4631"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Pathanamthitta Town (North)",
+  "section_code": "4633"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Kozhencherry (North)",
+  "section_code": "4635"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Konny (North)",
+  "section_code": "4637"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Ranni (North)",
+  "section_code": "4639"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Vadasserikkara (North)",
+  "section_code": "4641"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Adoor (North)",
+  "section_code": "4643"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Ezhamkulam (North)",
+  "section_code": "4645"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Enathu (North)",
+  "section_code": "4647"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Pandalam (North)",
+  "section_code": "4649"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Elavumthitta (North)",
+  "section_code": "4651"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Thiruvalla (North)",
+  "section_code": "4653"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Mallappally (North)",
+  "section_code": "4655"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Kumbanad (North)",
+  "section_code": "4657"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Aranmula (North)",
+  "section_code": "4659"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Kaviyoor (North)",
+  "section_code": "4661"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Puramattom (North)",
+  "section_code": "4663"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Pathanamthitta Town (South)",
+  "section_code": "4665"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Kozhencherry (South)",
+  "section_code": "4667"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Konny (South)",
+  "section_code": "4669"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Ranni (South)",
+  "section_code": "4671"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Pathanamthitta",
+  "section_name": "Vadasserikkara (South)",
+  "section_code": "4673"
+ },
+ {
+  "district": "Pathanamthitta",
+  "circle_division": "Thiruvalla",
+  "section_name": "Adoor (South)",
+  "section_code": "4675"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Alappuzha Town",
+  "section_code": "5501"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Alappuzha North",
+  "section_code": "5503"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Alappuzha South",
+  "section_code": "5505"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Ambalappuzha",
+  "section_code": "5507"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Punnapra",
+  "section_code": "5509"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Champakulam",
+  "section_code": "5511"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Cherthala",
+  "section_code": "5513"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Cherthala East",
+  "section_code": "5515"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Aroor",
+  "section_code": "5517"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Kuthiathode",
+  "section_code": "5519"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Pattanakkad",
+  "section_code": "5521"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Kanjikuzhy",
+  "section_code": "5523"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Haripad",
+  "section_code": "5525"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Karthikappally",
+  "section_code": "5527"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Kayamkulam",
+  "section_code": "5529"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Mavelikkara",
+  "section_code": "5531"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Chengannur",
+  "section_code": "5533"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Kallisserry",
+  "section_code": "5535"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Mannar",
+  "section_code": "5537"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Alappuzha Town (North)",
+  "section_code": "5539"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Alappuzha North (North)",
+  "section_code": "5541"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Alappuzha South (North)",
+  "section_code": "5543"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Ambalappuzha (North)",
+  "section_code": "5545"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Punnapra (North)",
+  "section_code": "5547"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Champakulam (North)",
+  "section_code": "5549"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Cherthala (North)",
+  "section_code": "5551"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Cherthala East (North)",
+  "section_code": "5553"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Aroor (North)",
+  "section_code": "5555"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Kuthiathode (North)",
+  "section_code": "5557"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Pattanakkad (North)",
+  "section_code": "5559"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Kanjikuzhy (North)",
+  "section_code": "5561"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Haripad (North)",
+  "section_code": "5563"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Karthikappally (North)",
+  "section_code": "5565"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Kayamkulam (North)",
+  "section_code": "5567"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Mavelikkara (North)",
+  "section_code": "5569"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Chengannur (North)",
+  "section_code": "5571"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Kallisserry (North)",
+  "section_code": "5573"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Mannar (North)",
+  "section_code": "5575"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Alappuzha Town (South)",
+  "section_code": "5577"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Alappuzha North (South)",
+  "section_code": "5579"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Alappuzha South (South)",
+  "section_code": "5581"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Ambalappuzha (South)",
+  "section_code": "5583"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Punnapra (South)",
+  "section_code": "5585"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Champakulam (South)",
+  "section_code": "5587"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Cherthala (South)",
+  "section_code": "5589"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Cherthala East (South)",
+  "section_code": "5591"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Aroor (South)",
+  "section_code": "5593"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Kuthiathode (South)",
+  "section_code": "5595"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Alappuzha",
+  "section_name": "Pattanakkad (South)",
+  "section_code": "5597"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Cherthala",
+  "section_name": "Kanjikuzhy (South)",
+  "section_code": "5599"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Haripad",
+  "section_name": "Haripad (South)",
+  "section_code": "5601"
+ },
+ {
+  "district": "Alappuzha",
+  "circle_division": "Mavelikkara",
+  "section_name": "Karthikappally (South)",
+  "section_code": "5603"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kottayam Central",
+  "section_code": "4628"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Ettumanoor",
+  "section_code": "4630"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Ayarkunnam",
+  "section_code": "4632"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Aymanam",
+  "section_code": "4634"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kumarakom",
+  "section_code": "4636"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Changanassery",
+  "section_code": "4638"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Vazhoor",
+  "section_code": "4640"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Pala",
+  "section_code": "4642"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Bharananganam",
+  "section_code": "4644"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Erattupetta",
+  "section_code": "4646"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Ramapuram",
+  "section_code": "4648"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Kanjirappally",
+  "section_code": "4650"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Erumely",
+  "section_code": "4652"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Mundakayam",
+  "section_code": "4654"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Vaikom",
+  "section_code": "4656"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kaduthuruthy",
+  "section_code": "4658"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kuravilangad",
+  "section_code": "4660"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Kottayam Central (North)",
+  "section_code": "4662"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Ettumanoor (North)",
+  "section_code": "4664"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Ayarkunnam (North)",
+  "section_code": "4666"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Aymanam (North)",
+  "section_code": "4668"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kumarakom (North)",
+  "section_code": "4670"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Changanassery (North)",
+  "section_code": "4672"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Vazhoor (North)",
+  "section_code": "4674"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Pala (North)",
+  "section_code": "4676"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Bharananganam (North)",
+  "section_code": "4678"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Erattupetta (North)",
+  "section_code": "4680"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Ramapuram (North)",
+  "section_code": "4682"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kanjirappally (North)",
+  "section_code": "4684"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Erumely (North)",
+  "section_code": "4686"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Mundakayam (North)",
+  "section_code": "4688"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Vaikom (North)",
+  "section_code": "4690"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Kaduthuruthy (North)",
+  "section_code": "4692"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kuravilangad (North)",
+  "section_code": "4694"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kottayam Central (South)",
+  "section_code": "4696"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Ettumanoor (South)",
+  "section_code": "4698"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Ayarkunnam (South)",
+  "section_code": "4700"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Aymanam (South)",
+  "section_code": "4702"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Kumarakom (South)",
+  "section_code": "4704"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Changanassery (South)",
+  "section_code": "4706"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Vazhoor (South)",
+  "section_code": "4708"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Pala (South)",
+  "section_code": "4710"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Bharananganam (South)",
+  "section_code": "4712"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Erattupetta (South)",
+  "section_code": "4714"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Ramapuram (South)",
+  "section_code": "4716"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kanjirappally (South)",
+  "section_code": "4718"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Erumely (South)",
+  "section_code": "4720"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Mundakayam (South)",
+  "section_code": "4722"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Vaikom (South)",
+  "section_code": "4724"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kaduthuruthy (South)",
+  "section_code": "4726"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Kuravilangad (South)",
+  "section_code": "4728"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Kottayam Central (East)",
+  "section_code": "4730"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Ettumanoor (East)",
+  "section_code": "4732"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kanjirappally",
+  "section_name": "Ayarkunnam (East)",
+  "section_code": "4734"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Kottayam",
+  "section_name": "Aymanam (East)",
+  "section_code": "4736"
+ },
+ {
+  "district": "Kottayam",
+  "circle_division": "Pala",
+  "section_name": "Kumarakom (East)",
+  "section_code": "4738"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Thodupuzha East",
+  "section_code": "5610"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Thodupuzha West",
+  "section_code": "5612"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Karimannoor",
+  "section_code": "5614"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Moolamattom",
+  "section_code": "5616"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Adimali",
+  "section_code": "5618"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Chithirapuram",
+  "section_code": "5620"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Munnar",
+  "section_code": "5622"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kattappana",
+  "section_code": "5624"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Kambilikandom",
+  "section_code": "5626"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kanchiyar",
+  "section_code": "5628"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Erattayar",
+  "section_code": "5630"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Nedumkandam",
+  "section_code": "5632"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Kumily",
+  "section_code": "5634"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Murickassery",
+  "section_code": "5636"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Vandiperiyar",
+  "section_code": "5638"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Thodupuzha East (North)",
+  "section_code": "5640"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Thodupuzha West (North)",
+  "section_code": "5642"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Karimannoor (North)",
+  "section_code": "5644"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Moolamattom (North)",
+  "section_code": "5646"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Adimali (North)",
+  "section_code": "5648"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Chithirapuram (North)",
+  "section_code": "5650"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Munnar (North)",
+  "section_code": "5652"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Kattappana (North)",
+  "section_code": "5654"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kambilikandom (North)",
+  "section_code": "5656"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Kanchiyar (North)",
+  "section_code": "5658"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Erattayar (North)",
+  "section_code": "5660"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Nedumkandam (North)",
+  "section_code": "5662"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kumily (North)",
+  "section_code": "5664"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Murickassery (North)",
+  "section_code": "5666"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Vandiperiyar (North)",
+  "section_code": "5668"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Thodupuzha East (South)",
+  "section_code": "5670"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Thodupuzha West (South)",
+  "section_code": "5672"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Karimannoor (South)",
+  "section_code": "5674"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Moolamattom (South)",
+  "section_code": "5676"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Adimali (South)",
+  "section_code": "5678"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Chithirapuram (South)",
+  "section_code": "5680"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Munnar (South)",
+  "section_code": "5682"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kattappana (South)",
+  "section_code": "5684"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Kambilikandom (South)",
+  "section_code": "5686"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Kanchiyar (South)",
+  "section_code": "5688"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Thodupuzha",
+  "section_name": "Erattayar (South)",
+  "section_code": "5690"
+ },
+ {
+  "district": "Idukki",
+  "circle_division": "Kattappana",
+  "section_name": "Nedumkandam (South)",
+  "section_code": "5692"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Ernakulam Central",
+  "section_code": "5541"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Girinagar",
+  "section_code": "5543"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kaloor",
+  "section_code": "5545"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Edappally",
+  "section_code": "5547"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Fort Cochin",
+  "section_code": "5549"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Mattancherry",
+  "section_code": "5551"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Kannamali",
+  "section_code": "5553"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Thoppumpady",
+  "section_code": "5555"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Tripunithura",
+  "section_code": "5557"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Chottanikkara",
+  "section_code": "5559"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Arakkunnam",
+  "section_code": "5561"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Mulanthuruthy",
+  "section_code": "5563"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalamassery",
+  "section_code": "5565"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Aluva Town",
+  "section_code": "5567"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Aluva North",
+  "section_code": "5569"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Aluva West",
+  "section_code": "5571"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Angamaly",
+  "section_code": "5573"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalady",
+  "section_code": "5575"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Perumbavoor",
+  "section_code": "5577"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Kuruppampady",
+  "section_code": "5579"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Kothamangalam",
+  "section_code": "5581"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Muvattupuzha",
+  "section_code": "5583"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Piravom",
+  "section_code": "5585"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Cherai",
+  "section_code": "5587"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Paravur",
+  "section_code": "5589"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Ernakulam Central (North)",
+  "section_code": "5591"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Girinagar (North)",
+  "section_code": "5593"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kaloor (North)",
+  "section_code": "5595"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Edappally (North)",
+  "section_code": "5597"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Fort Cochin (North)",
+  "section_code": "5599"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Mattancherry (North)",
+  "section_code": "5601"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Kannamali (North)",
+  "section_code": "5603"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Thoppumpady (North)",
+  "section_code": "5605"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Tripunithura (North)",
+  "section_code": "5607"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Chottanikkara (North)",
+  "section_code": "5609"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Arakkunnam (North)",
+  "section_code": "5611"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Mulanthuruthy (North)",
+  "section_code": "5613"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalamassery (North)",
+  "section_code": "5615"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Aluva Town (North)",
+  "section_code": "5617"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Aluva North (North)",
+  "section_code": "5619"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Aluva West (North)",
+  "section_code": "5621"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Angamaly (North)",
+  "section_code": "5623"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalady (North)",
+  "section_code": "5625"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Perumbavoor (North)",
+  "section_code": "5627"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Kuruppampady (North)",
+  "section_code": "5629"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Kothamangalam (North)",
+  "section_code": "5631"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Muvattupuzha (North)",
+  "section_code": "5633"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Piravom (North)",
+  "section_code": "5635"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Cherai (North)",
+  "section_code": "5637"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Paravur (North)",
+  "section_code": "5639"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Ernakulam Central (South)",
+  "section_code": "5641"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Girinagar (South)",
+  "section_code": "5643"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kaloor (South)",
+  "section_code": "5645"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Edappally (South)",
+  "section_code": "5647"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Fort Cochin (South)",
+  "section_code": "5649"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Mattancherry (South)",
+  "section_code": "5651"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Kannamali (South)",
+  "section_code": "5653"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Thoppumpady (South)",
+  "section_code": "5655"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Tripunithura (South)",
+  "section_code": "5657"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Chottanikkara (South)",
+  "section_code": "5659"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Arakkunnam (South)",
+  "section_code": "5661"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Mulanthuruthy (South)",
+  "section_code": "5663"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalamassery (South)",
+  "section_code": "5665"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Aluva Town (South)",
+  "section_code": "5667"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Aluva North (South)",
+  "section_code": "5669"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Aluva West (South)",
+  "section_code": "5671"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Angamaly (South)",
+  "section_code": "5673"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalady (South)",
+  "section_code": "5675"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Perumbavoor (South)",
+  "section_code": "5677"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Kuruppampady (South)",
+  "section_code": "5679"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Kothamangalam (South)",
+  "section_code": "5681"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Muvattupuzha (South)",
+  "section_code": "5683"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Piravom (South)",
+  "section_code": "5685"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Cherai (South)",
+  "section_code": "5687"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Paravur (South)",
+  "section_code": "5689"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Ernakulam Central (East)",
+  "section_code": "5691"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Girinagar (East)",
+  "section_code": "5693"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kaloor (East)",
+  "section_code": "5695"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Edappally (East)",
+  "section_code": "5697"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Fort Cochin (East)",
+  "section_code": "5699"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Mattancherry (East)",
+  "section_code": "5701"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Kannamali (East)",
+  "section_code": "5703"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Thoppumpady (East)",
+  "section_code": "5705"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Mattancherry",
+  "section_name": "Tripunithura (East)",
+  "section_code": "5707"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Perumbavoor",
+  "section_name": "Chottanikkara (East)",
+  "section_code": "5709"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam Central",
+  "section_name": "Arakkunnam (East)",
+  "section_code": "5711"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Ernakulam East",
+  "section_name": "Mulanthuruthy (East)",
+  "section_code": "5713"
+ },
+ {
+  "district": "Ernakulam",
+  "circle_division": "Aluva",
+  "section_name": "Kalamassery (East)",
+  "section_code": "5715"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Big Bazar",
+  "section_code": "5641"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Ayyanthol",
+  "section_code": "5643"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Ollur",
+  "section_code": "5645"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Arimboor",
+  "section_code": "5647"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Mannuthy",
+  "section_code": "5649"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Pudukad",
+  "section_code": "5651"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Irinjalakuda",
+  "section_code": "5653"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Amballoor",
+  "section_code": "5655"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Kodungallur",
+  "section_code": "5657"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Mala",
+  "section_code": "5659"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Chalakudy",
+  "section_code": "5661"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Annamanada",
+  "section_code": "5663"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Koratty",
+  "section_code": "5665"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Guruvayoor",
+  "section_code": "5667"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Chavakkad",
+  "section_code": "5669"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Kunnamkulam",
+  "section_code": "5671"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Wadakkanchery",
+  "section_code": "5673"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Chelakkara",
+  "section_code": "5675"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Cheruthuruthy",
+  "section_code": "5677"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Big Bazar (North)",
+  "section_code": "5679"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Ayyanthol (North)",
+  "section_code": "5681"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Ollur (North)",
+  "section_code": "5683"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Arimboor (North)",
+  "section_code": "5685"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Mannuthy (North)",
+  "section_code": "5687"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Pudukad (North)",
+  "section_code": "5689"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Irinjalakuda (North)",
+  "section_code": "5691"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Amballoor (North)",
+  "section_code": "5693"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Kodungallur (North)",
+  "section_code": "5695"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Mala (North)",
+  "section_code": "5697"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Chalakudy (North)",
+  "section_code": "5699"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Annamanada (North)",
+  "section_code": "5701"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Koratty (North)",
+  "section_code": "5703"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Guruvayoor (North)",
+  "section_code": "5705"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Chavakkad (North)",
+  "section_code": "5707"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Kunnamkulam (North)",
+  "section_code": "5709"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Wadakkanchery (North)",
+  "section_code": "5711"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Chelakkara (North)",
+  "section_code": "5713"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Cheruthuruthy (North)",
+  "section_code": "5715"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Big Bazar (South)",
+  "section_code": "5717"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Ayyanthol (South)",
+  "section_code": "5719"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Ollur (South)",
+  "section_code": "5721"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Arimboor (South)",
+  "section_code": "5723"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Mannuthy (South)",
+  "section_code": "5725"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Pudukad (South)",
+  "section_code": "5727"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Irinjalakuda (South)",
+  "section_code": "5729"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Amballoor (South)",
+  "section_code": "5731"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Kodungallur (South)",
+  "section_code": "5733"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Mala (South)",
+  "section_code": "5735"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Chalakudy (South)",
+  "section_code": "5737"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Annamanada (South)",
+  "section_code": "5739"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Koratty (South)",
+  "section_code": "5741"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Guruvayoor (South)",
+  "section_code": "5743"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Chavakkad (South)",
+  "section_code": "5745"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Kunnamkulam (South)",
+  "section_code": "5747"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Wadakkanchery (South)",
+  "section_code": "5749"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Chelakkara (South)",
+  "section_code": "5751"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Cheruthuruthy (South)",
+  "section_code": "5753"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Big Bazar (East)",
+  "section_code": "5755"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Ayyanthol (East)",
+  "section_code": "5757"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Ollur (East)",
+  "section_code": "5759"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Arimboor (East)",
+  "section_code": "5761"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Mannuthy (East)",
+  "section_code": "5763"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Pudukad (East)",
+  "section_code": "5765"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Irinjalakuda (East)",
+  "section_code": "5767"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Amballoor (East)",
+  "section_code": "5769"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Kodungallur (East)",
+  "section_code": "5771"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Mala (East)",
+  "section_code": "5773"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Chalakudy (East)",
+  "section_code": "5775"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Annamanada (East)",
+  "section_code": "5777"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Koratty (East)",
+  "section_code": "5779"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Guruvayoor (East)",
+  "section_code": "5781"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Chavakkad (East)",
+  "section_code": "5783"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Kunnamkulam (East)",
+  "section_code": "5785"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Wadakkanchery (East)",
+  "section_code": "5787"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Chalakudy",
+  "section_name": "Chelakkara (East)",
+  "section_code": "5789"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Wadakkanchery",
+  "section_name": "Cheruthuruthy (East)",
+  "section_code": "5791"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Thrissur",
+  "section_name": "Big Bazar Section 5",
+  "section_code": "5793"
+ },
+ {
+  "district": "Thrissur",
+  "circle_division": "Irinjalakuda",
+  "section_name": "Ayyanthol Section 5",
+  "section_code": "5795"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Big Bazar",
+  "section_code": "6501"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Kalpathy",
+  "section_code": "6502"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Elappully",
+  "section_code": "6503"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Kanjikode",
+  "section_code": "6504"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Chittur",
+  "section_code": "6505"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Kollengode",
+  "section_code": "6506"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Alathur",
+  "section_code": "6507"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Vadakkencherry",
+  "section_code": "6508"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Nemmara",
+  "section_code": "6509"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Ottapalam",
+  "section_code": "6510"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Shornur",
+  "section_code": "6511"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Ambalappara",
+  "section_code": "6512"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Cherplassery",
+  "section_code": "6513"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Mannarkkad",
+  "section_code": "6514"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Agali",
+  "section_code": "6515"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Alanellur",
+  "section_code": "6516"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Pattambi",
+  "section_code": "6517"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Big Bazar (North)",
+  "section_code": "6518"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Kalpathy (North)",
+  "section_code": "6519"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Elappully (North)",
+  "section_code": "6520"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Kanjikode (North)",
+  "section_code": "6521"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Chittur (North)",
+  "section_code": "6522"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Kollengode (North)",
+  "section_code": "6523"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Alathur (North)",
+  "section_code": "6524"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Vadakkencherry (North)",
+  "section_code": "6525"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Nemmara (North)",
+  "section_code": "6526"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Ottapalam (North)",
+  "section_code": "6527"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Shornur (North)",
+  "section_code": "6528"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Ambalappara (North)",
+  "section_code": "6529"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Cherplassery (North)",
+  "section_code": "6530"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Mannarkkad (North)",
+  "section_code": "6531"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Agali (North)",
+  "section_code": "6532"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Alanellur (North)",
+  "section_code": "6533"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Pattambi (North)",
+  "section_code": "6534"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Big Bazar (South)",
+  "section_code": "6535"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Kalpathy (South)",
+  "section_code": "6536"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Elappully (South)",
+  "section_code": "6537"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Kanjikode (South)",
+  "section_code": "6538"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Chittur (South)",
+  "section_code": "6539"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Kollengode (South)",
+  "section_code": "6540"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Alathur (South)",
+  "section_code": "6541"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Vadakkencherry (South)",
+  "section_code": "6542"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Nemmara (South)",
+  "section_code": "6543"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Ottapalam (South)",
+  "section_code": "6544"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Shornur (South)",
+  "section_code": "6545"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Ambalappara (South)",
+  "section_code": "6546"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Cherplassery (South)",
+  "section_code": "6547"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Mannarkkad (South)",
+  "section_code": "6548"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Agali (South)",
+  "section_code": "6549"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Alanellur (South)",
+  "section_code": "6550"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Pattambi (South)",
+  "section_code": "6551"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Big Bazar (East)",
+  "section_code": "6552"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Kalpathy (East)",
+  "section_code": "6553"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Elappully (East)",
+  "section_code": "6554"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Kanjikode (East)",
+  "section_code": "6555"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Chittur (East)",
+  "section_code": "6556"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Kollengode (East)",
+  "section_code": "6557"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Alathur (East)",
+  "section_code": "6558"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Vadakkencherry (East)",
+  "section_code": "6559"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Nemmara (East)",
+  "section_code": "6560"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Ottapalam (East)",
+  "section_code": "6561"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Shornur (East)",
+  "section_code": "6562"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Ambalappara (East)",
+  "section_code": "6563"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Cherplassery (East)",
+  "section_code": "6564"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Mannarkkad (East)",
+  "section_code": "6565"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Shornur",
+  "section_name": "Agali (East)",
+  "section_code": "6566"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Palakkad",
+  "section_name": "Alanellur (East)",
+  "section_code": "6567"
+ },
+ {
+  "district": "Palakkad",
+  "circle_division": "Ottapalam",
+  "section_name": "Pattambi (East)",
+  "section_code": "6568"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Malappuram Town",
+  "section_code": "6541"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Areekode",
+  "section_code": "6542"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edavannappara",
+  "section_code": "6543"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Kondotty",
+  "section_code": "6544"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Manjeri",
+  "section_code": "6545"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Angadipuram",
+  "section_code": "6546"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Perinthalmanna",
+  "section_code": "6547"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Wandoor",
+  "section_code": "6548"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edakkara",
+  "section_code": "6549"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Nilambur",
+  "section_code": "6550"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Tirur",
+  "section_code": "6551"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Alathiyoor",
+  "section_code": "6552"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Chelari",
+  "section_code": "6553"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Edarikode",
+  "section_code": "6554"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Tanur",
+  "section_code": "6555"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Parappanangadi",
+  "section_code": "6556"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Ponnani",
+  "section_code": "6557"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edappal",
+  "section_code": "6558"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Changaramkulam",
+  "section_code": "6559"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Malappuram Town (North)",
+  "section_code": "6560"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Areekode (North)",
+  "section_code": "6561"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Edavannappara (North)",
+  "section_code": "6562"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Kondotty (North)",
+  "section_code": "6563"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Manjeri (North)",
+  "section_code": "6564"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Angadipuram (North)",
+  "section_code": "6565"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Perinthalmanna (North)",
+  "section_code": "6566"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Wandoor (North)",
+  "section_code": "6567"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Edakkara (North)",
+  "section_code": "6568"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Nilambur (North)",
+  "section_code": "6569"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Tirur (North)",
+  "section_code": "6570"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Alathiyoor (North)",
+  "section_code": "6571"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Chelari (North)",
+  "section_code": "6572"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edarikode (North)",
+  "section_code": "6573"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Tanur (North)",
+  "section_code": "6574"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Parappanangadi (North)",
+  "section_code": "6575"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Ponnani (North)",
+  "section_code": "6576"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Edappal (North)",
+  "section_code": "6577"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Changaramkulam (North)",
+  "section_code": "6578"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Malappuram Town (South)",
+  "section_code": "6579"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Areekode (South)",
+  "section_code": "6580"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Edavannappara (South)",
+  "section_code": "6581"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Kondotty (South)",
+  "section_code": "6582"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Manjeri (South)",
+  "section_code": "6583"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Angadipuram (South)",
+  "section_code": "6584"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Perinthalmanna (South)",
+  "section_code": "6585"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Wandoor (South)",
+  "section_code": "6586"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Edakkara (South)",
+  "section_code": "6587"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Nilambur (South)",
+  "section_code": "6588"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Tirur (South)",
+  "section_code": "6589"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Alathiyoor (South)",
+  "section_code": "6590"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Chelari (South)",
+  "section_code": "6591"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Edarikode (South)",
+  "section_code": "6592"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Tanur (South)",
+  "section_code": "6593"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Parappanangadi (South)",
+  "section_code": "6594"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Ponnani (South)",
+  "section_code": "6595"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Edappal (South)",
+  "section_code": "6596"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Changaramkulam (South)",
+  "section_code": "6597"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Malappuram Town (East)",
+  "section_code": "6598"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Areekode (East)",
+  "section_code": "6599"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edavannappara (East)",
+  "section_code": "6600"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Kondotty (East)",
+  "section_code": "6601"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Manjeri (East)",
+  "section_code": "6602"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Angadipuram (East)",
+  "section_code": "6603"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Perinthalmanna (East)",
+  "section_code": "6604"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Wandoor (East)",
+  "section_code": "6605"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edakkara (East)",
+  "section_code": "6606"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Nilambur (East)",
+  "section_code": "6607"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Tirur (East)",
+  "section_code": "6608"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Alathiyoor (East)",
+  "section_code": "6609"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Chelari (East)",
+  "section_code": "6610"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Edarikode (East)",
+  "section_code": "6611"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Tanur (East)",
+  "section_code": "6612"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Parappanangadi (East)",
+  "section_code": "6613"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Tirur",
+  "section_name": "Ponnani (East)",
+  "section_code": "6614"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Nilambur",
+  "section_name": "Edappal (East)",
+  "section_code": "6615"
+ },
+ {
+  "district": "Malappuram",
+  "circle_division": "Manjeri",
+  "section_name": "Changaramkulam (East)",
+  "section_code": "6616"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Beach",
+  "section_code": "6591"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Karapparamba",
+  "section_code": "6592"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Feroke",
+  "section_code": "6593"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Beypur",
+  "section_code": "6594"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kallayi",
+  "section_code": "6595"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Mavoor",
+  "section_code": "6596"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kunnamangalam",
+  "section_code": "6597"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koduvally",
+  "section_code": "6598"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Thamarassery",
+  "section_code": "6599"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Balussery",
+  "section_code": "6600"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Atholy",
+  "section_code": "6601"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Vadakara",
+  "section_code": "6602"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Ayenchery",
+  "section_code": "6603"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koyilandy",
+  "section_code": "6604"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Payyoli",
+  "section_code": "6605"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Perambra",
+  "section_code": "6606"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Beach (North)",
+  "section_code": "6607"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Karapparamba (North)",
+  "section_code": "6608"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Feroke (North)",
+  "section_code": "6609"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Beypur (North)",
+  "section_code": "6610"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kallayi (North)",
+  "section_code": "6611"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Mavoor (North)",
+  "section_code": "6612"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kunnamangalam (North)",
+  "section_code": "6613"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koduvally (North)",
+  "section_code": "6614"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Thamarassery (North)",
+  "section_code": "6615"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Balussery (North)",
+  "section_code": "6616"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Atholy (North)",
+  "section_code": "6617"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Vadakara (North)",
+  "section_code": "6618"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Ayenchery (North)",
+  "section_code": "6619"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koyilandy (North)",
+  "section_code": "6620"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Payyoli (North)",
+  "section_code": "6621"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Perambra (North)",
+  "section_code": "6622"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Beach (South)",
+  "section_code": "6623"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Karapparamba (South)",
+  "section_code": "6624"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Feroke (South)",
+  "section_code": "6625"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Beypur (South)",
+  "section_code": "6626"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kallayi (South)",
+  "section_code": "6627"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Mavoor (South)",
+  "section_code": "6628"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kunnamangalam (South)",
+  "section_code": "6629"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koduvally (South)",
+  "section_code": "6630"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Thamarassery (South)",
+  "section_code": "6631"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Balussery (South)",
+  "section_code": "6632"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Atholy (South)",
+  "section_code": "6633"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Vadakara (South)",
+  "section_code": "6634"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Ayenchery (South)",
+  "section_code": "6635"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koyilandy (South)",
+  "section_code": "6636"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Payyoli (South)",
+  "section_code": "6637"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Perambra (South)",
+  "section_code": "6638"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Beach (East)",
+  "section_code": "6639"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Karapparamba (East)",
+  "section_code": "6640"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Feroke (East)",
+  "section_code": "6641"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Beypur (East)",
+  "section_code": "6642"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kallayi (East)",
+  "section_code": "6643"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Mavoor (East)",
+  "section_code": "6644"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Kunnamangalam (East)",
+  "section_code": "6645"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koduvally (East)",
+  "section_code": "6646"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Thamarassery (East)",
+  "section_code": "6647"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Balussery (East)",
+  "section_code": "6648"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Atholy (East)",
+  "section_code": "6649"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Vadakara (East)",
+  "section_code": "6650"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Kozhikode Central",
+  "section_name": "Ayenchery (East)",
+  "section_code": "6651"
+ },
+ {
+  "district": "Kozhikode",
+  "circle_division": "Vadakara",
+  "section_name": "Koyilandy (East)",
+  "section_code": "6652"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Kalpetta",
+  "section_code": "6710"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Ambalavayal",
+  "section_code": "6711"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Kambalakkad",
+  "section_code": "6712"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Meppadi",
+  "section_code": "6713"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Vythiri",
+  "section_code": "6714"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Mananthavady",
+  "section_code": "6715"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Panamaram",
+  "section_code": "6716"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Sulthan Bathery",
+  "section_code": "6717"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Pulpally",
+  "section_code": "6718"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Kalpetta (North)",
+  "section_code": "6719"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Ambalavayal (North)",
+  "section_code": "6720"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Kambalakkad (North)",
+  "section_code": "6721"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Meppadi (North)",
+  "section_code": "6722"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Vythiri (North)",
+  "section_code": "6723"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Mananthavady (North)",
+  "section_code": "6724"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Panamaram (North)",
+  "section_code": "6725"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Sulthan Bathery (North)",
+  "section_code": "6726"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Pulpally (North)",
+  "section_code": "6727"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Kalpetta (South)",
+  "section_code": "6728"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Ambalavayal (South)",
+  "section_code": "6729"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Kambalakkad (South)",
+  "section_code": "6730"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Meppadi (South)",
+  "section_code": "6731"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Vythiri (South)",
+  "section_code": "6732"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Mananthavady (South)",
+  "section_code": "6733"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Panamaram (South)",
+  "section_code": "6734"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Sulthan Bathery (South)",
+  "section_code": "6735"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Kalpetta",
+  "section_name": "Pulpally (South)",
+  "section_code": "6736"
+ },
+ {
+  "district": "Wayanad",
+  "circle_division": "Mananthavady",
+  "section_name": "Kalpetta (East)",
+  "section_code": "6737"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Kannur Town",
+  "section_code": "6651"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Burnasseri",
+  "section_code": "6652"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Chovva",
+  "section_code": "6653"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Kadachira",
+  "section_code": "6654"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Valapattanam",
+  "section_code": "6655"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Thalassery",
+  "section_code": "6656"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Dharmadam",
+  "section_code": "6657"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Chokli",
+  "section_code": "6658"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Kuthuparamba",
+  "section_code": "6659"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Mattannur",
+  "section_code": "6660"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Iritty",
+  "section_code": "6661"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Srikandapuram",
+  "section_code": "6662"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Taliparamba",
+  "section_code": "6663"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Payyanur",
+  "section_code": "6664"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Kannur Town (North)",
+  "section_code": "6665"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Burnasseri (North)",
+  "section_code": "6666"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Chovva (North)",
+  "section_code": "6667"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Kadachira (North)",
+  "section_code": "6668"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Valapattanam (North)",
+  "section_code": "6669"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Thalassery (North)",
+  "section_code": "6670"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Dharmadam (North)",
+  "section_code": "6671"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Chokli (North)",
+  "section_code": "6672"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Kuthuparamba (North)",
+  "section_code": "6673"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Mattannur (North)",
+  "section_code": "6674"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Iritty (North)",
+  "section_code": "6675"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Srikandapuram (North)",
+  "section_code": "6676"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Taliparamba (North)",
+  "section_code": "6677"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Payyanur (North)",
+  "section_code": "6678"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Kannur Town (South)",
+  "section_code": "6679"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Burnasseri (South)",
+  "section_code": "6680"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Chovva (South)",
+  "section_code": "6681"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Kadachira (South)",
+  "section_code": "6682"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Valapattanam (South)",
+  "section_code": "6683"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Thalassery (South)",
+  "section_code": "6684"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Dharmadam (South)",
+  "section_code": "6685"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Chokli (South)",
+  "section_code": "6686"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Kuthuparamba (South)",
+  "section_code": "6687"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Mattannur (South)",
+  "section_code": "6688"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Iritty (South)",
+  "section_code": "6689"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Srikandapuram (South)",
+  "section_code": "6690"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Taliparamba (South)",
+  "section_code": "6691"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Payyanur (South)",
+  "section_code": "6692"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Kannur Town (East)",
+  "section_code": "6693"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Burnasseri (East)",
+  "section_code": "6694"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Chovva (East)",
+  "section_code": "6695"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Kadachira (East)",
+  "section_code": "6696"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Valapattanam (East)",
+  "section_code": "6697"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Thalassery (East)",
+  "section_code": "6698"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Dharmadam (East)",
+  "section_code": "6699"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Chokli (East)",
+  "section_code": "6700"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Kuthuparamba (East)",
+  "section_code": "6701"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Mattannur (East)",
+  "section_code": "6702"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Iritty (East)",
+  "section_code": "6703"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Srikandapuram (East)",
+  "section_code": "6704"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Taliparamba (East)",
+  "section_code": "6705"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Thalassery",
+  "section_name": "Payyanur (East)",
+  "section_code": "6706"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Srikandapuram",
+  "section_name": "Kannur Town Section 5",
+  "section_code": "6707"
+ },
+ {
+  "district": "Kannur",
+  "circle_division": "Kannur",
+  "section_name": "Burnasseri Section 5",
+  "section_code": "6708"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kasaragod Town",
+  "section_code": "6685"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Badiadkka",
+  "section_code": "6686"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kumbla",
+  "section_code": "6687"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Manjeshwar",
+  "section_code": "6688"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kanhangad",
+  "section_code": "6689"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Chittari",
+  "section_code": "6690"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Nileshwar",
+  "section_code": "6691"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Cheruvathur",
+  "section_code": "6692"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Bheemanady",
+  "section_code": "6693"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Trikaripur",
+  "section_code": "6694"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kasaragod Town (North)",
+  "section_code": "6695"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Badiadkka (North)",
+  "section_code": "6696"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kumbla (North)",
+  "section_code": "6697"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Manjeshwar (North)",
+  "section_code": "6698"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kanhangad (North)",
+  "section_code": "6699"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Chittari (North)",
+  "section_code": "6700"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Nileshwar (North)",
+  "section_code": "6701"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Cheruvathur (North)",
+  "section_code": "6702"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Bheemanady (North)",
+  "section_code": "6703"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Trikaripur (North)",
+  "section_code": "6704"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kasaragod Town (South)",
+  "section_code": "6705"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Badiadkka (South)",
+  "section_code": "6706"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kumbla (South)",
+  "section_code": "6707"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Manjeshwar (South)",
+  "section_code": "6708"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kanhangad (South)",
+  "section_code": "6709"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Chittari (South)",
+  "section_code": "6710"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Nileshwar (South)",
+  "section_code": "6711"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Cheruvathur (South)",
+  "section_code": "6712"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Bheemanady (South)",
+  "section_code": "6713"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Trikaripur (South)",
+  "section_code": "6714"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kasaragod Town (East)",
+  "section_code": "6715"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Badiadkka (East)",
+  "section_code": "6716"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kumbla (East)",
+  "section_code": "6717"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Manjeshwar (East)",
+  "section_code": "6718"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kasaragod",
+  "section_name": "Kanhangad (East)",
+  "section_code": "6719"
+ },
+ {
+  "district": "Kasaragod",
+  "circle_division": "Kanhangad",
+  "section_name": "Chittari (East)",
+  "section_code": "6720"
+ }
+]

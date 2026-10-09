@@ -18,7 +18,7 @@
 {% endif %}
 
 <div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}">
-	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}"
+	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}" data-doctype="{{ collection.doctype | e }}"
 	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" novalidate>
 		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
 		<div class="a3s-form__grid">
@@ -41,7 +41,7 @@
 				{%- elif f.type == "Link" %}
 					{%- if f.choices %}
 					<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}"
-					        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}" data-doctype="{{ collection.doctype | e }}"{% endif %}>
+					        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}"{% if f.depends_also %} data-depends-also="{{ f.depends_also | e }}"{% endif %} data-doctype="{{ collection.doctype | e }}"{% endif %}>
 						<option value="">—</option>
 						{%- for c in f.choices %}
 						{#- The option's value is the record's id, its text the record's name. -#}
@@ -165,13 +165,24 @@
 	Array.prototype.forEach.call(dependents, function (select) {
 		var source = document.getElementById("fld-" + select.dataset.dependsOn);
 		if (!source) return;
-		source.addEventListener("change", function () {
-			var keep = select.value;
+		/* The list also follows the fields in data-depends-also (a section, the district). */
+		var also = (select.dataset.dependsAlso || "").split(",").filter(Boolean)
+			.map(function (name) { return document.getElementById("fld-" + name); }).filter(Boolean);
+		function alsoValues() {
+			var out = {};
+			also.forEach(function (el) { out[el.name || el.id.replace(/^fld-/, "")] = el.value; });
+			return out;
+		}
+		var reload = function () {
+			/* A value filled in with its parent (from the lead, say) waits in data-pending
+			   for the parent's list to arrive. */
+			var keep = select.dataset.pending || select.value;
+			delete select.dataset.pending;
 			select.disabled = true;
 			fetch("/api/method/a3_sola.api.portal_fields.dependent_options", {
 				method: "POST", credentials: "same-origin",
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
-				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value })
+				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value, also: alsoValues() })
 			}).then(function (r) { return r.json(); }).then(function (body) {
 				var choices = (body && body.message && body.message.choices) || [];
 				select.innerHTML = "";
@@ -186,7 +197,9 @@
 				});
 			}).catch(function () { /* leave the list as it was */ })
 			  .then(function () { select.disabled = false; });
-		});
+		};
+		source.addEventListener("change", reload);
+		also.forEach(function (el) { el.addEventListener("change", reload); });
 	});
 })();
 </script>

@@ -22,6 +22,7 @@
   "company",
   "status",
   "lead",
+  "site_survey",
   "tab_connection",
   "sb_3",
   "discom",
@@ -55,6 +56,9 @@
   "village",
   "cb_10",
   "survey_number",
+  "landmark",
+  "taluk",
+  "google_location_url",
   "gps_coordinates",
   "tab_bank",
   "sb_11",
@@ -86,9 +90,6 @@
   "kyc_status",
   "kyc_missing",
   "cb_kyc",
-  "landmark",
-  "taluk",
-  "google_location_url",
   "sb_kyc_docs",
   "kyc_documents"
  ],
@@ -183,7 +184,17 @@
    "fieldname": "lead",
    "fieldtype": "Link",
    "label": "Lead",
-   "options": "Lead"
+   "options": "Lead",
+   "reqd": 1,
+   "description": "The enquiry this consumer came from. Choosing it fills in what the lead already knows."
+  },
+  {
+   "fieldname": "site_survey",
+   "fieldtype": "Link",
+   "options": "Site Survey",
+   "label": "Site Survey",
+   "read_only": 1,
+   "description": "The consumer's latest site survey: the newest submitted one, else the newest draft."
   },
   {
    "fieldname": "tab_connection",
@@ -239,10 +250,11 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "As printed on the DISCOM's forms, e.g. LT-1/Single.",
+   "description": "KSEB's tariff code the connection is billed under, e.g. LT-I for domestic. A design estimate for this consumer takes it as its Electricity Tariff.",
    "fieldname": "tariff_category",
-   "fieldtype": "Data",
-   "label": "Tariff Category"
+   "fieldtype": "Link",
+   "label": "Tariff Category",
+   "options": "KSEB Tariff Category"
   },
   {
    "default": "Single Phase",
@@ -377,6 +389,23 @@
    "fieldname": "survey_number",
    "fieldtype": "Data",
    "label": "Survey Number"
+  },
+  {
+   "fieldname": "landmark",
+   "fieldtype": "Data",
+   "label": "Landmark"
+  },
+  {
+   "fieldname": "taluk",
+   "fieldtype": "Data",
+   "label": "Taluk"
+  },
+  {
+   "description": "Composed from the coordinates when blank. Paste the shared Maps link otherwise.",
+   "fieldname": "google_location_url",
+   "fieldtype": "Data",
+   "label": "Google Location",
+   "options": "URL"
   },
   {
    "fieldname": "gps_coordinates",
@@ -554,23 +583,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "landmark",
-   "fieldtype": "Data",
-   "label": "Landmark"
-  },
-  {
-   "fieldname": "taluk",
-   "fieldtype": "Data",
-   "label": "Taluk"
-  },
-  {
-   "description": "Composed from the coordinates when blank. Paste the shared Maps link otherwise.",
-   "fieldname": "google_location_url",
-   "fieldtype": "Data",
-   "label": "Google Location",
-   "options": "URL"
-  },
-  {
    "fieldname": "sb_kyc_docs",
    "fieldtype": "Section Break",
    "label": "Documents"
@@ -585,7 +597,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-09 12:00:00.000000",
+ "modified": "2026-10-09 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

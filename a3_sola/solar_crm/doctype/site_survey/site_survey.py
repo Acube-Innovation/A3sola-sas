@@ -13,6 +13,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from a3_sola.api import record_links
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_float
@@ -20,6 +21,7 @@ from a3_sola.setup.ehs_checklist import EHS_QUESTIONS
 
 LINKS = (
 	("solar_consumer", "Solar Consumer"),
+	("lead", "Lead"),
 	("discom", "DISCOM"),
 	("discom_section", "DISCOM Section"),
 	("roof_type", "Roof Type"),
@@ -34,6 +36,7 @@ class SiteSurvey(Document):
 		self.seed_ehs_checklist()
 
 	def validate(self):
+		record_links.fill_survey(self)
 		assert_same_company(self, LINKS)
 		self.seed_ehs_checklist()
 		self.compute_roof_capacity()
@@ -126,7 +129,23 @@ class SiteSurvey(Document):
 				title=_("EHS Blocked"),
 			)
 
+	def on_update(self):
+		record_links.survey_changed(self)
+
+	def on_cancel(self):
+		record_links.survey_changed(self)
+
+	def on_trash(self):
+		# Point the consumer and lead away from this survey before it goes.
+		frappe.db.set_value("Solar Consumer", self.solar_consumer, "site_survey", None, update_modified=False)
+		if self.lead:
+			frappe.db.set_value("Lead", self.lead, "site_survey", None, update_modified=False)
+
+	def after_delete(self):
+		record_links.sync_survey_refs(self.solar_consumer, self.lead)
+
 	def on_submit(self):
+		record_links.survey_changed(self)
 		consumer = frappe.get_doc("Solar Consumer", self.solar_consumer)
 		consumer.set_status("Surveyed")
 		if not flt(consumer.approx_roof_area_sqft) and flt(self.total_roof_area_sqft):

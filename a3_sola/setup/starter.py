@@ -929,7 +929,7 @@ def _consumer(company, lead=None):
 			"discom": _master("DISCOM", "discom_name", "KSEB", company),
 			"discom_section": _master("DISCOM Section", "section_name", "Athani", company),
 			"consumer_number": "1156500000001",
-			"tariff_category": "LT-1/Single",
+			"tariff_category": "LT-I",
 			"connection_type": "Single Phase",
 			"connected_load_watts": 3000,
 			"sanctioned_load_kw": 5,

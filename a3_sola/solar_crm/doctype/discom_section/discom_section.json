@@ -8,11 +8,13 @@
  "field_order": [
   "naming_series",
   "section_name",
+  "section_code",
   "discom",
   "electrical_division",
   "electrical_subdivision",
   "cb_1",
   "district",
+  "circle_division",
   "territory",
   "company",
   "sb_2",
@@ -47,6 +49,14 @@
    "in_global_search": 1
   },
   {
+   "fieldname": "section_code",
+   "fieldtype": "Data",
+   "label": "Section Code",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "The section office's code in KSEB's directory. Only sections with a code are offered on the portal's lead form."
+  },
+  {
    "fieldname": "discom",
    "fieldtype": "Link",
    "label": "DISCOM",
@@ -75,6 +85,11 @@
    "label": "District",
    "in_list_view": 1,
    "in_standard_filter": 1
+  },
+  {
+   "fieldname": "circle_division",
+   "fieldtype": "Data",
+   "label": "Circle / Division"
   },
   {
    "fieldname": "territory",
@@ -154,7 +169,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-09 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "DISCOM Section",
@@ -237,6 +252,6 @@
  "naming_rule": "By \"Naming Series\" field",
  "title_field": "section_name",
  "show_title_field_in_link": 1,
- "search_fields": "section_name,district,discom",
+ "search_fields": "section_name,section_code,district,discom",
  "description": "Every DISCOM letter is addressed to the Assistant Engineer of a named section, so this master is correspondence data, not just a territory."
 }

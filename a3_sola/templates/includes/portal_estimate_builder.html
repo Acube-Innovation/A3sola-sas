@@ -10,9 +10,23 @@
 		<h2 class="a3s-main__title" id="de-title">{{ record_name | e }}</h2>
 		<dl class="a3s-de-summary" id="de-summary"></dl>
 	</div>
+	{#- Square icon buttons: each is named by its tooltip and its aria-label. -#}
 	<div class="a3s-de-head__actions">
-		<a class="a3s-btn a3s-btn--secondary" id="de-details-link" href="#">Back to details</a>
-		<a class="a3s-btn a3s-btn--primary" id="de-view-link" href="#">Done</a>
+		<a class="a3s-square-btn" id="de-details-link" href="#" title="Back to details" aria-label="Back to details">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-back"></use></svg>
+		</a>
+		<a class="a3s-square-btn" id="de-pdf-link" href="#" title="Download PDF" aria-label="Download PDF" download>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+		</a>
+		<button type="button" class="a3s-square-btn a3s-square-btn--whatsapp" id="de-whatsapp" title="Send to WhatsApp" aria-label="Send to WhatsApp">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
+		</button>
+		{#- Every change here is saved as it is made; this finishes and opens the estimate. -#}
+		<a class="a3s-square-btn a3s-square-btn--primary" id="de-view-link" href="#" title="Save and finish" aria-label="Save and finish">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+		</a>
+		{#- Copies this estimate into a new one with the next number; draft or submitted only. -#}
+		<button type="button" class="a3s-textlink a3s-de-head__saveas" id="de-save-as" hidden>Save As</button>
 	</div>
 </div>
 

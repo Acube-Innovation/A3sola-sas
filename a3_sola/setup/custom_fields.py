@@ -105,7 +105,9 @@ CUSTOM_FIELDS = {
 		# quotation carries a lender, and read by the installation's Details tab.
 		{"fieldname": "loan_required", "fieldtype": "Select", "options": "\nYes\nNo", "label": "Loan Required", "insert_after": "approx_capacity_kw"},
 		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "loan_required", "read_only": 1},
-		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "solar_consumer", "read_only": 1},
+		{"fieldname": "site_survey", "fieldtype": "Link", "options": "Site Survey", "label": "Site Survey", "insert_after": "solar_consumer", "read_only": 1,
+		 "description": "The latest site survey of this lead's consumer."},
+		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "site_survey", "read_only": 1},
 
 		# Outreach and Outreach Log live in their own "Outreach" tab, right after the Solar tab.
 		{"fieldname": "a3s_outreach_tab", "fieldtype": "Tab Break", "label": "Outreach", "insert_after": "solar_proposal"},

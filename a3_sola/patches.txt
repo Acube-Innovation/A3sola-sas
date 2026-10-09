@@ -93,3 +93,15 @@ a3_sola.patches.v1_2.estimate_inverter_options
 
 # Package inverter rows state the connection they are for.
 a3_sola.patches.v1_2.package_inverter_phase
+
+# Lead, Solar Consumer and Site Survey point at each other.
+a3_sola.patches.v1_2.link_lead_consumer_survey
+
+# Priced options built from the estimate's package are marked; only those are rebuilt.
+a3_sola.patches.v1_2.mark_package_options
+
+# A consumer's tariff category is a KSEB tariff code.
+a3_sola.patches.v1_2.consumer_tariff_kseb_code
+
+# Ticked inverter options are part of the system; a recommended one stays chosen.
+a3_sola.patches.v1_2.inverter_options_ticked

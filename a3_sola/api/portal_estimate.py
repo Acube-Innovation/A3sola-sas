@@ -15,6 +15,7 @@ from frappe import _
 from frappe.utils import cint, flt
 
 from a3_sola.api.expenses import EXPENSE_GROUPS
+from a3_sola.api.settings import get_value
 from a3_sola.api.portal_fields import link_choices, link_title
 from a3_sola.solar_crm.doctype.balance_of_system_package.balance_of_system_package import MAKE_TYPE
 
@@ -22,13 +23,15 @@ DOCTYPE = "Solar Design Estimate"
 SLUG = "design-estimates"
 
 # Step one, top to bottom: who it is for (with that consumer's details beside the
-# fields), then what is being proposed, laid out as one table row of options.
+# fields), then the package and how it is sized.
 DETAIL_COLUMNS = (
 	# The tariff asked for is KSEB's category code. The priced tariff the savings are worked
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
 	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code")),
-	("Package & Sizing with Options", ("connection_type", "system_type", "override_capacity_kw", "subsidy_option",
-		"subsidy_scheme", "solar_package")),
+	# The package and how it is sized, asked for as the desk asks: one package per estimate.
+	# The estimate keeps them on its recommended sizing row, which it follows.
+	("Package Details", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
+		"solar_package", "override_capacity_kw")),
 )
 
 # The consumer's details shown under the Consumer fields: (fieldname, label) per source.
@@ -58,25 +61,35 @@ SECTIONS = (
 		{"fieldname": "panel_count", "column": False, "hint": True},
 		{"fieldname": "panel_variant", "choices": "module_technology"},
 		{"fieldname": "panel_make", "choices": "module_make", "filter_by": "panel_variant"},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
-	), "computed": ("nos", "amount")},
+	), "computed": ("nos", "amount"),
+		# Shown as the Inverter Options are: a bold title, a line under it, then the figures.
+		"compact": {"title": (("panel_make", ""), ("panel_capacity_wp", " Wp"), ("panel_type", "")),
+			"sub": (("panel_variant", ""),)}},
 	{"key": "inverters", "label": "Inverter", "icon": "power", "fields": (
 		{"fieldname": "inverter_type", "choices": "inverter_technology"},
 		{"fieldname": "inverter_capacity_kw"},
 		{"fieldname": "inverter_count", "column": False, "hint": True},
 		{"fieldname": "inverter_phase", "choices": "phase"},
 		{"fieldname": "inverter_make", "choices": "inverter_make", "filter_by": "inverter_type"},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
-	), "computed": ("nos", "amount")},
+	), "computed": ("nos", "amount"),
+		"compact": {"title": (("inverter_make", ""), ("inverter_type", ""), ("inverter_capacity_kw", " kW")),
+			"sub": (("inverter_phase", ""),)}},
 	{"key": "batteries", "label": "Battery", "icon": "stack", "only_for": ("Off-Grid", "Hybrid"), "fields": (
 		{"fieldname": "battery_voltage"},
 		{"fieldname": "battery_phase", "choices": "phase"},
 		{"fieldname": "battery_capacity_ah"},
 		{"fieldname": "battery_variant", "choices": "battery_technology"},
 		{"fieldname": "battery_make", "choices": "battery_make", "filter_by": "battery_variant"},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "nos"},
 		{"fieldname": "rate"},
-	), "computed": ("total_energy_kwh", "amount")},
+	), "computed": ("total_energy_kwh", "amount"),
+		"compact": {"title": (("battery_make", ""), ("battery_variant", ""), ("battery_voltage", " V"), ("battery_capacity_ah", " Ah")),
+			"sub": (("battery_phase", ""), ("total_energy_kwh", " kWh"))}},
 	{"key": "bos_items", "label": "Balance of System", "icon": "box", "fields": (
 		{"fieldname": "item", "choices": "bos_item"},
 		{"fieldname": "phase", "choices": "phase"},
@@ -84,7 +97,9 @@ SECTIONS = (
 		{"fieldname": "make", "choices": "bos_make", "filter_by": "item"},
 		{"fieldname": "numbers"},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
-	), "computed": ("amount",)},
+	), "computed": ("amount",),
+		"compact": {"title": (("item", ""), ("make", "")), "sub": (("specification", ""), ("phase", "")),
+			"count": "numbers"}},
 	{"key": "kseb_expenses", "label": "KSEB Expenses", "icon": "receipt", "fields": (
 		{"fieldname": "particulars", "choices": "kseb_expenses_item"},
 		{"fieldname": "amount"},
@@ -129,12 +144,6 @@ LINKED_SECTIONS = (
 	), "computed": ("amount",)},
 )
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
-
-# The package's inverter alternatives, priced as the quotation prices them, shown under the
-# Inverter table. Each is ticked to offer it or unticked to leave it off the estimate, and one
-# ticked option is recommended - the option the estimate's system cost is taken from. They
-# come from the package, so there is nothing to add or remove.
-OPTIONS_SECTION = {"key": "options", "label": "Inverter Options"}
 
 INPUT = {
 	"Select": "select", "Link": "select", "Int": "number", "Float": "number", "Currency": "number",
@@ -199,31 +208,53 @@ def detail_columns(doc=None):
 
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
+				if df.options == "Solar Consumer":
+					# The lead each consumer came from, either way round the link is kept, so
+					# choosing a lead lists only its consumers.
+					rows = {r.name: r for r in frappe.get_all("Solar Consumer", fields=["name", "lead", "tariff_category"],
+						filters={"name": ["in", [c["value"] for c in choices]]})}
+					leads = {name: r.lead for name, r in rows.items()}
+					for lead, consumer in frappe.get_all("Lead", fields=["name", "solar_consumer"],
+							filters={"solar_consumer": ["in", [c["value"] for c in choices]]}, as_list=True):
+						leads[consumer] = leads.get(consumer) or lead
+					for c in choices:
+						c["lead"] = leads.get(c["value"]) or ""
+						# Its KSEB code, which the Electricity Tariff takes when a consumer is chosen.
+						c["tariff"] = (rows.get(c["value"]) or {}).get("tariff_category") or ""
+				if df.options == "Site Survey":
+					# The consumer each survey is of, so surveys follow the lead and consumer
+					# chosen. A survey has no name of its own, so it reads as its consumer's,
+					# with its id under it.
+					surveys = {r.name: r for r in frappe.get_all("Site Survey", fields=["name", "solar_consumer", "customer_name"],
+						filters={"name": ["in", [c["value"] for c in choices]]})}
+					for c in choices:
+						row = surveys.get(c["value"])
+						c["consumer"] = row.solar_consumer if row else ""
+						if row and row.customer_name:
+							c["label"] = row.customer_name
+							c["show_id"] = True
 				spec["options"] = [{"value": "", "label": "—"}] + choices
 				spec["searchable"] = True  # typed into as well as picked from: lists run long
+			if fieldname == "subsidy_option":
+				# Subsidy is for one tariff only (LT-I, domestic): the page offers it only there.
+				from a3_sola.solar_crm.doctype.kseb_tariff_category.kseb_tariff_category import kseb_code
+
+				required = get_value("subsidy_tariff_category", "LT-I")
+				spec["subsidy_tariff"] = kseb_code(required) or required
 			if fieldname == "subsidy_scheme":
 				spec["show_when"] = "subsidy_option=With Subsidy"
+				# The scheme a subsidised estimate takes unless another is chosen (PM Surya Ghar).
+				spec["default_value"] = get_value("default_subsidy_scheme") or ""
+				if not doc and not spec["value"]:
+					spec["value"] = spec["default_value"]
 			fields.append(spec)
 		columns.append({"title": _(title), "fields": fields})
-	columns[1]["rows"] = sizing_rows(doc, columns[1]["fields"])
+	# Worked out by the estimate, shown beside the package once there is one.
+	columns[1]["facts"] = [
+		{"label": _("DCR Compliant"), "value": _("Yes") if doc.is_dcr_compliant else _("No")},
+		{"label": _("Proposed System Size (kW)"), "value": "{0:g}".format(flt(doc.final_capacity_kw))},
+	] if doc and doc.solar_package else []
 	return columns
-
-
-def sizing_rows(doc, fields):
-	"""The Package & Sizing options as rows of {fieldname: value}, recommended first in place.
-
-	A new estimate starts with one row of the field defaults; an estimate saved before
-	options existed shows its own package and sizing as its one row.
-	"""
-	def as_text(value):
-		return "" if value is None else ("{0:g}".format(value) if isinstance(value, float) else str(value))
-
-	if doc and doc.get("sizing_options"):
-		return [
-			{"recommended": bool(row.is_recommended), "values": {f["fieldname"]: as_text(row.get(f["fieldname"])) for f in fields}}
-			for row in doc.sizing_options
-		]
-	return [{"recommended": True, "values": {f["fieldname"]: f["value"] for f in fields}}]
 
 
 def subject_profile(lead=None, solar_consumer=None):
@@ -353,6 +384,7 @@ def _choices(doc):
 		"panel_type": [{"value": v, "label": v} for v in ("DCR", "Non-DCR")],
 		# An estimate's equipment is for its own connection type, so that is the one phase
 		# its rows are offered.
+		"yes_no": [{"value": "0", "label": "No"}, {"value": "1", "label": "Yes"}],
 		"phase": [{"value": v, "label": v} for v in ("Single Phase", "Three Phase")
 			if not doc.get("connection_type") or v == doc.get("connection_type")],
 		"module_technology": technologies("Module"),
@@ -386,6 +418,8 @@ def _display(row, df):
 		return ""
 	if df.fieldtype == "Link":
 		return link_title(df.options, value)
+	if df.fieldtype == "Check":
+		return _("Yes") if cint(value) else ""
 	if df.fieldtype == "Currency":
 		return frappe.utils.fmt_money(value, currency="INR")
 	if df.fieldtype in ("Float", "Int"):
@@ -425,17 +459,29 @@ def _section(doc, section, child, rows):
 			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
+	rows = [{
+		"name": row.name,
+		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
+		"computed": bool(row.get("source")),
+		# An optional count left at 0 was never typed, so the popup shows it blank.
+		"values": {f: _editable_value(row, child.get_field(f)) for f in fieldnames},
+		"display": {f: _display(row, child.get_field(f)) for f in fieldnames},
+	} for row in rows]
+	compact = section.get("compact")
+	if compact:
+		def line(parts, display):
+			return " \u00b7 ".join(display[f] + unit for f, unit in parts if display.get(f))
+		for payload in rows:
+			payload["title"] = line(compact["title"], payload["display"])
+			payload["sub"] = line(compact["sub"], payload["display"])
 	return {
 		"key": section["key"], "label": _(section["label"]), "icon": section["icon"],
+		"compact": bool(compact),
+		# Which field holds the count, and whether a row can be marked as an Option.
+		"count_field": (compact or {}).get("count", "nos"),
+		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
 		"columns": columns, "fields": fields,
-		"rows": [{
-			"name": row.name,
-			# Rows the estimate computes are refreshed on every save; they are shown, not edited.
-			"computed": bool(row.get("source")),
-			# An optional count left at 0 was never typed, so the popup shows it blank.
-			"values": {f: _editable_value(row, child.get_field(f)) for f in fieldnames},
-			"display": {f: _display(row, child.get_field(f)) for f in fieldnames},
-		} for row in rows],
+		"rows": rows,
 	}
 
 
@@ -446,9 +492,6 @@ def _sections(doc):
 			continue
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
 		out.append(_section(doc, section, child, doc.get(section["key"])))
-		if section["key"] == "inverters":
-			# Shown under the inverters, not as a table of their own.
-			out[-1]["options"] = _options_section(doc)
 	for section in LINKED_SECTIONS:
 		if not frappe.has_permission(section["doctype"], "read"):
 			continue
@@ -456,124 +499,6 @@ def _sections(doc):
 		rows = [row for record in _linked_records(doc, section) for row in record.items]
 		out.append(_section(doc, section, child, rows))
 	return out
-
-
-def _options_section(doc):
-	"""Every inverter alternative of the estimate's package, ticked when it is offered."""
-	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import (
-		package_inverter_alternatives,
-	)
-
-	out = {"key": OPTIONS_SECTION["key"], "label": _(OPTIONS_SECTION["label"]), "rows": [], "total": 0.0,
-		"package": doc.solar_package or "", "packages": _fitting_packages(doc)}
-	if any(row.component_make for row in doc.options):
-		# Options priced by hand on the desk are that person's; the page leaves them be.
-		out["packages"] = []
-		return out
-	if not doc.solar_package:
-		return out
-	offered = {row.inverter_make: row for row in doc.options}
-	makes = {}
-	for row in package_inverter_alternatives(frappe.get_cached_doc("Solar Package", doc.solar_package), doc.connection_type):
-		if row.inverter_make not in makes:
-			makes[row.inverter_make] = row
-	for make, row in makes.items():
-		option = offered.get(make)
-		out["rows"].append({
-			"name": make,
-			"title": link_title("Component Make", make) if make else _("Inverter"),
-			"specification": row.inverter_specification or "",
-			"count": cint(row.inverter_count),
-			# What the estimate priced it at when offered; the package's price otherwise.
-			"cost": flt(option.system_cost) if option else flt(row.cost),
-			"offered": bool(option),
-			"recommended": bool(option and option.is_recommended),
-		})
-		if option and option.is_recommended:
-			out["total"] = flt(option.system_cost)
-	return out
-
-
-def _fitting_packages(doc):
-	"""The active packages for the estimate's connection and system type, smallest first:
-	what the Inverter tab offers when the package is to be chosen or changed there."""
-	from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
-
-	filters = {"is_active": 1}
-	if doc.company:
-		filters["company"] = doc.company
-	if doc.system_type:
-		filters["system_type"] = doc.system_type
-	rows = frappe.get_all("Solar Package", filters=filters, fields=["name", "package_name", "capacity_kw"],
-		order_by="capacity_kw asc, package_name asc")
-	if doc.connection_type:
-		# A package fits when it has an inverter for the estimate's connection type.
-		rows = [r for r in rows if doc.connection_type in package_phases(r.name)]
-	if doc.solar_package and not any(r.name == doc.solar_package for r in rows):
-		rows.insert(0, frappe._dict(name=doc.solar_package, package_name=link_title("Solar Package", doc.solar_package)))
-	return [{"value": r.name, "label": r.package_name or r.name} for r in rows]
-
-
-def _set_package(doc, package):
-	"""Build the estimate on another package, as choosing it on the details step does.
-
-	The recommended sizing option is the one the header follows, so the package goes there.
-	"""
-	if package and not frappe.db.exists("Solar Package", package):
-		frappe.throw(_("That package no longer exists. Reload the page."))
-	row = next((r for r in doc.sizing_options if r.is_recommended), None) or (doc.sizing_options[0] if doc.sizing_options else None)
-	if row:
-		row.solar_package = package or None
-	doc.solar_package = package or None
-	doc.save()
-
-
-def _use_option_inverter(doc, make):
-	"""Put the recommended option's inverter on the Inverter table's first row.
-
-	Its rate is cleared, so the estimate prices it from the package's rate for that inverter.
-	"""
-	from a3_sola.solar_crm.doctype.solar_package.solar_package import inverter_phase, inverters_for_phase
-
-	package = frappe.get_cached_doc("Solar Package", doc.solar_package)
-	source = next((r for r in inverters_for_phase(package, doc.connection_type) if r.inverter_make == make), None)
-	technology = frappe.db.get_value("Component Make", make, "technology")
-	if not source or not technology:
-		return
-	values = {
-		"inverter_type": technology,
-		"inverter_capacity_kw": source.inverter_capacity_kw,
-		"inverter_count": cint(source.inverter_count) or None,
-		"inverter_phase": inverter_phase(package, source) or None,
-		"inverter_make": make,
-		"rate": 0,
-	}
-	if doc.get("inverters"):
-		doc.inverters[0].update(values)
-	else:
-		doc.append("inverters", values)
-
-
-def _choose_option(doc, make, values):
-	"""Tick or untick a package inverter alternative, or recommend one, and save the estimate."""
-	excluded = doc.excluded_makes()
-	if make not in {row["name"] for row in _options_section(doc)["rows"]}:
-		frappe.throw(_("That option is no longer offered by the package. Reload the page."))
-	if cint(values.get("is_recommended")):
-		# Recommending an option offers it too, and makes it the inverter the estimate is
-		# built and priced with.
-		excluded.discard(make)
-		doc.flags.recommend_inverter_make = make
-		_use_option_inverter(doc, make)
-	elif "offered" in values:
-		if cint(values.get("offered")):
-			excluded.discard(make)
-		else:
-			if not [r for r in doc.options if r.inverter_make != make]:
-				frappe.throw(_("Keep at least one inverter option on the estimate."))
-			excluded.add(make)
-	doc.excluded_inverter_makes = "\n".join(sorted(excluded)) or None
-	doc.save()
 
 
 def _linked_records(doc, section):
@@ -639,7 +564,10 @@ def builder_state(doc):
 		"name": doc.name,
 		"title": link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else doc.name,
 		"editable": bool(doc.has_permission("write")) and cint(doc.docstatus) == 0,
+		# A draft or a submitted estimate can be copied into a new one; a cancelled one cannot.
+		"can_save_as": cint(doc.docstatus) in (0, 1) and bool(frappe.has_permission(DOCTYPE, "create")),
 		"details_route": details_route(doc.name),
+		"pdf_route": "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name),
 		"view_route": "/a3solaportal/{0}/{1}".format(SLUG, frappe.utils.quote(doc.name)),
 		"summary": [
 			{"label": _("Proposed size"), "value": "{0:g} kW".format(flt(doc.final_capacity_kw))},
@@ -651,6 +579,8 @@ def builder_state(doc):
 		"sections": _sections(doc),
 		"choices": _choices(doc),
 		"commercials": commercials,
+		# Said on the last save without stopping it, as the inverter sizing with Options.
+		"warnings": list(doc.flags.get("warnings") or []),
 	}
 
 
@@ -663,13 +593,6 @@ def state(name):
 def save_row(name, section, values, row=None):
 	"""Add a row to one System & Options table, or change one, and save the estimate."""
 	doc = _load(name)
-	if section == OPTIONS_SECTION["key"]:
-		values = frappe.parse_json(values) or {}
-		if "solar_package" in values:
-			_set_package(doc, values.get("solar_package"))
-		else:
-			_choose_option(doc, row, values)
-		return builder_state(doc)
 	if section in LINKED_BY_KEY:
 		_save_linked_row(doc, LINKED_BY_KEY[section], frappe.parse_json(values) or {}, row)
 		return builder_state(doc)
@@ -733,3 +656,59 @@ def download_pdf(name):
 	frappe.local.response.filename = "{0}.pdf".format(doc.name)
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download"
+
+
+@frappe.whitelist()
+def whatsapp_link(name):
+	"""A wa.me link to the consumer (else the lead), prefilled with the estimate's summary.
+
+	Opens WhatsApp with the message ready to send, as the proposal's button does; it does
+	not send on anyone's behalf. The PDF is not attached - wa.me cannot carry a file - so
+	it is downloaded beside it and sent in the chat.
+	"""
+	from a3_sola.api import outreach
+
+	doc = _load(name, "read")
+	mobile, person = None, None
+	if doc.solar_consumer:
+		mobile, person = frappe.db.get_value("Solar Consumer", doc.solar_consumer, ["mobile_no", "consumer_name"]) or (None, None)
+	if not mobile and doc.lead:
+		mobile, person = frappe.db.get_value("Lead", doc.lead, ["mobile_no", "lead_name"]) or (None, None)
+	if not mobile:
+		frappe.throw(_("Neither the consumer nor the lead has a mobile number to send to."))
+	commercials = doc.commercials()
+	package = link_title("Solar Package", doc.solar_package) if doc.solar_package else ""
+	lines = [
+		_("Dear {0},").format(person or _("Sir/Madam")),
+		"",
+		_("Here is the solar design estimate {0} prepared for you.").format(doc.name),
+		_("System: {0:g} kW, {1}, {2}").format(flt(doc.final_capacity_kw), doc.connection_type or "", doc.system_type or "").strip(", "),
+	]
+	if package:
+		lines.append(_("Package: {0}").format(package))
+	lines += [
+		_("Estimated total: {0}").format(frappe.utils.fmt_money(commercials["total"], currency="INR")),
+		"",
+		_("The detailed estimate PDF follows. Please reach out with any questions."),
+		"",
+		doc.company or "",
+	]
+	return outreach.whatsapp_link(mobile, "\n".join(lines).strip())
+
+
+@frappe.whitelist()
+def save_as(name):
+	"""Copy an estimate into a new draft - the desk's Duplicate - and say where it opens.
+
+	`frappe.copy_doc` copies what the desk's Duplicate copies, child tables included, and
+	leaves out the fields marked not to be copied. The copy is dated today, takes the next
+	number on save, and opens on its details step for the person to review.
+	"""
+	source = _load(name, "read")
+	if cint(source.docstatus) == 2:
+		frappe.throw(_("A cancelled design estimate cannot be copied. Amend it instead."))
+	frappe.has_permission(DOCTYPE, "create", throw=True)
+	copy = frappe.copy_doc(source)
+	copy.estimate_date = frappe.utils.today()
+	copy.insert()
+	return {"name": copy.name, "route": details_route(copy.name)}

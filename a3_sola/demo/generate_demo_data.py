@@ -189,7 +189,7 @@ def generate_consumers(company):
 			"discom": _master("DISCOM", "discom_name", "KSEB", company),
 			"discom_section": _master("DISCOM Section", "section_name", "Athani", company),
 			"consumer_number": f"11565{frappe.utils.random_string(8).upper()[:8]}",
-			"tariff_category": "LT-1/Single" if phase == "Single Phase" else "LT-1/Three",
+			"tariff_category": "LT-I",
 			"connection_type": phase,
 			"connected_load_watts": load * 1000 * 0.6,
 			"sanctioned_load_kw": load,

@@ -33,11 +33,59 @@
 	var current = -1;
 	var scrollingTo = null;
 
+	/* Controls that count: named, and not hidden by a show-when rule. */
 	function controls(root) {
 		return Array.prototype.filter.call(root.querySelectorAll("input, select, textarea"), function (el) {
-			return el.name;
+			var rule = el.closest("[data-show-when]");
+			return el.name && !(rule && rule.hidden);
 		});
 	}
+
+	/* ------------------------------------------------- collapsible sections */
+	/* One section open at a time: opening one closes the rest. */
+	function setOpen(panel, open) {
+		panels.forEach(function (p) {
+			var isThis = p === panel;
+			var show = isThis ? open : (open ? false : !p.classList.contains("is-collapsed"));
+			var toggle = p.querySelector(".a3s-edit__toggle");
+			var body = p.querySelector(".a3s-edit__body");
+			if (!toggle || !body) return;
+			p.classList.toggle("is-collapsed", !show);
+			body.hidden = !show;
+			toggle.setAttribute("aria-expanded", show ? "true" : "false");
+		});
+	}
+	panels.forEach(function (panel) {
+		var toggle = panel.querySelector(".a3s-edit__toggle");
+		if (toggle) toggle.addEventListener("click", function () { setOpen(panel, panel.classList.contains("is-collapsed")); });
+	});
+
+	/* ---------------------------------------------------- show-when rules */
+	/* A field that only applies to one answer shows with it, as the desk's depends_on does:
+	   "field" shows while that field is ticked or filled, "field=value" while it holds it. */
+	var conditional = Array.prototype.slice.call(form.querySelectorAll("[data-show-when]"));
+	function applyRules() {
+		conditional.forEach(function (wrap) {
+			var parts = wrap.dataset.showWhen.split("=");
+			var source = form.elements[parts[0]];
+			if (!source) return;
+			var on;
+			if (parts.length > 1) on = source.value === parts.slice(1).join("=");
+			else on = source.type === "checkbox" ? source.checked : String(source.value || "").trim() !== "";
+			wrap.hidden = !on;
+		});
+		Array.prototype.forEach.call(form.querySelectorAll(".a3s-edit__group"), function (group) {
+			var fields = group.querySelectorAll(".a3s-field");
+			group.hidden = fields.length > 0 && Array.prototype.every.call(fields, function (f) { return f.hidden; });
+		});
+	}
+	var sources = {};
+	conditional.forEach(function (wrap) { sources[wrap.dataset.showWhen.split("=")[0]] = true; });
+	Object.keys(sources).forEach(function (fieldname) {
+		var el = form.elements[fieldname];
+		if (el) el.addEventListener("change", function () { applyRules(); refreshCounts(); });
+	});
+	applyRules();
 
 	function isFilled(el) {
 		if (el.type === "checkbox") return el.checked;
@@ -68,6 +116,7 @@
 	function goTo(index, focusTab, instant) {
 		var panel = panels[index];
 		if (!panel) return;
+		setOpen(panel, true);  // a section chosen, or with a field to fix, opens
 		scrollingTo = index;
 		setCurrent(index);
 		var y = panel.getBoundingClientRect().top + window.pageYOffset - topOffset();
@@ -88,7 +137,8 @@
 			if (panel.getBoundingClientRect().top <= line) index = i;
 		});
 		/* At the very bottom the last section counts, even if it is short. */
-		if (window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2) index = panels.length - 1;
+		/* Only once scrolled: with the sections closed the page can open already at its bottom. */
+		if (window.pageYOffset > 0 && window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2) index = panels.length - 1;
 		setCurrent(index);
 	}
 
@@ -122,6 +172,8 @@
 			var step = steps[i];
 			var count = step.querySelector("[data-count]");
 			if (count) count.textContent = done + " of " + all.length + " filled";
+			var inHeading = panel.querySelector("[data-panel-count]");
+			if (inHeading) inHeading.textContent = done + " of " + all.length + " filled";
 			step.classList.toggle("is-complete", all.length > 0 && done === all.length);
 		});
 	}

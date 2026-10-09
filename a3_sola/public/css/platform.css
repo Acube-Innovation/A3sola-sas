@@ -1625,7 +1625,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-badge--lead, .a3s-badge--open, .a3s-badge--replied {
 	background: rgba(41, 171, 226, 0.14); color: #1b8dc0;
 }
-.a3s-badge--opportunity, .a3s-badge--quotation, .a3s-badge--recommended {
+.a3s-badge--opportunity, .a3s-badge--quotation {
 	background: var(--color-accent-soft); color: var(--color-accent-hover);
 }
 .a3s-badge--interested, .a3s-badge--converted {
@@ -2198,6 +2198,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	color: var(--color-text-muted);
 }
 .a3s-edit__card-title + .a3s-edit__subtitle { margin-top: 0; padding-top: 0; border-top: 0; }
+.a3s-edit__body > .a3s-edit__group:first-child > .a3s-edit__subtitle { margin-top: 0; padding-top: 0; border-top: 0; }
 
 /* ---- breadcrumb row: the trail on the left, the way back out on the right ---- */
 .a3s-main__topline {
@@ -2453,24 +2454,70 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-combo--field .a3s-combo__list { top: calc(100% + 0.25rem); }
 .a3s-combo__native { display: none !important; }
 .a3s-de-money { white-space: nowrap; text-align: right; }
-.a3s-de-options { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px dashed var(--color-border); }
-.a3s-de-options__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
-.a3s-de-options__title { margin: 0; font-size: 1rem; }
-.a3s-de-options__package { margin: 0.75rem 0 0.5rem; max-width: 28rem; }
 .a3s-de-option__name { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
 .a3s-de-option__name input { width: 1rem; height: 1rem; accent-color: var(--color-accent); }
-.a3s-de-options .a3s-de-sub { padding-left: 1.5rem; }
-.a3s-de-options tr.is-off td { color: var(--color-text-muted); }
-.a3s-de-options .a3s-field__hint { margin: 0.2rem 0 0.5rem; }
+.a3s-de-table--compact tr.is-off td { color: var(--color-text-muted); }
+/* edit page: sections that open and close from their heading */
+.a3s-edit__toggle {
+	display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0; border: 0; background: none; cursor: pointer;
+	font: inherit; color: inherit; text-align: left;
+}
+.a3s-edit__toggle-label { flex: 1 1 auto; }
+.a3s-edit__toggle-count { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--color-text-muted); }
+.a3s-edit__chevron { flex: none; width: 1.1rem; height: 1.1rem; color: var(--color-text-muted); transform: rotate(180deg); transition: transform var(--duration) var(--ease); }
+.a3s-wizard__panel.is-collapsed .a3s-edit__chevron { transform: rotate(0deg); }
+.a3s-wizard__panel.is-collapsed .a3s-edit__card-title { margin-bottom: 0; }
+.a3s-edit__toggle:hover .a3s-edit__chevron, .a3s-edit__toggle:focus-visible .a3s-edit__chevron { color: var(--color-accent); }
+.a3s-edit__body[hidden], [data-show-when][hidden], .a3s-edit__group[hidden] { display: none; }
+
+/* square icon buttons: white, orange (the main action), and white with WhatsApp's green */
+.a3s-square-btn {
+	display: inline-grid; place-items: center; width: 2.9rem; height: 2.9rem; padding: 0; cursor: pointer;
+	border: 1px solid var(--color-border-strong); border-radius: 0.8rem; background: var(--color-surface); color: var(--color-text);
+	box-shadow: var(--shadow-soft); transition: all var(--duration) var(--ease);
+}
+.a3s-square-btn .a3s-ic { width: 1.25rem; height: 1.25rem; }
+.a3s-square-btn:hover, .a3s-square-btn:focus-visible { border-color: var(--color-accent); color: var(--color-accent-hover); transform: translateY(-1px); }
+.a3s-square-btn[hidden] { display: none; }
+.a3s-square-btn--primary { border-color: transparent; background-image: var(--color-accent-gradient); color: #fff; }
+.a3s-square-btn--primary:hover, .a3s-square-btn--primary:focus-visible { color: #fff; border-color: transparent; box-shadow: var(--shadow-raised); }
+.a3s-square-btn--whatsapp, .a3s-square-btn--whatsapp:hover, .a3s-square-btn--whatsapp:focus-visible { color: #25d366; }
+/* A square button made of a link: `.a3s a` would otherwise hand it the text colour around it. */
+.a3s a.a3s-square-btn--primary, .a3s a.a3s-square-btn--primary:hover { color: #fff; }
+.a3s a.a3s-square-btn:not(.a3s-square-btn--primary):hover { color: var(--color-accent-hover); }
+.a3s-square-btn--whatsapp .a3s-ic { width: 1.4rem; height: 1.4rem; }
+
+/* row actions shown as icons: edit and remove */
+.a3s-icon-btn {
+	display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; padding: 0; margin-left: 0.15rem;
+	border: 1px solid transparent; border-radius: 0.55rem; background: transparent; color: var(--color-text-muted); cursor: pointer;
+}
+.a3s-icon-btn .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-icon-btn:hover, .a3s-icon-btn:focus-visible { color: var(--color-accent-hover); background: var(--color-accent-soft); }
+.a3s-icon-btn--danger:hover, .a3s-icon-btn--danger:focus-visible { color: #c0392b; background: rgba(255, 95, 87, 0.12); }
+.a3s-de-option-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
+.a3s-de-item__title { display: block; margin-top: 0.3rem; font-weight: 600; }
+.a3s-de-item__title.is-first { margin-top: 0; }
+.a3s-de-table--compact .a3s-de-sub { padding-left: 0; }
+.a3s-de-table--compact table { width: 100%; }
+.a3s-de-table--compact td:first-child, .a3s-de-table--compact th:first-child { width: 44%; min-width: 7.5rem; }
+.a3s-de-table--compact td, .a3s-de-table--compact th { padding-left: 0.4rem; padding-right: 0.4rem; }
+/* Edit and Remove stack rather than push the figures out of the card. */
+.a3s-de-table--compact .a3s-de-saved__actions { width: 1%; }
+.a3s-de-table--compact .a3s-de-amount { font-weight: 600; }
+.a3s-de-unpriced { display: inline-block; margin-top: 0.3rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-de-table--compact tr.is-off .a3s-de-unpriced { color: var(--color-accent-hover); }
 .a3s-de-sub { display: block; margin-top: 0.2rem; font-size: 0.75rem; color: var(--color-text-muted); }
 
 /* a "?" beside a field label, opening a short explanation of the chosen value */
-.a3s-help { display: flex; align-items: center; gap: 0.4rem; }
-.a3s-field:has(> .a3s-help) { position: relative; }
+/* the box and its "?" side by side; the details open under the field */
+.a3s-help-row { display: flex; align-items: center; gap: 0.5rem; }
+.a3s-help-row > input, .a3s-help-row > select { flex: 1 1 auto; min-width: 0; }
+.a3s-field:has(.a3s-help-row) { position: relative; }
 .a3s-help__btn {
-	width: 1.15rem; height: 1.15rem; padding: 0; display: inline-grid; place-items: center; cursor: pointer;
+	flex: none; width: 2.25rem; height: 2.25rem; padding: 0; display: inline-grid; place-items: center; cursor: pointer;
 	border: 1px solid var(--color-border-strong); border-radius: 50%; background: var(--color-surface);
-	font: inherit; font-size: 0.7rem; font-weight: 800; line-height: 1; color: var(--color-text-muted);
+	font: inherit; font-size: 1rem; font-weight: 800; line-height: 1; color: var(--color-text-muted);
 }
 .a3s-help__btn:hover, .a3s-help__btn[aria-expanded="true"] { border-color: var(--color-accent); color: var(--color-accent); }
 .a3s-help__pop {
@@ -2618,6 +2665,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 @media (min-width: 900px) { .a3s-de-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .a3s-de-fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
 .a3s-de-fields .a3s-field__hint { margin: 0; font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-fact { align-content: start; }
+.a3s-de-fact__label { font-size: 0.8125rem; font-weight: 600; }
+.a3s-de-fact strong { padding: 0.6rem 0; font-weight: 600; }
 .a3s-de-fields__wide { grid-column: 1 / -1; }
 /* Step one: the consumer across the top, fields on the left and their details on the right. */
 .a3s-de-consumer { margin-bottom: 1.25rem; }
@@ -2666,7 +2716,16 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-actions .a3s-form__status { margin-right: auto; }
 
 .a3s-de-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.a3s-de-head__actions { display: flex; gap: 0.5rem; }
+.a3s-de-head__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; max-width: 14rem; }
+/* Save As sits under the four buttons, as a link, right-aligned with them. */
+.a3s-de-head__saveas { flex-basis: 100%; text-align: right; }
+.a3s-textlink {
+	padding: 0.15rem 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 0.875rem; font-weight: 700;
+	color: var(--color-accent-hover); text-decoration: underline; text-underline-offset: 0.2em;
+}
+.a3s-textlink:hover, .a3s-textlink:focus-visible { color: var(--color-accent); }
+.a3s-textlink[hidden] { display: none; }
+.a3s-textlink:disabled { opacity: 0.6; cursor: progress; }
 .a3s-de-summary { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin: 0.4rem 0 0; font-size: 0.8125rem; }
 .a3s-de-summary div { display: flex; gap: 0.35rem; }
 .a3s-de-summary dt { color: var(--color-text-muted); }

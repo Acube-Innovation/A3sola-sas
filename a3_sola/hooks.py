@@ -63,5 +63,6 @@ override_doctype_dashboards = {
 jinja = {
 	"methods": [
 		"a3_sola.api.proposal.proposal_context",
+		"a3_sola.api.assets.a3s_asset_version",
 	],
 }

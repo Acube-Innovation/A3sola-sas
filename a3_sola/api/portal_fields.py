@@ -25,6 +25,8 @@ DISPLAY_TYPES = INPUT_TYPES | {"Attach", "Attach Image", "Read Only", "Long Text
 INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
 NUMERIC_TYPES = {"Int", "Float", "Currency", "Percent"}
 LINK_CHOICE_LIMIT = 300
+#: KSEB's directory has some 820 section offices; all of them are offered.
+SECTION_CHOICE_LIMIT = 2000
 TRUE = {"1", "true", "on", "yes"}
 
 
@@ -130,6 +132,26 @@ def link_choices(doctype, filters=None, limit=None):
 	# the message it queues is not, and the form then reports it in place of the real error.
 	if not frappe.has_permission(doctype, "read"):
 		return []
+	if doctype == "DISCOM Section":
+		# Only the sections in KSEB's directory - those with a code - read as
+		# "Changanassery – 4638 (Kottayam)": the code, and the district that tells apart two
+		# offices the directory gives one code or one name.
+		rows = frappe.get_list(
+			"DISCOM Section", fields=["name", "section_name", "section_code", "district"],
+			filters=(filters or []) + [["section_code", "is", "set"]],
+			order_by="section_name asc, district asc", limit_page_length=SECTION_CHOICE_LIMIT,
+		)
+		return [
+			{"value": r.name, "label": "{0} \u2013 {1}{2}".format(
+				r.section_name, r.section_code, " ({0})".format(r.district) if r.district else "")}
+			for r in rows
+		]
+	if doctype == "KSEB Tariff Category" and not filters:
+		# Read as "LT-I · Domestic", in the board's own order: the names alone repeat
+		# (IT & ITES is both an LT and an HT category) and say nothing of the code.
+		from a3_sola.api.portal_estimate import tariff_code_choices
+
+		return tariff_code_choices()[0]
 	try:
 		meta = frappe.get_meta(doctype)
 		title_field = meta.title_field if meta.title_field and meta.title_field != "name" else None
@@ -154,6 +176,37 @@ DEPENDENT_LINKS = {
 	"discom_section": ("discom", "discom"),
 }
 
+#: Further fields of the same record a dependent Link also follows, as
+#: {fieldname: (target field, source field, how the source value is read)}. A section is
+#: offered only in the record's district: the form's District is an Indian District
+#: ("Ernakulam, Kerala"), the section's district is its name ("Ernakulam").
+DEPENDENT_ALSO = {
+	"discom_section": (("district", "district", "Indian District.district_name"),),
+}
+
+
+def _also_filters(fieldname, values):
+	"""The extra filters `DEPENDENT_ALSO` adds, from the record's or the form's values."""
+	out = []
+	for target_field, source_field, read in DEPENDENT_ALSO.get(fieldname, ()):
+		value = (values or {}).get(source_field)
+		if not value:
+			continue
+		if read:
+			doctype, field = read.split(".")
+			value = frappe.db.get_value(doctype, value, field) or value
+		out.append([target_field, "=", value])
+	return out
+
+
+def default_for(df):
+	"""A Link's default where the settings name one: the DISCOM is Kerala State Electricity Board."""
+	if df.fieldtype == "Link" and df.options == "DISCOM" and df.fieldname == "discom":
+		from a3_sola.api.settings import get_value
+
+		return get_value("default_discom") or None
+	return None
+
 
 def link_filters(df, doc=None):
 	"""Narrow a Link field's options by another field of the same record.
@@ -162,11 +215,16 @@ def link_filters(df, doc=None):
 	them would make the person find the right one rather than be given it.
 	"""
 	rule = DEPENDENT_LINKS.get(df.fieldname)
-	if not rule or doc is None:
+	if not rule:
 		return None
 	target_field, source_field = rule
-	value = doc.get(source_field) if hasattr(doc, "get") else None
-	return [[target_field, "=", value]] if value else None
+	values = doc if hasattr(doc, "get") else {}
+	value = values.get(source_field) if values else None
+	if not value and source_field == "discom":
+		# A new or empty record starts on the default DISCOM, so its sections are listed.
+		value = default_for(frappe._dict(fieldtype="Link", options="DISCOM", fieldname="discom"))
+	filters = ([[target_field, "=", value]] if value else []) + _also_filters(df.fieldname, values)
+	return filters or None
 
 
 def edit_spec(df, value, doc=None):
@@ -187,10 +245,16 @@ def edit_spec(df, value, doc=None):
 		spec["link_doctype"] = df.options
 		rule = DEPENDENT_LINKS.get(df.fieldname)
 		spec["depends_field"] = rule[1] if rule else ""
+		# Other fields the list also follows (a section, the district), reloaded on change.
+		spec["depends_also"] = ",".join(source for _t, source, _r in DEPENDENT_ALSO.get(df.fieldname, ()))
+		if not value:
+			value = default_for(df)
+			if value:
+				spec["value"] = value
 		choices = link_choices(df.options, filters=link_filters(df, doc))
 		# Past the limit the list is not the whole table, so offer a free-text field with
 		# the fetched names as suggestions rather than a dropdown that hides the rest.
-		spec["many"] = len(choices) >= LINK_CHOICE_LIMIT
+		spec["many"] = len(choices) >= LINK_CHOICE_LIMIT and df.options != "DISCOM Section"
 		if value and not any(c["value"] == value for c in choices):
 			choices.insert(0, {"value": value, "label": link_title(df.options, value)})
 		spec["choices"] = choices
@@ -215,7 +279,7 @@ def edit_spec(df, value, doc=None):
 
 
 @frappe.whitelist()
-def dependent_options(doctype=None, fieldname=None, value=None):
+def dependent_options(doctype=None, fieldname=None, value=None, also=None):
 	"""The options for a dependent Link field, given what its source field now holds.
 
 	Called when the form's source field changes - pick a state, get that state's
@@ -229,5 +293,6 @@ def dependent_options(doctype=None, fieldname=None, value=None):
 	if not df or df.fieldtype != "Link":
 		frappe.throw(frappe._("{0} is not a link field.").format(fieldname))
 	target_field = rule[0]
-	filters = [[target_field, "=", value]] if value else None
-	return {"choices": link_choices(df.options, filters=filters)}
+	also = frappe.parse_json(also) if also else {}
+	filters = ([[target_field, "=", value]] if value else []) + _also_filters(fieldname, also if isinstance(also, dict) else {})
+	return {"choices": link_choices(df.options, filters=filters or None)}

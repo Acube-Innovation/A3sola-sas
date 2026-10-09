@@ -26,6 +26,8 @@ def get_context(context):
 			{"label": "Design"},
 		],
 	)
+	# Three columns - sections, rows, commercials - so the page takes the full width.
+	context.main_wide = True
 	context.record_name = doc.name
 	context.builder_json = portal_estimate.builder_json(doc)
 	context.csrf_token = frappe.sessions.get_csrf_token()
