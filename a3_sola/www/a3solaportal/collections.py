@@ -36,7 +36,10 @@ COLLECTIONS = {
 	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart"},
 	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
 	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID"},
-	"site-surveys": {"doctype": "Site Survey", "title": "Site Survey", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin"},
+	# `edit_after_create`: the create form asks only the few fields a record needs to exist,
+	# so once it does, the person goes straight on to its full edit form.
+	"site-surveys": {"doctype": "Site Survey", "title": "Site Survey", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin",
+	                 "edit_after_create": True},
 	# `form_extra` names fields the create form must render beyond the mandatory ones:
 	# the manual result and the reason that goes with it are the point of this form,
 	# and neither is mandatory, so neither would be picked up on its own.

@@ -17,6 +17,9 @@ class A3SolaSettings(Document):
 		self.validate_isolation_gate()
 		self.record_sensitive_changes()
 
+	def on_update(self):
+		sync_default_subsidy_scheme(self.default_subsidy_scheme)
+
 	def validate_tenancy_strategy(self):
 		"""The strategy is architecture, not a toggle.
 
@@ -216,3 +219,15 @@ def repair_dangling_links():
 		frappe.db.commit()
 		frappe.clear_cache(doctype=SETTINGS_DOCTYPE)
 	return cleared
+
+
+def sync_default_subsidy_scheme(scheme=None):
+	"""Every new record's subsidy scheme starts on the one named in the settings.
+
+	Held as the site's global default for the `subsidy_scheme` field, which Frappe applies
+	to any new document with that field - lead, estimate, eligibility check, quotation,
+	opportunity, project, installation - on the desk and when one is made in code.
+	"""
+	if scheme is None:
+		scheme = frappe.db.get_single_value(SETTINGS_DOCTYPE, "default_subsidy_scheme")
+	frappe.defaults.set_global_default("subsidy_scheme", scheme or None)

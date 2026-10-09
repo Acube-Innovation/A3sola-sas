@@ -77,7 +77,7 @@
 				.then(function (data) { return { ok: response.ok, code: response.status, data: data }; });
 		}).then(function (result) {
 			if (result.ok && result.data && result.data.message) {
-				setStatus("Lead created. Taking you to the list…", "success");
+				setStatus("Lead created. Opening it to finish the details…", "success");
 				window.location.assign(result.data.message.route || "/a3solaportal/leads");
 				return;
 			}

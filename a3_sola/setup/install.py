@@ -65,6 +65,9 @@ def setup():
 	backfill_settings_defaults()
 	seed_all_companies()
 	seed_settings()
+	from a3_sola.solar_crm.doctype.a3_sola_settings.a3_sola_settings import sync_default_subsidy_scheme
+
+	sync_default_subsidy_scheme()
 	seed_expense_items()
 	seed_kseb_tariff_categories()
 	seed_kseb_section_offices()

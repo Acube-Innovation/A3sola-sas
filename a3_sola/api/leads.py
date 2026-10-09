@@ -272,7 +272,8 @@ def create_lead(
 	# which is why this endpoint does no role-checking of its own.
 	doc.insert()
 
-	return {"name": doc.name, "route": "/a3solaportal/leads"}
+	# Straight on to the full edit form, so the rest of the lead is filled in without a detour.
+	return {"name": doc.name, "route": lead_route(doc.name) + "/edit"}
 
 
 @frappe.whitelist()

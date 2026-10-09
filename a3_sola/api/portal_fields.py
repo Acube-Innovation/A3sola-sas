@@ -199,12 +199,21 @@ def _also_filters(fieldname, values):
 	return out
 
 
+#: Link fields that start on a value named in A3 Sola Settings, as (options, fieldname): setting.
+SETTINGS_DEFAULTS = {
+	("DISCOM", "discom"): "default_discom",
+	("Subsidy Scheme", "subsidy_scheme"): "default_subsidy_scheme",
+}
+
+
 def default_for(df):
-	"""A Link's default where the settings name one: the DISCOM is Kerala State Electricity Board."""
-	if df.fieldtype == "Link" and df.options == "DISCOM" and df.fieldname == "discom":
+	"""A Link's default where the settings name one: the DISCOM is Kerala State Electricity
+	Board, the subsidy scheme PM Surya Ghar."""
+	setting = SETTINGS_DEFAULTS.get((df.options, df.fieldname)) if df.fieldtype == "Link" else None
+	if setting:
 		from a3_sola.api.settings import get_value
 
-		return get_value("default_discom") or None
+		return get_value(setting) or None
 	return None
 
 

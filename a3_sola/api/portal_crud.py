@@ -20,7 +20,7 @@ from a3_sola.api import portal_chain
 from a3_sola.api.portal_fields import NUMERIC_TYPES
 from a3_sola.www.a3solaportal.collections import (
 	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
-	load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
+	is_editable, load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
 )
 
 TRUE = {"1", "true", "on", "yes"}
@@ -80,6 +80,8 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 		portal_chain.link_back(step, source_doc, doc.name)
 
 	route = record_route(slug, doc.name) if slug in DETAIL_SLUGS else f"/a3solaportal/{slug}"
+	if cfg.get("edit_after_create") and is_editable(doc):
+		route = record_route(slug, doc.name) + "/edit"
 	return {"name": doc.name, "route": route, "desk": desk_route(doctype, doc.name)}
 
 
