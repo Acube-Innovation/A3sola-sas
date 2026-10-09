@@ -1,0 +1,66 @@
+{#- The proposal's Design Comparison, from api/proposal_comparison.render. Option 1 in full;
+    every further option by its differing main components and its total. Inline styles and
+    plain tables, because the same markup goes into the desk form, the portal and the PDF. -#}
+{%- set base = data.base %}
+<div class="a3s-comparison" style="font-size: 13px; line-height: 1.45;">
+	<style>
+		.a3s-comparison table { width: 100%; border-collapse: collapse; margin: 0 0 6px; }
+		.a3s-comparison th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 6px 8px; }
+		.a3s-comparison td { padding: 6px 8px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+		.a3s-comparison .num { text-align: right; white-space: nowrap; }
+		.a3s-comparison .total td { font-weight: 700; border-top: 2px solid #2a3342; border-bottom: 0; }
+		.a3s-comparison .sub td { color: #5b6575; }
+		.a3s-comparison h3 { font-size: 15px; margin: 18px 0 2px; }
+		.a3s-comparison .meta { color: #5b6575; margin: 0 0 8px; }
+		.a3s-comparison .note { color: #5b6575; font-style: italic; margin: 4px 0 0; }
+		.a3s-comparison .up { color: #b3261e; } .a3s-comparison .down { color: #1a7a2b; }
+		.a3s-comparison .opt { page-break-inside: avoid; }
+	</style>
+
+	<div class="opt">
+		<h3>{{ _("Option 1") }} &middot; {{ base.package or base.name }}</h3>
+		<p class="meta">{{ base.name }} &middot; {{ "%g" | format(base.capacity_kw) }} kW</p>
+		<table>
+			<tr><th>{{ _("Item") }}</th><th>{{ _("Description") }}</th><th class="num">{{ _("Qty") }}</th><th class="num">{{ _("Rate") }}</th><th class="num">{{ _("Amount") }}</th></tr>
+			{%- for table in ("panels", "inverters", "batteries") %}
+			{%- for line in base.main[table] %}
+			<tr><td>{{ line.component }}</td><td>{{ line.description }}</td><td class="num">{{ line.qty }}</td><td class="num">{{ money(line.rate) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
+			{%- endfor %}
+			{%- endfor %}
+			{%- for line in base.other_lines %}
+			<tr><td colspan="4">{{ _(line.label) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
+			{%- endfor %}
+			<tr class="sub"><td colspan="4">{{ _("Subtotal") }}</td><td class="num">{{ money(base.subtotal) }}</td></tr>
+			<tr class="sub"><td colspan="4">{{ _("GST") }}{% if base.gst_percent %} ({{ "%g" | format(base.gst_percent) }}%){% endif %}</td><td class="num">{{ money(base.gst_amount) }}</td></tr>
+			<tr class="total"><td colspan="4">{{ _("Total") }}</td><td class="num">{{ money(base.total) }}</td></tr>
+		</table>
+	</div>
+
+	{%- for v in data.variants %}
+	{%- set e = v.estimate %}
+	<div class="opt">
+		<h3>{{ _("Option {0}").format(v.number) }} &middot; {{ e.package or e.name }}</h3>
+		<p class="meta">{{ e.name }} &middot; {{ "%g" | format(e.capacity_kw) }} kW &middot; {{ _("compared with Option 1") }}</p>
+		<table>
+			<tr><th>{{ _("Component") }}</th><th>{{ _("Option 1") }}</th><th>{{ _("Option {0}").format(v.number) }}</th></tr>
+			{%- for c in v.changes %}
+			<tr>
+				<td>{{ c.component }}</td>
+				<td>{% for l in c.base %}{{ l.description }} &times; {{ l.qty }} &middot; {{ money(l.amount) }}{% if not loop.last %}<br>{% endif %}{% else %}&mdash;{% endfor %}</td>
+				<td>{% for l in c.this %}{{ l.description }} &times; {{ l.qty }} &middot; {{ money(l.amount) }}{% if not loop.last %}<br>{% endif %}{% else %}&mdash;{% endfor %}</td>
+			</tr>
+			{%- endfor %}
+			<tr class="total">
+				<td>{{ _("Total price") }}</td>
+				<td class="num">{{ money(base.total) }}</td>
+				<td class="num">{{ money(e.total) }}
+					{%- if v.difference %} <span class="{{ 'up' if v.difference > 0 else 'down' }}">({{ '+' if v.difference > 0 else '&minus;' }}{{ money(v.difference | abs) }})</span>{% endif %}</td>
+			</tr>
+		</table>
+		<p class="note">
+			{%- if v.changes %}{{ _("All other items are as in Option 1.") }}
+			{%- else %}{{ _("Same solar panels, inverters and batteries as Option 1; the price differs in the rest of the system.") if v.difference else _("Same as Option 1.") }}{% endif %}
+		</p>
+	</div>
+	{%- endfor %}
+</div>

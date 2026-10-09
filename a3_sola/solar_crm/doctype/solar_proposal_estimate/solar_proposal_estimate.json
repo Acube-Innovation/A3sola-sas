@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-09 15:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "solar_design_estimate",
+  "is_base",
+  "estimate_date",
+  "solar_package",
+  "capacity_kw",
+  "total_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "solar_design_estimate",
+   "fieldtype": "Link",
+   "options": "Solar Design Estimate",
+   "label": "Design Estimate",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "is_base",
+   "fieldtype": "Check",
+   "label": "Base",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "The first row: the estimate the others are compared with, and the one the proposal is generated from."
+  },
+  {
+   "fieldname": "estimate_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "fetch_from": "solar_design_estimate.estimate_date"
+  },
+  {
+   "fieldname": "solar_package",
+   "fieldtype": "Link",
+   "options": "Solar Package",
+   "label": "Package",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 3,
+   "fetch_from": "solar_design_estimate.solar_package"
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "fetch_from": "solar_design_estimate.final_capacity_kw"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The estimate's commercials total, worked out on save."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-09 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Proposal Estimate",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "description": "A design estimate offered in a proposal. The first row is the base the others are compared with."
+}

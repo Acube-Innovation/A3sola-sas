@@ -77,6 +77,12 @@
   </table>
 {% endfor %}
 
+{# --- Design comparison: Option 1 in full, then what each option changes - #}
+{% if ctx.comparison_html %}
+<h2>Design Comparison</h2>
+{{ ctx.comparison_html }}
+{% endif %}
+
 {# --- f. KSEBL expenses, computed from the fee schedule ------------------ #}
 <h3>{{ ctx.discom_name or "DISCOM" }} Expenses</h3>
 <table>

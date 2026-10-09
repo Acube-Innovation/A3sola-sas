@@ -12,7 +12,7 @@ import json
 import frappe
 from frappe.utils import cint, flt, getdate
 
-from a3_sola.api import regulation
+from a3_sola.api import regulation, proposal_comparison
 from a3_sola.api.settings import get_settings
 from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_inverter,
@@ -63,7 +63,15 @@ def proposal_context(proposal):
 		},
 		"regulation_clauses": regulation.get_customer_clauses(consumer.discom, doc.proposal_date, doc.company),
 		"executive_summary": _executive_summary(doc, estimate, consumer, survey, primary),
+		# Option 1 in full, then each further estimate by what it changes.
+		"comparison_html": proposal_comparison.render(proposal_estimate_names(doc), for_print=True),
 	}
+
+
+def proposal_estimate_names(doc):
+	"""The proposal's design estimates in order, the base first."""
+	names = [row.solar_design_estimate for row in doc.get("design_estimates") or [] if row.solar_design_estimate]
+	return names or ([doc.solar_design_estimate] if doc.solar_design_estimate else [])
 
 
 def _executive_summary(doc, estimate, consumer, survey, package):

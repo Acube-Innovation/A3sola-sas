@@ -6,18 +6,14 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "sb_1",
-  "proposal_date",
-  "proposal_sequence",
-  "fiscal_year",
-  "cb_2",
-  "company",
-  "status",
-  "superseded_by",
-  "amended_from",
-  "sb_3",
+  "tab_details",
+  "sb_subject",
   "lead",
   "solar_consumer",
+  "cb_subject",
+  "site_survey",
+  "proposal_date",
+  "sb_3",
   "salutation",
   "customer_name",
   "cb_4",
@@ -25,6 +21,26 @@
   "email_id",
   "location",
   "district",
+  "sb_site",
+  "tariff_code",
+  "connection_type",
+  "consumer_number",
+  "cb_site",
+  "discom",
+  "discom_section",
+  "taluk",
+  "landmark",
+  "google_location_url",
+  "sb_estimates",
+  "design_estimates",
+  "sb_1",
+  "proposal_sequence",
+  "fiscal_year",
+  "cb_2",
+  "company",
+  "status",
+  "superseded_by",
+  "amended_from",
   "sb_5",
   "solar_design_estimate",
   "capacity_label",
@@ -44,6 +60,8 @@
   "cb_10",
   "sent_by",
   "lost_reason",
+  "tab_comparison",
+  "design_comparison",
   "tab_history",
   "current_version",
   "versions",
@@ -51,9 +69,39 @@
  ],
  "fields": [
   {
-   "fieldname": "sb_1",
+   "fieldname": "tab_details",
+   "fieldtype": "Tab Break",
+   "label": "Proposal Details"
+  },
+  {
+   "fieldname": "sb_subject",
    "fieldtype": "Section Break",
-   "label": "Register"
+   "label": "Proposal For",
+   "description": "Choose the lead first: its solar consumer, latest site survey and design estimates are filled in from it."
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead",
+   "description": "Choose this first."
+  },
+  {
+   "fieldname": "solar_consumer",
+   "fieldtype": "Link",
+   "label": "Solar Consumer",
+   "options": "Solar Consumer"
+  },
+  {
+   "fieldname": "cb_subject",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_survey",
+   "fieldtype": "Link",
+   "label": "Site Survey",
+   "options": "Site Survey",
+   "description": "The consumer's latest site survey, unless another is chosen."
   },
   {
    "fieldname": "proposal_date",
@@ -62,6 +110,133 @@
    "reqd": 1,
    "default": "Today",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Customer",
+   "description": "Filled from the lead, its solar consumer and site survey."
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Data",
+   "label": "District",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_site",
+   "fieldtype": "Section Break",
+   "label": "Site & Connection"
+  },
+  {
+   "fieldname": "tariff_code",
+   "fieldtype": "Link",
+   "label": "Electricity Tariff",
+   "read_only": 1,
+   "options": "KSEB Tariff Category"
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Data",
+   "label": "Connection Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_site",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "discom",
+   "fieldtype": "Link",
+   "label": "DISCOM",
+   "read_only": 1,
+   "options": "DISCOM"
+  },
+  {
+   "fieldname": "discom_section",
+   "fieldtype": "Link",
+   "label": "DISCOM Section",
+   "read_only": 1,
+   "options": "DISCOM Section"
+  },
+  {
+   "fieldname": "taluk",
+   "fieldtype": "Data",
+   "label": "Taluk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "landmark",
+   "fieldtype": "Data",
+   "label": "Landmark",
+   "read_only": 1
+  },
+  {
+   "fieldname": "google_location_url",
+   "fieldtype": "Data",
+   "label": "Google Location",
+   "read_only": 1,
+   "options": "URL"
+  },
+  {
+   "fieldname": "sb_estimates",
+   "fieldtype": "Section Break",
+   "label": "Design Estimates",
+   "description": "Every design estimate for the lead, filled in when the lead is chosen. The first row is the base; remove or reorder rows as needed."
+  },
+  {
+   "fieldname": "design_estimates",
+   "fieldtype": "Table",
+   "label": "Design Estimates",
+   "options": "Solar Proposal Estimate"
+  },
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Register"
   },
   {
    "fieldname": "proposal_sequence",
@@ -117,66 +292,6 @@
    "print_hide": 1
   },
   {
-   "fieldname": "sb_3",
-   "fieldtype": "Section Break",
-   "label": "Customer"
-  },
-  {
-   "fieldname": "lead",
-   "fieldtype": "Link",
-   "label": "Lead",
-   "options": "Lead"
-  },
-  {
-   "fieldname": "solar_consumer",
-   "fieldtype": "Link",
-   "label": "Solar Consumer",
-   "options": "Solar Consumer"
-  },
-  {
-   "fieldname": "salutation",
-   "fieldtype": "Link",
-   "label": "Salutation",
-   "options": "Salutation"
-  },
-  {
-   "fieldname": "customer_name",
-   "fieldtype": "Data",
-   "label": "Customer Name",
-   "reqd": 1,
-   "in_list_view": 1,
-   "in_global_search": 1
-  },
-  {
-   "fieldname": "cb_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "mobile_no",
-   "fieldtype": "Data",
-   "label": "Mobile",
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "email_id",
-   "fieldtype": "Data",
-   "label": "Email",
-   "options": "Email"
-  },
-  {
-   "fieldname": "location",
-   "fieldtype": "Data",
-   "label": "Location",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "district",
-   "fieldtype": "Data",
-   "label": "District",
-   "in_list_view": 1
-  },
-  {
    "fieldname": "sb_5",
    "fieldtype": "Section Break",
    "label": "Offer"
@@ -184,9 +299,11 @@
   {
    "fieldname": "solar_design_estimate",
    "fieldtype": "Link",
-   "label": "Design Estimate",
+   "label": "Base Design Estimate",
    "options": "Solar Design Estimate",
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1,
+   "description": "The first row of Design Estimates: what the proposal is generated from, and what the others are compared with."
   },
   {
    "fieldname": "capacity_label",
@@ -298,6 +415,16 @@
    "allow_on_submit": 1
   },
   {
+   "fieldname": "tab_comparison",
+   "fieldtype": "Tab Break",
+   "label": "Design Comparison"
+  },
+  {
+   "fieldname": "design_comparison",
+   "fieldtype": "HTML",
+   "label": "Design Comparison"
+  },
+  {
    "fieldname": "tab_history",
    "fieldtype": "Tab Break",
    "label": "History"
@@ -327,7 +454,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-09 10:00:00.000000",
+ "modified": "2026-10-09 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Proposal",

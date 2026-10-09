@@ -131,3 +131,84 @@ frappe.ui.form.on("Solar Proposal", {
 		}
 	},
 });
+
+// ---- Proposal For: a consumer of the chosen lead, a survey of the chosen consumer --------
+frappe.ui.form.on("Solar Proposal", {
+	setup(frm) {
+		frm.set_query("solar_consumer", () => (frm.doc.lead ? { filters: { lead: frm.doc.lead } } : {}));
+		frm.set_query("site_survey", () => (frm.doc.solar_consumer ? { filters: { solar_consumer: frm.doc.solar_consumer, docstatus: ["<", 2] } } : {}));
+	},
+	solar_consumer(frm) {
+		// A survey of another consumer no longer fits.
+		if (frm.doc.site_survey) frm.set_value("site_survey", null);
+	},
+});
+
+// ---- Proposal Details: filled from the lead -------------------------------------------
+// Choosing the lead brings in who and where (from the lead, its consumer and site survey)
+// and every design estimate of the lead; the first estimate row is the base.
+frappe.ui.form.on("Solar Proposal", {
+	lead(frm) {
+		if (!frm.doc.lead || frm.doc.docstatus !== 0) return;
+		frappe.call({
+			method: `${METHOD}.proposal_defaults`,
+			args: { lead: frm.doc.lead },
+			callback(r) {
+				const data = r.message || {};
+				const values = data.values || {};
+				(data.site_fields || []).forEach((f) => frm.set_value(f, values[f] || null));
+				// A new lead replaces the consumer and survey of the old one.
+				frm.set_value("solar_consumer", values.solar_consumer || null)
+					.then(() => frm.set_value("site_survey", values.site_survey || null));
+				["customer_name", "mobile_no", "email_id", "location", "district"].forEach((f) => {
+					if (!frm.doc[f] && values[f]) frm.set_value(f, values[f]);
+				});
+				frm.clear_table("design_estimates");
+				(data.estimates || []).forEach((e) => {
+					const row = frm.add_child("design_estimates");
+					row.solar_design_estimate = e.name;
+					row.estimate_date = e.estimate_date;
+					row.solar_package = e.solar_package;
+					row.capacity_kw = e.final_capacity_kw;
+				});
+				frm.refresh_field("design_estimates");
+				render_comparison(frm);
+				if (!(data.estimates || []).length) {
+					frappe.show_alert({ message: __("This lead has no design estimate yet."), indicator: "orange" });
+				}
+			},
+		});
+	},
+
+	refresh(frm) {
+		render_comparison(frm);
+	},
+
+	design_estimates_add: render_comparison,
+	design_estimates_remove: render_comparison,
+	design_estimates_move: render_comparison,
+});
+
+frappe.ui.form.on("Solar Proposal Estimate", {
+	solar_design_estimate(frm) {
+		render_comparison(frm);
+	},
+});
+
+// ---- Design Comparison: Option 1 in full, then each option by what it changes ---------
+function render_comparison(frm) {
+	const field = frm.fields_dict.design_comparison;
+	if (!field) return;
+	const names = (frm.doc.design_estimates || []).map((r) => r.solar_design_estimate).filter(Boolean);
+	if (!names.length) {
+		field.$wrapper.html(`<p class="text-muted">${__("Add design estimates on the Proposal Details tab to compare them here.")}</p>`);
+		return;
+	}
+	frappe.call({
+		method: "a3_sola.api.proposal_comparison.get_design_comparison",
+		args: { estimates: names },
+		callback(r) {
+			field.$wrapper.html(r.message || "");
+		},
+	});
+}

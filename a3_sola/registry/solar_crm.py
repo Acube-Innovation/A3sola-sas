@@ -44,6 +44,7 @@ DOCTYPES = [
 	"Eligibility Rule Result",
 	"Solar Proposal",
 	"Solar Proposal Version",
+	"Solar Proposal Estimate",
 	"Outreach Log",
 	"Additional Structure",
 	"Additional Structure Item",
