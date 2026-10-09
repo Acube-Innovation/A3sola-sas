@@ -1,0 +1,8 @@
+{#- The proposal page's own blocks under the record: its versions, then the comparison. -#}
+{% include "templates/includes/portal_proposal_versions.html" %}
+{%- if comparison_html %}
+<section class="a3s-card a3s-detail__card a3s-proposal-comparison">
+	<h3 class="a3s-detail__card-title">Design Comparison</h3>
+	{{ comparison_html }}
+</section>
+{%- endif %}

@@ -105,3 +105,6 @@ a3_sola.patches.v1_2.consumer_tariff_kseb_code
 
 # Ticked inverter options are part of the system; a recommended one stays chosen.
 a3_sola.patches.v1_2.inverter_options_ticked
+
+# Proposals carry their site and connection, and a table of design estimates.
+a3_sola.patches.v1_2.proposal_details_and_estimates

@@ -60,7 +60,12 @@ def get_context(context):
 	context.quotation = frappe.db.get_value(
 		"Quotation", {"solar_proposal": doc.name, "docstatus": ["<", 2]}, "name"
 	)
-	context.extra_template = "templates/includes/portal_proposal_versions.html"
+	# The version history, then the Design Comparison of the proposal's estimates.
+	context.extra_template = "templates/includes/portal_proposal_extra.html"
+	from a3_sola.api.proposal import proposal_estimate_names
+	from a3_sola.api.proposal_comparison import render as render_comparison
+
+	context.comparison_html = render_comparison(proposal_estimate_names(doc))
 	# The actions below are unsafe methods on an authenticated session, so they need a token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

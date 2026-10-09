@@ -95,6 +95,8 @@ class SolarProposal(Document):
 
 	def validate(self):
 		self.resolve_subject()
+		self.fill_from_lead()
+		self.fill_design_estimates()
 		assert_same_company(self, LINKS)
 		self.set_fiscal_year()
 		self.pull_from_estimate()
@@ -107,9 +109,10 @@ class SolarProposal(Document):
 		The lead is rarely typed - it is already known to the estimate this proposal quotes,
 		or to the consumer that estimate is for - so it is filled in rather than asked for.
 		"""
+		first = self.design_estimates[0].solar_design_estimate if self.get("design_estimates") else None
 		if not self.lead:
-			if self.solar_design_estimate:
-				self.lead = frappe.db.get_value("Solar Design Estimate", self.solar_design_estimate, "lead")
+			if first or self.solar_design_estimate:
+				self.lead = frappe.db.get_value("Solar Design Estimate", first or self.solar_design_estimate, "lead")
 			if not self.lead and self.solar_consumer:
 				self.lead = frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
 		if not (self.lead or self.solar_consumer):
@@ -119,6 +122,62 @@ class SolarProposal(Document):
 				title=_("Nothing to Propose For"),
 			)
 		self.assert_single_per_lead()
+
+	def fill_from_lead(self):
+		"""Section 1 - who and where - from the lead, its consumer and its latest site survey.
+
+		The site and connection fields are read-only here and always follow those records;
+		the customer's name, mobile, email, location and district are filled only when blank,
+		since they are what the proposal is addressed to and may be worded for it.
+		"""
+		values = proposal_defaults_for(self.lead, self.solar_consumer)
+		if self.site_survey and self.solar_consumer:
+			survey_consumer = frappe.db.get_value("Site Survey", self.site_survey, "solar_consumer")
+			if survey_consumer and survey_consumer != self.solar_consumer:
+				frappe.throw(_("Site survey {0} is of another consumer.").format(self.site_survey))
+		for fieldname in SITE_FIELDS:
+			if fieldname in values:
+				self.set(fieldname, values.get(fieldname))
+		for fieldname in ("solar_consumer", "site_survey", "customer_name", "mobile_no", "email_id", "location", "district"):
+			if not self.get(fieldname) and values.get(fieldname):
+				self.set(fieldname, values[fieldname])
+
+	def fill_design_estimates(self):
+		"""Every design estimate of the lead, oldest first, unless rows were chosen already.
+
+		The first row is the base - what the proposal is generated from and what the others
+		are compared with - so the Base Design Estimate field follows it. A row must be an
+		estimate of this lead (or its consumer), and appear once.
+		"""
+		if not self.get("design_estimates"):
+			names = lead_estimates(self.lead, self.solar_consumer)
+			if self.solar_design_estimate and self.solar_design_estimate not in names:
+				names.insert(0, self.solar_design_estimate)
+			elif self.solar_design_estimate in names:
+				# An estimate chosen before the table existed stays the base.
+				names.remove(self.solar_design_estimate)
+				names.insert(0, self.solar_design_estimate)
+			for name in names:
+				self.append("design_estimates", {"solar_design_estimate": name})
+
+		seen = set()
+		for row in self.design_estimates:
+			if row.solar_design_estimate in seen:
+				frappe.throw(_("Row {0}: design estimate {1} is listed twice.").format(row.idx, row.solar_design_estimate))
+			seen.add(row.solar_design_estimate)
+			est = frappe.db.get_value("Solar Design Estimate", row.solar_design_estimate,
+				["lead", "solar_consumer", "estimate_date", "solar_package", "final_capacity_kw"], as_dict=True)
+			if not est:
+				continue
+			if not _belongs(est, self.lead, self.solar_consumer):
+				frappe.throw(_("Row {0}: design estimate {1} is for another customer.").format(row.idx, row.solar_design_estimate))
+			row.estimate_date = est.estimate_date
+			row.solar_package = est.solar_package
+			row.capacity_kw = flt(est.final_capacity_kw)
+			row.total_amount = flt(frappe.get_doc("Solar Design Estimate", row.solar_design_estimate).commercials()["total"])
+			row.is_base = 1 if row.idx == 1 else 0
+		if self.design_estimates:
+			self.solar_design_estimate = self.design_estimates[0].solar_design_estimate
 
 	def assert_single_per_lead(self):
 		"""One proposal per lead. A re-quote is a version of it, not a second document."""
@@ -231,6 +290,79 @@ class SolarProposal(Document):
 			frappe.db.set_value(
 				"Solar Proposal", name, {"status": "Superseded", "superseded_by": self.name}, update_modified=False
 			)
+
+
+#: Section 1's site and connection fields: read-only, always taken from the records.
+SITE_FIELDS = ("tariff_code", "connection_type", "consumer_number", "discom", "discom_section",
+	"taluk", "landmark", "google_location_url")
+
+
+def lead_estimates(lead, solar_consumer=None):
+	"""The lead's design estimates - draft or submitted - oldest first."""
+	if not (lead or solar_consumer):
+		return []
+	# The lead decides; the consumer only for an estimate made without a lead.
+	rows = frappe.get_all("Solar Design Estimate", filters={"docstatus": ["<", 2]},
+		or_filters=[["lead", "=", lead or "__none__"], ["solar_consumer", "=", solar_consumer or "__none__"]],
+		fields=["name", "lead", "solar_consumer"], order_by="creation asc")
+	return [r.name for r in rows if _belongs(r, lead, solar_consumer)]
+
+
+def _belongs(estimate, lead, solar_consumer):
+	"""Whether an estimate is this customer's: by its lead, else by its consumer."""
+	if lead and estimate.lead:
+		return estimate.lead == lead
+	if solar_consumer and estimate.solar_consumer:
+		return estimate.solar_consumer == solar_consumer
+	return True
+
+
+def proposal_defaults_for(lead, solar_consumer=None):
+	"""What section 1 holds for this lead: from the lead, its consumer and its site survey."""
+	values = {}
+	lead_doc = frappe.db.get_value("Lead", lead, ["lead_name", "company_name", "mobile_no", "email_id", "city",
+		"district", "solar_consumer", "site_survey", "discom", "discom_section", "consumer_number",
+		"connection_type"], as_dict=True) if lead else None
+	consumer = solar_consumer or (lead_doc.solar_consumer if lead_doc else None)
+	con = frappe.db.get_value("Solar Consumer", consumer, ["consumer_name", "mobile_no", "email_id", "site_survey",
+		"tariff_category", "discom", "discom_section", "consumer_number", "connection_type", "taluk", "landmark",
+		"google_location_url", "village", "local_body_name"], as_dict=True) if consumer else None
+	survey = (con.site_survey if con else None) or (lead_doc.site_survey if lead_doc else None)
+	pick = lambda field: (con.get(field) if con else None) or (lead_doc.get(field) if lead_doc and field in lead_doc else None)
+
+	values["solar_consumer"] = consumer
+	values["customer_name"] = (con.consumer_name if con else None) or (lead_doc.lead_name if lead_doc else None)
+	values["mobile_no"] = pick("mobile_no")
+	values["email_id"] = pick("email_id")
+	values["site_survey"] = survey
+	values["tariff_code"] = con.tariff_category if con else None
+	values["discom"] = pick("discom")
+	values["discom_section"] = pick("discom_section")
+	values["consumer_number"] = pick("consumer_number")
+	values["connection_type"] = pick("connection_type")
+	values["taluk"] = con.taluk if con else None
+	values["landmark"] = con.landmark if con else None
+	values["google_location_url"] = con.google_location_url if con else None
+	district = frappe.db.get_value("Indian District", lead_doc.district, "district_name") if lead_doc and lead_doc.district else None
+	if not district and values["discom_section"]:
+		district = frappe.db.get_value("DISCOM Section", values["discom_section"], "district")
+	values["district"] = district
+	place = (con.village or con.local_body_name) if con else None
+	values["location"] = place or (lead_doc.city if lead_doc else None) or district
+	return values
+
+
+@frappe.whitelist()
+def proposal_defaults(lead=None, solar_consumer=None):
+	"""Section 1 and the design estimates for a lead, for the form to fill as it is chosen."""
+	if lead:
+		frappe.has_permission("Lead", "read", lead, throw=True)
+	values = proposal_defaults_for(lead, solar_consumer)
+	estimates = lead_estimates(lead, values.get("solar_consumer"))
+	return {"values": values, "site_fields": list(SITE_FIELDS), "estimates": [
+		frappe.db.get_value("Solar Design Estimate", n, ["name", "estimate_date", "solar_package", "final_capacity_kw"], as_dict=True)
+		for n in estimates
+	]}
 
 
 def _proposal_name(series, company, sequence):
