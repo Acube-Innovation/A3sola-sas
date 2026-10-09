@@ -161,6 +161,15 @@ class SolarDesignEstimate(Document):
 		the billing cycle. Both cases produce the same figures through the same code; the
 		lead-only case simply has fewer constraints to bind against.
 		"""
+		if self.site_survey and not self.solar_consumer:
+			# A survey is of one consumer, so choosing the survey is choosing them.
+			self.solar_consumer, survey_lead = frappe.db.get_value(
+				"Site Survey", self.site_survey, ["solar_consumer", "lead"]) or (None, None)
+			self.lead = self.lead or survey_lead
+			# The phase was only ever the field's default until now: the consumer's is the one.
+			if self.solar_consumer:
+				self.connection_type = frappe.db.get_value(
+					"Solar Consumer", self.solar_consumer, "connection_type") or self.connection_type
 		if self.solar_consumer and not self.lead:
 			# The consumer already knows the enquiry it came from; keep the chain intact.
 			self.lead = frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
@@ -288,7 +297,8 @@ class SolarDesignEstimate(Document):
 	# ------------------------------------------------------------------ sizing
 	def compute_sizing(self):
 		"""Constrain to the lower of consumption, roof and sanctioned load; name the binder."""
-		roof_kw = flt(self.survey.total_usable_kw) if self.survey else 0.0
+		# The roof's usable kW from its segments, else what the surveyor put down as installable.
+		roof_kw = (flt(self.survey.total_usable_kw) or flt(self.survey.get("capacity_installable_kw"))) if self.survey else 0.0
 		sanctioned_kw = flt(self.subject.sanctioned_load_kw)
 
 		sizing = calculations.recommend_capacity(

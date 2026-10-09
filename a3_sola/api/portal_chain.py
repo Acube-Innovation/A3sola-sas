@@ -166,6 +166,7 @@ CHAIN = {
 			"map": {
 				"site_survey": "name",
 				"solar_consumer": "solar_consumer",
+				"lead": "lead",
 				"company": "company",
 			},
 		},

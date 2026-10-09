@@ -133,7 +133,7 @@
 				.then(function (data) { return { ok: response.ok, code: response.status, data: data }; });
 		}).then(function (result) {
 			if (result.ok && result.data && result.data.message) {
-				setStatus("Created. Taking you to the list…", "success");
+				setStatus("Created. Opening it…", "success");
 				window.location.assign(result.data.message.route || ("/a3solaportal/" + slug));
 				return;
 			}

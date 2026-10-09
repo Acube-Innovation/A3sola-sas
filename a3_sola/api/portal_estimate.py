@@ -173,15 +173,57 @@ def tariff_code_choices():
 	return choices, info
 
 
-def detail_columns(doc=None):
-	"""The Estimate Details form as two columns of field specs, valued from `doc` if given."""
+def estimate_prefill(values):
+	"""A new estimate's details from the records it is raised from, so none is asked again.
+
+	`values` names any of the lead, consumer and survey. The survey brings its consumer, the
+	consumer its lead; then the consumer (else the lead) gives the connection type and KSEB
+	tariff code, and a survey with batteries in scope makes the system Hybrid. Each record
+	is read only if the person may read it.
+	"""
+	from a3_sola.solar_crm.doctype.kseb_tariff_category.kseb_tariff_category import kseb_code
+
+	out = {k: v for k, v in (values or {}).items() if v}
+
+	def readable(doctype, name):
+		return bool(name) and frappe.db.exists(doctype, name) and frappe.has_permission(doctype, "read", name)
+
+	survey = frappe.get_doc("Site Survey", out["site_survey"]) if readable("Site Survey", out.get("site_survey")) else None
+	if survey:
+		out.setdefault("solar_consumer", survey.solar_consumer)
+		out.setdefault("lead", survey.lead)
+		if cint(survey.get("batteries_in_scope")):
+			out.setdefault("system_type", "Hybrid")
+	consumer = (frappe.db.get_value("Solar Consumer", out["solar_consumer"],
+		["lead", "connection_type", "tariff_category"], as_dict=True)
+		if readable("Solar Consumer", out.get("solar_consumer")) else None)
+	if consumer:
+		out.setdefault("lead", consumer.lead)
+		out.setdefault("connection_type", consumer.connection_type)
+		code = kseb_code(consumer.tariff_category) if consumer.tariff_category else None
+		if code:
+			out.setdefault("tariff_code", code)
+	if readable("Lead", out.get("lead")):
+		if not out.get("solar_consumer"):
+			out["solar_consumer"] = frappe.db.get_value("Lead", out["lead"], "solar_consumer")
+		out.setdefault("connection_type", frappe.db.get_value("Lead", out["lead"], "connection_type"))
+		if not out.get("site_survey") and out.get("solar_consumer"):
+			# The consumer's survey, the submitted one first, as the estimate itself picks it.
+			out["site_survey"] = (frappe.get_all("Site Survey", filters={"solar_consumer": out["solar_consumer"],
+				"docstatus": ("<", 2)}, pluck="name", order_by="docstatus desc, creation desc", limit=1) or [None])[0]
+	return {k: v for k, v in out.items() if v}
+
+
+def detail_columns(doc=None, prefill=None):
+	"""The Estimate Details form as two columns of field specs, valued from `doc` if given,
+	else from `prefill` (see estimate_prefill) and the field defaults."""
 	meta = frappe.get_meta(DOCTYPE)
 	columns = []
 	for title, fieldnames in DETAIL_COLUMNS:
 		fields = []
 		for fieldname in fieldnames:
 			df = meta.get_field(fieldname)
-			value = doc.get(fieldname) if doc else (df.default or "")
+			value = doc.get(fieldname) if doc else ((prefill or {}).get(fieldname) or df.default or "")
 			if fieldname == "estimate_date" and (not value or value == "Today"):
 				# The doctype's default is the word "Today", which a date input cannot show.
 				value = frappe.utils.today()
