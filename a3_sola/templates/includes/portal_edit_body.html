@@ -42,13 +42,23 @@
 		</section>
 
 		{%- for g in groups %}
-		<section class="a3s-card a3s-edit__card a3s-wizard__panel" id="panel-{{ g.key }}" data-step="{{ loop.index0 }}">
-			<h3 class="a3s-edit__card-title">{{ g.label | e }}</h3>
+		{#- Each section opens and closes from its heading, one open at a time; all start closed,
+		    so the page opens short. Choosing a step, or a field that needs fixing, opens it. -#}
+		<section class="a3s-card a3s-edit__card a3s-wizard__panel is-collapsed" id="panel-{{ g.key }}" data-step="{{ loop.index0 }}">
+			<h3 class="a3s-edit__card-title">
+				<button type="button" class="a3s-edit__toggle" aria-expanded="false" aria-controls="body-{{ g.key }}">
+					<span class="a3s-edit__toggle-label">{{ g.label | e }}</span>
+					<span class="a3s-edit__toggle-count" data-panel-count></span>
+					<svg class="a3s-ic a3s-edit__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</button>
+			</h3>
+			<div class="a3s-edit__body" id="body-{{ g.key }}" hidden>
 			{%- for s in g.sections %}
+			<div class="a3s-edit__group">
 			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
 			<div class="a3s-form__grid">
 				{%- for f in s.fields %}
-				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}">
+				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
 					{%- if f.type == "Check" %}
 					<label class="a3s-check">
 						<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
@@ -71,7 +81,7 @@
 							</datalist>
 							{%- else %}
 							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}"
-							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}" data-doctype="{{ record.doctype | e }}"{% endif %}>
+							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}"{% if f.depends_also %} data-depends-also="{{ f.depends_also | e }}"{% endif %} data-doctype="{{ record.doctype | e }}"{% endif %}>
 								<option value=""{% if not f.value %} selected{% endif %}>—</option>
 								{%- for c in f.choices %}
 								{#- The option's value is the record's id, its text the record's name. -#}
@@ -112,7 +122,9 @@
 				</div>
 				{%- endfor %}
 			</div>
+			</div>
 			{%- endfor %}
+			</div>
 		</section>
 		{%- endfor %}
 
@@ -194,13 +206,21 @@
 	Array.prototype.forEach.call(dependents, function (select) {
 		var source = document.getElementById("fld-" + select.dataset.dependsOn);
 		if (!source) return;
-		source.addEventListener("change", function () {
+		/* The list also follows the fields in data-depends-also (a section, the district). */
+		var also = (select.dataset.dependsAlso || "").split(",").filter(Boolean)
+			.map(function (name) { return document.getElementById("fld-" + name); }).filter(Boolean);
+		function alsoValues() {
+			var out = {};
+			also.forEach(function (el) { out[el.name || el.id.replace(/^fld-/, "")] = el.value; });
+			return out;
+		}
+		var reload = function () {
 			var keep = select.value;
 			select.disabled = true;
 			fetch("/api/method/a3_sola.api.portal_fields.dependent_options", {
 				method: "POST", credentials: "same-origin",
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
-				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value })
+				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value, also: alsoValues() })
 			}).then(function (r) { return r.json(); }).then(function (body) {
 				var choices = (body && body.message && body.message.choices) || [];
 				select.innerHTML = "";
@@ -215,7 +235,9 @@
 				});
 			}).catch(function () { /* leave the list as it was */ })
 			  .then(function () { select.disabled = false; });
-		});
+		};
+		source.addEventListener("change", reload);
+		also.forEach(function (el) { el.addEventListener("change", reload); });
 	});
 })();
 </script>

@@ -12,9 +12,18 @@
 
 <form class="a3s-toolbar" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
 	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
-	       placeholder="Search {{ collection.title | lower }}" aria-label="Search {{ collection.title | lower }}">
+	       placeholder="{{ collection.search_hint or ('Search ' ~ (collection.title | lower)) }}" aria-label="Search {{ collection.title | lower }}">
+	{%- for f in list_filters or [] %}
+	{#- Choosing one applies it at once; the search typed beside it is kept. -#}
+	<select class="a3s-toolbar__select" name="{{ f.fieldname }}" aria-label="Filter by {{ f.label | e }}" onchange="this.form.submit()">
+		<option value="">All {{ f.label | lower | e }}s</option>
+		{%- for c in f.choices %}
+		<option value="{{ c.value | e }}"{% if c.value == f.value %} selected{% endif %}>{{ c.label | e }}</option>
+		{%- endfor %}
+	</select>
+	{%- endfor %}
 	<button type="submit" class="a3s-btn a3s-btn--ghost">Search</button>
-	{%- if q %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
+	{%- if q or filtered %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
 </form>
 
 {% if rows %}
@@ -64,7 +73,7 @@
 {% else %}
 <div class="a3s-card a3s-empty">
 	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ collection.icon }}"></use></svg></span>
-	{%- if q %}
+	{%- if q or filtered %}
 	<h3 class="a3s-empty__title">No matches</h3>
 	<p class="a3s-empty__text">Nothing matches that search. <a href="/a3solaportal/{{ collection.slug }}">Clear the search</a> to see everything.</p>
 	{%- else %}

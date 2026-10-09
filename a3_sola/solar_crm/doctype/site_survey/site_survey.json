@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sb_1",
+  "lead",
   "solar_consumer",
   "survey_date",
   "surveyor",
@@ -85,6 +86,15 @@
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
    "label": "Survey Details"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "options": "Lead",
+   "label": "Lead",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "description": "The enquiry surveyed. Choosing it brings in its solar consumer, and the consumer brings its lead."
   },
   {
    "fieldname": "solar_consumer",
@@ -506,7 +516,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-08 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

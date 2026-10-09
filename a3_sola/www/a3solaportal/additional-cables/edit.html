@@ -1,4 +1,4 @@
 {% extends "templates/portal_shell.html" %}
 {% block portal_content %}{% include "templates/includes/portal_edit_body.html" %}{% endblock %}
-{% block portal_scripts %}<script src="/assets/a3_sola/js/portal_record_edit.js?v={{ asset_version }}"></script>
-<script src="/assets/a3_sola/js/portal_item_table.js?v={{ asset_version }}"></script>{% endblock %}
+{% block portal_scripts %}<script src="/assets/a3_sola/js/portal_record_edit.js?v={{ a3s_asset_version('js/portal_record_edit.js') }}"></script>
+<script src="/assets/a3_sola/js/portal_item_table.js?v={{ a3s_asset_version('js/portal_item_table.js') }}"></script>{% endblock %}

@@ -534,10 +534,11 @@
   },
   {
    "fieldname": "subsidy_tariff_category",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Subsidy Tariff Category",
-   "default": "LT-1A",
-   "description": "A subsidised design estimate needs the consumer on this tariff category. Compared ignoring case, spaces and hyphens."
+   "default": "LT-I",
+   "description": "A subsidised design estimate needs the consumer on this KSEB tariff code (LT-I, domestic, for PM Surya Ghar).",
+   "options": "KSEB Tariff Category"
   },
   {
    "fieldname": "subsidy_max_capacity_kw",
@@ -2879,7 +2880,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-01 19:30:00.000000",
+ "modified": "2026-10-08 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

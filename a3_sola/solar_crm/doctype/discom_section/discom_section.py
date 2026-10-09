@@ -14,6 +14,9 @@ class DISCOMSection(Document):
 				"section_name": self.section_name,
 				"discom": self.discom,
 				"company": self.company,
+				# The same name can be two offices in two districts (Cantonment, Kollam and
+				# Thiruvananthapuram): a section is one name in one district.
+				"district": self.district or ["is", "not set"],
 				"name": ["!=", self.name],
 			},
 			"name",

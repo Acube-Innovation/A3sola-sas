@@ -99,6 +99,8 @@
 		$("de-details-link").href = state.details_route;
 		$("de-details-link").hidden = !state.editable;
 		$("de-view-link").href = state.view_route;
+		$("de-pdf-link").href = state.pdf_route;
+		$("de-save-as").hidden = !state.can_save_as;
 	}
 
 	/* --------------------------------------------------------- left: nav */
@@ -136,72 +138,62 @@
 		var body = $("de-saved");
 		body.innerHTML = "";
 		body.appendChild(s.rows.length
-			? savedTable(s)
+			? (s.compact ? compactTable(s) : savedTable(s))
 			: el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing saved yet. Use Add to enter the first one." : "Nothing saved." }));
-		/* Under the inverters: the package's inverter options, ticked to offer them, and
-		   the package itself, which can be chosen or changed here. */
-		if (s.options) body.appendChild(optionsBlock(s.options));
 	}
 
-	function optionsBlock(o) {
-		var parts = [el("div", { class: "a3s-de-options__head" }, [
-			el("h4", { class: "a3s-de-options__title", text: o.label }),
-			o.rows.length ? el("strong", { text: money.format(o.total || 0) }) : null
-		])];
-		if (o.packages && o.packages.length && state.editable) {
-			var pick = el("select", { id: "de-package", "aria-label": "Solar package" });
-			pick.appendChild(el("option", { value: "", text: "— choose a package —" }));
-			o.packages.forEach(function (p) {
-				pick.appendChild(el("option", { value: p.value, text: p.label, selected: p.value === o.package ? "selected" : null }));
-			});
-			pick.addEventListener("change", function () {
-				if (!pick.value) { pick.value = o.package; return; }
-				setStatus("Saving…", null, pageStatus);
-				call("save_row", { name: state.name, section: "options", values: { solar_package: pick.value }, row: null })
-					.then(function (next) { apply(next, "Package changed. Its inverter options are below."); })
-					.catch(function (error) { pick.value = o.package; fail(error); });
-			});
-			parts.push(el("div", { class: "a3s-field a3s-de-options__package" }, [
-				el("label", { for: "de-package", text: "Solar package" }), pick,
-				el("p", { class: "a3s-field__hint", text: "Choosing a package fills the panel and inverter rows with its kit." })
-			]));
-		}
-		if (o.rows.length) {
-			parts.push(el("p", { class: "a3s-field__hint", text: "Tick the options to offer the customer. Recommending one puts its inverter in the table above, priced from the package. System cost is the package's whole-system price with that inverter." }));
-			parts.push(optionsTable(o));
-		} else {
-			parts.push(el("p", { class: "a3s-de-empty", text: o.package
-				? "This package has no inverter options on file."
-				: (o.packages && o.packages.length ? "No solar package yet. Choose one above to see its inverter options."
-					: "No solar package fits this estimate's connection and system type.") }));
-		}
-		return el("div", { class: "a3s-de-options" }, parts);
+	/* A row action as an icon; its name is the tooltip and what a screen reader says. */
+	function iconButton(name, label, onClick, danger) {
+		var button = el("button", { type: "button", class: "a3s-icon-btn" + (danger ? " a3s-icon-btn--danger" : ""),
+			title: label, "aria-label": label }, [icon(name)]);
+		button.addEventListener("click", onClick);
+		return button;
 	}
 
-	/* The inverter options: a checkbox to offer each, and among those offered, one recommended. */
-	function optionsTable(o) {
-		var head = el("tr", {}, ["Option", "Nos", "System cost", ""].map(function (t) { return el("th", { scope: "col", text: t }); }));
-		var rows = o.rows.map(function (row) {
-			var box = el("input", { type: "checkbox", "aria-label": "Offer " + row.title, checked: row.offered ? "checked" : null, disabled: state.editable ? null : "disabled" });
-			box.addEventListener("change", function () { chooseOption(row, { offered: box.checked ? 1 : 0 }, box); });
-			var name = el("td", {}, [el("label", { class: "a3s-de-option__name" }, [box, el("span", { text: row.title })])]);
-			if (row.specification) name.appendChild(el("small", { class: "a3s-de-sub", text: row.specification }));
-			var actions = el("td", { class: "a3s-de-saved__actions" });
-			if (row.recommended) {
-				actions.appendChild(el("span", { class: "a3s-badge a3s-badge--recommended", title: "The system cost is taken from this option", text: "Recommended" }));
-			} else if (row.offered && state.editable) {
-				var pick = el("button", { type: "button", class: "a3s-btn a3s-btn--ghost a3s-btn--sm", text: "Recommend" });
-				pick.addEventListener("click", function () { chooseOption(row, { is_recommended: 1 }); });
-				actions.appendChild(pick);
+	/* Panels, inverters and batteries read as the Inverter Options do: the item in bold with
+	   its detail under it, then the figures. The Option tick leads the row, labelled, so it
+	   is not taken for an options tick: an Option is shown, not priced. */
+	function compactTable(s) {
+		var head = el("tr", {}, ["Item", "Qty \u00d7 Rate", "Amount", ""].map(function (t, i) {
+			return el("th", { scope: "col", class: i && i < 3 ? "a3s-de-money" : null, text: t });
+		}));
+		var rows = s.rows.map(function (row) {
+			var isOption = s.has_option && Number(row.values.is_option) === 1;
+			var optionLabel = null;
+			if (s.has_option) {
+				var tick = el("input", {
+					type: "checkbox", "aria-label": "Option - shown, not added to the commercials",
+					checked: isOption ? "checked" : null,
+					disabled: state.editable && !row.computed ? null : "disabled"
+				});
+				tick.addEventListener("change", function () { setOption(s, row, tick); });
+				optionLabel = el("label", { class: "a3s-de-option__name", title: "Option: shown to the customer, not added to the commercials" }, [
+					tick, el("span", { class: "a3s-de-option-tag", text: "Option" })
+				]);
 			}
-			return el("tr", { class: row.offered ? "" : "is-off" }, [
-				name,
-				el("td", { text: row.count ? String(row.count) : "" }),
-				el("td", { class: "a3s-de-money", text: money.format(row.cost || 0) }),
+			var item = el("td", {}, [
+				optionLabel,
+				el("strong", { class: "a3s-de-item__title" + (s.has_option ? "" : " is-first"), text: row.title || "" }),
+				row.sub ? el("small", { class: "a3s-de-sub", text: row.sub }) : null,
+				isOption ? el("small", { class: "a3s-de-unpriced", text: "Not priced" }) : null
+			]);
+			var actions = el("td", { class: "a3s-de-saved__actions" });
+			if (row.computed) {
+				actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every save", text: "Auto" }));
+			} else if (state.editable) {
+				actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
+				actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
+			}
+			var count = row.display[s.count_field || "nos"];
+			var qty = count ? count + " \u00d7 " + (row.display.rate || "\u2014") : (row.display.rate || "");
+			return el("tr", { class: isOption ? "is-off" : "" }, [
+				item,
+				el("td", { class: "a3s-de-money", text: qty }),
+				el("td", { class: "a3s-de-money a3s-de-amount", text: row.display.amount || "" }),
 				actions
 			]);
 		});
-		return el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
+		return el("div", { class: "a3s-de-table a3s-de-table--compact" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
 	}
 
 	/* One table of saved rows, with Edit and Remove on each row typed here. */
@@ -215,12 +207,8 @@
 			if (row.computed) {
 				actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every save", text: "Auto" }));
 			} else if (state.editable) {
-				var edit = el("button", { type: "button", class: "a3s-btn a3s-btn--ghost a3s-btn--sm", text: "Edit" });
-				edit.addEventListener("click", function () { openModal(row); });
-				var remove = el("button", { type: "button", class: "a3s-btn a3s-btn--ghost a3s-btn--sm", text: "Remove" });
-				remove.addEventListener("click", function () { removeRow(row); });
-				actions.appendChild(edit);
-				actions.appendChild(remove);
+				actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
+				actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
 			}
 			cells.push(actions);
 			return el("tr", {}, cells);
@@ -347,6 +335,38 @@
 		editing = null;
 	}
 
+	/* WhatsApp opens with the customer's number and the estimate's summary, ready to send.
+	   The window is opened at once, inside the click, so the browser does not block it. */
+	$("de-whatsapp").addEventListener("click", function () {
+		var win = window.open("", "_blank");
+		setStatus("Opening WhatsApp…", null, pageStatus);
+		call("whatsapp_link", { name: state.name })
+			.then(function (link) {
+				if (win) win.location.href = link; else window.location.href = link;
+				setStatus("WhatsApp opened with the estimate summary. Download the PDF to send it in the chat.", "success", pageStatus);
+			})
+			.catch(function (error) {
+				if (win) win.close();
+				setStatus(error.message, "error", pageStatus);
+			});
+	});
+
+	/* Save As: a copy of this estimate, with the next number, opened on its details step. */
+	$("de-save-as").addEventListener("click", function () {
+		var button = $("de-save-as");
+		button.disabled = true;
+		setStatus("Making a copy…", null, pageStatus);
+		call("save_as", { name: state.name })
+			.then(function (copy) {
+				setStatus("Copied to " + copy.name + ". Opening it…", "success", pageStatus);
+				window.location.assign(copy.route);
+			})
+			.catch(function (error) {
+				button.disabled = false;
+				setStatus(error.message, "error", pageStatus);
+			});
+	});
+
 	$("de-add").addEventListener("click", function () { openModal(null); });
 	$("de-close").addEventListener("click", closeModal);
 	cancel.addEventListener("click", closeModal);
@@ -358,7 +378,9 @@
 		state = next;
 		closeModal();
 		paint();
-		setStatus(message, "success", pageStatus);
+		/* A warning from the save (sizing with Options) is shown instead of the plain "Saved". */
+		if (next.warnings && next.warnings.length) setStatus(next.warnings.join(" "), "error", pageStatus);
+		else setStatus(message, "success", pageStatus);
 	}
 
 	function fail(error) {
@@ -375,14 +397,11 @@
 			.catch(fail);
 	});
 
-	function chooseOption(row, values, box) {
+	function setOption(s, row, tick) {
 		setStatus("Saving…", null, pageStatus);
-		call("save_row", { name: state.name, section: "options", values: values, row: row.name })
-			.then(function (next) { apply(next, "Inverter options updated."); })
-			.catch(function (error) {
-				if (box) box.checked = !box.checked;  // the server said no: put the tick back
-				fail(error);
-			});
+		call("save_row", { name: state.name, section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name })
+			.then(function (next) { apply(next, tick.checked ? "Marked as an option: not added to the commercials." : "Added back to the commercials."); })
+			.catch(function (error) { tick.checked = !tick.checked; fail(error); });
 	}
 
 	function removeRow(row) {

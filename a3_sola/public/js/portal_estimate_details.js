@@ -79,12 +79,16 @@
 
 		var shown = [];
 		var active = -1;
+		/* Options switched off by a filter (the lead narrowing the consumers) are not offered. */
 		function choices() {
-			return Array.prototype.filter.call(select.options, function (o) { return o.value; });
+			return Array.prototype.filter.call(select.options, function (o) { return o.value && !o.disabled; });
 		}
+		/* The box shows what was chosen; an option named after something else (a survey,
+		   after its consumer) also shows its id, since one consumer can have several. */
 		function labelOf(value) {
 			var o = choices().filter(function (c) { return c.value === value; })[0];
-			return o ? o.textContent : "";
+			if (!o) return "";
+			return o.dataset.showId ? o.textContent + " \u00b7 " + o.value : o.textContent;
 		}
 		function close() {
 			list.hidden = true;
@@ -135,6 +139,8 @@
 		}
 
 		input.value = labelOf(select.value);
+		/* Set from the script rather than picked here: show what the field now holds. */
+		select.addEventListener("a3s:sync", function () { input.value = labelOf(select.value); });
 		input.addEventListener("focus", function () { input.select(); });
 		input.addEventListener("click", function () { if (list.hidden) render(""); });
 		input.addEventListener("input", function () { render(input.value); });
@@ -163,6 +169,135 @@
 		});
 	}
 	Array.prototype.forEach.call(form.querySelectorAll("[data-combo]"), wireCombo);
+
+	/* A lead narrows the consumers to its own, and the consumers narrow the surveys to
+	   theirs; with one left, it is chosen. A choice that no longer fits is cleared. */
+	var leadField = document.getElementById("fld-lead");
+	var consumerField = document.getElementById("fld-solar_consumer");
+	var surveyField = document.getElementById("fld-site_survey");
+
+	function setField(select, value) {
+		if (select.value === value) return;
+		select.value = value;
+		select.dispatchEvent(new Event("a3s:sync"));
+		select.dispatchEvent(new Event("change", { bubbles: true }));
+	}
+	function keepOnly(select, fits) {
+		var left = [];
+		Array.prototype.forEach.call(select.options, function (o) {
+			if (!o.value) return;
+			var off = !fits(o);
+			o.hidden = off;
+			o.disabled = off;
+			if (!off) left.push(o.value);
+		});
+		if (select.value && left.indexOf(select.value) === -1) setField(select, "");
+		return left;
+	}
+	function narrow() {
+		var lead = leadField ? leadField.value : "";
+		var consumers = null;
+		if (consumerField) {
+			var mine = keepOnly(consumerField, function (o) { return !lead || o.dataset.lead === lead; });
+			if (lead && !consumerField.value && mine.length === 1) setField(consumerField, mine[0]);
+			consumers = consumerField.value ? [consumerField.value] : (lead ? mine : null);
+		}
+		if (surveyField) {
+			var surveys = keepOnly(surveyField, function (o) { return !consumers || consumers.indexOf(o.dataset.consumer) !== -1; });
+			if (consumers && !surveyField.value && surveys.length === 1) setField(surveyField, surveys[0]);
+		}
+	}
+	if (leadField) leadField.addEventListener("change", narrow);
+	if (consumerField) consumerField.addEventListener("change", narrow);
+	narrow();
+
+	/* A survey chosen first brings its consumer, and the consumer its lead. */
+	function optionOf(select, value) {
+		return Array.prototype.filter.call(select.options, function (o) { return o.value === value; })[0];
+	}
+	if (surveyField && consumerField) {
+		surveyField.addEventListener("change", function () {
+			var picked = surveyField.value && optionOf(surveyField, surveyField.value);
+			if (picked && picked.dataset.consumer && !consumerField.value) setField(consumerField, picked.dataset.consumer);
+		});
+	}
+	if (consumerField && leadField) {
+		consumerField.addEventListener("change", function () {
+			var picked = consumerField.value && optionOf(consumerField, consumerField.value);
+			if (picked && picked.dataset.lead && !leadField.value) setField(leadField, picked.dataset.lead);
+		});
+	}
+
+	/* Package Details: the package list follows the connection type - a package is listed
+	   when it has an inverter of that phase - and an Off-Grid system cannot take subsidy. A
+	   choice the rules no longer allow is cleared, and the page says why. */
+	var phaseField = document.getElementById("fld-connection_type");
+	var packageField = document.getElementById("fld-solar_package");
+	var systemField = document.getElementById("fld-system_type");
+	var subsidyField = document.getElementById("fld-subsidy_option");
+	function packageRules() {
+		if (phaseField && packageField) {
+			var dropped = null;
+			keepOnly(packageField, function (o) {
+				var phases = o.dataset.phases ? o.dataset.phases.split("|") : [];
+				var fits = !phaseField.value || !phases.length || phases.indexOf(phaseField.value) !== -1;
+				if (!fits && o.value === packageField.value) dropped = o;
+				return fits;
+			});
+			if (dropped) {
+				setStatus("\u201c" + dropped.textContent + "\u201d has no " + phaseField.value + " inverter, so it was cleared. Choose a " + phaseField.value + " package.");
+			}
+		}
+		if (subsidyField) {
+			/* Subsidy is only for the subsidy tariff (LT-I, domestic), and never Off-Grid. A
+			   tariff not chosen yet does not rule it out. */
+			var tariff = document.getElementById("fld-tariff_code");
+			var needed = subsidyField.dataset.subsidyTariff;
+			var wrongTariff = !!(needed && tariff && tariff.value && tariff.value !== needed);
+			var offGrid = !!systemField && systemField.value === "Off-Grid";
+			var blocked = wrongTariff || offGrid;
+			Array.prototype.forEach.call(subsidyField.options, function (o) {
+				if (o.value === "With Subsidy") { o.disabled = blocked; o.hidden = blocked; }
+			});
+			if (blocked && subsidyField.value === "With Subsidy") {
+				subsidyField.value = "Without Subsidy";
+				subsidyField.dispatchEvent(new Event("change", { bubbles: true }));
+				var picked = tariff && tariff.selectedOptions[0];
+				setStatus(wrongTariff
+					? "Subsidy is only for " + needed + " customers; this one is " + (picked ? picked.textContent : tariff.value) + ", so Subsidy was set to Without Subsidy."
+					: "An Off-Grid system cannot take subsidy, so Subsidy was set to Without Subsidy.");
+			} else if (!blocked && /^(Subsidy is only for|An Off-Grid system cannot take subsidy)/.test(status.textContent)) {
+				setStatus("");  // subsidy is allowed again: the reason it was not no longer applies
+			}
+		}
+	}
+	/* Subsidy again, with no scheme chosen: the default scheme (PM Surya Ghar) comes back. */
+	var schemeField = document.getElementById("fld-subsidy_scheme");
+	if (subsidyField && schemeField && schemeField.dataset.default) {
+		subsidyField.addEventListener("change", function () {
+			if (subsidyField.value === "With Subsidy" && !schemeField.value) setField(schemeField, schemeField.dataset.default);
+		});
+	}
+	if (phaseField) phaseField.addEventListener("change", packageRules);
+	if (systemField) systemField.addEventListener("change", packageRules);
+	var tariffSelect = document.getElementById("fld-tariff_code");
+	if (tariffSelect) tariffSelect.addEventListener("change", packageRules);
+	packageRules();
+
+	/* The Electricity Tariff is the chosen consumer's KSEB code, unless one was chosen here. */
+	var tariffField = document.getElementById("fld-tariff_code");
+	if (tariffField && consumerField) {
+		var tariffFilled = tariffField.value;  // what the page or this last put there
+		consumerField.addEventListener("change", function () {
+			if (tariffField.value && tariffField.value !== tariffFilled) return;  // chosen by hand
+			var picked = consumerField.value && optionOf(consumerField, consumerField.value);
+			var code = picked && picked.dataset.tariff;
+			if (code && optionOf(tariffField, code)) {
+				setField(tariffField, code);
+				tariffFilled = code;
+			}
+		});
+	}
 
 	/* The "?" beside the tariff: what the chosen KSEB code covers, kept in step with the
 	   field while it is open. Closes on a click elsewhere or Escape. */
@@ -274,7 +409,7 @@
 			var dropped = pkg.selectedOptions[0];
 			if (dropped && dropped.disabled) {
 				pkg.value = "";
-				setStatus("“" + dropped.textContent + "” has no " + phase.value + " inverter, so it was cleared. Choose a " + phase.value + " package, or pick one later on the Inverter tab.");
+				setStatus("“" + dropped.textContent + "” has no " + phase.value + " inverter, so it was cleared. Choose a " + phase.value + " package for this option.");
 			}
 		}
 		var system = field("system_type");

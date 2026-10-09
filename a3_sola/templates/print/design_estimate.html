@@ -71,21 +71,6 @@
 		</tr>
 		{%- endfor %}
 	</table>
-	{%- set offered = s.options.rows | selectattr("offered") | list if s.options else [] %}
-	{%- if offered %}
-	<h2>{{ s.options.label | e }}</h2>
-	<table>
-		<tr><th>{{ _("Option") }}</th><th>{{ _("Specification") }}</th><th class="right">{{ _("System Cost") }}</th><th></th></tr>
-		{%- for row in offered %}
-		<tr>
-			<td>{{ row.title | e }}</td>
-			<td>{{ row.specification | e }}</td>
-			<td class="right nowrap">{{ money(row.cost) }}</td>
-			<td>{% if row.recommended %}<strong>{{ _("Recommended") }}</strong>{% endif %}</td>
-		</tr>
-		{%- endfor %}
-	</table>
-	{%- endif %}
 	{%- endfor %}
 
 	<div class="keep">

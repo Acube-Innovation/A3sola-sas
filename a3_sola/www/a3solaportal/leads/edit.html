@@ -75,7 +75,7 @@
 							</datalist>
 							{%- else %}
 							<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}"
-							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}" data-doctype="Lead"{% endif %}>
+							        {% if f.depends_field %}data-depends-on="{{ f.depends_field | e }}"{% if f.depends_also %} data-depends-also="{{ f.depends_also | e }}"{% endif %} data-doctype="Lead"{% endif %}>
 								<option value=""{% if not f.value %} selected{% endif %}>—</option>
 								{%- for c in f.choices %}
 								{#- The option's value is the record's id, its text the record's name. -#}
@@ -113,7 +113,7 @@
 {% endblock %}
 
 {% block portal_scripts %}
-<script src="/assets/a3_sola/js/portal_record_edit.js?v={{ asset_version }}"></script>
+<script src="/assets/a3_sola/js/portal_record_edit.js?v={{ a3s_asset_version('js/portal_record_edit.js') }}"></script>
 {#- Keeps a dependent dropdown honest: choose a state and the district list becomes that
     state's districts, without a reload and without offering a district from elsewhere. -#}
 <script>
@@ -125,13 +125,21 @@
 	Array.prototype.forEach.call(dependents, function (select) {
 		var source = document.getElementById("fld-" + select.dataset.dependsOn);
 		if (!source) return;
-		source.addEventListener("change", function () {
+		/* The list also follows the fields in data-depends-also (a section, the district). */
+		var also = (select.dataset.dependsAlso || "").split(",").filter(Boolean)
+			.map(function (name) { return document.getElementById("fld-" + name); }).filter(Boolean);
+		function alsoValues() {
+			var out = {};
+			also.forEach(function (el) { out[el.name || el.id.replace(/^fld-/, "")] = el.value; });
+			return out;
+		}
+		var reload = function () {
 			var keep = select.value;
 			select.disabled = true;
 			fetch("/api/method/a3_sola.api.portal_fields.dependent_options", {
 				method: "POST", credentials: "same-origin",
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
-				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value })
+				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value, also: alsoValues() })
 			}).then(function (r) { return r.json(); }).then(function (body) {
 				var choices = (body && body.message && body.message.choices) || [];
 				select.innerHTML = "";
@@ -146,7 +154,9 @@
 				});
 			}).catch(function () { /* leave the list as it was */ })
 			  .then(function () { select.disabled = false; });
-		});
+		};
+		source.addEventListener("change", reload);
+		also.forEach(function (el) { el.addEventListener("change", reload); });
 	});
 })();
 </script>

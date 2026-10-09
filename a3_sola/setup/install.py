@@ -67,6 +67,7 @@ def setup():
 	seed_settings()
 	seed_expense_items()
 	seed_kseb_tariff_categories()
+	seed_kseb_section_offices()
 	# Platform is not tenant-scoped: it is the product's own marketing and funnel data,
 	# so it seeds once per site rather than once per company.
 	install_platform.setup()
@@ -78,6 +79,46 @@ def setup():
 	dashboard_projects.install()
 	dashboard_platform.install()
 	frappe.db.commit()
+
+
+def seed_kseb_section_offices():
+	"""KSEB's section offices and their codes, from its directory (setup/kseb_section_offices.json).
+
+	Loaded under each company's "Kerala State Electricity Board" DISCOM. A section already
+	on file with the same name in the same district (or with no district) takes the code
+	and district rather than being added again; the rest are added. Codes are kept as the
+	directory gives them: the directory repeats some across districts, so a section is
+	told apart by its district, not its code alone.
+	"""
+	import json
+	import os
+
+	path = os.path.join(os.path.dirname(__file__), "kseb_section_offices.json")
+	with open(path) as f:
+		rows = json.load(f)
+	for discom, company in frappe.get_all("DISCOM", filters={"discom_name": "Kerala State Electricity Board"},
+			fields=["name", "company"], as_list=True):
+		on_file = frappe.get_all("DISCOM Section", filters={"discom": discom, "company": company},
+			fields=["name", "section_name", "district", "section_code"])
+		by_key = {}
+		for s in on_file:
+			by_key.setdefault(((s.section_name or "").strip().lower(), (s.district or "").strip().lower()), s)
+			by_key.setdefault(((s.section_name or "").strip().lower(), ""), s)
+		for row in rows:
+			key = row["section_name"].strip().lower()
+			found = by_key.get((key, row["district"].lower())) or by_key.get((key, ""))
+			if found and found.district and found.district.strip().lower() != row["district"].lower():
+				found = None
+			if found:
+				if (found.section_code, found.district) != (row["section_code"], row["district"]):
+					frappe.db.set_value("DISCOM Section", found.name, {
+						"section_code": row["section_code"], "district": row["district"],
+						"circle_division": row["circle_division"]}, update_modified=False)
+				by_key.pop((key, ""), None)
+				continue
+			doc = frappe.get_doc({"doctype": "DISCOM Section", "discom": discom, "company": company,
+				"feasibility_sla_days": 45, "net_meter_sla_days": 21, **row})
+			doc.insert(ignore_permissions=True)
 
 
 def seed_kseb_tariff_categories():

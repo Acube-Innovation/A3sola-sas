@@ -46,7 +46,8 @@
   "lost_reason",
   "tab_history",
   "current_version",
-  "versions"
+  "versions",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -316,11 +317,17 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "description": "Every issue of this proposal to the customer, newest last. Raised by the Revise action, never edited by hand."
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-09 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Proposal",

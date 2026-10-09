@@ -11,6 +11,7 @@
   "battery_capacity_ah",
   "battery_variant",
   "battery_make",
+  "is_option",
   "nos",
   "total_energy_kwh",
   "rate",
@@ -60,6 +61,14 @@
    "description": "Makes of the chosen Battery Variant only."
   },
   {
+   "fieldname": "is_option",
+   "fieldtype": "Check",
+   "label": "Option",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "An alternative battery offered to the customer: shown on the estimate and proposal, but not added to the commercials or counted in the system's size."
+  },
+  {
    "fieldname": "nos",
    "fieldtype": "Int",
    "label": "Nos",
@@ -90,7 +99,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-01 19:30:00.000000",
+ "modified": "2026-10-08 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate Battery",
