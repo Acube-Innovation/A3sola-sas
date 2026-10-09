@@ -67,6 +67,7 @@ class SolarDesignEstimate(Document):
 		self.seed_option_from_package()
 		if not self.sync_kit_from_options():
 			self.fill_from_package()
+		self.keep_one_priced()
 		self.compute_panels()
 		self.compute_inverters()
 		self.compute_batteries()
@@ -472,6 +473,28 @@ class SolarDesignEstimate(Document):
 
 		if problems:
 			frappe.throw("<br>".join(problems), title=_("Inverter Sizing"))
+
+	def keep_one_priced(self):
+		"""One panel, one inverter and one battery row is priced; the rest are Options.
+
+		A row just made priced - its Option unticked, or a priced row added - is the one,
+		and every other row of its table becomes an Option (shown, not priced). Rows that
+		were all priced before this rule are left until one of them is next changed.
+		"""
+		before = self.get_doc_before_save() if not self.is_new() else None
+		for table in ("panels", "inverters", "batteries"):
+			rows = self.get(table) or []
+			priced = [row for row in rows if not row.is_option]
+			if len(priced) <= 1:
+				continue
+			was_option = {row.name: cint(row.is_option) for row in (before.get(table) if before else [])}
+			newly = [row for row in priced if row.name not in was_option or was_option[row.name]]
+			if not newly:
+				continue
+			keep = newly[-1]
+			for row in rows:
+				if row is not keep:
+					row.is_option = 1
 
 	def validate_priced_equipment(self):
 		"""At least one panel and one inverter - and one battery where the system has them -
@@ -1004,8 +1027,9 @@ class SolarDesignEstimate(Document):
 			self.set(table, [])
 			for key, values in desired.items():
 				old = kept.get(key)
-				self.append(table, {**values, "rate": (old.rate if old else 0) or 0,
-					"is_option": old.is_option if old else 0})
+				# The row keeps its name, so a change made to it can be told from the rest.
+				self.append(table, {**values, **({"name": old.name} if old else {}),
+					"rate": (old.rate if old else 0) or 0, "is_option": old.is_option if old else 0})
 			for row in by_hand:
 				self.append(table, row)
 

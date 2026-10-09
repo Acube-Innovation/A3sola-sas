@@ -400,7 +400,7 @@
 	function setOption(s, row, tick) {
 		setStatus("Saving…", null, pageStatus);
 		call("save_row", { name: state.name, section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name })
-			.then(function (next) { apply(next, tick.checked ? "Marked as an option: not added to the commercials." : "Added back to the commercials."); })
+			.then(function (next) { apply(next, tick.checked ? "Marked as an option: not added to the commercials." : "Priced: this row is in the commercials, and the other rows of the table are now Options."); })
 			.catch(function (error) { tick.checked = !tick.checked; fail(error); });
 	}
 
