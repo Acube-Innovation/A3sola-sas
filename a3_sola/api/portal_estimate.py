@@ -27,7 +27,7 @@ SLUG = "design-estimates"
 DETAIL_COLUMNS = (
 	# The tariff asked for is KSEB's category code. The priced tariff the savings are worked
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
-	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code")),
+	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
 	# The package and how it is sized, asked for as the desk asks: one package per estimate.
 	# The estimate keeps them on its recommended sizing row, which it follows.
 	("Package Details", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
@@ -73,6 +73,7 @@ SECTIONS = (
 		{"fieldname": "inverter_count", "column": False, "hint": True},
 		{"fieldname": "inverter_phase", "choices": "phase"},
 		{"fieldname": "inverter_make", "choices": "inverter_make", "filter_by": "inverter_type"},
+		{"fieldname": "specification", "column": False, "hint": "Printed in the proposal after the rating, e.g. Hybrid with MPPT and Online Monitoring."},
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
 	), "computed": ("nos", "amount"),
@@ -84,6 +85,7 @@ SECTIONS = (
 		{"fieldname": "battery_capacity_ah"},
 		{"fieldname": "battery_variant", "choices": "battery_technology"},
 		{"fieldname": "battery_make", "choices": "battery_make", "filter_by": "battery_variant"},
+		{"fieldname": "specification", "column": False, "hint": "Printed in the proposal after the voltage and capacity."},
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "nos"},
 		{"fieldname": "rate"},
@@ -95,6 +97,7 @@ SECTIONS = (
 		{"fieldname": "phase", "choices": "phase"},
 		{"fieldname": "specification"},
 		{"fieldname": "make", "choices": "bos_make", "filter_by": "item"},
+		{"fieldname": "component_makes", "column": False, "hint": "One line per part, e.g. Isolator - ABB. Printed in place of the make."},
 		{"fieldname": "numbers"},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
 	), "computed": ("amount",),
@@ -248,8 +251,11 @@ def detail_columns(doc=None, prefill=None):
 					# the packages for its connection type.
 					from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
 
+					dcr = set(frappe.get_all("Solar Package", filters={"is_dcr_compliant": 1}, pluck="name"))
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
+						# Subsidy needs DCR panels, so a subsidised estimate lists only these.
+						c["dcr"] = 1 if c["value"] in dcr else 0
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.

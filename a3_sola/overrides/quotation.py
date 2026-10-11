@@ -58,10 +58,13 @@ def pull_from_estimate(doc):
 		)
 
 	if option:
-		doc.solar_package = option.solar_package
-		doc.gross_amount = flt(option.total_option_cost)
+		doc.solar_package = estimate.solar_package or option.solar_package
+	# What the customer pays is what the quotation charges - its total after discount and
+	# GST - once it has been priced; the estimate's figure only stands in before that.
+	if flt(doc.get("grand_total")):
+		doc.gross_amount = flt(doc.rounded_total or doc.grand_total)
 	else:
-		doc.gross_amount = flt(estimate.total_project_cost)
+		doc.gross_amount = flt(option.total_option_cost) if option else flt(estimate.total_project_cost)
 
 	doc.net_payable_by_customer = flt(doc.gross_amount) - flt(doc.expected_subsidy_to_customer)
 

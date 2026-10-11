@@ -1,0 +1,120 @@
+{#- Sections 3.3 to 6 of the Solar Proposal print, page by page as the client's document
+    lays them out: the project cost and KSEBL expenses; the terms, payment terms and bank
+    details; the schedule and warranty; the scope of work; the pictures of similar
+    installations; the way forward. `rest` is print_rest(doc), `letter` the frame's brand.
+    The terms, schedule and scope are edited in A3 Sola Settings; a long text there can
+    run a page into its footer, so keep them to the client's length. -#}
+{%- from "templates/includes/print_frame.html" import page -%}
+{%- macro amount_rows(rows) -%}
+	{%- for r in rows %}
+	<tr{% if r.bold %} class="b"{% endif %}><td class="c">{{ loop.index }}</td><td{% if r.right %} class="r"{% endif %}>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+	{%- endfor %}
+{%- endmacro -%}
+
+{% call page(letter, "a3r") %}
+	<h3>3.3.&nbsp; <u>Project Cost</u></h3>
+	<h4>3.3.1.&nbsp; <u>Solar Power Plant</u></h4>
+	<table class="a3r-table">
+		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		{{ amount_rows(rest.cost) }}
+	</table>
+	<h4 class="a3r-gap">3.3.2.&nbsp; <u>KSEBL Expenses</u></h4>
+	<table class="a3r-table">
+		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		{%- for r in rest.kseb %}
+		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+		{%- endfor %}
+		<tr class="b"><td class="c">{{ rest.kseb | length + 1 }}</td><td class="r">Total</td><td class="r n">{{ rest.kseb_total }}</td></tr>
+		{%- if rest.kseb_words %}<tr class="b"><td colspan="3" class="c">{{ rest.kseb_words }}</td></tr>{% endif %}
+	</table>
+	{%- if rest.kseb_note %}<p class="a3r-note">{{ rest.kseb_note }}</p>{% endif %}
+{% endcall %}
+
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	<h3>3.4.&nbsp; <u>General Terms &amp; Conditions</u></h3>
+	<div class="a3r-rich">{{ rest.terms_html }}</div>
+	{%- if rest.validity %}<ul><li>{{ rest.validity }}</li></ul>{% endif %}
+	<h3 class="a3r-gap">3.5.&nbsp; <u>Payment Terms:</u></h3>
+	<ol>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ol>
+	<ul class="a3r-bankhead"><li><b><u>Bank Account Details for Payment</u></b></li></ul>
+	<table class="a3r-bank">
+		{%- for label, value in rest.bank %}
+		<tr><td class="r">{{ label }}</td><td class="c" colspan="2">{{ value or "—" }}</td></tr>
+		{%- endfor %}
+		{%- for label, value in rest.bank_credentials %}
+		<tr>{% if loop.first %}<td class="c" rowspan="{{ rest.bank_credentials | length }}">Bank Credentials for Payment</td>{% endif %}<td class="r">{{ label }}</td><td>{{ value or "—" }}</td></tr>
+		{%- endfor %}
+	</table>
+{% endcall %}
+
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	<h3>3.6.&nbsp; <u>Schedule of Delivery, Installation and Commissioning</u></h3>
+	<div class="a3r-rich">{{ rest.schedule_html }}</div>
+	<h3 class="a3r-gap">3.7.&nbsp; <u>Warranty: -</u></h3>
+	<ul>{% for w in rest.warranty %}<li>{{ w }}</li>{% endfor %}</ul>
+{% endcall %}
+
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	<h2>4.&nbsp; Scope of Work</h2>
+	<h4>4.1.&nbsp; {{ rest.company_scope_label }}</h4>
+	<ul>{% for s in rest.scope.company %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
+	<h4 class="a3r-gap">4.2.&nbsp; {{ rest.customer_scope_label }}</h4>
+	<ul>{% for s in rest.scope.customer %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
+{% endcall %}
+
+{%- set pictures = rest.pictures %}
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	<h2>5.&nbsp; Pictures of Similar Installations</h2>
+	<div class="a3r-pics">{% for src in pictures[:2] %}<img src="{{ src }}" alt="">{% endfor %}</div>
+{% endcall %}
+
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	{%- if pictures | length > 2 %}
+	<div class="a3r-pics">{% for src in pictures[2:3] %}<img src="{{ src }}" alt="">{% endfor %}</div>
+	{%- endif %}
+	<h2 class="a3r-gap">6.&nbsp; Way Forward</h2>
+	<div class="a3r-forward">
+		<p>We have offered a solution with high-quality components which will be executed using experienced manpower and hassle-free service for the lifetime of the solar plant.</p>
+		<p>Should you require any further details or clarifications, please do not hesitate to contact us.</p>
+		<p>In case you have received another offer and wants to have a comparison, we would be more than happy to give you a technical comparison of the components on offer. Further, we would be delighted to address any questions or provide additional information to support your decision-making process.</p>
+		<p>Please feel free to reach out to us:</p>
+	</div>
+	<table class="a3r-contact">
+		{%- if letter.phone %}<tr><td>{{ letter.phone }}</td></tr>{% endif %}
+		<tr><td>{% if letter.email %}{{ letter.email }}{% endif %}{% if letter.email and letter.website %}<br>{% endif %}{% if letter.website %}{{ letter.website }}{% endif %}</td></tr>
+	</table>
+{% endcall %}
+<style>
+	.a3r .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 14pt; line-height: 1.35; }
+	.a3r h2 { margin: 0 0 8pt; font-family: inherit; font-size: 17pt; font-weight: 700; color: #1f1f1f; }
+	.a3r h3 { margin: 0 0 8pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }
+	.a3r h4 { margin: 0 0 6pt 14pt; font-family: inherit; font-size: 14pt; font-weight: 700; color: #1f1f1f; }
+	.a3r .a3r-gap { margin-top: 18pt; }
+	.a3r p { margin: 0 0 7pt; }
+	.a3r ul, .a3r ol { margin: 0 0 6pt; padding-left: 40pt; }
+	.a3r li { margin-bottom: 4pt; text-align: justify; }
+	.a3r .a3r-rich ul, .a3r .a3r-rich ol { list-style: disc; }
+	.a3r-table, .a3r-bank, .a3r-contact { border-collapse: collapse; width: 100%; table-layout: fixed; }
+	.a3r-table th, .a3r-table td, .a3r-bank td, .a3r-contact td { border: 1px solid #222; padding: 3pt 6pt; vertical-align: middle; }
+	.a3r-table th { text-align: center; font-weight: 700; }
+	.a3r .c { text-align: center; }
+	.a3r .r { text-align: right; }
+	.a3r .n { white-space: nowrap; }
+	.a3r tr.b td { font-weight: 700; }
+	.a3r-note { margin-top: 10pt !important; }
+	.a3r-bankhead { margin: 8pt 0 2pt; }
+	.a3r-bank { width: 82%; margin-left: 10%; font-size: 13pt; }
+	.a3r-pics { border: 1px solid #222; padding: 4pt; }
+	.a3r-pics img { display: block; width: 100%; height: auto; margin: 0 0 4pt; }
+	.a3r-forward { padding-left: 14pt; }
+	.a3r-forward p { text-align: justify; }
+	.a3r-contact { width: 92%; margin: 18pt auto 0; }
+	.a3r-contact td { text-align: center; font-weight: 700; padding: 6pt; line-height: 1.6; }
+</style>

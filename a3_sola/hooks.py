@@ -22,6 +22,8 @@ app_license = "mit"
 required_apps = ["frappe/erpnext"]
 
 app_include_js = "a3_sola.bundle.js"
+# The Quotation form: one option of a proposal, shown as the proposal finalised it.
+doctype_js = {"Quotation": "public/js/quotation.js"}
 
 after_install = "a3_sola.setup.install.after_install"
 after_migrate = "a3_sola.setup.install.after_migrate"
@@ -64,5 +66,11 @@ jinja = {
 	"methods": [
 		"a3_sola.api.proposal.proposal_context",
 		"a3_sola.api.assets.a3s_asset_version",
+		"a3_sola.api.print_cover.print_cover",
+		"a3_sola.api.print_cover.print_letter",
+		"a3_sola.api.print_cover.print_summary",
+		"a3_sola.api.print_cover.print_components",
+		"a3_sola.api.print_cover.print_rest",
+		"a3_sola.api.quotation_option.quotation_print_doc",
 	],
 }

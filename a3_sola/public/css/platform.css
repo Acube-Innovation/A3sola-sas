@@ -3041,3 +3041,41 @@ select.a3s-items__input { min-width: 9rem; }
 /* Estimate popup: a field with a hint (No. of Panels) must not stretch its neighbours' inputs. */
 #de-fields { align-items: start; }
 #de-fields .a3s-field { align-content: start; }
+
+/* Proposal page (proposals/new and edit): site details, the estimates table, the base row. */
+.a3s-pp__note { margin: -0.25rem 0 0.9rem; }
+.a3s-pp__site { display: grid; gap: 0.7rem 1.25rem; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); margin: 0; }
+.a3s-pp__site dt { font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-pp__site dd { margin: 0.15rem 0 0; font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
+.a3s-pp__rows .a3s-num { text-align: right; white-space: nowrap; }
+.a3s-pp__rows tr.is-base td { background: var(--color-accent-soft); }
+.a3s-pp__base, .a3s-pp__draft { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: var(--radius-pill); }
+.a3s-pp__base { background-image: var(--color-accent-gradient); color: #fff; }
+.a3s-pp__draft { margin-left: 0.45rem; color: var(--color-text-muted); background: rgba(42, 51, 66, 0.06); }
+.a3s-pp__add { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.8rem; flex-wrap: wrap; }
+.a3s-pp__add[hidden], .a3s-pp__existing[hidden], .a3s-pp .a3s-tablewrap[hidden] { display: none; }
+.a3s-pp__add select { min-width: 0; flex: 1 1 18rem; max-width: 34rem; }
+.a3s-pp__existing { margin: 0; padding: 0.8rem 1rem; border-radius: 0.8rem; background: #fff4e5; border: 1px solid #f7c97e; font-size: 0.9rem; }
+#a3s-pp-comparison.is-loading { opacity: 0.55; }
+.a3s-pp__rows td:nth-child(2), .a3s-pp__rows td:nth-child(4) { white-space: nowrap; }
+.a3s-pp__existing a { font-weight: 700; }
+.a3s-pp__issued { margin: 0; padding: 0.8rem 1rem; border-radius: 0.8rem; background: var(--color-accent-soft); border: 1px solid #f7c97e; font-size: 0.9rem; }
+
+/* Quotation page (quotations/new and <name>): the options to choose from, the read-only tabs. */
+.a3s-qf { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.a3s-qf:has(.a3s-qf__side) { grid-template-columns: minmax(0, 1fr) 320px; }
+@media (max-width: 1100px) { .a3s-qf:has(.a3s-qf__side) { grid-template-columns: minmax(0, 1fr); } }
+.a3s-qf__main { display: grid; gap: 1.25rem; min-width: 0; align-content: start; }
+.a3s-qf__side { display: grid; gap: 1.25rem; align-content: start; }
+.a3s-qf [data-panel][hidden] { display: none; }
+.a3s-qf__status { margin: 0.4rem 0 0; font-weight: 600; }
+.a3s-qf__options { display: grid; gap: 1rem; margin-top: 1rem; }
+.a3s-qf__group { display: grid; gap: 0.5rem; }
+.a3s-qf__group-title { margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.a3s-qf__opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.8rem; align-items: center; padding: 0.75rem 1rem;
+	border: 1px solid var(--color-border); border-radius: 0.8rem; cursor: pointer; background: var(--color-surface); }
+.a3s-qf__opt:has(input:checked) { border-color: #f7941e; background: var(--color-accent-soft); }
+.a3s-qf__opt-text { display: grid; gap: 0.1rem; min-width: 0; }
+.a3s-qf__opt-text small { color: var(--color-text-muted); }
+.a3s-qf__price { font-weight: 700; white-space: nowrap; }
+.a3s-qf [data-html].is-loading { opacity: 0.55; }

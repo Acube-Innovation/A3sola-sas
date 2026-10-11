@@ -1,0 +1,31 @@
+{#- Page 2 of the Solar Proposal print: the covering letter, in the frame every inner
+    page shares (print_frame.html). `letter` is a3_sola.api.print_cover.print_letter(doc). -#}
+{%- from "templates/includes/print_frame.html" import page, frame_style -%}
+{{ frame_style() }}
+{% call page(letter) %}
+		{%- if letter.date %}<p class="a3l-date">{{ letter.date }}</p>{% endif %}
+		<p>To,</p>
+		<p class="a3l-to">{{ letter.to }}{% if letter.place %},<br>{{ letter.place }}{% endif %}</p>
+		<p class="a3l-dear">{{ letter.dear }}</p>
+		<p class="a3l-intro">{{ letter.intro }}</p>
+		<ol class="a3l-points">
+			{%- for p in letter.points %}<li>{{ p }}</li>{% endfor %}
+		</ol>
+		<p class="a3l-thanks">Thanking you and assuring you of our best attention and services always.</p>
+		<p>Thanks &amp; Regards</p>
+		<p><strong>For {{ letter.company_name }}</strong></p>
+		<div class="a3l-sign">
+			{%- if letter.signatory %}<p><strong>{{ letter.signatory }}</strong></p>{% endif %}
+			{%- if letter.designation %}<p><strong>{{ letter.designation }}</strong></p>{% endif %}
+		</div>
+{% endcall %}
+<style>
+	.a3l-body p { margin: 0 0 9pt; }
+	.a3l-date { text-align: right; }
+	.a3l-to { margin-top: 4pt !important; }
+	.a3l-dear { margin: 20pt 0 46pt !important; }
+	.a3l-points { margin: 0 0 46pt 0; padding-left: 22pt; }
+	.a3l-points li { margin-bottom: 9pt; padding-left: 3pt; }
+	.a3l-sign { margin-top: 52pt; }
+	.a3l-sign p { margin: 0 0 9pt; }
+</style>

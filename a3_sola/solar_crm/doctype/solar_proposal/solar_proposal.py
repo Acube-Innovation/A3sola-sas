@@ -531,6 +531,15 @@ def record_response(solar_proposal, outcome, client_comments=None, lost_reason=N
 	return {"version_no": version.version_no, "status": doc.status}
 
 
+#: The print the proposal goes out as: the client's document, cover to way forward. The
+#: earlier one-format print stays available on the desk's Print menu.
+PRINT_FORMAT = "Solar Proposal Document"
+
+
+def proposal_print_format():
+	return PRINT_FORMAT if frappe.db.exists("Print Format", PRINT_FORMAT) else "Solar Proposal"
+
+
 @frappe.whitelist()
 def generate_proposal(solar_proposal):
 	"""Render the PDF, name it on the client's convention, and render the greeting message."""
@@ -547,7 +556,7 @@ def generate_proposal(solar_proposal):
 		_save_version_change(doc)
 		version = _current_version(doc)
 
-	html = frappe.get_print(doc.doctype, doc.name, print_format="Solar Proposal", no_letterhead=0)
+	html = frappe.get_print(doc.doctype, doc.name, print_format=proposal_print_format(), no_letterhead=0)
 	pdf = get_pdf(html)
 
 	file_name = f"{version.proposal_file_name or doc.proposal_file_name or doc.name}.pdf"

@@ -16,15 +16,16 @@
 							{%- if lead.company_name and lead.company_name != lead.display %}
 							<span class="a3s-table__sub">{{ lead.company_name | e }}</span>
 							{%- endif %}
+							{#- The place under the name and company, on the same left edge. -#}
+							{%- if lead.place %}
+							<span class="a3s-table__meta a3s-table__place">
+								{%- if lead.city %}<span class="a3s-tag">{{ lead.city | e }}</span>{% endif -%}
+								{%- if lead.city and lead.state %}, {% endif -%}
+								{%- if lead.state %}{{ lead.state | e }}{% endif -%}
+							</span>
+							{%- endif %}
 						</span>
 					</a>
-					{%- if lead.place %}
-					<span class="a3s-table__meta a3s-table__place">
-						{%- if lead.city %}<span class="a3s-tag">{{ lead.city | e }}</span>{% endif -%}
-						{%- if lead.city and lead.state %}, {% endif -%}
-						{%- if lead.state %}{{ lead.state | e }}{% endif -%}
-					</span>
-					{%- endif %}
 				</td>
 				<td>
 					{%- if lead.email_id %}<span class="a3s-table__meta">{{ lead.email_id }}</span>{% endif %}

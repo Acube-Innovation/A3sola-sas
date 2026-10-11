@@ -1,0 +1,83 @@
+{#- One option of a proposal, as a quotation shows it: `part` is details, bom or terms.
+    From api/quotation_option.render - the same data the proposal print sets out, shown and
+    not typed. Plain tables and inline styles, so it reads the same on the desk and the portal. -#}
+<div class="a3q" style="font-size: 13px; line-height: 1.5;">
+	<style>
+		.a3q table { width: 100%; border-collapse: collapse; margin: 0 0 12px; table-layout: fixed; }
+		.a3q th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 6px 8px; }
+		.a3q td { padding: 6px 8px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+		.a3q .num { text-align: right; white-space: nowrap; }
+		.a3q .b td { font-weight: 700; }
+		.a3q .total td { font-weight: 700; border-top: 2px solid #2a3342; border-bottom: 0; }
+		.a3q h4 { font-size: 14px; margin: 16px 0 6px; }
+		.a3q h4:first-child { margin-top: 0; }
+		.a3q .muted { color: #5b6575; }
+		.a3q .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; margin: 0 0 12px; }
+		.a3q .facts dt { font-size: 11px; color: #5b6575; text-transform: uppercase; letter-spacing: .04em; }
+		.a3q .facts dd { margin: 2px 0 0; font-weight: 600; }
+		.a3q ul, .a3q ol { margin: 0 0 10px; padding-left: 20px; }
+	</style>
+	{%- if part == "details" %}
+	{%- if opt %}
+	<dl class="facts">
+		<div><dt>Design estimate</dt><dd>{{ opt.estimate }}</dd></div>
+		{%- if proposal %}<div><dt>Proposal</dt><dd>{{ proposal }}</dd></div>{% endif %}
+		<div><dt>Package</dt><dd>{{ opt.package or "—" }}</dd></div>
+		<div><dt>System</dt><dd>{{ opt.capacity_kwp }} kWp {{ opt.connection_type }} {{ opt.system_type }}</dd></div>
+		<div><dt>Plant price</dt><dd>{{ opt.price_text }}</dd></div>
+	</dl>
+	{%- endif %}
+	<h4>Executive Summary</h4>
+	<table>
+		<colgroup><col style="width: 40%"><col></colgroup>
+		{%- for particular, description in summary.rows %}
+		<tr><td>{{ particular }}</td><td>{{ description or "—" }}</td></tr>
+		{%- endfor %}
+	</table>
+
+	{%- elif part == "bom" %}
+	<h4>Specifications &amp; Quantity of Major Components</h4>
+	<table>
+		<colgroup><col style="width: 5%"><col style="width: 20%"><col><col style="width: 20%"><col style="width: 11%"></colgroup>
+		<tr><th>#</th><th>Item</th><th>Specification</th><th>Make</th><th class="num">Nos.</th></tr>
+		{%- for r in components.rows %}
+		<tr><td>{{ loop.index }}</td><td>{{ r.item }}</td>
+			{%- if r.make is none %}<td colspan="2">{{ r.spec or "—" }}</td>{% else %}<td>{{ r.spec or "—" }}</td>
+			<td>{% for line in (r.make or "—").split("\n") %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>{% endif %}
+			<td class="num">{{ r.nos or "—" }}</td></tr>
+		{%- endfor %}
+	</table>
+	<h4>Project Cost</h4>
+	<table>
+		<colgroup><col><col style="width: 20%"></colgroup>
+		{%- for r in rest.cost %}
+		<tr class="{{ 'b' if r.bold else '' }}"><td{% if r.right %} class="num"{% endif %}>{{ r.item }}</td><td class="num">{{ r.amount_text }}</td></tr>
+		{%- endfor %}
+	</table>
+	{%- if rest.kseb %}
+	<h4>KSEBL Expenses <span class="muted">(paid to KSEBL, not part of the quotation)</span></h4>
+	<table>
+		<colgroup><col><col style="width: 20%"></colgroup>
+		{%- for r in rest.kseb %}<tr><td>{{ r.item }}</td><td class="num">{{ r.amount_text }}</td></tr>{% endfor %}
+		<tr class="total"><td>Total</td><td class="num">{{ rest.kseb_total }}</td></tr>
+	</table>
+	{%- if rest.kseb_note %}<p class="muted">{{ rest.kseb_note }}</p>{% endif %}
+	{%- endif %}
+
+	{%- else %}
+	<h4>General Terms &amp; Conditions</h4>
+	<div>{{ rest.terms_html }}</div>
+	{%- if rest.validity %}<ul><li>{{ rest.validity }}</li></ul>{% endif %}
+	<h4>Payment Terms</h4>
+	<ol>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ol>
+	<h4>Schedule of Delivery, Installation and Commissioning</h4>
+	<div>{{ rest.schedule_html }}</div>
+	<h4>Warranty</h4>
+	<ul>{% for w in rest.warranty %}<li>{{ w }}</li>{% endfor %}</ul>
+	<h4>Scope of Work</h4>
+	<p><b>{{ rest.company_scope_label }}</b></p>
+	<ul>{% for s in rest.scope.company %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
+	<p><b>{{ rest.customer_scope_label }}</b></p>
+	<ul>{% for s in rest.scope.customer %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
+	{%- endif %}
+</div>

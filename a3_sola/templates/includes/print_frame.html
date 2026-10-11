@@ -1,0 +1,66 @@
+{#- The frame of every inner page of the proposal print (page 2 on): the light blue
+    artwork, the logo and website at the top, the address, phone and email at the foot.
+    `brand` carries logo, website, address_lines, phone and email - print_letter(doc)
+    gives all of them. Each page is a whole A4 sheet sized from the page width, as the
+    cover is; the page's own content goes in `{% call page(brand) %}...{% endcall %}`,
+    inside the text column. -#}
+{%- macro facets(bottom=False) -%}
+<svg class="a3l-art{% if bottom %} a3l-art--bottom{% endif %}" viewBox="0 0 2000 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<polygon points="0,0 2000,0 2000,300 1500,160 900,210 300,120 0,190" fill="#eef6fb"/>
+	<polygon points="700,0 1250,0 980,190" fill="#d9ecf6"/>
+	<polygon points="1250,0 1700,0 1500,160" fill="#c6e2f1"/>
+	<polygon points="1700,0 2000,0 2000,230" fill="#b3d8ec"/>
+	<polygon points="980,190 1500,160 1250,0" fill="#e3f1f8"/>
+	<polygon points="300,120 700,0 980,190" fill="#e8f3f9"/>
+	<polygon points="1500,160 2000,230 2000,300" fill="#d2e8f4"/>
+</svg>
+{%- endmacro -%}
+{%- macro icon(kind) -%}
+<svg class="a3l-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<rect width="24" height="24" rx="5" fill="#2f8dba"/>
+	{%- if kind == "web" %}
+	<circle cx="12" cy="12" r="6.5" fill="none" stroke="#fff" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="2.8" ry="6.5" fill="none" stroke="#fff" stroke-width="1.4"/><line x1="5.5" y1="12" x2="18.5" y2="12" stroke="#fff" stroke-width="1.4"/>
+	{%- elif kind == "pin" %}
+	<path d="M12 5.2c-2.6 0-4.6 2-4.6 4.6 0 3.4 4.6 8.6 4.6 8.6s4.6-5.2 4.6-8.6c0-2.6-2-4.6-4.6-4.6z" fill="#fff"/><circle cx="12" cy="9.8" r="1.7" fill="#2f8dba"/>
+	{%- elif kind == "phone" %}
+	<path d="M8.6 5.5l2 2.6-1.3 1.6c.8 1.7 2.2 3.1 3.9 3.9l1.6-1.3 2.6 2-1.1 2.4c-4.9-.3-8.8-4.2-9.1-9.1z" fill="#fff"/>
+	{%- else %}
+	<rect x="5.5" y="7.5" width="13" height="9" rx="1.2" fill="#fff"/><polyline points="5.8,8 12,12.8 18.2,8" fill="none" stroke="#2f8dba" stroke-width="1.4"/>
+	{%- endif %}
+</svg>
+{%- endmacro -%}
+{%- macro page(brand, cls="") -%}
+<div class="a3l-page{% if cls %} {{ cls }}{% endif %}">
+	{{ facets() }}
+	{%- if brand.logo %}<img class="a3l-logo" src="{{ brand.logo }}" alt="">{% endif %}
+	{%- if brand.website %}<p class="a3l-web">{{ icon("web") }}<span>{{ brand.website }}</span></p>{% endif %}
+	<div class="a3l-body">{{ caller() }}</div>
+	{{ facets(bottom=True) }}
+	<div class="a3l-foot">
+		<div class="a3l-foot__left">
+			{%- if brand.address_lines %}{{ icon("pin") }}<span>{{ brand.address_lines | join("<br>") }}</span>{% endif %}
+		</div>
+		<div class="a3l-foot__right">
+			{%- if brand.phone %}<p>{{ icon("phone") }}<span>{{ brand.phone }}</span></p>{% endif %}
+			{%- if brand.email %}<p>{{ icon("mail") }}<span>{{ brand.email }}</span></p>{% endif %}
+		</div>
+	</div>
+</div>
+{%- endmacro -%}
+{%- macro frame_style() -%}
+<style>
+	.a3l-page { position: relative; width: 100%; height: 0; padding-bottom: 141.42%; overflow: hidden; background: #fff; }
+	.a3l-art { position: absolute; left: 0; top: 0; width: 100%; height: 15%; }
+	.a3l-art--bottom { top: auto; bottom: 0; height: 12%; -webkit-transform: scale(-1, -1); transform: scale(-1, -1); }
+	.a3l-logo { position: absolute; left: 4.5%; top: 2%; width: 20%; height: auto; }
+	.a3l-web { position: absolute; right: 4.5%; top: 2.6%; margin: 0; font-family: Poppins, sans-serif; font-size: 13pt; color: #333; }
+	.a3l-icon { width: 15pt; height: 15pt; vertical-align: middle; margin-right: 6pt; }
+	.a3l-body { position: absolute; left: 14%; right: 9%; top: 15.2%; font-family: "Palatino Linotype", "Book Antiqua", Palatino, "URW Palladio L", "P052", serif; font-size: 15pt; line-height: 1.45; color: #1f1f1f; }
+	.a3l-foot { position: absolute; left: 4.5%; right: 4.5%; bottom: 2.2%; font-family: Poppins, sans-serif; font-size: 12pt; line-height: 1.3; color: #222; }
+	.a3l-foot__left { float: left; width: 48%; }
+	.a3l-foot__left .a3l-icon { float: left; }
+	.a3l-foot__left span { display: block; margin-left: 24pt; }
+	.a3l-foot__right { float: right; width: 48%; text-align: left; padding-left: 12%; box-sizing: border-box; }
+	.a3l-foot__right p { margin: 0 0 6pt; }
+</style>
+{%- endmacro -%}

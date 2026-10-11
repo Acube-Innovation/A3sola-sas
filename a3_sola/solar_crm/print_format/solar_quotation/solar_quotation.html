@@ -1,0 +1,21 @@
+{#- Solar Quotation: the proposal's document for the one option the quotation is raised for.
+    Page 1 is the cover, shared with the Solar Proposal Document; then the letter, About Us,
+    3.1 and 3.2 for the option, 3.3 at the quotation's own price (its line, discount and
+    GST), and the terms, schedule, warranty, scope, pictures and way forward. -#}
+{%- set cover = print_cover(doc) -%}
+{% include "templates/includes/print_cover.html" %}
+{%- set qdoc = quotation_print_doc(doc) -%}
+{%- if qdoc %}
+<div style="page-break-before: always;"></div>
+{%- set letter = print_letter(qdoc) -%}
+{% include "templates/includes/print_letter.html" %}
+<div style="page-break-before: always;"></div>
+{% include "templates/includes/print_about_us.html" %}
+<div style="page-break-before: always;"></div>
+{%- set summary = print_summary(qdoc) -%}
+{%- set components = print_components(qdoc) -%}
+{% include "templates/includes/print_summary.html" %}
+<div style="page-break-before: always;"></div>
+{%- set rest = print_rest(qdoc) -%}
+{% include "templates/includes/print_rest.html" %}
+{%- endif %}

@@ -42,6 +42,11 @@ SIZING_FIELDS = (
 #: What a lead's consumption is assumed to be quoted against, since a lead records no
 #: billing cycle of its own. Matches the Solar Consumer field default.
 DEFAULT_BILLING_FREQUENCY = "Bimonthly"
+#: The Building Type an estimate starts with, by the consumer's category (proposal: Site Location).
+BUILDING_BY_CATEGORY = {
+	"Residential": "Residence Building", "Group Housing": "Residential Apartment",
+	"Commercial": "Commercial Building", "Industrial": "Industrial Building", "Government": "Government Building",
+}
 
 LINKS = (
 	("lead", "Lead"),
@@ -275,6 +280,8 @@ class SolarDesignEstimate(Document):
 		self.survey = frappe.get_cached_doc("Site Survey", self.site_survey) if self.site_survey else None
 		self.annual_consumption_units = flt(self.subject.annual_consumption_units)
 		self.consumer_category = self.subject.consumer_category
+		if not self.get("building_type"):
+			self.building_type = BUILDING_BY_CATEGORY.get(self.consumer_category or "")
 		self.tariff_category = self.subject.tariff_category
 		# The Electricity Tariff asked for is the consumer's KSEB code unless one was chosen.
 		if not self.tariff_code:
@@ -388,6 +395,7 @@ class SolarDesignEstimate(Document):
 				"inverter_count": cint(inverter.inverter_count) or None,
 				"inverter_phase": inverter_phase(package, inverter) or None,
 				"inverter_make": inverter.inverter_make,
+				"specification": inverter.inverter_specification or None,
 			})
 
 		if self.system_type in ("Off-Grid", "Hybrid"):
@@ -1024,6 +1032,7 @@ class SolarDesignEstimate(Document):
 					"inverter_count": cint(source.inverter_count) or None,
 					"inverter_phase": inverter_phase(package, source) or None,
 					"inverter_make": option.inverter_make,
+					"specification": source.inverter_specification or None,
 					"option_key": key,
 				}
 
@@ -1039,12 +1048,22 @@ class SolarDesignEstimate(Document):
 				old = kept.get(key)
 				# The row keeps its name, so a change made to it can be told from the rest.
 				self.append(table, {**values, **({"name": old.name} if old else {}),
-					"rate": (old.rate if old else 0) or 0, "is_option": old.is_option if old else 0})
+					"rate": (old.rate if old else 0) or 0, "is_option": old.is_option if old else 0,
+					# A specification typed on the row stands over the package's.
+					**({"specification": old.get("specification")} if old and old.get("specification") else {})})
 			for row in by_hand:
 				self.append(table, row)
 
 		rebuild("panels", panels, lambda r, v: r.panel_make == v["panel_make"] and flt(r.panel_capacity_wp) == flt(v["panel_capacity_wp"]))
 		rebuild("inverters", inverters, lambda r, v: r.inverter_make == v["inverter_make"] and flt(r.inverter_capacity_kw) == flt(v["inverter_capacity_kw"]))
+		# An Off-Grid or Hybrid system takes its packages' batteries while it has none of its own.
+		if self.system_type in ("Off-Grid", "Hybrid") and not self.get("batteries"):
+			for package_name in dict.fromkeys(option.solar_package for option in ticked):
+				for row in frappe.get_cached_doc("Solar Package", package_name).get("batteries") or []:
+					values = row.as_dict()
+					for key in ("name", "parent", "parentfield", "parenttype", "idx", "doctype", "owner", "creation", "modified", "modified_by", "docstatus"):
+						values.pop(key, None)
+					self.append("batteries", values)
 		# The kit is the options' now; choosing the package again must not refill it.
 		self.equipment_package = self.solar_package
 		return True

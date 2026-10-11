@@ -16,7 +16,7 @@
 		{%- if f.input == "select" %}
 		<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if f.subsidy_tariff %} data-subsidy-tariff="{{ f.subsidy_tariff | e }}"{% endif %}>
 			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.lead %} data-lead="{{ o.lead | e }}"{% endif %}{% if o.consumer %} data-consumer="{{ o.consumer | e }}"{% endif %}{% if o.show_id %} data-show-id="1"{% endif %}{% if o.tariff %} data-tariff="{{ o.tariff | e }}"{% endif %}{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.lead %} data-lead="{{ o.lead | e }}"{% endif %}{% if o.consumer %} data-consumer="{{ o.consumer | e }}"{% endif %}{% if o.show_id %} data-show-id="1"{% endif %}{% if o.tariff %} data-tariff="{{ o.tariff | e }}"{% endif %}{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
 		</select>
 		{%- elif f.input == "number" %}

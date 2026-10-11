@@ -67,6 +67,15 @@
 	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Generate the proposal to open version one.</p>
 	{%- endif %}
 
+	{#- The proposal as the customer receives it, drawn fresh from the record. -#}
+	<div class="a3s-version__actions a3s-version__pdf">
+		<a class="a3s-btn a3s-btn--secondary" target="_blank" rel="noopener"
+		   href="/api/method/a3_sola.api.portal_proposal.pdf?name={{ record.name | urlencode }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>View PDF</span>
+		</a>
+		<a class="a3s-btn a3s-btn--ghost"
+		   href="/api/method/a3_sola.api.portal_proposal.pdf?name={{ record.name | urlencode }}&download=1">Download PDF</a>
+	</div>
 	{%- if can_write %}
 	<div class="a3s-version__actions" id="a3s-proposal-actions"
 	     data-name="{{ record.name | e }}">

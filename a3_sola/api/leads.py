@@ -177,10 +177,11 @@ def glance_rows(doc, only_fields=None):
 
 def lead_snapshot(doc):
 	"""Counts and dates for the snapshot card."""
-	notes = [n for n in (doc.get("notes") or []) if (n.note or "").strip()]
+	from a3_sola.www.a3solaportal.collections import assigned_count, attachment_count
+
 	return {
-		"touches": len(doc.get("outreach_log") or []),
-		"notes": len(notes),
+		"assigned": assigned_count(doc),
+		"attachments": attachment_count(doc),
 		"days_open": max(cint(date_diff(today(), doc.creation)), 0),
 		"non_connects": cint(doc.get("consecutive_non_connects")),
 		"followup_status": doc.get("followup_status") or "",

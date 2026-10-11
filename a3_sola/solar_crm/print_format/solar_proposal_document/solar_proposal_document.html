@@ -1,0 +1,18 @@
+{#- Solar Proposal Document. Page 1 is the cover, shared with the Solar Quotation format;
+    page 2 the covering letter; pages 3-6 About Us and the components offered;
+    pages 7-8 section 3, Proposed Solar Energy Solution: 3.1 and 3.2; then 3.3 to 6
+    (project cost, terms, schedule, warranty, scope, pictures, way forward). -#}
+{%- set cover = print_cover(doc) -%}
+{% include "templates/includes/print_cover.html" %}
+<div style="page-break-before: always;"></div>
+{%- set letter = print_letter(doc) -%}
+{% include "templates/includes/print_letter.html" %}
+<div style="page-break-before: always;"></div>
+{% include "templates/includes/print_about_us.html" %}
+<div style="page-break-before: always;"></div>
+{%- set summary = print_summary(doc) -%}
+{%- set components = print_components(doc) -%}
+{% include "templates/includes/print_summary.html" %}
+<div style="page-break-before: always;"></div>
+{%- set rest = print_rest(doc) -%}
+{% include "templates/includes/print_rest.html" %}
