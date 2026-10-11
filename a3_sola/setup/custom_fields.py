@@ -183,12 +183,16 @@ CUSTOM_FIELDS = {
 		{"fieldname": "net_payable_by_customer", "fieldtype": "Currency", "label": "Net Payable by Customer", "insert_after": "expected_subsidy_to_customer", "read_only": 1},
 		{"fieldname": "estimated_annual_savings", "fieldtype": "Currency", "label": "Estimated Annual Savings", "insert_after": "net_payable_by_customer", "read_only": 1},
 		{"fieldname": "simple_payback_years", "fieldtype": "Float", "label": "Simple Payback (years)", "insert_after": "estimated_annual_savings", "read_only": 1, "precision": "2"},
+		# The chosen option as the proposal finalised it - details, bill of materials, terms -
+		# shown, not typed. Drawn by the form script from the design estimate.
+		{"fieldname": "a3s_option_sb", "fieldtype": "Section Break", "label": "Quotation Details", "insert_after": "simple_payback_years"},
+		{"fieldname": "a3s_option_html", "fieldtype": "HTML", "label": "Option Details", "insert_after": "a3s_option_sb"},
 
 		{
 			"fieldname": "a3s_statutory_sb",
 			"fieldtype": "Section Break",
 			"label": "Statutory & Net Meter",
-			"insert_after": "simple_payback_years",
+			"insert_after": "a3s_option_html",
 			"collapsible": 1,
 			"description": (
 				"A reimbursement, not revenue. These never enter the items or taxes tables - they "

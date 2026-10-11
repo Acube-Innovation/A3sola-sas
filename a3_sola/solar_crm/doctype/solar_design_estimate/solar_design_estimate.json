@@ -16,6 +16,7 @@
   "electricity_tariff",
   "tariff_code",
   "consumer_category",
+  "building_type",
   "connection_type",
   "company",
   "amended_from",
@@ -37,6 +38,7 @@
   "is_dcr_compliant",
   "final_capacity_kw",
   "system_type",
+  "backup_load_kw",
   "sb_sizing_options",
   "sizing_options",
   "tab_system",
@@ -177,6 +179,13 @@
    "options": "Residential\nGroup Housing\nCommercial\nIndustrial\nGovernment",
    "fetch_from": "solar_consumer.consumer_category",
    "read_only": 1
+  },
+  {
+   "fieldname": "building_type",
+   "fieldtype": "Select",
+   "label": "Building Type",
+   "options": "\nResidence Building\nVilla\nResidential Apartment\nCommercial Building\nOffice\nIndustrial Building\nFactory / Warehouse\nGovernment Building\nInstitution\nOther",
+   "description": "How the site reads in the proposal (Site Location). Filled from the consumer category when left blank."
   },
   {
    "fieldname": "connection_type",
@@ -330,6 +339,13 @@
    "options": "On-Grid\nOff-Grid\nHybrid",
    "default": "On-Grid",
    "description": "With subsidy, the system cannot be Off-Grid."
+  },
+  {
+   "fieldname": "backup_load_kw",
+   "fieldtype": "Float",
+   "label": "Backup Load (kW)",
+   "depends_on": "eval:['Hybrid','Off-Grid'].includes(doc.system_type)",
+   "description": "The load the batteries carry in a power cut. The proposal quotes the backup hours for it."
   },
   {
    "fieldname": "sb_sizing_options",
@@ -800,7 +816,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-08 21:00:00.000000",
+ "modified": "2026-10-11 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

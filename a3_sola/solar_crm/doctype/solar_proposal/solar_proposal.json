@@ -33,6 +33,8 @@
   "google_location_url",
   "sb_estimates",
   "design_estimates",
+  "letter_section",
+  "remarks",
   "sb_1",
   "proposal_sequence",
   "fiscal_year",
@@ -232,6 +234,17 @@
    "fieldtype": "Table",
    "label": "Design Estimates",
    "options": "Solar Proposal Estimate"
+  },
+  {
+   "fieldname": "letter_section",
+   "fieldtype": "Section Break",
+   "label": "Covering Letter"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks",
+   "description": "Printed in the covering letter after the options, one numbered point per line."
   },
   {
    "fieldname": "sb_1",
@@ -454,7 +467,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-09 17:00:00.000000",
+ "modified": "2026-10-11 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Proposal",
@@ -551,5 +564,6 @@
  "title_field": "customer_name",
  "show_title_field_in_link": 1,
  "search_fields": "customer_name,mobile_no,capacity_label",
- "description": "The proposal register the client keeps in a spreadsheet today. The existing fiscal-year numbering and file-naming convention are preserved."
+ "description": "The proposal register the client keeps in a spreadsheet today. The existing fiscal-year numbering and file-naming convention are preserved.",
+ "default_print_format": "Solar Proposal Document"
 }

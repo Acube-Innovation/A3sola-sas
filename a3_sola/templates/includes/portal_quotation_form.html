@@ -1,0 +1,67 @@
+{#- The quotation page, new and existing: choose the lead, then one option of its proposals;
+    the tabs show that option as the proposal finalised it - details, bill of materials and
+    price, terms - and nothing there is typed. Context from api/quotation_option.page_context;
+    portal_quotation_form.js loads the options and the tabs. -#}
+<script type="application/json" id="a3s-qf-state">{{ state_json }}</script>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">{{ title | e }}</h2>
+		<p class="a3s-main__sub">One option of a proposal, as the proposal finalised it. Choose the lead, then the option.</p>
+	</div>
+	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/quotations">&larr; Back</a>
+</div>
+
+<div class="a3s-qf" id="a3s-qf">
+	<div class="a3s-qf__main">
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">Quotation For</h3>
+			<div class="a3s-form__grid">
+				<div class="a3s-field a3s-combo a3s-combo--field" data-combo id="f-qf-lead">
+					<label for="fld-qf-lead">Lead <span class="a3s-req">*</span></label>
+					<select id="fld-qf-lead" aria-label="Lead"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for c in lead_choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
+					</select>
+				</div>
+				{%- if quotation %}
+				<div class="a3s-field">
+					<label>Status</label>
+					<p class="a3s-qf__status">{{ quotation.status | e }}{% if quotation.grand_total %} &middot; {{ frappe.utils.fmt_money(quotation.rounded_total or quotation.grand_total, currency=quotation.currency) }}{% endif %}</p>
+				</div>
+				{%- endif %}
+			</div>
+			<p class="a3s-field__hint">Only leads with a proposal are listed. Option 1 of a proposal is its base.</p>
+			<div class="a3s-qf__options" id="a3s-qf-options" aria-live="polite"></div>
+		</section>
+
+		<div class="a3s-ce-tabs a3s-lf__tabs" role="tablist" aria-label="Quotation">
+			<button type="button" role="tab" id="tab-q-details" data-tab="details" aria-selected="true">Quotation Details</button>
+			<button type="button" role="tab" id="tab-q-bom" data-tab="bom" aria-selected="false" tabindex="-1">BOM</button>
+			<button type="button" role="tab" id="tab-q-terms" data-tab="terms" aria-selected="false" tabindex="-1">Terms</button>
+		</div>
+		{%- for key in ("details", "bom", "terms") %}
+		<section class="a3s-card a3s-edit__card" id="panel-q-{{ key }}" role="tabpanel" data-panel="{{ key }}"{% if not loop.first %} hidden{% endif %}>
+			<div data-html="{{ key }}"><p class="a3s-field__hint">Choose an option above to see it here.</p></div>
+		</section>
+		{%- endfor %}
+
+		<div class="a3s-form__actions a3s-edit__actions">
+			{%- if editable %}
+			<button type="button" class="a3s-btn a3s-btn--primary" id="a3s-qf-save" disabled>{% if quotation %}Save{% else %}Create quotation{% endif %}</button>
+			{%- if quotation and quotation.docstatus == 0 %}
+			<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-qf-submit">Submit quotation</button>
+			{%- endif %}
+			{%- endif %}
+			{%- if pdf_route %}
+			<a class="a3s-btn a3s-btn--secondary" href="{{ pdf_route }}" target="_blank" rel="noopener">View PDF</a>
+			<a class="a3s-btn a3s-btn--ghost" href="{{ pdf_route }}&download=1">Download PDF</a>
+			{%- endif %}
+			{%- if desk_route %}<a class="a3s-btn a3s-btn--ghost" href="{{ desk_route }}">Open in ERPNext</a>{% endif %}
+			<p class="a3s-form__status" id="a3s-qf-status" role="status" aria-live="polite"></p>
+		</div>
+	</div>
+	{%- if quotation %}
+	<aside class="a3s-qf__side">{% include "templates/includes/portal_record_aside.html" %}</aside>
+	{%- endif %}
+</div>

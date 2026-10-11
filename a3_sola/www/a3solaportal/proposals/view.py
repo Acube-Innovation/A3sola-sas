@@ -32,6 +32,9 @@ def get_context(context):
 	detail_context(context, "proposals", name)
 
 	doc = context.record
+	# A proposal goes on after it is submitted: edited into a new version, regenerated,
+	# dispatched. Only a cancelled one - replaced by its amendment - is closed.
+	context.can_write = bool(doc.has_permission("write")) and frappe.utils.cint(doc.docstatus) < 2
 	# Newest first: the question on this page is what happened last.
 	context.versions = [
 		{

@@ -184,6 +184,10 @@ frappe.ui.form.on("Solar Proposal", {
 		render_comparison(frm);
 	},
 
+	validate(frm) {
+		sync_base(frm);
+	},
+
 	design_estimates_add: render_comparison,
 	design_estimates_remove: render_comparison,
 	design_estimates_move: render_comparison,
@@ -195,8 +199,22 @@ frappe.ui.form.on("Solar Proposal Estimate", {
 	},
 });
 
+// ---- The base: the first Design Estimates row, as the server keeps it -------------------
+// Kept here too, because the form checks Base Design Estimate (mandatory) before saving.
+function sync_base(frm) {
+	const rows = (frm.doc.design_estimates || []).filter((r) => r.solar_design_estimate);
+	(frm.doc.design_estimates || []).forEach((r, i) => { r.is_base = i === 0 ? 1 : 0; });
+	const base = rows.length ? rows[0].solar_design_estimate : null;
+	if (frm.doc.solar_design_estimate !== base) {
+		frm.doc.solar_design_estimate = base;
+		frm.refresh_field("solar_design_estimate");
+	}
+	frm.refresh_field("design_estimates");
+}
+
 // ---- Design Comparison: Option 1 in full, then each option by what it changes ---------
 function render_comparison(frm) {
+	sync_base(frm);
 	const field = frm.fields_dict.design_comparison;
 	if (!field) return;
 	const names = (frm.doc.design_estimates || []).map((r) => r.solar_design_estimate).filter(Boolean);

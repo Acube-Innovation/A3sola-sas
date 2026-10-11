@@ -10,6 +10,7 @@
   "phase",
   "specification",
   "make",
+  "component_makes",
   "numbers",
   "rate",
   "amount"
@@ -45,6 +46,12 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "component_makes",
+   "fieldtype": "Small Text",
+   "label": "Makes by Part",
+   "description": "One line per part, e.g. Isolator - ABB, Fuses - Mersen, SPD - Mersen. Printed in place of the make."
+  },
+  {
    "fieldname": "numbers",
    "fieldtype": "Float",
    "label": "Numbers",
@@ -67,7 +74,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-01 19:30:00.000000",
+ "modified": "2026-10-11 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate BOS Item",

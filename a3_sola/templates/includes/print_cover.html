@@ -1,0 +1,49 @@
+{#- The cover page shared by the Solar Proposal and Quotation print formats. `cover` is
+    a3_sola.api.print_cover.print_cover(doc). The blue bands are drawn, not images, so
+    they stay sharp at any size. The page is a full A4 sheet: the print formats set no
+    margins and later pages bring their own padding. -#}
+{%- macro band(flip=False) -%}
+<svg class="a3c-band{% if flip %} a3c-band--bottom{% endif %}" viewBox="0 0 2000 333" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<polygon points="0,0 2000,0 2000,270 1000,190 0,215" fill="#cfe6f1"/>
+	<polygon points="0,0 900,0 2000,178 2000,262 690,150 0,215" fill="#7fbcd9"/>
+	<polygon points="0,0 900,0 1400,80 0,90" fill="#a9d2e6"/>
+	<polygon points="900,0 2000,0 2000,26 1460,90" fill="#2f8dba"/>
+	<polygon points="1460,90 2000,26 2000,178" fill="#4fa2c9"/>
+	<line x1="0" y1="305" x2="2000" y2="10" stroke="#b9bfc4" stroke-width="3"/>
+</svg>
+{%- endmacro -%}
+<div class="a3c-cover">
+	{{ band() }}
+	<div class="a3c-body">
+		<h1 class="a3c-title">{{ cover.title }}</h1>
+		<p class="a3c-scope">{{ cover.scope }}</p>
+		<p class="a3c-for">for</p>
+		{%- if cover.customer %}<p class="a3c-name">{{ cover.customer }}</p>{% endif %}
+		{%- if cover.place %}<p class="a3c-name">{{ cover.place }}</p>{% endif %}
+		<p class="a3c-ref">No. {{ cover.number }}</p>
+		{%- if cover.date %}<p class="a3c-ref">Date &ndash; {{ cover.date }}</p>{% endif %}
+		{%- if cover.logo %}<img class="a3c-logo" src="{{ cover.logo }}" alt="">{% endif %}
+		{%- for line in cover.address_lines %}<p class="a3c-address">{{ line }}</p>{% endfor %}
+	</div>
+	{{ band(flip=True) }}
+</div>
+<style>
+	/* The cover is the whole sheet: no PDF margins (read by Frappe from this rule), no padding. */
+	.print-format { margin-top: 0mm; margin-bottom: 0mm; margin-left: 0mm; margin-right: 0mm; padding: 0 !important; }
+	/* Sized from the page width, not in mm: the PDF engine draws a CSS mm at about 0.77 of
+	   a real one, so a 210mm box would not fill the sheet. Height is A4's 297/210 of the
+	   width; offsets are percentages of the width, text and gaps in pt to match. */
+	.a3c-cover { position: relative; width: 100%; height: 0; padding-bottom: 141.42%; overflow: hidden; margin: 0; background: #fff; }
+	.a3c-band { position: absolute; left: 0; top: 0; width: 100%; height: 13.5%; }
+	.a3c-band--bottom { top: auto; bottom: 0; -webkit-transform: scale(-1, -1); transform: scale(-1, -1); }
+	.a3c-body { position: absolute; left: 13%; right: 13%; top: 20%; text-align: center; }
+	.a3c-title, .a3c-scope, .a3c-for, .a3c-name { font-family: Poppins, Futura, "Century Gothic", "URW Gothic", sans-serif; }
+	.a3c-title { margin: 0 0 30pt; font-size: 33pt; font-weight: 700; letter-spacing: 0.05em; color: #10275e; text-transform: uppercase; }
+	.a3c-scope { margin: 0 0 16pt; padding: 0 46pt; font-size: 23pt; line-height: 1.4; color: #2a6f8f; text-transform: uppercase; }
+	.a3c-for { margin: 0 0 6pt; font-size: 26pt; color: #10275e; }
+	.a3c-name { margin: 0 0 12pt; font-size: 28pt; font-weight: 700; color: #10275e; }
+	.a3c-ref, .a3c-address { font-family: "Palatino Linotype", "Book Antiqua", Palatino, "URW Palladio L", "P052", serif; }
+	.a3c-ref { margin: 0; font-size: 16pt; line-height: 1.45; color: #1f2b3d; }
+	.a3c-logo { display: block; width: 33%; height: auto; margin: 26pt auto 18pt; }
+	.a3c-address { margin: 0; font-size: 14pt; line-height: 1.5; color: #555; }
+</style>

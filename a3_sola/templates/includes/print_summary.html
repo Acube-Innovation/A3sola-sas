@@ -1,0 +1,71 @@
+{#- Section 3 of the Solar Proposal print: 3. Proposed Solar Energy Solution, 3.1 Executive
+    Summary (`summary`, print_summary(doc)) and 3.2 Specifications & Quantity of Major
+    Components (`components`, print_components(doc)), both from the base design estimate.
+    As in the client's document, 3.2 starts under 3.1 on page 7 with its first five rows and
+    continues on page 8 without repeating the header. A row with nothing on record prints a
+    dash. In the shared frame (print_frame.html). -#}
+{%- from "templates/includes/print_frame.html" import page -%}
+{#- Five component rows fit under 3.1; four when 3.1 carries the backup rows (Hybrid, Off-Grid). -#}
+{%- set FIRST_PAGE_ROWS = 4 if summary.rows | length > 7 else 5 -%}
+{%- macro component_rows(rows, start) -%}
+	{%- for r in rows %}
+	<tr>
+		<td class="c">{{ start + loop.index0 }}</td>
+		<td class="a3s3-item">{{ r.item }}</td>
+		{%- if r.make is none %}
+		<td colspan="2">{{ r.spec or "—" }}</td>
+		{%- else %}
+		<td class="a3s3-spec">{{ r.spec or "—" }}</td>
+		<td class="c a3s3-make">{% for line in (r.make or "—").split("\n") %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+		{%- endif %}
+		<td class="c">{{ r.nos or "—" }}</td>
+	</tr>
+	{%- endfor %}
+{%- endmacro -%}
+{%- macro component_cols() -%}
+<colgroup><col style="width: 7%"><col style="width: 20%"><col style="width: 36%"><col style="width: 21%"><col style="width: 16%"></colgroup>
+{%- endmacro -%}
+{%- set first = components.rows[:FIRST_PAGE_ROWS] -%}
+{%- set rest = components.rows[FIRST_PAGE_ROWS:] -%}
+{% call page(letter, "a3s3") %}
+	<h2>3.&nbsp; Proposed Solar Energy Solution</h2>
+	<h3>3.1.&nbsp; <u>Executive Summary</u></h3>
+	<table class="a3s3-table">
+		<colgroup><col style="width: 13%"><col style="width: 47%"><col style="width: 40%"></colgroup>
+		<tr><th>Sl No</th><th>Particulars</th><th>Description</th></tr>
+		{%- for particular, description in summary.rows %}
+		<tr><td class="c">{{ loop.index }}</td><td>{{ particular }}</td><td>{{ description or "—" }}</td></tr>
+		{%- endfor %}
+	</table>
+	{%- if components.rows %}
+	<h3 class="a3s3-next">3.2.&nbsp; <u>Specifications &amp; Quantity of Major Components</u></h3>
+	<table class="a3s3-table a3s3-components">
+		{{ component_cols() }}
+		<tr><th>Sl.<br>No.</th><th>Item<br>Description</th><th>Specification</th><th>Make</th><th>Nos.</th></tr>
+		{{ component_rows(first, 1) }}
+	</table>
+	{%- endif %}
+{% endcall %}
+{%- if rest %}
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3s3") %}
+	<table class="a3s3-table a3s3-components">
+		{{ component_cols() }}
+		{{ component_rows(rest, FIRST_PAGE_ROWS + 1) }}
+	</table>
+{% endcall %}
+{%- endif %}
+<style>
+	.a3s3 .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 15pt; line-height: 1.3; }
+	.a3s3 h2 { margin: 0 0 6pt; font-family: inherit; font-size: 17pt; font-weight: 700; color: #1f1f1f; }
+	.a3s3 h3 { margin: 0 0 6pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }
+	.a3s3 h3.a3s3-next { margin-top: 18pt; }
+	.a3s3-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+	.a3s3-table th, .a3s3-table td { border: 1px solid #222; padding: 2pt 6pt; vertical-align: middle; text-align: left; }
+	.a3s3-table th { font-weight: 700; text-align: center; }
+	.a3s3-table td.c { text-align: center; }
+	.a3s3-components td { font-size: 14pt; }
+	.a3s3-components td.a3s3-item { font-size: 12pt; }
+	.a3s3-components td.a3s3-spec { text-align: justify; }
+	.a3s3-components td.a3s3-make { font-size: 13pt; }
+</style>

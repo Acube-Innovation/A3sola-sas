@@ -278,6 +278,10 @@ def list_context(context, slug):
 		list_filters.append({"fieldname": fieldname, "label": _(df.label), "value": chosen,
 			"choices": link_choices(df.options)})
 
+	# A cancelled document has been withdrawn or replaced by its amendment (the proposal's
+	# "-1"), so the list shows what stands; the cancelled one still opens from its link.
+	if meta.is_submittable:
+		filters["docstatus"] = ["<", 2]
 	records = frappe.get_list(
 		doctype, fields=fields, filters=filters, or_filters=or_filters,
 		order_by="modified desc", limit_page_length=100,
@@ -733,9 +737,29 @@ def _backlink_field(doctype, target):
 	return None
 
 
+def assigned_count(doc):
+	"""How many people the record is assigned to now - its open assignments (ToDo)."""
+	return len(set(frappe.get_all("ToDo", filters={"reference_type": doc.doctype, "reference_name": doc.name,
+		"status": "Open"}, pluck="allocated_to")))
+
+
+def attachment_count(doc):
+	"""How many files are attached to the record."""
+	return frappe.db.count("File", {"attached_to_doctype": doc.doctype, "attached_to_name": doc.name, "is_folder": 0})
+
+
+def people_and_files_tiles(doc):
+	"""The two counts every record page shows: who it is assigned to, and what is attached."""
+	return [
+		{"value": assigned_count(doc), "label": "Assigned", "icon": "user", "tone": "green"},
+		{"value": attachment_count(doc), "label": "Attachments", "icon": "doc", "tone": "amber"},
+	]
+
+
 def record_snapshot(slug, doc):
-	"""Tiles for the snapshot card: linked records, plus age."""
-	tiles = []
+	"""Tiles for the snapshot card: who it is assigned to, its attachments, linked records,
+	plus age."""
+	tiles = people_and_files_tiles(doc)
 	for doctype, label, icon, tone in RECORD_LINKS.get(slug, []):
 		if not frappe.db.exists("DocType", doctype):
 			continue
