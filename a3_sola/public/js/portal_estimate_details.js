@@ -113,16 +113,24 @@
 	var packageField = document.getElementById("fld-solar_package");
 	var systemField = document.getElementById("fld-system_type");
 	var subsidyField = document.getElementById("fld-subsidy_option");
-	/* With subsidy, only DCR-compliant packages: the subsidy needs DCR panels. */
-	function packageFits(o, phase, subsidy) {
+	/* A DCR-compliant package is a subsidy package: with subsidy only those are listed, and
+	   without subsidy only the rest - each is priced off its own price list. */
+	function packageFits(o, phase, subsidy, system) {
 		var phases = o.dataset.phases ? o.dataset.phases.split("|") : [];
 		if (phase && phases.length && phases.indexOf(phase) === -1) return "phase";
+		/* An On-Grid estimate is built on an On-Grid package, a Hybrid one on a Hybrid package. */
+		if (system && o.dataset.systemType && o.dataset.systemType !== system) return "system";
 		if (subsidy === "With Subsidy" && o.dataset.dcr === "0") return "dcr";
+		if (subsidy === "Without Subsidy" && o.dataset.dcr === "1") return "subsidy";
 		return "";
 	}
-	function droppedNote(o, why, phase) {
-		return "\u201c" + o.textContent + "\u201d " + (why === "dcr"
+	function droppedNote(o, why, phase, system) {
+		return "\u201c" + o.textContent + "\u201d " + (why === "system"
+			? "is for " + o.dataset.systemType + " systems, so it was cleared. Choose a package for " + system + "."
+			: why === "dcr"
 			? "is not DCR compliant, and subsidy needs DCR panels, so it was cleared. Choose a DCR package."
+			: why === "subsidy"
+			? "is a subsidy (DCR) package, so it was cleared. Choose a non-subsidy package."
 			: "has no " + phase + " inverter, so it was cleared. Choose a " + phase + " package.");
 	}
 	function packageRules() {
@@ -130,11 +138,11 @@
 			var dropped = null, why = "";
 			var phase = phaseField ? phaseField.value : "";
 			keepOnly(packageField, function (o) {
-				var off = packageFits(o, phase, subsidyField ? subsidyField.value : "");
+				var off = packageFits(o, phase, subsidyField ? subsidyField.value : "", systemField ? systemField.value : "");
 				if (off && o.value === packageField.value) { dropped = o; why = off; }
 				return !off;
 			});
-			if (dropped) setStatus(droppedNote(dropped, why, phase));
+			if (dropped) setStatus(droppedNote(dropped, why, phase, systemField ? systemField.value : ""));
 		}
 		if (subsidyField) {
 			/* Subsidy is only for the subsidy tariff (LT-I, domestic), and never Off-Grid. A
@@ -302,7 +310,7 @@
 			var why = "";
 			Array.prototype.forEach.call(pkg.options, function (o) {
 				if (!o.value) return;
-				var off = packageFits(o, phaseValue, subsidy ? subsidy.value : "");
+				var off = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
 				o.hidden = !!off;
 				o.disabled = !!off;
 				if (off && o.value === pkg.value) why = off;
@@ -310,7 +318,7 @@
 			var dropped = pkg.selectedOptions[0];
 			if (dropped && dropped.disabled) {
 				pkg.value = "";
-				setStatus(droppedNote(dropped, why, phaseValue));
+				setStatus(droppedNote(dropped, why, phaseValue, system ? system.value : ""));
 			}
 		}
 	}

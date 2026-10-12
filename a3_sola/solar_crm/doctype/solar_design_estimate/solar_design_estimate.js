@@ -86,6 +86,22 @@ frappe.ui.form.on("Solar Design Estimate", {
 				technology: locals[cdt][cdn].battery_variant || "",
 			},
 		}));
+		// A DCR-compliant package is a subsidy package: each subsidy choice lists its own. And
+		// an On-Grid estimate lists On-Grid packages, a Hybrid one Hybrid packages.
+		const package_filters = (subsidy_option, system_type) => ({
+			filters: {
+				is_active: 1,
+				company: frm.doc.company,
+				is_dcr_compliant: subsidy_option === "Without Subsidy" ? 0 : 1,
+				...(system_type ? { system_type } : {}),
+			},
+		});
+		frm.set_query("solar_package", () =>
+			package_filters(frm.doc.subsidy_option, frm.doc.system_type)
+		);
+		frm.set_query("solar_package", "sizing_options", (doc, cdt, cdn) =>
+			package_filters(locals[cdt][cdn].subsidy_option, locals[cdt][cdn].system_type)
+		);
 	},
 
 	override_capacity_kw(frm) {

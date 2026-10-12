@@ -242,6 +242,9 @@ def detail_columns(doc=None, prefill=None):
 					choices, spec["help"] = tariff_code_choices()
 					spec["label"] = _("Electricity Tariff")
 					spec["hint"] = ""
+				elif df.options == "Solar Package":
+					# Retired packages are not offered; one already on the estimate still shows below.
+					choices = link_choices(df.options, filters=[["is_active", "=", 1]])
 				else:
 					choices = link_choices(df.options)
 				if value and not any(c["value"] == value for c in choices):
@@ -251,11 +254,15 @@ def detail_columns(doc=None, prefill=None):
 					# the packages for its connection type.
 					from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
 
-					dcr = set(frappe.get_all("Solar Package", filters={"is_dcr_compliant": 1}, pluck="name"))
+					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type"],
+						filters={"name": ["in", [c["value"] for c in choices]]})}
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
-						# Subsidy needs DCR panels, so a subsidised estimate lists only these.
-						c["dcr"] = 1 if c["value"] in dcr else 0
+						pkg = info.get(c["value"]) or frappe._dict()
+						# A DCR package is a subsidy package, so each subsidy choice lists its own.
+						c["dcr"] = 1 if pkg.is_dcr_compliant else 0
+						# An On-Grid estimate lists On-Grid packages, a Hybrid one Hybrid packages.
+						c["system_type"] = pkg.system_type or ""
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.

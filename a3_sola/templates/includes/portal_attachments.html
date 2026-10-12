@@ -1,0 +1,50 @@
+{#- The record's attachments: its files listed, with Upload and Remove, on its view page and
+    at the foot of its edit form. Files go straight onto the record (api/portal_attachments),
+    so nothing here waits for the form's Save, and none of its controls is named - the edit
+    form posts only named controls.
+
+    Context: att_doctype, att_name (set with `{% with %}` by the including page). -#}
+{%- if att_doctype and att_name %}
+<section class="a3s-card a3s-edit__card a3s-attach" data-attach
+         data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}">
+	<div class="a3s-attach__head">
+		<h3 class="a3s-edit__card-title">Attachments</h3>
+		<span class="a3s-attach__count" data-attach-count hidden></span>
+	</div>
+
+	{#- Choose what the files are, then pick them - or drop them on the panel. -#}
+	<div class="a3s-attach__drop" data-attach-new hidden>
+		<span class="a3s-attach__drop-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-upload"></use></svg></span>
+		<span class="a3s-attach__drop-text">
+			<strong>Add documents</strong>
+			<span data-attach-hint>Pick a document type, then choose or drop files.</span>
+		</span>
+		<span class="a3s-attach__drop-controls">
+			<select class="a3s-attach__select" data-attach-type aria-label="Document type of the files to upload">
+				<option value="">Document type&hellip;</option>
+			</select>
+			<input type="file" multiple hidden data-attach-input aria-label="Choose files to attach">
+			<button type="button" class="a3s-btn a3s-btn--primary a3s-attach__pick" data-attach-upload>
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-upload"></use></svg>
+				<span>Choose files</span>
+			</button>
+		</span>
+	</div>
+
+	{#- One row per file, as a child table: the file, what it is, and Remove. -#}
+	<div class="a3s-attach__table" role="table" aria-label="Attachments" data-attach-table hidden>
+		<div class="a3s-attach__row a3s-attach__row--head" role="row">
+			<span role="columnheader">File</span><span role="columnheader">Document type</span><span role="columnheader"><span class="a3s-sr-only">Remove</span></span>
+		</div>
+		<div class="a3s-attach__rows" data-attach-list role="rowgroup"></div>
+	</div>
+
+	<div class="a3s-attach__empty" data-attach-empty hidden>
+		<span class="a3s-attach__empty-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-doc"></use></svg></span>
+		<span>No files attached yet.</span>
+	</div>
+
+	<p class="a3s-attach__status" data-attach-status role="status" aria-live="polite" hidden></p>
+</section>
+<script src="/assets/a3_sola/js/portal_attachments.js?v={{ a3s_asset_version('js/portal_attachments.js') }}"></script>
+{%- endif %}

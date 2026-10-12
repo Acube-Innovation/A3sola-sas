@@ -2778,6 +2778,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-com__totals { margin: 0.9rem 0 0; display: grid; gap: 0.35rem; }
 .a3s-de-com__totals div { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.875rem; }
 .a3s-de-com__totals dt { color: var(--color-text-muted); }
+.a3s-de-com__proposal { margin-top: 1.25rem; justify-content: center; }
+.a3s-de-com__proposal + .a3s-edit__hint { margin: 0.5rem 0 0; text-align: center; }
 .a3s-de-com__totals dd { margin: 0; font-weight: 700; }
 .a3s-de-com__totals .is-grand { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 2px solid var(--color-text); font-size: 1rem; }
 .a3s-de-com__totals .is-grand dt, .a3s-de-com__totals .is-grand dd { color: var(--color-text); font-weight: 800; }
@@ -3081,3 +3083,127 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt-text small { color: var(--color-text-muted); }
 .a3s-qf__price { font-weight: 700; white-space: nowrap; }
 .a3s-qf [data-html].is-loading { opacity: 0.55; }
+
+/* list: the Edit column - a small link to where the record is edited */
+.a3s-table__edit {
+	display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem; border-radius: 999px;
+	border: 1px solid var(--color-border-strong); color: var(--color-text); font-weight: 600; font-size: 0.8125rem;
+	text-decoration: none; white-space: nowrap; transition: all var(--duration) var(--ease);
+}
+.a3s-table__edit .a3s-ic { width: 0.9rem; height: 0.9rem; }
+.a3s-table__edit:hover, .a3s-table__edit:focus-visible { border-color: var(--color-accent); color: var(--color-accent); }
+
+/* Attachments card: an upload panel over a child table of the record's files (portal_attachments.js) */
+.a3s-attach [hidden] { display: none !important; }
+.a3s-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.a3s-attach__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; }
+.a3s-attach__head .a3s-edit__card-title { margin: 0; }
+.a3s-attach__count {
+	padding: 0.2rem 0.65rem; border-radius: 999px; background: var(--color-accent-soft); color: var(--color-accent-hover);
+	font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+}
+
+/* the upload panel: dashed, and lit while files are dragged over it */
+.a3s-attach__drop {
+	display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.9rem 1rem;
+	padding: 1rem 1.1rem; border: 1.5px dashed var(--color-accent-tint); border-radius: 1rem;
+	background: var(--color-accent-soft); transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+.a3s-attach__drop.is-dragging { border-color: var(--color-accent); border-style: solid; background: rgba(247, 148, 30, 0.14); }
+.a3s-attach__drop.is-busy { opacity: 0.7; pointer-events: none; }
+.a3s-attach__drop-icon {
+	display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 0.8rem;
+	background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 6px 16px rgba(247, 148, 30, 0.28);
+}
+.a3s-attach__drop-icon .a3s-ic { width: 1.3rem; height: 1.3rem; }
+.a3s-attach__drop-text { display: grid; gap: 0.15rem; min-width: 0; }
+.a3s-attach__drop-text strong { font-size: 0.95rem; }
+.a3s-attach__drop-text span { font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-attach__drop-controls { display: flex; align-items: center; gap: 0.6rem; }
+.a3s-attach__pick { white-space: nowrap; }
+
+/* selects: the portal's input look, with its own chevron */
+.a3s-attach__select {
+	appearance: none; -webkit-appearance: none; min-width: 12rem; max-width: 100%;
+	padding: 0.6rem 2.2rem 0.6rem 0.85rem; border: 1px solid var(--color-border-strong); border-radius: 0.7rem;
+	background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7383' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.7rem center / 1rem;
+	font: inherit; font-size: 0.875rem; color: var(--color-text); cursor: pointer;
+	transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+.a3s-attach__select:hover { border-color: var(--color-accent-tint); }
+.a3s-attach__select:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+.a3s-attach__select.is-invalid { border-color: var(--color-danger); box-shadow: 0 0 0 3px rgba(255, 95, 87, 0.15); }
+.a3s-attach__select--row { width: 100%; min-width: 0; padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.8125rem; }
+.a3s-attach__select.is-unset { color: var(--color-text-muted); border-style: dashed; }
+/* a saved file's type: fixed, so a label rather than a control */
+.a3s-attach__tag {
+	display: inline-flex; align-items: center; max-width: 100%; padding: 0.35rem 0.75rem; border-radius: 999px;
+	background: var(--color-accent-soft); color: var(--color-accent-hover); border: 1px solid var(--color-accent-tint);
+	font-size: 0.8125rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.a3s-attach__tag.is-unset { background: var(--color-bg); color: var(--color-text-muted); border: 1px dashed var(--color-border-strong); font-weight: 600; }
+
+/* the table */
+.a3s-attach__table { margin-top: 1.1rem; display: grid; gap: 0.5rem; }
+.a3s-attach__rows { display: grid; gap: 0.5rem; }
+.a3s-attach__row {
+	display: grid; grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) 2.25rem; gap: 0.9rem; align-items: center;
+	padding: 0.65rem 0.75rem; border: 1px solid var(--color-border); border-radius: 0.85rem; background: var(--color-surface);
+	transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+.a3s-attach__rows .a3s-attach__row:hover { border-color: var(--color-accent-tint); box-shadow: 0 4px 14px rgba(42, 51, 66, 0.06); }
+.a3s-attach__row--head {
+	padding: 0 0.75rem; border: 0; background: none;
+	font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted);
+}
+.a3s-attach__file { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.a3s-attach__badge {
+	flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 0.65rem;
+	font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em;
+}
+.a3s-attach__badge--pdf { background: rgba(255, 95, 87, 0.12); color: #c0392b; }
+.a3s-attach__badge--img { background: rgba(41, 171, 226, 0.13); color: var(--color-sky-ink); }
+.a3s-attach__badge--doc { background: rgba(27, 141, 192, 0.1); color: #1b5e8a; }
+.a3s-attach__badge--xls { background: rgba(40, 200, 64, 0.13); color: #1a7a2b; }
+.a3s-attach__badge--file { background: rgba(42, 51, 66, 0.08); color: var(--color-text-muted); }
+.a3s-attach__text { min-width: 0; display: grid; gap: 0.15rem; }
+.a3s-attach__name { font-weight: 600; color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-attach__name:hover, .a3s-attach__name:focus-visible { color: var(--color-accent-hover); text-decoration: underline; }
+.a3s-attach__meta { font-size: 0.78rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-attach__remove {
+	display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 1px solid transparent; border-radius: 0.6rem;
+	background: none; color: var(--color-text-muted); cursor: pointer; transition: all var(--duration) var(--ease);
+}
+.a3s-attach__remove .a3s-ic { width: 1.05rem; height: 1.05rem; }
+.a3s-attach__remove:hover, .a3s-attach__remove:focus-visible { color: #c0392b; background: rgba(255, 95, 87, 0.1); border-color: rgba(255, 95, 87, 0.25); }
+
+/* nothing yet */
+.a3s-attach__empty {
+	margin-top: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+	padding: 1.1rem; border-radius: 0.85rem; background: var(--color-bg); color: var(--color-text-muted); font-size: 0.875rem;
+}
+.a3s-attach__empty-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 0.6rem; background: rgba(42, 51, 66, 0.06); }
+.a3s-attach__empty-icon .a3s-ic { width: 1rem; height: 1rem; }
+
+/* what just happened */
+.a3s-attach__status { margin: 0.85rem 0 0; padding: 0.55rem 0.8rem; border-radius: 0.65rem; font-size: 0.8125rem; background: var(--color-bg); color: var(--color-text-muted); }
+.a3s-attach__status[data-tone="ok"] { background: rgba(40, 200, 64, 0.1); color: #1a7a2b; }
+.a3s-attach__status[data-tone="error"] { background: rgba(255, 95, 87, 0.1); color: #c0392b; }
+
+/* narrow: in a sidebar, or on a phone - the panel and the rows stack */
+.a3s-edit__side .a3s-attach__drop { grid-template-columns: auto minmax(0, 1fr); }
+.a3s-edit__side .a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
+.a3s-edit__side .a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
+.a3s-edit__side .a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
+.a3s-edit__side .a3s-attach__row { grid-template-columns: minmax(0, 1fr) 2.25rem; gap: 0.5rem; }
+.a3s-edit__side .a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
+.a3s-edit__side .a3s-attach__row--head { display: none; }
+@media (max-width: 720px) {
+	.a3s-attach__drop { grid-template-columns: auto minmax(0, 1fr); }
+	.a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
+	.a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
+	.a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
+	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) 2.25rem; gap: 0.5rem; }
+	.a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
+	.a3s-attach__row--head { display: none; }
+}

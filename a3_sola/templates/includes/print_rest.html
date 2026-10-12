@@ -11,15 +11,29 @@
 	{%- endfor %}
 {%- endmacro -%}
 
+{#- 3.3 runs over as many pages as its options need: rest.cost_pages lays them out, since a
+    page is a fixed frame that would clip what overflows. Each option is its own table. -#}
+{%- for pg in rest.cost_pages %}
+{%- if not loop.first %}
+<div style="page-break-before: always;"></div>
+{%- endif %}
 {% call page(letter, "a3r") %}
+	{%- if loop.first %}
 	<h3>3.3.&nbsp; <u>Project Cost</u></h3>
-	<h4>3.3.1.&nbsp; <u>Solar Power Plant</u></h4>
-	<table class="a3r-table">
+	{%- endif %}
+	{%- if pg.options %}
+	<h4>3.3.1.&nbsp; <u>Solar Power Plant</u>{% if not loop.first %} (continued){% endif %}</h4>
+	{%- for o in pg.options %}
+	{%- if o.label %}<h5 class="a3r-option">{{ o.label }}</h5>{% endif %}
+	<table class="a3r-table{% if not loop.last %} a3r-table--option{% endif %}">
 		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
 		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
-		{{ amount_rows(rest.cost) }}
+		{{ amount_rows(o.rows) }}
 	</table>
-	<h4 class="a3r-gap">3.3.2.&nbsp; <u>KSEBL Expenses</u></h4>
+	{%- endfor %}
+	{%- endif %}
+	{%- if pg.kseb %}
+	<h4{% if pg.options %} class="a3r-gap"{% endif %}>3.3.2.&nbsp; <u>KSEBL Expenses</u></h4>
 	<table class="a3r-table">
 		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
 		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
@@ -30,7 +44,9 @@
 		{%- if rest.kseb_words %}<tr class="b"><td colspan="3" class="c">{{ rest.kseb_words }}</td></tr>{% endif %}
 	</table>
 	{%- if rest.kseb_note %}<p class="a3r-note">{{ rest.kseb_note }}</p>{% endif %}
+	{%- endif %}
 {% endcall %}
+{%- endfor %}
 
 <div style="page-break-before: always;"></div>
 {% call page(letter, "a3r") %}
@@ -97,6 +113,8 @@
 	.a3r h3 { margin: 0 0 8pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }
 	.a3r h4 { margin: 0 0 6pt 14pt; font-family: inherit; font-size: 14pt; font-weight: 700; color: #1f1f1f; }
 	.a3r .a3r-gap { margin-top: 18pt; }
+	.a3r h5.a3r-option { margin: 10pt 0 4pt 14pt; font-family: inherit; font-size: 13pt; font-weight: 700; color: #1f1f1f; }
+	.a3r .a3r-table--option { margin-bottom: 6pt; }
 	.a3r p { margin: 0 0 7pt; }
 	.a3r ul, .a3r ol { margin: 0 0 6pt; padding-left: 40pt; }
 	.a3r li { margin-bottom: 4pt; text-align: justify; }

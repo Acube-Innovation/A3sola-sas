@@ -95,8 +95,19 @@
 		</section>
 
 		{%- for g in groups %}
-		<section class="a3s-card a3s-edit__card" id="sec-{{ g.key }}">
-			<h3 class="a3s-edit__card-title">{{ g.label | e }}</h3>
+		{#- Each section opens and closes from its heading, one open at a time, as on the edit
+		    page; all start closed, so the page opens short (portal_sections.js). -#}
+		{%- set rows = g.sections | map(attribute="rows") | sum(start=[]) %}
+		{%- set filled = rows | rejectattr("kind", "equalto", "empty") | list | length %}
+		<section class="a3s-card a3s-edit__card a3s-wizard__panel is-collapsed" id="sec-{{ g.key }}" data-collapsible>
+			<h3 class="a3s-edit__card-title">
+				<button type="button" class="a3s-edit__toggle" aria-expanded="false" aria-controls="body-{{ g.key }}">
+					<span class="a3s-edit__toggle-label">{{ g.label | e }}</span>
+					<span class="a3s-edit__toggle-count">{{ filled }} of {{ rows | length }} filled</span>
+					<svg class="a3s-ic a3s-edit__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</button>
+			</h3>
+			<div class="a3s-edit__body" id="body-{{ g.key }}" hidden>
 			{%- for s in g.sections %}
 			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
 			<div class="a3s-facts">
@@ -120,6 +131,7 @@
 				{%- endfor %}
 			</div>
 			{%- endfor %}
+			</div>
 		</section>
 		{%- endfor %}
 
@@ -132,3 +144,4 @@
 	</aside>
 </div>
 {%- endif %}
+<script src="/assets/a3_sola/js/portal_sections.js?v={{ a3s_asset_version('js/portal_sections.js') }}"></script>

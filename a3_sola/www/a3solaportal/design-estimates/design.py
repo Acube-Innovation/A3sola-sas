@@ -4,7 +4,7 @@
 
 import frappe
 
-from a3_sola.api import portal_estimate
+from a3_sola.api import portal_estimate, portal_proposal
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import load_record, record_route
 
@@ -30,5 +30,6 @@ def get_context(context):
 	context.main_wide = True
 	context.record_name = doc.name
 	context.builder_json = portal_estimate.builder_json(doc)
+	context.proposal_action = portal_proposal.proposal_action(doc.name)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

@@ -52,6 +52,14 @@
 		<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
 		<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
 		<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
+		{%- if proposal_action %}
+		{#- The next step: the proposal this estimate is offered in (api/portal_proposal.proposal_action). -#}
+		<a class="a3s-btn a3s-btn--primary a3s-btn--block a3s-de-com__proposal" href="{{ proposal_action.href | e }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+			<span>{{ proposal_action.label | e }}</span>
+		</a>
+		<p class="a3s-edit__hint">{{ proposal_action.hint | e }}</p>
+		{%- endif %}
 	</aside>
 </div>
 

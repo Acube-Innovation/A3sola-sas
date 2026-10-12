@@ -36,8 +36,17 @@
 		</section>
 
 		{%- for section in sections %}
-		<section class="a3s-card a3s-edit__card" id="sec-{{ section.key }}" aria-labelledby="sec-{{ section.key }}-title">
-			<h3 class="a3s-edit__card-title" id="sec-{{ section.key }}-title">{{ section.label }}</h3>
+		{#- Opens and closes from its heading, one at a time, as on the edit page (portal_sections.js). -#}
+		{%- set filled = section.rows | rejectattr("kind", "equalto", "empty") | list | length %}
+		<section class="a3s-card a3s-edit__card a3s-wizard__panel is-collapsed" id="sec-{{ section.key }}" aria-labelledby="sec-{{ section.key }}-title" data-collapsible>
+			<h3 class="a3s-edit__card-title" id="sec-{{ section.key }}-title">
+				<button type="button" class="a3s-edit__toggle" aria-expanded="false" aria-controls="body-{{ section.key }}">
+					<span class="a3s-edit__toggle-label">{{ section.label }}</span>
+					<span class="a3s-edit__toggle-count">{{ filled }} of {{ section.rows | length }} filled</span>
+					<svg class="a3s-ic a3s-edit__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</button>
+			</h3>
+			<div class="a3s-edit__body" id="body-{{ section.key }}" hidden>
 			<div class="a3s-facts">
 				{%- for row in section.rows %}
 				<div class="a3s-fact{% if row.kind == "multiline" %} a3s-fact--wide{% endif %}">
@@ -57,6 +66,7 @@
 					{%- endif %}
 				</div>
 				{%- endfor %}
+			</div>
 			</div>
 		</section>
 		{%- endfor %}
@@ -122,7 +132,7 @@
 				</div>
 				<div class="a3s-tile">
 					<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-doc"></use></svg></span>
-					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.attachments }}</span><span class="a3s-tile__label">Attachments</span></span>
+					<span class="a3s-tile__text"><span class="a3s-tile__value" data-attachment-count>{{ snapshot.attachments }}</span><span class="a3s-tile__label">Attachments</span></span>
 				</div>
 				<div class="a3s-tile">
 					<span class="a3s-tile__icon a3s-tile__icon--sky" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-clipboard"></use></svg></span>
@@ -167,6 +177,8 @@
 
 		{%- include "templates/includes/portal_chain_steps.html" %}
 		{%- include "templates/includes/portal_assignment.html" %}
+		{%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 	</aside>
 </div>
 {% endblock %}
+{% block portal_scripts %}<script src="/assets/a3_sola/js/portal_sections.js?v={{ a3s_asset_version('js/portal_sections.js') }}"></script>{% endblock %}

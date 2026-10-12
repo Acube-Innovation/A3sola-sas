@@ -55,6 +55,10 @@
 								{%- if cell.sub %}<span class="a3s-table__sub">{{ cell.sub }}</span>{% endif %}
 							</span>
 						</a>
+					{%- elif cell.edit -%}
+						<a class="a3s-table__edit" href="{{ cell.route }}" aria-label="Edit {{ row.cells[0].sub or row.cells[0].text }}">
+							<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg><span>{{ cell.text }}</span>
+						</a>
 					{%- elif cell.badge -%}
 						<span class="a3s-badge">{{ cell.text }}</span>
 					{%- elif cell.text == "—" -%}

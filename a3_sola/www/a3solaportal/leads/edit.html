@@ -102,6 +102,8 @@
 		</section>
 		{%- endfor %}
 
+		{%- with att_doctype="Lead", att_name=lead.name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+
 		<div class="a3s-form__actions a3s-edit__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>Save changes</button>
 			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>

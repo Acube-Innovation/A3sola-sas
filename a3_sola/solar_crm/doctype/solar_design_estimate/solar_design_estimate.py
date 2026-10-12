@@ -64,6 +64,7 @@ class SolarDesignEstimate(Document):
 
 	def validate(self):
 		self.apply_sizing_options()
+		self.validate_package_system_type()
 		self.resolve_subject()
 		self.default_subsidy_scheme()
 		assert_same_company(self, LINKS)
@@ -128,6 +129,9 @@ class SolarDesignEstimate(Document):
 		for row in self.sizing_options:
 			if row.subsidy_option != "With Subsidy":
 				row.subsidy_scheme = None
+				if row.solar_package and frappe.db.get_value("Solar Package", row.solar_package, "is_dcr_compliant"):
+					problems.append(_("Row {0}: package {1} is a subsidy (DCR) package; without subsidy, choose a non-DCR package.").format(
+						row.idx, row.solar_package))
 			elif row.system_type == "Off-Grid":
 				problems.append(_("Row {0}: with subsidy, the system cannot be Off-Grid.").format(row.idx))
 			if flt(row.override_capacity_kw) < 0:
@@ -142,6 +146,27 @@ class SolarDesignEstimate(Document):
 
 		for field in SIZING_FIELDS:
 			self.set(field, recommended[0].get(field))
+
+	def validate_package_system_type(self):
+		"""An On-Grid estimate is built on an On-Grid package, a Hybrid one on a Hybrid package.
+
+		The package brings the kit - a hybrid package its battery and hybrid inverter - and
+		its price, so a package of another system type would quote the wrong system.
+		"""
+		rows = [(row.idx, row.solar_package, row.system_type) for row in self.get("sizing_options") or []]
+		if not rows:
+			rows = [(None, self.solar_package, self.system_type)]
+		problems = []
+		for idx, package, system_type in rows:
+			if not (package and system_type):
+				continue
+			package_type = frappe.db.get_value("Solar Package", package, "system_type")
+			if package_type and package_type != system_type:
+				message = _("package {0} is for {1} systems, but this system is {2}.").format(
+					frappe.bold(package), package_type, system_type)
+				problems.append(_("Row {0}: {1}").format(idx, message) if idx else message[0].upper() + message[1:])
+		if problems:
+			frappe.throw("<br>".join(problems), title=_("Package System Type"))
 
 	def default_subsidy_scheme(self):
 		"""With subsidy and no scheme chosen - not here, not on the lead - the scheme is the
@@ -366,17 +391,10 @@ class SolarDesignEstimate(Document):
 				return None
 			return frappe.db.get_value("Component Make", name, ["technology", "is_dcr"], as_dict=True)
 
-		module = default_module(package)
-		module_make = make_of(module.module_make) if module else None
+		# The default panel priced, and every other panel the package offers as an Option.
 		self.set("panels", [])
-		if module and module_make and module_make.technology and flt(module.module_wattage):
-			self.append("panels", {
-				"panel_type": "DCR" if module_make.is_dcr or package.is_dcr_compliant else "Non-DCR",
-				"panel_capacity_wp": module.module_wattage,
-				"panel_count": cint(module.module_count) or None,
-				"panel_variant": module_make.technology,
-				"panel_make": module.module_make,
-			})
+		for values, _suffix in package_panel_rows(package):
+			self.append("panels", values)
 
 		# The package's default inverter for this connection, else the first of its phase.
 		matching = inverters_for_phase(package, self.connection_type)
@@ -388,14 +406,20 @@ class SolarDesignEstimate(Document):
 		)
 		inverter_make = make_of(inverter.inverter_make) if inverter else None
 		self.set("inverters", [])
-		if inverter and inverter_make and inverter_make.technology and flt(inverter.inverter_capacity_kw):
+		# The chosen inverter priced, then the package's other inverters for this connection
+		# as Options - shown beside it, not priced.
+		for row in ([inverter] if inverter else []) + [r for r in matching if r is not inverter]:
+			row_make = make_of(row.inverter_make)
+			if not (row_make and row_make.technology and flt(row.inverter_capacity_kw)):
+				continue
 			self.append("inverters", {
-				"inverter_type": inverter_make.technology,
-				"inverter_capacity_kw": inverter.inverter_capacity_kw,
-				"inverter_count": cint(inverter.inverter_count) or None,
-				"inverter_phase": inverter_phase(package, inverter) or None,
-				"inverter_make": inverter.inverter_make,
-				"specification": inverter.inverter_specification or None,
+				"inverter_type": row_make.technology,
+				"inverter_capacity_kw": row.inverter_capacity_kw,
+				"inverter_count": cint(row.inverter_count) or None,
+				"inverter_phase": inverter_phase(package, row) or None,
+				"inverter_make": row.inverter_make,
+				"specification": row.inverter_specification or None,
+				"is_option": 0 if row is inverter else 1,
 			})
 
 		if self.system_type in ("Off-Grid", "Hybrid"):
@@ -1011,17 +1035,9 @@ class SolarDesignEstimate(Document):
 		for option in ticked:
 			package = frappe.get_cached_doc("Solar Package", option.solar_package)
 			if package.name not in panels:
-				module = default_module(package)
-				module_make = make_of(module.module_make) if module else None
-				if module and module_make and module_make.technology and flt(module.module_wattage):
-					panels[package.name] = {
-						"panel_type": "DCR" if module_make.is_dcr or package.is_dcr_compliant else "Non-DCR",
-						"panel_capacity_wp": module.module_wattage,
-						"panel_count": cint(module.module_count) or None,
-						"panel_variant": module_make.technology,
-						"panel_make": module.module_make,
-						"option_key": package.name,
-					}
+				# Its default panel, priced, keyed by the package; its other panels as Options.
+				for values, suffix in package_panel_rows(package):
+					panels[package.name + suffix] = {**values, "option_key": package.name + suffix}
 			source = next((r for r in inverters_for_phase(package, self.connection_type) if r.inverter_make == option.inverter_make), None)
 			inverter_make = make_of(option.inverter_make)
 			key = f"{package.name}|{option.inverter_make}"
@@ -1035,6 +1051,27 @@ class SolarDesignEstimate(Document):
 					"specification": source.inverter_specification or None,
 					"option_key": key,
 				}
+		# Each package's other inverters for this connection - Solinteg beside Hoymiles, say -
+		# shown as Options: an alternative, not priced. One unticked on the design step stays out.
+		excluded = self.excluded_options()
+		for package_name in dict.fromkeys(option.solar_package for option in ticked):
+			package = frappe.get_cached_doc("Solar Package", package_name)
+			for source in package_inverter_alternatives(package, self.connection_type):
+				key = f"{package.name}|{source.inverter_make}"
+				if key in inverters or {(package.name, source.inverter_make), (None, source.inverter_make)} & excluded:
+					continue
+				inverter_make = make_of(source.inverter_make)
+				if inverter_make and inverter_make.technology and flt(source.inverter_capacity_kw):
+					inverters[key] = {
+						"inverter_type": inverter_make.technology,
+						"inverter_capacity_kw": source.inverter_capacity_kw,
+						"inverter_count": cint(source.inverter_count) or None,
+						"inverter_phase": inverter_phase(package, source) or None,
+						"inverter_make": source.inverter_make,
+						"specification": source.inverter_specification or None,
+						"is_option": 1,
+						"option_key": key,
+					}
 
 		def rebuild(table, desired, same):
 			rows = self.get(table)
@@ -1048,7 +1085,9 @@ class SolarDesignEstimate(Document):
 				old = kept.get(key)
 				# The row keeps its name, so a change made to it can be told from the rest.
 				self.append(table, {**values, **({"name": old.name} if old else {}),
-					"rate": (old.rate if old else 0) or 0, "is_option": old.is_option if old else 0,
+					"rate": (old.rate if old else 0) or 0,
+					# A new row starts as the package offers it - an alternative panel as an Option.
+					"is_option": old.is_option if old else values.get("is_option", 0),
 					# A specification typed on the row stands over the package's.
 					**({"specification": old.get("specification")} if old and old.get("specification") else {})})
 			for row in by_hand:
@@ -1217,8 +1256,17 @@ class SolarDesignEstimate(Document):
 		None of this applies without subsidy: a non-DCR package or a larger system is
 		legitimate for a commercial or unsubsidised job — the client's own 10 kWp proposal
 		quotes non-DCR modules. The tariff category and size cap live in A3 Sola Settings.
+		Without subsidy only the reverse applies: the package must not be a DCR one.
 		"""
 		if self.subsidy_option != "With Subsidy":
+			# The other way round holds too: a DCR package is a subsidy package, priced off the
+			# subsidy price list, so an unsubsidised job is quoted on a non-DCR one.
+			if self.solar_package and frappe.db.get_value("Solar Package", self.solar_package, "is_dcr_compliant"):
+				frappe.throw(
+					_("Package {0} is a subsidy (DCR) package. Without subsidy, choose a non-DCR package, "
+					  "or set Subsidy to With Subsidy.").format(frappe.bold(self.solar_package)),
+					title=_("Subsidy Package Without Subsidy"),
+				)
 			return
 
 		problems = []
@@ -1539,6 +1587,31 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	)
 	doc.save()
 	return doc.name
+
+
+def package_panel_rows(package):
+	"""A package's panels as estimate panel rows, each with the suffix that keys it: the
+	default panel first, priced, then every other panel the package offers - another make of
+	the same DCR type - as an Option, shown beside it and not priced. Ticking one of those
+	makes it the priced panel, as for any Option."""
+	default = default_module(package)
+	modules = ([default] if default else []) + [m for m in package.get("modules") or [] if m is not default]
+	rows = []
+	for module in modules:
+		make = frappe.db.get_value("Component Make", module.module_make, ["technology", "is_dcr"], as_dict=True) \
+			if module.module_make else None
+		if not (make and make.technology and flt(module.module_wattage)):
+			continue
+		is_default = module is default
+		rows.append(({
+			"panel_type": "DCR" if make.is_dcr or package.is_dcr_compliant else "Non-DCR",
+			"panel_capacity_wp": module.module_wattage,
+			"panel_count": cint(module.module_count) or None,
+			"panel_variant": make.technology,
+			"panel_make": module.module_make,
+			"is_option": 0 if is_default else 1,
+		}, "" if is_default else "|panel|{0}|{1:g}".format(module.module_make, flt(module.module_wattage))))
+	return rows
 
 
 def package_inverter_alternatives(package, phase=None):
