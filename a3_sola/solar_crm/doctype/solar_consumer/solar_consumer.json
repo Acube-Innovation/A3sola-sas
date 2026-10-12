@@ -123,7 +123,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "description": "The consumer as an ERPNext Customer. Made automatically when a quotation is saved, or now with Create Customer."
   },
   {
    "fieldname": "contact_person",
@@ -597,7 +598,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-09 14:00:00.000000",
+ "modified": "2026-10-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

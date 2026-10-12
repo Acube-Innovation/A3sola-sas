@@ -86,7 +86,7 @@ DOC_EVENTS = {
 		"validate": ["a3_sola.overrides.opportunity.validate"],
 	},
 	"Quotation": {
-		"before_validate": ["a3_sola.api.quotation_option.apply_option"],
+		"before_validate": ["a3_sola.api.quotation_option.ensure_party", "a3_sola.api.quotation_option.apply_option"],
 		"validate": ["a3_sola.overrides.quotation.validate"],
 		"on_submit": ["a3_sola.overrides.quotation.on_submit"],
 	},

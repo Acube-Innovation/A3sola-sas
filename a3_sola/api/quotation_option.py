@@ -316,3 +316,28 @@ def pdf(name, download=0):
 	frappe.local.response.filename = "{0}.pdf".format(name)
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download" if cint(download) else "pdf"
+
+
+def ensure_party(doc, method=None):
+	"""Quotation before_validate: a quotation for a consumer is raised to its Customer.
+
+	The consumer is converted to an ERPNext Customer here if nobody did it by hand, and a
+	quotation still addressed to the consumer's lead is moved to that Customer. One already
+	raised to some other Customer is left as written.
+	"""
+	consumer = doc.get("solar_consumer")
+	if not consumer or not frappe.db.exists("Solar Consumer", consumer):
+		return
+	from a3_sola.solar_crm.doctype.solar_consumer.solar_consumer import ensure_customer
+
+	if doc.quotation_to == "Customer" and doc.party_name:
+		linked = frappe.db.get_value("Solar Consumer", consumer, "customer")
+		if linked and linked != doc.party_name:
+			return
+		if not linked:
+			frappe.db.set_value("Solar Consumer", consumer, "customer", doc.party_name)
+			return
+	customer = ensure_customer(consumer)
+	doc.quotation_to = "Customer"
+	doc.party_name = customer
+	doc.customer_name = frappe.db.get_value("Customer", customer, "customer_name")

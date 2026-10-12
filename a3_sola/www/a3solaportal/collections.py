@@ -496,7 +496,14 @@ def source_prefill(slug):
 		return None, None, {}
 	doc = frappe.get_doc(source_dt, source_name)
 	doc.check_permission("read")
-	return doc, step, portal_chain.mapped_values(step, doc)
+	values = portal_chain.mapped_values(step, doc)
+	# A consumer or survey also takes what its lead knows, as it would once saved, so the
+	# form shows it now rather than after the save.
+	if step["doctype"] in ("Solar Consumer", "Site Survey") and (values.get("lead") or values.get("solar_consumer")):
+		from a3_sola.api import record_links
+		extra = record_links.prefill(step["doctype"], lead=values.get("lead"), solar_consumer=values.get("solar_consumer"))
+		values = {**extra, **values}
+	return doc, step, values
 
 
 def new_context(context, slug):

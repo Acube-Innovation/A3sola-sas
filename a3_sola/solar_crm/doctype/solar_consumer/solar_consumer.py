@@ -111,3 +111,64 @@ class SolarConsumer(Document):
 			# never walk the status backwards on a re-submit
 			return
 		self.db_set("status", status, update_modified=False)
+
+
+# ------------------------------------------------------------------ the ERPNext Customer
+#: The Customer Group a consumer's category lands in.
+CUSTOMER_GROUP = {"Residential": "Individual", "Group Housing": "Individual", "Commercial": "Commercial",
+	"Industrial": "Commercial", "Government": "Government"}
+
+
+def ensure_customer(consumer):
+	"""The consumer's ERPNext Customer, made the first time it is needed, and linked.
+
+	A consumer becomes a customer when they are quoted - a quotation is raised to a Customer,
+	not a Lead. A Customer already made from the consumer's lead is linked rather than
+	duplicated; otherwise one is made in the consumer's name, with their mobile and email
+	(ERPNext makes the primary contact from them), their category's group, and the
+	installation address linked to it. Returns the Customer's name.
+	"""
+	doc = frappe.get_doc("Solar Consumer", consumer) if isinstance(consumer, str) else consumer
+	if doc.customer and frappe.db.exists("Customer", doc.customer):
+		return doc.customer
+	name = frappe.db.get_value("Customer", {"lead_name": doc.lead}, "name") if doc.lead else None
+	if not name:
+		individual = (doc.consumer_category or "Residential") in ("Residential", "Group Housing")
+		group = CUSTOMER_GROUP.get(doc.consumer_category or "Residential", "Individual")
+		customer = frappe.get_doc({
+			"doctype": "Customer",
+			"customer_name": doc.consumer_name,
+			"customer_type": "Individual" if individual else "Company",
+			"customer_group": group if frappe.db.exists("Customer Group", group)
+				else frappe.db.get_single_value("Selling Settings", "customer_group") or "All Customer Groups",
+			"territory": "India" if frappe.db.exists("Territory", "India")
+				else frappe.db.get_single_value("Selling Settings", "territory") or "All Territories",
+			"gst_category": "Unregistered",
+			"lead_name": doc.lead or None,
+			"mobile_no": doc.mobile_no or None,
+			"email_id": doc.email_id or None,
+		})
+		customer.flags.ignore_permissions = True
+		customer.insert()
+		name = customer.name
+	# The installation address is the customer's address too.
+	if doc.installation_address and not frappe.db.exists("Dynamic Link", {"parenttype": "Address",
+			"parent": doc.installation_address, "link_doctype": "Customer", "link_name": name}):
+		address = frappe.get_doc("Address", doc.installation_address)
+		address.append("links", {"link_doctype": "Customer", "link_name": name})
+		address.flags.ignore_permissions = True
+		address.save()
+	doc.db_set("customer", name)
+	return name
+
+
+@frappe.whitelist()
+def make_customer(solar_consumer):
+	"""Convert the consumer to an ERPNext Customer (or link the one already made from its
+	lead), from the consumer's desk form or portal page."""
+	doc = frappe.get_doc("Solar Consumer", solar_consumer)
+	doc.check_permission("write")
+	frappe.has_permission("Customer", "create", throw=True)
+	customer = ensure_customer(doc)
+	return {"customer": customer, "customer_name": frappe.db.get_value("Customer", customer, "customer_name"),
+		"route": "/app/customer/" + frappe.utils.quote(customer)}

@@ -1,0 +1,35 @@
+{#- The consumer as an ERPNext Customer: linked, or converted from here. A quotation saved
+    for the consumer makes the Customer on its own if this has not been done. -#}
+<section class="a3s-card a3s-detail__card" id="a3s-consumer-customer" data-name="{{ record.name | e }}">
+	<h3 class="a3s-detail__card-title">ERPNext Customer</h3>
+	{%- if customer.name %}
+	<p><a href="{{ customer.desk }}"><b>{{ customer.customer_name | e }}</b></a> &middot; {{ customer.name | e }}</p>
+	<p class="a3s-field__hint">Quotations, orders and invoices for this consumer are raised to this customer.</p>
+	{%- else %}
+	<p class="a3s-field__hint">Not a customer in ERPNext yet. It becomes one when its first quotation is saved, or convert it now.</p>
+	{%- if customer.can_convert %}
+	<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-make-customer">Convert to customer</button>
+	<p class="a3s-form__status" id="a3s-make-customer-status" role="status" aria-live="polite"></p>
+	<script>
+	(function () {
+		var btn = document.getElementById("a3s-make-customer");
+		var status = document.getElementById("a3s-make-customer-status");
+		btn.addEventListener("click", function () {
+			btn.disabled = true;
+			status.textContent = "Creating the customer…";
+			fetch("/api/method/a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.make_customer", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": "{{ csrf_token }}" },
+				body: JSON.stringify({ solar_consumer: document.getElementById("a3s-consumer-customer").dataset.name })
+			}).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+			  .then(function (res) {
+				if (!res.ok) throw new Error("Could not create the customer.");
+				window.location.reload();
+			  })
+			  .catch(function (e) { btn.disabled = false; status.textContent = e.message; });
+		});
+	})();
+	</script>
+	{%- endif %}
+	{%- endif %}
+</section>
