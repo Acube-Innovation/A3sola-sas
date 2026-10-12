@@ -78,7 +78,17 @@ def fill_survey(doc):
 		fill_blanks(doc, values_from(frappe.get_doc("Solar Consumer", doc.solar_consumer), "Site Survey"))
 	if doc.lead and frappe.db.exists("Lead", doc.lead):
 		lead = frappe.get_doc("Lead", doc.lead)
-		fill_blanks(doc, {"company": lead.company, "roof_type": lead.get("roof_type")})
+		fill_blanks(doc, lead_survey_values(lead))
+
+
+def lead_survey_values(lead):
+	"""What a survey takes from the lead itself: the size the customer asked about becomes
+	the capacity applied for, until the surveyor says otherwise."""
+	return {
+		"company": lead.company,
+		"roof_type": lead.get("roof_type"),
+		"capacity_applied_kw": lead.get("approx_capacity_kw"),
+	}
 
 
 def latest_survey(consumer):
@@ -128,7 +138,7 @@ def prefill(doctype, lead=None, solar_consumer=None):
 			out.update(values_from(frappe.get_doc("Solar Consumer", solar_consumer), "Site Survey"))
 		if lead and frappe.has_permission("Lead", "read", lead):
 			lead_doc = frappe.get_doc("Lead", lead)
-			for fieldname, value in (("lead", lead_doc.name), ("company", lead_doc.company), ("roof_type", lead_doc.get("roof_type"))):
+			for fieldname, value in {"lead": lead_doc.name, **lead_survey_values(lead_doc)}.items():
 				if value and not out.get(fieldname):
 					out[fieldname] = value
 		return out
