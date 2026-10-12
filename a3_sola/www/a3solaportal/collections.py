@@ -35,7 +35,8 @@ COLLECTIONS = {
 	# items and taxes arrive intact; the portal only ever reads and edits the draft.
 	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart"},
 	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
-	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID"},
+	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID",
+	                     "list_edit": True},
 	# `edit_after_create`: the create form asks only the few fields a record needs to exist,
 	# so once it does, the person goes straight on to its full edit form.
 	"site-surveys": {"doctype": "Site Survey", "title": "Site Survey", "singular": "site survey", "subtitle": "Roof and load", "icon": "pin",
@@ -282,6 +283,11 @@ def list_context(context, slug):
 	# "-1"), so the list shows what stands; the cancelled one still opens from its link.
 	if meta.is_submittable:
 		filters["docstatus"] = ["<", 2]
+	# `list_edit`: an Edit column, linking each record the person may still change to where
+	# it is edited - a draft, for a submittable doctype, as the record's own Edit button.
+	list_edit = bool(cfg.get("list_edit")) and frappe.has_permission(doctype, "write")
+	if list_edit and meta.is_submittable and "docstatus" not in fields:
+		fields.append("docstatus")
 	records = frappe.get_list(
 		doctype, fields=fields, filters=filters, or_filters=or_filters,
 		order_by="modified desc", limit_page_length=100,
@@ -331,12 +337,18 @@ def list_context(context, slug):
 				"badge": c.fieldtype == "Select" and value not in (None, ""),
 				"route": None,
 			})
+		if list_edit:
+			editable = not meta.is_submittable or frappe.utils.cint(rec.get("docstatus")) == 0
+			cells.append({"text": _("Edit") if editable else "—", "edit": editable, "primary": False, "num": False,
+				"status": False, "badge": False, "route": edit_route(slug, name) if editable else None})
 		rows.append({"cells": cells})
 
 	# headers, matching the cell order above (primary first, then the columns shown)
 	headers = [{"label": _("Name"), "num": False, "status": False}]
 	for c in shown:
 		headers.append({"label": c.label, "num": c.fieldtype in NUMERIC, "status": _is_status(c)})
+	if list_edit:
+		headers.append({"label": _("Edit"), "num": False, "status": False})
 
 	fill_shell(
 		context,
@@ -624,6 +636,12 @@ def record_route(slug, name):
 	return "/a3solaportal/{0}/{1}".format(slug, frappe.utils.quote(name))
 
 
+def edit_route(slug, name):
+	"""Where a record is edited: a design estimate in its builder, where the system and the
+	prices live; anything else in its edit form."""
+	return record_route(slug, name) + ("/design" if slug == "design-estimates" else "/edit")
+
+
 def is_editable(doc):
 	"""Whether the portal's edit form may be pointed at this record.
 
@@ -851,8 +869,7 @@ def detail_context(context, slug, name):
 	context.glance = record_glance(doc)
 	context.update(_record_about(doc))
 	context.can_write = is_editable(doc)
-	# A design estimate is edited in its builder, where the system and the prices live.
-	context.edit_route = record_route(slug, doc.name) + ("/design" if slug == "design-estimates" else "/edit")
+	context.edit_route = edit_route(slug, doc.name)
 	if slug == "design-estimates":
 		context.pdf_route = "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name)
 	context.list_route = f"/a3solaportal/{slug}"

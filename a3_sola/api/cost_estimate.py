@@ -455,7 +455,8 @@ def _solar_figures(doc):
 			category = frappe.db.get_value("Solar Consumer", doc.solar_consumer, "consumer_category")
 		elif doc.quotation_to == "Lead":
 			category = frappe.db.get_value("Lead", doc.party_name, "consumer_category")
-		subsidised = (category or "Residential") == "Residential"
+		# Residential, and on a DCR (subsidy) package: a non-DCR one is sold without subsidy.
+		subsidised = (category or "Residential") == "Residential" and bool(pkg.is_dcr_compliant)
 		doc.subsidy_scheme = get_value("default_subsidy_scheme") if subsidised else None
 		# The statutory figures and the subsidy belong to a configuration, not to the
 		# package, so they come off the price row the package is offered in.

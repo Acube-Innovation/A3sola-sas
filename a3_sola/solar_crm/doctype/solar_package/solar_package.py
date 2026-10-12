@@ -160,9 +160,10 @@ class SolarPackage(Document):
 		fees = self._statutory_fees()
 		capacity = flt(self.capacity_kw)
 		for row in self.prices or []:
+			# A DCR-compliant package is a subsidy package; any other is sold without subsidy.
 			row.indicative_subsidy = (
 				flt(calculations.get_subsidy_amount(scheme, capacity, category)["subsidy_amount"])
-				if category
+				if category and self.is_dcr_compliant
 				else 0.0
 			)
 			if fees:

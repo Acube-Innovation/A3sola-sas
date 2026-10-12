@@ -12,6 +12,12 @@ CADENCE = (
 	"Step 1: First Contact\nStep 2: 24hr Nudge\nStep 3: Value/ROI\n"
 	"Step 4: Breakup/Close\nCompleted: Proposal Sent"
 )
+#: What an attached file is. The consumer's KYC types first, so a file of one of those on a
+#: Solar Consumer is also its KYC row (api/portal_attachments), then the rest.
+DOCUMENT_TYPES = (
+	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\n"
+	"Income Tax Return\nLand Tax Receipt\nPre-Installation Photo\nPhoto\nOther"
+)
 LEAD_STATUS = (
 	"New\nContacted\nIn Discussion\nSite Visit Scheduled\nConverted / Won\n"
 	"Closed / Unresponsive\nNot Interested"
@@ -66,6 +72,19 @@ CUSTOM_FIELDS = {
 		{"fieldname": "default_electrical_contractor", "fieldtype": "Link", "options": "Solar Contractor", "label": "Default Electrical Contractor", "insert_after": "google_review_url"},
 		{"fieldname": "a3s_customer_care_cb", "fieldtype": "Column Break", "insert_after": "default_electrical_contractor"},
 		{"fieldname": "support_contacts", "fieldtype": "Table", "options": "Company Support Contact", "label": "Support Contacts", "insert_after": "a3s_customer_care_cb"},
+	],
+	# --------------------------------------------------------------------- File
+	"File": [
+		{
+			"fieldname": "a3s_document_type",
+			"fieldtype": "Select",
+			"label": "Document Type",
+			"options": DOCUMENT_TYPES,
+			"insert_after": "file_name",
+			"in_list_view": 1,
+			"in_standard_filter": 1,
+			"description": "What the attachment is - the KSEB bill, an Aadhaar face, the PAN - as chosen on the portal.",
+		},
 	],
 	# --------------------------------------------------------------------- Item
 	"Item": [

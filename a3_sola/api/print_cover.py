@@ -401,7 +401,8 @@ def print_rest(doc):
 	est = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate) if doc.get("solar_design_estimate") else None
 	company = frappe.get_doc("Company", doc.company) if doc.get("company") else frappe._dict()
 	money = lambda v: fmt_money(flt(v), precision=0)  # 7,76,000 - the client prints whole rupees
-	out = {"cost": [], "kseb": [], "kseb_total": 0, "kseb_words": "", "kseb_note": "", "terms_html": "",
+	empty = {"label": "", "rows": []}
+	out = {"cost": [], "cost_options": [empty], "cost_pages": [{"options": [empty], "kseb": True}], "kseb": [], "kseb_total": 0, "kseb_words": "", "kseb_note": "", "terms_html": "",
 		"validity": "", "payment_terms": list(PAYMENT_TERMS), "bank": [], "schedule_html": settings.get("delivery_schedule_text") or "",
 		"warranty": [], "scope": {"company": [], "customer": []}, "pictures": list(DEFAULT_PICTURES),
 		"company_scope_label": "", "customer_scope_label": "", "system_type": ""}
@@ -415,30 +416,11 @@ def print_rest(doc):
 	kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000 for r in batteries)
 	out["system_type"] = est.system_type or ""
 
-	# 3.3.1 The plant, then each linked charge's lines, the total and the price after discount.
-	commercials = est.commercials()
-	lines = {line["key"]: flt(line["amount"]) for line in commercials["lines"]}
-	description = plant_description(est)
-	plant = sum(lines.get(k, 0) for k in PLANT_LINES)
-	rows = [{"item": description, "amount": plant}]
-	discount = 0.0
-	for doctype, sign in CHARGES:
-		for name in frappe.get_all(doctype, filters={"solar_design_estimate": est.name, "docstatus": ["<", 2]}, pluck="name"):
-			for item in frappe.get_doc(doctype, name).items:
-				if sign < 0:
-					discount += flt(item.amount)
-				else:
-					rows.append({"item": item.description or item.get("structure_type") or item.get("cable_type") or doctype,
-						"amount": flt(item.amount), "right": True})
-	if flt(commercials.get("gst_amount")):
-		rows.append({"item": "GST @ {0:g}%".format(flt(commercials["gst_percent"])), "amount": flt(commercials["gst_amount"]), "right": True})
-	total = sum(r["amount"] for r in rows)
-	rows.append({"item": "Total", "amount": total, "right": True, "bold": True})
-	if discount:
-		rows.append({"item": "Special Price after Discount", "amount": total - discount, "right": True, "bold": True})
+	# 3.3.1 Every option of the proposal, in its order - Option 1 is the base - each with its
+	# plant, its linked charges, the total and the price after discount. A quotation is one
+	# option, and prints what it charges.
 	q = doc.get("quotation")
 	if q:
-		# A quotation prints what it charges: its lines, its discount, its taxes, its total.
 		rows = [{"item": frappe.utils.strip_html(r.description or r.item_name or ""), "amount": flt(r.amount)} for r in q.items]
 		rows.append({"item": "Total", "amount": flt(q.total), "right": True, "bold": True})
 		if flt(q.discount_amount):
@@ -448,9 +430,19 @@ def print_rest(doc):
 				rows.append({"item": t.description, "amount": flt(t.tax_amount), "right": True})
 		if q.taxes:
 			rows.append({"item": "Grand Total", "amount": flt(q.rounded_total or q.grand_total), "right": True, "bold": True})
-	for r in rows:
-		r["amount_text"] = money(r["amount"])
-	out["cost"] = rows
+		options = [{"label": "", "rows": rows}]
+	else:
+		names = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.get("solar_design_estimate")]
+		names = list(dict.fromkeys(names)) or [est.name]
+		estimates = [est if n == est.name else frappe.get_doc("Solar Design Estimate", n) for n in names
+			if n == est.name or frappe.db.exists("Solar Design Estimate", n)]
+		options = [{"label": _option_label(e, i) if len(estimates) > 1 else "", "rows": plant_cost_rows(e)}
+			for i, e in enumerate(estimates, 1)]
+	for option in options:
+		for r in option["rows"]:
+			r["amount_text"] = money(r["amount"])
+	out["cost"] = options[0]["rows"]
+	out["cost_options"] = options
 
 	# 3.3.2 KSEBL expenses, as the fee schedule resolved them for the estimate.
 	import json
@@ -470,6 +462,7 @@ def print_rest(doc):
 		out["kseb_words"] = words.rstrip(".").replace(" only", " Only")
 	if purchased:
 		out["kseb_note"] = "*Bi-directional meter can be availed from KSEBL on rental basis also."
+	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb), bool(out["kseb_note"]))
 
 	# 3.4 terms and offer validity; 3.5 the bank details from the Company.
 	out["terms_html"] = settings.get("terms_and_conditions_text") or ""
@@ -518,6 +511,74 @@ def print_rest(doc):
 	out["company_scope_label"] = "{0} Scope".format(short) if short else (settings.get("company_scope_label") or "Our Scope")
 	out["customer_scope_label"] = settings.get("customer_scope_label") or "Client's Scope"
 	return out
+
+
+def plant_cost_rows(est):
+	"""One option's 3.3.1 rows: the plant, each linked charge's lines, GST, the total and the
+	price after discount."""
+	commercials = est.commercials()
+	lines = {line["key"]: flt(line["amount"]) for line in commercials["lines"]}
+	rows = [{"item": plant_description(est), "amount": sum(lines.get(k, 0) for k in PLANT_LINES)}]
+	discount = 0.0
+	for doctype, sign in CHARGES:
+		for name in frappe.get_all(doctype, filters={"solar_design_estimate": est.name, "docstatus": ["<", 2]}, pluck="name"):
+			for item in frappe.get_doc(doctype, name).items:
+				if sign < 0:
+					discount += flt(item.amount)
+				else:
+					rows.append({"item": item.description or item.get("structure_type") or item.get("cable_type") or doctype,
+						"amount": flt(item.amount), "right": True})
+	if flt(commercials.get("gst_amount")):
+		rows.append({"item": "GST @ {0:g}%".format(flt(commercials["gst_percent"])), "amount": flt(commercials["gst_amount"]), "right": True})
+	total = sum(r["amount"] for r in rows)
+	rows.append({"item": "Total", "amount": total, "right": True, "bold": True})
+	if discount:
+		rows.append({"item": "Special Price after Discount", "amount": total - discount, "right": True, "bold": True})
+	return rows
+
+
+def _option_label(est, number):
+	"""'Option 2 – 3 kW Single Phase On-Grid (PM Surya Ghar) – Solinteg': the package it is
+	built on and the inverter it is priced with, since two options often share a package."""
+	package = frappe.db.get_value("Solar Package", est.solar_package, "package_name") if est.solar_package else None
+	makes = [frappe.db.get_value("Component Make", r.inverter_make, "make_name") for r in est.get("inverters") or []
+		if r.inverter_make and not r.get("is_option")]
+	label = " – ".join(part for part in (package, " + ".join(dict.fromkeys(m for m in makes if m))) if part)
+	return "Option {0}{1}".format(number, " – " + label if label else "")
+
+
+#: How much of a printed page section 3.3 may fill, and what each block takes, in mm. The
+#: page is a fixed A4 frame that clips what overflows, so the options are laid out page by
+#: page here rather than left to run on. Measured on the Solar Proposal Document print.
+PAGE_MM = 200
+HEADINGS_MM = 18   # 3.3 Project Cost and 3.3.1 Solar Power Plant
+CONTINUED_MM = 10  # 3.3.1 (continued)
+OPTION_MM = 22     # the option's label, the table's header and its gap
+LINE_MM = 7        # one printed line of a row
+
+
+def _rows_mm(rows):
+	# The plant's description runs to about 85 characters a line in its column.
+	return sum(LINE_MM * max(1, -(-len(r["item"]) // 85)) + 2 for r in rows)
+
+
+def cost_pages(options, kseb_rows, kseb_note):
+	"""Section 3.3 as pages: [{"options": [...], "kseb": bool}]. Options fill a page in order;
+	the KSEBL expenses follow the last of them, on its page when they fit, else on the next."""
+	kseb_mm = 14 + 12 + (kseb_rows + 2) * (LINE_MM + 2) + (12 if kseb_note else 0)
+	pages, current, used = [], [], HEADINGS_MM
+	for option in options:
+		need = (OPTION_MM if option["label"] else 12) + _rows_mm(option["rows"])
+		if current and used + need > PAGE_MM:
+			pages.append({"options": current, "kseb": False})
+			current, used = [], CONTINUED_MM
+		current.append(option)
+		used += need
+	if used + kseb_mm > PAGE_MM:
+		pages.append({"options": current, "kseb": False})
+		current = []
+	pages.append({"options": current, "kseb": True})
+	return pages
 
 
 def plant_description(est):

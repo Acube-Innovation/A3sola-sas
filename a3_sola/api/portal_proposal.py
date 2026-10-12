@@ -49,6 +49,7 @@ def page_context(context, name=None):
 	crumbs.append({"label": "Edit" if doc else "New"})
 	fill_shell(context, active_route="/a3solaportal/" + SLUG, page_title=title, crumbs=crumbs)
 
+	source = _source_estimate()
 	if doc:
 		values = {f: doc.get(f) for f in EDITABLE}
 		state = {
@@ -57,9 +58,19 @@ def page_context(context, name=None):
 			"available": estimate_rows(lead_estimates(doc.lead, doc.solar_consumer)),
 			"existing": None,
 		}
+		# Opened from a design estimate of this lead: it is added as the next option.
+		if source and not any(r["name"] == source for r in state["rows"]):
+			state["rows"] += [r for r in state["available"] if r["name"] == source]
 	else:
 		lead = _preset_lead()
-		state = lead_details(lead) if lead else {"values": {}, "site": _site({}), "rows": [], "available": [], "existing": None}
+		# Opened from a design estimate: its consumer, not only the lead's, and that
+		# estimate as the base option - the lead's other estimates stay on offer below.
+		consumer, survey = frappe.db.get_value("Solar Design Estimate", source, ["solar_consumer", "site_survey"]) if source else (None, None)
+		state = lead_details(lead, consumer) if lead else {"values": {}, "site": _site({}), "rows": [], "available": [], "existing": None}
+		if source:
+			state["rows"] = [r for r in state["rows"] if r["name"] == source] or estimate_rows([source])
+			if survey and lead:
+				state["values"]["site_survey"] = survey  # the survey the estimate was designed on
 		values = dict(state.pop("values", {}) or {}, lead=lead or "")
 	values["proposal_date"] = str(values.get("proposal_date") or today())
 
@@ -86,6 +97,49 @@ def _load_for_edit(name):
 	if doc.docstatus == 2:
 		frappe.throw(_("{0} was cancelled; edit its amendment instead.").format(name), frappe.PermissionError)
 	return doc
+
+
+def _source_estimate():
+	"""The design estimate the page was opened from (?source_dt=Solar Design Estimate&source=), if readable."""
+	form = frappe.form_dict
+	if (form.get("source_dt") or "").strip() != "Solar Design Estimate":
+		return None
+	name = (form.get("source") or "").strip()
+	if not name or not frappe.db.exists("Solar Design Estimate", name) \
+			or not frappe.has_permission("Solar Design Estimate", "read", name):
+		return None
+	return name
+
+
+def proposal_action(estimate):
+	"""The proposal step from a design estimate, as {label, href, hint}, or None.
+
+	One proposal per lead, so: the proposal the estimate is already in; else the lead's
+	proposal, opened with this estimate added as an option (a re-quote is a new version of
+	it); else a new proposal, filled from the estimate. None when the user may do none of it.
+	"""
+	est = frappe.db.get_value("Solar Design Estimate", estimate, ["name", "lead", "solar_consumer"], as_dict=True)
+	if not est:
+		return None
+	query = "?" + frappe.utils.urlencode({"source_dt": "Solar Design Estimate", "source": est.name})
+	in_proposal = frappe.db.get_value("Solar Proposal Estimate",
+		{"solar_design_estimate": est.name, "parenttype": DOCTYPE, "docstatus": ["<", 2]}, "parent")
+	if in_proposal:
+		if not frappe.has_permission(DOCTYPE, "read", in_proposal):
+			return None
+		return {"label": _("View proposal"), "href": record_route(SLUG, in_proposal),
+			"hint": _("This estimate is an option of proposal {0}.").format(in_proposal)}
+	lead = est.lead or (frappe.db.get_value("Solar Consumer", est.solar_consumer, "lead") if est.solar_consumer else None)
+	existing = frappe.db.get_value(DOCTYPE, {"lead": lead, "docstatus": ["<", 2]}, "name") if lead else None
+	if existing:
+		if not frappe.has_permission(DOCTYPE, "write", existing):
+			return None
+		return {"label": _("Add to proposal"), "href": record_route(SLUG, existing) + "/edit" + query,
+			"hint": _("This lead already has proposal {0}; it opens with this estimate added as an option.").format(existing)}
+	if not frappe.has_permission(DOCTYPE, "create"):
+		return None
+	return {"label": _("Create proposal"), "href": "/a3solaportal/" + SLUG + "/new" + query,
+		"hint": _("Opens a new proposal filled in from this estimate.")}
 
 
 def _preset_lead():

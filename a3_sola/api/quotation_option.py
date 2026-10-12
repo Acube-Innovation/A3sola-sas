@@ -25,7 +25,9 @@ from a3_sola.api.print_cover import (
 def options(lead=None, proposal=None):
 	"""The options a quotation can be raised for: each proposal of the lead (or the one
 	proposal given), with its design estimates in order - Option 1 is the base. A lead's
-	estimate that is in no proposal is offered on its own."""
+	estimate that is in no proposal is offered on its own, draft or submitted, as a proposal's
+	drafts are - the portal has no way to submit an estimate, so a new one would otherwise
+	never reach the quotation until it was put in a proposal."""
 	if proposal:
 		lead = lead or frappe.db.get_value("Solar Proposal", proposal, "lead")
 	if not lead:
@@ -45,7 +47,7 @@ def options(lead=None, proposal=None):
 			"date": frappe.utils.format_date(p.proposal_date) if p.proposal_date else "", "options": [o for o in opts if o]})
 	loose = [] if proposal else [
 		o for o in (_option(n, 0) for n in frappe.get_all("Solar Design Estimate",
-			filters={"lead": lead, "docstatus": 1}, pluck="name", order_by="creation asc") if n not in offered) if o
+			filters={"lead": lead, "docstatus": ["<", 2]}, pluck="name", order_by="creation asc") if n not in offered) if o
 	]
 	return {"proposals": proposals, "loose": loose}
 
@@ -288,8 +290,9 @@ def page_context(context, name=None):
 		elif form.get("source_dt") == "Lead":
 			lead = form.get("source") or lead
 	editable = (not doc) or (doc.docstatus == 0 and doc.has_permission("write"))
-	# The leads a quotation can be raised for: those with a proposal on file.
-	leads = sorted(set(frappe.get_list("Solar Proposal", filters={"docstatus": ["<", 2]}, pluck="lead")) - {None, ""})
+	# The leads a quotation can be raised for: those with a proposal or a design estimate on file.
+	leads = sorted((set(frappe.get_list("Solar Proposal", filters={"docstatus": ["<", 2]}, pluck="lead"))
+		| set(frappe.get_list("Solar Design Estimate", filters={"docstatus": ["<", 2]}, pluck="lead"))) - {None, ""})
 	context.quotation = doc
 	context.quote_name = name or ""
 	context.title = name or _("New quotation")
