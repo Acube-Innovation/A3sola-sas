@@ -1,8 +1,10 @@
 {#- Step one of the design estimate builder: the Estimate Details tab. The consumer comes
-    first, across the page, with the chosen consumer's details beside its fields; package and
-    sizing follow as one table row of options. Context from design-estimates/new.py and
-    details.py - `columns` from portal_estimate.detail_columns, `profile` from
-    portal_estimate.subject_profile. -#}
+    first, across the page, with the chosen consumer's details beside its fields; then the
+    options, one table row per package offered, each choosing one panel, one inverter and
+    (Off-Grid and Hybrid) one battery from its package. Context from design-estimates/new.py
+    and details.py - `columns` from portal_estimate.detail_columns, `profile` from
+    portal_estimate.subject_profile, `packages_json` from portal_estimate.package_choices_json. -#}
+<script type="application/json" id="a3s-de-packages">{{ packages_json }}</script>
 <div class="a3s-page__head">
 	<div>
 		<p class="a3s-de-steps"><span class="is-current">1 &middot; Estimate details</span><span>2 &middot; System &amp; commercials</span></p>
@@ -78,12 +80,80 @@
 		</div>
 	</section>
 
-	<section class="a3s-card a3s-de-card a3s-de-package" id="a3s-de-package">
-		<h3 class="a3s-de-card__title">{{ package.title }}</h3>
-		<div class="a3s-de-fields">
-			{%- for f in package.fields %}
-			{{ field_cell(f) }}
+	{#- One row per option. The controls carry `data-field`, not `name`: the script posts the
+	    rows as a list, and the recommended row becomes the estimate's own. -#}
+	{%- macro option_control(f, value, locked) %}
+		{%- if f.input == "select" %}
+		<select data-field="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if locked %} disabled{% endif %}>
+			{%- for o in f.options %}
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
+		</select>
+		{%- elif f.input == "number" %}
+		<input type="number" step="any" min="0" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}" placeholder="Auto"{% if locked %} disabled{% endif %}>
+		{%- else %}
+		<input type="text" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}"{% if locked %} disabled{% endif %}>
+		{%- endif %}
+	{%- endmacro %}
+	{%- macro option_row(row) %}
+		{%- set locked = row.saved_as %}
+		<div class="a3s-de-opt" data-option data-name="{{ row.name | e }}"{% if locked %} data-locked="1"{% endif %}>
+			<div class="a3s-de-opt__head">
+				<label class="a3s-de-sizing__radio" title="Make this the recommended option: this estimate is built on it">
+					<input type="radio" name="recommended_option" data-recommended{% if row.recommended %} checked{% endif %}{% if locked %} disabled{% endif %}>
+					<span class="a3s-de-sizing__num">Option <span data-option-number></span></span>
+				</label>
+				<span class="a3s-de-sizing__badge">Recommended</span>
+				{%- if locked %}
+				<a class="a3s-de-sizing__saved" href="{{ row.saved_route | e }}" title="This option is saved as its own estimate; change it there">Saved as {{ row.saved_as | e }}</a>
+				{%- endif %}
+				<span class="a3s-de-sizing__cost" data-package-cost>{{ row.package_cost_label | e }}</span>
+				<button type="button" class="a3s-icon-btn a3s-icon-btn--danger a3s-de-opt__remove" data-remove-option aria-label="Remove this option" title="Remove this option">&times;</button>
+			</div>
+			<div class="a3s-de-opt__grid">
+				{#- The subsidy scheme only applies with subsidy, so it sits under Subsidy. -#}
+				{%- for f in package.fields if f.fieldname != "subsidy_scheme" %}
+				<div class="a3s-field a3s-de-opt__f-{{ f.fieldname }}">
+					<span class="a3s-de-sizing__part-label">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
+					{{ option_control(f, row["values"][f.fieldname], locked) }}
+					{%- if f.fieldname == "subsidy_option" %}
+					{%- for g in package.fields if g.fieldname == "subsidy_scheme" %}
+					<div class="a3s-de-sizing__scheme" data-row-show-when="{{ g.show_when | e }}">
+						{{ option_control(g, row["values"][g.fieldname], locked) }}
+					</div>
+					{%- endfor %}
+					{%- endif %}
+				</div>
+				{%- endfor %}
+			</div>
+			{#- One of each, from the option's package; filled by the script as the package changes. -#}
+			<div class="a3s-de-opt__parts">
+				{%- for c in package.components %}
+				<div class="a3s-field a3s-de-sizing__part"{% if c.only_for %} data-only-for="{{ c.only_for | e }}"{% endif %}>
+					<span class="a3s-de-sizing__part-label">{{ c.label }}</span>
+					<select data-field="{{ c.fieldname }}" data-component="{{ c.key }}" data-value="{{ row['values'][c.fieldname] | e }}" aria-label="{{ c.label | e }}"{% if locked %} disabled{% endif %}>
+						<option value="">—</option>
+					</select>
+				</div>
+				{%- endfor %}
+			</div>
+		</div>
+	{%- endmacro %}
+	{%- set subsidy = package.fields | selectattr("fieldname", "equalto", "subsidy_option") | first %}
+
+	<section class="a3s-card a3s-de-card a3s-de-sizing" id="a3s-de-sizing" data-subsidy-tariff="{{ subsidy.subsidy_tariff | e if subsidy else '' }}">
+		<h3 class="a3s-de-card__title">{{ package.title }}</h3>
+		<div class="a3s-de-opts" data-options>
+			{%- for row in package.rows %}{{ option_row(row) }}{% endfor %}
+		</div>
+		{%- set blank = {"name": "", "recommended": False, "values": package.rows[0]["values"], "package_cost_label": "", "saved_as": "", "saved_route": ""} %}
+		<template id="a3s-de-option-template">{{ option_row(blank) }}</template>
+		<div class="a3s-items__foot">
+			<button type="button" class="a3s-btn a3s-btn--ghost" data-add-option>+ Add option</button>
+			<p class="a3s-field__hint">Each option is a tab on the next step, priced on its own. The recommended option is this estimate; the others are saved as their own estimates for the same lead, from their tabs.</p>
+		</div>
+		{%- if package.facts %}
+		<div class="a3s-de-fields a3s-de-sizing__facts">
 			{%- for fact in package.facts %}
 			<div class="a3s-field a3s-de-fact">
 				<span class="a3s-de-fact__label">{{ fact.label | e }}</span>
@@ -91,6 +161,7 @@
 			</div>
 			{%- endfor %}
 		</div>
+		{%- endif %}
 		{%- set notes = package.fields | selectattr("hint") | list %}
 		{%- if notes %}
 		<ul class="a3s-de-sizing__notes">

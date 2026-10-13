@@ -102,6 +102,24 @@ frappe.ui.form.on("Solar Design Estimate", {
 		frm.set_query("solar_package", "sizing_options", (doc, cdt, cdn) =>
 			package_filters(locals[cdt][cdn].subsidy_option, locals[cdt][cdn].system_type)
 		);
+		// Each option row chooses one panel, inverter and battery from its own package.
+		[
+			["panel_make", "panels"],
+			["inverter_make", "inverters"],
+			["battery_make", "batteries"],
+		].forEach(([fieldname, component]) => {
+			frm.set_query(fieldname, "sizing_options", (doc, cdt, cdn) => {
+				const row = locals[cdt][cdn];
+				return {
+					query: "a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate.package_component_query",
+					filters: {
+						solar_package: row.solar_package || "",
+						component,
+						connection_type: row.connection_type || frm.doc.connection_type || "",
+					},
+				};
+			});
+		});
 	},
 
 	override_capacity_kw(frm) {
@@ -268,3 +286,12 @@ function compare_packages(frm) {
 		},
 	});
 }
+
+frappe.ui.form.on("Design Estimate Sizing Option", {
+	// Another package offers other makes: the save puts its defaults in their place.
+	solar_package(frm, cdt, cdn) {
+		["panel_make", "inverter_make", "battery_make"].forEach((fieldname) => {
+			if (locals[cdt][cdn][fieldname]) frappe.model.set_value(cdt, cdn, fieldname, null);
+		});
+	},
+});

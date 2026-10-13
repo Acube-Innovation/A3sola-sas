@@ -37,6 +37,7 @@ def get_context(context):
 			prefill = portal_chain.mapped_values(step, frappe.get_doc(source_dt, source))
 	prefill = portal_estimate.estimate_prefill(prefill)
 	context.columns = portal_estimate.detail_columns(prefill=prefill)
+	context.packages_json = portal_estimate.package_choices_json(context.columns)
 	context.profile = portal_estimate.subject_profile(prefill.get("lead"), prefill.get("solar_consumer"))
 	context.cancel_route = "/a3solaportal/design-estimates"
 	context.csrf_token = frappe.sessions.get_csrf_token()

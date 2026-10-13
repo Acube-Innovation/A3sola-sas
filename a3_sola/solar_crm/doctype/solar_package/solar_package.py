@@ -28,6 +28,7 @@ class SolarPackage(Document):
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
 		self.validate_one_default_per_type()
+		self.fill_package_cost()
 		self.validate_prices()
 		self.price_the_configurations()
 		self.compute_batteries()
@@ -49,6 +50,15 @@ class SolarPackage(Document):
 		for row in self.get("inverters") or []:
 			if not row.inverter_phase:
 				row.inverter_phase = self.connection_type
+
+	def fill_package_cost(self):
+		"""The package's cost, for its default kit, is the default inverter's cost unless typed.
+
+		The default panel, inverter and battery are what the package is; its other panels and
+		inverters are options, each priced at its own rate on an estimate.
+		"""
+		if not flt(self.package_cost):
+			self.package_cost = default_package_cost(self)
 
 	def validate_one_default(self, fieldname, noun):
 		"""Exactly one option is the default, because everything downstream reads one.
@@ -337,6 +347,104 @@ def default_inverter(package):
 	Its `cost` is the package price: what the array costs built that way.
 	"""
 	return _default_row(package, "inverters")
+
+
+def default_package_cost(package):
+	"""What the package costs built its default way: the default inverter's cost, else the
+	default price row's. Zero when neither says."""
+	inverter = default_inverter(package)
+	if inverter and flt(inverter.cost):
+		return flt(inverter.cost)
+	price = default_price(package)
+	return flt(price.system_cost) if price else 0.0
+
+
+def package_cost(package):
+	"""The package's cost as recorded on it, else as its defaults price it."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	return flt(doc.get("package_cost")) or default_package_cost(doc)
+
+
+def default_battery(package):
+	"""The battery a package is built with: its first row not marked as an option."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	rows = [row for row in doc.get("batteries") or [] if row.battery_make]
+	return next((row for row in rows if not row.is_option), rows[0] if rows else None)
+
+
+def package_components(package, phase=None):
+	"""What an option row may choose from a package: one panel, one inverter, one battery.
+
+	Returns {"package_cost", "panels", "inverters", "batteries"}, each list of
+	{"value": make, "label", "default"} with the package's default first. Inverters are the
+	package's for `phase` when one is given; batteries are listed only for Off-Grid and
+	Hybrid packages.
+	"""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	makes = {}
+	wanted = [r.module_make for r in doc.get("modules") or []] + [r.inverter_make for r in doc.get("inverters") or []] \
+		+ [r.battery_make for r in doc.get("batteries") or []]
+	if any(wanted):
+		makes = {
+			m.name: m.make_name
+			for m in frappe.get_all("Component Make", filters={"name": ["in", [w for w in wanted if w]]}, fields=["name", "make_name"])
+		}
+
+	def ordered(rows, default):
+		return ([default] if default in rows else []) + [r for r in rows if r is not default]
+
+	def number(value, unit):
+		return "{0:g} {1}".format(flt(value), unit) if flt(value) else ""
+
+	def label(*parts):
+		return " \u00b7 ".join(p for p in parts if p)
+
+	panels = []
+	module = default_module(doc)
+	for row in ordered([r for r in doc.get("modules") or [] if r.module_make], module):
+		panels.append({
+			"value": row.module_make, "default": row is module,
+			"label": label(makes.get(row.module_make) or row.module_make, number(row.module_wattage, "Wp"),
+				"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else ""),
+		})
+
+	inverters = []
+	matching = [r for r in inverters_for_phase(doc, phase) if r.inverter_make]
+	inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
+	for row in ordered(matching, inverter):
+		inverters.append({
+			"value": row.inverter_make, "default": row is inverter, "phase": inverter_phase(doc, row),
+			"label": label(makes.get(row.inverter_make) or row.inverter_make, number(row.inverter_capacity_kw, "kW"),
+				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else ""),
+		})
+
+	batteries = []
+	if doc.system_type in ("Off-Grid", "Hybrid"):
+		battery = default_battery(doc)
+		seen = set()
+		for row in ordered([r for r in doc.get("batteries") or [] if r.battery_make], battery):
+			if row.battery_make in seen:
+				continue
+			seen.add(row.battery_make)
+			batteries.append({
+				"value": row.battery_make, "default": row is battery,
+				"label": label(makes.get(row.battery_make) or row.battery_make, number(row.battery_voltage, "V"),
+					number(row.battery_capacity_ah, "Ah"), "\u00d7 {0}".format(cint(row.nos)) if cint(row.nos) > 1 else ""),
+			})
+
+	return {"package_cost": package_cost(doc), "panels": panels, "inverters": inverters, "batteries": batteries}
 
 
 def default_system_items(package):

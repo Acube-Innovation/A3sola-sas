@@ -1,11 +1,14 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The portal's design estimate builder: details first, then the system, row by row.
+"""The portal's design estimate builder: details first, then the system, option by option.
 
-Step one captures the Estimate Details tab. Step two works one System & Options table at a
-time: the rows saved so far, a form to add or change one, and the commercials beside them.
-Every change saves the whole estimate, so the controller - not this module - computes the
-counts, the expense rows and the prices, and the page simply shows what came back.
+Step one captures the Estimate Details tab and its options: one row per package offered,
+each with the panel, inverter and battery chosen from that package. Step two has a tab per
+option, each the system and commercials of that option, one System & Options table at a
+time. A change in a tab is worked out on the server - the controller, not this module,
+computes the counts, the expense rows and the prices - and held until that tab's Save: the
+recommended option saves this estimate, every other option is saved as an estimate of its
+own for the same lead, so the options can be compared side by side and quoted.
 """
 
 import json
@@ -28,11 +31,25 @@ DETAIL_COLUMNS = (
 	# The tariff asked for is KSEB's category code. The priced tariff the savings are worked
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
 	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
-	# The package and how it is sized, asked for as the desk asks: one package per estimate.
-	# The estimate keeps them on its recommended sizing row, which it follows.
-	("Package Details", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
+	# The options: one row per package and sizing, the recommended row the estimate's own.
+	("Package & Options", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
 		"solar_package", "override_capacity_kw")),
 )
+
+# What each option row chooses from its package, after the package and sizing fields.
+COMPONENT_FIELDS = (
+	{"fieldname": "panel_make", "label": "Solar Panel", "key": "panels"},
+	{"fieldname": "inverter_make", "label": "Inverter", "key": "inverters"},
+	{"fieldname": "battery_make", "label": "Battery", "key": "batteries", "only_for": ("Off-Grid", "Hybrid")},
+)
+
+# Rebuilt from the package when an option is first worked out as an estimate of its own.
+KIT_TABLES = ("panels", "inverters", "batteries", "bos_items", "options", "quoted_options",
+	"kseb_expenses", "mounting_expenses", "installation_expenses", "cashflow")
+KIT_FIELDS = ("equipment_package", "bos_package", "bos_basis", "included_inverter_options",
+	"excluded_inverter_makes", "recommended_option")
+# Rows worked out in memory, before a save, are named with this so a change can point at them.
+TEMP_ROW = "tmp-"
 
 # The consumer's details shown under the Consumer fields: (fieldname, label) per source.
 # A consumer is preferred to its lead, as the estimate itself prefers it.
@@ -304,12 +321,62 @@ def detail_columns(doc=None, prefill=None):
 					spec["value"] = spec["default_value"]
 			fields.append(spec)
 		columns.append({"title": _(title), "fields": fields})
+	columns[1]["rows"] = option_rows(doc, columns[1]["fields"])
+	columns[1]["components"] = [
+		{"fieldname": c["fieldname"], "label": _(c["label"]), "key": c["key"], "only_for": "|".join(c.get("only_for") or ())}
+		for c in COMPONENT_FIELDS
+	]
 	# Worked out by the estimate, shown beside the package once there is one.
 	columns[1]["facts"] = [
 		{"label": _("DCR Compliant"), "value": _("Yes") if doc.is_dcr_compliant else _("No")},
 		{"label": _("Proposed System Size (kW)"), "value": "{0:g}".format(flt(doc.final_capacity_kw))},
 	] if doc and doc.solar_package else []
 	return columns
+
+
+def option_rows(doc, fields):
+	"""The option rows step one shows: the estimate's own, else one from the fields' values.
+
+	A row saved as an estimate of its own (from its tab on step two) says so, and is shown
+	as it was saved: it is changed on that estimate.
+	"""
+	names = [f["fieldname"] for f in fields] + [c["fieldname"] for c in COMPONENT_FIELDS]
+	if doc and doc.get("sizing_options"):
+		rows = []
+		for row in sorted(doc.sizing_options, key=lambda r: r.idx):
+			values = {}
+			for fieldname in names:
+				value = row.get(fieldname)
+				if fieldname == "override_capacity_kw":
+					value = "{0:g}".format(flt(value)) if flt(value) else ""
+				values[fieldname] = "" if value is None else str(value)
+			saved = row.design_estimate if row.design_estimate and row.design_estimate != doc.name else ""
+			rows.append({"name": row.name, "recommended": bool(row.is_recommended), "values": values,
+				"package_cost_label": package_cost_label(row.package_cost), "saved_as": saved,
+				"saved_route": design_route(saved) if saved else ""})
+		return rows
+	values = {f["fieldname"]: f["value"] for f in fields}
+	values.update({c["fieldname"]: "" for c in COMPONENT_FIELDS})
+	if not flt(values.get("override_capacity_kw")):
+		values["override_capacity_kw"] = ""
+	return [{"name": "", "recommended": True, "values": values, "package_cost_label": "", "saved_as": "", "saved_route": ""}]
+
+
+def package_cost_label(amount):
+	return _("Package cost {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
+
+
+def package_choices_json(columns):
+	"""Each package on offer's cost and its panels, inverters and batteries, for step one to
+	fill a row's choices from when its package is picked."""
+	from a3_sola.solar_crm.doctype.solar_package.solar_package import package_components
+
+	field = next((f for f in columns[1]["fields"] if f["fieldname"] == "solar_package"), None)
+	out = {}
+	for option in (field or {}).get("options") or []:
+		if option.get("value"):
+			out[option["value"]] = package_components(option["value"])
+	return json.dumps(out, default=str).replace("</", "<\\/")
 
 
 def subject_profile(lead=None, solar_consumer=None):
@@ -374,14 +441,27 @@ def save_details(values, name=None, sizing_options=None):
 		if fieldname in values:
 			doc.set(fieldname, values.get(fieldname) or None)
 	if options:
-		doc.set("sizing_options", [])
+		existing = {row.name: row for row in doc.get("sizing_options") or []}
+		rows = []
 		for row in options:
 			if not isinstance(row, dict):
 				continue
+			old = existing.get(row.get("name")) if row.get("name") else None
+			if old and old.design_estimate and old.design_estimate != doc.name:
+				# Saved as an estimate of its own: kept as saved, and changed on that estimate.
+				old.is_recommended = 1 if row.get("is_recommended") else 0
+				rows.append(old)
+				continue
 			entry = {fieldname: (row.get(fieldname) or None) for fieldname in sizing_fields}
+			entry.update({c["fieldname"]: row.get(c["fieldname"]) or None for c in COMPONENT_FIELDS})
 			entry["override_capacity_kw"] = flt(row.get("override_capacity_kw")) or None
 			entry["is_recommended"] = 1 if row.get("is_recommended") else 0
-			doc.append("sizing_options", entry)
+			if old:
+				entry["name"] = old.name  # the same option: its tab and saved estimate follow it
+			rows.append(entry)
+		doc.set("sizing_options", [])
+		for row in rows:
+			doc.append("sizing_options", row)
 	elif doc.subsidy_option != "With Subsidy":
 		doc.subsidy_scheme = None
 	doc.save()
@@ -548,7 +628,9 @@ def _sections(doc):
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
 		out.append(_section(doc, section, child, doc.get(section["key"])))
 	for section in LINKED_SECTIONS:
-		if not frappe.has_permission(section["doctype"], "read"):
+		# Charges are records of their own raised against a saved estimate, so an option
+		# not saved yet has none.
+		if doc.is_new() or not frappe.has_permission(section["doctype"], "read"):
 			continue
 		child = frappe.get_meta(frappe.get_meta(section["doctype"]).get_field("items").options)
 		rows = [row for record in _linked_records(doc, section) for row in record.items]
@@ -609,89 +691,331 @@ def _remove_linked_row(doc, section, row):
 	record.save()
 
 
-def builder_state(doc):
-	"""Everything step two paints from: the header, each section and the commercials."""
+def builder_state(doc, editable=None):
+	"""Everything a tab of step two paints from: the header, each section and the commercials.
+
+	`doc` may be an option worked out in memory and not saved yet; `editable` then says
+	whether the person may save it.
+	"""
 	commercials = doc.commercials()
 	for line in commercials["lines"]:
 		line["label"] = _(line["label"])
 	subject = doc.solar_consumer or doc.lead
+	saved = not doc.is_new()
+	if editable is None:
+		editable = bool(doc.has_permission("write")) and cint(doc.docstatus) == 0
+	sizing = doc.recommended_sizing_row()
+	package_cost = flt(sizing.package_cost) if sizing else 0.0
 	return {
-		"name": doc.name,
-		"title": link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else doc.name,
-		"editable": bool(doc.has_permission("write")) and cint(doc.docstatus) == 0,
-		# A draft or a submitted estimate can be copied into a new one; a cancelled one cannot.
-		"can_save_as": cint(doc.docstatus) in (0, 1) and bool(frappe.has_permission(DOCTYPE, "create")),
-		"details_route": details_route(doc.name),
-		"pdf_route": "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name),
-		"view_route": "/a3solaportal/{0}/{1}".format(SLUG, frappe.utils.quote(doc.name)),
+		"name": doc.name if saved else "",
+		"saved": saved,
+		"title": link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else (doc.name or ""),
+		"editable": bool(editable),
+		"docstatus": cint(doc.docstatus),
+		"pdf_route": "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name) if saved else "",
+		"view_route": "/a3solaportal/{0}/{1}".format(SLUG, frappe.utils.quote(doc.name)) if saved else "",
 		"summary": [
 			{"label": _("Proposed size"), "value": "{0:g} kW".format(flt(doc.final_capacity_kw))},
 			{"label": _("Connection"), "value": doc.connection_type or ""},
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
 			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
+			{"label": _("Package cost"), "value": frappe.utils.fmt_money(package_cost, currency="INR") if package_cost else "—"},
 		],
 		"sections": _sections(doc),
 		"choices": _choices(doc),
 		"commercials": commercials,
-		# Said on the last save without stopping it, as the inverter sizing with Options.
+		# The proposal this saved option is offered in, or the way to one.
+		"proposal_action": _proposal_action(doc.name) if saved else None,
+		# Said on the last change without stopping it, as the inverter sizing with Options.
 		"warnings": list(doc.flags.get("warnings") or []),
 	}
 
 
-@frappe.whitelist()
-def state(name):
-	return builder_state(_load(name, "read"))
+def _proposal_action(name):
+	from a3_sola.api import portal_proposal
+
+	return portal_proposal.proposal_action(name)
 
 
-@frappe.whitelist()
-def save_row(name, section, values, row=None):
-	"""Add a row to one System & Options table, or change one, and save the estimate."""
-	doc = _load(name)
-	if section in LINKED_BY_KEY:
-		_save_linked_row(doc, LINKED_BY_KEY[section], frappe.parse_json(values) or {}, row)
-		return builder_state(doc)
+# --------------------------------------------------------------- option tabs
+def root_of(doc):
+	"""The estimate whose option `doc` was saved from, else `doc` itself: the estimate whose
+	option rows are the tabs of step two."""
+	parent = doc.get("parent_estimate")
+	if (parent and frappe.db.exists(DOCTYPE, parent) and frappe.has_permission(DOCTYPE, "read", parent)
+			and frappe.db.exists("Design Estimate Sizing Option",
+				{"parent": parent, "parenttype": DOCTYPE, "design_estimate": doc.name})):
+		return frappe.get_doc(DOCTYPE, parent)
+	return doc
+
+
+def _tab_target(root, option):
+	"""(option row, estimate) for a tab: the recommended row is the root estimate itself,
+	another row the estimate it was saved as, or None while it is not saved."""
+	row = next((r for r in root.get("sizing_options") or [] if r.name == option), None) if option else None
+	if option and not row:
+		frappe.throw(_("That option is no longer on {0}. Reload the page.").format(root.name))
+	if not row or row.is_recommended:
+		return row, root.name
+	if row.design_estimate and frappe.db.exists(DOCTYPE, row.design_estimate):
+		return row, row.design_estimate
+	return row, None
+
+
+def option_key(root, doc):
+	"""The tab `doc` is shown in: its option row on the root, else the root's own."""
+	if doc.name != root.name:
+		row = next((r for r in root.get("sizing_options") or [] if r.design_estimate == doc.name), None)
+		if row:
+			return row.name
+	row = next((r for r in root.get("sizing_options") or [] if r.is_recommended), None)
+	return row.name if row else ""
+
+
+def option_tabs(root):
+	"""One tab per option row of the root estimate, described by what it chooses."""
+	makes = {}
+
+	def make_name(name):
+		if name and name not in makes:
+			makes[name] = frappe.db.get_value("Component Make", name, "make_name") or name
+		return makes.get(name) or ""
+
+	tabs = []
+	rows = sorted(root.get("sizing_options") or [], key=lambda r: r.idx)
+	for n, row in enumerate(rows, start=1):
+		_row, estimate = _tab_target(root, row.name)
+		source, docstatus = row, cint(root.docstatus)
+		if estimate and estimate != root.name:
+			# A saved option is described as it was saved: it may have been changed there.
+			source = frappe.get_all("Design Estimate Sizing Option", filters={"parent": estimate, "parenttype": DOCTYPE,
+				"is_recommended": 1}, fields=["*"], limit=1)
+			source = source[0] if source else row
+			docstatus = cint(frappe.db.get_value(DOCTYPE, estimate, "docstatus"))
+		tabs.append({
+			"key": row.name, "number": n, "recommended": bool(row.is_recommended),
+			"estimate": estimate or "", "docstatus": docstatus,
+			"package": link_title("Solar Package", source.solar_package) if source.solar_package else _("No package"),
+			"capacity": "{0:g} kW".format(flt(source.override_capacity_kw)) if flt(source.override_capacity_kw) else "",
+			"parts": [p for p in (make_name(source.panel_make), make_name(source.inverter_make), make_name(source.battery_make)) if p],
+			"package_cost": flt(source.package_cost),
+		})
+	if not tabs:
+		tabs.append({"key": "", "number": 1, "recommended": True, "estimate": root.name, "docstatus": cint(root.docstatus),
+			"package": link_title("Solar Package", root.solar_package) if root.solar_package else _("No package"),
+			"capacity": "", "parts": [], "package_cost": 0.0})
+	return tabs
+
+
+def _new_option_estimate(root, row):
+	"""An option row worked out as an estimate of its own, not saved: the root's details
+	with this row as its only, recommended, option, and the kit rebuilt from its package."""
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import SIZING_FIELDS
+
+	doc = frappe.copy_doc(root)
+	doc.parent_estimate = root.name
+	doc.source_option = row.name
+	values = {field: row.get(field) for field in SIZING_FIELDS}
+	values.update({c["fieldname"]: row.get(c["fieldname"]) for c in COMPONENT_FIELDS})
+	doc.set("sizing_options", [])
+	doc.append("sizing_options", {**values, "is_recommended": 1, "option_notes": row.option_notes})
+	for field in SIZING_FIELDS:
+		doc.set(field, row.get(field))
+	for table in KIT_TABLES:
+		doc.set(table, [])
+	for field in KIT_FIELDS:
+		doc.set(field, None)
+	return doc
+
+
+def _compute(doc, tag):
+	"""Work an estimate out as a save would, without saving it, and name its new rows so a
+	change can point at them. Replaying the same changes names them the same again."""
+	doc.flags.warnings = []
+	doc._set_defaults()
+	doc.run_method("before_validate")
+	doc.run_method("validate")
+	for child in doc.get_all_children():
+		if not child.name:
+			child.name = "{0}{1}-{2}-{3}".format(TEMP_ROW, tag, child.parentfield, child.idx)
+
+
+def _apply_change(doc, change):
+	"""One change to a System & Options table: {section, values, row, action}."""
+	section = (change or {}).get("section")
 	spec = SECTION_BY_KEY.get(section)
 	if not spec:
 		frappe.throw(_("Unknown section: {0}").format(section))
-	values = frappe.parse_json(values) or {}
-	allowed = {f["fieldname"] for f in spec["fields"]}
-	if row:
-		target = next((r for r in doc.get(section) if r.name == row), None)
+	row = change.get("row")
+	target = next((r for r in doc.get(section) if r.name == row), None) if row else None
+	if row and not target:
+		frappe.throw(_("That row no longer exists. Reload the page."))
+	if target and target.get("source"):
+		frappe.throw(_("This row is worked out by the estimate and cannot be changed here."))
+	if change.get("action") == "remove":
 		if not target:
-			frappe.throw(_("That row no longer exists. Reload the page."))
-		if target.get("source"):
-			frappe.throw(_("This row is worked out by the estimate and cannot be changed here."))
-	else:
+			frappe.throw(_("Choose a row to remove."))
+		doc.remove(target)
+		return
+	if not target:
 		target = doc.append(section, {})
-	for fieldname in allowed:
+	values = change.get("values") or {}
+	for fieldname in {f["fieldname"] for f in spec["fields"]}:
 		if fieldname in values:
-			target.set(fieldname, values.get(fieldname) if values.get(fieldname) not in ("",) else None)
-	doc.save()
-	return builder_state(doc)
+			target.set(fieldname, values.get(fieldname) if values.get(fieldname) != "" else None)
+
+
+def _work(doc, changes):
+	"""Apply a tab's unsaved changes in order, working the estimate out after each, as
+	each would have been saved. The state before each change is what the estimate tells a
+	row just changed by (an Option just unticked is the one priced)."""
+	if doc.is_new():
+		_compute(doc, "0")
+	for n, change in enumerate(changes or [], start=1):
+		doc._doc_before_save = frappe.get_doc(doc.as_dict())
+		_apply_change(doc, change)
+		_compute(doc, str(n))
+
+
+def _tab_doc(root, option, changes, permtype="read"):
+	"""(doc, editable) for a tab, its unsaved changes applied: read fresh, as each tab is
+	worked out on its own copy."""
+	row, estimate = _tab_target(root, option)
+	if estimate:
+		doc = _load(estimate, permtype)
+		editable = bool(doc.has_permission("write")) and cint(doc.docstatus) == 0
+	else:
+		if permtype == "write":
+			frappe.has_permission(DOCTYPE, "create", throw=True)
+		doc = _new_option_estimate(frappe.get_doc(DOCTYPE, root.name), row)
+		editable = bool(frappe.has_permission(DOCTYPE, "create"))
+	if changes and not editable:
+		frappe.throw(_("This option cannot be changed."), frappe.PermissionError)
+	_work(doc, changes)
+	return doc, editable
+
+
+def _payload(root, option, doc, editable=None):
+	frappe.local.message_log = []  # worked out, not saved: the page shows its own messages
+	return {"tabs": option_tabs(root), "option": option or "", "root": root.name,
+		"details_route": details_route(root.name) if root.has_permission("write") and cint(root.docstatus) == 0 else "",
+		"state": builder_state(doc, editable)}
+
+
+def _changes(ops):
+	changes = frappe.parse_json(ops) if ops else []
+	return [c for c in changes if isinstance(c, dict)] if isinstance(changes, list) else []
 
 
 @frappe.whitelist()
-def remove_row(name, section, row):
-	"""Drop one hand-added row from a System & Options table and save the estimate."""
-	doc = _load(name)
-	if section in LINKED_BY_KEY:
-		_remove_linked_row(doc, LINKED_BY_KEY[section], row)
-		return builder_state(doc)
-	if section not in SECTION_BY_KEY:
+def tab_state(name, option=None, ops=None):
+	"""A tab of step two with its unsaved changes applied, nothing saved."""
+	root = _load(name, "read")
+	doc, editable = _tab_doc(root, option, _changes(ops))
+	return _payload(root, option, doc, editable)
+
+
+@frappe.whitelist()
+def save_tab(name, option=None, ops=None):
+	"""Save a tab: the recommended option into this estimate, any other option into the
+	estimate it was saved as - made, for the same lead, the first time it is saved."""
+	root = _load(name, "read")
+	row, estimate = _tab_target(root, option)
+	doc, _editable = _tab_doc(root, option, _changes(ops), "write")
+	for child in doc.get_all_children():
+		if (child.name or "").startswith(TEMP_ROW):
+			child.name = None
+			child.set("__islocal", 1)
+	if estimate:
+		doc.save()
+	else:
+		doc._doc_before_save = None
+		doc.insert()
+		# A child row's link, set directly, so the estimate open on step one is not
+		# reported as changed by someone else.
+		frappe.db.set_value("Design Estimate Sizing Option", row.name, "design_estimate", doc.name, update_modified=False)
+	root = frappe.get_doc(DOCTYPE, root.name)
+	return _payload(root, option, frappe.get_doc(DOCTYPE, doc.name))
+
+
+def _linked_change(name, option, ops, change):
+	"""A charge record's row changed on a saved tab's estimate, at once; then the tab with
+	its unsaved changes."""
+	root = _load(name, "read")
+	_row, estimate = _tab_target(root, option)
+	if not estimate:
+		frappe.throw(_("Save this option first: its charges are kept against the saved estimate."))
+	change(_load(estimate))
+	doc, editable = _tab_doc(root, option, _changes(ops))
+	return _payload(root, option, doc, editable)
+
+
+@frappe.whitelist()
+def save_linked_row(name, section, values, option=None, row=None, ops=None):
+	"""Add or change an Additional Structure, Additional Cable or Special Discount row."""
+	if section not in LINKED_BY_KEY:
 		frappe.throw(_("Unknown section: {0}").format(section))
-	target = next((r for r in doc.get(section) if r.name == row), None)
-	if not target:
-		frappe.throw(_("That row no longer exists. Reload the page."))
-	if target.get("source"):
-		frappe.throw(_("This row is worked out by the estimate and comes back on every save."))
-	doc.remove(target)
-	doc.save()
-	return builder_state(doc)
+	return _linked_change(name, option, ops,
+		lambda doc: _save_linked_row(doc, LINKED_BY_KEY[section], frappe.parse_json(values) or {}, row))
 
 
-def builder_json(doc):
-	return json.dumps(builder_state(doc), default=str).replace("</", "<\\/")
+@frappe.whitelist()
+def remove_linked_row(name, section, row, option=None, ops=None):
+	if section not in LINKED_BY_KEY:
+		frappe.throw(_("Unknown section: {0}").format(section))
+	return _linked_change(name, option, ops, lambda doc: _remove_linked_row(doc, LINKED_BY_KEY[section], row))
+
+
+@frappe.whitelist()
+def compare(name, pending=None):
+	"""Every option side by side - its kit and commercials - with each tab's unsaved
+	changes applied. An option that cannot be worked out says why instead."""
+	root = _load(name, "read")
+	pending = frappe.parse_json(pending) if pending else {}
+	pending = pending if isinstance(pending, dict) else {}
+	out = []
+	for tab in option_tabs(root):
+		entry = {"key": tab["key"], "number": tab["number"], "recommended": tab["recommended"],
+			"estimate": tab["estimate"], "package": tab["package"], "unsaved": bool(pending.get(tab["key"]))}
+		try:
+			doc, _editable = _tab_doc(root, tab["key"], _changes(pending.get(tab["key"])))
+		except frappe.ValidationError as error:
+			entry["error"] = frappe.utils.strip_html(str(error)) or _("This option could not be worked out.")
+			out.append(entry)
+			continue
+		state = builder_state(doc, False)
+		priced = {}
+		for section in state["sections"]:
+			if section["key"] in ("panels", "inverters", "batteries"):
+				row = next((r for r in section["rows"] if not cint(r["values"].get("is_option"))), None)
+				priced[section["key"]] = row["title"] if row else ""
+		entry.update({
+			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
+			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
+			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
+			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package cost")), ""),
+			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
+			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
+			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],
+			"total": state["commercials"]["total"],
+		})
+		out.append(entry)
+	frappe.local.message_log = []
+	return out
+
+
+def page_json(doc):
+	"""Step two's first paint: the tabs of `doc`'s root estimate, on the tab `doc` is."""
+	root = root_of(doc)
+	option = option_key(root, doc)
+	editable = None
+	if doc.name != root.name or not option:
+		target = doc
+	else:
+		target, editable = _tab_doc(root, option, [])
+	payload = _payload(root, option, target, editable)
+	return json.dumps(payload, default=str).replace("</", "<\\/")
 
 
 @frappe.whitelist()
@@ -749,21 +1073,3 @@ def whatsapp_link(name):
 		doc.company or "",
 	]
 	return outreach.whatsapp_link(mobile, "\n".join(lines).strip())
-
-
-@frappe.whitelist()
-def save_as(name):
-	"""Copy an estimate into a new draft - the desk's Duplicate - and say where it opens.
-
-	`frappe.copy_doc` copies what the desk's Duplicate copies, child tables included, and
-	leaves out the fields marked not to be copied. The copy is dated today, takes the next
-	number on save, and opens on its details step for the person to review.
-	"""
-	source = _load(name, "read")
-	if cint(source.docstatus) == 2:
-		frappe.throw(_("A cancelled design estimate cannot be copied. Amend it instead."))
-	frappe.has_permission(DOCTYPE, "create", throw=True)
-	copy = frappe.copy_doc(source)
-	copy.estimate_date = frappe.utils.today()
-	copy.insert()
-	return {"name": copy.name, "route": details_route(copy.name)}

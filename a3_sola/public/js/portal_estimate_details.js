@@ -1,8 +1,10 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * Step one of the design estimate builder. Next saves the details - creating the estimate
- * the first time - and moves on to step two. The server validates; this only collects.
+ * Step one of the design estimate builder. Next saves the details and the options -
+ * creating the estimate the first time - and moves on to step two, where each option is a
+ * tab. The server validates; this only collects, and keeps each option row's choices to
+ * what its package offers.
  */
 (function () {
 	"use strict";
@@ -281,29 +283,79 @@
 		});
 	}
 
-	/* Package & Sizing options: one row per combination, one of them recommended. A row's
-	   subsidy scheme only shows when that row is with subsidy. */
+	/* Package & Options: one row per package offered, one of them recommended. A row's
+	   subsidy scheme only shows when that row is with subsidy, and its panel, inverter and
+	   battery are the ones its package offers. */
 	var optionsBody = form.querySelector("[data-options]");
 	var template = document.getElementById("a3s-de-option-template");
+	var sizingCard = document.getElementById("a3s-de-sizing");
+	var packages = {};
+	try { packages = JSON.parse(document.getElementById("a3s-de-packages").textContent) || {}; } catch (e) { /* none */ }
+	var money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+
+	/* Each choice list is the package's own: inverters of the row's connection type, and a
+	   battery only for Off-Grid and Hybrid. A choice still offered is kept; otherwise the
+	   package's default is taken. */
+	function fillComponents(tr) {
+		function field(name) { return tr.querySelector('[data-field="' + name + '"]'); }
+		var pkg = field("solar_package");
+		var info = packages[pkg ? pkg.value : ""] || null;
+		var phase = field("connection_type") ? field("connection_type").value : "";
+		var system = field("system_type") ? field("system_type").value : "";
+		Array.prototype.forEach.call(tr.querySelectorAll("[data-component]"), function (select) {
+			var wrap = select.closest(".a3s-de-sizing__part");
+			var onlyFor = wrap && wrap.dataset.onlyFor ? wrap.dataset.onlyFor.split("|") : null;
+			var applies = !onlyFor || onlyFor.indexOf(system) !== -1;
+			var list = info && applies ? (info[select.dataset.component] || []) : [];
+			if (select.dataset.component === "inverters" && phase) {
+				list = list.filter(function (o) { return !o.phase || o.phase === phase; });
+			}
+			var keep = select.value || select.dataset.value || "";
+			select.innerHTML = "";
+			if (!list.length) select.appendChild(new Option(info ? "None in this package" : "Choose a package", ""));
+			list.forEach(function (o) {
+				select.appendChild(new Option(o.label + (o["default"] ? " (in package)" : " (option)"), o.value));
+			});
+			var offered = list.some(function (o) { return o.value === keep; });
+			var fallback = list.filter(function (o) { return o["default"]; })[0] || list[0];
+			select.value = offered ? keep : (fallback ? fallback.value : "");
+			select.dataset.value = select.value;
+			if (wrap) wrap.hidden = !applies;
+		});
+		var cost = tr.querySelector("[data-package-cost]");
+		if (cost) cost.textContent = info && info.package_cost ? "Package cost " + money.format(info.package_cost) : "";
+	}
 
 	function optionRows() {
-		return optionsBody ? Array.prototype.slice.call(optionsBody.querySelectorAll("tr[data-option]")) : [];
+		return optionsBody ? Array.prototype.slice.call(optionsBody.querySelectorAll("[data-option]")) : [];
 	}
 
 	/* A row lists only the packages for its connection type, and an Off-Grid row cannot take
 	   subsidy. A choice the row no longer allows is cleared rather than left to fail the save. */
 	function applyRowRules(tr) {
 		function field(name) { return tr.querySelector('[data-field="' + name + '"]'); }
+		if (tr.dataset.locked) return;  // saved as its own estimate: changed there
 		var phase = field("connection_type");
 		var pkg = field("solar_package");
 		var system = field("system_type");
 		var subsidy = field("subsidy_option");
 		if (system && subsidy) {
-			var offGrid = system.value === "Off-Grid";
+			/* Subsidy is only for the subsidy tariff (LT-I, domestic), and never Off-Grid. */
+			var tariff = document.getElementById("fld-tariff_code");
+			var needed = sizingCard ? sizingCard.dataset.subsidyTariff : "";
+			var wrongTariff = !!(needed && tariff && tariff.value && tariff.value !== needed);
+			var blocked = wrongTariff || system.value === "Off-Grid";
 			Array.prototype.forEach.call(subsidy.options, function (o) {
-				if (o.value === "With Subsidy") { o.disabled = offGrid; o.hidden = offGrid; }
+				if (o.value === "With Subsidy") { o.disabled = blocked; o.hidden = blocked; }
 			});
-			if (offGrid && subsidy.value === "With Subsidy") subsidy.value = "Without Subsidy";
+			if (blocked && subsidy.value === "With Subsidy") {
+				subsidy.value = "Without Subsidy";
+				setStatus(wrongTariff
+					? "Subsidy is only for " + needed + " customers, so the option was set to Without Subsidy."
+					: "An Off-Grid system cannot take subsidy, so the option was set to Without Subsidy.");
+			}
+			var scheme = field("subsidy_scheme");
+			if (scheme && subsidy.value === "With Subsidy" && !scheme.value && scheme.dataset["default"]) scheme.value = scheme.dataset["default"];
 		}
 		if (pkg) {
 			var phaseValue = phase ? phase.value : "";
@@ -325,6 +377,7 @@
 
 	function applyRowConditions(tr) {
 		applyRowRules(tr);
+		fillComponents(tr);
 		Array.prototype.forEach.call(tr.querySelectorAll("[data-row-show-when]"), function (wrap) {
 			var parts = wrap.dataset.rowShowWhen.split("=");
 			var source = tr.querySelector('[data-field="' + parts[0] + '"]');
@@ -342,9 +395,13 @@
 				setStatus("Keep at least one option.", "error");
 				return;
 			}
+			if (tr.dataset.locked && !window.confirm("This option is saved as its own estimate. Remove it from here? That estimate is kept.")) return;
 			var wasRecommended = tr.querySelector("[data-recommended]").checked;
 			tr.remove();
-			if (wasRecommended) optionRows()[0].querySelector("[data-recommended]").checked = true;
+			if (wasRecommended) {
+				var next = optionRows().filter(function (r) { return !r.dataset.locked; })[0];
+				if (next) next.querySelector("[data-recommended]").checked = true;
+			}
 			renumber();
 			setStatus("");
 		});
@@ -360,6 +417,9 @@
 
 	optionRows().forEach(wireRow);
 	renumber();
+	/* The tariff decides whether any option may take subsidy. */
+	var tariffForRows = document.getElementById("fld-tariff_code");
+	if (tariffForRows) tariffForRows.addEventListener("change", function () { optionRows().forEach(applyRowConditions); });
 
 	var addOption = form.querySelector("[data-add-option]");
 	if (addOption && template) {
@@ -367,10 +427,11 @@
 			/* A new option starts as a copy of the last one: usually only one thing changes. */
 			var rows = optionRows();
 			var last = rows[rows.length - 1];
-			var tr = template.content.querySelector("tr").cloneNode(true);
+			var tr = template.content.querySelector("[data-option]").cloneNode(true);
 			Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
 				var from = last && last.querySelector('[data-field="' + el.dataset.field + '"]');
-				el.value = from ? from.value : "";
+				if (el.dataset.component) el.dataset.value = from ? from.value : "";
+				else el.value = from ? from.value : "";
 			});
 			tr.querySelector("[data-recommended]").checked = false;
 			optionsBody.appendChild(tr);
@@ -383,7 +444,7 @@
 
 	function collectOptions() {
 		return optionRows().map(function (tr) {
-			var row = { is_recommended: tr.querySelector("[data-recommended]").checked ? 1 : 0 };
+			var row = { name: tr.dataset.name || null, is_recommended: tr.querySelector("[data-recommended]").checked ? 1 : 0 };
 			Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
 				if (!el.closest("[hidden]")) row[el.dataset.field] = el.value;
 			});
