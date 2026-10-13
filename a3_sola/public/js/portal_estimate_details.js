@@ -133,6 +133,8 @@
 			? "is not DCR compliant, and subsidy needs DCR panels, so it was cleared. Choose a DCR package."
 			: why === "subsidy"
 			? "is a subsidy (DCR) package, so it was cleared. Choose a non-subsidy package."
+			: why === "capacity"
+			? "is a " + o.dataset.capacity + " kW package, not the capacity entered, so it was cleared."
 			: "has no " + phase + " inverter, so it was cleared. Choose a " + phase + " package.");
 	}
 	function packageRules() {
@@ -365,9 +367,31 @@
 		if (pkg) {
 			var phaseValue = phase ? phase.value : "";
 			var why = "";
-			Array.prototype.forEach.call(pkg.options, function (o) {
-				if (!o.value) return;
-				var off = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
+			var options = Array.prototype.filter.call(pkg.options, function (o) { return !!o.value; });
+			var reason = {};
+			var fitting = options.filter(function (o) {
+				reason[o.value] = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
+				return !reason[o.value];
+			});
+			/* A capacity typed on the option lists the packages of that size; with none of that
+			   size for these choices, the nearest size, and the page says so. */
+			var capField = field("override_capacity_kw");
+			var cap = capField ? parseFloat(capField.value) : NaN;
+			var capNote = "";
+			if (cap > 0 && fitting.length) {
+				var size = function (o) { return parseFloat(o.dataset.capacity || "0"); };
+				var keep = fitting.filter(function (o) { return Math.abs(size(o) - cap) < 0.001; });
+				if (!keep.length) {
+					var gap = Math.min.apply(null, fitting.map(function (o) { return Math.abs(size(o) - cap); }));
+					keep = fitting.filter(function (o) { return Math.abs(Math.abs(size(o) - cap) - gap) < 0.001; });
+					capNote = "No " + cap + " kW package for these choices; showing the nearest, "
+						+ keep.map(size).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" / ") + " kW.";
+				}
+				fitting.forEach(function (o) { if (keep.indexOf(o) === -1) reason[o.value] = "capacity"; });
+				fitting = keep;
+			}
+			options.forEach(function (o) {
+				var off = reason[o.value];
 				o.hidden = !!off;
 				o.disabled = !!off;
 				if (off && o.value === pkg.value) why = off;
@@ -376,6 +400,13 @@
 			if (dropped && dropped.disabled) {
 				pkg.value = "";
 				setStatus(droppedNote(dropped, why, phaseValue, system ? system.value : ""));
+			} else if (capNote) {
+				setStatus(capNote);
+			}
+			/* One package left for these choices: it is the one. */
+			if (!pkg.value && fitting.length === 1) {
+				pkg.value = fitting[0].value;
+				pkg.dispatchEvent(new Event("a3s:sync"));
 			}
 		}
 	}
@@ -394,7 +425,10 @@
 
 	function wireRow(tr) {
 		applyRowConditions(tr);
-		tr.addEventListener("change", function () { applyRowConditions(tr); });
+		tr.addEventListener("change", function () {
+			setStatus("");  // what the last change said no longer applies
+			applyRowConditions(tr);
+		});
 		tr.querySelector("[data-remove-option]").addEventListener("click", function () {
 			if (optionRows().length === 1) {
 				setStatus("Keep at least one option.", "error");

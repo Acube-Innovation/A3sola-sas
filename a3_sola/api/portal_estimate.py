@@ -32,8 +32,9 @@ DETAIL_COLUMNS = (
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
 	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
 	# The options: one row per package and sizing, the recommended row the estimate's own.
+	# Capacity before the package: the package list follows it, as it follows the rest.
 	("Package & Options", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
-		"solar_package", "override_capacity_kw")),
+		"override_capacity_kw", "solar_package")),
 )
 
 # What each option row chooses from its package, after the package and sizing fields.
@@ -271,7 +272,7 @@ def detail_columns(doc=None, prefill=None):
 					# the packages for its connection type.
 					from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
 
-					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type"],
+					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type", "capacity_kw"],
 						filters={"name": ["in", [c["value"] for c in choices]]})}
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
@@ -280,6 +281,8 @@ def detail_columns(doc=None, prefill=None):
 						c["dcr"] = 1 if pkg.is_dcr_compliant else 0
 						# An On-Grid estimate lists On-Grid packages, a Hybrid one Hybrid packages.
 						c["system_type"] = pkg.system_type or ""
+						# The capacity typed on the option narrows the list to packages of that size.
+						c["capacity"] = "{0:g}".format(flt(pkg.capacity_kw)) if pkg.capacity_kw else ""
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.

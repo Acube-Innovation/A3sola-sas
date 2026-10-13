@@ -2693,7 +2693,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
 .a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
 @media (min-width: 900px) {
-	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 2.6fr) minmax(0, 0.9fr); }
+	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.25fr) minmax(0, 2.3fr); }
+	.a3s-de-opt__grid .a3s-de-sizing__part-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 .a3s-de-opt__parts { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--color-border);
 	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }

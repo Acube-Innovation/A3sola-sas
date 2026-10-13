@@ -86,11 +86,11 @@
 		{%- if f.input == "select" %}
 		<select data-field="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if locked %} disabled{% endif %}>
 			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.capacity %} data-capacity="{{ o.capacity | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
 		</select>
 		{%- elif f.input == "number" %}
-		<input type="number" step="any" min="0" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}" placeholder="Auto"{% if locked %} disabled{% endif %}>
+		<input type="number" step="any" min="0" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}" placeholder="Any"{% if locked %} disabled{% endif %}>
 		{%- else %}
 		<input type="text" data-field="{{ f.fieldname }}" value="{{ value | e }}" aria-label="{{ f.label | e }}"{% if locked %} disabled{% endif %}>
 		{%- endif %}
