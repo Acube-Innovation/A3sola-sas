@@ -522,6 +522,8 @@
 		inverters.slice(1).forEach(function (inverter) {
 			var row = cloneRow(tr);
 			row.querySelector('[data-component="inverters"]').dataset.value = inverter.value;
+			/* An inverter the price list builds on panels of its own takes them. */
+			if (inverter.panel) row.querySelector('[data-component="panels"]').dataset.value = inverter.panel;
 			row.dataset.addedBy = tr.dataset.uid;
 			row.dataset.expandedKey = key;  // added for this package: adds nothing itself
 			after.parentNode.insertBefore(row, after.nextSibling);
