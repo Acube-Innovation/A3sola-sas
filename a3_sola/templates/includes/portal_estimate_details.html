@@ -114,7 +114,7 @@
 				{#- The subsidy scheme only applies with subsidy, so it sits under Subsidy. -#}
 				{%- for f in package.fields if f.fieldname != "subsidy_scheme" %}
 				<div class="a3s-field a3s-de-opt__f-{{ f.fieldname }}">
-					<span class="a3s-de-sizing__part-label">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
+					<span class="a3s-de-sizing__part-label" title="{{ f.label | e }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
 					{{ option_control(f, row["values"][f.fieldname], locked) }}
 					{%- if f.fieldname == "subsidy_option" %}
 					{%- for g in package.fields if g.fieldname == "subsidy_scheme" %}

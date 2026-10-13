@@ -2692,14 +2692,22 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-opt__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
 .a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
 .a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
-@media (min-width: 900px) {
-	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.25fr) minmax(0, 2.3fr); }
-	.a3s-de-opt__grid .a3s-de-sizing__part-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Labels stay on one line, so every box in the row lines up; the full label is its title. */
+.a3s-de-opt__grid .a3s-de-sizing__part-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Mid widths: connection, system and subsidy across, then capacity and the package. */
+@media (min-width: 700px) {
+	.a3s-de-opt__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.a3s-de-opt__f-solar_package { grid-column: span 2; }
+}
+/* Wide: all five in one row; capacity is wide enough for its label. */
+@media (min-width: 1440px) {
+	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(11.5rem, 1.15fr) minmax(0, 2.2fr); }
+	.a3s-de-opt__f-solar_package { grid-column: auto; }
 }
 .a3s-de-opt__parts { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--color-border);
 	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
 .a3s-de-opt .a3s-field { margin: 0; display: grid; gap: 0.25rem; align-content: start; min-width: 0; }
-.a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; }
+.a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; height: 2.8125rem; box-sizing: border-box; }
 .a3s-de-sizing__radio { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
 .a3s-de-sizing__radio input { width: 1.05rem; height: 1.05rem; accent-color: var(--color-accent); }
 .a3s-de-sizing__num { font-weight: 800; font-size: 0.95rem; }
