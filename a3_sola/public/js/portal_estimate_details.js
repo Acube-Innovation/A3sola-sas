@@ -432,8 +432,11 @@
 
 	function wireRow(tr) {
 		tr.dataset.uid = String(++uid);
-		applyRowConditions(tr);
 		if (!tr.dataset.expandedKey) tr.dataset.expandedKey = rowKey(tr);  // as it opened: nothing to add
+		applyRowConditions(tr);
+		/* The rules may have chosen the only package that fits as it opened: its other
+		   inverters become options then too. */
+		expandInverters(tr);
 		tr.addEventListener("change", function (event) {
 			if (event.target.matches("[data-include]")) return;
 			setStatus("");  // what the last change said no longer applies

@@ -44,7 +44,9 @@ def after_migrate():
 	`bench execute a3_sola.setup.install.setup` re-runs it.
 	"""
 	try:
-		setup()
+		# The starter packages are a fresh install's; a migration must not bring back
+		# packages that were deleted to load a price list in their place.
+		setup(packages=False)
 	except Exception:
 		frappe.db.rollback()
 		frappe.log_error(frappe.get_traceback(), "a3_sola: master seeding failed during migrate")
@@ -54,8 +56,12 @@ def after_migrate():
 		)
 
 
-def setup():
-	"""Create roles, install custom fields and seed masters. Idempotent throughout."""
+def setup(packages=True):
+	"""Create roles, install custom fields and seed masters. Idempotent throughout.
+
+	`packages=False` (on migrate) leaves the Solar Packages alone: the starter packages are
+	seeded on install only.
+	"""
 	create_roles()
 	frappe.db.commit()
 	install_custom_fields()
@@ -63,7 +69,7 @@ def setup():
 	# Backfill the singleton BEFORE any module seeding touches it. A later phase's new
 	# mandatory field would otherwise block the first save that module attempts.
 	backfill_settings_defaults()
-	seed_all_companies()
+	seed_all_companies(packages=packages)
 	seed_settings()
 	from a3_sola.solar_crm.doctype.a3_sola_settings.a3_sola_settings import sync_default_subsidy_scheme
 
@@ -167,7 +173,7 @@ def backfill_settings_defaults():
 	return filled
 
 
-def seed_all_companies():
+def seed_all_companies(packages=True):
 	"""Seed every existing company, not just the default one.
 
 	When a later phase adds a module, tenants created before it have none of its masters -
@@ -176,7 +182,7 @@ def seed_all_companies():
 	"""
 	seeded = []
 	for company in frappe.get_all("Company", pluck="name"):
-		seed_masters(company)
+		seed_masters(company, packages=packages)
 		seeded.append(company)
 	return seeded
 
@@ -255,8 +261,13 @@ def _insert(doc):
 
 
 # --------------------------------------------------------------------- masters
-def seed_masters(company=None):
-	"""Seed every master this app needs, for one company. Idempotent."""
+def seed_masters(company=None, packages=True):
+	"""Seed every master this app needs, for one company. Idempotent.
+
+	The starter Solar Packages are seeded unless `packages` is False: a company's live
+	packages come from its price list, and a migration must not re-create starter ones that
+	were cleared to make way for it.
+	"""
 	company = company or default_company()
 	if not company:
 		frappe.log_error(
@@ -274,7 +285,8 @@ def seed_masters(company=None):
 	seed_regulation_rules(company, discom)
 	seed_component_makes(company)
 	seed_outreach_templates(company)
-	seed_packages(company)
+	if packages:
+		seed_packages(company)
 	install_ops.setup(company)
 	install_projects.setup(company)
 	return {
