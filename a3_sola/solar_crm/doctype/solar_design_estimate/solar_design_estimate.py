@@ -199,7 +199,8 @@ class SolarDesignEstimate(Document):
 			return
 		before = self.get_doc_before_save()
 		previous = next((r for r in (before.get("sizing_options") or []) if r.name == row.name), None) if before else None
-		if previous and previous.solar_package == row.solar_package and before.equipment_package == self.equipment_package \
+		if previous and previous.is_recommended and previous.solar_package == row.solar_package \
+				and before.equipment_package == self.equipment_package \
 				and all(previous.get(field) == row.get(field) for _table, field in COMPONENT_CHOICES):
 			return
 		for table, field in COMPONENT_CHOICES:

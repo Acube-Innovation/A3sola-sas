@@ -909,9 +909,38 @@ def _tab_doc(root, option, changes, permtype="read"):
 
 def _payload(root, option, doc, editable=None):
 	frappe.local.message_log = []  # worked out, not saved: the page shows its own messages
+	root_editable = bool(root.has_permission("write")) and cint(root.docstatus) == 0
 	return {"tabs": option_tabs(root), "option": option or "", "root": root.name,
-		"details_route": details_route(root.name) if root.has_permission("write") and cint(root.docstatus) == 0 else "",
+		"details_route": details_route(root.name) if root_editable else "",
+		# Options can be taken off a draft estimate the person may change.
+		"can_remove": root_editable and len(root.get("sizing_options") or []) > 1,
 		"state": builder_state(doc, editable)}
+
+
+@frappe.whitelist()
+def remove_option(name, option):
+	"""Take an option off the estimate - the row on step one - and say where to reload.
+
+	The recommended option is the estimate itself: taking it off makes the next option the
+	recommended one, and the estimate is rebuilt on it. An option already saved as an
+	estimate of its own leaves that estimate as it is.
+	"""
+	doc = _load(name)
+	rows = sorted(doc.get("sizing_options") or [], key=lambda r: r.idx)
+	row = next((r for r in rows if r.name == option), None)
+	if not row:
+		frappe.throw(_("That option is no longer on {0}. Reload the page.").format(doc.name))
+	if len(rows) == 1:
+		frappe.throw(_("An estimate keeps at least one option."))
+	if row.is_recommended:
+		heir = next((r for r in rows if r is not row
+			and not (r.design_estimate and r.design_estimate != doc.name)), None)
+		if not heir:
+			frappe.throw(_("Every other option is saved as an estimate of its own, so this one stays as {0}.").format(doc.name))
+		heir.is_recommended = 1
+	doc.remove(row)
+	doc.save()
+	return {"route": design_route(doc.name)}
 
 
 def _changes(ops):

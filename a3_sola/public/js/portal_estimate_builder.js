@@ -137,7 +137,15 @@
 				el("span", { class: "a3s-de-tab__state", text: tabStatusText(t) + (dirty ? " · unsaved changes" : "") })
 			]);
 			button.addEventListener("click", function () { selectTab(t.key); });
-			bar.appendChild(button);
+			var holder = el("div", { class: "a3s-de-tabwrap" }, [button]);
+			/* The cross takes the option off the estimate, after asking. */
+			if (page.can_remove && t.key) {
+				var cross = el("button", { type: "button", class: "a3s-de-tab__x", title: "Remove Option " + t.number,
+					"aria-label": "Remove Option " + t.number, disabled: busy ? "disabled" : null, text: "\u00d7" });
+				cross.addEventListener("click", function (event) { event.stopPropagation(); removeOption(t); });
+				holder.appendChild(cross);
+			}
+			bar.appendChild(holder);
 		});
 		if (page.tabs.length > 1) {
 			var compare = el("button", {
@@ -147,7 +155,133 @@
 			compare.addEventListener("click", function () { selectTab(COMPARE); });
 			bar.appendChild(compare);
 		}
+		/* Save all: every option saved in turn. */
+		if (page.tabs.some(function (t) { return t.docstatus !== 1; })) {
+			var saveAll = el("button", { type: "button", class: "a3s-square-btn a3s-de-saveall-btn", title: "Save all options",
+				"aria-label": "Save all options", disabled: busy ? "disabled" : null }, [icon("save")]);
+			saveAll.addEventListener("click", saveAllOptions);
+			bar.appendChild(saveAll);
+		}
 	}
+
+	/* ---------------------------------------------- remove an option */
+	function confirmDialog(title, text, ok) {
+		var box = $("de-confirm");
+		$("de-confirm-title").textContent = title;
+		$("de-confirm-text").textContent = text;
+		$("de-confirm-ok").textContent = ok;
+		box.hidden = false;
+		$("de-confirm-cancel").focus();
+		return new Promise(function (resolve) {
+			function done(answer) {
+				box.hidden = true;
+				$("de-confirm-ok").onclick = $("de-confirm-cancel").onclick = box.onclick = document.onkeydown = null;
+				resolve(answer);
+			}
+			$("de-confirm-ok").onclick = function () { done(true); };
+			$("de-confirm-cancel").onclick = function () { done(false); };
+			box.onclick = function (event) { if (event.target === box) done(false); };
+			document.onkeydown = function (event) { if (event.key === "Escape") done(false); };
+		});
+	}
+
+	function removeOption(t) {
+		if (busy) return;
+		var notes = [];
+		if (t.recommended) notes.push("It is the recommended option, so the next option becomes the recommended one and this estimate is rebuilt on it.");
+		if (t.estimate && t.estimate !== page.root) notes.push("It is saved as " + t.estimate + ", which is kept as an estimate of its own.");
+		if (changes(t.key).length) notes.push("Its unsaved changes are lost.");
+		confirmDialog("Remove Option " + t.number + "?",
+			t.package + (t.parts.length ? " (" + t.parts.join(" \u00b7 ") + ")" : "") + " is taken off this estimate's options. " + notes.join(" "),
+			"Remove option")
+			.then(function (yes) {
+				if (!yes) return;
+				begin("Removing Option " + t.number + "\u2026", tabStatus);
+				pending[t.key] = [];
+				call("remove_option", { name: page.root, option: t.key })
+					.then(function (result) {
+						// Unsaved changes in the other tabs go with the reload; it was asked.
+						pending = {};
+						window.location.assign(result.route);
+					})
+					.catch(function (error) { fail(error, tabStatus); });
+			});
+	}
+
+	/* --------------------------------------------------- save all options */
+	function saveAllOptions() {
+		if (busy) return;
+		var tabs = page.tabs.slice();
+		var box = $("de-saveall"), list = $("de-saveall-list"), close = $("de-saveall-close");
+		var saved = 0, failed = 0;
+		list.innerHTML = "";
+		close.disabled = true;
+		$("de-saveall-title").textContent = "Saving all options";
+		setStatus("", null, $("de-saveall-status"));
+		box.hidden = false;
+		busy = true;
+		paintTabs();
+
+		function progress(done) {
+			var pct = Math.round(done * 100 / tabs.length);
+			$("de-saveall-bar").style.width = pct + "%";
+			$("de-saveall-progress").setAttribute("aria-valuenow", String(pct));
+			$("de-saveall-count").textContent = done + " of " + tabs.length + " options";
+		}
+		function label(t) { return "Option " + t.number + " \u00b7 " + t.package; }
+
+		progress(0);
+		var chain = Promise.resolve();
+		tabs.forEach(function (t, i) {
+			chain = chain.then(function () {
+				var line = el("li", { class: "is-working" }, [el("span", { text: label(t) }), el("small", { text: "Saving\u2026" })]);
+				list.appendChild(line);
+				if (t.docstatus === 1) {
+					line.className = "is-skipped";
+					line.lastChild.textContent = "Submitted as " + t.estimate + ": not changed";
+					progress(i + 1);
+					return;
+				}
+				return call("save_tab", { name: page.root, option: t.key, ops: changes(t.key) })
+					.then(function (payload) {
+						pending[t.key] = [];
+						cache[t.key] = payload.state;
+						page.tabs = payload.tabs;
+						page.details_route = payload.details_route;
+						page.can_remove = payload.can_remove;
+						saved += 1;
+						line.className = "is-done";
+						line.lastChild.textContent = "Saved as " + payload.state.name + (payload.state.name === page.root ? " (this estimate)" : "");
+					})
+					.catch(function (error) {
+						failed += 1;
+						line.className = "is-failed";
+						line.lastChild.textContent = "Not saved: " + error.message;
+					})
+					.then(function () { progress(i + 1); });
+			});
+		});
+		chain.then(function () {
+			busy = false;
+			comparison = null;
+			$("de-saveall-title").textContent = failed ? "Saved, with problems" : "All options saved";
+			setStatus(failed ? saved + " saved, " + failed + " not saved: see above." : "All " + saved + " options are saved.",
+				failed ? "error" : "success", $("de-saveall-status"));
+			close.disabled = false;
+			close.focus();
+		});
+	}
+
+	$("de-saveall-close").addEventListener("click", function () {
+		$("de-saveall").hidden = true;
+		// The tab on show stays, now with the estimate it was saved as.
+		if (option !== COMPARE && cache[option]) {
+			state = cache[option];
+			keepActive();
+		}
+		paint();
+		if (option === COMPARE) loadCompare();
+	});
 
 	function selectTab(key) {
 		if (busy || key === option) return;
@@ -174,7 +308,9 @@
 
 	/* ------------------------------------------------------------ header */
 	function paintHeader() {
-		$("de-title").textContent = page.root + (state.title && state.title !== page.root ? " · " + state.title : "");
+		/* The title is the estimate on show: a saved option's own ID, else this estimate's. */
+		var shown = option !== COMPARE && state.saved && state.name ? state.name : page.root;
+		$("de-title").textContent = shown + (state.title && state.title !== shown ? " · " + state.title : "");
 		$("de-details-link").href = page.details_route || "#";
 		$("de-details-link").hidden = !page.details_route;
 		var comparing = option === COMPARE;

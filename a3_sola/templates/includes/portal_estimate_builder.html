@@ -90,3 +90,31 @@
 		</form>
 	</div>
 </div>
+
+{#- Asked before an option is taken off the estimate. -#}
+<div class="a3s-modal" id="de-confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="de-confirm-title" aria-describedby="de-confirm-text">
+	<div class="a3s-modal__panel a3s-de-confirm">
+		<h3 class="a3s-de-confirm__title" id="de-confirm-title"></h3>
+		<p class="a3s-de-confirm__text" id="de-confirm-text"></p>
+		<div class="a3s-de-actions">
+			<button type="button" class="a3s-btn a3s-btn--ghost" id="de-confirm-cancel">Cancel</button>
+			<button type="button" class="a3s-btn a3s-btn--primary a3s-de-confirm__ok" id="de-confirm-ok">Remove</button>
+		</div>
+	</div>
+</div>
+
+{#- Save all: each option saved in turn, with how far it has got. -#}
+<div class="a3s-modal" id="de-saveall" hidden role="dialog" aria-modal="true" aria-labelledby="de-saveall-title">
+	<div class="a3s-modal__panel a3s-de-saveall">
+		<h3 class="a3s-de-confirm__title" id="de-saveall-title">Saving all options</h3>
+		<div class="a3s-de-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="de-saveall-progress">
+			<div class="a3s-de-progress__bar" id="de-saveall-bar"></div>
+		</div>
+		<p class="a3s-de-saveall__count" id="de-saveall-count"></p>
+		<ul class="a3s-de-saveall__list" id="de-saveall-list" aria-live="polite"></ul>
+		<p class="a3s-form__status" id="de-saveall-status" role="status"></p>
+		<div class="a3s-de-actions">
+			<button type="button" class="a3s-btn a3s-btn--primary" id="de-saveall-close" disabled>Close</button>
+		</div>
+	</div>
+</div>

@@ -3272,3 +3272,31 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-included { display: inline-block; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; color: var(--color-sky-ink); background: rgba(41, 171, 226, 0.12); white-space: nowrap; }
 .a3s-de-com__lines li.is-package span { display: grid; gap: 0.1rem; font-weight: 700; }
 .a3s-de-com__kicker { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-accent-hover); }
+
+/* An option tab's cross, and the white square Save all after Compare. */
+.a3s-de-tabwrap { position: relative; flex: 0 0 auto; display: flex; }
+.a3s-de-tab__x {
+	position: absolute; top: 0.35rem; right: 0.35rem; width: 1.5rem; height: 1.5rem; padding: 0;
+	border: 0; border-radius: 0.45rem; background: transparent; color: var(--color-text-muted);
+	font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.a3s-de-tab__x:hover, .a3s-de-tab__x:focus-visible { background: rgba(255, 95, 87, 0.12); color: #b42318; }
+.a3s-de-tab__x:disabled { opacity: 0.4; cursor: progress; }
+.a3s-de-tabwrap .a3s-de-tab { padding-right: 2rem; }
+.a3s-de-saveall-btn { flex: 0 0 auto; align-self: center; width: 3.4rem; height: 3.4rem; }
+.a3s-de-saveall-btn:disabled { opacity: 0.5; cursor: progress; }
+
+/* The confirmation and the save-all progress pop-ups. */
+.a3s-de-confirm, .a3s-de-saveall { width: min(32rem, 100%); }
+.a3s-de-confirm__title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 800; }
+.a3s-de-confirm__text { margin: 0; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-de-confirm__ok { background-image: none; background: #d92d20; color: #fff; }
+.a3s-de-progress { height: 0.6rem; margin: 0.4rem 0 0.4rem; border-radius: var(--radius-pill); background: var(--color-bg); overflow: hidden; border: 1px solid var(--color-border); }
+.a3s-de-progress__bar { height: 100%; width: 0; background-image: var(--color-accent-gradient); transition: width 300ms var(--ease); }
+.a3s-de-saveall__count { margin: 0 0 0.6rem; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); }
+.a3s-de-saveall__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; max-height: 16rem; overflow-y: auto; }
+.a3s-de-saveall__list li { display: grid; gap: 0.1rem; padding: 0.55rem 0.7rem; border-radius: 0.7rem; background: var(--color-bg); font-size: 0.875rem; font-weight: 600; }
+.a3s-de-saveall__list li small { font-weight: 600; color: var(--color-text-muted); }
+.a3s-de-saveall__list li.is-done small { color: #067647; }
+.a3s-de-saveall__list li.is-failed small { color: #b42318; }
+.a3s-de-saveall__list li.is-working small { color: var(--color-accent-hover); }
