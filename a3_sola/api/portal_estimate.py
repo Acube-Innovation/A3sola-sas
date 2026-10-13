@@ -12,6 +12,7 @@ own for the same lead, so the options can be compared side by side and quoted.
 """
 
 import json
+import re
 
 import frappe
 from frappe import _
@@ -43,6 +44,9 @@ COMPONENT_FIELDS = (
 	{"fieldname": "inverter_make", "label": "Inverter", "key": "inverters"},
 	{"fieldname": "battery_make", "label": "Battery", "key": "batteries", "only_for": ("Off-Grid", "Hybrid")},
 )
+
+# A package name's trailing subsidy scheme, which the package list on an option leaves off.
+SCHEME_SUFFIX = re.compile(r"\s*\((?:PM Surya Ghar|Non-Subsidy)\)\s*$", re.IGNORECASE)
 
 # Rebuilt from the package when an option is first worked out as an estimate of its own.
 KIT_TABLES = ("panels", "inverters", "batteries", "bos_items", "options", "quoted_options",
@@ -283,6 +287,9 @@ def detail_columns(doc=None, prefill=None):
 						c["system_type"] = pkg.system_type or ""
 						# The capacity typed on the option narrows the list to packages of that size.
 						c["capacity"] = "{0:g}".format(flt(pkg.capacity_kw)) if pkg.capacity_kw else ""
+						# The list already follows the option's Subsidy, so the scheme in brackets
+						# at the end of the name ("(PM Surya Ghar)", "(Non-Subsidy)") is not repeated.
+						c["label"] = SCHEME_SUFFIX.sub("", c["label"]) or c["label"]
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.
