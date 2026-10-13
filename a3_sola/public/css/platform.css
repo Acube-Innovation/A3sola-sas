@@ -2687,7 +2687,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
    inverter and battery it is built with, chosen from that package. */
 .a3s-de-opts { display: grid; gap: 0.85rem; }
 .a3s-de-opt { padding: 0.9rem 1rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface); }
-.a3s-de-opt:has([data-recommended]:checked) { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent-tint); }
+.a3s-de-opt.is-recommended { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent-tint); }
+/* An unticked option is left out: dimmed, its fields still there to tick it back. */
+.a3s-de-opt.is-excluded .a3s-de-opt__grid, .a3s-de-opt.is-excluded .a3s-de-opt__parts, .a3s-de-opt.is-excluded .a3s-de-sizing__cost { opacity: 0.45; }
 .a3s-de-opt[data-locked] { background: var(--color-bg); }
 .a3s-de-opt__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
 .a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
@@ -2712,7 +2714,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-sizing__radio input { width: 1.05rem; height: 1.05rem; accent-color: var(--color-accent); }
 .a3s-de-sizing__num { font-weight: 800; font-size: 0.95rem; }
 .a3s-de-sizing__badge { display: none; white-space: nowrap; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.65rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
-.a3s-de-opt:has([data-recommended]:checked) .a3s-de-sizing__badge { display: inline-block; }
+.a3s-de-opt.is-recommended .a3s-de-sizing__badge { display: inline-block; }
+.a3s-de-opt.is-excluded .a3s-de-sizing__num { color: var(--color-text-muted); }
 .a3s-de-sizing__part[hidden] { display: none; }
 .a3s-de-sizing__part-label { font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
 .a3s-de-sizing__cost { font-size: 0.8125rem; font-weight: 700; color: var(--color-accent-hover); }

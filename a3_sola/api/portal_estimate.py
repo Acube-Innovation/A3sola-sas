@@ -353,7 +353,8 @@ def option_rows(doc, fields):
 	names = [f["fieldname"] for f in fields] + [c["fieldname"] for c in COMPONENT_FIELDS]
 	if doc and doc.get("sizing_options"):
 		rows = []
-		for row in sorted(doc.sizing_options, key=lambda r: r.idx):
+		# The recommended option first: the first ticked option is the recommended one.
+		for row in sorted(doc.sizing_options, key=lambda r: (not r.is_recommended, r.idx)):
 			values = {}
 			for fieldname in names:
 				value = row.get(fieldname)

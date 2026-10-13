@@ -99,8 +99,9 @@
 		{%- set locked = row.saved_as %}
 		<div class="a3s-de-opt" data-option data-name="{{ row.name | e }}"{% if locked %} data-locked="1"{% endif %}>
 			<div class="a3s-de-opt__head">
-				<label class="a3s-de-sizing__radio" title="Make this the recommended option: this estimate is built on it">
-					<input type="radio" name="recommended_option" data-recommended{% if row.recommended %} checked{% endif %}{% if locked %} disabled{% endif %}>
+				{#- Ticked options go forward as tabs; the first ticked is the recommended one. -#}
+				<label class="a3s-de-sizing__radio" title="Include this option; untick it to leave it out">
+					<input type="checkbox" data-include checked aria-label="Include this option">
 					<span class="a3s-de-sizing__num">Option <span data-option-number></span></span>
 				</label>
 				<span class="a3s-de-sizing__badge">Recommended</span>
@@ -150,7 +151,7 @@
 		<template id="a3s-de-option-template">{{ option_row(blank) }}</template>
 		<div class="a3s-items__foot">
 			<button type="button" class="a3s-btn a3s-btn--ghost" data-add-option>+ Add option</button>
-			<p class="a3s-field__hint">Each option is a tab on the next step, priced on its own. The recommended option is this estimate; the others are saved as their own estimates for the same lead, from their tabs.</p>
+			<p class="a3s-field__hint">Choosing a package adds an option for each of its other inverters. Each ticked option is a tab on the next step, priced on its own; untick any you do not want. The first ticked option is the recommended one and is this estimate; the others are saved as their own estimates for the same lead, from their tabs.</p>
 		</div>
 		{%- if package.facts %}
 		<div class="a3s-de-fields a3s-de-sizing__facts">
