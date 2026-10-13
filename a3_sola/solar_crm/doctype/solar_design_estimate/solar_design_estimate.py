@@ -31,6 +31,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_system_items,
 	inverter_phase,
 	inverters_for_phase,
+	package_components,
 	package_phases,
 )
 
@@ -38,6 +39,10 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 SIZING_FIELDS = (
 	"connection_type", "override_capacity_kw", "subsidy_option", "subsidy_scheme", "solar_package", "system_type",
 )
+
+#: Each option row chooses one of its package's panels, inverters and batteries: the
+#: System & Options table it prices, and the make field shared by the row and that table.
+COMPONENT_CHOICES = (("panels", "panel_make"), ("inverters", "inverter_make"), ("batteries", "battery_make"))
 
 #: What a lead's consumption is assumed to be quoted against, since a lead records no
 #: billing cycle of its own. Matches the Solar Consumer field default.
@@ -73,7 +78,9 @@ class SolarDesignEstimate(Document):
 		self.seed_option_from_package()
 		if not self.sync_kit_from_options():
 			self.fill_from_package()
+		self.apply_component_choices()
 		self.keep_one_priced()
+		self.record_component_choices()
 		self.compute_panels()
 		self.compute_inverters()
 		self.compute_batteries()
@@ -141,11 +148,81 @@ class SolarDesignEstimate(Document):
 				if phases and row.connection_type not in phases:
 					problems.append(_("Row {0}: package {1} has no {2} inverter; it is for {3}.").format(
 						row.idx, row.solar_package, row.connection_type, " / ".join(sorted(phases))))
+		saved_elsewhere = recommended[0].get("design_estimate")
+		if saved_elsewhere and saved_elsewhere != self.name:
+			problems.append(_("Row {0} is saved as its own estimate {1}, so it cannot be this estimate's recommended option. Open {1} instead.").format(
+				recommended[0].idx, saved_elsewhere))
 		if problems:
 			frappe.throw("<br>".join(problems), title=_("Sizing Options"))
 
+		for row in self.sizing_options:
+			self.settle_row_components(row)
 		for field in SIZING_FIELDS:
 			self.set(field, recommended[0].get(field))
+
+	def settle_row_components(self, row):
+		"""Give an option row one panel, one inverter and - for Off-Grid and Hybrid - one
+		battery, each from its own package; the package's default where none is chosen, or
+		where the one chosen is not the package's (its package changed under it)."""
+		if not row.solar_package:
+			for _table, field in COMPONENT_CHOICES:
+				row.set(field, None)
+			row.package_cost = 0
+			return
+		choices = package_components(row.solar_package, row.connection_type or self.connection_type)
+		row.package_cost = choices["package_cost"]
+		for table, field in COMPONENT_CHOICES:
+			offered = choices[table]
+			if table == "batteries" and row.system_type not in ("Off-Grid", "Hybrid"):
+				offered = []
+			if not offered:
+				row.set(field, None)
+			elif row.get(field) not in {o["value"] for o in offered}:
+				row.set(field, next((o["value"] for o in offered if o["default"]), offered[0]["value"]))
+
+	def recommended_sizing_row(self):
+		return next((row for row in self.get("sizing_options") or [] if row.is_recommended), None)
+
+	def apply_component_choices(self):
+		"""Price the panel, inverter and battery the recommended option row chooses.
+
+		The chosen make's row of each table is priced and the table's other rows become
+		Options. Done when the choice is new or changed - a new estimate, a row whose package
+		or makes changed - so an Option ticked on the System step afterwards stands; that
+		tick is written back to the row (record_component_choices).
+		"""
+		row = self.recommended_sizing_row()
+		if not row:
+			return
+		before = self.get_doc_before_save()
+		previous = next((r for r in (before.get("sizing_options") or []) if r.name == row.name), None) if before else None
+		if previous and previous.solar_package == row.solar_package and before.equipment_package == self.equipment_package \
+				and all(previous.get(field) == row.get(field) for _table, field in COMPONENT_CHOICES):
+			return
+		for table, field in COMPONENT_CHOICES:
+			make = row.get(field)
+			rows = self.get(table) or []
+			chosen = next((r for r in rows if make and r.get(field) == make), None)
+			if not chosen:
+				continue
+			for r in rows:
+				r.is_option = 0 if r is chosen else 1
+
+	def record_component_choices(self):
+		"""Write the priced panel, inverter and battery back to the recommended option row,
+		where its package offers them, so the row always says what the estimate prices."""
+		row = self.recommended_sizing_row()
+		if not row or not row.solar_package:
+			return
+		choices = package_components(row.solar_package, row.connection_type or self.connection_type)
+		inverter_before = row.inverter_make
+		for table, field in COMPONENT_CHOICES:
+			priced = next((r for r in self.get(table) or [] if not r.is_option), None)
+			if priced and priced.get(field) in {o["value"] for o in choices[table]}:
+				row.set(field, priced.get(field))
+		if row.inverter_make != inverter_before:
+			# The priced options follow the inverter now priced.
+			self.seed_option_from_package()
 
 	def validate_package_system_type(self):
 		"""An On-Grid estimate is built on an On-Grid package, a Hybrid one on a Hybrid package.
@@ -523,7 +600,9 @@ class SolarDesignEstimate(Document):
 		and every other row of its table becomes an Option (shown, not priced). Rows that
 		were all priced before this rule are left until one of them is next changed.
 		"""
-		before = self.get_doc_before_save() if not self.is_new() else None
+		# A new estimate has no before-state, unless the portal set one while working on it
+		# unsaved (api/portal_estimate), which is then what "just made priced" is told by.
+		before = self.get_doc_before_save()
 		for table in ("panels", "inverters", "batteries"):
 			rows = self.get(table) or []
 			priced = [row for row in rows if not row.is_option]
@@ -925,19 +1004,17 @@ class SolarDesignEstimate(Document):
 		rewritten or removed here; an alternative such an option already offers is not
 		added again beside it. With no package anywhere the table is left as it is.
 		"""
-		packages = []
-		for row in sorted(self.get("sizing_options") or [], key=lambda r: r.idx):
-			key = (row.solar_package, row.connection_type or self.connection_type)
-			if row.solar_package and key not in packages:
-				packages.append(key)
-		if not packages and self.solar_package:
-			packages = [(self.solar_package, self.connection_type)]
-		if not packages:
+		# Each option row is an estimate of its own (saved from its tab), so the priced options
+		# are the recommended row's package only, the inverter that row chooses recommended.
+		if not self.solar_package:
 			return
-		header = self.solar_package or packages[0][0]
+		packages = [(self.solar_package, self.connection_type)]
+		header = self.solar_package
+		sizing_row = self.recommended_sizing_row()
+		chosen_make = sizing_row.inverter_make if sizing_row and sizing_row.solar_package == header else None
 
 		kept = [row for row in self.options if not row.from_package]
-		flagged = self.flags.get("recommend_inverter_make")
+		flagged = self.flags.get("recommend_inverter_make") or chosen_make
 		if flagged:
 			for row in kept:
 				row.is_recommended = 0
@@ -950,6 +1027,8 @@ class SolarDesignEstimate(Document):
 		# panels once, its inverters), so the extra alternatives start unticked.
 		excluded = self.excluded_options()
 		included = self.included_options()
+		if chosen_make:
+			included.add((header, chosen_make))
 		alternatives = []
 		for package_name, phase in packages:
 			package = frappe.get_cached_doc("Solar Package", package_name)
@@ -1678,3 +1757,21 @@ def package_price_for_make(package, component_type, make_name):
 		fields=["system_cost"], order_by="idx", limit=1,
 	)
 	return flt(rows[0].system_cost) if rows else None
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def package_component_query(doctype, txt, searchfield, start, page_len, filters):
+	"""The makes an option row may choose for one component: its package's own, the
+	package's default first. `filters` names the solar_package, the component (panels,
+	inverters or batteries) and the row's connection type."""
+	filters = frappe._dict(frappe.parse_json(filters) or {})
+	if not filters.solar_package or filters.component not in ("panels", "inverters", "batteries"):
+		return []
+	if not frappe.has_permission("Solar Package", "read", filters.solar_package):
+		return []
+	offered = package_components(filters.solar_package, filters.connection_type or None)[filters.component]
+	txt = (txt or "").lower()
+	rows = [(o["value"], o["label"] + (" (in package)" if o["default"] else "")) for o in offered
+		if not txt or txt in o["label"].lower() or txt in o["value"].lower()]
+	return rows[cint(start):cint(start) + cint(page_len or 20)]

@@ -2683,35 +2683,34 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-profile__rows { display: grid; gap: 0.55rem 1rem; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); margin: 0; }
 .a3s-de-profile__rows dt { font-size: 0.75rem; color: var(--color-text-muted); }
 .a3s-de-profile__rows dd { margin: 0.1rem 0 0; font-size: 0.875rem; font-weight: 600; overflow-wrap: anywhere; }
-/* Package and sizing: one table row of options under their headings. */
-.a3s-de-sizing .a3s-tablewrap { border: 1px solid var(--color-border); border-radius: var(--radius-tile); }
-.a3s-table.a3s-de-sizing__table thead th { padding: 0.7rem 0.75rem; white-space: nowrap; }
-.a3s-table.a3s-de-sizing__table tbody td { padding: 0.75rem 0.5rem; vertical-align: top; min-width: 10rem; }
-.a3s-table.a3s-de-sizing__table tbody td.a3s-de-sizing__number { min-width: 7rem; }
-.a3s-table.a3s-de-sizing__table thead th { padding-left: 0.5rem; padding-right: 0.5rem; }
-.a3s-de-sizing__table select, .a3s-de-sizing__table input[type=number] { padding-left: 0.6rem; padding-right: 1.3rem; font-size: 0.875rem; }
-.a3s-de-sizing__table input[type=number] { padding-right: 0.5rem; }
-.a3s-table.a3s-de-sizing__table tbody tr:hover { background: transparent; }
-.a3s-de-sizing__table .a3s-field { margin: 0; }
-.a3s-table.a3s-de-sizing__table td.a3s-de-sizing__pick { white-space: nowrap; vertical-align: middle; padding-left: 0.75rem; }
+/* Package & Options: a block per option - its package and sizing, then the panel,
+   inverter and battery it is built with, chosen from that package. */
+.a3s-de-opts { display: grid; gap: 0.85rem; }
+.a3s-de-opt { padding: 0.9rem 1rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface); }
+.a3s-de-opt:has([data-recommended]:checked) { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent-tint); }
+.a3s-de-opt[data-locked] { background: var(--color-bg); }
+.a3s-de-opt__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
+.a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
+.a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+@media (min-width: 900px) {
+	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 2.6fr) minmax(0, 0.9fr); }
+}
+.a3s-de-opt__parts { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--color-border);
+	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.a3s-de-opt .a3s-field { margin: 0; display: grid; gap: 0.25rem; align-content: start; min-width: 0; }
+.a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; }
 .a3s-de-sizing__radio { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
 .a3s-de-sizing__radio input { width: 1.05rem; height: 1.05rem; accent-color: var(--color-accent); }
-.a3s-de-sizing__num { font-weight: 700; font-size: 0.9rem; }
-.a3s-de-sizing__badge { display: none; white-space: nowrap; margin-top: 0.3rem; padding: 0.1rem 0.4rem; border-radius: var(--radius-pill); font-size: 0.6rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
-.a3s-de-sizing__pick:has(input:checked) .a3s-de-sizing__badge { display: table; }
-.a3s-table.a3s-de-sizing__table td.a3s-de-sizing__remove { vertical-align: middle; }
-/* Fixed proportions, so spare width goes to the package name rather than to whichever
-   column the browser picks; the scheme sits under Subsidy in the same cell. */
-.a3s-table.a3s-de-sizing__table { table-layout: fixed; width: 100%; min-width: 56rem; }
-.a3s-table.a3s-de-sizing__table tbody td { min-width: 0; padding-left: 0.35rem; padding-right: 0.35rem; }
-.a3s-table.a3s-de-sizing__table thead th { padding-left: 0.35rem; padding-right: 0.35rem; white-space: normal; }
-.a3s-table.a3s-de-sizing__table th.a3s-de-sizing__pick { width: 11%; padding-left: 0.75rem; }
-.a3s-de-sizing__h-connection_type { width: 14%; }
-.a3s-de-sizing__h-override_capacity_kw { width: 9%; }
-.a3s-de-sizing__h-subsidy_option { width: 17%; }
-.a3s-de-sizing__h-solar_package { width: 32%; }
-.a3s-de-sizing__h-system_type { width: 12%; }
-.a3s-de-sizing__h-remove { width: 5%; }
+.a3s-de-sizing__num { font-weight: 800; font-size: 0.95rem; }
+.a3s-de-sizing__badge { display: none; white-space: nowrap; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.65rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
+.a3s-de-opt:has([data-recommended]:checked) .a3s-de-sizing__badge { display: inline-block; }
+.a3s-de-sizing__part[hidden] { display: none; }
+.a3s-de-sizing__part-label { font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.a3s-de-sizing__cost { font-size: 0.8125rem; font-weight: 700; color: var(--color-accent-hover); }
+.a3s-de-sizing__cost:empty { display: none; }
+.a3s-de-sizing__saved { font-size: 0.75rem; font-weight: 700; color: var(--color-sky-ink); }
+.a3s-de-opt[data-locked] select, .a3s-de-opt[data-locked] input { opacity: 0.75; }
+.a3s-de-sizing__facts { margin-top: 1rem; }
 .a3s-de-sizing__scheme { margin-top: 0.4rem; }
 .a3s-de-sizing__notes { margin: 0.85rem 0 0; padding-left: 1.1rem; font-size: 0.75rem; color: var(--color-text-muted); display: grid; gap: 0.25rem; }
 .a3s-de-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.75rem; margin-top: 1.1rem; }
@@ -2719,8 +2718,6 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 
 .a3s-de-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .a3s-de-head__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; max-width: 14rem; }
-/* Save As sits under the four buttons, as a link, right-aligned with them. */
-.a3s-de-head__saveas { flex-basis: 100%; text-align: right; }
 .a3s-textlink {
 	padding: 0.15rem 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 0.875rem; font-weight: 700;
 	color: var(--color-accent-hover); text-decoration: underline; text-underline-offset: 0.2em;
@@ -3207,3 +3204,54 @@ select.a3s-items__input { min-width: 9rem; }
 	.a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
 	.a3s-attach__row--head { display: none; }
 }
+
+/* Step two's option tabs: one per option of step one, then Compare. Each says what it
+   chooses and whether it is saved; a dot marks changes not saved yet. */
+.a3s-de-tabs { display: flex; gap: 0.6rem; margin: 1rem 0 0.9rem; overflow-x: auto; padding-bottom: 0.25rem; }
+.a3s-de-tab {
+	flex: 0 0 auto; display: grid; gap: 0.15rem; min-width: 12rem; max-width: 17rem; padding: 0.7rem 0.9rem;
+	border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface);
+	color: var(--color-text); font: inherit; text-align: left; cursor: pointer;
+	transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+.a3s-de-tab:hover, .a3s-de-tab:focus-visible { border-color: var(--color-accent); }
+.a3s-de-tab:disabled { cursor: progress; }
+.a3s-de-tab[aria-selected="true"] { border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-accent-tint); background: var(--color-accent-soft); }
+.a3s-de-tab.is-unsaved { border-style: dashed; }
+.a3s-de-tab__top { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
+.a3s-de-tab__chip { padding: 0.05rem 0.45rem; border-radius: var(--radius-pill); font-size: 0.6rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
+.a3s-de-tab__dot { width: 0.5rem; height: 0.5rem; margin-left: auto; border-radius: 50%; background: var(--color-accent); }
+.a3s-de-tab__package { font-size: 0.8125rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-de-tab__parts { font-size: 0.75rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-de-tab__state { font-size: 0.7rem; font-weight: 700; color: var(--color-sky-ink); }
+.a3s-de-tab.is-unsaved .a3s-de-tab__state { color: var(--color-text-muted); }
+.a3s-de-tab--compare { min-width: 10rem; align-content: start; }
+.a3s-de-tab--compare .a3s-ic { width: 1rem; height: 1rem; color: var(--color-accent-hover); }
+
+/* The open tab: what it is, and its own Save. */
+.a3s-de-tabhead { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-bottom: 1.25rem; height: auto; padding: 1.1rem 1.4rem; }
+.a3s-de-tabhead:hover, .a3s-de-compare:hover { transform: none; box-shadow: var(--shadow-soft); }
+.a3s-de-tabhead[hidden], .a3s-de-builder[hidden], .a3s-de-compare[hidden] { display: none; }
+.a3s-de-tabhead__main { flex: 1 1 22rem; min-width: 0; }
+.a3s-de-tabhead__name { margin: 0; font-weight: 800; }
+.a3s-de-tabhead__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.a3s-de-tabhead__actions .a3s-btn[hidden] { display: none; }
+.a3s-de-tabhead__actions .a3s-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+.a3s-de-tabhead__actions .a3s-btn .a3s-ic { width: 1.05rem; height: 1.05rem; }
+.a3s-de-tabhead__status { flex-basis: 100%; margin: 0; }
+.a3s-de-tabhead__status:empty { display: none; }
+.a3s-de-nav__note { margin: 0.6rem 0.25rem 0; font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-head__actions [hidden] { display: none; }
+
+/* Compare: an option per column, the cheapest total marked. */
+.a3s-de-compare { height: auto; }
+.a3s-de-compare__table { width: 100%; min-width: 36rem; border-collapse: collapse; font-size: 0.875rem; }
+.a3s-de-compare__table th, .a3s-de-compare__table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.a3s-de-compare__table thead th { text-align: right; }
+.a3s-de-compare__table thead th:first-child, .a3s-de-compare__table tbody th { text-align: left; color: var(--color-text-muted); font-weight: 600; }
+.a3s-de-compare__table td { text-align: right; white-space: normal; }
+.a3s-de-compare__table tr.is-line th { padding-left: 1.2rem; font-weight: 500; }
+.a3s-de-compare__table tr.is-sum td, .a3s-de-compare__table tr.is-sum th { font-weight: 700; color: var(--color-text); }
+.a3s-de-compare__table tr.is-grand td, .a3s-de-compare__table tr.is-grand th { border-top: 2px solid var(--color-text); font-weight: 800; color: var(--color-text); font-size: 1rem; }
+.a3s-de-compare__table tr.is-grand td.is-best { color: var(--color-accent-hover); }
+.a3s-de-compare__error { color: #b42318; font-weight: 600; font-size: 0.75rem; }

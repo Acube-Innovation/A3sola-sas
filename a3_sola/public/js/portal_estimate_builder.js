@@ -1,10 +1,15 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * Step two of the design estimate builder. Left: the System & Options tables. Middle: the
- * chosen table's saved rows; a row is added or changed in a popup. Right: what each table
- * costs, the tax and the total. Every add, change or removal saves the estimate and
- * repaints from what the server returns - counts, expense rows and prices are its to work out.
+ * Step two of the design estimate builder: a tab per option chosen on step one, then
+ * Compare. In a tab - left: the System & Options tables; middle: the chosen table's rows,
+ * a row added or changed in a popup; right: what each table costs, the tax and the total.
+ *
+ * A change is worked out on the server at once - counts, expense rows and prices are its to
+ * work out - and held, with the tab's other changes, until the tab's Save. The recommended
+ * option saves this estimate; any other option is saved as an estimate of its own for the
+ * same lead. Additional structure, cable and discount rows are records of their own and are
+ * kept as they are made, on a saved option only.
  */
 (function () {
 	"use strict";
@@ -12,9 +17,18 @@
 	var dataEl = document.getElementById("a3s-de-data");
 	if (!dataEl) return;
 
-	var state = JSON.parse(dataEl.textContent);
+	var page = JSON.parse(dataEl.textContent);  // {tabs, option, root, details_route, state}
+	var COMPARE = "__compare__";
+	var LINKED = { additional_structure: true, additional_cable: true, special_discount: true };
+	var option = page.option;      // the tab on show: an option row's name, or COMPARE
+	var state = page.state;        // that tab as last worked out
+	var cache = {};                // option -> state, so a tab comes back as it was left
+	var pending = {};              // option -> its unsaved changes, in order
+	var comparison = null;         // the last Compare, or null when it is out of date
+	cache[option] = state;
 	var active = (state.sections[0] || {}).key;
 	var editing = null; // the row being changed, or null when adding
+	var busy = false;
 
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
@@ -26,6 +40,7 @@
 	var cancel = $("de-cancel");
 	var status = $("de-status");
 	var pageStatus = $("de-page-status");
+	var tabStatus = $("de-tab-status");
 	var modal = $("de-modal");
 
 	function el(tag, attrs, children) {
@@ -58,6 +73,14 @@
 		return line ? line.amount : 0;
 	}
 
+	function tab(key) {
+		return page.tabs.find(function (t) { return t.key === key; }) || null;
+	}
+
+	function changes(key) {
+		return pending[key] || [];
+	}
+
 	function setStatus(text, kind, target) {
 		target = target || status;
 		target.textContent = text || "";
@@ -82,25 +105,108 @@
 			body: JSON.stringify(args)
 		}).then(function (r) {
 			return r.json().catch(function () { return {}; }).then(function (data) {
-				if (!r.ok || !data.message) throw new Error(serverMessage(data) || "Could not save. Try again.");
+				if (!r.ok || !data.message) throw new Error(serverMessage(data) || "Could not work that out. Try again.");
 				return data.message;
 			});
 		});
 	}
 
+	/* ------------------------------------------------------------ tabs */
+	function tabStatusText(t) {
+		if (!t.estimate) return "Not saved";
+		if (t.estimate === page.root) return "This estimate";
+		return "Saved as " + t.estimate;
+	}
+
+	function paintTabs() {
+		var bar = $("de-tabs");
+		bar.innerHTML = "";
+		page.tabs.forEach(function (t) {
+			var dirty = changes(t.key).length > 0;
+			var button = el("button", {
+				type: "button", role: "tab", class: "a3s-de-tab" + (t.estimate ? "" : " is-unsaved"),
+				"aria-selected": t.key === option ? "true" : "false", disabled: busy ? "disabled" : null
+			}, [
+				el("span", { class: "a3s-de-tab__top" }, [
+					el("strong", { text: "Option " + t.number }),
+					t.recommended ? el("span", { class: "a3s-de-tab__chip", text: "Recommended" }) : null,
+					dirty ? el("span", { class: "a3s-de-tab__dot", title: "Unsaved changes", "aria-label": "Unsaved changes" }) : null
+				]),
+				el("span", { class: "a3s-de-tab__package", text: t.package + (t.capacity ? " · " + t.capacity : "") }),
+				t.parts.length ? el("span", { class: "a3s-de-tab__parts", text: t.parts.join(" · ") }) : null,
+				el("span", { class: "a3s-de-tab__state", text: tabStatusText(t) + (dirty ? " · unsaved changes" : "") })
+			]);
+			button.addEventListener("click", function () { selectTab(t.key); });
+			bar.appendChild(button);
+		});
+		if (page.tabs.length > 1) {
+			var compare = el("button", {
+				type: "button", role: "tab", class: "a3s-de-tab a3s-de-tab--compare",
+				"aria-selected": option === COMPARE ? "true" : "false", disabled: busy ? "disabled" : null
+			}, [icon("stack"), el("strong", { text: "Compare" }), el("span", { class: "a3s-de-tab__state", text: page.tabs.length + " options side by side" })]);
+			compare.addEventListener("click", function () { selectTab(COMPARE); });
+			bar.appendChild(compare);
+		}
+	}
+
+	function selectTab(key) {
+		if (busy || key === option) return;
+		option = key;
+		setStatus("", null, tabStatus);
+		setStatus("", null, pageStatus);
+		if (key === COMPARE) {
+			paint();
+			loadCompare();
+			return;
+		}
+		if (cache[key]) {
+			state = cache[key];
+			keepActive();
+			paint();
+			return;
+		}
+		work(key, changes(key), "");
+	}
+
+	function keepActive() {
+		if (!state.sections.some(function (s) { return s.key === active; })) active = (state.sections[0] || {}).key;
+	}
+
 	/* ------------------------------------------------------------ header */
 	function paintHeader() {
-		$("de-title").textContent = state.name + (state.title && state.title !== state.name ? " · " + state.title : "");
+		$("de-title").textContent = page.root + (state.title && state.title !== page.root ? " · " + state.title : "");
+		$("de-details-link").href = page.details_route || "#";
+		$("de-details-link").hidden = !page.details_route;
+		var comparing = option === COMPARE;
+		$("de-tabhead").hidden = comparing;
+		$("a3s-de-builder").hidden = comparing;
+		$("de-compare").hidden = !comparing;
+		if (comparing) return;
+
+		var t = tab(option) || { number: 1, package: "", estimate: state.name, recommended: true };
+		var dirty = changes(option).length > 0;
+		$("de-tab-name").textContent = "Option " + t.number + (t.recommended ? " (recommended)" : "") + " · " + tabStatusText(t);
 		var summary = $("de-summary");
 		summary.innerHTML = "";
 		state.summary.forEach(function (item) {
 			summary.appendChild(el("div", {}, [el("dt", { text: item.label }), el("dd", { text: item.value || "—" })]));
 		});
-		$("de-details-link").href = state.details_route;
-		$("de-details-link").hidden = !state.editable;
-		$("de-view-link").href = state.view_route;
-		$("de-pdf-link").href = state.pdf_route;
-		$("de-save-as").hidden = !state.can_save_as;
+
+		/* The PDF and WhatsApp send what is saved, so they wait for the changes to be saved. */
+		$("de-pdf-link").href = state.pdf_route || "#";
+		$("de-pdf-link").hidden = !state.saved || dirty;
+		$("de-whatsapp").hidden = !state.saved || dirty;
+		$("de-discard").hidden = !dirty || busy;
+		var save = $("de-save");
+		var canSave = state.editable && (dirty || !state.saved);
+		save.hidden = !state.editable && state.saved;
+		save.disabled = busy || !canSave;
+		$("de-save-label").textContent = !state.saved
+			? "Save as new estimate"
+			: (dirty ? "Save changes" : "Saved");
+		save.title = !state.saved
+			? "Saves this option as an estimate of its own for the same lead"
+			: (dirty ? "Saves the changes made in this tab to " + state.name : "Nothing to save in this tab");
 	}
 
 	/* --------------------------------------------------------- left: nav */
@@ -116,7 +222,7 @@
 				el("span", { class: "a3s-de-nav__label", text: s.label }),
 				el("span", { class: "a3s-de-nav__n", text: String(s.rows.length) })
 			]);
-			// Choosing a table shows its saved rows; Add (or Edit on a row) opens the popup.
+			// Choosing a table shows its rows; Add (or Edit on a row) opens the popup.
 			button.addEventListener("click", function () {
 				active = s.key;
 				setStatus("", null, pageStatus);
@@ -124,9 +230,12 @@
 			});
 			nav.appendChild(el("li", {}, [button]));
 		});
+		if (!state.saved) {
+			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: "Additional structure, cable and discount can be added once this option is saved." }));
+		}
 	}
 
-	/* ------------------------------------------------- middle: saved box */
+	/* ------------------------------------------------- middle: rows box */
 	/* Amounts stay on one line: "₹ 1,95,000.00" broken after the sign reads as two numbers. */
 	var MONEY = { rate: true, amount: true, system_cost: true };
 
@@ -135,26 +244,38 @@
 		$("de-saved-title").textContent = s.label;
 		$("de-saved-total").textContent = money.format(lineAmount(s.key));
 		$("de-add").hidden = !state.editable;
+		$("de-add").disabled = busy;
 		var body = $("de-saved");
 		body.innerHTML = "";
 		body.appendChild(s.rows.length
 			? (s.compact ? compactTable(s) : savedTable(s))
-			: el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing saved yet. Use Add to enter the first one." : "Nothing saved." }));
+			: el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing here yet. Use Add to enter the first one." : "Nothing here." }));
 	}
 
 	/* A row action as an icon; its name is the tooltip and what a screen reader says. */
 	function iconButton(name, label, onClick, danger) {
 		var button = el("button", { type: "button", class: "a3s-icon-btn" + (danger ? " a3s-icon-btn--danger" : ""),
-			title: label, "aria-label": label }, [icon(name)]);
+			title: label, "aria-label": label, disabled: busy ? "disabled" : null }, [icon(name)]);
 		button.addEventListener("click", onClick);
 		return button;
+	}
+
+	function rowActions(row) {
+		var actions = el("td", { class: "a3s-de-saved__actions" });
+		if (row.computed) {
+			actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every change", text: "Auto" }));
+		} else if (state.editable) {
+			actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
+			actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
+		}
+		return actions;
 	}
 
 	/* Panels, inverters and batteries read as the Inverter Options do: the item in bold with
 	   its detail under it, then the figures. The Option tick leads the row, labelled, so it
 	   is not taken for an options tick: an Option is shown, not priced. */
 	function compactTable(s) {
-		var head = el("tr", {}, ["Item", "Qty \u00d7 Rate", "Amount", ""].map(function (t, i) {
+		var head = el("tr", {}, ["Item", "Qty × Rate", "Amount", ""].map(function (t, i) {
 			return el("th", { scope: "col", class: i && i < 3 ? "a3s-de-money" : null, text: t });
 		}));
 		var rows = s.rows.map(function (row) {
@@ -164,7 +285,7 @@
 				var tick = el("input", {
 					type: "checkbox", "aria-label": "Option - shown, not added to the commercials",
 					checked: isOption ? "checked" : null,
-					disabled: state.editable && !row.computed ? null : "disabled"
+					disabled: state.editable && !row.computed && !busy ? null : "disabled"
 				});
 				tick.addEventListener("change", function () { setOption(s, row, tick); });
 				optionLabel = el("label", { class: "a3s-de-option__name", title: "Option: shown to the customer, not added to the commercials" }, [
@@ -177,40 +298,26 @@
 				row.sub ? el("small", { class: "a3s-de-sub", text: row.sub }) : null,
 				isOption ? el("small", { class: "a3s-de-unpriced", text: "Not priced" }) : null
 			]);
-			var actions = el("td", { class: "a3s-de-saved__actions" });
-			if (row.computed) {
-				actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every save", text: "Auto" }));
-			} else if (state.editable) {
-				actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
-				actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
-			}
 			var count = row.display[s.count_field || "nos"];
-			var qty = count ? count + " \u00d7 " + (row.display.rate || "\u2014") : (row.display.rate || "");
+			var qty = count ? count + " × " + (row.display.rate || "—") : (row.display.rate || "");
 			return el("tr", { class: isOption ? "is-off" : "" }, [
 				item,
 				el("td", { class: "a3s-de-money", text: qty }),
 				el("td", { class: "a3s-de-money a3s-de-amount", text: row.display.amount || "" }),
-				actions
+				rowActions(row)
 			]);
 		});
 		return el("div", { class: "a3s-de-table a3s-de-table--compact" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
 	}
 
-	/* One table of saved rows, with Edit and Remove on each row typed here. */
+	/* One table of rows, with Edit and Remove on each row typed here. */
 	function savedTable(s) {
 		var head = el("tr", {}, s.columns.map(function (c) { return el("th", { scope: "col", text: c.label }); }).concat([el("th", { "aria-label": "Actions" })]));
 		var rows = s.rows.map(function (row) {
 			var cells = s.columns.map(function (c) {
 				return el("td", { class: MONEY[c.fieldname] ? "a3s-de-money" : null, text: row.display[c.fieldname] || "" });
 			});
-			var actions = el("td", { class: "a3s-de-saved__actions" });
-			if (row.computed) {
-				actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every save", text: "Auto" }));
-			} else if (state.editable) {
-				actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
-				actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
-			}
-			cells.push(actions);
+			cells.push(rowActions(row));
 			return el("tr", {}, cells);
 		});
 		return el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
@@ -245,7 +352,7 @@
 	function paintForm() {
 		var s = section();
 		$("de-form-title").textContent = (editing ? "Change " : "Add ") + s.label.toLowerCase();
-		submit.textContent = editing ? "Save changes" : "Add";
+		submit.textContent = editing ? "Apply changes" : "Add";
 
 		var values = {};
 		s.fields.forEach(function (f) {
@@ -309,10 +416,95 @@
 		} else {
 			totals.appendChild(el("p", { class: "a3s-field__hint", text: "GST on " + money.format(c.taxable) + "; KSEB fees are already gross." }));
 		}
+
+		var proposal = $("de-proposal");
+		proposal.innerHTML = "";
+		var action = state.proposal_action;
+		if (action && !changes(option).length) {
+			proposal.appendChild(el("a", { class: "a3s-btn a3s-btn--primary a3s-btn--block a3s-de-com__proposal", href: action.href }, [
+				icon("doc"), el("span", { text: action.label })
+			]));
+			proposal.appendChild(el("p", { class: "a3s-edit__hint", text: action.hint }));
+		} else if (!state.saved) {
+			proposal.appendChild(el("p", { class: "a3s-edit__hint", text: "Save this option to add it to a proposal." }));
+		}
+	}
+
+	/* ------------------------------------------------------------- compare */
+	function paintCompare() {
+		var body = $("de-compare-body");
+		body.innerHTML = "";
+		if (!comparison) return;
+		var cols = comparison;
+		var lowest = null;
+		cols.forEach(function (c) { if (!c.error && (lowest === null || c.total < lowest)) lowest = c.total; });
+
+		var head = el("tr", {}, [el("th", { scope: "col", text: "" })].concat(cols.map(function (c) {
+			var open = el("button", { type: "button", class: "a3s-textlink", text: "Option " + c.number });
+			open.addEventListener("click", function () { selectTab(c.key); });
+			return el("th", { scope: "col", class: "a3s-de-money" }, [
+				open,
+				c.recommended ? el("small", { class: "a3s-de-sub", text: "Recommended" }) : null,
+				el("small", { class: "a3s-de-sub", text: (c.estimate ? (c.estimate === page.root ? "This estimate" : c.estimate) : "Not saved") + (c.unsaved ? " · unsaved changes" : "") })
+			]);
+		})));
+
+		var rows = [];
+		function row(label, values, cls) {
+			rows.push(el("tr", { class: cls || "" }, [el("th", { scope: "row", text: label })].concat(values.map(function (v, i) {
+				return el("td", { class: "a3s-de-money" + (cols[i].error ? " is-error" : ""), text: v });
+			}))));
+		}
+		function pick(fn) { return cols.map(function (c) { return c.error ? "" : fn(c); }); }
+
+		row("Package", cols.map(function (c) { return c.package; }));
+		row("Proposed size", pick(function (c) { return c.size; }));
+		row("Panels", pick(function (c) { return c.panel_kwp; }));
+		row("Inverters", pick(function (c) { return c.inverter_kw; }));
+		row("Package cost", pick(function (c) { return c.package_cost; }));
+		row("Solar panel", pick(function (c) { return c.panel; }));
+		row("Inverter", pick(function (c) { return c.inverter; }));
+		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));
+		var keys = [];
+		/* Lines in the order of the option with the most of them, so a battery sits where it does there. */
+		cols.slice().sort(function (a, b) { return (b.lines || []).length - (a.lines || []).length; }).forEach(function (c) {
+			(c.lines || []).forEach(function (l) { if (!keys.some(function (k) { return k.key === l.key; })) keys.push({ key: l.key, label: l.label }); });
+		});
+		keys.forEach(function (k) {
+			row(k.label, pick(function (c) {
+				var line = (c.lines || []).find(function (l) { return l.key === k.key; });
+				return money.format(line ? line.amount : 0);
+			}), "is-line");
+		});
+		row("Subtotal", pick(function (c) { return money.format(c.subtotal); }), "is-sum");
+		row("GST", pick(function (c) { return money.format(c.gst_amount); }));
+		rows.push(el("tr", { class: "is-grand" }, [el("th", { scope: "row", text: "Total" })].concat(cols.map(function (c) {
+			return el("td", { class: "a3s-de-money" + (!c.error && c.total === lowest && cols.length > 1 ? " is-best" : "") },
+				c.error ? [el("small", { class: "a3s-de-compare__error", text: c.error })] : [document.createTextNode(money.format(c.total))]);
+		}))));
+		body.appendChild(el("table", { class: "a3s-de-compare__table" }, [el("thead", {}, [head]), el("tbody", {}, rows)]));
+	}
+
+	function loadCompare() {
+		comparison = null;
+		paintCompare();
+		setStatus("Working out every option…", null, $("de-compare-status"));
+		busy = true;
+		paintTabs();
+		call("compare", { name: page.root, pending: pending })
+			.then(function (result) {
+				comparison = result;
+				setStatus(Object.keys(pending).some(function (k) { return pending[k].length; })
+					? "Unsaved changes are included. Save them in their tabs to keep them." : "", null, $("de-compare-status"));
+			})
+			.catch(function (error) { setStatus(error.message, "error", $("de-compare-status")); })
+			.then(function () { busy = false; paintTabs(); paintCompare(); });
 	}
 
 	function paint() {
+		paintTabs();
 		paintHeader();
+		if (option === COMPARE) return;
 		paintNav();
 		paintSaved();
 		paintCommercials();
@@ -320,7 +512,7 @@
 
 	/* ------------------------------------------------------------- popup */
 	function openModal(row) {
-		if (!state.editable) return;
+		if (!state.editable || busy) return;
 		editing = row || null;
 		submit.disabled = false;
 		setStatus("");
@@ -339,31 +531,15 @@
 	   The window is opened at once, inside the click, so the browser does not block it. */
 	$("de-whatsapp").addEventListener("click", function () {
 		var win = window.open("", "_blank");
-		setStatus("Opening WhatsApp…", null, pageStatus);
+		setStatus("Opening WhatsApp…", null, tabStatus);
 		call("whatsapp_link", { name: state.name })
 			.then(function (link) {
 				if (win) win.location.href = link; else window.location.href = link;
-				setStatus("WhatsApp opened with the estimate summary. Download the PDF to send it in the chat.", "success", pageStatus);
+				setStatus("WhatsApp opened with the estimate summary. Download the PDF to send it in the chat.", "success", tabStatus);
 			})
 			.catch(function (error) {
 				if (win) win.close();
-				setStatus(error.message, "error", pageStatus);
-			});
-	});
-
-	/* Save As: a copy of this estimate, with the next number, opened on its details step. */
-	$("de-save-as").addEventListener("click", function () {
-		var button = $("de-save-as");
-		button.disabled = true;
-		setStatus("Making a copy…", null, pageStatus);
-		call("save_as", { name: state.name })
-			.then(function (copy) {
-				setStatus("Copied to " + copy.name + ". Opening it…", "success", pageStatus);
-				window.location.assign(copy.route);
-			})
-			.catch(function (error) {
-				button.disabled = false;
-				setStatus(error.message, "error", pageStatus);
+				setStatus(error.message, "error", tabStatus);
 			});
 	});
 
@@ -373,43 +549,119 @@
 	modal.addEventListener("click", function (event) { if (event.target === modal) closeModal(); });
 	document.addEventListener("keydown", function (event) { if (event.key === "Escape" && !modal.hidden) closeModal(); });
 
-	/* ------------------------------------------------------------ saving */
-	function apply(next, message) {
-		state = next;
+	/* ------------------------------------------------- changes and saving */
+	function apply(payload, key, message, target) {
+		page.tabs = payload.tabs;
+		page.details_route = payload.details_route;
+		cache[key] = payload.state;
+		comparison = null;
+		if (key === option) {
+			state = payload.state;
+			keepActive();
+		}
 		closeModal();
 		paint();
-		/* A warning from the save (sizing with Options) is shown instead of the plain "Saved". */
-		if (next.warnings && next.warnings.length) setStatus(next.warnings.join(" "), "error", pageStatus);
-		else setStatus(message, "success", pageStatus);
+		/* A warning from the change (sizing with Options) is shown instead of the plain message. */
+		if (payload.state.warnings && payload.state.warnings.length) setStatus(payload.state.warnings.join(" "), "error", target || pageStatus);
+		else setStatus(message, "success", target || pageStatus);
 	}
 
-	function fail(error) {
+	function begin(text, target) {
+		busy = true;
+		setStatus(text, null, target || pageStatus);
+		paint();
+	}
+
+	function end() {
+		busy = false;
 		submit.disabled = false;
-		setStatus(error.message, "error", modal.hidden ? pageStatus : status);
+		paint();
+	}
+
+	function fail(error, target) {
+		end();
+		setStatus(error.message, "error", modal.hidden ? (target || pageStatus) : status);
+	}
+
+	/* Work a tab out with these changes; they become its unsaved changes if it works. */
+	function work(key, ops, message) {
+		begin("Working it out…", key === option ? pageStatus : tabStatus);
+		return call("tab_state", { name: page.root, option: key, ops: ops })
+			.then(function (payload) {
+				pending[key] = ops;
+				busy = false;
+				apply(payload, key, message);
+			})
+			.catch(fail);
+	}
+
+	function change(item, message) {
+		var key = option;
+		return work(key, changes(key).concat([item]), message);
 	}
 
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
 		submit.disabled = true;
-		setStatus("Saving…");
-		call("save_row", { name: state.name, section: active, values: currentValues(), row: editing ? editing.name : null })
-			.then(function (next) { submit.disabled = false; apply(next, "Saved."); })
-			.catch(fail);
+		setStatus("Working it out…");
+		var values = currentValues();
+		var row = editing ? editing.name : null;
+		if (LINKED[active]) {
+			linkedChange("save_linked_row", { section: active, values: values, row: row }, "Saved.");
+			return;
+		}
+		change({ section: active, values: values, row: row }, "Changed. Save the tab to keep it.");
 	});
 
+	/* A failed change repaints the tab as it was, so the tick goes back by itself. */
 	function setOption(s, row, tick) {
-		setStatus("Saving…", null, pageStatus);
-		call("save_row", { name: state.name, section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name })
-			.then(function (next) { apply(next, tick.checked ? "Marked as an option: not added to the commercials." : "Priced: this row is in the commercials, and the other rows of the table are now Options."); })
-			.catch(function (error) { tick.checked = !tick.checked; fail(error); });
+		change({ section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name },
+			tick.checked ? "Marked as an option: not added to the commercials. Save the tab to keep it."
+				: "Priced: this row is in the commercials, and the other rows of the table are now Options. Save the tab to keep it.");
 	}
 
 	function removeRow(row) {
-		setStatus("Removing…", null, pageStatus);
-		call("remove_row", { name: state.name, section: active, row: row.name })
-			.then(function (next) { apply(next, "Removed."); })
+		if (LINKED[active]) {
+			linkedChange("remove_linked_row", { section: active, row: row.name }, "Removed.");
+			return;
+		}
+		change({ section: active, row: row.name, action: "remove" }, "Removed. Save the tab to keep it.");
+	}
+
+	/* Additional structure, cable and discount are records of their own: kept at once. */
+	function linkedChange(method, args, message) {
+		var key = option;
+		begin("Saving…");
+		call(method, Object.assign({ name: page.root, option: key, ops: changes(key) }, args))
+			.then(function (payload) { busy = false; apply(payload, key, message); })
 			.catch(fail);
 	}
+
+	$("de-save").addEventListener("click", function () {
+		var key = option;
+		var wasSaved = state.saved;
+		begin(wasSaved ? "Saving…" : "Saving as a new estimate…", tabStatus);
+		call("save_tab", { name: page.root, option: key, ops: changes(key) })
+			.then(function (payload) {
+				pending[key] = [];
+				busy = false;
+				apply(payload, key, wasSaved ? "Saved." : "Saved as " + payload.state.name + ", for the same lead.", tabStatus);
+			})
+			.catch(function (error) { fail(error, tabStatus); });
+	});
+
+	$("de-discard").addEventListener("click", function () {
+		if (!window.confirm("Discard the changes made in this tab?")) return;
+		work(option, [], "Changes discarded.");
+	});
+
+	/* Unsaved changes are only in this page: leaving it asks first. */
+	window.addEventListener("beforeunload", function (event) {
+		if (Object.keys(pending).some(function (k) { return pending[k].length; })) {
+			event.preventDefault();
+			event.returnValue = "";
+		}
+	});
 
 	paint();
 })();

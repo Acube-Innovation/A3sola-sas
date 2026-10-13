@@ -13,6 +13,7 @@
   "specification_code",
   "package_name",
   "capacity_kw",
+  "package_cost",
   "system_type",
   "connection_type",
   "cb_1",
@@ -95,6 +96,14 @@
    "label": "Capacity (kW)",
    "precision": 3,
    "reqd": 1
+  },
+  {
+   "fieldname": "package_cost",
+   "fieldtype": "Currency",
+   "label": "Package Cost",
+   "options": "INR",
+   "in_list_view": 1,
+   "description": "What the package costs as offered: its default panel, inverter and battery. The other panels and inverters are options, priced at their own rates. Left blank, it is the default inverter's cost."
   },
   {
    "default": "On-Grid",
@@ -353,7 +362,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-01 16:20:00.000000",
+ "modified": "2026-10-13 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

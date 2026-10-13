@@ -1,10 +1,10 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Step two of a design estimate: the system, one table at a time, priced alongside."""
+"""Step two of a design estimate: a tab per option, each its system and commercials."""
 
 import frappe
 
-from a3_sola.api import portal_estimate, portal_proposal
+from a3_sola.api import portal_estimate
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import load_record, record_route
 
@@ -29,7 +29,7 @@ def get_context(context):
 	# Three columns - sections, rows, commercials - so the page takes the full width.
 	context.main_wide = True
 	context.record_name = doc.name
-	context.builder_json = portal_estimate.builder_json(doc)
-	context.proposal_action = portal_proposal.proposal_action(doc.name)
+	# The tabs are the options of the estimate this one was saved from, if any.
+	context.builder_json = portal_estimate.page_json(doc)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

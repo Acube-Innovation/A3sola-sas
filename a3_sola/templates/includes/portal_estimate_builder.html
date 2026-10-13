@@ -1,34 +1,45 @@
-{#- Step two of the design estimate builder, in three columns at 20:50:30 - the System &
-    Options tables, the chosen table's saved rows, and the commercials. A row is added or
-    changed in a popup over the page.
-    `builder_json` is portal_estimate.builder_state; portal_estimate_builder.js paints it. -#}
+{#- Step two of the design estimate builder: a tab per option of step one, then Compare. A
+    tab is the option's system and commercials in three columns at 20:50:30 - the System &
+    Options tables, the chosen table's rows, and the commercials. A row is added or changed
+    in a popup over the page; changes are held until the tab's own Save.
+    `builder_json` is portal_estimate.page_json; portal_estimate_builder.js paints it. -#}
 <script type="application/json" id="a3s-de-data">{{ builder_json }}</script>
 
 <div class="a3s-page__head a3s-de-head">
 	<div>
 		<p class="a3s-de-steps"><span>1 &middot; Estimate details</span><span class="is-current">2 &middot; System &amp; commercials</span></p>
 		<h2 class="a3s-main__title" id="de-title">{{ record_name | e }}</h2>
-		<dl class="a3s-de-summary" id="de-summary"></dl>
 	</div>
-	{#- Square icon buttons: each is named by its tooltip and its aria-label. -#}
 	<div class="a3s-de-head__actions">
-		<a class="a3s-square-btn" id="de-details-link" href="#" title="Back to details" aria-label="Back to details">
+		<a class="a3s-square-btn" id="de-details-link" href="#" title="Back to details and options" aria-label="Back to details and options" hidden>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-back"></use></svg>
 		</a>
-		<a class="a3s-square-btn" id="de-pdf-link" href="#" title="Download PDF" aria-label="Download PDF" download>
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
-		</a>
-		<button type="button" class="a3s-square-btn a3s-square-btn--whatsapp" id="de-whatsapp" title="Send to WhatsApp" aria-label="Send to WhatsApp">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
-		</button>
-		{#- Every change here is saved as it is made; this finishes and opens the estimate. -#}
-		<a class="a3s-square-btn a3s-square-btn--primary" id="de-view-link" href="#" title="Save and finish" aria-label="Save and finish">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
-		</a>
-		{#- Copies this estimate into a new one with the next number; draft or submitted only. -#}
-		<button type="button" class="a3s-textlink a3s-de-head__saveas" id="de-save-as" hidden>Save As</button>
 	</div>
 </div>
+
+{#- One tab per option; each is saved on its own. -#}
+<div class="a3s-de-tabs" id="de-tabs" role="tablist" aria-label="Options"></div>
+
+<section class="a3s-card a3s-de-tabhead" id="de-tabhead" aria-live="polite">
+	<div class="a3s-de-tabhead__main">
+		<p class="a3s-de-tabhead__name" id="de-tab-name"></p>
+		<dl class="a3s-de-summary" id="de-summary"></dl>
+	</div>
+	<div class="a3s-de-tabhead__actions">
+		<a class="a3s-square-btn" id="de-pdf-link" href="#" title="Download PDF" aria-label="Download PDF" download hidden>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+		</a>
+		<button type="button" class="a3s-square-btn a3s-square-btn--whatsapp" id="de-whatsapp" title="Send to WhatsApp" aria-label="Send to WhatsApp" hidden>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
+		</button>
+		<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" id="de-discard" hidden>Discard changes</button>
+		<button type="button" class="a3s-btn a3s-btn--primary" id="de-save">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+			<span id="de-save-label">Save</span>
+		</button>
+	</div>
+	<p class="a3s-form__status a3s-de-tabhead__status" id="de-tab-status" role="status" aria-live="polite"></p>
+</section>
 
 <div class="a3s-de-builder" id="a3s-de-builder">
 	<nav class="a3s-card a3s-de-nav" aria-label="System and options">
@@ -45,23 +56,23 @@
 			<p class="a3s-form__status" id="de-page-status" role="status" aria-live="polite"></p>
 			<div class="a3s-de-saved__body" id="de-saved"></div>
 		</section>
-
 	</div>
 
 	<aside class="a3s-card a3s-de-commercials" aria-labelledby="de-com-title">
 		<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
 		<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
 		<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
-		{%- if proposal_action %}
-		{#- The next step: the proposal this estimate is offered in (api/portal_proposal.proposal_action). -#}
-		<a class="a3s-btn a3s-btn--primary a3s-btn--block a3s-de-com__proposal" href="{{ proposal_action.href | e }}">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
-			<span>{{ proposal_action.label | e }}</span>
-		</a>
-		<p class="a3s-edit__hint">{{ proposal_action.hint | e }}</p>
-		{%- endif %}
+		{#- The next step for a saved option: the proposal it is offered in (api/portal_proposal.proposal_action). -#}
+		<div id="de-proposal"></div>
 	</aside>
 </div>
+
+{#- Every option side by side, its unsaved changes included. -#}
+<section class="a3s-card a3s-de-compare" id="de-compare" hidden aria-labelledby="de-compare-title">
+	<h3 class="a3s-de-card__title" id="de-compare-title">Compare options</h3>
+	<p class="a3s-form__status" id="de-compare-status" role="status" aria-live="polite"></p>
+	<div class="a3s-de-table" id="de-compare-body"></div>
+</section>
 
 <div class="a3s-modal" id="de-modal" hidden role="dialog" aria-modal="true" aria-labelledby="de-form-title">
 	<div class="a3s-modal__panel a3s-de-modal">

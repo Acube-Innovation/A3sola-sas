@@ -33,6 +33,8 @@
   "subsidy_scheme",
   "solar_package",
   "equipment_package",
+  "parent_estimate",
+  "source_option",
   "tariff_category",
   "cb_4",
   "is_dcr_compliant",
@@ -304,6 +306,24 @@
    "description": "The package the panel, inverter and battery tables were last filled from."
   },
   {
+   "fieldname": "parent_estimate",
+   "fieldtype": "Link",
+   "label": "Option Of",
+   "options": "Solar Design Estimate",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "parent_estimate",
+   "description": "The estimate whose option this one was saved from."
+  },
+  {
+   "fieldname": "source_option",
+   "fieldtype": "Data",
+   "label": "Source Option",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "tariff_category",
    "fieldtype": "Data",
    "label": "Consumer Tariff Category",
@@ -351,7 +371,7 @@
    "fieldname": "sb_sizing_options",
    "fieldtype": "Section Break",
    "label": "Package & Sizing with Options",
-   "hidden": 1
+   "description": "One row per option the customer is offered. The recommended row is this estimate; each other row is saved as its own estimate from its tab on the System & Commercials step."
   },
   {
    "fieldname": "sizing_options",
@@ -817,7 +837,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-12 10:50:00.000000",
+ "modified": "2026-10-13 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

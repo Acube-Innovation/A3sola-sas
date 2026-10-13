@@ -108,3 +108,6 @@ a3_sola.patches.v1_2.inverter_options_ticked
 
 # Proposals carry their site and connection, and a table of design estimates.
 a3_sola.patches.v1_2.proposal_details_and_estimates
+
+# Packages carry their cost; each option row the panel, inverter and battery it is built with.
+a3_sola.patches.v1_2.package_cost_and_option_choices
