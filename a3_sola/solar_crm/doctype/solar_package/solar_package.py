@@ -420,12 +420,26 @@ def package_components(package, phase=None):
 				"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else ""),
 		})
 
+	# The panels each inverter is priced with on the Cost tab, where they are not the
+	# package's default panels (a microinverter option on panels of its own).
+	module_make = {r.module_specification: r.module_make for r in doc.get("modules") or []}
+	default_panel = module.module_make if module else None
+	panel_of = {}
+	for price in doc.get("prices") or []:
+		make = module_make.get(price.module)
+		if make and make != default_panel:
+			panel_of[price.inverter] = make
+
 	inverters = []
 	matching = [r for r in inverters_for_phase(doc, phase) if r.inverter_make]
 	inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
 	for row in ordered(matching, inverter):
 		inverters.append({
 			"value": row.inverter_make, "default": row is inverter, "phase": inverter_phase(doc, row),
+			# The package's price built with this inverter: the price list's MRP for it.
+			"cost": flt(row.cost) or (package_cost(doc) if row is inverter else 0.0),
+			# Its own panels, when the price list builds it on other panels than the default.
+			"panel": panel_of.get(row.inverter_specification, ""),
 			"label": label(makes.get(row.inverter_make) or row.inverter_make, number(row.inverter_capacity_kw, "kW"),
 				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else ""),
 		})

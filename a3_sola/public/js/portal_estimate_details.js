@@ -133,6 +133,8 @@
 			? "is not DCR compliant, and subsidy needs DCR panels, so it was cleared. Choose a DCR package."
 			: why === "subsidy"
 			? "is a subsidy (DCR) package, so it was cleared. Choose a non-subsidy package."
+			: why === "capacity"
+			? "is a " + o.dataset.capacity + " kW package, not the capacity entered, so it was cleared."
 			: "has no " + phase + " inverter, so it was cleared. Choose a " + phase + " package.");
 	}
 	function packageRules() {
@@ -314,7 +316,8 @@
 			select.innerHTML = "";
 			if (!list.length) select.appendChild(new Option(info ? "None in this package" : "Choose a package", ""));
 			list.forEach(function (o) {
-				select.appendChild(new Option(o.label + (o["default"] ? " (in package)" : " (option)"), o.value));
+				var price = o.cost ? " — " + money.format(o.cost) : "";
+				select.appendChild(new Option(o.label + price + (o["default"] ? " (default)" : ""), o.value));
 			});
 			var offered = list.some(function (o) { return o.value === keep; });
 			var fallback = list.filter(function (o) { return o["default"]; })[0] || list[0];
@@ -322,8 +325,12 @@
 			select.dataset.value = select.value;
 			if (wrap) wrap.hidden = !applies;
 		});
+		/* The option's price: the package built with the inverter chosen (the price list's MRP). */
 		var cost = tr.querySelector("[data-package-cost]");
-		if (cost) cost.textContent = info && info.package_cost ? "Package cost " + money.format(info.package_cost) : "";
+		var inv = tr.querySelector('[data-component="inverters"]');
+		var chosen = info && inv ? (info.inverters || []).filter(function (o) { return o.value === inv.value; })[0] : null;
+		var price = chosen && chosen.cost ? chosen.cost : (info ? info.package_cost : 0);
+		if (cost) cost.textContent = price ? "Package price " + money.format(price) : "";
 	}
 
 	function optionRows() {
@@ -360,9 +367,31 @@
 		if (pkg) {
 			var phaseValue = phase ? phase.value : "";
 			var why = "";
-			Array.prototype.forEach.call(pkg.options, function (o) {
-				if (!o.value) return;
-				var off = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
+			var options = Array.prototype.filter.call(pkg.options, function (o) { return !!o.value; });
+			var reason = {};
+			var fitting = options.filter(function (o) {
+				reason[o.value] = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
+				return !reason[o.value];
+			});
+			/* A capacity typed on the option lists the packages of that size; with none of that
+			   size for these choices, the nearest size, and the page says so. */
+			var capField = field("override_capacity_kw");
+			var cap = capField ? parseFloat(capField.value) : NaN;
+			var capNote = "";
+			if (cap > 0 && fitting.length) {
+				var size = function (o) { return parseFloat(o.dataset.capacity || "0"); };
+				var keep = fitting.filter(function (o) { return Math.abs(size(o) - cap) < 0.001; });
+				if (!keep.length) {
+					var gap = Math.min.apply(null, fitting.map(function (o) { return Math.abs(size(o) - cap); }));
+					keep = fitting.filter(function (o) { return Math.abs(Math.abs(size(o) - cap) - gap) < 0.001; });
+					capNote = "No " + cap + " kW package for these choices; showing the nearest, "
+						+ keep.map(size).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" / ") + " kW.";
+				}
+				fitting.forEach(function (o) { if (keep.indexOf(o) === -1) reason[o.value] = "capacity"; });
+				fitting = keep;
+			}
+			options.forEach(function (o) {
+				var off = reason[o.value];
 				o.hidden = !!off;
 				o.disabled = !!off;
 				if (off && o.value === pkg.value) why = off;
@@ -371,6 +400,13 @@
 			if (dropped && dropped.disabled) {
 				pkg.value = "";
 				setStatus(droppedNote(dropped, why, phaseValue, system ? system.value : ""));
+			} else if (capNote) {
+				setStatus(capNote);
+			}
+			/* One package left for these choices: it is the one. */
+			if (!pkg.value && fitting.length === 1) {
+				pkg.value = fitting[0].value;
+				pkg.dispatchEvent(new Event("a3s:sync"));
 			}
 		}
 	}
@@ -387,21 +423,41 @@
 		});
 	}
 
+	/* Each option row has an id of its own, so the rows it adds can be found again. */
+	var uid = 0;
+	function rowKey(tr) {
+		function value(name) { var el = tr.querySelector('[data-field="' + name + '"]'); return el ? el.value : ""; }
+		return value("solar_package") + "|" + value("connection_type");
+	}
+
 	function wireRow(tr) {
+		tr.dataset.uid = String(++uid);
+		if (!tr.dataset.expandedKey) tr.dataset.expandedKey = rowKey(tr);  // as it opened: nothing to add
 		applyRowConditions(tr);
-		tr.addEventListener("change", function () { applyRowConditions(tr); });
+		/* The rules may have chosen the only package that fits as it opened: its other
+		   inverters become options then too. */
+		expandInverters(tr);
+		tr.addEventListener("change", function (event) {
+			if (event.target.matches("[data-include]")) return;
+			setStatus("");  // what the last change said no longer applies
+			applyRowConditions(tr);
+			expandInverters(tr);
+		});
+		var include = tr.querySelector("[data-include]");
+		include.addEventListener("change", function () {
+			if (!include.checked && tr.dataset.locked
+					&& !window.confirm("This option is saved as its own estimate. Leave it out of this one? That estimate is kept.")) {
+				include.checked = true;
+			}
+			markIncluded();
+		});
 		tr.querySelector("[data-remove-option]").addEventListener("click", function () {
 			if (optionRows().length === 1) {
 				setStatus("Keep at least one option.", "error");
 				return;
 			}
 			if (tr.dataset.locked && !window.confirm("This option is saved as its own estimate. Remove it from here? That estimate is kept.")) return;
-			var wasRecommended = tr.querySelector("[data-recommended]").checked;
 			tr.remove();
-			if (wasRecommended) {
-				var next = optionRows().filter(function (r) { return !r.dataset.locked; })[0];
-				if (next) next.querySelector("[data-recommended]").checked = true;
-			}
 			renumber();
 			setStatus("");
 		});
@@ -413,6 +469,73 @@
 			var n = tr.querySelector("[data-option-number]");
 			if (n) n.textContent = String(i + 1);
 		});
+		markIncluded();
+	}
+
+	/* The first ticked option is the recommended one - the estimate itself - unless it is
+	   saved as an estimate of its own; unticked options are left out. */
+	function recommendedRow() {
+		return optionRows().filter(function (tr) { return tr.querySelector("[data-include]").checked && !tr.dataset.locked; })[0] || null;
+	}
+	function markIncluded() {
+		var recommended = recommendedRow();
+		optionRows().forEach(function (tr) {
+			tr.classList.toggle("is-recommended", tr === recommended);
+			tr.classList.toggle("is-excluded", !tr.querySelector("[data-include]").checked);
+		});
+	}
+
+	/* A new option as a copy of another: usually only one thing changes. */
+	function cloneRow(from) {
+		var tr = template.content.querySelector("[data-option]").cloneNode(true);
+		Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
+			var source = from && from.querySelector('[data-field="' + el.dataset.field + '"]');
+			if (el.dataset.component) el.dataset.value = source ? source.value : "";
+			else el.value = source ? source.value : "";
+		});
+		return tr;
+	}
+
+	/* A package with more than one inverter for the option's connection is several options:
+	   its default inverter on this one, then one option per other inverter, ticked, right
+	   after it. Choosing another package (or connection) replaces the options it added. */
+	function expandInverters(tr) {
+		if (tr.dataset.locked || !template) return;
+		var key = rowKey(tr);
+		if (tr.dataset.expandedKey === key) return;
+		tr.dataset.expandedKey = key;
+		optionRows().forEach(function (row) {
+			if (row.dataset.addedBy === tr.dataset.uid && !row.dataset.locked) row.remove();
+		});
+		var pkg = tr.querySelector('[data-field="solar_package"]').value;
+		var phase = (tr.querySelector('[data-field="connection_type"]') || {}).value || "";
+		var info = packages[pkg];
+		var inverters = info ? (info.inverters || []).filter(function (o) { return !phase || !o.phase || o.phase === phase; }) : [];
+		if (inverters.length) {
+			inverters = inverters.filter(function (o) { return o["default"]; }).concat(inverters.filter(function (o) { return !o["default"]; }));
+			var own = tr.querySelector('[data-component="inverters"]');
+			own.dataset.value = inverters[0].value;
+			own.value = inverters[0].value;
+			fillComponents(tr);
+		}
+		var after = tr;
+		inverters.slice(1).forEach(function (inverter) {
+			var row = cloneRow(tr);
+			row.querySelector('[data-component="inverters"]').dataset.value = inverter.value;
+			/* An inverter the price list builds on panels of its own takes them. */
+			if (inverter.panel) row.querySelector('[data-component="panels"]').dataset.value = inverter.panel;
+			row.dataset.addedBy = tr.dataset.uid;
+			row.dataset.expandedKey = key;  // added for this package: adds nothing itself
+			after.parentNode.insertBefore(row, after.nextSibling);
+			wireRow(row);
+			after = row;
+		});
+		renumber();
+		if (inverters.length > 1) {
+			setStatus("This package has " + inverters.length + " inverters, so each is an option of its own: "
+				+ inverters.map(function (o) { return o.label.split(" \u00b7 ")[0]; }).join(", ")
+				+ ". Untick any you do not want.");
+		}
 	}
 
 	optionRows().forEach(wireRow);
@@ -424,16 +547,8 @@
 	var addOption = form.querySelector("[data-add-option]");
 	if (addOption && template) {
 		addOption.addEventListener("click", function () {
-			/* A new option starts as a copy of the last one: usually only one thing changes. */
 			var rows = optionRows();
-			var last = rows[rows.length - 1];
-			var tr = template.content.querySelector("[data-option]").cloneNode(true);
-			Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
-				var from = last && last.querySelector('[data-field="' + el.dataset.field + '"]');
-				if (el.dataset.component) el.dataset.value = from ? from.value : "";
-				else el.value = from ? from.value : "";
-			});
-			tr.querySelector("[data-recommended]").checked = false;
+			var tr = cloneRow(rows[rows.length - 1]);
 			optionsBody.appendChild(tr);
 			wireRow(tr);
 			renumber();
@@ -442,9 +557,11 @@
 		});
 	}
 
+	/* Only the ticked options are saved; the first of them is the recommended one. */
 	function collectOptions() {
-		return optionRows().map(function (tr) {
-			var row = { name: tr.dataset.name || null, is_recommended: tr.querySelector("[data-recommended]").checked ? 1 : 0 };
+		var recommended = recommendedRow();
+		return optionRows().filter(function (tr) { return tr.querySelector("[data-include]").checked; }).map(function (tr) {
+			var row = { name: tr.dataset.name || null, is_recommended: tr === recommended ? 1 : 0 };
 			Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
 				if (!el.closest("[hidden]")) row[el.dataset.field] = el.value;
 			});
@@ -454,9 +571,13 @@
 
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
+		if (optionsBody && !recommendedRow()) {
+			setStatus("Tick at least one option that is not already saved as its own estimate.", "error");
+			return;
+		}
 		var values = {};
 		Array.prototype.forEach.call(form.elements, function (el) {
-			if (el.name && el.name !== "recommended_option" && !el.closest("[hidden]")) values[el.name] = el.value;
+			if (el.name && !el.closest("[hidden]")) values[el.name] = el.value;
 		});
 		next.disabled = true;
 		setStatus("Saving…");

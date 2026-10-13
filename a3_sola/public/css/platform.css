@@ -2687,23 +2687,35 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
    inverter and battery it is built with, chosen from that package. */
 .a3s-de-opts { display: grid; gap: 0.85rem; }
 .a3s-de-opt { padding: 0.9rem 1rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface); }
-.a3s-de-opt:has([data-recommended]:checked) { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent-tint); }
+.a3s-de-opt.is-recommended { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent-tint); }
+/* An unticked option is left out: dimmed, its fields still there to tick it back. */
+.a3s-de-opt.is-excluded .a3s-de-opt__grid, .a3s-de-opt.is-excluded .a3s-de-opt__parts, .a3s-de-opt.is-excluded .a3s-de-sizing__cost { opacity: 0.45; }
 .a3s-de-opt[data-locked] { background: var(--color-bg); }
 .a3s-de-opt__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
 .a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
 .a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
-@media (min-width: 900px) {
-	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 2.6fr) minmax(0, 0.9fr); }
+/* Labels stay on one line, so every box in the row lines up; the full label is its title. */
+.a3s-de-opt__grid .a3s-de-sizing__part-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Mid widths: connection, system and subsidy across, then capacity and the package. */
+@media (min-width: 700px) {
+	.a3s-de-opt__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.a3s-de-opt__f-solar_package { grid-column: span 2; }
+}
+/* Wide: all five in one row; capacity is wide enough for its label. */
+@media (min-width: 1440px) {
+	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(11.5rem, 1.15fr) minmax(0, 2.2fr); }
+	.a3s-de-opt__f-solar_package { grid-column: auto; }
 }
 .a3s-de-opt__parts { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--color-border);
 	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
 .a3s-de-opt .a3s-field { margin: 0; display: grid; gap: 0.25rem; align-content: start; min-width: 0; }
-.a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; }
+.a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; height: 2.8125rem; box-sizing: border-box; }
 .a3s-de-sizing__radio { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
 .a3s-de-sizing__radio input { width: 1.05rem; height: 1.05rem; accent-color: var(--color-accent); }
 .a3s-de-sizing__num { font-weight: 800; font-size: 0.95rem; }
 .a3s-de-sizing__badge { display: none; white-space: nowrap; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.65rem; font-weight: 700; color: #fff; background-image: var(--color-accent-gradient); }
-.a3s-de-opt:has([data-recommended]:checked) .a3s-de-sizing__badge { display: inline-block; }
+.a3s-de-opt.is-recommended .a3s-de-sizing__badge { display: inline-block; }
+.a3s-de-opt.is-excluded .a3s-de-sizing__num { color: var(--color-text-muted); }
 .a3s-de-sizing__part[hidden] { display: none; }
 .a3s-de-sizing__part-label { font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
 .a3s-de-sizing__cost { font-size: 0.8125rem; font-weight: 700; color: var(--color-accent-hover); }
@@ -3255,3 +3267,36 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-compare__table tr.is-grand td, .a3s-de-compare__table tr.is-grand th { border-top: 2px solid var(--color-text); font-weight: 800; color: var(--color-text); font-size: 1rem; }
 .a3s-de-compare__table tr.is-grand td.is-best { color: var(--color-accent-hover); }
 .a3s-de-compare__error { color: #b42318; font-weight: 600; font-size: 0.75rem; }
+
+/* A row the package price covers, and the package line in the commercials. */
+.a3s-de-included { display: inline-block; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; color: var(--color-sky-ink); background: rgba(41, 171, 226, 0.12); white-space: nowrap; }
+.a3s-de-com__lines li.is-package span { display: grid; gap: 0.1rem; font-weight: 700; }
+.a3s-de-com__kicker { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-accent-hover); }
+
+/* An option tab's cross, and the white square Save all after Compare. */
+.a3s-de-tabwrap { position: relative; flex: 0 0 auto; display: flex; }
+.a3s-de-tab__x {
+	position: absolute; top: 0.35rem; right: 0.35rem; width: 1.5rem; height: 1.5rem; padding: 0;
+	border: 0; border-radius: 0.45rem; background: transparent; color: var(--color-text-muted);
+	font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.a3s-de-tab__x:hover, .a3s-de-tab__x:focus-visible { background: rgba(255, 95, 87, 0.12); color: #b42318; }
+.a3s-de-tab__x:disabled { opacity: 0.4; cursor: progress; }
+.a3s-de-tabwrap .a3s-de-tab { padding-right: 2rem; }
+.a3s-de-saveall-btn { flex: 0 0 auto; align-self: center; width: 3.4rem; height: 3.4rem; }
+.a3s-de-saveall-btn:disabled { opacity: 0.5; cursor: progress; }
+
+/* The confirmation and the save-all progress pop-ups. */
+.a3s-de-confirm, .a3s-de-saveall { width: min(32rem, 100%); }
+.a3s-de-confirm__title { margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 800; }
+.a3s-de-confirm__text { margin: 0; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-de-confirm__ok { background-image: none; background: #d92d20; color: #fff; }
+.a3s-de-progress { height: 0.6rem; margin: 0.4rem 0 0.4rem; border-radius: var(--radius-pill); background: var(--color-bg); overflow: hidden; border: 1px solid var(--color-border); }
+.a3s-de-progress__bar { height: 100%; width: 0; background-image: var(--color-accent-gradient); transition: width 300ms var(--ease); }
+.a3s-de-saveall__count { margin: 0 0 0.6rem; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); }
+.a3s-de-saveall__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; max-height: 16rem; overflow-y: auto; }
+.a3s-de-saveall__list li { display: grid; gap: 0.1rem; padding: 0.55rem 0.7rem; border-radius: 0.7rem; background: var(--color-bg); font-size: 0.875rem; font-weight: 600; }
+.a3s-de-saveall__list li small { font-weight: 600; color: var(--color-text-muted); }
+.a3s-de-saveall__list li.is-done small { color: #067647; }
+.a3s-de-saveall__list li.is-failed small { color: #b42318; }
+.a3s-de-saveall__list li.is-working small { color: var(--color-accent-hover); }

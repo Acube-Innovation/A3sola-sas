@@ -111,3 +111,6 @@ a3_sola.patches.v1_2.proposal_details_and_estimates
 
 # Packages carry their cost; each option row the panel, inverter and battery it is built with.
 a3_sola.patches.v1_2.package_cost_and_option_choices
+
+# Estimates are priced on their package's price; its own items are shown as included.
+a3_sola.patches.v1_2.package_priced_estimates

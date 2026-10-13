@@ -343,26 +343,23 @@
   {
    "fieldname": "tab_commercial",
    "fieldtype": "Tab Break",
-   "label": "Commercial",
-   "hidden": 1
+   "label": "Cost"
   },
   {
    "fieldname": "sb_11",
-   "fieldtype": "Section Break",
-   "hidden": 1
+   "fieldtype": "Section Break"
   },
   {
-   "description": "One row per configuration the package is offered in - a module, an inverter, the boards and the meter - and what that costs. The subsidy, the statutory fees and the generation band are resolved per row, never typed.",
+   "description": "What the package costs with each of its inverter options: the price list's MRP, the subsidy resolved from the scheme, and the net cost to the customer. One row per inverter.",
    "fieldname": "prices",
    "fieldtype": "Table",
-   "label": "Price List",
-   "options": "Solar Package Price",
-   "hidden": 1
+   "label": "Package Cost by Inverter",
+   "options": "Solar Package Price"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-13 13:00:00.000000",
+ "modified": "2026-10-13 19:45:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

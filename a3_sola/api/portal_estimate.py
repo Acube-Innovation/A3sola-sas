@@ -12,6 +12,7 @@ own for the same lead, so the options can be compared side by side and quoted.
 """
 
 import json
+import re
 
 import frappe
 from frappe import _
@@ -32,8 +33,9 @@ DETAIL_COLUMNS = (
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
 	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
 	# The options: one row per package and sizing, the recommended row the estimate's own.
+	# Capacity before the package: the package list follows it, as it follows the rest.
 	("Package & Options", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",
-		"solar_package", "override_capacity_kw")),
+		"override_capacity_kw", "solar_package")),
 )
 
 # What each option row chooses from its package, after the package and sizing fields.
@@ -42,6 +44,9 @@ COMPONENT_FIELDS = (
 	{"fieldname": "inverter_make", "label": "Inverter", "key": "inverters"},
 	{"fieldname": "battery_make", "label": "Battery", "key": "batteries", "only_for": ("Off-Grid", "Hybrid")},
 )
+
+# A package name's trailing subsidy scheme, which the package list on an option leaves off.
+SCHEME_SUFFIX = re.compile(r"\s*\((?:PM Surya Ghar|Non-Subsidy)\)\s*$", re.IGNORECASE)
 
 # Rebuilt from the package when an option is first worked out as an estimate of its own.
 KIT_TABLES = ("panels", "inverters", "batteries", "bos_items", "options", "quoted_options",
@@ -271,7 +276,7 @@ def detail_columns(doc=None, prefill=None):
 					# the packages for its connection type.
 					from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
 
-					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type"],
+					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type", "capacity_kw"],
 						filters={"name": ["in", [c["value"] for c in choices]]})}
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
@@ -280,6 +285,11 @@ def detail_columns(doc=None, prefill=None):
 						c["dcr"] = 1 if pkg.is_dcr_compliant else 0
 						# An On-Grid estimate lists On-Grid packages, a Hybrid one Hybrid packages.
 						c["system_type"] = pkg.system_type or ""
+						# The capacity typed on the option narrows the list to packages of that size.
+						c["capacity"] = "{0:g}".format(flt(pkg.capacity_kw)) if pkg.capacity_kw else ""
+						# The list already follows the option's Subsidy, so the scheme in brackets
+						# at the end of the name ("(PM Surya Ghar)", "(Non-Subsidy)") is not repeated.
+						c["label"] = SCHEME_SUFFIX.sub("", c["label"]) or c["label"]
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.
@@ -343,7 +353,8 @@ def option_rows(doc, fields):
 	names = [f["fieldname"] for f in fields] + [c["fieldname"] for c in COMPONENT_FIELDS]
 	if doc and doc.get("sizing_options"):
 		rows = []
-		for row in sorted(doc.sizing_options, key=lambda r: r.idx):
+		# The recommended option first: the first ticked option is the recommended one.
+		for row in sorted(doc.sizing_options, key=lambda r: (not r.is_recommended, r.idx)):
 			values = {}
 			for fieldname in names:
 				value = row.get(fieldname)
@@ -363,7 +374,7 @@ def option_rows(doc, fields):
 
 
 def package_cost_label(amount):
-	return _("Package cost {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
+	return _("Package price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
 
 
 def package_choices_json(columns):
@@ -598,6 +609,8 @@ def _section(doc, section, child, rows):
 		"name": row.name,
 		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
 		"computed": bool(row.get("source")),
+		# Part of the solar package: its price is the package's, not the row's.
+		"included": bool(doc.solar_package and row.get("in_package")),
 		# An optional count left at 0 was never typed, so the popup shows it blank.
 		"values": {f: _editable_value(row, child.get_field(f)) for f in fieldnames},
 		"display": {f: _display(row, child.get_field(f)) for f in fieldnames},
@@ -704,8 +717,6 @@ def builder_state(doc, editable=None):
 	saved = not doc.is_new()
 	if editable is None:
 		editable = bool(doc.has_permission("write")) and cint(doc.docstatus) == 0
-	sizing = doc.recommended_sizing_row()
-	package_cost = flt(sizing.package_cost) if sizing else 0.0
 	return {
 		"name": doc.name if saved else "",
 		"saved": saved,
@@ -720,7 +731,7 @@ def builder_state(doc, editable=None):
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
 			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
-			{"label": _("Package cost"), "value": frappe.utils.fmt_money(package_cost, currency="INR") if package_cost else "—"},
+			{"label": _("Package price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
 		"choices": _choices(doc),
@@ -898,9 +909,38 @@ def _tab_doc(root, option, changes, permtype="read"):
 
 def _payload(root, option, doc, editable=None):
 	frappe.local.message_log = []  # worked out, not saved: the page shows its own messages
+	root_editable = bool(root.has_permission("write")) and cint(root.docstatus) == 0
 	return {"tabs": option_tabs(root), "option": option or "", "root": root.name,
-		"details_route": details_route(root.name) if root.has_permission("write") and cint(root.docstatus) == 0 else "",
+		"details_route": details_route(root.name) if root_editable else "",
+		# Options can be taken off a draft estimate the person may change.
+		"can_remove": root_editable and len(root.get("sizing_options") or []) > 1,
 		"state": builder_state(doc, editable)}
+
+
+@frappe.whitelist()
+def remove_option(name, option):
+	"""Take an option off the estimate - the row on step one - and say where to reload.
+
+	The recommended option is the estimate itself: taking it off makes the next option the
+	recommended one, and the estimate is rebuilt on it. An option already saved as an
+	estimate of its own leaves that estimate as it is.
+	"""
+	doc = _load(name)
+	rows = sorted(doc.get("sizing_options") or [], key=lambda r: r.idx)
+	row = next((r for r in rows if r.name == option), None)
+	if not row:
+		frappe.throw(_("That option is no longer on {0}. Reload the page.").format(doc.name))
+	if len(rows) == 1:
+		frappe.throw(_("An estimate keeps at least one option."))
+	if row.is_recommended:
+		heir = next((r for r in rows if r is not row
+			and not (r.design_estimate and r.design_estimate != doc.name)), None)
+		if not heir:
+			frappe.throw(_("Every other option is saved as an estimate of its own, so this one stays as {0}.").format(doc.name))
+		heir.is_recommended = 1
+	doc.remove(row)
+	doc.save()
+	return {"route": design_route(doc.name)}
 
 
 def _changes(ops):
@@ -994,7 +1034,7 @@ def compare(name, pending=None):
 			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
 			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
 			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
-			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package cost")), ""),
+			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
 			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],
