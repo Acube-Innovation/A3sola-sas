@@ -426,6 +426,8 @@ def package_components(package, phase=None):
 	for row in ordered(matching, inverter):
 		inverters.append({
 			"value": row.inverter_make, "default": row is inverter, "phase": inverter_phase(doc, row),
+			# The package's price built with this inverter: the price list's MRP for it.
+			"cost": flt(row.cost) or (package_cost(doc) if row is inverter else 0.0),
 			"label": label(makes.get(row.inverter_make) or row.inverter_make, number(row.inverter_capacity_kw, "kW"),
 				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else ""),
 		})

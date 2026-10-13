@@ -3255,3 +3255,8 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-compare__table tr.is-grand td, .a3s-de-compare__table tr.is-grand th { border-top: 2px solid var(--color-text); font-weight: 800; color: var(--color-text); font-size: 1rem; }
 .a3s-de-compare__table tr.is-grand td.is-best { color: var(--color-accent-hover); }
 .a3s-de-compare__error { color: #b42318; font-weight: 600; font-size: 0.75rem; }
+
+/* A row the package price covers, and the package line in the commercials. */
+.a3s-de-included { display: inline-block; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; color: var(--color-sky-ink); background: rgba(41, 171, 226, 0.12); white-space: nowrap; }
+.a3s-de-com__lines li.is-package span { display: grid; gap: 0.1rem; font-weight: 700; }
+.a3s-de-com__kicker { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-accent-hover); }

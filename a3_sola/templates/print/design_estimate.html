@@ -76,8 +76,10 @@
 	<div class="keep">
 	<h2>{{ _("Commercials") }}</h2>
 	<table class="money">
-		{%- for line in state.commercials.lines %}
-		<tr><td>{{ line.label | e }}</td><td class="right">{{ money(line.amount) }}</td></tr>
+		{#- With a package, its price covers its own items: only lines with a charge print. -#}
+		{%- set has_package = state.commercials.lines | selectattr("key", "equalto", "package") | list %}
+		{%- for line in state.commercials.lines if not has_package or line.key == "package" or line.amount %}
+		<tr><td>{% if line.key == "package" %}{{ _("Package") }}: {% endif %}{{ line.label | e }}</td><td class="right">{{ money(line.amount) }}</td></tr>
 		{%- endfor %}
 		<tr><td><strong>{{ _("Subtotal") }}</strong></td><td class="right"><strong>{{ money(state.commercials.subtotal) }}</strong></td></tr>
 		<tr><td>{{ _("GST") }}{% if state.commercials.gst_percent %} ({{ "%g" | format(state.commercials.gst_percent) }}%){% endif %}</td><td class="right">{{ money(state.commercials.gst_amount) }}</td></tr>

@@ -373,7 +373,8 @@ def print_components(doc):
 
 # ------------------------------------------------------------------ sections 3.3 to 6
 #: The estimate's own tables that make up the plant's price (KSEB and linked charges apart).
-PLANT_LINES = ("panels", "inverters", "batteries", "bos_items", "mounting_expenses", "installation_expenses")
+# The package line is the package at its price; the rest price only what is added to it.
+PLANT_LINES = ("package", "panels", "inverters", "batteries", "bos_items", "mounting_expenses", "installation_expenses")
 #: Charges raised against the estimate in records of their own: (doctype, sign).
 CHARGES = (("Additional Structure", 1), ("Additional Cable", 1), ("Special Discount", -1))
 #: The client's payment terms. Nothing on file holds them yet, so they are printed as standing.

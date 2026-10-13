@@ -32,6 +32,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	inverter_phase,
 	inverters_for_phase,
 	package_components,
+	package_cost,
 	package_phases,
 )
 
@@ -170,7 +171,6 @@ class SolarDesignEstimate(Document):
 			row.package_cost = 0
 			return
 		choices = package_components(row.solar_package, row.connection_type or self.connection_type)
-		row.package_cost = choices["package_cost"]
 		for table, field in COMPONENT_CHOICES:
 			offered = choices[table]
 			if table == "batteries" and row.system_type not in ("Off-Grid", "Hybrid"):
@@ -179,6 +179,9 @@ class SolarDesignEstimate(Document):
 				row.set(field, None)
 			elif row.get(field) not in {o["value"] for o in offered}:
 				row.set(field, next((o["value"] for o in offered if o["default"]), offered[0]["value"]))
+		# The row's price: the package built with the inverter it chooses.
+		inverter = next((o for o in choices["inverters"] if o["value"] == row.inverter_make), None)
+		row.package_cost = flt(inverter["cost"]) if inverter and flt(inverter["cost"]) else choices["package_cost"]
 
 	def recommended_sizing_row(self):
 		return next((row for row in self.get("sizing_options") or [] if row.is_recommended), None)
@@ -497,6 +500,7 @@ class SolarDesignEstimate(Document):
 				"inverter_make": row.inverter_make,
 				"specification": row.inverter_specification or None,
 				"is_option": 0 if row is inverter else 1,
+				"in_package": 1,
 			})
 
 		if self.system_type in ("Off-Grid", "Hybrid"):
@@ -505,7 +509,7 @@ class SolarDesignEstimate(Document):
 				values = row.as_dict()
 				for key in ("name", "parent", "parentfield", "parenttype", "idx", "doctype", "owner", "creation", "modified", "modified_by", "docstatus"):
 					values.pop(key, None)
-				self.append("batteries", values)
+				self.append("batteries", {**values, "in_package": 1})
 
 		# The balance of system follows the inverter it is filled for, below.
 		self.bos_basis = None
@@ -579,10 +583,14 @@ class SolarDesignEstimate(Document):
 		if panel_kwp:
 			total_kw = flt(sum(flt(r.total_capacity_kw) for r in self.inverters if not r.is_option), 3)
 			low, high = flt(panel_kwp * min_factor, 3), flt(panel_kwp * max_factor, 3)
-			if not (low <= total_kw <= high):
-				message = _("{0} kW of inverters in all is outside {1} to {2} kW for {3} kWp of panels.").format(
-					"{0:g}".format(total_kw), low, high, panel_kwp
-				)
+			# A hybrid or off-grid inverter also carries the battery's backup load, so it may be
+			# sized well above the panels (the price list's 5 kWp / 10 kW hybrid): no ceiling.
+			battery_backed = self.system_type in ("Hybrid", "Off-Grid")
+			if not (low <= total_kw and (battery_backed or total_kw <= high)):
+				message = (_("{0} kW of inverters in all is below the {1} kW needed for {2} kWp of panels.").format(
+					"{0:g}".format(total_kw), low, panel_kwp) if battery_backed else
+					_("{0} kW of inverters in all is outside {1} to {2} kW for {3} kWp of panels.").format(
+					"{0:g}".format(total_kw), low, high, panel_kwp))
 				if any(r.is_option for r in self.get("panels")) or any(r.is_option for r in self.inverters):
 					# Marking rows as Options is choosing what to price, not designing the
 					# system; the person is told, and decides.
@@ -681,6 +689,10 @@ class SolarDesignEstimate(Document):
 		inverter = next((row for row in self.get("inverters") if row.inverter_type), None)
 		if not inverter:
 			return
+		if self.solar_package and default_system_items(self.solar_package):
+			# The package's own boards, cables, meter and earthing: what its price includes.
+			self.fill_bos_from_solar_package(inverter)
+			return
 		capacity = flt(inverter.total_capacity_kw) or flt(inverter.inverter_capacity_kw)
 		package = package_for(inverter.inverter_type, self.company, capacity)
 		if not package and self.solar_package:
@@ -744,6 +756,7 @@ class SolarDesignEstimate(Document):
 				"specification": row.specification,
 				"make": row.make,
 				"numbers": row.qty,
+				"in_package": 1,
 			})
 
 	def price_equipment(self):
@@ -757,7 +770,28 @@ class SolarDesignEstimate(Document):
 		self.price_rows_from_backend()
 		for table, count in EQUIPMENT_COUNT.items():
 			for row in self.get(table):
+				if self.included(row):
+					# Covered by the package price (the Package line), not priced on its own.
+					row.rate = 0
 				row.amount = flt(flt(row.rate) * flt(row.get(count)), 2)
+
+	def included(self, row):
+		"""Whether a row is part of the solar package, so the package price covers it."""
+		return bool(self.solar_package and row.get("in_package"))
+
+	def package_price(self):
+		"""What the solar package costs as this estimate builds it: the price list's MRP for
+		the package with the inverter priced here, else the package's own cost."""
+		if not self.solar_package or not frappe.db.exists("Solar Package", self.solar_package):
+			return 0.0
+		package = frappe.get_doc("Solar Package", self.solar_package)
+		priced = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("in_package")), None)
+		if priced:
+			rows = inverters_for_phase(package, self.connection_type) or package.get("inverters") or []
+			match = next((r for r in rows if r.inverter_make == priced.inverter_make), None)
+			if match and flt(match.cost):
+				return flt(match.cost)
+		return package_cost(package)
 
 	def price_rows_from_backend(self):
 		# Read fresh, not from the cache: these are prices, and a stale copy prices wrongly.
@@ -765,7 +799,7 @@ class SolarDesignEstimate(Document):
 		if package:
 			modules = package.get("modules") or []
 			for row in self.get("panels"):
-				if flt(row.rate):
+				if flt(row.rate) or self.included(row):
 					continue
 				match = (
 					next((m for m in modules if m.module_make == row.panel_make
@@ -776,7 +810,7 @@ class SolarDesignEstimate(Document):
 					row.rate = flt(match.rate)
 			inverters = package.get("inverters") or []
 			for row in self.get("inverters"):
-				if flt(row.rate):
+				if flt(row.rate) or self.included(row):
 					continue
 				same_make = [i for i in inverters if i.inverter_make == row.inverter_make]
 				match = (
@@ -798,7 +832,7 @@ class SolarDesignEstimate(Document):
 				if flt(part.cost):
 					bos_rates[(item, "")] = flt(part.cost) / (flt(part.qty) or 1)
 		for row in self.get("bos_items"):
-			if flt(row.rate):
+			if flt(row.rate) or self.included(row):
 				continue
 			rate = bos_rates.get((row.item, row.phase or "")) or bos_rates.get((row.item, ""))
 			if rate:
@@ -813,7 +847,15 @@ class SolarDesignEstimate(Document):
 		"""
 		# A panel, inverter or battery marked as an option is an alternative offered
 		# beside the system, not part of it: shown, not priced.
-		lines = [
+		lines = []
+		if self.solar_package:
+			# The package at its price-list price; its own panels, inverter, battery, boards,
+			# mounting and installation are in it, so the lines below price only what is added.
+			make = next((frappe.db.get_value("Component Make", r.inverter_make, "make_name")
+				for r in self.get("inverters") or [] if r.get("in_package") and not r.is_option and r.inverter_make), None)
+			name = frappe.db.get_value("Solar Package", self.solar_package, "package_name") or self.solar_package
+			lines.append({"key": "package", "label": " - ".join(p for p in (name, make) if p), "amount": flt(self.package_price(), 2)})
+		lines += [
 			{"key": table, "label": label,
 			 "amount": flt(sum(flt(row.amount) for row in self.get(table) if not row.get("is_option")), 2)}
 			for table, label in COMMERCIAL_LINES
@@ -1129,6 +1171,7 @@ class SolarDesignEstimate(Document):
 					"inverter_make": option.inverter_make,
 					"specification": source.inverter_specification or None,
 					"option_key": key,
+					"in_package": 1,
 				}
 		# Each package's other inverters for this connection - Solinteg beside Hoymiles, say -
 		# shown as Options: an alternative, not priced. One unticked on the design step stays out.
@@ -1150,6 +1193,7 @@ class SolarDesignEstimate(Document):
 						"specification": source.inverter_specification or None,
 						"is_option": 1,
 						"option_key": key,
+						"in_package": 1,
 					}
 
 		def rebuild(table, desired, same):
@@ -1181,7 +1225,7 @@ class SolarDesignEstimate(Document):
 					values = row.as_dict()
 					for key in ("name", "parent", "parentfield", "parenttype", "idx", "doctype", "owner", "creation", "modified", "modified_by", "docstatus"):
 						values.pop(key, None)
-					self.append("batteries", values)
+					self.append("batteries", {**values, "in_package": 1})
 		# The kit is the options' now; choosing the package again must not refill it.
 		self.equipment_package = self.solar_package
 		return True
@@ -1265,6 +1309,16 @@ class SolarDesignEstimate(Document):
 				"net_meter_charge": self.net_meter_charge,
 			},
 		)
+		# The package includes flat-roof mounting and installation: the worked-out rows are
+		# shown as included. Structure work beyond it is an Additional Structure; rows added
+		# here by hand are priced as typed.
+		for row in self.get("mounting_expenses"):
+			row.in_package = 1 if self.solar_package and row.get("source") else 0
+		for row in self.get("installation_expenses"):
+			row.in_package = 1 if self.solar_package else 0
+		for row in list(self.get("mounting_expenses")) + list(self.get("installation_expenses")):
+			if self.included(row):
+				row.amount = 0
 
 	# --------------------------------------------------------------- regulation
 	def check_regulation(self):
@@ -1300,6 +1354,10 @@ class SolarDesignEstimate(Document):
 			self.gross_system_cost = flt(row.system_cost)
 			if not self.solar_package and row.solar_package:
 				self.solar_package = row.solar_package
+		# Built on a package with a price, that price is the system's cost.
+		price = self.package_price() if self.solar_package else 0.0
+		if price:
+			self.gross_system_cost = price
 		if self.survey and not flt(self.additional_civil_cost):
 			self.additional_civil_cost = flt(self.survey.additional_civil_cost)
 
@@ -1689,6 +1747,7 @@ def package_panel_rows(package):
 			"panel_variant": make.technology,
 			"panel_make": module.module_make,
 			"is_option": 0 if is_default else 1,
+			"in_package": 1,
 		}, "" if is_default else "|panel|{0}|{1:g}".format(module.module_make, flt(module.module_wattage))))
 	return rows
 

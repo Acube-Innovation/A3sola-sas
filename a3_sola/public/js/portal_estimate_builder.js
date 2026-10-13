@@ -300,10 +300,13 @@
 			]);
 			var count = row.display[s.count_field || "nos"];
 			var qty = count ? count + " × " + (row.display.rate || "—") : (row.display.rate || "");
+			if (row.included) qty = count ? count + " nos" : "";
 			return el("tr", { class: isOption ? "is-off" : "" }, [
 				item,
 				el("td", { class: "a3s-de-money", text: qty }),
-				el("td", { class: "a3s-de-money a3s-de-amount", text: row.display.amount || "" }),
+				row.included && !isOption
+					? el("td", { class: "a3s-de-money" }, [el("span", { class: "a3s-de-included", text: "In package" })])
+					: el("td", { class: "a3s-de-money a3s-de-amount", text: isOption ? "" : (row.display.amount || "") }),
 				rowActions(row)
 			]);
 		});
@@ -315,6 +318,9 @@
 		var head = el("tr", {}, s.columns.map(function (c) { return el("th", { scope: "col", text: c.label }); }).concat([el("th", { "aria-label": "Actions" })]));
 		var rows = s.rows.map(function (row) {
 			var cells = s.columns.map(function (c) {
+				if (row.included && MONEY[c.fieldname]) {
+					return el("td", { class: "a3s-de-money" }, c.fieldname === "amount" ? [el("span", { class: "a3s-de-included", text: "In package" })] : []);
+				}
 				return el("td", { class: MONEY[c.fieldname] ? "a3s-de-money" : null, text: row.display[c.fieldname] || "" });
 			});
 			cells.push(rowActions(row));
@@ -395,9 +401,18 @@
 		var c = state.commercials;
 		var lines = $("de-com-lines");
 		lines.innerHTML = "";
-		c.lines.forEach(function (line) {
-			lines.appendChild(el("li", { class: line.key === active ? "is-active" : "" }, [
-				el("span", { text: line.label }),
+		/* With a package, its price covers its own items: a line shows only when something is
+		   charged on it, or when it is the table being worked on. */
+		var hasPackage = c.lines.some(function (l) { return l.key === "package"; });
+		c.lines.filter(function (line) {
+			return !hasPackage || line.key === "package" || line.key === active || Number(line.amount);
+		}).forEach(function (line) {
+			var isPackage = line.key === "package";
+			lines.appendChild(el("li", { class: (line.key === active ? "is-active" : "") + (isPackage ? " is-package" : "") }, [
+				el("span", {}, [
+					isPackage ? el("small", { class: "a3s-de-com__kicker", text: "Package price" }) : null,
+					document.createTextNode(line.label)
+				]),
 				el("strong", { text: money.format(line.amount) })
 			]));
 		});
@@ -461,7 +476,7 @@
 		row("Proposed size", pick(function (c) { return c.size; }));
 		row("Panels", pick(function (c) { return c.panel_kwp; }));
 		row("Inverters", pick(function (c) { return c.inverter_kw; }));
-		row("Package cost", pick(function (c) { return c.package_cost; }));
+		row("Package price", pick(function (c) { return c.package_cost; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
 		row("Inverter", pick(function (c) { return c.inverter; }));
 		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));

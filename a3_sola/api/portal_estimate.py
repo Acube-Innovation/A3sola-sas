@@ -363,7 +363,7 @@ def option_rows(doc, fields):
 
 
 def package_cost_label(amount):
-	return _("Package cost {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
+	return _("Package price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
 
 
 def package_choices_json(columns):
@@ -598,6 +598,8 @@ def _section(doc, section, child, rows):
 		"name": row.name,
 		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
 		"computed": bool(row.get("source")),
+		# Part of the solar package: its price is the package's, not the row's.
+		"included": bool(doc.solar_package and row.get("in_package")),
 		# An optional count left at 0 was never typed, so the popup shows it blank.
 		"values": {f: _editable_value(row, child.get_field(f)) for f in fieldnames},
 		"display": {f: _display(row, child.get_field(f)) for f in fieldnames},
@@ -704,8 +706,6 @@ def builder_state(doc, editable=None):
 	saved = not doc.is_new()
 	if editable is None:
 		editable = bool(doc.has_permission("write")) and cint(doc.docstatus) == 0
-	sizing = doc.recommended_sizing_row()
-	package_cost = flt(sizing.package_cost) if sizing else 0.0
 	return {
 		"name": doc.name if saved else "",
 		"saved": saved,
@@ -720,7 +720,7 @@ def builder_state(doc, editable=None):
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
 			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
-			{"label": _("Package cost"), "value": frappe.utils.fmt_money(package_cost, currency="INR") if package_cost else "—"},
+			{"label": _("Package price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
 		"choices": _choices(doc),
@@ -994,7 +994,7 @@ def compare(name, pending=None):
 			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
 			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
 			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
-			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package cost")), ""),
+			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
 			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],

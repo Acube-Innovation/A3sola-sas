@@ -314,7 +314,8 @@
 			select.innerHTML = "";
 			if (!list.length) select.appendChild(new Option(info ? "None in this package" : "Choose a package", ""));
 			list.forEach(function (o) {
-				select.appendChild(new Option(o.label + (o["default"] ? " (in package)" : " (option)"), o.value));
+				var price = o.cost ? " — " + money.format(o.cost) : "";
+				select.appendChild(new Option(o.label + price + (o["default"] ? " (default)" : ""), o.value));
 			});
 			var offered = list.some(function (o) { return o.value === keep; });
 			var fallback = list.filter(function (o) { return o["default"]; })[0] || list[0];
@@ -322,8 +323,12 @@
 			select.dataset.value = select.value;
 			if (wrap) wrap.hidden = !applies;
 		});
+		/* The option's price: the package built with the inverter chosen (the price list's MRP). */
 		var cost = tr.querySelector("[data-package-cost]");
-		if (cost) cost.textContent = info && info.package_cost ? "Package cost " + money.format(info.package_cost) : "";
+		var inv = tr.querySelector('[data-component="inverters"]');
+		var chosen = info && inv ? (info.inverters || []).filter(function (o) { return o.value === inv.value; })[0] : null;
+		var price = chosen && chosen.cost ? chosen.cost : (info ? info.package_cost : 0);
+		if (cost) cost.textContent = price ? "Package price " + money.format(price) : "";
 	}
 
 	function optionRows() {
