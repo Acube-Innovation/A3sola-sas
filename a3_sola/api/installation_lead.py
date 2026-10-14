@@ -74,9 +74,22 @@ def lead_context(lead, solar_consumer=None):
 		"solar_package": estimate_values.get("solar_package"),
 		"subsidy_scheme": estimate_values.get("subsidy_scheme") or values.subsidy_scheme,
 	}
+	# The quotation the job was sold on: its proposal's, else its estimate's - submitted first.
+	quotation = (_latest("Quotation", {"solar_proposal": proposal}) if proposal else None) or (
+		_latest("Quotation", {"solar_design_estimate": estimate}) if estimate else None)
+	if quotation:
+		out["quotation"] = quotation
 	if consumer:
 		out.update(frappe.db.get_value("Solar Consumer", consumer, CONSUMER_DEFAULTS, as_dict=True) or {})
 	return out
+
+
+def loan_default(lead, quotation=None):
+	"""Whether a new job for `lead` starts as financed: its quotation's Loan Required (the
+	lead's answer as quoted), else the lead's own answer."""
+	if quotation and frappe.db.exists("Quotation", quotation):
+		return 1 if frappe.db.get_value("Quotation", quotation, "is_financed") else 0
+	return 1 if lead and frappe.db.get_value("Lead", lead, "loan_required") == "Yes" else 0
 
 
 def lead_of(solar_consumer=None, solar_design_estimate=None, solar_proposal=None):
@@ -146,6 +159,8 @@ def get_installation_preview(lead):
 		doc.apply_package_defaults()
 		doc.resolve_template()
 		doc.resolve_statutory()
+	# Financed as quoted (the lead's Loan Required): the loan tasks below follow it.
+	doc.is_financed = loan_default(lead, doc.get("quotation"))
 	doc.execution_start_date = doc.execution_start_date or doc.order_date
 	# The package and size the Details tab shows for the proposal are the job's own to start with.
 	doc.solar_package = doc.solar_package or doc.estimate_package

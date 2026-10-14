@@ -228,7 +228,10 @@ CUSTOM_FIELDS = {
 		{"fieldname": "statutory_total", "fieldtype": "Currency", "label": "Statutory Total", "insert_after": "net_meter_charge", "read_only": 1},
 
 		{"fieldname": "a3s_finance_sb", "fieldtype": "Section Break", "label": "Finance", "insert_after": "statutory_total", "collapsible": 1},
-		{"fieldname": "is_financed", "fieldtype": "Check", "label": "Financed", "insert_after": "a3s_finance_sb"},
+		# The lead's answer to "Loan required?", copied on every save of a draft (overrides
+		# quotation.loan_from_lead) - shown, not set here; it changes no price.
+		{"fieldname": "is_financed", "fieldtype": "Check", "label": "Loan Required", "insert_after": "a3s_finance_sb",
+		 "read_only": 1, "description": "From the lead's Loan Required. Change it on the lead (or later on the project)."},
 		{"fieldname": "lender", "fieldtype": "Data", "label": "Lender", "insert_after": "is_financed", "depends_on": "eval:doc.is_financed"},
 		{"fieldname": "lender_branch", "fieldtype": "Data", "label": "Branch", "insert_after": "lender", "depends_on": "eval:doc.is_financed"},
 		{"fieldname": "loan_scheme", "fieldtype": "Select", "options": "\nPM Surya Ghar via Jan Samarth\nBank Own Scheme\nOther", "label": "Loan Scheme", "insert_after": "lender_branch", "depends_on": "eval:doc.is_financed"},
@@ -251,11 +254,8 @@ CUSTOM_FIELDS = {
 		{"fieldname": "solar_package", "fieldtype": "Link", "options": "Solar Package", "label": "Solar Package", "insert_after": "item_name", "read_only": 1},
 		{"fieldname": "package_option", "fieldtype": "Data", "label": "Package Option", "insert_after": "solar_package", "read_only": 1, "description": "Which inverter option of the package this line prices."},
 	],
-	# --------------------------------------------------------------- Sales Order
-	"Sales Order": [
-		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "order_type", "collapsible": 1},
-		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "a3s_solar_sb", "read_only": 1},
-	],
+	# Sales Order: ERPNext's own form, nothing added. It is linked to its quotation by
+	# ERPNext's item rows (prevdoc_docname), which is how the handoff finds the consumer.
 }
 
 

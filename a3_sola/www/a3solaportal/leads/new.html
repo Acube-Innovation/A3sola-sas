@@ -58,6 +58,19 @@
 			</div>
 		</div>
 
+		{#- Carried to the quotation and the project, where it decides the loan tasks. -#}
+		<div class="a3s-field-row">
+			<div class="a3s-field" id="f-loan_required">
+				<label for="loan_required">Loan required? <span class="a3s-req">*</span></label>
+				<select id="loan_required" name="loan_required" required>
+					<option value="">&mdash;</option>
+					<option value="Yes">Yes</option>
+					<option value="No">No</option>
+				</select>
+				<p class="a3s-field__hint">Will the customer finance the plant with a loan?</p>
+			</div>
+		</div>
+
 		<div class="a3s-form__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-lead-submit">Create lead</button>
 			<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads">Cancel</a>

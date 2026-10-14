@@ -19,7 +19,9 @@ def get_data():
 			},
 			{
 				"label": _("Sales"),
-				"items": ["Solar Proposal", "Quotation", "Sales Order"],
+				# A sales order has no consumer field (ERPNext's own form): it is found
+				# from its quotation.
+				"items": ["Solar Proposal", "Quotation"],
 			},
 			{
 				"label": _("Execution"),

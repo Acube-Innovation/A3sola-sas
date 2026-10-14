@@ -98,6 +98,7 @@ class LoanApplication(Document):
 		self.push_to_installation()
 
 	def push_to_installation(self):
+		was_financed = frappe.db.get_value("Solar Installation", self.solar_installation, "is_financed")
 		frappe.db.set_value(
 			"Solar Installation",
 			self.solar_installation,
@@ -114,6 +115,16 @@ class LoanApplication(Document):
 			},
 			update_modified=False,
 		)
+		if not was_financed:
+			# A loan on a job sold as self-funded: its loan tasks apply now, as when the
+			# project is edited to Financed (stages.reapply_applicability).
+			from a3_sola.api import stages
+
+			installation = frappe.get_doc("Solar Installation", self.solar_installation)
+			changed = stages.reapply_applicability(installation)
+			if changed:
+				stages._save(installation, _("Loan application {0}: tasks updated: {1}.").format(
+					self.name, "; ".join("{0}: {1}".format(name, _("now applies")) for name, _state, _reason in changed)))
 
 	def generate_lender_pack(self):
 		"""Vendor feasibility report, EHS checklist, covering letter and the project proposal.

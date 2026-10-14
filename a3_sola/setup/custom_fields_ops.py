@@ -45,26 +45,11 @@ CUSTOM_FIELDS = {
 			"depends_on": "eval:doc.is_dcr",
 		},
 	],
-	"Sales Order": [
-		{
-			"fieldname": "solar_installation",
-			"fieldtype": "Link",
-			"options": "Solar Installation",
-			"label": "Solar Installation",
-			"insert_after": "solar_consumer",
-			"read_only": 1,
-		},
-		# The order is the first task, and the KYC it fetches from the consumer is its evidence.
-		{"fieldname": "a3s_kyc_sb", "fieldtype": "Section Break", "label": "Customer KYC",
-		 "insert_after": "solar_installation", "collapsible": 1, "depends_on": "eval:doc.solar_consumer"},
-		{"fieldname": "kyc_status", "fieldtype": "Small Text", "label": "KYC Status", "insert_after": "a3s_kyc_sb",
-		 "read_only": 1},
-		{"fieldname": "kyc_html", "fieldtype": "HTML", "label": "KYC Documents", "insert_after": "kyc_status"},
-	],
 }
 
-#: The task header every executing ERPNext document carries, so the order, the purchase
-#: order and the delivery note say who was to do them, by when, and what they cost.
+#: The task header the executing ERPNext documents carry, so the purchase order and the
+#: delivery note say who was to do them, by when, and what they cost. (The sales order is
+#: ERPNext's own form, nothing added.)
 TASK_HEADER = [
 	{"fieldname": "a3s_task_sb", "fieldtype": "Section Break", "label": "Task", "collapsible": 1},
 	{"fieldname": "assigned_by", "fieldtype": "Link", "options": "User", "label": "Assigned By", "read_only": 1},
@@ -84,7 +69,6 @@ def _header(after):
 	return rows
 
 
-CUSTOM_FIELDS["Sales Order"] += _header("kyc_html")
 CUSTOM_FIELDS["Purchase Order"] += [
 	# Where the materials go: the consumer's location, captured at survey, carried to the PO.
 	{"fieldname": "a3s_site_sb", "fieldtype": "Section Break", "label": "Site", "insert_after": "solar_installation",

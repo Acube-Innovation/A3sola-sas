@@ -49,7 +49,7 @@ LEAD_SECTIONS = [
 		"fields": [
 			"subsidy_scheme", "discom", "discom_section", "consumer_number", "consumer_category",
 			"connection_type", "roof_type", "approx_consumption_units", "avg_monthly_bill",
-			"approx_capacity_kw", "solar_consumer", "solar_proposal",
+			"approx_capacity_kw", "loan_required", "solar_consumer", "solar_proposal",
 		],
 	},
 	{
@@ -130,6 +130,7 @@ GLANCE = [
 	{"label": "System size", "field": "approx_capacity_kw", "kind": "number", "suffix": " kW"},
 	{"label": "Avg monthly bill", "field": "avg_monthly_bill", "kind": "money"},
 	{"label": "Consumer category", "field": "consumer_category"},
+	{"label": "Loan required", "field": "loan_required"},
 ]
 
 
@@ -242,6 +243,7 @@ def create_lead(
 	phone=None,
 	status=None,
 	source=None,
+	loan_required=None,
 ):
 	"""Create a Lead from the portal form and return its name and portal route.
 
@@ -255,6 +257,12 @@ def create_lead(
 	if not lead_name and not company_name:
 		frappe.throw(_("Enter a lead name or a company name."), frappe.MandatoryError)
 
+	# Asked of every new lead: it decides whether the job's loan tasks apply, carried to the
+	# quotation and on to the project.
+	loan_required = (loan_required or "").strip()
+	if loan_required not in ("Yes", "No"):
+		frappe.throw(_("Say whether the customer needs a loan: Yes or No."), frappe.MandatoryError)
+
 	status = (status or "Lead").strip()
 	if status not in LEAD_STATUSES:
 		status = "Lead"
@@ -266,6 +274,7 @@ def create_lead(
 	doc.mobile_no = (mobile_no or "").strip() or None
 	doc.phone = (phone or "").strip() or None
 	doc.status = status
+	doc.loan_required = loan_required
 	if (source or "").strip():
 		doc.source = source.strip()
 

@@ -60,11 +60,18 @@ class TestSeeding(FrappeTestCase):
 
 	def test_custom_fields_are_module_scoped(self):
 		"""So `bench export-fixtures` does not drag unrelated records in."""
-		for doctype in ("Company", "Lead", "Quotation", "Item", "Opportunity", "Sales Order"):
+		for doctype in ("Company", "Lead", "Quotation", "Item", "Opportunity"):
 			fields = frappe.get_all(
 				"Custom Field", filters={"dt": doctype, "module": "Solar CRM"}, pluck="name"
 			)
 			self.assertTrue(fields, f"no module-scoped custom fields on {doctype}")
+
+	def test_the_sales_order_is_erpnexts_own_form(self):
+		"""Nothing of this app's on the Sales Order: it is linked to its quotation by
+		ERPNext's item rows (patch v1_2.sales_order_erpnext_default)."""
+		from a3_sola.patches.v1_2.sales_order_erpnext_default import FIELDS
+
+		self.assertFalse(frappe.get_all("Custom Field", filters={"dt": "Sales Order", "fieldname": ["in", FIELDS]}))
 
 	def test_the_subsidy_display_field_carries_its_warning(self):
 		description = frappe.db.get_value(

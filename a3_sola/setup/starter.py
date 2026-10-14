@@ -1182,6 +1182,8 @@ def _sales_order(company, customer, quotation):
 	so the installation comes out carrying its quotation, order, estimate, eligibility
 	check and proposal - which is what makes the chain walkable in both directions.
 	"""
+	from a3_sola.overrides.sales_order import working_day  # no delivery on a weekend
+
 	if not quotation:
 		return None
 	if frappe.db.get_value("Quotation", quotation, "docstatus") != 1:
@@ -1202,14 +1204,14 @@ def _sales_order(company, customer, quotation):
 			"company": company,
 			"customer": customer,
 			"transaction_date": _dated(company, ORDERED_DAYS_AGO),
-			"delivery_date": add_days(_dated(company, ORDERED_DAYS_AGO), 60),
+			"delivery_date": working_day(add_days(_dated(company, ORDERED_DAYS_AGO), 60)),
 			"solar_consumer": q.solar_consumer,
 			"items": [
 				{
 					"item_code": row.item_code,
 					"qty": row.qty,
 					"rate": row.rate,
-					"delivery_date": add_days(_dated(company, ORDERED_DAYS_AGO), 60),
+					"delivery_date": working_day(add_days(_dated(company, ORDERED_DAYS_AGO), 60)),
 					"prevdoc_docname": q.name,
 				}
 				for row in q.items

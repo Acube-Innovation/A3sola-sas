@@ -33,7 +33,12 @@ COLLECTIONS = {
 	"quotations": {"doctype": "Quotation", "title": "Quotation", "singular": "quotation", "subtitle": "Priced offer", "icon": "calc"},
 	# An ERPNext Sales Order. Created from a quotation by ERPNext's own mapping, so the
 	# items and taxes arrive intact; the portal only ever reads and edits the draft.
-	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart"},
+	# ERPNext refuses an order without a delivery date though its field is not marked so.
+	"sales-orders": {"doctype": "Sales Order", "title": "Sales Order", "singular": "sales order", "subtitle": "Confirmed orders", "icon": "cart",
+		"required": ("delivery_date",),
+		# A week from today, on a working day; the person may change it, but not to a weekend.
+		"defaults": {"delivery_date": "a3_sola.overrides.sales_order.default_delivery_date"},
+		"no_weekend": ("delivery_date",)},
 	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
 	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID",
 	                     "list_edit": True},
@@ -401,6 +406,13 @@ def show_when(df):
 	return "{0}={1}".format(match.group(1), match.group(2))
 
 
+#: Fields the portal's forms never show, by doctype: ERPNext sets them itself (an order's
+#: currency and exchange rates come from the company, customer and price list).
+PORTAL_HIDDEN = {
+	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
+}
+
+
 def form_fields(meta, prefill=None, extra=()):
 	"""The fields the create form renders, and the mandatory ones it cannot.
 
@@ -420,8 +432,9 @@ def form_fields(meta, prefill=None, extra=()):
 
 	optional = 0
 	wanted = set(extra or ())
+	hidden = PORTAL_HIDDEN.get(meta.name, set())
 	for f in meta.fields:
-		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only:
+		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only or f.fieldname in hidden:
 			continue
 		reqd = bool(f.reqd) or f.fieldname in wanted
 		if f.fieldtype not in INPUT_TYPES:
@@ -522,6 +535,9 @@ def new_context(context, slug):
 	cfg = get_collection(slug)
 	meta = frappe.get_meta(cfg["doctype"])
 	source_doc, step, prefill = source_prefill(slug)
+	for fieldname, method in (cfg.get("defaults") or {}).items():
+		if not prefill.get(fieldname):
+			prefill = {**prefill, fieldname: frappe.get_attr(method)()}
 	fill_shell(
 		context,
 		active_route=f"/a3solaportal/{slug}",
@@ -533,6 +549,11 @@ def new_context(context, slug):
 		],
 	)
 	fields, unrenderable = form_fields(meta, prefill, form_extra(cfg, meta))
+	for f in fields:
+		if f["fieldname"] in cfg.get("required", ()):
+			f["reqd"] = True
+		if f["fieldname"] in cfg.get("no_weekend", ()):
+			f["no_weekend"] = True
 	# The record a create form is filled from is asked for first: the lead, then the consumer.
 	first = ("lead", "solar_consumer")
 	fields.sort(key=lambda f: first.index(f["fieldname"]) if f["fieldname"] in first else len(first))
@@ -543,6 +564,22 @@ def new_context(context, slug):
 		label for label in unrenderable
 		if not context.item_table or label != context.item_table["label"]
 	]
+	# Built by a mapper (a sales order from its quotation): the items it carries across are
+	# shown as they will be, not typed, so the notice that they are wanted does not apply.
+	context.source_items = None
+	if step and step.get("via") and source_doc:
+		from a3_sola.api.portal_chain import mapped_doc
+
+		mapped = mapped_doc(step, source_doc)
+		currency = mapped.get("currency") or "INR"
+		context.source_items = {
+			"rows": [{"item": r.item_name or r.item_code, "description": frappe.utils.strip_html(r.description or ""),
+				"qty": frappe.utils.flt(r.qty), "rate": frappe.utils.fmt_money(r.rate, currency=currency),
+				"amount": frappe.utils.fmt_money(r.amount, currency=currency)} for r in mapped.get("items") or []],
+			"total": frappe.utils.fmt_money(mapped.get("grand_total") or mapped.get("total"), currency=currency),
+		}
+		items_label = _(meta.get_label("items"))
+		context.unrenderable = [label for label in context.unrenderable if label != items_label]
 	# Carried on the form so the write endpoint can apply the rest of the mapping and
 	# record the new document back on the record it came from.
 	context.source_dt = source_doc.doctype if source_doc else ""
@@ -642,6 +679,14 @@ def edit_route(slug, name):
 	return record_route(slug, name) + ("/design" if slug == "design-estimates" else "/edit")
 
 
+#: What a SUBMITTED record may still be changed in from the portal, by doctype - fields the
+#: doctype allows on submit. A project is submitted when it is created; its finance can
+#: change later (a loan taken or dropped), and the tasks follow (stages.reapply_applicability).
+EDITABLE_AFTER_SUBMIT = {
+	"Solar Installation": ("is_financed", "lender", "lender_branch", "loan_sanction_no", "jan_samarth_id"),
+}
+
+
 def is_editable(doc):
 	"""Whether the portal's edit form may be pointed at this record.
 
@@ -650,7 +695,9 @@ def is_editable(doc):
 	lead to a form that cannot be saved. A doctype that is not submittable sits at
 	docstatus 0 for its whole life, so this is simply write permission for those.
 	"""
-	return bool(doc.has_permission("write")) and frappe.utils.cint(doc.get("docstatus")) == 0
+	docstatus = frappe.utils.cint(doc.get("docstatus"))
+	editable_state = docstatus == 0 or (docstatus == 1 and doc.doctype in EDITABLE_AFTER_SUBMIT)
+	return bool(doc.has_permission("write")) and editable_state
 
 
 def load_record(slug, name, permtype="read"):
@@ -667,7 +714,10 @@ def load_record(slug, name, permtype="read"):
 		raise frappe.DoesNotExistError(_("That record does not exist."))
 	doc = frappe.get_doc(doctype, name)
 	doc.check_permission(permtype)
-	if permtype == "write" and frappe.utils.cint(doc.get("docstatus")) != 0:
+	# A submitted record is closed, except the few fields its doctype lets change after
+	# submit (EDITABLE_AFTER_SUBMIT) - the edit form then offers only those.
+	docstatus = frappe.utils.cint(doc.get("docstatus"))
+	if permtype == "write" and docstatus != 0 and not (docstatus == 1 and doctype in EDITABLE_AFTER_SUBMIT):
 		frappe.throw(
 			_("{0} has been submitted and can no longer be edited here.").format(name),
 			frappe.PermissionError,
@@ -913,13 +963,19 @@ def edit_fields_for(doc, first_label=None):
 	Reused verbatim by the update endpoint as its allow-list, so the two never drift: a
 	field the form does not render is a field the endpoint refuses to set.
 	"""
+	# A submitted record offers only what it may still change.
+	only = EDITABLE_AFTER_SUBMIT.get(doc.doctype) if frappe.utils.cint(doc.get("docstatus")) == 1 else None
+	if frappe.utils.cint(doc.get("docstatus")) == 1 and only is None:
+		return []
 	groups = []
 	for g in form_groups(doc.meta, first_label):
 		sections = []
 		for s in g["sections"]:
 			specs = []
 			for df in s["fields"]:
-				if df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS:
+				if (df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS
+						or df.fieldname in PORTAL_HIDDEN.get(doc.doctype, ())
+						or (only is not None and df.fieldname not in only)):
 					continue
 				spec = edit_spec(df, doc.get(df.fieldname), doc)
 				# Shown only with the answer it belongs to, as the desk's depends_on does.

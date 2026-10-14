@@ -73,7 +73,7 @@
 					</span>
 				</div>
 				{%- elif f.type == "Date" %}
-				<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+				<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"{% if f.no_weekend %} data-no-weekend{% endif %}>
 				{%- elif f.type == "Datetime" %}
 				<input type="datetime-local" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
 				{%- elif f.type in ("Int", "Float", "Currency", "Percent") %}
@@ -86,6 +86,26 @@
 		</div>
 		{%- endfor %}
 		</div>
+
+		{#- Items a mapper carries across (a sales order from its quotation): shown, not typed. -#}
+		{%- if source_items and source_items.rows %}
+		<div class="a3s-source-items">
+			<h3 class="a3s-edit__card-title">Items from {{ source_title | e }}</h3>
+			<div class="a3s-de-table">
+				<table>
+					<thead><tr><th>Item</th><th class="a3s-de-money">Qty</th><th class="a3s-de-money">Rate</th><th class="a3s-de-money">Amount</th></tr></thead>
+					<tbody>
+					{%- for r in source_items.rows %}
+					<tr><td><strong>{{ r.item | e }}</strong>{% if r.description and r.description != r.item %}<small class="a3s-de-sub">{{ r.description | e }}</small>{% endif %}</td>
+						<td class="a3s-de-money">{{ "%g" | format(r.qty) }}</td><td class="a3s-de-money">{{ r.rate }}</td><td class="a3s-de-money">{{ r.amount }}</td></tr>
+					{%- endfor %}
+					</tbody>
+				</table>
+			</div>
+			<p class="a3s-source-items__total">Total <strong>{{ source_items.total }}</strong></p>
+			<p class="a3s-field__hint">Carried across with their rates and taxes as quoted; change them on the order in ERPNext if needed.</p>
+		</div>
+		{%- endif %}
 
 		{#- A collection with a rows table (Additional Structure, ...) edits it here, in the form. -#}
 		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
