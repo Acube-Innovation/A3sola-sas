@@ -1,4 +1,5 @@
-{#- One option of a proposal, as a quotation shows it: `part` is details, bom or terms.
+{#- One option of a proposal, as a quotation shows it: `part` is details, bom or terms, or
+    preview - the facts and main components, for the pop-up that tells options apart.
     From api/quotation_option.render - the same data the proposal print sets out, shown and
     not typed. Plain tables and inline styles, so it reads the same on the desk and the portal. -#}
 <div class="a3q" style="font-size: 13px; line-height: 1.5;">
@@ -17,7 +18,9 @@
 		.a3q .facts dd { margin: 2px 0 0; font-weight: 600; }
 		.a3q ul, .a3q ol { margin: 0 0 10px; padding-left: 20px; }
 	</style>
-	{%- if part == "details" %}
+	{%- if part == "preview" %}
+	{#- An option told from the others at a glance (the quotation page's pop-up): its facts,
+	    its main components - panels, inverter, battery - and its project cost. -#}
 	{%- if opt %}
 	<dl class="facts">
 		<div><dt>Design estimate</dt><dd>{{ opt.estimate }}</dd></div>
@@ -25,6 +28,38 @@
 		<div><dt>Package</dt><dd>{{ opt.package or "—" }}</dd></div>
 		<div><dt>System</dt><dd>{{ opt.capacity_kwp }} kWp {{ opt.connection_type }} {{ opt.system_type }}</dd></div>
 		<div><dt>Plant price</dt><dd>{{ opt.price_text }}</dd></div>
+		<div><dt>Loan required</dt><dd>{{ loan or "Not stated" }}</dd></div>
+	</dl>
+	{%- endif %}
+	{%- set main = components.rows | selectattr("item", "in", ("Solar Panels", "Solar PV Inverter", "Solar PV Hybrid Inverter", "Battery")) | list %}
+	{%- if main %}
+	<table>
+		<colgroup><col style="width: 5%"><col style="width: 20%"><col><col style="width: 20%"><col style="width: 11%"></colgroup>
+		<tr><th>#</th><th>Item</th><th>Specification</th><th>Make</th><th class="num">Nos.</th></tr>
+		{%- for r in main %}
+		<tr><td>{{ loop.index }}</td><td>{{ r.item }}</td><td>{{ r.spec or "—" }}</td>
+			<td>{% for line in (r.make or "—").split("\n") %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+			<td class="num">{{ r.nos or "—" }}</td></tr>
+		{%- endfor %}
+	</table>
+	{%- endif %}
+	<h4>Project Cost</h4>
+	<table>
+		<colgroup><col><col style="width: 20%"></colgroup>
+		{%- for r in rest.cost %}
+		<tr class="{{ 'b' if r.bold else '' }}"><td{% if r.right %} class="num"{% endif %}>{{ r.item }}</td><td class="num">{{ r.amount_text }}</td></tr>
+		{%- endfor %}
+	</table>
+
+	{%- elif part == "details" %}
+	{%- if opt %}
+	<dl class="facts">
+		<div><dt>Design estimate</dt><dd>{{ opt.estimate }}</dd></div>
+		{%- if proposal %}<div><dt>Proposal</dt><dd>{{ proposal }}</dd></div>{% endif %}
+		<div><dt>Package</dt><dd>{{ opt.package or "—" }}</dd></div>
+		<div><dt>System</dt><dd>{{ opt.capacity_kwp }} kWp {{ opt.connection_type }} {{ opt.system_type }}</dd></div>
+		<div><dt>Plant price</dt><dd>{{ opt.price_text }}</dd></div>
+		<div><dt>Loan required</dt><dd>{{ loan or "Not stated" }}</dd></div>
 	</dl>
 	{%- endif %}
 	<h4>Executive Summary</h4>

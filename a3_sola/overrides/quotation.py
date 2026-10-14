@@ -93,6 +93,34 @@ def reject_subsidy_rows(doc):
 			)
 
 
+def loan_from_lead(doc, method=None):
+	"""Quotation before_validate: Loan Required mirrors the lead's answer while a draft.
+
+	It is the lead's answer, shown here and carried on through the order to the project,
+	where it decides the loan tasks. It changes nothing on the quotation itself."""
+	if doc.docstatus != 0:
+		return
+	lead = _lead_of(doc)
+	if lead:
+		doc.is_financed = 1 if frappe.db.get_value("Lead", lead, "loan_required") == "Yes" else 0
+
+
+def _lead_of(doc):
+	"""The lead a quotation is for: its design estimate's, its proposal's, or the one it is
+	addressed to."""
+	if doc.get("solar_design_estimate"):
+		lead = frappe.db.get_value("Solar Design Estimate", doc.solar_design_estimate, "lead")
+		if lead:
+			return lead
+	if doc.get("solar_proposal"):
+		lead = frappe.db.get_value("Solar Proposal", doc.solar_proposal, "lead")
+		if lead:
+			return lead
+	if doc.get("quotation_to") == "Lead":
+		return doc.get("party_name")
+	return None
+
+
 def enforce_gates(doc, submitting=True):
 	"""Each gate raises a specific, actionable error naming the document to fix."""
 	has_solar_item = bool(doc.get("solar_package")) or bool(doc.get("capacity_kw"))
@@ -109,13 +137,15 @@ def enforce_gates(doc, submitting=True):
 			)
 		return
 
+	# A draft estimate may be quoted: the quotation carries its own items and price, and the
+	# proposal's versions keep what each one offered. Only a cancelled estimate is refused.
 	estimate = frappe.get_cached_doc("Solar Design Estimate", doc.solar_design_estimate)
-	if submitting and estimate.docstatus != 1:
+	if submitting and estimate.docstatus == 2:
 		frappe.throw(
-			_("Design Estimate {0} is not submitted. Submit it before submitting this quotation.").format(
+			_("Design Estimate {0} is cancelled. Choose a current estimate for this quotation.").format(
 				frappe.utils.get_link_to_form("Solar Design Estimate", estimate.name)
 			),
-			title=_("Design Estimate Not Submitted"),
+			title=_("Design Estimate Cancelled"),
 		)
 
 	if flt(doc.capacity_kw) and flt(estimate.final_capacity_kw) and flt(doc.capacity_kw, 3) != flt(
@@ -128,29 +158,8 @@ def enforce_gates(doc, submitting=True):
 			title=_("Capacity Mismatch"),
 		)
 
-	check = doc.get("subsidy_eligibility_check")
-	if check:
-		# The manual override wins where one was recorded, so a job a manager passed by
-		# hand is not stopped here by the rules it was passed in spite of.
-		from a3_sola.solar_crm.doctype.subsidy_eligibility_check.subsidy_eligibility_check import (
-			effective_result,
-		)
-
-		result = effective_result(check)
-		if result == "Not Eligible" and submitting:
-			frappe.throw(
-				_("Eligibility check {0} returned Not Eligible. Resolve the failing rules, record a waiver, or override the result before submitting.").format(
-					frappe.utils.get_link_to_form("Subsidy Eligibility Check", check)
-				),
-				title=_("Not Eligible"),
-			)
-	elif submitting and estimate.subsidy_scheme:
-		frappe.throw(
-			_("This quotation claims subsidy scheme {0} but has no Subsidy Eligibility Check. Run one for {1} first.").format(
-				estimate.subsidy_scheme, doc.get("solar_consumer")
-			),
-			title=_("Eligibility Check Required"),
-		)
+	# Subsidy eligibility does not hold a quotation back: a check, where one was run, is on
+	# the record for the subsidy application, and the quotation goes out either way.
 
 
 def on_submit(doc, method=None):

@@ -84,22 +84,100 @@
 
 	/* ------------------------------------------------------------ the options */
 	Array.prototype.forEach.call(root.querySelectorAll("[data-combo]"), window.a3sCombo.wire);
+	/* A card per option: hover lifts it, a click opens its details to tell it from the
+	   others (preview below), and its radio - or Choose there - picks it. */
 	function optionCard(o, proposal) {
 		var id = "qf-opt-" + o.estimate;
-		var label = node("label", "a3s-qf__opt");
-		label.htmlFor = id;
+		var card = node("div", "a3s-qf__opt");
+		card.tabIndex = 0;
+		card.setAttribute("role", "button");
+		card.setAttribute("aria-label", optionTitle(o) + " - view details");
 		var radio = node("input");
 		radio.type = "radio"; radio.name = "qf-option"; radio.id = id; radio.value = o.estimate;
 		radio.disabled = !state.editable;
 		radio.checked = o.estimate === chosen.estimate;
+		radio.setAttribute("aria-label", "Choose " + optionTitle(o));
 		radio.addEventListener("change", function () { choose(o.estimate, proposal); });
-		label.appendChild(radio);
+		radio.addEventListener("click", function (e) { e.stopPropagation(); });
+		card.appendChild(radio);
 		var text = node("span", "a3s-qf__opt-text");
-		text.appendChild(node("b", "", (o.number ? "Option " + o.number : "Estimate") + " · " + (o.package || o.estimate)));
-		text.appendChild(node("small", "", o.capacity_kwp + " kWp " + o.connection_type + " " + o.system_type + " · " + o.estimate + (o.submitted ? "" : " · draft")));
-		label.appendChild(text);
-		label.appendChild(node("span", "a3s-qf__price", o.price_text));
-		return label;
+		text.appendChild(node("b", "", optionTitle(o)));
+		text.appendChild(node("small", "", optionSub(o)));
+		card.appendChild(text);
+		var right = node("span", "a3s-qf__opt-right");
+		right.appendChild(node("span", "a3s-qf__price", o.price_text));
+		right.appendChild(node("small", "a3s-qf__opt-more", "View details"));
+		card.appendChild(right);
+		card.addEventListener("click", function () { preview(o, proposal); });
+		card.addEventListener("keydown", function (e) {
+			if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); preview(o, proposal); }
+		});
+		return card;
+	}
+	function optionTitle(o) {
+		return (o.number ? "Option " + o.number : "Estimate") + " \u00b7 " + (o.package || o.estimate);
+	}
+	function optionSub(o) {
+		return o.capacity_kwp + " kWp " + o.connection_type + " " + o.system_type + " \u00b7 " + o.estimate + (o.submitted ? "" : " \u00b7 draft");
+	}
+
+	/* The option in a pop-up: its facts and main components (panels, inverter, battery). */
+	function preview(o, proposal) {
+		var back = node("div", "a3s-modal");
+		var panel = node("div", "a3s-modal__panel a3s-qf-preview");
+		panel.setAttribute("role", "dialog");
+		panel.setAttribute("aria-modal", "true");
+		panel.setAttribute("aria-label", optionTitle(o));
+		var head = node("div", "a3s-qf-preview__head");
+		var titles = node("div");
+		titles.appendChild(node("h3", "a3s-qf-preview__title", optionTitle(o)));
+		titles.appendChild(node("p", "a3s-qf-preview__sub", optionSub(o) + (proposal ? " \u00b7 Proposal " + proposal : "")));
+		head.appendChild(titles);
+		head.appendChild(node("strong", "a3s-qf-preview__price", o.price_text));
+		var close = node("button", "a3s-qf-preview__x", "\u00d7");
+		close.type = "button";
+		close.setAttribute("aria-label", "Close");
+		head.appendChild(close);
+		var body = node("div", "a3s-qf-preview__body");
+		body.appendChild(node("p", "a3s-field__hint", "Loading the option\u2026"));
+		var foot = node("div", "a3s-form__actions a3s-qf-preview__foot");
+		var isChosen = o.estimate === chosen.estimate;
+		if (state.editable) {
+			var pick = node("button", "a3s-btn a3s-btn--primary", isChosen ? "Chosen" : "Choose this option");
+			pick.type = "button";
+			pick.disabled = isChosen;
+			pick.addEventListener("click", function () { choose(o.estimate, proposal, true); shut(); });
+			foot.appendChild(pick);
+		}
+		var done = node("button", "a3s-btn a3s-btn--ghost", "Close");
+		done.type = "button";
+		foot.appendChild(done);
+		panel.appendChild(head); panel.appendChild(body); panel.appendChild(foot);
+		back.appendChild(panel);
+
+		function onKey(e) { if (e.key === "Escape") shut(); }
+		function shut() { back.remove(); document.removeEventListener("keydown", onKey); }
+		document.addEventListener("keydown", onKey);
+		back.addEventListener("click", function (e) { if (e.target === back) shut(); });
+		close.addEventListener("click", shut);
+		done.addEventListener("click", shut);
+		document.body.appendChild(back);
+		close.focus();
+
+		call("quotation_option.option_view", { estimate: o.estimate, proposal: proposal })
+			.then(function (v) {
+				body.innerHTML = "";
+				[["preview", "Details"]].forEach(function (part) {
+					if (!(v || {})[part[0]]) return;
+					var section = node("section", "a3s-qf-preview__part");
+					section.appendChild(node("h4", "a3s-qf-preview__label", part[1]));
+					var html = node("div");
+					html.innerHTML = v[part[0]];
+					section.appendChild(html);
+					body.appendChild(section);
+				});
+			})
+			.catch(function (e) { body.innerHTML = ""; body.appendChild(node("p", "a3s-form__status is-error", e.message)); });
 	}
 	function paintOptions(data) {
 		box.innerHTML = "";

@@ -534,6 +534,9 @@ def print_rest(doc):
 	]
 	out["bank_credentials"] = [("Bank", company.get("payee_bank_name") or ""), ("A/c No.", company.get("payee_bank_account_no") or ""),
 		("Branch", company.get("payee_bank_branch") or ""), ("IFS Code", company.get("payee_bank_ifsc") or "")]
+	# The company's payment QR (Company > Payee Bank > Payment QR Code): a column of its own
+	# beside the bank details, for the customer to scan and pay.
+	out["payment_qr"] = company.get("payment_qr_code") or ""
 
 	# 3.7 warranty: the package's system warranty, then each make's own terms.
 	def make_doc(name):
