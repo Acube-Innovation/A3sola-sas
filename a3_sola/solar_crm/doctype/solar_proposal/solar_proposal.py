@@ -17,7 +17,7 @@ so a list or a report reads the current state without walking the table.
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, now_datetime
+from frappe.utils import cint, flt, getdate, now_datetime
 
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_settings, get_value
@@ -223,7 +223,9 @@ class SolarProposal(Document):
 		self.sent_on = latest.sent_on
 		self.sent_by = latest.sent_by
 		self.lost_reason = latest.lost_reason
-		self.status = _status_of(latest)
+		# The client may take an earlier version than the newest (Version 2 of three): one
+		# accepted is the proposal accepted.
+		self.status = "Accepted" if any(v.outcome == "Accepted" for v in self.versions) else _status_of(latest)
 
 	def pull_from_estimate(self):
 		if not self.solar_design_estimate:
@@ -441,6 +443,12 @@ def _current_version(doc):
 	return doc.versions[-1] if doc.versions else None
 
 
+def version_is_out(version):
+	"""Whether a version has gone to the client - sent, or answered. Its PDF is then the
+	record of what was offered, so it is never rendered again: a change is a new version."""
+	return bool(version and (version.sent_on or (version.outcome or "Awaiting Response") != "Awaiting Response"))
+
+
 def _save_version_change(doc):
 	"""Persist a version change, on a submitted proposal as much as a draft one.
 
@@ -454,6 +462,42 @@ def _save_version_change(doc):
 	return doc
 
 
+def _make_base(doc, estimate):
+	"""Quote `estimate` from now on: first in the proposal's estimates, which is what the PDF
+	and the next version are drawn from. A changed design saved as an estimate of its own
+	leaves the earlier versions' estimates - and so what they quoted - as they were."""
+	if not frappe.db.exists("Solar Design Estimate", estimate):
+		frappe.throw(_("Design estimate {0} does not exist.").format(estimate))
+	rows = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.solar_design_estimate]
+	if rows[:1] == [estimate]:
+		doc.solar_design_estimate = estimate
+		return
+	rows = [estimate] + [r for r in rows if r != estimate]
+	doc.set("design_estimates", [])
+	for idx, name in enumerate(rows, start=1):
+		doc.append("design_estimates", {"solar_design_estimate": name, "is_base": 1 if idx == 1 else 0})
+	doc.solar_design_estimate = estimate
+
+
+def version_choices(doc):
+	"""The versions a quotation can be raised for, newest first, each saying what it quoted
+	and whether its estimate was changed after it was raised - the quotation is built from
+	the estimate as it is now."""
+	out = []
+	for v in reversed(doc.get("versions") or []):
+		modified = frappe.db.get_value("Solar Design Estimate", v.solar_design_estimate, "modified") \
+			if v.solar_design_estimate else None
+		out.append({
+			"version_no": v.version_no,
+			"estimate": v.solar_design_estimate or "",
+			"cost": flt(v.recommended_option_cost),
+			"raised": frappe.utils.format_datetime(v.version_date, "d MMM, h:mm a") if v.version_date else "",
+			"outcome": v.outcome or "Awaiting Response",
+			"changed_after": bool(modified and v.version_date and modified > v.version_date),
+		})
+	return out
+
+
 @frappe.whitelist()
 def add_version(solar_proposal, solar_design_estimate=None, notes=None):
 	"""Re-quote: open a new version of this proposal rather than a second proposal.
@@ -464,7 +508,7 @@ def add_version(solar_proposal, solar_design_estimate=None, notes=None):
 	doc = frappe.get_doc("Solar Proposal", solar_proposal)
 	doc.check_permission("write")
 	if solar_design_estimate:
-		doc.solar_design_estimate = solar_design_estimate
+		_make_base(doc, solar_design_estimate)
 	row = _open_version(doc, notes)
 	_save_version_change(doc)
 	return {"version_no": row.version_no, "status": doc.status}
@@ -551,6 +595,13 @@ def generate_proposal(solar_proposal):
 
 	# The first Generate is what opens version one; there is no document to send before it.
 	version = _current_version(doc)
+	if version_is_out(version):
+		# Rendering again would put today's design into the PDF the client already has.
+		frappe.throw(
+			_("Version {0} has already gone to the client, so its PDF is kept as sent. "
+			  "Click Revise to open Version {1}, then generate that.").format(version.version_no, version.version_no + 1),
+			title=_("Revise first"),
+		)
 	if not version:
 		version = _open_version(doc)
 		_save_version_change(doc)
@@ -610,7 +661,7 @@ def mark_sent(solar_proposal, sent_via="WhatsApp"):
 
 
 @frappe.whitelist()
-def create_quotation(solar_proposal):
+def create_quotation(solar_proposal, version_no=None):
 	"""Raise the commercial quotation for the version the customer accepted.
 
 	The proposal is the offer; the quotation is what books it. This does not price anything
@@ -624,16 +675,30 @@ def create_quotation(solar_proposal):
 	doc.check_permission("read")
 	frappe.has_permission("Quotation", "create", throw=True)
 
-	version = _current_version(doc)
-	if not version or version.outcome != "Accepted":
-		frappe.throw(
-			_("Record the customer's acceptance on the current version before raising a quotation."),
-			title=_("Not Accepted Yet"),
-		)
-
 	existing = frappe.db.get_value("Quotation", {"solar_proposal": doc.name, "docstatus": ["<", 2]}, "name")
 	if existing:
 		return {"name": existing, "route": cost_estimate.route_of(existing), "existing": True}
+
+	if version_no:
+		# The version the client chose - not necessarily the newest. Choosing it is their
+		# acceptance, recorded on that version; the others stay as they were.
+		version = next((v for v in doc.versions if cint(v.version_no) == cint(version_no)), None)
+		if not version:
+			frappe.throw(_("Version {0} is not on {1}.").format(version_no, doc.name))
+		if version.outcome != "Accepted":
+			doc.check_permission("write")
+			version.outcome = "Accepted"
+			version.responded_on = now_datetime()
+			version.lost_reason = None
+			_save_version_change(doc)
+	else:
+		# The latest version the client accepted.
+		version = next((v for v in reversed(doc.versions or []) if v.outcome == "Accepted"), None)
+		if not version:
+			frappe.throw(
+				_("Record the customer's acceptance on a version before raising a quotation."),
+				title=_("Not Accepted Yet"),
+			)
 
 	estimate_name = version.solar_design_estimate or doc.solar_design_estimate
 	if not estimate_name:

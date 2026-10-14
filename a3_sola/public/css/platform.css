@@ -1705,7 +1705,39 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	font-size: 0.8125rem;
 	color: var(--color-text-muted);
 }
-.a3s-detail__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.a3s-detail__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+/* A record's PDF and sharing, as square buttons before Edit. */
+.a3s-share { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.a3s-share [hidden] { display: none; }
+/* Held until the document may go out: greyed, and the reason under them. */
+.a3s-share.is-locked .a3s-square-btn { opacity: 0.4; cursor: not-allowed; pointer-events: none; box-shadow: none; }
+.a3s-share.is-locked .a3s-share__hint { display: block; }
+.a3s-share-mail { width: min(40rem, 100%); }
+/* Download: the print formats, each with View and Download. */
+.a3s-share-formats { width: min(30rem, 100%); }
+.a3s-share-formats__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.a3s-share-formats__head .a3s-modal__title { margin: 0; font-size: 1.05rem; }
+.a3s-share-formats__x { border: 0; background: transparent; font-size: 1.5rem; line-height: 1; color: var(--color-text-muted); cursor: pointer; padding: 0 0.4rem; border-radius: 0.5rem; }
+.a3s-share-formats__x:hover { color: var(--color-text); background: var(--color-accent-soft); }
+.a3s-share-formats__list { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.a3s-share-formats__list li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 0.9rem; border: 1px solid var(--color-border); border-radius: 0.8rem; }
+.a3s-share-formats__list li:hover { border-color: var(--color-accent-tint); }
+.a3s-share-formats__name { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; min-width: 0; }
+.a3s-share-formats__tag { padding: 0.05rem 0.45rem; border-radius: var(--radius-pill); font-size: 0.65rem; font-weight: 700; color: var(--color-sky-ink); background: rgba(41, 171, 226, 0.12); }
+.a3s-share-formats__actions { display: flex; gap: 0.4rem; flex: none; }
+/* A create form's items carried from its source (a sales order's, from the quotation). */
+.a3s-source-items { margin: 1.25rem 0 0.5rem; display: grid; gap: 0.5rem; }
+.a3s-source-items__total { margin: 0; text-align: right; font-size: 0.9rem; }
+/* Next steps: a long message wraps inside the card rather than widening it. */
+.a3s-chain { min-width: 0; }
+.a3s-chain [data-chain-error] { overflow-wrap: anywhere; color: var(--color-danger); }
+.a3s-share-mail textarea { width: 100%; min-height: 14rem; font: inherit; font-size: 0.875rem; line-height: 1.5; resize: vertical; }
+/* A note under the buttons wraps to their width, never widening the head's column. */
+.a3s-share__hint { flex-basis: 100%; contain: inline-size; margin: 0; text-align: right; font-size: 0.75rem; line-height: 1.35; color: var(--color-text-muted); }
+.a3s-square-btn.is-busy { cursor: progress; opacity: 0.6; }
+/* The proposal's Generate, above the chain's step in Next steps. */
+.a3s-proposal-next { display: grid; gap: 0.4rem; margin-bottom: 0.75rem; }
+.a3s-proposal-next .a3s-form__status:empty { display: none; }
 
 .a3s-detail { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
 @media (min-width: 1100px) { .a3s-detail { grid-template-columns: 1fr 1fr; } }
@@ -2493,10 +2525,13 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-square-btn[hidden] { display: none; }
 .a3s-square-btn--primary { border-color: transparent; background-image: var(--color-accent-gradient); color: #fff; }
 .a3s-square-btn--primary:hover, .a3s-square-btn--primary:focus-visible { color: #fff; border-color: transparent; box-shadow: var(--shadow-raised); }
-.a3s-square-btn--whatsapp, .a3s-square-btn--whatsapp:hover, .a3s-square-btn--whatsapp:focus-visible { color: #25d366; }
+/* WhatsApp in its own green, a link (`.a3s a`) as much as a button. */
+.a3s-square-btn--whatsapp, .a3s a.a3s-square-btn--whatsapp { color: #fff; background: #25d366; border-color: #25d366; }
+.a3s-square-btn--whatsapp:hover, .a3s-square-btn--whatsapp:focus-visible,
+.a3s a.a3s-square-btn--whatsapp:hover, .a3s a.a3s-square-btn--whatsapp:focus-visible { color: #fff; background: #1da851; border-color: #1da851; }
 /* A square button made of a link: `.a3s a` would otherwise hand it the text colour around it. */
 .a3s a.a3s-square-btn--primary, .a3s a.a3s-square-btn--primary:hover { color: #fff; }
-.a3s a.a3s-square-btn:not(.a3s-square-btn--primary):hover { color: var(--color-accent-hover); }
+.a3s a.a3s-square-btn:not(.a3s-square-btn--primary):not(.a3s-square-btn--whatsapp):hover { color: var(--color-accent-hover); }
 .a3s-square-btn--whatsapp .a3s-ic { width: 1.4rem; height: 1.4rem; }
 
 /* row actions shown as icons: edit and remove */
@@ -3093,7 +3128,9 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf:has(.a3s-qf__side) { grid-template-columns: minmax(0, 1fr) 320px; }
 @media (max-width: 1100px) { .a3s-qf:has(.a3s-qf__side) { grid-template-columns: minmax(0, 1fr); } }
 .a3s-qf__main { display: grid; gap: 1.25rem; min-width: 0; align-content: start; }
-.a3s-qf__side { display: grid; gap: 1.25rem; align-content: start; }
+/* A grid item is as wide as its widest content unless told otherwise: held to its track. */
+.a3s-qf__side { display: grid; gap: 1.25rem; align-content: start; min-width: 0; }
+.a3s-qf__side > * { min-width: 0; max-width: 100%; }
 .a3s-qf [data-panel][hidden] { display: none; }
 .a3s-qf__status { margin: 0.4rem 0 0; font-weight: 600; }
 .a3s-qf__options { display: grid; gap: 1rem; margin-top: 1rem; }
@@ -3102,6 +3139,25 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.8rem; align-items: center; padding: 0.75rem 1rem;
 	border: 1px solid var(--color-border); border-radius: 0.8rem; cursor: pointer; background: var(--color-surface); }
 .a3s-qf__opt:has(input:checked) { border-color: #f7941e; background: var(--color-accent-soft); }
+/* An option lifts on hover and keyboard focus: a click opens its details. */
+.a3s-qf__opt { transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
+.a3s-qf__opt:hover, .a3s-qf__opt:focus-visible { border-color: var(--color-accent); box-shadow: var(--shadow-soft); transform: translateY(-2px); outline: none; }
+.a3s-qf__opt-right { display: grid; justify-items: end; gap: 0.15rem; }
+.a3s-qf__opt-more { font-size: 0.72rem; font-weight: 700; color: var(--color-sky-ink); opacity: 0.7; }
+.a3s-qf__opt:hover .a3s-qf__opt-more, .a3s-qf__opt:focus-visible .a3s-qf__opt-more { opacity: 1; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .a3s-qf__opt:hover, .a3s-qf__opt:focus-visible { transform: none; } }
+/* The option's pop-up. */
+.a3s-qf-preview { width: min(56rem, 100%); max-height: 88vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 1rem; padding: 1.5rem; }
+.a3s-qf-preview__head { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 1rem; align-items: start; }
+.a3s-qf-preview__title { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.a3s-qf-preview__sub { margin: 0.2rem 0 0; font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-qf-preview__price { font-size: 1.15rem; font-weight: 800; white-space: nowrap; }
+.a3s-qf-preview__x { border: 0; background: transparent; font-size: 1.6rem; line-height: 1; color: var(--color-text-muted); cursor: pointer; padding: 0 0.4rem; border-radius: 0.5rem; }
+.a3s-qf-preview__x:hover { color: var(--color-text); background: var(--color-accent-soft); }
+.a3s-qf-preview__body { overflow-y: auto; min-height: 6rem; padding-right: 0.25rem; display: grid; gap: 1.5rem; align-content: start; }
+.a3s-qf-preview__part + .a3s-qf-preview__part { padding-top: 1.25rem; border-top: 1px solid var(--color-border); }
+.a3s-qf-preview__label { margin: 0 0 0.6rem; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-accent-hover); }
+.a3s-qf-preview__foot { margin: 0; justify-content: flex-end; }
 .a3s-qf__opt-text { display: grid; gap: 0.1rem; min-width: 0; }
 .a3s-qf__opt-text small { color: var(--color-text-muted); }
 .a3s-qf__price { font-weight: 700; white-space: nowrap; }
@@ -3214,13 +3270,18 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-attach__status[data-tone="error"] { background: rgba(255, 95, 87, 0.1); color: #c0392b; }
 
 /* narrow: in a sidebar, or on a phone - the panel and the rows stack */
-.a3s-edit__side .a3s-attach__drop { grid-template-columns: auto minmax(0, 1fr); }
-.a3s-edit__side .a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
-.a3s-edit__side .a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
-.a3s-edit__side .a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
-.a3s-edit__side .a3s-attach__row { grid-template-columns: minmax(0, 1fr) 2.25rem; gap: 0.5rem; }
-.a3s-edit__side .a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
-.a3s-edit__side .a3s-attach__row--head { display: none; }
+/* The Attachments card lays out by its own width, so a side column of any page - a record's,
+   the quotation's - gets the stacked form, and its controls never widen the column. */
+.a3s-attach { container-type: inline-size; }
+@container (max-width: 32rem) {
+	.a3s-attach__drop { grid-template-columns: auto minmax(0, 1fr); }
+	.a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
+	.a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
+	.a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
+	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) 2.25rem; gap: 0.5rem; }
+	.a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
+	.a3s-attach__row--head { display: none; }
+}
 @media (max-width: 720px) {
 	.a3s-attach__drop { grid-template-columns: auto minmax(0, 1fr); }
 	.a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }

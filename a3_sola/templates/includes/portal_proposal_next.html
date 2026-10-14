@@ -1,0 +1,29 @@
+{#- The proposal's own next steps: render it into a version, render the current version
+    again - or, once that version went to the client, revise it into a new one - and raise
+    the quotation for the version the client chose. Wired by portal_proposal.js. -#}
+{%- if can_write %}
+<div class="a3s-proposal-next" data-proposal-actions data-name="{{ record.name | e }}">
+	{%- if version_out %}
+	{#- Its PDF is what the client has: a change is a new version, never a re-render. -#}
+	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-act="revise">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
+		<span>Revise proposal</span>
+	</button>
+	<p class="a3s-edit__hint">Version {{ current_version_no }} has gone to the client. Change the design estimate first, then revise to open Version {{ current_version_no + 1 }}.</p>
+	{%- else %}
+	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-act="generate">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+		<span>{{ "Regenerate PDF" if has_versions else "Generate proposal" }}</span>
+	</button>
+	{%- endif %}
+	{%- if can_quote %}
+	{#- Asks which version the client chose (portal_proposal.js), and records it accepted. -#}
+	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-act="quotation">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-calc"></use></svg>
+		<span>Create quotation</span>
+	</button>
+	{%- endif %}
+	<p class="a3s-form__status" data-proposal-status role="status" aria-live="polite"></p>
+</div>
+<script type="application/json" id="a3s-proposal-choices">{{ proposal_choices | tojson }}</script>
+{%- endif %}

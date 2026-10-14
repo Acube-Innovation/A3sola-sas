@@ -874,7 +874,21 @@ def _apply_change(doc, change):
 	values = change.get("values") or {}
 	for fieldname in {f["fieldname"] for f in spec["fields"]}:
 		if fieldname in values:
-			target.set(fieldname, values.get(fieldname) if values.get(fieldname) != "" else None)
+			target.set(fieldname, _typed(target, fieldname, values.get(fieldname)))
+
+
+def _typed(row, fieldname, value):
+	"""A value from the form as its field holds it. The form sends text, and "0" is true to
+	Python: an Option set to No would read as ticked, and a table's one priced row as none."""
+	if value == "" or value is None:
+		return None
+	df = row.meta.get_field(fieldname)
+	fieldtype = df.fieldtype if df else None
+	if fieldtype in ("Check", "Int"):
+		return cint(value)
+	if fieldtype in ("Float", "Currency", "Percent"):
+		return flt(value)
+	return value
 
 
 def _work(doc, changes):

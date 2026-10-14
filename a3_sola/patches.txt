@@ -114,3 +114,6 @@ a3_sola.patches.v1_2.package_cost_and_option_choices
 
 # Estimates are priced on their package's price; its own items are shown as included.
 a3_sola.patches.v1_2.package_priced_estimates
+
+# The Sales Order is ERPNext's own form: its solar, KYC and task fields come off.
+a3_sola.patches.v1_2.sales_order_erpnext_default

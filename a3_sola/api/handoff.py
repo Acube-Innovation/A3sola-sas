@@ -199,9 +199,8 @@ def create_solar_installation(sales_order):
 	installation.insert(ignore_permissions=True)
 	installation.submit()
 
-	frappe.db.set_value(
-		"Sales Order", payload["sales_order"], "solar_installation", installation.name, update_modified=False
-	)
+	# The installation carries the order (its sales_order); the order, ERPNext's own form,
+	# carries nothing back.
 	# The order IS the first task. It is complete the moment the job exists.
 	from a3_sola.api import tasks
 

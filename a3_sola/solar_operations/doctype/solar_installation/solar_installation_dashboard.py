@@ -12,6 +12,8 @@ from frappe import _
 def get_data():
 	return {
 		"fieldname": "solar_installation",
+		# The order is linked from the installation (its sales_order), not the other way.
+		"internal_links": {"Sales Order": "sales_order"},
 		"transactions": [
 			{
 				"label": _("Execution"),

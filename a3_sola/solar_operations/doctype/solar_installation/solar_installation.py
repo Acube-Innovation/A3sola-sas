@@ -319,7 +319,21 @@ class SolarInstallation(Document):
 		serials.validate_register(self)
 		self.release_dangling_links()
 		self.roll_counts()
+		if self.has_value_changed("is_financed"):
+			self.reapply_task_rules()
 		stages.recompute(self)
+
+	def reapply_task_rules(self):
+		"""Financing changed: the loan tasks follow, for tasks not started yet."""
+		changed = stages.reapply_applicability(self)
+		if changed:
+			# The task rows are the engine's, as on every task transition (stages._save):
+			# their status moves on a submitted job.
+			self.flags.ignore_validate_update_after_submit = True
+			lines = ["{0}: {1}{2}".format(name, _("now applies") if state == "Pending" else _("skipped"),
+				" ({0})".format(reason) if reason else "") for name, state, reason in changed]
+			self.add_comment("Comment", _("{0} by {1}. Tasks updated: {2}.").format(
+				_("Marked financed") if self.is_financed else _("Marked self-funded"), frappe.session.user, "; ".join(lines)))
 
 	def release_dangling_links(self):
 		"""A task document deleted behind the engine's back must not make the job unsaveable."""

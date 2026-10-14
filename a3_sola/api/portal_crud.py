@@ -34,7 +34,12 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 	specs, _unrenderable = form_fields(meta, None, form_extra(cfg, meta))
 	allowed = {s["fieldname"]: s for s in specs}
 
-	doc = frappe.new_doc(doctype)
+	step, source_doc = None, None
+	if source_dt and source:
+		step, source_doc = _load_source(slug, source_dt, source)
+	# A step with a mapper starts from what the mapper builds - an order with the
+	# quotation's items, rates and taxes - and the form's values go on top.
+	doc = portal_chain.mapped_doc(step, source_doc) if step and step.get("via") else frappe.new_doc(doctype)
 
 	# Prompt-named doctypes carry their id in the synthetic __name field. A doctype that
 	# allocates its own series has no such field and must not be given a name here.
@@ -48,9 +53,7 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 	# so the fields the form does not render still arrive. The form is authoritative for
 	# what it does render, so those are overwritten below - including with a blank, if
 	# the person cleared a suggested value.
-	step, source_doc = None, None
-	if source_dt and source:
-		step, source_doc = _load_source(slug, source_dt, source)
+	if step and not step.get("via"):
 		for fieldname, value in portal_chain.mapped_values(step, source_doc).items():
 			if fieldname not in allowed:
 				doc.set(fieldname, value)
@@ -172,6 +175,9 @@ def _load_source(slug, source_dt, source):
 		frappe.throw(_("That record does not exist."), frappe.DoesNotExistError)
 	doc = frappe.get_doc(source_dt, source)
 	doc.check_permission("write" if step.get("link_field") else "read")
+	if step.get("needs_submit") and cint(doc.docstatus) != 1:
+		frappe.throw(_("{0} must be submitted before a {1} can be raised from it.").format(source, step["doctype"]),
+			frappe.ValidationError)
 	return step, doc
 
 
@@ -188,7 +194,7 @@ def create_mapped(slug=None, source_dt=None, source=None):
 	only gets the person to a document they can check first.
 	"""
 	step = portal_chain.find_step(source_dt, slug)
-	if not step or not step.get("via"):
+	if not step or not (step.get("via") or step.get("make")):
 		frappe.throw(_("Cannot create a {0} from a {1}.").format(slug, source_dt), frappe.ValidationError)
 	if not frappe.db.exists(source_dt, source):
 		frappe.throw(_("That record does not exist."), frappe.DoesNotExistError)
@@ -201,6 +207,17 @@ def create_mapped(slug=None, source_dt=None, source=None):
 			frappe.ValidationError,
 		)
 	frappe.has_permission(step["doctype"], "create", throw=True)
+
+	if step.get("needs_setting") and not portal_chain.get_value(step["needs_setting"]):
+		frappe.throw(_("Creating a {0} is turned off in A3 Sola Settings.").format(
+			_(step.get("kind_label") or step["doctype"]).lower()), frappe.ValidationError)
+	if step.get("make"):
+		# The step's own creator writes the whole record (the project, by the handoff).
+		name = frappe.get_attr(step["make"])(source_doc)
+		if not name:
+			frappe.throw(_("{0} cannot open a {1}: it was not raised from a solar quotation.").format(
+				source, _(step.get("kind_label") or step["doctype"]).lower()), frappe.ValidationError)
+		return {"name": name, "route": record_route(slug, name), "desk": desk_route(step["doctype"], name)}
 
 	doc = frappe.get_attr(step["via"])(source)
 	doc.insert()

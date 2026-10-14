@@ -114,14 +114,20 @@ def option_doc(estimate, proposal=None, quotation=None):
 def render(estimate, proposal=None, quotation=None):
 	"""The three tabs' HTML for one option: details, bill of materials (with the price), terms."""
 	doc = option_doc(estimate, proposal, quotation)
+	# The lead's loan answer, as the quotation carries it (Loan Required, read-only).
+	if quotation:
+		loan = "Yes" if quotation.get("is_financed") else "No"
+	else:
+		lead = frappe.db.get_value("Solar Design Estimate", estimate, "lead")
+		loan = (frappe.db.get_value("Lead", lead, "loan_required") if lead else None) or "Not stated"
 	ctx = {
-		"opt": _option(estimate, 0), "proposal": proposal, "summary": print_summary(doc),
+		"opt": _option(estimate, 0), "proposal": proposal, "summary": print_summary(doc), "loan": loan,
 		"components": print_components(doc), "rest": print_rest(doc),
 		"quote": quotation_price(quotation) if quotation else None,
 		"money": lambda v: frappe.utils.fmt_money(flt(v), currency="INR"),
 	}
 	out = {}
-	for part in ("details", "bom", "terms"):
+	for part in ("details", "bom", "terms", "preview"):
 		out[part] = frappe.render_template("a3_sola/templates/includes/quotation_option.html", dict(ctx, part=part))
 	return out
 
@@ -302,21 +308,52 @@ def page_context(context, name=None):
 	context.state_json = frappe.as_json({"lead": lead or "", "proposal": proposal, "estimate": estimate, "name": name or "",
 		"editable": editable, "status": doc.status if doc else "", "docstatus": doc.docstatus if doc else 0})
 	context.pdf_route = "/api/method/a3_sola.api.quotation_option.pdf?name=" + frappe.utils.quote(name) if name else ""
+	if doc and doc.docstatus < 2:
+		# View, download and send it to the customer: the square buttons by Back, held
+		# (greyed, with the reason) until the quotation is submitted.
+		from a3_sola.api.portal_share import share_links
+
+		context.share = share_links(doc, context.pdf_route)
+		# Download asks which print: each of the quotation's formats, its own buttons.
+		context.share["formats"] = [{
+			"name": f, "default": f == DEFAULT_PRINT_FORMAT,
+			"view": context.pdf_route + "&print_format=" + frappe.utils.quote(f),
+			"download": context.pdf_route + "&download=1&print_format=" + frappe.utils.quote(f),
+		} for f in print_formats()]
 	context.desk_route = "/app/quotation/" + frappe.utils.quote(name) if name else ""
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
 
 
+#: The quotation's own print, listed first and used where none is named.
+DEFAULT_PRINT_FORMAT = "Solar Quotation"
+
+
+def print_formats():
+	"""The print formats a quotation can be downloaded in: ours first, then the other
+	enabled ones for Quotation, then Frappe's built-in Standard."""
+	names = frappe.get_all("Print Format", filters={"doc_type": "Quotation", "disabled": 0}, pluck="name", order_by="name")
+	ordered = ([DEFAULT_PRINT_FORMAT] if DEFAULT_PRINT_FORMAT in names else []) + [n for n in names if n != DEFAULT_PRINT_FORMAT]
+	return ordered + ["Standard"]
+
+
 @frappe.whitelist()
-def pdf(name, download=0):
-	"""The quotation as the customer receives it - the Solar Quotation print - to read in the
-	browser, or to save with `download=1`."""
+def pdf(name, download=0, print_format=None):
+	"""The quotation as the customer receives it - the Solar Quotation print, or another of
+	its print formats (print_formats) - to read in the browser, or to save with `download=1`."""
 	from frappe.utils.pdf import get_pdf
 
 	doc = frappe.get_doc("Quotation", name)
 	doc.check_permission("read")
-	html = frappe.get_print("Quotation", name, print_format="Solar Quotation", no_letterhead=0)
-	frappe.local.response.filename = "{0}.pdf".format(name)
+	if doc.docstatus != 1:
+		# Its PDF is the quotation as issued: a draft has none yet.
+		frappe.throw(_("Submit the quotation first to view, download or send its PDF."), title=_("Not Issued Yet"))
+	print_format = print_format or DEFAULT_PRINT_FORMAT
+	if print_format not in print_formats():
+		frappe.throw(_("{0} is not a print format for quotations.").format(print_format))
+	html = frappe.get_print("Quotation", name, print_format=print_format, no_letterhead=0)
+	suffix = "" if print_format == DEFAULT_PRINT_FORMAT else " - " + print_format
+	frappe.local.response.filename = "{0}{1}.pdf".format(name, suffix)
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download" if cint(download) else "pdf"
 

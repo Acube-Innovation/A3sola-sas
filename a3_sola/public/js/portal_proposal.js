@@ -9,23 +9,27 @@
 (function () {
 	"use strict";
 
-	var panel = document.getElementById("a3s-proposal-actions");
-	if (!panel) return;
+	/* ---- the version actions: Generate in Next steps, the rest in the history */
+	var panels = Array.prototype.slice.call(document.querySelectorAll("[data-proposal-actions]"));
+	if (!panels.length) return;
 
-	var name = panel.dataset.name;
-	var status = document.getElementById("a3s-proposal-status");
+	var name = panels[0].dataset.name;
+	var status = panels[0].querySelector("[data-proposal-status]");
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var ENDPOINT = "a3_sola.solar_crm.doctype.solar_proposal.solar_proposal.";
 
 	function setStatus(text, kind) {
+		if (!status) return;
 		status.textContent = text || "";
 		status.classList.toggle("is-error", kind === "error");
 		status.classList.toggle("is-success", kind === "success");
 	}
 
 	function busy(on) {
-		panel.querySelectorAll("button").forEach(function (b) { b.disabled = on; });
+		panels.forEach(function (panel) {
+			panel.querySelectorAll("button").forEach(function (b) { b.disabled = on; });
+		});
 	}
 
 	/* Frappe returns a thrown message inside _server_messages as a JSON array. */
@@ -39,6 +43,20 @@
 			return "";
 		}
 	}
+
+	/* Text into HTML, for labels built from record names. */
+	function esc(text) {
+		return String(text == null ? "" : text).replace(/[&<>"]/g, function (c) {
+			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+		});
+	}
+
+	/* What Create quotation and Revise choose from (portal_proposal_next.html). */
+	var choices = (function () {
+		var node = document.getElementById("a3s-proposal-choices");
+		try { return node ? JSON.parse(node.textContent) : {}; } catch (e) { return {}; }
+	})();
+	var money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 	function post(method, args, working) {
 		busy(true);
@@ -57,8 +75,10 @@
 				.then(function (data) { return { ok: response.ok, code: response.status, data: data }; });
 		}).then(function (result) {
 			if (result.ok) {
-				setStatus("Saved. Refreshing…", "success");
-				window.location.reload();
+				var route = result.data && result.data.message && result.data.message.route;
+				setStatus(route ? "Done. Opening it…" : "Saved. Refreshing…", "success");
+				if (route) window.location.assign(route);
+				else window.location.reload();
 				return;
 			}
 			busy(false);
@@ -91,14 +111,20 @@
 			var control;
 			if (f.type === "select") {
 				control = '<select id="' + id + '" name="' + f.name + '">' +
-					f.options.map(function (o) { return '<option value="' + o + '">' + o + "</option>"; }).join("") +
+					f.options.map(function (o) {
+						var value = typeof o === "object" ? o.value : o;
+						var label = typeof o === "object" ? o.label : o;
+						return '<option value="' + esc(value) + '"' + (String(value) === String(f.value) ? " selected" : "") + ">" +
+							esc(label) + "</option>";
+					}).join("") +
 					"</select>";
 			} else if (f.type === "textarea") {
 				control = '<textarea id="' + id + '" name="' + f.name + '" rows="3"></textarea>';
 			} else {
 				control = '<input type="text" id="' + id + '" name="' + f.name + '" value="' + (f.value || "") + '">';
 			}
-			wrap.innerHTML = '<label for="' + id + '">' + f.label + "</label>" + control;
+			wrap.innerHTML = '<label for="' + id + '">' + esc(f.label) + "</label>" + control +
+				(f.hint ? '<p class="a3s-field__hint">' + esc(f.hint) + "</p>" : "");
 			form.appendChild(wrap);
 		});
 
@@ -143,19 +169,50 @@
 			], "Record", function (v) { post("record_response", v, "Recording the response…"); });
 		},
 		revise: function () {
-			ask("Revise proposal", [
-				{ name: "notes", label: "Why this revision", type: "textarea" }
-			], "Open version", function (v) { post("add_version", v, "Opening a new version…"); });
+			var fields = [];
+			if ((choices.estimates || []).length) {
+				fields.push({
+					name: "solar_design_estimate", label: "Design estimate this version quotes", type: "select",
+					options: choices.estimates, value: choices.base,
+					hint: "A changed design saved as a new estimate keeps the earlier versions' designs as they were sent."
+				});
+			}
+			fields.push({ name: "notes", label: "Why this revision", type: "textarea" });
+			ask("Revise proposal", fields, "Open version", function (v) { post("add_version", v, "Opening a new version…"); });
 		},
 		quotation: function () {
-			post("create_quotation", {}, "Building the quotation…");
+			var versions = choices.versions || [];
+			if (!versions.length) {
+				post("create_quotation", {}, "Building the quotation…");
+				return;
+			}
+			var accepted = versions.filter(function (v) { return v.outcome === "Accepted"; })[0];
+			var options = versions.map(function (v) {
+				return {
+					value: v.version_no,
+					label: "Version " + v.version_no + " \u00b7 " + v.raised + " \u00b7 " + money.format(v.cost) +
+						(v.estimate ? " \u00b7 " + v.estimate : "") + (v.outcome === "Accepted" ? " \u00b7 Accepted" : "") +
+						(v.changed_after ? " \u00b7 estimate changed since" : "")
+				};
+			});
+			ask("Create quotation", [{
+				name: "version_no", label: "Which version did the client accept?", type: "select",
+				options: options, value: (accepted || versions[0]).version_no,
+				hint: "The chosen version is recorded as Accepted and quoted from its own design estimate. " +
+					"\"Estimate changed since\" means that estimate was edited after the version was raised."
+			}], "Create quotation", function (v) { post("create_quotation", v, "Building the quotation…"); });
 		}
 	};
 
-	panel.addEventListener("click", function (event) {
-		var button = event.target.closest("[data-act]");
-		if (!button) return;
-		var action = ACTIONS[button.dataset.act];
-		if (action) action();
+	panels.forEach(function (panel) {
+		panel.addEventListener("click", function (event) {
+			var button = event.target.closest("[data-act]");
+			if (!button) return;
+			var action = ACTIONS[button.dataset.act];
+			if (!action) return;
+			// Say how it went where it was asked.
+			status = panel.querySelector("[data-proposal-status]") || status;
+			action();
+		});
 	});
 })();

@@ -366,6 +366,12 @@ def create_milestone_invoice(billing_plan, milestone_name):
 			"items": items,
 		}
 	)
+	# The tax template as the desk form would pick it (GST by place of supply, from the
+	# company's and customer's addresses); each line's own rate comes from its item tax
+	# template, inside the milestone amount.
+	invoice.set_missing_values()
+	if invoice.get("taxes_and_charges") and not invoice.get("taxes"):
+		invoice.set_taxes()
 	invoice.flags.ignore_permissions = True
 	invoice.insert(ignore_permissions=True)
 

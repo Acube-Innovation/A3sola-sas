@@ -122,13 +122,23 @@ class TestQuotationSolarLayer(FrappeTestCase):
 			)
 		self.assertIn("subsidy", str(ctx.exception).lower())
 
-	def test_submission_blocked_without_an_eligibility_check(self):
+	def test_submission_allowed_without_an_eligibility_check(self):
+		"""Eligibility does not hold a quotation back."""
 		quotation = make_quotation(self.consumer, self.estimate, check=None)
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			quotation.submit()
-		self.assertIn("Eligibility Check", str(ctx.exception))
+		quotation.submit()
+		self.assertEqual(quotation.docstatus, 1)
 
-	def test_submission_blocked_when_not_eligible(self):
+	def test_submission_allowed_on_a_draft_estimate(self):
+		"""A draft design estimate may be quoted and the quotation submitted."""
+		consumer = make_consumer(avg_consumption_units=750, sanctioned_load_kw=5)
+		survey = make_survey(consumer, segments=((240, True),))
+		estimate = make_estimate(consumer, survey)
+		self.assertEqual(estimate.docstatus, 0)
+		quotation = make_quotation(consumer, estimate, check=None)
+		quotation.submit()
+		self.assertEqual(quotation.docstatus, 1)
+
+	def test_submission_allowed_when_not_eligible(self):
 		consumer = make_consumer(
 			avg_consumption_units=750, sanctioned_load_kw=5, has_availed_prior_subsidy=1
 		)
@@ -146,9 +156,8 @@ class TestQuotationSolarLayer(FrappeTestCase):
 		self.assertEqual(check.overall_result, "Not Eligible")
 
 		quotation = make_quotation(consumer, estimate, check)
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			quotation.submit()
-		self.assertIn("Not Eligible", str(ctx.exception))
+		quotation.submit()
+		self.assertEqual(quotation.docstatus, 1)
 
 	def test_submit_advances_consumer_to_quoted(self):
 		quotation = make_quotation(self.consumer, self.estimate, self.check)

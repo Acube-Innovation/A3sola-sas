@@ -4,12 +4,16 @@
     portal_quotation_form.js loads the options and the tabs. -#}
 <script type="application/json" id="a3s-qf-state">{{ state_json }}</script>
 
-<div class="a3s-page__head">
+{#- The record pages' head: the title on the left, the PDF, sharing and Back on the right. -#}
+<div class="a3s-page__head a3s-detail__head">
 	<div>
 		<h2 class="a3s-main__title">{{ title | e }}</h2>
 		<p class="a3s-main__sub">One option of a proposal, as the proposal finalised it. Choose the lead, then the option.</p>
 	</div>
-	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/quotations">&larr; Back</a>
+	<div class="a3s-detail__actions">
+		{%- if share %}{% include "templates/includes/portal_share.html" %}{% endif %}
+		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/quotations">&larr; Back</a>
+	</div>
 </div>
 
 <div class="a3s-qf" id="a3s-qf">
@@ -53,7 +57,8 @@
 			<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-qf-submit">Submit quotation</button>
 			{%- endif %}
 			{%- endif %}
-			{%- if pdf_route %}
+			{#- The PDF - view, download, send - is in the page head. -#}
+			{%- if pdf_route and not share %}
 			<a class="a3s-btn a3s-btn--secondary" href="{{ pdf_route }}" target="_blank" rel="noopener">View PDF</a>
 			<a class="a3s-btn a3s-btn--ghost" href="{{ pdf_route }}&download=1">Download PDF</a>
 			{%- endif %}

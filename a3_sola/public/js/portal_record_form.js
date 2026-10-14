@@ -114,8 +114,28 @@
 		});
 	}
 
+	/* A date that may not fall on a weekend (an order's delivery date): said as it is picked,
+	   and refused on Create; the server holds the same rule. */
+	function weekendOf(input) {
+		if (!input.value) return "";
+		var day = new Date(input.value + "T00:00:00").getDay();
+		return day === 0 ? "Sunday" : day === 6 ? "Saturday" : "";
+	}
+	function checkWeekend(input) {
+		var day = weekendOf(input);
+		input.setCustomValidity(day ? "That is a " + day + ". Choose a weekday." : "");
+		if (day) setStatus("The delivery date is a " + day + ". Choose a weekday.", "error");
+		else setStatus("");
+		return !day;
+	}
+	Array.prototype.forEach.call(form.querySelectorAll("[data-no-weekend]"), function (input) {
+		input.addEventListener("change", function () { checkWeekend(input); });
+	});
+
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
+		var bad = Array.prototype.filter.call(form.querySelectorAll("[data-no-weekend]"), function (input) { return !checkWeekend(input); });
+		if (bad.length) { bad[0].focus(); return; }
 		busy(true);
 		setStatus("Creating…");
 

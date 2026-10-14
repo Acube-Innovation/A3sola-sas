@@ -86,12 +86,13 @@ DOC_EVENTS = {
 		"validate": ["a3_sola.overrides.opportunity.validate"],
 	},
 	"Quotation": {
-		"before_validate": ["a3_sola.api.quotation_option.ensure_party", "a3_sola.api.quotation_option.apply_option"],
+		"before_validate": ["a3_sola.api.quotation_option.ensure_party", "a3_sola.api.quotation_option.apply_option",
+			"a3_sola.overrides.quotation.loan_from_lead"],
 		"validate": ["a3_sola.overrides.quotation.validate"],
 		"on_submit": ["a3_sola.overrides.quotation.on_submit"],
 	},
 	"Sales Order": {
-		"validate": ["a3_sola.api.kyc.warn_missing_on_sales_order"],
+		"validate": ["a3_sola.overrides.sales_order.validate_delivery_dates", "a3_sola.overrides.sales_order.no_gst_on_solar_orders"],
 		"on_submit": ["a3_sola.overrides.sales_order.on_submit"],
 	},
 	# A KYC file added after the job opened still reaches the job's register.

@@ -56,9 +56,20 @@
 	<h3 class="a3r-gap">3.5.&nbsp; <u>Payment Terms:</u></h3>
 	<ol>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ol>
 	<ul class="a3r-bankhead"><li><b><u>Bank Account Details for Payment</u></b></li></ul>
-	<table class="a3r-bank">
+	{%- set qr = rest.payment_qr %}
+	<table class="a3r-bank{% if qr %} a3r-bank--qr{% endif %}">
+		{%- if qr %}
+		{#- With the payment QR the details narrow, and the QR takes a column of its own. -#}
+		<colgroup><col style="width: 27%"><col style="width: 19%"><col style="width: 29%"><col style="width: 25%"></colgroup>
+		{%- endif %}
 		{%- for label, value in rest.bank %}
-		<tr><td class="r">{{ label }}</td><td class="c" colspan="2">{{ value or "—" }}</td></tr>
+		<tr><td class="r">{{ label }}</td><td class="c" colspan="2">{{ value or "—" }}</td>
+			{%- if qr and loop.first %}
+			<td class="a3r-qr" rowspan="{{ (rest.bank | length) + (rest.bank_credentials | length) }}">
+				<img src="{{ qr }}" alt="Payment QR code">
+				<span>Scan to pay</span>
+			</td>
+			{%- endif %}</tr>
 		{%- endfor %}
 		{%- for label, value in rest.bank_credentials %}
 		<tr>{% if loop.first %}<td class="c" rowspan="{{ rest.bank_credentials | length }}">Bank Credentials for Payment</td>{% endif %}<td class="r">{{ label }}</td><td>{{ value or "—" }}</td></tr>
@@ -129,6 +140,10 @@
 	.a3r-note { margin-top: 10pt !important; }
 	.a3r-bankhead { margin: 8pt 0 2pt; }
 	.a3r-bank { width: 82%; margin-left: 10%; font-size: 13pt; }
+	.a3r-bank--qr { width: 92%; margin-left: 5%; font-size: 12pt; }
+	.a3r-bank td.a3r-qr { text-align: center; vertical-align: middle; padding: 6pt; }
+	.a3r-qr img { display: block; width: 100%; max-width: 4.2cm; height: auto; margin: 0 auto 4pt; }
+	.a3r-qr span { font-size: 11pt; font-weight: 700; }
 	.a3r-pics { border: 1px solid #222; padding: 4pt; }
 	.a3r-pics img { display: block; width: 100%; height: auto; margin: 0 0 4pt; }
 	.a3r-forward { padding-left: 14pt; }

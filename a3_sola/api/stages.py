@@ -93,6 +93,41 @@ def stage_applies(row, context):
 	return True, None
 
 
+def reapply_applicability(installation):
+	"""Re-check each task's rule after the job changed (a loan taken or dropped).
+
+	Only tasks not yet started move: a Pending task that no longer applies is Skipped with
+	the rule's reason, and a task the rule had skipped comes back Pending. A task skipped
+	by hand (another reason), or started, blocked or completed, is left as it is. Returns
+	[(task name, "Skipped" | "Pending", reason)] for what changed.
+	"""
+	if not installation.stage_template or not frappe.db.exists("Installation Stage Template", installation.stage_template):
+		return []
+	template = frappe.get_cached_doc("Installation Stage Template", installation.stage_template)
+	rules = {row.stage_code: row for row in template.stages}
+	context = {
+		"is_financed": installation.is_financed,
+		"subsidy_scheme": installation.subsidy_scheme,
+		"capacity_kw": installation.capacity_kw,
+		"net_meter_mode": installation.net_meter_mode,
+	}
+	changed = []
+	for row in installation.stages:
+		rule = rules.get(row.stage_code)
+		if not rule or (rule.applicability or "Always") == "Always":
+			continue
+		applies, reason = stage_applies(rule, context)
+		if not applies and row.status == "Pending":
+			row.status, row.skip_reason = "Skipped", reason
+			changed.append((row.stage_name, "Skipped", reason))
+		elif applies and row.status == "Skipped" and row.skip_reason == reason:
+			# Skipped by this rule (a rule names its reason whether or not it applies), not
+			# by hand: it applies again.
+			row.status, row.skip_reason = "Pending", None
+			changed.append((row.stage_name, "Pending", None))
+	return changed
+
+
 def build_stages(installation):
 	"""Populate the task rows and the document register from the resolved template.
 

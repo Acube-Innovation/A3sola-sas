@@ -15,8 +15,10 @@ module what to carry across; the pages ask it what to show.
 import frappe
 from frappe import _
 
+from a3_sola.api.settings import get_value
+
 # The chain is linear: Lead > Solar Consumer > Site Survey > Solar Design Estimate >
-# Subsidy Eligibility Check > Solar Proposal > Quotation > Sales Order. Each source
+# Subsidy Eligibility Check > Solar Proposal > Quotation > Sales Order > Project. Each source
 # doctype therefore declares exactly one step - the record made next from it - so a page
 # offers one thing to do and the sequence cannot be taken out of order.
 #
@@ -28,11 +30,17 @@ from frappe import _
 #                  field of its own, as ERPNext's Sales Order Item does for a Quotation.
 #   via            a dotted path to an ERPNext mapper. Its presence means the step is a
 #                  POST that builds the whole document, not a create form.
+#   make           a dotted path to a function that creates the target from the source's
+#                  name and returns its name - for a target with more to it than a mapper
+#                  (the project, opened by the handoff). Posted, like `via`.
 #   needs_submit   the source must be submitted before the step is offered.
 #   map            target fieldname -> source fieldname, or a tuple of source fieldnames
 #                  meaning "the first of these that has a value"
 #   defaults       target fieldname -> a literal, used only when the map produced nothing
 #   card_*         what the card shows once the step is done
+#   needs_setting  an A3 Sola Settings check that must be on for the step to be offered
+#   kind_label     what the card calls the target, where the portal's name for it is not
+#                  the doctype's (a Solar Installation is a project)
 CHAIN = {
 	"Lead": [
 		{
@@ -246,10 +254,33 @@ CHAIN = {
 			# ERPNext already knows how to turn a quotation into an order, items, taxes
 			# and all. Re-deriving that here would be a second, worse implementation of it.
 			"via": "erpnext.selling.doctype.quotation.quotation.make_sales_order",
+			# Opened as the create form, prefilled from the mapper, rather than saved
+			# straight away: the order needs what the quotation cannot say (its delivery date).
+			"form": True,
 			"needs_submit": True,
 			"needs_submit_note": "A sales order is raised from a submitted quotation, so submit this one first.",
 			"child_link": {"doctype": "Sales Order Item", "field": "prevdoc_docname"},
 			"card_title": "name",
+			"card_subtitle": "status",
+			"card_subtitle_label": "Status",
+		},
+	],
+	"Sales Order": [
+		{
+			"key": "project",
+			"slug": "projects",
+			"doctype": "Solar Installation",
+			"label": "Create project",
+			"icon": "briefcase",
+			# The handoff opens the job with its stages, billing plan and document register,
+			# and is idempotent: an order that already has its project gets that one back.
+			"make": "a3_sola.api.handoff.create_solar_installation",
+			# Off for a tenant running CRM alone, which defers Operations.
+			"needs_setting": "enable_phase2_handoff",
+			"needs_submit": True,
+			"needs_submit_note": "A project is opened from a submitted sales order, so submit this one first.",
+			"kind_label": "Project",
+			"card_title": "consumer_name",
 			"card_subtitle": "status",
 			"card_subtitle_label": "Status",
 		},
@@ -322,6 +353,11 @@ def find_target(step, doc):
 	return found[0] if found else None
 
 
+def mapped_doc(step, source_doc):
+	"""The new document as the step's ERPNext mapper builds it from `source_doc`, unsaved."""
+	return frappe.get_attr(step["via"])(source_doc.name)
+
+
 def mapped_values(step, doc):
 	"""What carries across from the source record to the new one.
 
@@ -330,6 +366,16 @@ def mapped_values(step, doc):
 	"""
 	meta = frappe.get_meta(step["doctype"])
 	out = {}
+	if step.get("via") and not step.get("map"):
+		# The mapper says what carries across: its header fields, set, for the form to show.
+		mapped = mapped_doc(step, doc)
+		for df in meta.fields:
+			if df.fieldtype in frappe.model.table_fields or df.fieldtype in frappe.model.no_value_fields:
+				continue
+			value = mapped.get(df.fieldname)
+			if value not in (None, "", 0):
+				out[df.fieldname] = value
+		return out
 	for target_field, source in (step.get("map") or {}).items():
 		if not meta.get_field(target_field) and target_field != "name":
 			continue
@@ -364,7 +410,7 @@ def _card(step, target_name):
 		# The card names the kind of document as well as the document, so a person
 		# scanning a record's next steps can tell a quotation from a sales order without
 		# recognising the numbering series.
-		"doctype_label": _(doctype),
+		"doctype_label": _(step.get("kind_label") or doctype),
 		"title": pick("card_title") or target_name,
 		"subtitle": pick("card_subtitle"),
 		"subtitle_label": step.get("card_subtitle_label", ""),
@@ -382,6 +428,8 @@ def steps_for(doc):
 	done_keys = set()
 	for step in steps_of(doc.doctype):
 		if not frappe.db.exists("DocType", step["doctype"]):
+			continue
+		if step.get("needs_setting") and not get_value(step["needs_setting"]):
 			continue
 		target = find_target(step, doc)
 		if target:
@@ -409,7 +457,7 @@ def steps_for(doc):
 			"note": note if blocked and not target else "",
 			"can_create": frappe.has_permission(step["doctype"], "create"),
 			# A mapped step is a write, so it is posted rather than followed as a link.
-			"posts": bool(step.get("via")),
+			"posts": bool(step.get("make")) or (bool(step.get("via")) and not step.get("form")),
 			"create_route": "/a3solaportal/{0}/new?source_dt={1}&source={2}".format(
 				step["slug"], frappe.utils.quote(doc.doctype), frappe.utils.quote(doc.name)
 			),

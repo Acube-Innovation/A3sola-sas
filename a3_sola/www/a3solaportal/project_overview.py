@@ -191,8 +191,10 @@ def _proposal_box(doc):
 			("Subsidy", _money(doc.estimate_subsidy)),
 		],
 		"net_cost": _money(doc.estimate_net_cost),
-		"loan": doc.loan_required or "",
-		"lender": doc.quoted_lender if doc.loan_required == "Yes" else "",
+		# The job's own Financed (the lead's answer as quoted, editable on the project), not
+		# the lead's first answer.
+		"loan": "Yes" if doc.is_financed else ("No" if doc.loan_required or doc.quotation else ""),
+		"lender": (doc.lender or doc.quoted_lender or "") if doc.is_financed else "",
 	}
 
 
