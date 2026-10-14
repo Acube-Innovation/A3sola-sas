@@ -9,10 +9,12 @@
 	<h3 class="a3s-edit__card-title">Snapshot</h3>
 	<div class="a3s-tiles">
 		{%- for t in tiles %}
-		<div class="a3s-tile">
+		{#- Attachments opens the record's Attachments panel, further down this column. -#}
+		{%- set to_files = t.label == "Attachments" and record_doctype and record_name %}
+		<{{ "a" if to_files else "div" }} class="a3s-tile{% if to_files %} a3s-tile--link{% endif %}"{% if to_files %} href="#a3s-attachments" data-attach-jump title="View attachments"{% endif %}>
 			<span class="a3s-tile__icon a3s-tile__icon--{{ t.tone }}" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ t.icon }}"></use></svg></span>
 			<span class="a3s-tile__text"><span class="a3s-tile__value"{% if t.label == "Attachments" %} data-attachment-count{% endif %}>{{ t.value }}</span><span class="a3s-tile__label">{{ t.label | e }}</span></span>
-		</div>
+		</{{ "a" if to_files else "div" }}>
 		{%- endfor %}
 		{%- if total %}
 		<div class="a3s-tile">

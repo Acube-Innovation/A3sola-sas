@@ -2,15 +2,21 @@
     page shares (print_frame.html). `letter` is a3_sola.api.print_cover.print_letter(doc). -#}
 {%- from "templates/includes/print_frame.html" import page, frame_style -%}
 {{ frame_style() }}
-{% call page(letter) %}
+{% call page(letter, "a3lt") %}
 		{%- if letter.date %}<p class="a3l-date">{{ letter.date }}</p>{% endif %}
 		<p>To,</p>
 		<p class="a3l-to">{{ letter.to }}{% if letter.place %},<br>{{ letter.place }}{% endif %}</p>
 		<p class="a3l-dear">{{ letter.dear }}</p>
+		{%- for para in letter.opening %}
+		<p class="a3l-opening">{{ para }}</p>
+		{%- endfor %}
 		<p class="a3l-intro">{{ letter.intro }}</p>
 		<ol class="a3l-points">
 			{%- for p in letter.points %}<li>{{ p }}</li>{% endfor %}
 		</ol>
+		{%- for para in letter.closing %}
+		<p class="a3l-opening">{{ para }}</p>
+		{%- endfor %}
 		<p class="a3l-thanks">Thanking you and assuring you of our best attention and services always.</p>
 		<p>Thanks &amp; Regards</p>
 		<p><strong>For {{ letter.company_name }}</strong></p>
@@ -23,9 +29,14 @@
 	.a3l-body p { margin: 0 0 9pt; }
 	.a3l-date { text-align: right; }
 	.a3l-to { margin-top: 4pt !important; }
-	.a3l-dear { margin: 20pt 0 46pt !important; }
-	.a3l-points { margin: 0 0 46pt 0; padding-left: 22pt; }
+	/* Tighter than a bare letter: the opening paragraphs share the page, with up to three options. */
+	.a3lt .a3l-body { font-size: 13.5pt; line-height: 1.4; }
+	.a3l-dear { margin: 16pt 0 12pt !important; }
+	.a3l-opening { text-align: justify; }
+	.a3l-thanks { margin-top: 14pt !important; }
+	.a3l-intro { margin-top: 14pt !important; }
+	.a3l-points { margin: 0 0 14pt 0; padding-left: 22pt; }
 	.a3l-points li { margin-bottom: 9pt; padding-left: 3pt; }
-	.a3l-sign { margin-top: 52pt; }
+	.a3l-sign { margin-top: 30pt; }
 	.a3l-sign p { margin: 0 0 9pt; }
 </style>

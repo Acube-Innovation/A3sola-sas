@@ -41,30 +41,33 @@
 	<p class="a3s-form__status a3s-de-tabhead__status" id="de-tab-status" role="status" aria-live="polite"></p>
 </section>
 
-<div class="a3s-de-builder" id="a3s-de-builder">
-	<nav class="a3s-card a3s-de-nav" aria-label="System and options">
-		<ul id="de-nav" role="tablist"></ul>
-	</nav>
+{#- Laid out by the width the builder gets, not the window's: the portal menu takes some. -#}
+<div class="a3s-de-builder-wrap">
+	<div class="a3s-de-builder" id="a3s-de-builder">
+		<nav class="a3s-card a3s-de-nav" aria-label="System and options">
+			<ul id="de-nav" role="tablist"></ul>
+		</nav>
 
-	<div class="a3s-de-work">
-		<section class="a3s-card a3s-de-saved" aria-labelledby="de-saved-title">
-			<header class="a3s-de-saved__head">
-				<h3 id="de-saved-title"></h3>
-				<span class="a3s-de-saved__total" id="de-saved-total"></span>
-				<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" id="de-add">Add</button>
-			</header>
-			<p class="a3s-form__status" id="de-page-status" role="status" aria-live="polite"></p>
-			<div class="a3s-de-saved__body" id="de-saved"></div>
-		</section>
+		<div class="a3s-de-work">
+			<section class="a3s-card a3s-de-saved" aria-labelledby="de-saved-title">
+				<header class="a3s-de-saved__head">
+					<h3 id="de-saved-title"></h3>
+					<span class="a3s-de-saved__total" id="de-saved-total"></span>
+					<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" id="de-add">Add</button>
+				</header>
+				<p class="a3s-form__status" id="de-page-status" role="status" aria-live="polite"></p>
+				<div class="a3s-de-saved__body" id="de-saved"></div>
+			</section>
+		</div>
+
+		<aside class="a3s-card a3s-de-commercials" aria-labelledby="de-com-title">
+			<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
+			<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
+			<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
+			{#- The next step for a saved option: the proposal it is offered in (api/portal_proposal.proposal_action). -#}
+			<div id="de-proposal"></div>
+		</aside>
 	</div>
-
-	<aside class="a3s-card a3s-de-commercials" aria-labelledby="de-com-title">
-		<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
-		<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
-		<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
-		{#- The next step for a saved option: the proposal it is offered in (api/portal_proposal.proposal_action). -#}
-		<div id="de-proposal"></div>
-	</aside>
 </div>
 
 {#- Every option side by side, its unsaved changes included. -#}

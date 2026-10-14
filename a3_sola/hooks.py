@@ -67,6 +67,7 @@ jinja = {
 		"a3_sola.api.proposal.proposal_context",
 		"a3_sola.api.assets.a3s_asset_version",
 		"a3_sola.api.print_cover.print_cover",
+		"a3_sola.api.print_cover.print_fonts",
 		"a3_sola.api.print_cover.print_letter",
 		"a3_sola.api.print_cover.print_summary",
 		"a3_sola.api.print_cover.print_components",

@@ -1963,6 +1963,16 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	background: var(--color-surface);
 	min-width: 0;
 }
+/* A tile that opens something: it lifts on hover and keyboard focus. */
+.a3s-tile--link { color: inherit; text-decoration: none; cursor: pointer; transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
+.a3s-tile--link:hover, .a3s-tile--link:focus-visible { border-color: var(--color-accent); box-shadow: var(--shadow-soft); transform: translateY(-2px); }
+.a3s-tile--link:hover .a3s-tile__label, .a3s-tile--link:focus-visible .a3s-tile__label { color: var(--color-accent-hover); }
+/* The Attachments panel, arrived at from its tile: clear of the top bar, and flashed. */
+.a3s-attach { scroll-margin-top: calc(var(--a3s-topbar-h) + 1.5rem); }
+.a3s-attach:focus { outline: none; }
+.a3s-attach.is-flash { animation: a3s-flash 1.6s var(--ease); }
+@keyframes a3s-flash { 0%, 40% { box-shadow: 0 0 0 3px var(--color-accent); } 100% { box-shadow: var(--shadow-soft); } }
+@media (prefers-reduced-motion: reduce) { .a3s-tile--link:hover, .a3s-tile--link:focus-visible { transform: none; } }
 .a3s-tile__icon {
 	flex: none;
 	width: 2.75rem; height: 2.75rem;
@@ -2742,14 +2752,16 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-summary dt { color: var(--color-text-muted); }
 .a3s-de-summary dd { margin: 0; font-weight: 700; }
 
+/* Columns by the builder's own width: beside the portal menu it gets far less than the window. */
+.a3s-de-builder-wrap { container-type: inline-size; }
 .a3s-de-builder { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
 /* Too narrow for three: sections beside the rows, the commercials across the bottom. */
-@media (min-width: 900px) {
-	.a3s-de-builder { grid-template-columns: minmax(0, 2fr) minmax(0, 5fr); }
+@container (min-width: 40rem) {
+	.a3s-de-builder { grid-template-columns: minmax(12rem, 2fr) minmax(0, 5fr); }
 	.a3s-de-commercials { grid-column: 1 / -1; }
 }
-@media (min-width: 1200px) {
-	.a3s-de-builder { grid-template-columns: minmax(0, 2fr) minmax(0, 5fr) minmax(0, 3fr); }
+@container (min-width: 62rem) {
+	.a3s-de-builder { grid-template-columns: minmax(12rem, 2fr) minmax(0, 5fr) minmax(16rem, 3fr); }
 	.a3s-de-commercials { grid-column: auto; }
 	.a3s-de-nav, .a3s-de-commercials { position: sticky; top: calc(var(--a3s-topbar-h) + 1.5rem); }
 }
@@ -2764,7 +2776,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-nav__item:hover { color: var(--color-text); background: var(--color-accent-soft); }
 .a3s-de-nav__item[aria-selected="true"] { background-image: var(--color-accent-gradient); color: #fff; }
 .a3s-de-nav__item .a3s-ic { width: 1rem; height: 1rem; flex: none; }
-.a3s-de-nav__label { flex: 1; min-width: 0; }
+.a3s-de-nav__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.a3s-de-nav ul > li { min-width: 0; }
+.a3s-de-nav__n { flex: none; }
 .a3s-de-nav__n { font-size: 0.7rem; font-weight: 800; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.08); }
 .a3s-de-nav__item[aria-selected="true"] .a3s-de-nav__n { background: rgba(255, 255, 255, 0.25); }
 
@@ -3283,8 +3297,15 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-tab__x:hover, .a3s-de-tab__x:focus-visible { background: rgba(255, 95, 87, 0.12); color: #b42318; }
 .a3s-de-tab__x:disabled { opacity: 0.4; cursor: progress; }
 .a3s-de-tabwrap .a3s-de-tab { padding-right: 2rem; }
-.a3s-de-saveall-btn { flex: 0 0 auto; align-self: center; width: 3.4rem; height: 3.4rem; }
+/* At the row's right edge, under the back button and its size, so the two line up. */
+.a3s-de-saveall-btn { flex: 0 0 auto; align-self: center; margin-left: auto; }
 .a3s-de-saveall-btn:disabled { opacity: 0.5; cursor: progress; }
+/* A button whose action is running: a spinner before its label. */
+.a3s-btn.is-busy { display: inline-flex; align-items: center; gap: 0.5rem; cursor: progress; }
+.a3s-btn.is-busy:disabled { opacity: 0.85; }
+.a3s-btn.is-busy::before { content: ""; width: 1rem; height: 1rem; flex: 0 0 auto; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: a3s-spin 0.7s linear infinite; }
+@keyframes a3s-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a3s-btn.is-busy::before { animation-duration: 2s; } }
 
 /* The confirmation and the save-all progress pop-ups. */
 .a3s-de-confirm, .a3s-de-saveall { width: min(32rem, 100%); }

@@ -238,4 +238,22 @@
 			drop.hidden = !data.can_upload;
 		}).catch(function (e) { setStatus(e.message, "error"); });
 	});
+
+	/* The Snapshot's Attachments tile opens this panel: scrolled to, flashed, focused. Bound
+	   once, whichever page includes the card. */
+	if (!window.a3sAttachJump) {
+		window.a3sAttachJump = true;
+		document.addEventListener("click", function (e) {
+			var tile = e.target.closest && e.target.closest("[data-attach-jump]");
+			var panel = tile && document.getElementById("a3s-attachments");
+			if (!panel) return;
+			e.preventDefault();
+			var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			panel.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+			panel.focus({ preventScroll: true });
+			panel.classList.remove("is-flash");
+			void panel.offsetWidth; // restart the flash on a second click
+			panel.classList.add("is-flash");
+		});
+	}
 })();

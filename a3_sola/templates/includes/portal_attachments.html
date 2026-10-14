@@ -5,7 +5,7 @@
 
     Context: att_doctype, att_name (set with `{% with %}` by the including page). -#}
 {%- if att_doctype and att_name %}
-<section class="a3s-card a3s-edit__card a3s-attach" data-attach
+<section class="a3s-card a3s-edit__card a3s-attach" id="a3s-attachments" tabindex="-1" data-attach
          data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}">
 	<div class="a3s-attach__head">
 		<h3 class="a3s-edit__card-title">Attachments</h3>
