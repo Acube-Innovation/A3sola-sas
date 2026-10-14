@@ -1,9 +1,11 @@
 {#- The next step along the solar chain. The chain is linear, so this is one offer to
     create the record that comes next - or, once it exists, the card for the record it
     became. Context: chain_steps. -#}
-{%- if chain_steps %}
+{%- if chain_steps or chain_lead_template %}
 <section class="a3s-card a3s-edit__card a3s-chain">
 	<h3 class="a3s-edit__card-title">Next steps</h3>
+	{#- A page's own step before the chain's, as the proposal's Generate. -#}
+	{%- if chain_lead_template %}{% include chain_lead_template %}{% endif %}
 	{%- for step in chain_steps %}
 
 	{%- if step.done %}
@@ -76,13 +78,21 @@
 			return r.json().then(function (body) { return { ok: r.ok, body: body }; });
 		}).then(function (res) {
 			var route = res.ok && res.body && res.body.message && res.body.message.route;
-			if (!route) throw new Error(((res.body || {})._server_messages) || "That did not work.");
+			if (!route) {
+				// Frappe sends a thrown message as a JSON list of JSON objects: say its text.
+				var text = "";
+				try {
+					var msgs = JSON.parse((res.body || {})._server_messages || "[]");
+					if (msgs.length) text = String(JSON.parse(msgs[0]).message || "").replace(/<[^>]*>/g, "");
+				} catch (e) { /* fall through */ }
+				throw new Error(text || "That did not work.");
+			}
 			window.location.assign(route);
 		}).catch(function (e) {
 			btn.disabled = false;
 			if (label) label.textContent = was;
 			if (error) {
-				error.textContent = String(e.message || e).replace(/[\[\]"\\]|\{.*?"message":\s*/g, "").slice(0, 300);
+				error.textContent = String(e.message || e).slice(0, 300);
 				error.hidden = false;
 			}
 		});

@@ -64,36 +64,19 @@
 		{%- endfor %}
 	</ol>
 	{%- else %}
-	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Generate the proposal to open version one.</p>
+	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Generate the proposal from Next steps to open version one.</p>
 	{%- endif %}
 
-	{#- The proposal as the customer receives it, drawn fresh from the record. -#}
-	<div class="a3s-version__actions a3s-version__pdf">
-		<a class="a3s-btn a3s-btn--secondary" target="_blank" rel="noopener"
-		   href="/api/method/a3_sola.api.portal_proposal.pdf?name={{ record.name | urlencode }}">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>View PDF</span>
-		</a>
-		<a class="a3s-btn a3s-btn--ghost"
-		   href="/api/method/a3_sola.api.portal_proposal.pdf?name={{ record.name | urlencode }}&download=1">Download PDF</a>
-	</div>
 	{%- if can_write %}
-	<div class="a3s-version__actions" id="a3s-proposal-actions"
-	     data-name="{{ record.name | e }}">
-		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="generate">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
-			<span>{{ "Regenerate PDF" if has_versions else "Generate proposal" }}</span>
-		</button>
-		{%- if has_versions %}
+	{#- Generate / Regenerate is in Next steps; the PDF and its sharing beside Edit. -#}
+	{#- The quotation is raised from Next steps, for the version the client chose. -#}
+	{%- if has_versions %}
+	<div class="a3s-version__actions" data-proposal-actions data-name="{{ record.name | e }}">
 		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="dispatch">Record dispatch</button>
 		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="response">Record client response</button>
 		<button type="button" class="a3s-btn a3s-btn--ghost" data-act="revise">Revise</button>
-		{%- endif %}
-		{%- if quotation %}
-		<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/quotations/{{ quotation | e }}">Open quotation</a>
-		{%- elif is_accepted %}
-		<button type="button" class="a3s-btn a3s-btn--primary" data-act="quotation">Create quotation</button>
-		{%- endif %}
-		<p class="a3s-form__status" id="a3s-proposal-status" role="status" aria-live="polite"></p>
+		<p class="a3s-form__status" data-proposal-status role="status" aria-live="polite"></p>
 	</div>
+	{%- endif %}
 	{%- endif %}
 </section>

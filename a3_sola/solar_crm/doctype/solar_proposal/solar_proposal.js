@@ -89,22 +89,35 @@ frappe.ui.form.on("Solar Proposal", {
 			}, __("Client"));
 		}
 
-		if (frm.doc.status === "Accepted") {
+		if (frm.doc.current_version) {
+			// The client may take any version, not only the newest: choosing it records it
+			// accepted, and the quotation is built from that version's estimate.
 			frm.add_custom_button(__("Create Quotation"), () => {
-				frappe.call({
-					method: `${METHOD}.create_quotation`,
-					args: { solar_proposal: frm.doc.name },
-					freeze: true,
-					freeze_message: __("Building the quotation..."),
-					callback(r) {
-						if (!r.message) return;
-						if (r.message.existing) {
-							frappe.show_alert({ message: __("This proposal already has a quotation."), indicator: "orange" });
-						}
-						frappe.set_route("Form", "Quotation", r.message.name);
-					},
-				});
-			}).addClass("btn-primary");
+				const versions = (frm.doc.versions || []).map((v) => v.version_no).reverse();
+				const accepted = (frm.doc.versions || []).filter((v) => v.outcome === "Accepted").pop();
+				frappe.prompt(
+					[{
+						fieldname: "version_no", label: __("Version the client accepted"), fieldtype: "Select", reqd: 1,
+						options: versions.join("\n"), default: String(accepted ? accepted.version_no : versions[0]),
+						description: __("Recorded as Accepted and quoted from its own design estimate."),
+					}],
+					(values) => frappe.call({
+						method: `${METHOD}.create_quotation`,
+						args: { solar_proposal: frm.doc.name, version_no: values.version_no },
+						freeze: true,
+						freeze_message: __("Building the quotation..."),
+						callback(r) {
+							if (!r.message) return;
+							if (r.message.existing) {
+								frappe.show_alert({ message: __("This proposal already has a quotation."), indicator: "orange" });
+							}
+							frappe.set_route("Form", "Quotation", r.message.name);
+						},
+					}),
+					__("Create Quotation"),
+					__("Create")
+				);
+			}).addClass(frm.doc.status === "Accepted" ? "btn-primary" : "btn-default");
 		}
 
 		// ---- banners -----------------------------------------------------------

@@ -1,0 +1,52 @@
+{#- A document's PDF and its sharing, as square buttons in the page head - the proposal's
+    beside Edit, the quotation's beside Back: view, download, a WhatsApp chat to the
+    customer prefilled (the click also downloads the PDF to drop in), an email sent from
+    the company mailbox with the PDF attached, and the device's share sheet where the
+    browser can share a file. Context: share, from
+    api/portal_share.share_links. Wired by portal_share.js. -#}
+{%- if share.locked %}
+{#- Not yet for the customer (a draft quotation): the buttons show where they will be, held. -#}
+<div class="a3s-share is-locked" title="{{ share.locked_note | e }}">
+	{%- for ic, label in (("eye", "View PDF"), ("download", "Download PDF"), ("whatsapp", "Share on WhatsApp"), ("mail", "Email the PDF")) %}
+	<span class="a3s-square-btn{% if ic == 'whatsapp' %} a3s-square-btn--whatsapp{% endif %} is-disabled" role="button" aria-disabled="true"
+	      aria-label="{{ label }} - {{ share.locked_note | e }}"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ ic }}"></use></svg></span>
+	{%- endfor %}
+	<p class="a3s-share__hint">{{ share.locked_note | e }}</p>
+</div>
+{%- else %}
+<div class="a3s-share" data-share data-pdf="{{ share.view | e }}" data-download="{{ share.download | e }}" data-file="{{ share.file_name | e }}"
+     data-title="{{ share.subject | e }}" data-text="{{ share.message | e }}">
+	<a class="a3s-square-btn" href="{{ share.view | e }}" target="_blank" rel="noopener" title="View PDF" aria-label="View PDF">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg>
+	</a>
+	{%- if share.formats and share.formats | length > 1 %}
+	{#- More than one print: Download asks which (portal_share.js). -#}
+	<button type="button" class="a3s-square-btn" data-share-formats title="Download PDF - choose the print format" aria-label="Download PDF - choose the print format" aria-haspopup="dialog">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+	</button>
+	<script type="application/json" data-share-formats-list>{{ share.formats | tojson }}</script>
+	{%- else %}
+	<a class="a3s-square-btn" href="{{ share.download | e }}" title="Download PDF" aria-label="Download PDF">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+	</a>
+	{%- endif %}
+	{#- A link carries no file: the click also downloads the PDF, to drop into the chat. -#}
+	<a class="a3s-square-btn a3s-square-btn--whatsapp" href="{{ share.whatsapp | e }}" target="_blank" rel="noopener"
+	   data-share-download="drag it into the WhatsApp chat, then press Send"
+	   title="Download the PDF and open WhatsApp{% if share.whatsapp_to %} with {{ share.whatsapp_to | e }}{% endif %}" aria-label="Download the PDF and share on WhatsApp">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
+	</a>
+	{#- Sent by the site from the company mailbox, the PDF attached (portal_share.send_email). -#}
+	<button type="button" class="a3s-square-btn" data-share-email
+	        data-doctype="{{ share.doctype | e }}" data-name="{{ share.name | e }}"
+	        data-to="{{ share.email_to | e }}" data-subject="{{ share.subject | e }}" data-text="{{ share.email_message | e }}"
+	        title="Email the PDF{% if share.email_to %} to {{ share.email_to | e }}{% endif %}" aria-label="Email the PDF to the customer">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-mail"></use></svg>
+	</button>
+	<button type="button" class="a3s-square-btn" data-share-file hidden title="Share the PDF…" aria-label="Share the PDF">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-share"></use></svg>
+	</button>
+	<p class="a3s-share__hint" data-share-hint role="status" aria-live="polite" hidden></p>
+</div>
+<script src="/assets/a3_sola/js/portal_share.js?v={{ a3s_asset_version('js/portal_share.js') }}" defer></script>
+{%- endif %}
