@@ -1197,6 +1197,10 @@ class SolarDesignEstimate(Document):
 						"in_package": 1,
 					}
 
+		# A count changed on the row - 7 panels where the package has 6 - is kept, as a
+		# specification typed there is: the package only sets the count a row starts with.
+		count_field = {"panels": "panel_count", "inverters": "inverter_count"}
+
 		def rebuild(table, desired, same):
 			rows = self.get(table)
 			if not any(r.option_key for r in rows):
@@ -1213,7 +1217,8 @@ class SolarDesignEstimate(Document):
 					# A new row starts as the package offers it - an alternative panel as an Option.
 					"is_option": old.is_option if old else values.get("is_option", 0),
 					# A specification typed on the row stands over the package's.
-					**({"specification": old.get("specification")} if old and old.get("specification") else {})})
+					**({"specification": old.get("specification")} if old and old.get("specification") else {}),
+					**({count_field[table]: cint(old.get(count_field[table]))} if old and cint(old.get(count_field[table])) else {})})
 			for row in by_hand:
 				self.append(table, row)
 
