@@ -19,6 +19,44 @@ PLANT = {"On-Grid": "On-Grid", "Off-Grid": "Off-Grid", "Hybrid": "Hybrid"}
 DEFAULT_LOGO = "/assets/a3_sola/images/renewcore-logo.png"
 
 
+# ------------------------------------------------------------------ fonts
+#: The print's fonts, shipped in public/fonts/print: (family, file, weight, style). Embedded
+#: in the HTML, so a server without Poppins or a Palatino draws the same text at the same
+#: size, and no page's text runs into its footer.
+PRINT_FONTS = (
+	("A3 Print Sans", "Poppins-Regular.ttf", 400, "normal"),
+	("A3 Print Sans", "Poppins-Bold.ttf", 700, "normal"),
+	("A3 Print Serif", "P052-Roman.otf", 400, "normal"),
+	("A3 Print Serif", "P052-Bold.otf", 700, "normal"),
+	("A3 Print Serif", "P052-Italic.otf", 400, "italic"),
+)
+_font_css = None
+
+
+def print_fonts():
+	"""A <style> of @font-face rules carrying the print's fonts as data URIs, since
+	wkhtmltopdf may not read local files.
+
+	`src` leads with a local() no machine has: Frappe's get_pdf appends !important to any
+	`: url(...)` (frappe.utils.data.URL_NOTATION_PATTERN), data URIs included, and that
+	makes the rule invalid. After a local() the url() is not matched, and is the one used."""
+	global _font_css
+	if _font_css is None:
+		import base64
+		import os
+
+		folder = frappe.get_app_path("a3_sola", "public", "fonts", "print")
+		rules = []
+		for family, filename, weight, style in PRINT_FONTS:
+			with open(os.path.join(folder, filename), "rb") as f:
+				data = base64.b64encode(f.read()).decode()
+			kind = "otf" if filename.endswith(".otf") else "ttf"
+			rules.append('@font-face {{ font-family: "{0}"; font-weight: {1}; font-style: {2}; '
+				'src: local("{0} Embedded"), url(data:font/{3};base64,{4}); }}'.format(family, weight, style, kind, data))
+		_font_css = "<style>" + "\n".join(rules) + "</style>"
+	return _font_css
+
+
 def print_cover(doc):
 	"""The cover's content for a Solar Proposal or a Quotation."""
 	if doc.doctype == "Solar Proposal":
@@ -115,6 +153,24 @@ def _company(company):
 #: "Dear Madam" for these salutations, "Dear Sir" for the rest that name one.
 MADAM = {"mrs", "ms", "miss", "madam", "smt"}
 
+#: The letter's opening, under the salutation and before what is enclosed.
+LETTER_OPENING = (
+	"We thank you for your interest evinced in renewable energy solutions from us. We are pleased to submit "
+	"our proposal for a solar power project aimed at delivering sustainable energy solutions tailored to your "
+	"environmental goals.",
+	"Our team at Renewcore specializes in end-to-end solar project development, including feasibility studies, "
+	"permitting, engineering, procurement, construction, and grid integration.",
+	"This proposal outlines a custom-designed solar power system suited to your site requirements and energy "
+	"consumption profile. The project is expected to deliver long-term cost savings, reduce carbon emissions, "
+	"and increase energy independence\u2014all aligned with your vision for a sustainable future.",
+)
+#: Its close, after what is enclosed and before the thanks.
+LETTER_CLOSING = (
+	"We look forward to the opportunity to collaborate and are confident in our ability to bring this project "
+	"to life efficiently and professionally.",
+	"Please feel free to reach out with any questions or to schedule a follow-up discussion.",
+)
+
 
 def print_letter(doc):
 	"""The covering letter of a Solar Proposal: one point per design estimate, in the
@@ -141,6 +197,8 @@ def print_letter(doc):
 		"to": " ".join(p for p in (_titled(doc.get("salutation")), doc.customer_name) if p),
 		"place": _place(doc.get("location"), doc.get("district")),
 		"dear": dear,
+		"opening": list(LETTER_OPENING),
+		"closing": list(LETTER_CLOSING),
 		"intro": "Please find enclosed our quotation for the following:" if doc.get("quotation") else
 			"Please find enclosed our {0}offer with the following {1}:".format(
 				"revised " if revised else "", "options" if len(options) > 1 else "details"),

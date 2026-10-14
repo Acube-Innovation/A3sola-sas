@@ -2,6 +2,7 @@
     Page 1 is the cover, shared with the Solar Proposal Document; then the letter, About Us,
     3.1 and 3.2 for the option, 3.3 at the quotation's own price (its line, discount and
     GST), and the terms, schedule, warranty, scope, pictures and way forward. -#}
+{{ print_fonts() }}
 {%- set cover = print_cover(doc) -%}
 {% include "templates/includes/print_cover.html" %}
 {%- set qdoc = quotation_print_doc(doc) -%}
