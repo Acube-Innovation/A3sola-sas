@@ -130,10 +130,10 @@
 					<span class="a3s-tile__icon a3s-tile__icon--green" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-user"></use></svg></span>
 					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.assigned }}</span><span class="a3s-tile__label">Assigned</span></span>
 				</div>
-				<div class="a3s-tile">
+				<a class="a3s-tile a3s-tile--link" href="#a3s-attachments" data-attach-jump title="View attachments">
 					<span class="a3s-tile__icon a3s-tile__icon--amber" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-doc"></use></svg></span>
 					<span class="a3s-tile__text"><span class="a3s-tile__value" data-attachment-count>{{ snapshot.attachments }}</span><span class="a3s-tile__label">Attachments</span></span>
-				</div>
+				</a>
 				<div class="a3s-tile">
 					<span class="a3s-tile__icon a3s-tile__icon--sky" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-clipboard"></use></svg></span>
 					<span class="a3s-tile__text"><span class="a3s-tile__value">{{ snapshot.days_open }}</span><span class="a3s-tile__label">Days open</span></span>

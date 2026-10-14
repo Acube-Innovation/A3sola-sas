@@ -165,21 +165,50 @@
 	}
 
 	/* ---------------------------------------------- remove an option */
-	function confirmDialog(title, text, ok) {
-		var box = $("de-confirm");
+	/* With `work`, the dialog stays open on OK while it runs: the button spins, nothing else
+	   can be pressed, and a failure closes it and rejects with the error. */
+	function confirmDialog(title, text, ok, work, working) {
+		var box = $("de-confirm"), okButton = $("de-confirm-ok"), cancel = $("de-confirm-cancel");
 		$("de-confirm-title").textContent = title;
 		$("de-confirm-text").textContent = text;
-		$("de-confirm-ok").textContent = ok;
+		okButton.textContent = ok;
+		okButton.disabled = cancel.disabled = false;
+		okButton.classList.remove("is-busy");
+		okButton.removeAttribute("aria-busy");
 		box.hidden = false;
-		$("de-confirm-cancel").focus();
-		return new Promise(function (resolve) {
-			function done(answer) {
+		cancel.focus();
+		return new Promise(function (resolve, reject) {
+			var running = false;
+			function close() {
 				box.hidden = true;
-				$("de-confirm-ok").onclick = $("de-confirm-cancel").onclick = box.onclick = document.onkeydown = null;
+				okButton.onclick = cancel.onclick = box.onclick = document.onkeydown = null;
+				okButton.disabled = cancel.disabled = false;
+				okButton.classList.remove("is-busy");
+				okButton.removeAttribute("aria-busy");
+			}
+			function done(answer) {
+				if (running) return;
+				close();
 				resolve(answer);
 			}
-			$("de-confirm-ok").onclick = function () { done(true); };
-			$("de-confirm-cancel").onclick = function () { done(false); };
+			okButton.onclick = function () {
+				if (!work) return done(true);
+				if (running) return;
+				running = true;
+				okButton.disabled = cancel.disabled = true;
+				okButton.classList.add("is-busy");
+				okButton.setAttribute("aria-busy", "true");
+				okButton.textContent = working || ok;
+				Promise.resolve().then(work).then(function () {
+					// Left open: the work ends by moving the page on.
+					resolve(true);
+				}, function (error) {
+					running = false;
+					close();
+					reject(error);
+				});
+			};
+			cancel.onclick = function () { done(false); };
 			box.onclick = function (event) { if (event.target === box) done(false); };
 			document.onkeydown = function (event) { if (event.key === "Escape") done(false); };
 		});
@@ -193,19 +222,19 @@
 		if (changes(t.key).length) notes.push("Its unsaved changes are lost.");
 		confirmDialog("Remove Option " + t.number + "?",
 			t.package + (t.parts.length ? " (" + t.parts.join(" \u00b7 ") + ")" : "") + " is taken off this estimate's options. " + notes.join(" "),
-			"Remove option")
-			.then(function (yes) {
-				if (!yes) return;
+			"Remove option",
+			function () {
 				begin("Removing Option " + t.number + "\u2026", tabStatus);
 				pending[t.key] = [];
-				call("remove_option", { name: page.root, option: t.key })
+				return call("remove_option", { name: page.root, option: t.key })
 					.then(function (result) {
 						// Unsaved changes in the other tabs go with the reload; it was asked.
 						pending = {};
 						window.location.assign(result.route);
-					})
-					.catch(function (error) { fail(error, tabStatus); });
-			});
+					});
+			},
+			"Removing\u2026")
+			.catch(function (error) { fail(error, tabStatus); });
 	}
 
 	/* --------------------------------------------------- save all options */
