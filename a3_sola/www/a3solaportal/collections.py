@@ -19,7 +19,7 @@ import frappe
 from frappe import _
 from frappe.model.base_document import get_controller
 
-from a3_sola.api import assignments, portal_chain
+from a3_sola.api import assignments, installation_lead, portal_chain
 from a3_sola.www.a3solaportal import fill_shell
 
 
@@ -66,7 +66,9 @@ COLLECTIONS = {
 	                      "form_extra": ["solar_design_estimate", "approved_by", "reason"]},
 	# ---------------------------------------------------- Solar Operations
 	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The job itself", "icon": "wrench"},
-	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist"},
+	# The procurement tasks' material lists are a rows grid, each on the task that buys it.
+	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist",
+	                       "item_table_by": ("task_code", {"SPROC": "structure_materials", "PROC": "materials"}), "item_total": False},
 	"fee-payments": {"doctype": "Statutory Fee Payment", "title": "Statutory Fee Payment", "singular": "fee payment", "subtitle": "Form 1, Form 2, meter", "icon": "cash"},
 	"portal-applications": {"doctype": "Portal Application", "title": "Portal Application", "singular": "portal application", "subtitle": "PM Surya Ghar, CEIG", "icon": "globe"},
 	"loan-applications": {"doctype": "Loan Application", "title": "Loan Application", "singular": "loan application", "subtitle": "Financed jobs", "icon": "bank"},
@@ -105,6 +107,7 @@ COLLECTIONS = {
 	"service-tickets": {"doctype": "Service Ticket", "title": "Service Ticket", "singular": "service ticket", "subtitle": "Faults and requests", "icon": "ticket"},
 	"warranty-claims": {"doctype": "Solar Warranty Claim", "title": "Solar Warranty Claim", "singular": "warranty claim", "subtitle": "Against the supplier", "icon": "shield"},
 	"generation-readings": {"doctype": "Generation Reading", "title": "Generation Reading", "singular": "generation reading", "subtitle": "Output vs guarantee", "icon": "gauge"},
+	"reimbursements": {"doctype": "Expense Reimbursement", "title": "Reimbursement", "singular": "reimbursement", "subtitle": "Claims, approval, payment", "icon": "wallet"},
 	"fee-recoveries": {"doctype": "Statutory Fee Recovery", "title": "Statutory Fee Recovery", "singular": "fee recovery", "subtitle": "Fees fronted, recovered", "icon": "refund"},
 }
 
@@ -406,10 +409,12 @@ def show_when(df):
 	return "{0}={1}".format(match.group(1), match.group(2))
 
 
-#: Fields the portal's forms never show, by doctype: ERPNext sets them itself (an order's
-#: currency and exchange rates come from the company, customer and price list).
+#: Fields the portal never shows, by doctype: ERPNext sets them itself (an order's
+#: currency and exchange rates come from the company, customer and price list), or they
+#: are the office's business, kept in ERPNext (a task's cost).
 PORTAL_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
+	"Installation Task": {"cost", "cost_category", "cost_remarks"},
 }
 
 
@@ -503,16 +508,202 @@ def form_extra(cfg, meta):
 	return extra
 
 
+def task_source(slug, installation, task_code):
+	"""What a task's document starts with when it is created from the project board, or None.
+
+	The values the desk's Task button opens a new document with (`tasks.open_task`): the job,
+	its consumer, the task code and the kind of document the task needs. Only for this
+	collection's doctype, and only while the task has no document yet; the job is read with
+	the caller's own permissions.
+	"""
+	from a3_sola.api import tasks
+
+	if not (installation and task_code and frappe.db.exists("Solar Installation", installation)):
+		return None
+	target = tasks.open_task(installation, task_code, create_draft=0)
+	if target.get("name") or target.get("doctype") != get_collection(slug)["doctype"]:
+		return None
+	return {k: v for k, v in (target.get("route_options") or {}).items() if v not in (None, "")}
+
+
+#: What a task's document is opened with that makes it that task's: the job, the task code
+#: and the kind of document the task needs. Fixed on the task's create form - carried, shown
+#: as context, never edited - while the rest of its values (a loan's lender) can be changed.
+TASK_FIXED = (
+	"solar_installation", "solar_consumer", "company", "task_code",
+	"fee_type", "pack_type", "application_type", "work_order_kind", "work_order_type",
+	# Who it is with is the task's people, set in its Assigned to strip; the document takes
+	# the lead of them.
+	"assigned_to",
+	# A task's document is named for its task.
+	"task_name",
+)
+
+
+#: Tasks whose create form asks only for these fields, by task code; the rest of the
+#: document is filled in later, on its edit form. Registering on the PM Surya Ghar portal
+#: is its number, date and who applied - the approval comes afterwards.
+TASK_FORM_FIELDS = {
+	"NPA": ("application_number", "application_date", "applied_by"),
+	# Buying the stamp paper: bought or not, what it cost, whether it is claimed back - the
+	# rest of the agreement comes later.
+	"STMP": ("stamp_paper_status", "stamp_paper_value", "claim_reimbursement", "stamp_paper_remarks"),
+}
+
+#: Select fields a task's create form asks as a single tick box, by task code:
+#: {code: {field: (label, value when ticked, value when not)}}.
+TASK_FORM_CHECKS = {
+	"STMP": {"stamp_paper_status": ("Stamp paper purchased", "Purchased", "Not Purchased")},
+}
+
+#: A task form field shown only where the task allows a reimbursement.
+REIMBURSEMENT_FIELDS = {"claim_reimbursement"}
+
+#: Show-when rules on a task's create form, by task code: {code: {field: rule}}.
+TASK_FORM_SHOW_WHEN = {
+	# Claimed back only once it is bought.
+	"STMP": {"claim_reimbursement": "stamp_paper_status"},
+}
+
+
+#: Tasks whose own form asks about a reimbursement (the stamp paper's "I paid" box), so
+#: their create form needs no Claim reimbursement button.
+CLAIM_IN_FORM = {"STMP"}
+
+
+def tasks_code_for(doc):
+	from a3_sola.api.tasks import code_for
+
+	return code_for(doc)
+
+
+def task_claim(installation, task_code):
+	"""What a task's reimbursement button needs, or None when there is no task: the claim the
+	person has already raised for it (not rejected), to view - and edit while it waits for
+	approval, on its page - else what a new claim is raised against."""
+	if not (installation and task_code):
+		return None
+	name = frappe.db.get_value(
+		"Installation Stage Log", {"parent": installation, "parenttype": "Solar Installation", "stage_code": task_code},
+		"stage_name",
+	)
+	if not name:
+		return None
+	existing = frappe.db.get_value(
+		"Expense Reimbursement",
+		{"solar_installation": installation, "task_code": task_code, "claimant": frappe.session.user,
+		 "status": ("!=", "Rejected")},
+		["name", "status"], as_dict=True, order_by="creation desc",
+	)
+	# A claim already raised is always there to view; a new one only where the task allows it.
+	if not existing and not reimbursable(installation, task_code):
+		return None
+	return {
+		"installation": installation, "task": task_code, "task_name": name,
+		"existing": {**existing, "route": record_route("reimbursements", existing.name)} if existing else None,
+	}
+
+
+def reimbursable(installation, task_code):
+	"""Whether the job's task template ticks Allow Reimbursement for this task."""
+	template = frappe.db.get_value("Solar Installation", installation, "stage_template")
+	if not template:
+		return False
+	# A plain query: get_all drops some template-row columns from its field list.
+	rows = frappe.db.sql(
+		"""select allow_reimbursement from `tabInstallation Stage Template Detail`
+		where parent = %s and parenttype = 'Installation Stage Template' and stage_code = %s""",
+		(template, task_code),
+	)
+	return bool(rows and rows[0][0])
+
+
+def task_people(installation, task_code):
+	"""Who a task is assigned to - its people on the job, the defaults from its position
+	first - for the Assigned to strip on the task's own pages. None when there is no task."""
+	if not (installation and task_code):
+		return None
+	name = frappe.db.get_value(
+		"Installation Stage Log", {"parent": installation, "parenttype": "Solar Installation", "stage_code": task_code},
+		["stage_name", "default_assignee"], as_dict=True,
+	)
+	if not name:
+		return None
+	rows = frappe.get_all(
+		"Installation Task Assignee", filters={"parent": installation, "parenttype": "Solar Installation", "stage_code": task_code},
+		fields=["user", "full_name"], order_by="idx asc",
+	)
+	return {
+		"installation": installation, "task": task_code, "task_name": name.stage_name,
+		"position": name.default_assignee or "",
+		"assignees": [{"user": r.user, "name": r.full_name or r.user} for r in rows],
+		"can_assign": bool(frappe.has_permission("Solar Installation", "write", installation)),
+	}
+
+
+def task_downloads(installation, task_code, document=None):
+	"""What a task offers to download before or after its document exists: the stamp paper
+	data the vendor writes the paper from (api/stamp_print.py); the structure material
+	and material tasks' purchase lists, once the task is saved (api/purchase_list.py)."""
+	if task_code == "STMP":
+		from a3_sola.api import stamp_print
+
+		return [{"label": "Download stamp paper data", "url": stamp_print.url(installation, document)}]
+	if task_code in ("SPROC", "PROC") and document:
+		from a3_sola.api import purchase_list
+
+		return [{"label": "Download purchase list", "url": purchase_list.url(document)}]
+	return []
+
+
+def task_form_groups(slug, values):
+	"""The task's create form: the doctype's whole form, as its edit form lays it out, for a
+	new document holding `values`, less the fixed fields - or only the task's own fields
+	(TASK_FORM_FIELDS). A section that applies to other tasks only (an Installation Task's,
+	by code) is hidden by its rule in the browser."""
+	doc = frappe.new_doc(get_collection(slug)["doctype"])
+	doc.update(values)
+	only = TASK_FORM_FIELDS.get(values.get("task_code"))
+	groups = []
+	for g in edit_fields_for(doc, get_collection(slug)["title"]):
+		sections = [
+			{**s, "fields": [
+				f for f in s["fields"]
+				if f["fieldname"] not in TASK_FIXED and (only is None or f["fieldname"] in only)
+			]} for s in g["sections"]
+		]
+		sections = [s for s in sections if s["fields"]]
+		if sections:
+			groups.append({**g, "sections": sections})
+	for field, (label, on, _off) in TASK_FORM_CHECKS.get(values.get("task_code"), {}).items():
+		for spec in (f for g in groups for s in g["sections"] for f in s["fields"] if f["fieldname"] == field):
+			spec.update({"type": "Check", "label": label, "value": 1 if doc.get(field) == on else 0, "show_when": ""})
+	if not reimbursable(values.get("solar_installation"), values.get("task_code")):
+		for g in groups:
+			for s in g["sections"]:
+				s["fields"] = [f for f in s["fields"] if f["fieldname"] not in REIMBURSEMENT_FIELDS]
+	for field, rule in TASK_FORM_SHOW_WHEN.get(values.get("task_code"), {}).items():
+		for spec in (f for g in groups for s in g["sections"] for f in s["fields"] if f["fieldname"] == field):
+			spec["show_when"] = rule
+	return doc, groups
+
+
 def source_prefill(slug):
 	"""(source doc, step, values) when the create page was reached from another record.
 
 	The pairing must be one the chain declares, and the source is read with the caller's
-	own permissions, so this cannot be used to read a record the person may not see.
+	own permissions, so this cannot be used to read a record the person may not see. A task
+	opened from the project board is the other way in: the job, with `task` naming the task.
 	"""
 	source_dt = (frappe.form_dict.get("source_dt") or "").strip()
 	source_name = (frappe.form_dict.get("source") or "").strip()
 	if not source_dt or not source_name:
 		return None, None, {}
+	if source_dt == "Solar Installation":
+		values = task_source(slug, source_name, (frappe.form_dict.get("task") or "").strip())
+		if values is None:
+			return None, None, {}
+		return frappe.get_doc("Solar Installation", source_name), None, values
 
 	step = portal_chain.find_step(source_dt, slug)
 	if not step:
@@ -584,6 +775,31 @@ def new_context(context, slug):
 	# record the new document back on the record it came from.
 	context.source_dt = source_doc.doctype if source_doc else ""
 	context.source_name = source_doc.name if source_doc else ""
+	context.source_task = (frappe.form_dict.get("task") or "").strip() if context.source_dt == "Solar Installation" else ""
+	if context.source_task:
+		# A task's document is created on its whole form, as it is edited, so every detail
+		# the task asks for is there - not just the mandatory ones.
+		from a3_sola.api.stages import _get_stage
+
+		context.record, context.groups = task_form_groups(slug, prefill)
+		context.task_form = True
+		context.task_name = _get_stage(source_doc, context.source_task).stage_name
+		context.fixed = [(k, prefill[k]) for k in TASK_FIXED if prefill.get(k)]
+		context.endpoint = "a3_sola.api.portal_crud.create_record"
+		context.view_route = context.source_route
+		context.title = "New " + cfg["singular"]
+		context.task_downloads = task_downloads(source_doc.name, context.source_task)
+		if context.source_task not in CLAIM_IN_FORM:
+			context.claim = task_claim(source_doc.name, context.source_task)
+		context.task_people = task_people(source_doc.name, context.source_task)
+		from a3_sola.api import structure_bom
+
+		lists = structure_bom.MATERIAL_LISTS.get(context.source_task)
+		if lists and context.record.get(lists[1]) and not context.record.get(lists[0]):
+			structure_bom.fill_materials(context.record)
+		context.item_table = item_table(slug, context.record, editable=True)
+		# Choosing another BOM on the form refills the list (portal_structure_bom.html).
+		context.bom_follow = lists[1] if lists else None
 	context.source_title = record_title(source_doc) if source_doc else ""
 	context.source_route = (
 		record_route(SLUG_OF_DOCTYPE[source_doc.doctype], source_doc.name)
@@ -611,16 +827,33 @@ DETAIL_SLUGS = {
 	"dispatch-notices", "document-packs", "commissioning", "customer-reviews",
 	"subsidy-claims", "projects", "billing-plans", "sales-invoices",
 	"payment-entries", "om-contracts", "om-visits", "service-tickets",
-	"warranty-claims", "generation-readings", "fee-recoveries", "installation-snags",
+	"warranty-claims", "generation-readings", "reimbursements", "fee-recoveries", "installation-snags",
 	"material-requests", "purchase-receipts", "stock-entries", "serial-numbers",
 	"journal-entries", "additional-structures", "additional-cables", "special-discounts",
 }
 
-#: Slugs whose record may be submitted from the portal. Only the sales order: submitting
-#: it is the handoff into Operations - it opens the Solar Installation, its document
-#: register and its billing plan - and that is the one place the portal needs to trigger.
-#: The CRM steps before it are submitted on the desk, as they always have been.
-SUBMIT_SLUGS = {"sales-orders"}
+#: The documents a project's tasks are carried out in, by slug, as the board opens them.
+#: Submitting one is what completes its task (tasks.sync_from_document). The purchase
+#: order and delivery note are ERPNext's own forms and are worked in the desk.
+TASK_SLUGS = {
+	"installation-tasks", "fee-payments", "portal-applications", "loan-applications",
+	"agreements", "work-orders", "dispatch-notices", "document-packs", "commissioning",
+	"customer-reviews", "subsidy-claims",
+}
+
+#: The doctypes a project's tasks are done in, whose Assigned To is the task's lead person.
+TASK_DOCTYPES_WITH_PEOPLE = {COLLECTIONS[s]["doctype"] for s in TASK_SLUGS}
+
+#: Slugs whose record may be submitted from the portal: the sales order - submitting it is
+#: the handoff into Operations, opening the Solar Installation, its document register and
+#: its billing plan - and the task documents, so a task is completed where it is opened.
+#: Not the agreement: its task is done when the stamp paper is bought, and submitting it is
+#: executing the agreement, which needs its text generated first - a desk step. The CRM
+#: steps before the order are submitted on the desk, as they always have been.
+SUBMIT_SLUGS = {"sales-orders"} | (TASK_SLUGS - {"agreements"})
+
+#: The submit button's words, by slug; "Submit" otherwise.
+SUBMIT_LABELS = {"sales-orders": "Submit order", "installation-tasks": "Complete task"}
 
 #: Slugs whose detail and create pages are bespoke rather than metadata-driven, so the
 #: generic `detail_context` is not what renders them. Quotations open in the pricing
@@ -683,7 +916,19 @@ def edit_route(slug, name):
 #: doctype allows on submit. A project is submitted when it is created; its finance can
 #: change later (a loan taken or dropped), and the tasks follow (stages.reapply_applicability).
 EDITABLE_AFTER_SUBMIT = {
-	"Solar Installation": ("is_financed", "lender", "lender_branch", "loan_sanction_no", "jan_samarth_id"),
+	"Solar Installation": (
+		"is_financed", "lender", "lender_branch", "bank_ifsc_code", "bank_account_holder_name",
+		"bank_account_no", "loan_sanction_no", "jan_samarth_id",
+		# The job's people: its tasks are assigned to them by position.
+		"project_manager", "site_engineer", "sales_coordinator",
+	),
+	# What the bank's covering letter and feasibility report print, corrected before a reprint.
+	"Loan Application": (
+		"consumer_name", "installation_address", "district", "state", "pincode", "place",
+		"national_portal_application_id", "discom_consumer_id", "discom_id", "jan_samarth_id",
+		"loan_sanction_no", "feasibility_status", "capacity_applied_kw", "capacity_installable_kw",
+		"project_cost_all_inclusive",
+	),
 }
 
 
@@ -780,7 +1025,7 @@ def form_groups(meta, first_label=None):
 			continue  # inside a skipped tab
 		if df.fieldtype == "Section Break":
 			if df.label or section is None:
-				section = {"label": df.label or "", "fields": []}
+				section = {"label": df.label or "", "fields": [], "depends_on": df.depends_on or ""}
 				group["sections"].append(section)
 			continue
 		if df.fieldtype == "Column Break":
@@ -788,7 +1033,7 @@ def form_groups(meta, first_label=None):
 		if df.hidden or df.fieldtype not in DISPLAY_TYPES_ALL:
 			continue
 		if section is None:
-			section = {"label": "", "fields": []}
+			section = {"label": "", "fields": [], "depends_on": ""}
 			group["sections"].append(section)
 		section["fields"].append(df)
 
@@ -900,8 +1145,10 @@ def detail_context(context, slug, name):
 	for g in form_groups(doc.meta, cfg["title"]):
 		sections = []
 		for s in g["sections"]:
-			rows =[detail_row(df, doc.get(df.fieldname)) for df in s["fields"]]
-			sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "rows": rows})
+			rows = [detail_row(df, doc.get(df.fieldname)) for df in s["fields"]
+			        if df.fieldname not in PORTAL_HIDDEN.get(doc.doctype, ())]
+			if rows:
+				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "rows": rows})
 		groups.append({"key": g["key"], "label": g["label"], "sections": sections})
 
 	rows = [r for g in groups for s in g["sections"] for r in s["rows"]]
@@ -933,6 +1180,18 @@ def detail_context(context, slug, name):
 		and bool(doc.has_permission("submit"))
 	)
 	context.back_link = {"href": context.list_route, "label": "Back to " + cfg["title"].lower()}
+	context.submit_label = SUBMIT_LABELS.get(slug, "Submit")
+	# A task's document is reached from its project's board, and leads back there.
+	if slug in TASK_SLUGS and doc.get("solar_installation"):
+		context.back_link = {"href": record_route("projects", doc.solar_installation), "label": "Back to project"}
+		context.claim = task_claim(doc.solar_installation, tasks_code_for(doc))
+		context.task_people = task_people(doc.solar_installation, tasks_code_for(doc))
+		context.task_downloads = task_downloads(doc.solar_installation, tasks_code_for(doc), doc.name)
+		if context.task_downloads and not context.get("head_actions_template"):
+			context.head_actions_template = "templates/includes/portal_task_downloads.html"
+
+		# A task's people are its own (the strip in the head); the to-do card would be a second list.
+		context.hide_assignment = bool(context.task_people)
 	context.chain_steps = portal_chain.steps_for(doc)
 	# A chain step that ERPNext maps for us is posted from this page, so it needs the
 	# record's identity and a CSRF token.
@@ -956,6 +1215,24 @@ PORTAL_SHOW_WHEN = {
 	},
 }
 
+#: Values the edit form offers for blank fields, as {doctype: fn(doc) -> (where from, {field: value})}.
+#: Only offered: the box is filled in the browser when the field shows, and nothing is
+#: written until it is saved. A project's loan is usually with the consumer's own bank;
+#: when it is not, the person overtypes it, and the consumer's record keeps its own details.
+PORTAL_PREFILL = {
+	"Solar Installation": lambda doc: (
+		"Solar Consumer", installation_lead.consumer_bank(doc.solar_consumer, doc.lender)
+	),
+	"Solar Consumer": lambda doc: ("consumer name", {"bank_account_holder_name": doc.consumer_name}),
+}
+
+#: Fields that follow another while they still match it, as {doctype: {field: source}}: the
+#: account holder is the consumer until somebody says otherwise, so renaming the consumer
+#: renames an untouched holder too.
+PORTAL_FOLLOWS = {
+	"Solar Consumer": {"bank_account_holder_name": "consumer_name"},
+}
+
 
 def edit_fields_for(doc, first_label=None):
 	"""The fields the edit form renders, grouped like the form, with current values.
@@ -975,16 +1252,46 @@ def edit_fields_for(doc, first_label=None):
 			for df in s["fields"]:
 				if (df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS
 						or df.fieldname in PORTAL_HIDDEN.get(doc.doctype, ())
+						# A task's document: its people are the task's, in the Assigned to strip.
+						or (df.fieldname == "assigned_to" and doc.doctype in TASK_DOCTYPES_WITH_PEOPLE)
 						or (only is not None and df.fieldname not in only)):
 					continue
 				spec = edit_spec(df, doc.get(df.fieldname), doc)
-				# Shown only with the answer it belongs to, as the desk's depends_on does.
-				spec["show_when"] = PORTAL_SHOW_WHEN.get(doc.doctype, {}).get(df.fieldname) or show_when_expr(df)
+				# Shown only with the answer it belongs to, as the desk's depends_on does - the
+				# field's own rule, else its section's.
+				spec["show_when"] = (
+					PORTAL_SHOW_WHEN.get(doc.doctype, {}).get(df.fieldname) or show_when_expr(df)
+					or section_show_when(s.get("depends_on"))
+				)
 				specs.append(spec)
 			if specs:
 				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "fields": specs})
 		if sections:
 			groups.append({"key": g["key"], "label": g["label"], "sections": sections})
+	return groups
+
+
+def apply_prefill(doc, groups):
+	"""Mark each blank field in `groups` with the value it is offered (PORTAL_PREFILL), and
+	each field that follows another (PORTAL_FOLLOWS).
+
+	A value the record already has is never replaced. Kept off `edit_fields_for`, which is
+	also the save allow-list and has no use for the lookup.
+	"""
+	rule = PORTAL_PREFILL.get(doc.doctype)
+	follows = PORTAL_FOLLOWS.get(doc.doctype, {})
+	if not (rule or follows):
+		return groups
+	source, values = rule(doc) if rule else ("", {})
+	for g in groups:
+		for s in g["sections"]:
+			for spec in s["fields"]:
+				value = values.get(spec["fieldname"])
+				if value and spec["value"] in ("", None):
+					spec["prefill"] = value
+					spec["prefill_from"] = source
+				if spec["fieldname"] in follows:
+					spec["follows"] = follows[spec["fieldname"]]
 	return groups
 
 
@@ -1010,7 +1317,11 @@ def edit_context(context, slug, name):
 	context.collection = {**cfg, "slug": slug}
 	context.record = doc
 	context.title = title
-	context.groups = edit_fields_for(doc, cfg["title"])
+	context.groups = apply_prefill(doc, edit_fields_for(doc, cfg["title"]))
+	if doc.doctype == "Installation Task":
+		from a3_sola.api.structure_bom import MATERIAL_LISTS
+
+		context.bom_follow = (MATERIAL_LISTS.get(doc.get("task_code")) or (None, None))[1]
 	context.view_route = record_route(slug, doc.name)
 	context.back_link = {"href": context.view_route, "label": "Back to " + cfg["singular"]}
 	context.endpoint = "a3_sola.api.portal_crud.update_record"
@@ -1035,9 +1346,14 @@ def item_table(slug, doc=None, editable=False):
 	"""The rows grid for this collection, with `doc`'s rows when there is one, or None.
 
 	`editable` renders it as inputs inside the page's form; otherwise it is a read-only table.
+	A collection whose grid depends on the record (`item_table_by`: field, {value: table})
+	shows the record's table, and none for a record without one.
 	"""
 	cfg = get_collection(slug)
 	fieldname = cfg.get("item_table")
+	by = cfg.get("item_table_by")
+	if by:
+		fieldname = by[1].get(doc.get(by[0])) if doc is not None else None
 	if not fieldname:
 		return None
 	parent = frappe.get_meta(cfg["doctype"])
@@ -1066,7 +1382,8 @@ def item_table(slug, doc=None, editable=False):
 		"fieldname": fieldname, "label": _(table_df.label), "reqd": bool(table_df.reqd), "editable": editable,
 		"columns": columns, "rows": rows, "display": display, "rule": cfg.get("row_amount") or "",
 		"total_label": _(parent.get_label("total_amount")),
-		"total": frappe.format_value(total, parent.get_field("total_amount"), doc) if doc else "",
+		"total": frappe.format_value(total, parent.get_field("total_amount"), doc) if doc and parent.has_field("total_amount") else "",
+		"show_total": cfg.get("item_total", True),
 	}
 	# What the grid's script starts from, embedded in a <script> tag: "</" is escaped so a
 	# row's text can never close that tag.
@@ -1074,13 +1391,13 @@ def item_table(slug, doc=None, editable=False):
 	return spec
 
 
-def item_rows(slug, posted):
+def item_rows(slug, posted, doc=None):
 	"""The posted rows, kept to the grid's editable columns: the browser sets nothing else.
 
 	`posted` is the JSON the grid carries in its hidden `__items` input. Blank rows are
 	dropped so an untouched last line does not fail validation.
 	"""
-	spec = item_table(slug)
+	spec = item_table(slug, doc)
 	if not spec:
 		return None
 	editable = [c for c in spec["columns"] if not c["readonly"]]
@@ -1277,6 +1594,23 @@ def lead_first_allowlist(meta):
 				if not spec["readonly"]:
 					allowed[spec["fieldname"]] = spec
 	return allowed
+
+
+def section_show_when(depends_on):
+	"""A section's `depends_on` as a show-when rule for each of its fields, or "".
+
+	The shapes a field's own rule takes (show_when_expr), and `eval:["a","b"].includes(doc.field)`,
+	written "field=a|b" - an Installation Task's sections, one per task code.
+	"""
+	expr = (depends_on or "").strip()
+	rule = show_when_expr(frappe._dict(depends_on=expr))
+	if rule:
+		return rule
+	match = re.match(r"^eval:\[(.*)\]\.includes\(doc\.([a-z0-9_]+)\)$", expr)
+	if not match:
+		return ""
+	values = re.findall(r"[\"']([^\"']*)[\"']", match.group(1))
+	return "{0}={1}".format(match.group(2), "|".join(values)) if values else ""
 
 
 def show_when_expr(df):

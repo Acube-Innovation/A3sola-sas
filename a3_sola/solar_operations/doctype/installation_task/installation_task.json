@@ -58,6 +58,23 @@
   "structure_drawing_attachment",
   "module_layout_attachment",
   "design_notes",
+  "sb_sproc",
+  "structure_bom",
+  "structure_roof_type",
+  "cb_sproc",
+  "structure_capacity_kw",
+  "structure_procured_on",
+  "structure_notes",
+  "structure_materials",
+  "sb_proc",
+  "material_bom",
+  "cb_proc",
+  "materials_procured_on",
+  "materials",
+  "sb_dal",
+  "approval_reference",
+  "cb_dal",
+  "approval_received_on",
   "sb_ccert",
   "solar_contractor",
   "certificate_no",
@@ -152,7 +169,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Task",
-   "options": "\nFRM1\nADV\nDSGN\nCCERT\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
+   "options": "\nFRM1\nDAL\nADV\nDSGN\nSPROC\nPROC\nCCERT\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
    "reqd": 1
   },
   {
@@ -400,6 +417,106 @@
    "label": "Design Notes"
   },
   {
+   "depends_on": "eval:doc.task_code=='SPROC'",
+   "fieldname": "sb_sproc",
+   "fieldtype": "Section Break",
+   "label": "Structure Material"
+  },
+  {
+   "fieldname": "structure_bom",
+   "fieldtype": "Link",
+   "label": "Structure BOM",
+   "options": "BOM",
+   "description": "From the project's package (Structure BOMs, by roof type and panel capacity); fills the Structure Material list."
+  },
+  {
+   "fieldname": "structure_roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_sproc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "structure_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Panel Capacity (kW)",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "structure_procured_on",
+   "fieldtype": "Date",
+   "label": "Procured On"
+  },
+  {
+   "fieldname": "structure_notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "structure_materials",
+   "fieldtype": "Table",
+   "label": "Structure Material",
+   "options": "Installation Task Material",
+   "depends_on": "eval:doc.task_code=='SPROC'",
+   "description": "The structure BOM's lines, filled when the BOM is chosen; add, change or remove materials as bought."
+  },
+  {
+   "depends_on": "eval:doc.task_code=='PROC'",
+   "fieldname": "sb_proc",
+   "fieldtype": "Section Break",
+   "label": "Material"
+  },
+  {
+   "fieldname": "material_bom",
+   "fieldtype": "Link",
+   "label": "Material BOM",
+   "options": "BOM",
+   "description": "The package's bill of materials (Solar Package › BOM); fills the Material list."
+  },
+  {
+   "fieldname": "cb_proc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "materials_procured_on",
+   "fieldtype": "Date",
+   "label": "Procured On"
+  },
+  {
+   "fieldname": "materials",
+   "fieldtype": "Table",
+   "label": "Material",
+   "options": "Installation Task Material",
+   "depends_on": "eval:doc.task_code=='PROC'",
+   "description": "The package BOM's lines; add, change or remove materials as bought."
+  },
+  {
+   "depends_on": "eval:doc.task_code=='DAL'",
+   "fieldname": "sb_dal",
+   "fieldtype": "Section Break",
+   "label": "Digital Approval Letter",
+   "description": "Upload the approval letter from Jan Samarth in Attachments."
+  },
+  {
+   "fieldname": "approval_reference",
+   "fieldtype": "Data",
+   "label": "Jan Samarth Reference"
+  },
+  {
+   "fieldname": "cb_dal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approval_received_on",
+   "fieldtype": "Date",
+   "label": "Approval Received On"
+  },
+  {
    "depends_on": "eval:doc.task_code=='CCERT'",
    "fieldname": "sb_ccert",
    "fieldtype": "Section Break",
@@ -599,7 +716,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 11:30:00.000000",
+ "modified": "2026-10-15 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Task",
@@ -741,6 +858,19 @@
    "read": 1,
    "role": "Solar Operations Executive",
    "write": 1
+  },
+  {
+   "role": "Solar Sales Coordinator",
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "share": 1,
+   "create": 1,
+   "write": 1,
+   "submit": 1
   }
  ],
  "search_fields": "solar_installation,task_code,consumer_name",

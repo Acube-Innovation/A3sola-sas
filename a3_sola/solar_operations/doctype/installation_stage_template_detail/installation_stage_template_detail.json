@@ -14,6 +14,8 @@
   "sla_days",
   "cb_1",
   "responsible_role",
+  "default_assignee",
+  "allow_reimbursement",
   "is_mandatory",
   "display_order",
   "sb_2",
@@ -77,7 +79,6 @@
    "fieldname": "sla_days",
    "fieldtype": "Int",
    "label": "SLA Days",
-   "in_list_view": 1,
    "columns": 1
   },
   {
@@ -89,6 +90,24 @@
    "fieldtype": "Link",
    "label": "Responsible Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "default_assignee",
+   "fieldtype": "Select",
+   "label": "Default Assignee",
+   "options": "Project Engineer\nProject Manager\nSales Co-ordinator\nLead Owner\nAccounts\nContractor",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Who the task is first assigned to on a new project: the person in that position on the project."
+  },
+  {
+   "fieldname": "allow_reimbursement",
+   "fieldtype": "Check",
+   "label": "Allow Reimbursement",
+   "default": "0",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Tick for a task its assignee may pay for out of pocket: its pages offer Claim Reimbursement."
   },
   {
    "fieldname": "is_mandatory",
@@ -159,7 +178,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-02 12:00:00.000000",
+ "modified": "2026-10-15 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",

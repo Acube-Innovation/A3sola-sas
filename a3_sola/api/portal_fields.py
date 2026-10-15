@@ -236,6 +236,16 @@ def link_filters(df, doc=None):
 	return filters or None
 
 
+#: Link fields whose choices are not the whole doctype, by fieldname: a dotted function
+#: taking the document and returning [{value, label}].
+CHOICE_SOURCES = {
+	# The structure BOMs of the project's package, by roof type and capacity.
+	"structure_bom": "a3_sola.api.structure_bom.choices_for",
+	# The project's package's bill of materials.
+	"material_bom": "a3_sola.api.structure_bom.material_choices_for",
+}
+
+
 def edit_spec(df, value, doc=None):
 	"""What a form needs to render one field with its current value."""
 	spec = {
@@ -260,7 +270,8 @@ def edit_spec(df, value, doc=None):
 			value = default_for(df)
 			if value:
 				spec["value"] = value
-		choices = link_choices(df.options, filters=link_filters(df, doc))
+		source = CHOICE_SOURCES.get(df.fieldname)
+		choices = frappe.get_attr(source)(doc) if source else link_choices(df.options, filters=link_filters(df, doc))
 		# Past the limit the list is not the whole table, so offer a free-text field with
 		# the fetched names as suggestions rather than a dropdown that hides the rest.
 		spec["many"] = len(choices) >= LINK_CHOICE_LIMIT and df.options != "DISCOM Section"

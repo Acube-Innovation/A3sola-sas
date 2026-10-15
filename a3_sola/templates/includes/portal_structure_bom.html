@@ -1,0 +1,23 @@
+{#- On a procurement task (structure or material): choosing another BOM refills its material
+    list (the rows grid, portal_item_table.js) with that BOM's lines. Context: bom_follow -
+    the BOM field's name. -#}
+{%- if bom_follow %}
+<script>
+(function () {
+	var field = document.querySelector('[name="{{ bom_follow }}"]');
+	var grid = document.querySelector("[data-item-table]");
+	if (!field || !grid || field.type === "hidden") return;
+	field.addEventListener("change", function () {
+		if (!field.value) return;
+		fetch("/api/method/a3_sola.api.structure_bom.bom_items?bom=" + encodeURIComponent(field.value), { credentials: "same-origin", headers: { "Accept": "application/json" } })
+			.then(function (r) { return r.json(); })
+			.then(function (body) {
+				var lines = ((body.message || {}).lines) || [];
+				grid.dispatchEvent(new CustomEvent("a3s:set-rows", { detail: lines.map(function (l) {
+					return { material: l.item_name, qty: l.qty, uom: l.uom, item_code: l.item_code, remarks: "" };
+				}) }));
+			});
+	});
+})();
+</script>
+{%- endif %}

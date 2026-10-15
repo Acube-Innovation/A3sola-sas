@@ -1,0 +1,86 @@
+{#- A reimbursement's next step in its page head: Approve / Reject while it waits (an
+    operations manager), Mark paid once approved (Accounts). Each asks what it needs and
+    posts to the Expense Reimbursement controller. Context: can_decide, can_pay. -#}
+{%- if can_decide %}
+<button type="button" class="a3s-btn a3s-btn--primary" data-reimb="approve">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg><span>Approve</span></button>
+<button type="button" class="a3s-btn a3s-btn--secondary" data-reimb="reject"><span>Reject</span></button>
+{%- endif %}
+{%- if can_pay %}
+<button type="button" class="a3s-btn a3s-btn--primary" data-reimb="pay">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-wallet"></use></svg><span>Mark paid</span></button>
+{%- endif %}
+{%- if can_decide or can_pay %}
+<script>
+(function () {
+	var NAME = {{ record.name | tojson }};
+	var BASE = "a3_sola.solar_operations.doctype.expense_reimbursement.expense_reimbursement.";
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+	function message(body) {
+		try { var m = JSON.parse((body && body._server_messages) || "[]"); if (m.length) return String(JSON.parse(m[0]).message || "").replace(/<[^>]*>/g, ""); } catch (e) { /* none */ }
+		return "";
+	}
+	function post(method, args, status) {
+		status.textContent = "Saving…"; status.classList.remove("is-error");
+		return fetch("/api/method/" + BASE + method, {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
+			body: JSON.stringify(Object.assign({ name: NAME }, args)),
+		}).then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) {
+			if (!r.ok) throw new Error(message(b) || (r.status === 403 ? "You do not have permission to do that." : "That did not go through. Try again."));
+			window.location.reload();
+		}); }).catch(function (e) { status.textContent = e.message; status.classList.add("is-error"); });
+	}
+	/* A small dialog asking for what the step needs. */
+	function ask(title, fieldsHtml, label, collect, method) {
+		var back = document.createElement("div");
+		back.className = "a3s-modal";
+		back.innerHTML = '<div class="a3s-modal__panel" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+			'<h3 class="a3s-modal__title">' + esc(title) + "</h3>" +
+			'<form class="a3s-form a3s-modal__form">' + fieldsHtml +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary">' + esc(label) + "</button>" +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button>' +
+			'<p class="a3s-form__status" data-status role="status" aria-live="polite"></p></div></form></div>';
+		document.body.appendChild(back);
+		var form = back.querySelector("form");
+		back.addEventListener("click", function (e) { if (e.target === back || e.target.closest("[data-close]")) back.remove(); });
+		form.addEventListener("submit", function (e) {
+			e.preventDefault();
+			var args = collect(form);
+			if (args === null) return;
+			post(method, args, form.querySelector("[data-status]"));
+		});
+		var first = form.querySelector("input, select, textarea");
+		if (first) first.focus();
+	}
+	var today = new Date().toISOString().slice(0, 10);
+	document.addEventListener("click", function (event) {
+		var b = event.target.closest("[data-reimb]");
+		if (!b) return;
+		if (b.dataset.reimb === "approve") {
+			ask("Approve reimbursement", '<div class="a3s-field"><label for="r-remarks">Remarks (optional)</label><textarea id="r-remarks" name="remarks" rows="2"></textarea></div>',
+				"Approve", function (f) { return { remarks: f.elements.remarks.value.trim() }; }, "approve");
+		} else if (b.dataset.reimb === "reject") {
+			ask("Reject reimbursement", '<div class="a3s-field"><label for="r-reason">Reason <span class="a3s-req">*</span></label><textarea id="r-reason" name="reason" rows="3" required></textarea></div>',
+				"Reject", function (f) {
+					var reason = f.elements.reason.value.trim();
+					if (!reason) { f.querySelector("[data-status]").textContent = "Say why it is rejected."; return null; }
+					return { reason: reason };
+				}, "reject");
+		} else if (b.dataset.reimb === "pay") {
+			ask("Mark reimbursement paid",
+				'<div class="a3s-field"><label for="r-on">Paid on <span class="a3s-req">*</span></label><input type="date" id="r-on" name="paid_on" value="' + today + '" max="' + today + '" required></div>' +
+				'<div class="a3s-field"><label for="r-mode">Mode <span class="a3s-req">*</span></label><select id="r-mode" name="payment_mode" required>' +
+				'<option value="">—</option><option>Cash</option><option>Bank Transfer</option><option>UPI</option><option>Cheque</option></select></div>' +
+				'<div class="a3s-field"><label for="r-ref">Reference (UTR, cheque no.)</label><input type="text" id="r-ref" name="payment_reference"></div>',
+				"Mark paid", function (f) {
+					if (!f.elements.payment_mode.value) { f.querySelector("[data-status]").textContent = "Choose how it was paid."; return null; }
+					return { paid_on: f.elements.paid_on.value, payment_mode: f.elements.payment_mode.value, payment_reference: f.elements.payment_reference.value.trim() };
+				}, "mark_paid");
+		}
+	});
+})();
+</script>
+{%- endif %}

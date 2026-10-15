@@ -53,5 +53,5 @@
 {%- endif %}
 
 {%- include "templates/includes/portal_chain_steps.html" %}
-{%- include "templates/includes/portal_assignment.html" %}
+{%- if not hide_assignment %}{% include "templates/includes/portal_assignment.html" %}{% endif %}
 {%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}

@@ -172,3 +172,102 @@ class TestHandoffBilling(TestSalesOrderHandoff):
 		doc = frappe.get_doc("Solar Billing Plan", plan)
 		advance = next(r for r in doc.milestones if r.trigger_type == "On Order")
 		self.assertTrue(advance.is_triggered, "the advance did not trigger on the order")
+
+
+class TestProjectBank(FrappeTestCase):
+	"""A financed project's loan bank starts as the consumer's own, and stays editable."""
+
+	setUp = TestSalesOrderHandoff.setUp
+	make_sales_order = TestSalesOrderHandoff.make_sales_order
+	open_project = TestSalesOrderHandoff.open_project
+
+	BANK = {
+		"bank_name": "State Bank of India",
+		"bank_branch": "Aluva",
+		"bank_ifsc_code": "SBIN0070035",
+		"bank_account_holder_name": "Test Consumer",
+		"bank_account_no": "028901000123456",
+	}
+
+	def project(self, financed=1, lender=None):
+		frappe.db.set_value("Solar Consumer", self.consumer.name, dict(self.BANK))
+		frappe.db.set_value("Quotation", self.quotation.name, {"is_financed": financed, "lender": lender})
+		order = self.make_sales_order()
+		self.open_project(order)
+		return frappe.get_doc("Solar Installation", {"sales_order": order.name})
+
+	def test_a_financed_project_takes_the_consumers_bank(self):
+		doc = self.project()
+		self.assertEqual(
+			(doc.lender, doc.lender_branch, doc.bank_ifsc_code, doc.bank_account_holder_name, doc.bank_account_no),
+			tuple(self.BANK.values()),
+		)
+
+	def test_a_quoted_lender_keeps_its_own_bank(self):
+		doc = self.project(lender="Canara Bank")
+		self.assertEqual(doc.lender, "Canara Bank")
+		self.assertFalse(doc.lender_branch or doc.bank_ifsc_code or doc.bank_account_no)
+
+	def test_a_self_funded_project_takes_no_bank(self):
+		doc = self.project(financed=0)
+		self.assertFalse(doc.lender or doc.bank_ifsc_code or doc.bank_account_no)
+
+	def test_the_edit_form_offers_the_consumers_bank_for_blank_fields(self):
+		from unittest.mock import patch
+
+		from a3_sola.www.a3solaportal import collections
+
+		doc = self.project(financed=0)
+		frappe.db.set_value("Solar Installation", doc.name, "bank_account_no", "999")
+		with patch("frappe.sessions.get_csrf_token", return_value="x"):
+			context = collections.edit_context(frappe._dict(), "projects", doc.name)
+		specs = {s["fieldname"]: s for g in context.groups for sec in g["sections"] for s in sec["fields"]}
+		self.assertEqual(specs["lender"]["prefill"], "State Bank of India")
+		self.assertEqual(specs["bank_ifsc_code"]["prefill"], "SBIN0070035")
+		self.assertEqual(specs["bank_ifsc_code"]["show_when"], "is_financed")
+		self.assertNotIn("prefill", specs["bank_account_no"])  # the project's own value stands
+
+	def test_a_loan_with_another_bank_is_saved_on_the_project_only(self):
+		from a3_sola.api import portal_crud
+
+		doc = self.project()
+		portal_crud.update_record(
+			slug="projects", name=doc.name, is_financed="1", lender="Federal Bank",
+			lender_branch="Kochi", bank_ifsc_code="FDRL0001234", bank_account_holder_name="Test Consumer",
+			bank_account_no="11112222",
+		)
+		doc.reload()
+		self.assertEqual((doc.lender, doc.bank_ifsc_code, doc.bank_account_no), ("Federal Bank", "FDRL0001234", "11112222"))
+		self.assertEqual(frappe.db.get_value("Solar Consumer", self.consumer.name, "bank_name"), "State Bank of India")
+
+	def test_the_account_holder_is_the_consumer_until_typed_over(self):
+		consumer = frappe.get_doc("Solar Consumer", self.consumer.name)
+		consumer.bank_account_holder_name = None
+		consumer.save(ignore_permissions=True)
+		self.assertEqual(consumer.bank_account_holder_name, consumer.consumer_name)
+
+		consumer.bank_account_holder_name = "Someone Else"
+		consumer.save(ignore_permissions=True)
+		self.assertEqual(consumer.reload().bank_account_holder_name, "Someone Else")
+
+	def test_a_project_holder_falls_back_to_the_consumer_name(self):
+		frappe.db.set_value("Solar Consumer", self.consumer.name, "bank_account_holder_name", None)
+		from a3_sola.api import installation_lead
+
+		bank = installation_lead.consumer_bank(self.consumer.name)
+		self.assertEqual(bank["bank_account_holder_name"], self.consumer.consumer_name)
+
+	def test_the_board_has_a_bank_column_only_when_financed(self):
+		from a3_sola.www.a3solaportal.project_overview import _task_columns
+
+		doc = self.project()
+		columns = _task_columns(doc)
+		self.assertEqual(
+			[c["label"] for c in columns], ["Company Activity", "PM Surya Ghar", "KSEB Activity", "Bank Activity"]
+		)
+		self.assertIn("LOAN", [t["code"] for t in columns[-1]["tasks"]])
+
+		doc.is_financed = 0
+		columns = _task_columns(doc)
+		self.assertEqual([c["label"] for c in columns], ["Company Activity", "PM Surya Ghar", "KSEB Activity"])
+		self.assertNotIn("LOAN", [t["code"] for c in columns for t in c["tasks"]])

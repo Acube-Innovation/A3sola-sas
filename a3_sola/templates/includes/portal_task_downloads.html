@@ -1,0 +1,7 @@
+{#- A task document's downloads in its page head, as icon buttons named by their tooltip - the stamp paper data on an agreement.
+    Context: task_downloads, from collections.task_downloads. -#}
+{%- for d in task_downloads or [] %}
+<a class="a3s-square-btn" href="{{ d.url | e }}" title="{{ d.label | e }}" aria-label="{{ d.label | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+</a>
+{%- endfor %}

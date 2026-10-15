@@ -18,6 +18,14 @@
   "project_cost_all_inclusive",
   "company",
   "amended_from",
+  "sb_customer",
+  "consumer_name",
+  "installation_address",
+  "cb_customer",
+  "district",
+  "state",
+  "pincode",
+  "place",
   "sb_3",
   "lender",
   "lender_branch",
@@ -124,7 +132,8 @@
    "fieldname": "project_cost_all_inclusive",
    "fieldtype": "Currency",
    "label": "Project Cost (all inclusive)",
-   "permlevel": 1
+   "permlevel": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "company",
@@ -142,6 +151,53 @@
    "options": "Loan Application",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "sb_customer",
+   "fieldtype": "Section Break",
+   "label": "Customer & Site"
+  },
+  {
+   "fieldname": "consumer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "description": "As the bank's documents print it.",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "installation_address",
+   "fieldtype": "Small Text",
+   "label": "Address for Installation",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_customer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Data",
+   "label": "District",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "label": "Pin Code",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "place",
+   "fieldtype": "Data",
+   "label": "Place",
+   "description": "Printed under the feasibility report's date.",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "sb_3",
@@ -197,7 +253,8 @@
    "description": "Shape ANS-SOLAR-<digits>-<digits>.",
    "fieldname": "jan_samarth_id",
    "fieldtype": "Data",
-   "label": "Jan Samarth ID"
+   "label": "Jan Samarth ID",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "loan_application_no",
@@ -216,21 +273,22 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "solar_installation.national_portal_application_id",
    "fieldname": "national_portal_application_id",
    "fieldtype": "Data",
-   "label": "Portal ID",
-   "read_only": 1
+   "label": "PM Surya Ghar Portal ID",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "discom_consumer_id",
    "fieldtype": "Data",
-   "label": "DISCOM Consumer ID"
+   "label": "DISCOM Consumer ID",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "discom_id",
    "fieldtype": "Data",
-   "label": "DISCOM ID"
+   "label": "DISCOM ID",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "sb_7",
@@ -301,21 +359,21 @@
    "fieldname": "feasibility_status",
    "fieldtype": "Data",
    "label": "Feasibility Status",
-   "read_only": 1
+   "allow_on_submit": 1
   },
   {
    "fieldname": "capacity_applied_kw",
    "fieldtype": "Float",
    "label": "Capacity Applied (kW)",
    "precision": 3,
-   "read_only": 1
+   "allow_on_submit": 1
   },
   {
    "fieldname": "capacity_installable_kw",
    "fieldtype": "Float",
    "label": "Capacity Installable (kW)",
    "precision": 3,
-   "read_only": 1
+   "allow_on_submit": 1
   },
   {
    "fieldname": "cb_11",
@@ -457,7 +515,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 16:00:00.000000",
+ "modified": "2026-10-15 14:10:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Loan Application",

@@ -18,6 +18,7 @@ ROLES = [
 	("Solar Design Engineer", "Owns design estimates and eligibility checks."),
 	("Solar Sales Manager", "Approves designs, waives eligibility rules, sees commercials."),
 	("Solar CRM Manager", "Full access including master data and settings."),
+	("Solar Sales Coordinator", "Registers the job on the PM Surya Ghar portal and raises Form 1 - the paperwork between the sale and the site."),
 ]
 
 ROLE_PROFILES = {
@@ -26,6 +27,7 @@ ROLE_PROFILES = {
 	"Solar Design": ["Solar Design Engineer", "Employee"],
 	"Solar Sales Management": ["Solar Sales Manager", "Solar Sales Executive", "Sales Manager", "Employee"],
 	"Solar CRM Administration": ["Solar CRM Manager", "Solar Sales Manager", "Sales Manager", "Employee"],
+	"Solar Sales Coordination": ["Solar Sales Coordinator", "Employee"],
 }
 
 

@@ -35,7 +35,7 @@
 		{%- if t.editable %}
 		<button type="button" class="a3s-btn a3s-btn--ghost" data-add-row>+ Add row</button>
 		{%- else %}<span></span>{% endif %}
-		<p class="a3s-items__total">{{ t.total_label | e }}: <strong data-total>{{ t.total | e }}</strong></p>
+		<p class="a3s-items__total"{% if t.show_total is sameas false %} hidden{% endif %}>{{ t.total_label | e }}: <strong data-total>{{ t.total | e }}</strong></p>
 	</div>
 	{%- if t.editable %}
 	<input type="hidden" name="__items" value="">

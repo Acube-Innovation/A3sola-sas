@@ -2265,7 +2265,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 /* ---- record header: the primary action sits level with the record's name ---- */
 .a3s-detail__head {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	/* The name keeps room for itself; many actions wrap onto a second line beside it. */
+	grid-template-columns: minmax(14rem, 1fr) minmax(0, max-content);
 	align-items: center;
 	column-gap: 1rem;
 	row-gap: 0;
@@ -2273,7 +2274,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-detail__head .a3s-detail__eyebrow,
 .a3s-detail__head .a3s-main__sub { grid-column: 1 / -1; }
 .a3s-detail__head .a3s-detail__title { grid-column: 1; margin-bottom: 0; }
-.a3s-detail__head .a3s-detail__actions { grid-column: 2; justify-self: end; }
+.a3s-detail__head .a3s-detail__actions { grid-column: 2; justify-self: end; justify-content: flex-end; }
 .a3s-detail__head .a3s-main__sub { margin-top: 0.35rem; }
 
 @media (max-width: 640px) {
@@ -2284,9 +2285,11 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 }
 
 /* ---- next steps along the chain: an offer to create, or the record it became ---- */
-.a3s-chain { display: grid; gap: 0.75rem; }
+/* One column no wider than the card: an `auto` track grows to the longest unbroken label. */
+.a3s-chain { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
 .a3s-chain .a3s-edit__card-title { margin-bottom: 0.25rem; }
-.a3s-chain .a3s-btn--block { justify-content: flex-start; text-align: left; }
+.a3s-chain .a3s-btn--block { justify-content: flex-start; text-align: left; white-space: normal; min-width: 0; }
+.a3s-chain .a3s-btn--block .a3s-ic { flex: none; }
 .a3s-chain .a3s-btn[aria-disabled="true"] { pointer-events: none; }
 .a3s-chain .a3s-edit__hint { margin: 0; }
 
@@ -2942,7 +2945,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-proj .a3s-proj__board { padding: 0; overflow: hidden; }
 .a3s-proj__cols { display: grid; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 700px) { .a3s-proj__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1200px) { .a3s-proj__cols { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* Four columns, or three for a job with no bank column (--a3s-proj-cols, set by the page). */
+@media (min-width: 1200px) { .a3s-proj__cols { grid-template-columns: repeat(var(--a3s-proj-cols, 4), minmax(0, 1fr)); } }
 .a3s-proj__col { min-width: 0; border-bottom: 1px solid var(--color-border); }
 @media (min-width: 700px) {
 	.a3s-proj__col:nth-child(odd) { border-right: 1px solid var(--color-border); }
@@ -2965,7 +2969,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	background-image: var(--color-accent-gradient);
 	color: #fff;
 }
-.a3s-proj__col--discom-activity .a3s-proj__col-icon,
+.a3s-proj__col--kseb-activity .a3s-proj__col-icon,
 .a3s-proj__col--bank-activity .a3s-proj__col-icon { background-image: var(--color-sky-gradient); }
 .a3s-proj__col-icon .a3s-ic { width: 0.95rem; height: 0.95rem; }
 .a3s-proj__col-label { flex: 1; min-width: 0; }
@@ -2978,8 +2982,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-proj__tasks { list-style: none; margin: 0; padding: 0.6rem; display: grid; gap: 0.45rem; }
 .a3s-proj__task {
 	--tk-ink: #b8650a; --tk-tile: #fde3c2; --tk-card: #fff; --tk-line: #fbd3a1;
-	display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.6rem;
-	min-height: 3.4rem;
+	/* Every card the same height: the name two lines at most, date and status, who. */
+	display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 0.6rem;
+	height: 5.9rem; overflow: hidden;
 	padding: 0.45rem 0.6rem;
 	border: 1px solid var(--tk-line);
 	border-radius: 0.65rem;
@@ -3000,13 +3005,29 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 }
 .a3s-proj__task-icon .a3s-ic { width: 1rem; height: 1rem; }
 .a3s-proj__task-body { min-width: 0; }
-.a3s-proj__task-name { margin: 0; font-size: 0.8125rem; font-weight: 700; line-height: 1.25; color: var(--color-text); }
+.a3s-proj__task-name {
+	margin: 0; font-size: 0.8125rem; font-weight: 700; line-height: 1.25; color: var(--color-text);
+	height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.a3s-proj__task-body { display: grid; gap: 0.2rem; }
 .a3s-proj__task-meta {
-	display: flex; flex-wrap: wrap; gap: 0.1rem 0.6rem;
-	margin: 0.2rem 0 0;
+	display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 0.4rem;
+	margin: 0; min-width: 0;
 	font-size: 0.6875rem; color: var(--color-text-muted);
 }
 .a3s-proj__task-meta a { font-size: 0.6875rem; }
+.a3s-proj__task-who {
+	display: flex; align-items: center; gap: 0.25rem; margin: 0; min-height: 1rem;
+	font-size: 0.6875rem; color: var(--color-text-muted); min-width: 0;
+}
+.a3s-proj__task-who .a3s-ic { width: 0.8rem; height: 0.8rem; flex: none; }
+.a3s-proj__task-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A card that opens its task: the link covers it; the document link sits above that. */
+.a3s-proj__task.has-link { position: relative; transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease); }
+.a3s-proj__task.has-link:hover { border-color: var(--tk-ink); box-shadow: var(--shadow-soft); }
+.a3s-proj__task-open { position: absolute; inset: 0; border-radius: inherit; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.a3s-proj__task-open:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.a3s-proj__task.has-link .a3s-proj__task-meta a { position: relative; z-index: 1; }
 /* White, lettered in the status's own colour. */
 .a3s-proj__task-status {
 	padding: 0.15rem 0.55rem;
@@ -3020,7 +3041,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
    out on it is not shown as overdue. */
 .a3s-proj__task.is-skipped .a3s-proj__task-name { color: var(--color-text-muted); font-weight: 600; text-decoration: line-through; text-decoration-color: rgba(42, 51, 66, 0.35); }
 .a3s-proj__task.is-skipped .a3s-proj__overdue { color: inherit; font-weight: inherit; }
-.a3s-proj__when:empty { display: none; }
+.a3s-proj__when { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .a3s-proj__none { margin: 0; padding: 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
 
 /* The job's lead above the boxes, as its row in the Leads list. */
@@ -3066,7 +3087,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 /* ---- project list: four stacked columns and the job's latest task as its status ---- */
 .a3s-projlist .a3s-stack > span:first-child, .a3s-projlist .a3s-stack > .a3s-table__link { font-size: 0.9375rem; }
 .a3s-projlist__status { min-width: 17rem; }
-.a3s-projlist__status .a3s-proj__task { min-height: 3.1rem; }
+/* The project page's progress bar, in a table cell: no space above, a smaller figure. */
+.a3s-projlist__progress { margin: 0; padding-top: 0; }
+.a3s-projlist__progress .a3s-proj__percent { font-size: 1.35rem; }
 .a3s-projlist__proposal { white-space: nowrap; }
 
 /* ---- rows table: Additional Structure, Additional Cable, Special Discount ---- */
@@ -3382,3 +3405,120 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-saveall__list li.is-done small { color: #067647; }
 .a3s-de-saveall__list li.is-failed small { color: #b42318; }
 .a3s-de-saveall__list li.is-working small { color: var(--color-accent-hover); }
+
+/* A Print menu in a record's page head: the button opens a short list of documents. */
+.a3s-printmenu { position: relative; }
+.a3s-printmenu > summary { list-style: none; }
+.a3s-printmenu > summary::-webkit-details-marker { display: none; }
+.a3s-printmenu__chevron { width: 0.9rem; height: 0.9rem; transition: transform var(--duration) var(--ease); }
+.a3s-printmenu[open] .a3s-printmenu__chevron { transform: rotate(180deg); }
+.a3s-printmenu__list {
+	position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 20; min-width: 14rem;
+	display: grid; padding: 0.4rem;
+	background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-tile);
+	box-shadow: var(--shadow-raised);
+}
+.a3s-printmenu__group { margin: 0.35rem 0.6rem 0.15rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
+/* The signature choice heads the list and applies to whichever document is printed. */
+.a3s-printmenu__sign, .a3s-taskdocs__sign {
+	display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.a3s-printmenu__sign { margin-bottom: 0.25rem; border-bottom: 1px solid var(--color-border); border-radius: 0.5rem 0.5rem 0 0; }
+.a3s-taskdocs__sign { padding: 0 0 0.75rem; }
+.a3s .a3s-printmenu__list a { padding: 0.45rem 0.6rem; border-radius: 0.5rem; font-size: 0.875rem; color: var(--color-text); }
+.a3s .a3s-printmenu__list a:hover { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+
+/* A task card's menu on the project board: the task, its documents, skip. Placed on the
+   page under the card (portal_project_board.js). */
+.a3s-btn--sm { padding: 0.4rem 0.85rem; font-size: 0.8125rem; }
+.a3s-taskmenu {
+	position: fixed; z-index: 90; min-width: 12rem; display: grid; padding: 0.35rem;
+	background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0.85rem;
+	box-shadow: var(--shadow-raised);
+}
+.a3s-taskmenu a, .a3s-taskmenu button, .a3s-taskmenu span {
+	display: block; width: 100%; padding: 0.5rem 0.7rem; border: 0; border-radius: 0.55rem; background: none;
+	font: inherit; font-size: 0.875rem; text-align: left; color: var(--color-text); cursor: pointer;
+}
+.a3s .a3s-taskmenu a:hover, .a3s-taskmenu button:hover, .a3s-taskmenu a:focus-visible, .a3s-taskmenu button:focus-visible {
+	background: var(--color-accent-soft); color: var(--color-accent-hover); outline: none;
+}
+.a3s-taskmenu .is-disabled { color: var(--color-text-muted); cursor: default; }
+.a3s-taskmenu [data-act="skip"], .a3s-taskmenu [data-act="unskip"] { border-top: 1px solid var(--color-border); border-radius: 0 0 0.55rem 0.55rem; margin-top: 0.2rem; }
+
+.a3s-modal__panel.a3s-taskpanel { width: min(40rem, 100%); }
+.a3s-taskpanel__sub { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-taskpanel__empty { margin: 0.5rem 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-taskdocs { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
+.a3s-taskdocs__row {
+	display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding: 0.7rem 0.85rem;
+	border: 1px solid var(--color-border); border-radius: 0.75rem;
+}
+@media (min-width: 560px) { .a3s-taskdocs__row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+.a3s-taskdocs__name { margin: 0; font-size: 0.9rem; font-weight: 700; }
+.a3s-taskdocs__meta { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.a3s-taskdocs__state { display: inline-block; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); font-weight: 700; }
+.a3s-taskdocs__state.is-missing { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-taskdocs__state.is-uploaded, .a3s-taskdocs__state.is-generated, .a3s-taskdocs__state.is-paid { background: rgba(40, 200, 64, 0.16); color: #1a7a2b; }
+.a3s-taskdocs__state.is-pending-approval { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-taskdocs__state.is-approved { background: rgba(41, 171, 226, 0.14); color: var(--color-sky-ink); }
+.a3s-taskdocs__state.is-rejected { background: rgba(255, 95, 87, 0.14); color: #c0392b; }
+.a3s-taskdocs__state.is-partly { background: rgba(41, 171, 226, 0.14); color: var(--color-sky-ink); }
+.a3s-taskdocs__heading { margin: 0.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.a3s-taskdocs__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.a3s-taskdocs__add { display: grid; gap: 0.35rem; margin-bottom: 0.5rem; }
+.a3s-taskdocs__add label { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.a3s-taskdocs__addrow { display: flex; gap: 0.5rem; }
+.a3s-taskdocs__addrow input { flex: 1; min-width: 0; }
+
+/* Assign people on a task: a searchable checklist of the office. */
+.a3s-assign__search { width: 100%; margin-bottom: 0.6rem; }
+.a3s-assign__list { display: grid; gap: 0.15rem; max-height: 50vh; overflow-y: auto; margin-bottom: 0.5rem; }
+.a3s-assign__person { padding: 0.4rem 0.5rem; border-radius: 0.5rem; }
+.a3s-assign__person:hover { background: var(--color-accent-soft); }
+.a3s-assign__person[hidden] { display: none; }
+.a3s-assign__person small { color: var(--color-text-muted); font-size: 0.75rem; }
+
+/* The project's one summary card: the facts in a tight grid, how far it has got along its foot. */
+.a3s-proj .a3s-proj__summary { display: grid; gap: 0.9rem; padding: 1rem 1.25rem; }
+.a3s-proj__summary-facts {
+	display: grid; gap: 0.6rem 1.25rem; margin: 0;
+	grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+}
+.a3s-proj__summary-facts div { min-width: 0; }
+.a3s-proj__summary-facts dt {
+	font-size: 0.625rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted);
+}
+.a3s-proj__summary-facts dd { margin: 0.1rem 0 0; font-size: 0.8125rem; line-height: 1.35; overflow-wrap: anywhere; }
+.a3s-proj__summary-facts dd.is-empty { color: var(--color-text-muted); }
+.a3s-proj__summary-facts dd .a3s-badge { margin-left: 0.2rem; font-size: 0.625rem; vertical-align: middle; }
+.a3s-proj__summary-progress {
+	display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.25rem 0.75rem;
+	padding-top: 0.75rem; border-top: 1px solid var(--color-border);
+}
+.a3s-proj__summary-progress .a3s-proj__percent { font-size: 1.15rem; }
+.a3s-proj__summary-progress .a3s-progress { height: 0.5rem; margin: 0; }
+.a3s-proj__summary-progress .a3s-proj__progress-meta { grid-column: 1 / -1; margin: 0; font-size: 0.75rem; }
+
+/* A task's people, on its own pages: who it is with, its default, and Assign people. */
+.a3s-taskpeople {
+	display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; margin: 0.25rem 0 1.25rem;
+	padding: 0.6rem 0.85rem; border: 1px solid var(--color-border); border-radius: 0.85rem; background: var(--color-surface);
+	font-size: 0.875rem;
+}
+.a3s-taskpeople .a3s-ic { width: 1rem; height: 1rem; color: var(--color-accent-hover); }
+.a3s-taskpeople__label { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.a3s-taskpeople__names { font-weight: 600; }
+.a3s-taskpeople__position { font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-taskpeople [data-assign-people] { margin-left: auto; }
+
+/* The structure's bill of materials on its task. */
+.a3s-structbom { margin-bottom: 1.25rem; }
+.a3s-structbom__table td small { color: var(--color-text-muted); }
+.a3s-structbom__table .a3s-num { text-align: right; white-space: nowrap; }
+
+
+/* The structure's material list: the material's name has the room, the quantity little. */
+#sec-structure_materials td[data-label="Material"], #sec-materials td[data-label="Material"] { min-width: 17rem; }
+#sec-structure_materials td[data-label="Qty"], #sec-materials td[data-label="Qty"] { width: 5.5rem; }
+#sec-structure_materials td[data-label="Unit"], #sec-materials td[data-label="Unit"] { width: 6rem; }

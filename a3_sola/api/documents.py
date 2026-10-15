@@ -107,6 +107,10 @@ def get_document_context(installation, template=None, source=None):
 	task = (
 		frappe.get_doc(source[0], source[1]) if source and source[0] and source[1] else None
 	)
+	# A bank document generated or printed from its loan application reads that application,
+	# draft or not - the job only links its loan once the application is submitted.
+	if task and task.doctype == "Loan Application":
+		loan = task
 	contractor = None
 	if task and task.get("solar_contractor"):
 		contractor = frappe.get_doc("Solar Contractor", task.solar_contractor)
@@ -176,7 +180,13 @@ def get_document_context(installation, template=None, source=None):
 			"template": template,
 			"today": frappe.utils.formatdate(frappe.utils.today(), "dd-MM-yyyy"),
 			"discom_name": frappe.db.get_value("DISCOM", inst.discom, "discom_name") if inst.discom else "",
+			"discom_short": _initials(frappe.db.get_value("DISCOM", inst.discom, "discom_name") if inst.discom else ""),
+			"image_src": image_src,
 			"address_text": _address_text(address),
+			"party_address": _party_address(address, inst),
+			"bank_proposal": bank_proposal(inst, survey, section) if wants("BANK-PROJECT-PROPOSAL") else None,
+			"quotation_doc": frappe.get_doc("Quotation", inst.quotation)
+			if wants("BANK-QUOTATION") and inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation) else None,
 			"serials": serial_rows(inst),
 			"module_serials": [r.serial_no for r in inst.serials if r.component_type == "Module"],
 			"inverter_serials": [r.serial_no for r in inst.serials if r.component_type == "Inverter"],
@@ -215,6 +225,214 @@ def _work_orders(inst):
 		order_by="planned_start_date asc, creation asc",
 		ignore_permissions=True,
 	)
+
+
+def _initials(name):
+	"""A DISCOM as its documents name it: "Kerala State Electricity Board" is KSEB."""
+	words = [w for w in (name or "").replace("-", " ").split() if w.lower() not in ("of", "and", "the")]
+	return "".join(w[0] for w in words).upper() if len(words) > 1 else (name or "")
+
+
+def image_src(file_url):
+	"""An attached image as a data URI, so a PDF carries it whatever the file's privacy and
+	without wkhtmltopdf fetching it over HTTP. "" when there is no such file."""
+	import base64
+	import mimetypes
+
+	if not file_url:
+		return ""
+	name = frappe.db.get_value("File", {"file_url": file_url}, "name")
+	if not name:
+		return ""
+	content = frappe.get_doc("File", name).get_content()
+	if isinstance(content, str):
+		content = content.encode()
+	mime = mimetypes.guess_type(file_url)[0] or "image/png"
+	return f"data:{mime};base64,{base64.b64encode(content).decode()}"
+
+
+#: Documents printed on the company letterhead, each a single page as its Word original is.
+LETTERHEAD_TEMPLATES = ("BANK-COVERING-LOAN", "BANK-VENDOR-FEASIBILITY")
+#: Documents on the letterhead that run on over pages - the band on every page.
+LETTERHEAD_FLOW_TEMPLATES = ("BANK-EHS-CHECKLIST", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION")
+
+
+def letterhead_flow_pdf(html, company, signed=True):
+	"""`html` run on over as many A4 pages as it takes, each on the company letterhead.
+
+	The text is laid out with room left for the letterhead's bands, and each page is then
+	put over a copy of the bare letterhead sheet - so the bands are on every page whatever
+	the server's wkhtmltopdf can or cannot repeat."""
+	from io import BytesIO
+
+	from frappe.utils.pdf import get_pdf
+	from pypdf import PdfReader, PdfWriter
+
+	zoom = 1 if _patched_wkhtmltopdf() else 1.3046
+	content = get_pdf(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+	.print-format {{ margin-top: 38mm; margin-bottom: 27mm; margin-left: 17.5mm; margin-right: 20mm; }}
+	body {{ margin: 0; zoom: {zoom}; font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
+		font-size: 11pt; line-height: 1.4; color: #000; }}
+	p {{ margin: 0 0 5pt; }}
+	table {{ border-collapse: collapse; }}
+	thead {{ display: table-header-group; }}
+	tr {{ page-break-inside: avoid; }}
+	.a3s-page-break {{ page-break-before: always; }}
+	{"" if signed else ".a3s-sign { visibility: hidden; }"}
+	</style></head><body>{html}</body></html>""")
+	sheet = letterhead_pdf([""], company)
+	out = PdfWriter()
+	for page in PdfReader(BytesIO(content)).pages:
+		base = PdfReader(BytesIO(sheet)).pages[0]
+		base.merge_page(page)
+		out.add_page(base)
+	buf = BytesIO()
+	out.write(buf)
+	return buf.getvalue()
+
+
+def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None):
+	"""Each of `pages` (HTML, or one string) as an A4 sheet on the company's letterhead - or,
+	with `letterhead=False`, on plain paper inside `margins` (CSS padding, Word's).
+
+	Unsigned, the signature and seal (`.a3s-sign`) are left out but keep their space, to be
+	signed and stamped by hand.
+
+	A sheet is drawn whole - the letterhead's header image across the top edge, its footer
+	image across the bottom, the text between, in Word's margins - rather than through
+	wkhtmltopdf's header and footer, which its unpatched builds cannot draw at all. Those
+	builds also lay out at 0.767 of true size, so the sheet is scaled back up there.
+	"""
+	from frappe.utils.pdf import get_pdf
+
+	if isinstance(pages, str):
+		pages = [pages]
+	head = frappe.db.get_value("Company", company, "default_letter_head") if company and letterhead else None
+	images = frappe.db.get_value("Letter Head", head, ["image", "footer_image"], as_dict=True) if head else None
+	header = image_src(images.image) if images else ""
+	footer = image_src(images.footer_image) if images else ""
+	sheets = "".join(
+		'<div class="a3s-sheet">'
+		+ (f'<img class="a3s-sheet__head" src="{header}">' if header else "")
+		+ f'<div class="a3s-letter">{page}</div>'
+		+ (f'<img class="a3s-sheet__foot" src="{footer}">' if footer else "")
+		+ "</div>"
+		for page in pages
+	)
+	zoom = 1 if _patched_wkhtmltopdf() else 1.3046
+	# Margins through `.print-format`: get_pdf lets the page's own CSS override its options.
+	# WebKit takes fontconfig's fallback for the first family it cannot find, so Book
+	# Antiqua is named first only where the server has it.
+	html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+	.print-format {{ margin-top: 0mm; margin-bottom: 0mm; margin-left: 0mm; margin-right: 0mm; }}
+	body {{ margin: 0; zoom: {zoom}; }}
+	.a3s-sheet {{ position: relative; width: 210mm; height: 296.5mm; overflow: hidden; page-break-after: always; }}
+	.a3s-sheet:last-child {{ page-break-after: auto; }}
+	.a3s-sheet__head {{ position: absolute; top: 0; left: 0; width: 210mm; }}
+	.a3s-sheet__foot {{ position: absolute; bottom: 0; left: 0; width: 210mm; }}
+	.a3s-letter {{ padding: {margins or (("37mm" if header else "25mm") + " 20mm 0 17.5mm")};
+		font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.45; color: #000; }}
+	.a3s-letter p {{ margin: 0 0 6pt; }}
+	.a3s-letter table {{ border-collapse: collapse; }}
+	{"" if signed else ".a3s-sign { visibility: hidden; }"}
+	</style></head><body>{sheets}</body></html>"""
+	return get_pdf(html)
+
+
+def plain_pdf(html, margins="12mm"):
+	"""`html` as A4 pages that flow - a long list runs on, its table head repeated - in
+	`margins` (CSS), scaled as letterhead_pdf scales for the server's wkhtmltopdf."""
+	from frappe.utils.pdf import get_pdf
+
+	zoom = 1 if _patched_wkhtmltopdf() else 1.3046
+	page = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+	.print-format {{ margin-top: {margins}; margin-bottom: {margins}; margin-left: {margins}; margin-right: {margins}; }}
+	body {{ margin: 0; zoom: {zoom}; font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif; font-size: 10pt; color: #000; }}
+	table {{ border-collapse: collapse; width: 100%; }}
+	thead {{ display: table-header-group; }}
+	tr {{ page-break-inside: avoid; }}
+	a {{ color: #0b57d0; }}
+	</style></head><body>{html}</body></html>"""
+	return get_pdf(page)
+
+
+def maps_link(lat, lng):
+	"""Google Maps directions to a point, or "" without one."""
+	from frappe.utils import flt
+
+	if not (flt(lat) or flt(lng)):
+		return ""
+	return f"https://www.google.com/maps/dir/?api=1&destination={flt(lat, 6)},{flt(lng, 6)}"
+
+
+def _patched_wkhtmltopdf():
+	"""Whether the server's wkhtmltopdf is the patched-Qt build, which lays out at true size."""
+	import subprocess
+
+	if not hasattr(_patched_wkhtmltopdf, "result"):
+		try:
+			out = subprocess.run(["wkhtmltopdf", "-V"], capture_output=True, text=True, timeout=10).stdout
+		except Exception:
+			out = ""
+		_patched_wkhtmltopdf.result = "patched qt" in out.lower()
+	return _patched_wkhtmltopdf.result
+
+
+def bank_proposal(inst, survey, section):
+	"""What the bank's project proposal prints about the system, worked out once."""
+	from a3_sola.api.portal_fields import link_title
+
+	kw = flt(inst.capacity_kw)
+	panel = (inst.get("panels") or [None])[0]
+	inverter = (inst.get("inverters") or [None])[0]
+	bos = {r.item: r for r in inst.get("bos_items") or []}
+	mounting = (inst.get("mounting_expenses") or [None])[0]
+	roof = link_title("Roof Type", inst.roof_type) if inst.get("roof_type") else ""
+	district = (section.district if section else "") or (frappe.db.get_value("Lead", inst.lead, "city") if inst.get("lead") else "")
+	phase = inst.get("connection_type") or ""
+
+	def make(row, field):
+		return link_title("Component Make", row.get(field)) if row and row.get(field) else ""
+
+	def bos_row(name, spec, makes):
+		r = bos.get(name)
+		return {"spec": (r.specification if r and r.specification else spec), "make": (make(r, "make") if r else "") or makes,
+			"nos": (("%g" % flt(r.numbers)) if r and flt(r.numbers) else "Ls.")}
+
+	area = flt(survey.total_usable_area_sqft) if survey and flt(survey.get("total_usable_area_sqft")) else kw * 50
+	return frappe._dict({
+		"kw": "%g" % kw, "phase": phase,
+		"site": "Residential Building in {0}".format(district.upper()) if district else "Residential Building",
+		"tilt": "10 - 12 degrees, South",
+		"plant": "Grid Connected Rooftop" if (inst.get("system_type") or "On-Grid") == "On-Grid" else "{0} Rooftop".format(inst.system_type),
+		"roof_area": "%d Sq. Ft." % round(area), "roof": roof,
+		"generation": "%g - %g units" % (round(kw * 3), round(kw * 4)),
+		"components": [
+			{"item": "Solar Panels", "spec": "{0:g} Wp {1}".format(flt(panel.panel_capacity_wp), panel.panel_type or "") if panel else "",
+			 "make": make(panel, "panel_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("panels") or []) if panel else ""},
+			{"item": "Solar PV Inverter", "spec": "{0:g}kW {1} On-Grid Inverter and Online Monitoring".format(flt(inverter.inverter_capacity_kw), inverter.inverter_phase or phase) if inverter else "",
+			 "make": make(inverter, "inverter_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("inverters") or []) if inverter else ""},
+			{"item": "DCDB", **bos_row("DCDB", "With PV Fuses at input, DC Isolator and Type 2 DC SPD in IP65 rated enclosure", "ABB/Eaton, Mersen")},
+			{"item": "ACDB", **bos_row("ACDB", "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated enclosure", "ABB/Eaton, Mersen/Citel")},
+			{"item": "DC Cables", **bos_row("DC Cable", "UV Rated Solar Copper Cable with E-Beam Cross Linked sheath and insulation", "Apar/ Seichem")},
+			{"item": "AC Cables", **bos_row("AC Cable", "Type: PVC/XLPE Aluminium", "Apar/ Polycab")},
+			{"item": "Earthing", **bos_row("Earthing", "Maintenance Free Chemical Earthing with 250 microns Copper Bonded Earth Rod of 14 mm dia / 1.2 m long", "Excel Earthing")},
+			{"item": "Lightning Protection", **bos_row("Lightning Protection", "Single Spike Air Termination Rod with insulated base and chemical earth kit", "Excel Earthing")},
+			{"item": "Solar Energy Meter", **bos_row("Solar Energy Meter", "Type: Watt-hour Meter", "L&T")},
+			{"item": "Solar PV Roof Mounting Structure", "spec": (mounting.specification if mounting and mounting.specification else "Epoxy Coated GP Tubes"),
+			 "make": make(mounting, "make") or "Apollo/ Equivalent", "nos": "%g kWp" % kw},
+			{"item": "Installation, Testing, Commissioning", "spec": "Complying with Electrical Inspectorate & KSEB standards", "make": "", "nos": ""},
+		],
+	})
+
+
+def _party_address(address, inst):
+	"""Where the consumer lives, as a party to a document names it - house, street, place,
+	without state and PIN - from the address record, else the lead's town."""
+	if address:
+		return ", ".join(p for p in (address.address_line1, address.address_line2, address.city) if p)
+	lead = inst.get("lead")
+	return (frappe.db.get_value("Lead", lead, "city") or "") if lead else ""
 
 
 def _address_text(address):
@@ -341,7 +559,13 @@ def _attach(target_doctype, target_name, template, html):
 	):
 		frappe.delete_doc("File", existing, ignore_permissions=True, force=True)
 
-	wrapper = f"<div style='font-family:serif;font-size:12px'>{html}</div>"
+	# The bank's loan pair goes on the company letterhead, as the Word originals do.
+	if template.get("template_code") in LETTERHEAD_TEMPLATES:
+		content = letterhead_pdf(html, template.get("company"))
+	elif template.get("template_code") in LETTERHEAD_FLOW_TEMPLATES:
+		content = letterhead_flow_pdf(html, template.get("company"))
+	else:
+		content = get_pdf(f"<div style='font-family:serif;font-size:12px'>{html}</div>")
 	file_doc = frappe.get_doc(
 		{
 			"doctype": "File",
@@ -349,7 +573,7 @@ def _attach(target_doctype, target_name, template, html):
 			"attached_to_doctype": target_doctype,
 			"attached_to_name": target_name,
 			"is_private": 1,
-			"content": get_pdf(wrapper),
+			"content": content,
 		}
 	).insert(ignore_permissions=True)
 	return file_doc.file_url

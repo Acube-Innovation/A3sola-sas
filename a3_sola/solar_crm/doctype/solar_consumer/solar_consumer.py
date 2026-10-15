@@ -38,6 +38,7 @@ class SolarConsumer(Document):
 		self.validate_consumer_number_unique()
 		self.compute_annual_consumption()
 		self.compose_gps()
+		self.fill_discom_id()
 		self.validate_bank_details()
 
 	def on_update(self):
@@ -74,6 +75,21 @@ class SolarConsumer(Document):
 		else:
 			self.gps_coordinates = None
 
+	def fill_discom_id(self):
+		"""The DISCOM ID is the section office's code - "Chalakudy - 5661" is 5661. Taken from
+		the section while blank, and moved with it when the section changes; one typed in
+		by hand that is not the old section's code stays."""
+		code = frappe.db.get_value("DISCOM Section", self.discom_section, "section_code") if self.discom_section else None
+		if not code:
+			return
+		before = self.get_doc_before_save()
+		old = (
+			frappe.db.get_value("DISCOM Section", before.discom_section, "section_code")
+			if before and before.discom_section else None
+		)
+		if not self.discom_id or self.discom_id == old:
+			self.discom_id = code
+
 	def validate_bank_details(self):
 		"""The DBT and the 80% registration refund both land in this account.
 
@@ -81,6 +97,9 @@ class SolarConsumer(Document):
 		the single most common reason a DBT bounces — so warn, loudly, but do not block:
 		the account is often supplied after the survey.
 		"""
+		# The account is usually in the consumer's own name; a different holder is typed over it.
+		if not (self.bank_account_holder_name or "").strip():
+			self.bank_account_holder_name = self.consumer_name
 		if self.bank_ifsc_code:
 			self.bank_ifsc_code = self.bank_ifsc_code.strip().upper()
 			if not IFSC_PATTERN.match(self.bank_ifsc_code):

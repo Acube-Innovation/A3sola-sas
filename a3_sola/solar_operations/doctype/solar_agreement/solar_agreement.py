@@ -67,6 +67,26 @@ class SolarAgreement(Document):
 				)
 			)
 
+	def on_update(self):
+		self.raise_reimbursement()
+
+	def raise_reimbursement(self):
+		"""Paid for the stamp paper out of pocket: the claim goes for approval once the
+		paper is recorded as bought, once - its link here says it has been raised."""
+		if not (self.claim_reimbursement and self.stamp_paper_status == "Purchased") or self.reimbursement:
+			return
+		if not self.stamp_paper_value:
+			frappe.throw(_("Enter the stamp paper value to claim it back."), frappe.ValidationError)
+		from a3_sola.solar_operations.doctype.expense_reimbursement.expense_reimbursement import raise_claim
+
+		claim = raise_claim(
+			self.solar_installation, "STMP", self.stamp_paper_value,
+			_("Stamp paper - Rs. {0}").format(frappe.utils.fmt_money(self.stamp_paper_value, precision=0)),
+			expense_date=self.stamp_paper_purchased_on, remarks=self.stamp_paper_remarks,
+			receipt=self.stamp_paper_scan, source_doctype=self.doctype, source_document=self.name,
+		)
+		self.db_set("reimbursement", claim.name, update_modified=False)
+
 	def validate_one_active(self):
 		"""One live agreement per installation. A terminated one does not compete."""
 		if self.is_terminated:

@@ -18,14 +18,13 @@ from frappe.utils import cint, flt, fmt_money, format_date
 
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import get_collection, initials, record_route
-from a3_sola.www.a3solaportal.project_overview import _task
 
 no_cache = 1
 
 SLUG = "projects"
 LIMIT = 100
 
-#: What the status card needs, read from the job's task rows.
+#: What the status column needs, read from the job's task rows.
 STAGE_FIELDS = (
 	"parent", "idx", "stage_code", "stage_name", "task_doctype", "task_document", "status",
 	"planned_start_date", "planned_date", "due_date", "actual_completion_date",
@@ -77,12 +76,19 @@ def _latest_per(doctype, key, ids, fields):
 	return out
 
 
-def _activity(stages):
-	"""The task the status column shows: the last completed one, else the first on the plan."""
+def _progress(row, stages):
+	"""The status column: how far the job has got, as its page's progress bar shows it -
+	the share done, tasks done of those that apply, its status and the task in focus."""
 	if not stages:
 		return None
-	done = [s for s in stages if s.status == "Completed"]
-	return _task(done[-1] if done else stages[0])
+	live = [s for s in stages if s.status != "Skipped"]
+	return {
+		"percent": int(round(flt(row.overall_progress_percent))),
+		"done": len([s for s in live if s.status == "Completed"]),
+		"total": len(live),
+		"focus": row.current_stage or "",
+		"overdue": bool(cint(row.is_sla_breached)),
+	}
 
 
 def get_context(context):
@@ -110,6 +116,7 @@ def get_context(context):
 			"name", "solar_consumer", "consumer_name", "consumer_mobile", "consumer_number", "lead",
 			"solar_package", "system_type", "discom", "discom_section", "connection_type",
 			"national_portal_application_id", "solar_proposal", "quotation", "is_financed", "status",
+			"overall_progress_percent", "current_stage", "is_sla_breached",
 		],
 		filters={"docstatus": ("<", 2)}, or_filters=or_filters,
 		order_by="modified desc", limit_page_length=LIMIT,
@@ -196,7 +203,7 @@ def get_context(context):
 		r["loan_status"] = (loan.get("status") or quotation.get("finance_status") or "Not applied") if loan_available else ""
 
 		# 5 - where the job has got to
-		r["activity"] = _activity(stages_of.get(r.name))
+		r["progress"] = _progress(r, stages_of.get(r.name))
 		r["status_slug"] = (r.status or "").lower().replace(" ", "-")
 
 	context.collection = {**cfg, "slug": SLUG}

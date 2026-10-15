@@ -1,27 +1,30 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A project page: its lead as a row, four boxes, then the task board.
+"""A project page: one summary card, then the task board.
 
-The boxes answer who the job is for, what their connection is, what is being built and how
-far it has got, and what was offered. The board has a column per party the work is done
-with - the company, the DISCOM, the KSEB portal side and the bank - and a small card per
-task in plan order, carrying its status and dates.
+The card says who the job is for, the facts a person working it reaches for - connection,
+system, loan, offer - and how far it has got. The board has a column per party the work is done
+with - the company, the PM Surya Ghar portal, KSEB and, for a financed job, the bank - and a
+small card per task in plan order, carrying its status and dates.
 """
 
 import frappe
-from frappe.utils import cint, flt, fmt_money, format_date
+from frappe.utils import cint, flt, fmt_money, format_date, quote
 
 from a3_sola.api.portal_fields import link_title
 from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, desk_route, initials, record_route
 
-#: Board columns: (heading, template activity scope, icon). KSEB is the DISCOM, so its tasks
-#: read as DISCOM activity; the PM Surya Ghar scheme work is done on the KSEB side.
+#: Board columns: (heading, template activity scope, icon), in the order the work starts -
+#: after the order, the first step is registering on the PM Surya Ghar portal, where the
+#: scheme's work is done, so its column comes before KSEB's.
 BOARD_COLUMNS = (
 	("Company Activity", "Company Activity", "briefcase"),
-	("DISCOM Activity", "KSEB Activity", "bolt"),
-	("KSEB Activity", "Scheme Activity", "globe"),
+	("PM Surya Ghar", "Scheme Activity", "globe"),
+	("KSEB Activity", "KSEB Activity", "bolt"),
 	("Bank Activity", "Bank Activity", "bank"),
 )
+#: The column a job shows only when it is financed: without a loan there is no bank work.
+FINANCED_ONLY = "Bank Activity"
 
 
 #: The icon for a task, by the document it is carried out in - the same icons the menu uses.
@@ -42,33 +45,54 @@ TASK_ICONS = {
 }
 #: Tasks worked as a generic Installation Task, by code; anything else gets the checklist.
 GENERIC_TASK_ICONS = {
-	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "CCERT": "shield",
+	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "SPROC": "box", "PROC": "box", "DAL": "doc", "CCERT": "shield",
 	"PORTUPD": "globe", "KTST": "gauge", "MTR": "gauge",
 }
 
 
 def project_overview(doc):
+	consumer, electricity = _consumer_box(doc), _electricity_box(doc)
+	solar, proposal = _solar_box(doc), _proposal_box(doc)
 	return {
-		"lead": _lead_row(doc),
-		"consumer": _consumer_box(doc),
-		"electricity": _electricity_box(doc),
-		"solar": _solar_box(doc),
-		"proposal": _proposal_box(doc),
+		"consumer": consumer,
+		"solar": solar,
+		"summary": _summary(consumer, electricity, solar, proposal) + [_location(doc)],
 		"columns": _task_columns(doc),
 	}
 
 
-def _lead_row(doc):
-	"""The job's lead, as the Leads list shows it: who, contact, status, and who holds it.
+def _location(doc):
+	"""The site, as a link that opens Google Maps directions to it."""
+	from a3_sola.api import documents, purchase_list
 
-	Read with the caller's permissions, so a lead the person may not see is simply left out.
-	"""
-	if not doc.lead:
-		return None
-	from a3_sola.www.a3solaportal.leads.index import lead_rows
+	point = purchase_list.location(doc)
+	if not point:
+		return {"label": "Location", "value": ""}
+	return {"label": "Location", "value": "{0:.4f}, {1:.4f} ↗".format(*point), "route": documents.maps_link(*point),
+		"external": True}
 
-	rows = lead_rows({"name": doc.lead}, limit=1)
-	return rows[0] if rows else None
+
+def _summary(consumer, electricity, solar, proposal):
+	"""The one card above the board: the facts a person working the job reaches for, taken
+	from the consumer, connection, system and offer - each said once."""
+	facts = dict(consumer["facts"])
+	connection = dict(electricity["facts"])
+	system = " ".join(filter(None, [f"{solar['capacity']} kW" if solar["capacity"] else "", solar["system_type"]]))
+	loan = " · ".join(filter(None, [proposal["loan"], proposal["lender"]]))
+	return [
+		{"label": "Consumer No.", "value": facts.get("Consumer No.")},
+		{"label": "Mobile", "value": facts.get("Mobile")},
+		{"label": "DISCOM Section", "value": connection.get("Section")},
+		{"label": "Connection", "value": connection.get("Connection")},
+		{"label": "System", "value": system},
+		{"label": "Package", "value": solar["package"]},
+		{"label": "Modules", "value": solar["modules"]},
+		{"label": "Inverter", "value": solar["inverters"]},
+		{"label": "Subsidy Scheme", "value": connection.get("Subsidy Scheme")},
+		{"label": "Loan", "value": loan},
+		{"label": "Proposal", "value": proposal["name"], "route": proposal["route"], "badge": proposal["status"]},
+		{"label": "Net Cost", "value": proposal["net_cost"]},
+	]
 
 
 def _route(doctype, name):
@@ -199,15 +223,25 @@ def _proposal_box(doc):
 
 
 def _task_columns(doc):
-	"""A column per party, each with its tasks in plan order."""
+	"""A column per party, each with its tasks in plan order. A job that is not financed has
+	no bank column, and its bank tasks (skipped, as Financed Sales Only) are not shown."""
+	shown = [c for c in BOARD_COLUMNS if doc.is_financed or c[1] != FINANCED_ONLY]
 	columns = [
 		{"label": label, "icon": icon, "key": frappe.scrub(label).replace("_", "-"), "tasks": []}
-		for label, _scope, icon in BOARD_COLUMNS
+		for label, _scope, icon in shown
 	]
-	index = {scope: i for i, (_label, scope, _icon) in enumerate(BOARD_COLUMNS)}
+	index = {scope: i for i, (_label, scope, _icon) in enumerate(shown)}
+	people = {}
+	for a in doc.get("task_assignees") or []:
+		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
 	for row in doc.stages:
+		if row.activity_scope == FINANCED_ONLY and not doc.is_financed:
+			continue
+		task = _task(row, doc.name)
+		task["assignees"] = people.get(row.stage_code, [])
+		task["contractor"] = _contractor(row)
 		# A task the template has not scoped yet is the company's own until it says otherwise.
-		columns[index.get(row.activity_scope, 0)]["tasks"].append(_task(row))
+		columns[index.get(row.activity_scope, 0)]["tasks"].append(task)
 	for column in columns:
 		live = [t for t in column["tasks"] if t["status"] != "Skipped"]
 		column["total"] = len(live)
@@ -215,7 +249,19 @@ def _task_columns(doc):
 	return columns
 
 
-def _task(row):
+def _contractor(row):
+	"""The contractor a work order task is with, once its work order names one - a
+	contractor has no login, so the task itself is the Project Engineer's."""
+	if row.task_doctype != "Installation Work Order" or not row.task_document:
+		return ""
+	contractor = frappe.db.get_value("Installation Work Order", row.task_document, "solar_contractor")
+	return link_title("Solar Contractor", contractor) if contractor else ""
+
+
+def _task(row, installation=None):
+	"""One task card. With the job's `installation`, the card opens a menu: the task where it
+	is carried out (projects/task.py) - a skipped task with nothing done on it has nowhere to
+	go - its documents, and skipping it or putting it back."""
 	open_ = row.status not in ("Completed", "Skipped")
 	return {
 		"code": row.stage_code,
@@ -233,4 +279,9 @@ def _task(row):
 		"document": row.task_document or "",
 		"document_route": _route(row.task_doctype, row.task_document) if row.task_document else "",
 		"reason": row.skip_reason or row.blocked_reason or "",
+		"url": "{0}/tasks/{1}".format(record_route("projects", installation), quote(row.stage_code))
+		if installation and row.stage_code and (row.status != "Skipped" or row.task_document) else "",
+		# The card's menu (portal_project_board.js) works any task of the job, skipped too.
+		"menu": bool(installation and row.stage_code),
+		"mandatory": bool(row.is_mandatory),
 	}

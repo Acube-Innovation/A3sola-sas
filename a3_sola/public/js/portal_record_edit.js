@@ -62,7 +62,8 @@
 
 	/* ---------------------------------------------------- show-when rules */
 	/* A field that only applies to one answer shows with it, as the desk's depends_on does:
-	   "field" shows while that field is ticked or filled, "field=value" while it holds it. */
+	   "field" shows while that field is ticked or filled, "field=value" while it holds it,
+	   "field=a|b" while it holds either. */
 	var conditional = Array.prototype.slice.call(form.querySelectorAll("[data-show-when]"));
 	function applyRules() {
 		conditional.forEach(function (wrap) {
@@ -70,15 +71,42 @@
 			var source = form.elements[parts[0]];
 			if (!source) return;
 			var on;
-			if (parts.length > 1) on = source.value === parts.slice(1).join("=");
+			if (parts.length > 1) on = parts.slice(1).join("=").split("|").indexOf(source.value) !== -1;
 			else on = source.type === "checkbox" ? source.checked : String(source.value || "").trim() !== "";
 			wrap.hidden = !on;
+			if (on) prefill(wrap);
 		});
 		Array.prototype.forEach.call(form.querySelectorAll(".a3s-edit__group"), function (group) {
 			var fields = group.querySelectorAll(".a3s-field");
 			group.hidden = fields.length > 0 && Array.prototype.every.call(fields, function (f) { return f.hidden; });
 		});
 	}
+	/* A blank field the server offered a value for (data-prefill, from a linked record) takes
+	   it the first time it shows, so a hidden field is never saved with a value nobody saw.
+	   Once only: a box the person cleared stays clear. */
+	function prefill(root) {
+		Array.prototype.forEach.call(root.querySelectorAll("[data-prefill]:not([data-prefilled])"), function (el) {
+			el.setAttribute("data-prefilled", "1");
+			if (String(el.value || "").trim() !== "") return;
+			el.value = el.dataset.prefill;
+			var hint = el.parentNode.querySelector("[data-prefill-hint]");
+			if (hint) hint.hidden = false;
+		});
+	}
+	Array.prototype.forEach.call(form.querySelectorAll(".a3s-field:not([data-show-when])"), prefill);
+
+	/* A field that follows another (data-follows) takes its new value while it still matches
+	   the old one, or is empty: the account holder is the consumer until it is typed over. */
+	Array.prototype.forEach.call(form.querySelectorAll("[data-follows]"), function (el) {
+		var source = form.elements[el.dataset.follows];
+		if (!source) return;
+		var was = source.value;
+		source.addEventListener("input", function () {
+			if (String(el.value || "").trim() === "" || el.value === was) el.value = source.value;
+			was = source.value;
+		});
+	});
+
 	var sources = {};
 	conditional.forEach(function (wrap) { sources[wrap.dataset.showWhen.split("=")[0]] = true; });
 	Object.keys(sources).forEach(function (fieldname) {

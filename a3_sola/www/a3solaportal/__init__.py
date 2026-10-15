@@ -58,6 +58,7 @@ NAV_GROUPS = [
 			{"title": "Installation Snag", "sub": "Defects and rectification", "ic": "alert", "route": "/a3solaportal/installation-snags"},
 			{"title": "Customer Review", "sub": "Feedback and Google", "ic": "star", "route": "/a3solaportal/customer-reviews"},
 			{"title": "Subsidy Claim", "sub": "Request to disbursement", "ic": "wallet", "route": "/a3solaportal/subsidy-claims"},
+			{"title": "Reimbursement", "sub": "Claims, approval, payment", "ic": "wallet", "route": "/a3solaportal/reimbursements"},
 		],
 	},
 	{

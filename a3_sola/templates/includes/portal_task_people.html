@@ -1,0 +1,18 @@
+{#- Who a task is assigned to, on the task's own pages: its people (the defaults from its
+    position on the project first) and Assign people to change them (portal_task_people.js).
+    Context: task_people, from collections.task_people. -#}
+{%- if task_people %}{% set tp = task_people %}
+<div class="a3s-taskpeople" data-installation="{{ tp.installation | e }}" data-task="{{ tp.task | e }}"
+     data-task-name="{{ tp.task_name | e }}" data-assignees="{{ tp.assignees | map(attribute='user') | join(',') | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg>
+	<span class="a3s-taskpeople__label">Assigned to</span>
+	<span class="a3s-taskpeople__names">
+		{%- if tp.assignees %}{{ tp.assignees | map(attribute='name') | join(", ") | e }}{% else %}Nobody yet{% endif %}
+	</span>
+	{%- if tp.position %}<span class="a3s-taskpeople__position">Default: {{ tp.position | e }}</span>{% endif %}
+	{%- if tp.can_assign %}
+	<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-assign-people>Assign people</button>
+	<script src="/assets/a3_sola/js/portal_task_people.js?v={{ a3s_asset_version('js/portal_task_people.js') }}"></script>
+	{%- endif %}
+</div>
+{%- endif %}

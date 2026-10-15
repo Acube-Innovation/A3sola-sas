@@ -1,0 +1,56 @@
+{#- A procurement task's purchase list, laid out as the team's own: who is billed and where
+    it ships, then Sl. No. / Material / Unit / Qty - the task's own list. Context:
+    api/purchase_list.pdf. -#}
+<style>
+	.pl-head td { border: 1px solid #000; padding: 6pt 8pt; vertical-align: top; width: 50%; }
+	.pl-head h4 { margin: 0 0 3pt; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.04em; }
+	.pl-head strong { font-size: 11pt; }
+	.pl-title { text-align: center; font-weight: bold; font-size: 12pt; margin: 10pt 0 4pt; }
+	.pl-sub { text-align: center; margin: 0 0 8pt; }
+	.pl-items th, .pl-items td { border: 1px solid #000; padding: 2.5pt 5pt; }
+	.pl-items th { background: #f0f0f0; }
+	.pl-items .n { width: 9%; text-align: center; }
+	.pl-items .u { width: 11%; text-align: center; }
+	.pl-items .q { width: 11%; text-align: center; }
+	.pl-items .sec td { font-weight: bold; background: #fafafa; }
+	.pl-remarks { margin-top: 10pt; page-break-inside: avoid; }
+	.pl-remarks td { border: 1px solid #000; padding: 6pt 8pt; }
+	.pl-remarks h4 { margin: 0 0 3pt; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.04em; }
+	.pl-remarks p { margin: 0 0 4pt; }
+</style>
+<table class="pl-head"><tr>
+	<td>
+		<h4>Bill To</h4>
+		<strong>{{ company.epc_name or company.company_name }}</strong><br>
+		{{ (company.epc_address or "") | e | replace("\n", "<br>") }}
+		{%- if company.epc_contact_no %}<br>Phone: {{ company.epc_contact_no | e }}{% endif %}
+		{%- if company.epc_email %}<br>Email: {{ company.epc_email | e }}{% endif %}
+	</td>
+	<td>
+		<h4>Ship To</h4>
+		<strong>{{ inst.consumer_name or inst.name }}</strong><br>
+		{{ (ship_address or "") | e }}
+		{%- if inst.consumer_mobile %}<br>Phone: {{ inst.consumer_mobile | e }}{% endif %}
+		{%- if map_url %}<br>Location: <a href="{{ map_url }}">{{ "%.4f" | format(point[0]) }}, {{ "%.4f" | format(point[1]) }} (open in Google Maps)</a>{% endif %}
+	</td>
+</tr></table>
+<p class="pl-title">Purchase List - {{ title }}</p>
+<p class="pl-sub">{{ system }} · {{ inst.name }} · {{ date }}</p>
+<table class="pl-items">
+	<thead><tr><th class="n">Sl. No.</th><th>Material</th><th class="u">Unit</th><th class="q">Qty</th></tr></thead>
+	<tbody>
+		<tr class="sec"><td colspan="4">{{ title }}{% if bom %} · {{ bom }}{% endif %}</td></tr>
+		{%- for r in rows %}
+		<tr><td class="n">{{ loop.index }}</td><td>{{ r.material | e }}</td><td class="u">{{ r.uom | e }}</td><td class="q">{{ "%g" | format(r.qty) }}</td></tr>
+		{%- else %}
+		<tr><td colspan="4">Nothing listed on the task yet.</td></tr>
+		{%- endfor %}
+	</tbody>
+</table>
+{%- if remarks %}
+<table class="pl-remarks"><tr><td>
+	<h4>Remarks</h4>
+	{%- for r in remarks %}<p>{{ r | e | replace("\n", "<br>") }}</p>{% endfor %}
+</td></tr></table>
+{%- endif %}
+

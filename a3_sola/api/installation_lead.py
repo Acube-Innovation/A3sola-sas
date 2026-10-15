@@ -84,6 +84,34 @@ def lead_context(lead, solar_consumer=None):
 	return out
 
 
+#: The consumer's bank details (Solar Consumer, Bank tab) as the job's loan bank, by
+#: installation field. The loan is usually with the consumer's own bank.
+CONSUMER_BANK = {
+	"lender": "bank_name",
+	"lender_branch": "bank_branch",
+	"bank_ifsc_code": "bank_ifsc_code",
+	"bank_account_holder_name": "bank_account_holder_name",
+	"bank_account_no": "bank_account_no",
+}
+
+
+def consumer_bank(solar_consumer, lender=None):
+	"""The consumer's bank details as installation values, for the fields that are blank.
+
+	Nothing when the job already names another lender: that bank's branch and IFSC are not
+	the consumer's, and the account is not the one the consumer gave us.
+	"""
+	if not solar_consumer:
+		return {}
+	bank = frappe.db.get_value(
+		"Solar Consumer", solar_consumer, [*CONSUMER_BANK.values(), "consumer_name"], as_dict=True
+	) or {}
+	bank["bank_account_holder_name"] = bank.get("bank_account_holder_name") or bank.get("consumer_name")
+	if lender and (bank.get("bank_name") or "").strip().casefold() != lender.strip().casefold():
+		return {}
+	return {field: bank.get(source) for field, source in CONSUMER_BANK.items() if bank.get(source)}
+
+
 def loan_default(lead, quotation=None):
 	"""Whether a new job for `lead` starts as financed: its quotation's Loan Required (the
 	lead's answer as quoted), else the lead's own answer."""

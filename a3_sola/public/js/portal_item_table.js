@@ -59,7 +59,7 @@
 			var cell = tr.querySelector("[data-amount]");
 			if (cell) cell.textContent = money.format(amount);
 		});
-		totalEl.textContent = "₹ " + money.format(total);
+		if (totalEl) totalEl.textContent = "₹ " + money.format(total);
 		hidden.value = JSON.stringify(rows.map(function (row) {
 			var out = {};
 			columns.forEach(function (c) { if (!c.readonly) out[c.fieldname] = row[c.fieldname]; });
@@ -120,7 +120,10 @@
 				var cell = document.createElement("td");
 				cell.dataset.label = c.label;
 				if (c.numeric) cell.className = "a3s-items__num";
-				if (c.readonly) cell.setAttribute("data-amount", "");
+				/* A read-only column is the worked-out amount, or a value shown as it is
+				   (a material's item code). */
+				if (c.readonly && c.fieldname === "amount") cell.setAttribute("data-amount", "");
+				else if (c.readonly) cell.textContent = row[c.fieldname] || "";
 				else cell.appendChild(control(c, row));
 				tr.appendChild(cell);
 			});
@@ -146,6 +149,14 @@
 		render();
 		var inputs = body.querySelectorAll("tr[data-index]:last-child .a3s-items__input");
 		if (inputs.length) inputs[0].focus();
+	});
+
+	/* Another script can set the rows (a structure BOM chosen fills the material list):
+	   dispatch "a3s:set-rows" on the grid with the new rows as its detail. */
+	root.addEventListener("a3s:set-rows", function (event) {
+		rows = (event.detail || []).map(function (r) { return Object.assign({}, r); });
+		if (!rows.length) rows.push(blankRow());
+		render();
 	});
 
 	if (!rows.length) rows.push(blankRow());

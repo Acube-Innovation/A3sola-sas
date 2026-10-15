@@ -119,6 +119,39 @@ class InstallationTask(Document):
 		if self.task_code == "MTR" and flt(self.meter_cost) and not flt(self.cost):
 			self.cost = self.meter_cost
 			self.cost_category = self.cost_category or "Material"
+		if self.task_code == "SPROC":
+			self.pull_structure()
+		if self.task_code == "SPROC" and self.status == "Completed" and not self.structure_procured_on:
+			self.structure_procured_on = self.completed_on or today()
+		if self.task_code == "PROC":
+			self.pull_material()
+		if self.task_code == "PROC" and self.status == "Completed" and not self.materials_procured_on:
+			self.materials_procured_on = self.completed_on or today()
+
+	def pull_material(self):
+		"""The package's bill of materials, unless one was chosen here, and its lines."""
+		from a3_sola.api import structure_bom
+
+		if not self.material_bom:
+			package = frappe.db.get_value("Solar Installation", self.solar_installation, "solar_package")
+			self.material_bom = frappe.db.get_value("Solar Package", package, "bom") if package else None
+		if not self.get("materials") and self.material_bom:
+			structure_bom.fill_materials(self)
+		structure_bom.match_items(self.get("materials") or [])
+
+	def pull_structure(self):
+		"""The project's roof type and capacity, and its structure BOM from the package -
+		unless one was chosen here."""
+		from a3_sola.api import structure_bom
+
+		inst = frappe.get_doc("Solar Installation", self.solar_installation)
+		self.structure_roof_type = inst.roof_type
+		self.structure_capacity_kw = inst.capacity_kw
+		if not self.structure_bom:
+			self.structure_bom = structure_bom.bom_for(inst)
+		if not self.get("structure_materials") and self.structure_bom:
+			structure_bom.fill_materials(self)
+		structure_bom.match_items(self.get("structure_materials") or [])
 
 	def stamp_uploads(self):
 		for row in self.uploads or []:
@@ -134,6 +167,8 @@ class InstallationTask(Document):
 		]
 		if self.task_code == "FRM1" and not (self.generated or self.uploads):
 			missing.append(_("Form 1 (generated or uploaded)"))
+		if self.task_code == "DAL" and not approval_letters(self):
+			missing.append(_("the digital approval letter (upload it in Attachments)"))
 		if missing:
 			frappe.throw(
 				_("Task {0} cannot be completed without: {1}").format(self.task_code, ", ".join(missing)),
@@ -324,3 +359,15 @@ def pull_loan_tranche(task):
 		doc.status = "In Progress"
 	_save(doc)
 	return {"amount": doc.amount, "paid_on": str(doc.paid_on)}
+
+
+def approval_letters(task):
+	"""The digital approval letter's files: attached to the task, or filed under its code on
+	the job's document register."""
+	files = frappe.get_all("File", filters={"attached_to_doctype": "Installation Task", "attached_to_name": task.name,
+		"is_folder": 0}, fields=["file_name", "file_url"], order_by="creation asc") if task.get("name") else []
+	files += [{"file_name": r.document_name, "file_url": r.attachment} for r in frappe.get_all(
+		"Installation Document", filters={"parent": task.solar_installation, "parenttype": "Solar Installation",
+		"stage_code": "DAL", "attachment": ["is", "set"]}, fields=["document_name", "attachment"])]
+	return files
+

@@ -22,6 +22,7 @@
   "migrated_from",
   "sb_stamp",
   "stamp_paper_status",
+  "claim_reimbursement",
   "stamp_paper_purchased_on",
   "stamp_paper_value",
   "cb_stamp",
@@ -29,6 +30,8 @@
   "stamp_paper_vendor",
   "stamp_paper_scan",
   "stamp_paper_data_sheet",
+  "stamp_paper_remarks",
+  "reimbursement",
   "sb_execution",
   "agreement_date",
   "place_of_execution",
@@ -193,6 +196,12 @@
    "reqd": 1
   },
   {
+   "fieldname": "claim_reimbursement",
+   "fieldtype": "Check",
+   "label": "I paid - Claim Reimbursement",
+   "description": "Paid from your own pocket: a reimbursement is raised for approval when the paper is recorded as purchased."
+  },
+  {
    "fieldname": "stamp_paper_purchased_on",
    "fieldtype": "Date",
    "label": "Purchased On"
@@ -227,6 +236,19 @@
    "fieldtype": "Attach",
    "label": "Data Sheet",
    "read_only": 1
+  },
+  {
+   "fieldname": "stamp_paper_remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "reimbursement",
+   "fieldtype": "Link",
+   "label": "Reimbursement",
+   "options": "Expense Reimbursement",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "sb_execution",
@@ -553,7 +575,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 14:00:00.000000",
+ "modified": "2026-10-15 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Agreement",

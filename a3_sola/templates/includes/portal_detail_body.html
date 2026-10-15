@@ -8,6 +8,7 @@
 	</h2>
 	<div class="a3s-detail__actions">
 		{%- if head_actions_template %}{% include head_actions_template %}{% endif %}
+		{%- include "templates/includes/portal_claim_button.html" %}
 		{%- if pdf_route %}
 		<a class="a3s-btn a3s-btn--secondary" href="{{ pdf_route }}" download>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
@@ -20,13 +21,13 @@
 			<span>Edit</span>
 		</a>
 		{%- if can_submit %}
-		{#- Submitting the order is the handoff into Operations: it opens the Solar
-		    Installation, its document register and its billing plan. The button posts to
-		    the same `submit` the desk calls, so both run one code path. -#}
+		{#- Submitting the order is the handoff into Operations; submitting a task's document
+		    completes the task. The button posts to the same `submit` the desk calls, so both
+		    run one code path. -#}
 		<button type="button" class="a3s-btn a3s-btn--primary" id="a3s-submit-record"
 		        data-slug="{{ collection.slug | e }}" data-name="{{ record.name | e }}">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg>
-			<span>Submit order</span>
+			<span>{{ submit_label or "Submit" }}</span>
 		</button>
 		{%- endif %}
 		{%- elif submitted and not hide_desk_amend %}
@@ -60,14 +61,20 @@
 				return r.json().then(function (body) { return { ok: r.ok, body: body }; });
 			}).then(function (res) {
 				if (!res.ok || !res.body || !res.body.message) {
-					throw new Error(((res.body || {})._server_messages) || "That did not work.");
+					/* Frappe sends a thrown message as a JSON list of JSON objects: say its text. */
+					var text = "";
+					try {
+						var msgs = JSON.parse((res.body || {})._server_messages || "[]");
+						if (msgs.length) text = String(JSON.parse(msgs[0]).message || "").replace(/<[^>]*>/g, "");
+					} catch (err) { /* fall through */ }
+					throw new Error(text || "That did not work.");
 				}
 				window.location.reload();
 			}).catch(function (e) {
 				btn.disabled = false;
 				if (label) label.textContent = was;
 				if (error) {
-					error.textContent = String(e.message || e).replace(/[\[\]"\\]|\{.*?"message":\s*/g, "").slice(0, 300);
+					error.textContent = String(e.message || e).slice(0, 300);
 					error.hidden = false;
 				}
 			});
@@ -77,6 +84,7 @@
 	{%- endif %}
 	<p class="a3s-main__sub">{{ collection.singular | capitalize }} &middot; stored in ERPNext.</p>
 </div>
+{%- include "templates/includes/portal_task_people.html" %}
 
 {#- A collection may put its own overview above the record - the project's boxes and board. -#}
 {%- if top_template %}{% include top_template %}{% endif %}

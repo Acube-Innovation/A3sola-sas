@@ -117,3 +117,33 @@ a3_sola.patches.v1_2.package_priced_estimates
 
 # The Sales Order is ERPNext's own form: its solar, KYC and task fields come off.
 a3_sola.patches.v1_2.sales_order_erpnext_default
+
+# Loan Documents is bank work: it sits in the project board's Bank column.
+a3_sola.patches.v1_2.loan_task_bank_scope
+
+# The bank covering letter and feasibility report in the Word layout, from the loan application.
+a3_sola.patches.v1_2.loan_documents_word_format
+
+# The bank pair can be printed with or without the signature and seal.
+a3_sola.patches.v1_2.loan_documents_sign_block
+
+# The stamp paper data sheet in the Word layout.
+a3_sola.patches.v1_2.stamp_paper_data_word_format
+
+# Each task has a default assignee on the template, and any number of people on a job.
+a3_sola.patches.v1_2.task_default_assignees
+
+# Structure Material Procurement, between Design Freeze and Work Order - Structure.
+a3_sola.patches.v1_2.structure_material_task
+
+# Structure Material Procurement: due with the advance, with its own material list.
+a3_sola.patches.v1_2.structure_material_list
+
+# Material Procurement worked on its own task, with the package BOM as its list.
+a3_sola.patches.v1_2.material_procurement_task
+
+# Claim Reimbursement only on the tasks the template allows it on.
+a3_sola.patches.v1_2.task_allow_reimbursement
+
+# The bank loan pack: Digital Approval Letter task, Building Tax Receipt, RIM quotation.
+a3_sola.patches.v1_2.loan_pack_and_approval_task

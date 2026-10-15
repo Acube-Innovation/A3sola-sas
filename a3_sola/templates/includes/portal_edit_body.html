@@ -1,15 +1,40 @@
 {#- Generic record edit form. Context from collections.edit_context: a step per form tab,
-    section headings inside each step, every control in one form. -#}
+    section headings inside each step, every control in one form. A task's new document is
+    created on the same form (task_form, from collections.new_context): nothing saved yet,
+    so no About card or attachments, and the fields that make it the task's ride along. -#}
 <div class="a3s-page__head">
 	<div>
+		{%- if task_form %}
+		<p class="a3s-detail__eyebrow">{{ source_title | e }}</p>
+		<h2 class="a3s-main__title">{{ task_name | e }}</h2>
+		<p class="a3s-main__sub">A new {{ collection.singular }} for this task on {{ source_title | e }}. Fill in what the task needs and create it.</p>
+		{%- include "templates/includes/portal_task_people.html" %}
+		{%- if task_downloads or claim %}
+		<div class="a3s-detail__actions" style="margin-top:0.75rem">
+			{%- for d in task_downloads or [] %}
+			<a class="a3s-square-btn" href="{{ d.url | e }}" title="{{ d.label | e }}" aria-label="{{ d.label | e }}">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg></a>
+			{%- endfor %}
+			{%- include "templates/includes/portal_claim_button.html" %}
+		</div>
+		{%- endif %}
+		{%- else %}
 		<p class="a3s-detail__eyebrow">{{ record.name | e }}</p>
 		<h2 class="a3s-main__title">Edit {{ title | e }}</h2>
 		<p class="a3s-main__sub">Changes are saved to the {{ collection.singular }} in ERPNext.</p>
+		{%- endif %}
 	</div>
 </div>
 
 <form class="a3s-edit a3s-edit--single" id="a3s-record-edit-form" data-endpoint="{{ endpoint }}" data-slug="{{ collection.slug }}"
-      data-name="{{ record.name | e }}" data-view="{{ view_route }}" novalidate>
+      data-name="{{ '' if task_form else record.name | e }}" data-view="{{ view_route }}" novalidate>
+	{%- if task_form %}
+	{#- Re-derived from the job on the server; posted only so the form's own rules can read them. -#}
+	<input type="hidden" name="source_dt" value="{{ source_dt | e }}">
+	<input type="hidden" name="source" value="{{ source_name | e }}">
+	<input type="hidden" name="source_task" value="{{ source_task | e }}">
+	{%- for k, v in fixed %}<input type="hidden" name="{{ k }}" value="{{ v | e }}">{% endfor %}
+	{%- endif %}
 	<div class="a3s-edit__main">
 
 		<div class="a3s-card a3s-edit__card a3s-edit__nav">
@@ -32,6 +57,7 @@
 			</div>
 		</div>
 
+		{%- if not task_form %}
 		<section class="a3s-card a3s-edit__card">
 			<h3 class="a3s-edit__card-title">About</h3>
 			<p class="a3s-edit__about">{{ about | e }}</p>
@@ -40,19 +66,21 @@
 				<span>Updated {{ modified }}</span>
 			</p>
 		</section>
+		{%- endif %}
 
 		{%- for g in groups %}
 		{#- Each section opens and closes from its heading, one open at a time; all start closed,
 		    so the page opens short. Choosing a step, or a field that needs fixing, opens it. -#}
-		<section class="a3s-card a3s-edit__card a3s-wizard__panel is-collapsed" id="panel-{{ g.key }}" data-step="{{ loop.index0 }}">
+		{%- set open_first = task_form and loop.first %}
+		<section class="a3s-card a3s-edit__card a3s-wizard__panel{% if not open_first %} is-collapsed{% endif %}" id="panel-{{ g.key }}" data-step="{{ loop.index0 }}">
 			<h3 class="a3s-edit__card-title">
-				<button type="button" class="a3s-edit__toggle" aria-expanded="false" aria-controls="body-{{ g.key }}">
+				<button type="button" class="a3s-edit__toggle" aria-expanded="{{ 'true' if open_first else 'false' }}" aria-controls="body-{{ g.key }}">
 					<span class="a3s-edit__toggle-label">{{ g.label | e }}</span>
 					<span class="a3s-edit__toggle-count" data-panel-count></span>
 					<svg class="a3s-ic a3s-edit__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
 				</button>
 			</h3>
-			<div class="a3s-edit__body" id="body-{{ g.key }}" hidden>
+			<div class="a3s-edit__body" id="body-{{ g.key }}"{% if not open_first %} hidden{% endif %}>
 			{%- for s in g.sections %}
 			<div class="a3s-edit__group">
 			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
@@ -116,7 +144,13 @@
 						<input type="number" step="{{ f.step }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
 						{%- else %}
 						<input type="{{ f.input }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
-						       {% if f.input == "email" %}autocomplete="email" spellcheck="false"{% elif f.input == "tel" %}autocomplete="tel"{% endif %}>
+						       {% if f.input == "email" %}autocomplete="email" spellcheck="false"{% elif f.input == "tel" %}autocomplete="tel"{% endif %}
+						       {%- if f.prefill %} data-prefill="{{ f.prefill | e }}"{% endif %}
+						       {%- if f.follows %} data-follows="{{ f.follows | e }}"{% endif %}>
+						{%- if f.prefill %}
+						{#- Offered from a linked record; filled in when the field shows (portal_record_edit.js). -#}
+						<span class="a3s-field__hint" data-prefill-hint hidden>From the {{ f.prefill_from | e }} - change it if it differs.</span>
+						{%- endif %}
 						{%- endif %}
 					{%- endif %}
 				</div>
@@ -128,13 +162,17 @@
 		</section>
 		{%- endfor %}
 
+		{%- include "templates/includes/portal_structure_bom.html" %}
+
 		{#- A collection with a rows table (Additional Structure, ...) edits it here, in the form. -#}
 		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
 
+		{%- if not task_form %}
 		{%- with att_doctype=record.doctype, att_name=record.name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+		{%- endif %}
 
 		<div class="a3s-form__actions a3s-edit__actions">
-			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>Save changes</button>
+			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>{{ "Save" if task_form else "Save changes" }}</button>
 			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>
 			<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>
 		</div>

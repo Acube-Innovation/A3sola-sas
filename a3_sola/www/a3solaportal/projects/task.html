@@ -1,0 +1,10 @@
+{% extends "templates/portal_shell.html" %}
+{% block portal_content %}
+{#- Only reached when a task has nowhere to be carried out; otherwise the page redirects. -#}
+<div class="a3s-card a3s-empty">
+	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-checklist"></use></svg></span>
+	<h3 class="a3s-empty__title">Nothing to open</h3>
+	<p class="a3s-empty__text">{{ message | e }}</p>
+	<a class="a3s-btn a3s-btn--primary" href="{{ project_route | e }}">Back to project</a>
+</div>
+{% endblock %}
