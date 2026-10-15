@@ -403,3 +403,98 @@ class TestDeletedTaskDocuments(FrappeTestCase):
 		doc.insert(ignore_permissions=True)
 		row, _doc = task_row(self.installation, "FRM1")
 		self.assertEqual((row.status, row.task_document), ("Pending", None))
+
+
+class TestTasksFromTheBoard(FrappeTestCase):
+	"""A task card on the portal's project board opens where the task is carried out."""
+
+	def setUp(self):
+		self.installation = make_installation()
+
+	def target(self, code):
+		from a3_sola.www.a3solaportal.projects.task import task_target
+
+		return task_target(self.installation.name, code, tasks.open_task(self.installation.name, code, create_draft=0))
+
+	def test_a_task_opens_its_create_form_then_its_document(self):
+		self.assertTrue(self.target("ADV").startswith("/a3solaportal/installation-tasks/new?source_dt=Solar+Installation"))
+		task = make_task(self.installation, "ADV")
+		self.assertEqual(self.target("ADV"), "/a3solaportal/installation-tasks/" + task.name)
+
+	def test_a_delivery_task_is_raised_in_the_desk_material_procurement_on_the_portal(self):
+		self.assertTrue(self.target("DISP").startswith("/app/delivery-note/new?solar_installation="))
+		self.assertTrue(self.target("PROC").startswith("/a3solaportal/installation-tasks/new?"))
+
+	def test_the_board_cards_link_to_their_tasks(self):
+		from a3_sola.www.a3solaportal.project_overview import _task_columns
+
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		cards = {t["code"]: t for c in _task_columns(doc) for t in c["tasks"]}
+		self.assertTrue(cards["ADV"]["url"].endswith("/tasks/ADV"))
+
+	def test_created_from_the_board_with_what_the_task_needs(self):
+		from a3_sola.api import portal_crud
+
+		made = portal_crud.create_record(
+			slug="document-packs", source_dt="Solar Installation", source=self.installation.name, source_task="KFORMS"
+		)
+		pack = frappe.get_doc("Document Pack", made["name"])
+		self.assertEqual((pack.solar_installation, pack.pack_type), (self.installation.name, "KSEB Submission"))
+		self.assertEqual(made["route"], "/a3solaportal/document-packs/" + pack.name)
+		row, _doc = task_row(self.installation, "KFORMS")
+		self.assertEqual(row.task_document, pack.name)
+
+	def test_a_task_is_completed_from_its_portal_page(self):
+		from a3_sola.api import portal_crud
+
+		task = make_task(self.installation, "ADV", amount=1000, paid_on=today())
+		portal_crud.submit_record(slug="installation-tasks", name=task.name)
+		row, _doc = task_row(self.installation, "ADV")
+		self.assertEqual(row.status, "Completed")
+
+	def test_the_task_form_takes_its_details_but_not_another_task(self):
+		from a3_sola.api import portal_crud
+
+		made = portal_crud.create_record(
+			slug="installation-tasks", source_dt="Solar Installation", source=self.installation.name,
+			source_task="ADV", amount="25000", paid_on=today(), task_code="BAL", solar_installation="ELSEWHERE",
+		)
+		task = frappe.get_doc("Installation Task", made["name"])
+		self.assertEqual((task.task_code, task.solar_installation), ("ADV", self.installation.name))
+		self.assertEqual((task.amount, str(task.paid_on)), (25000, today()))
+
+	def test_a_section_for_some_tasks_shows_with_them_only(self):
+		from a3_sola.www.a3solaportal.collections import section_show_when, task_form_groups
+
+		self.assertEqual(section_show_when("eval:['ADV','BAL'].includes(doc.task_code)"), "task_code=ADV|BAL")
+		self.assertEqual(section_show_when("eval:doc.task_code=='FRM1'"), "task_code=FRM1")
+		_doc, groups = task_form_groups("installation-tasks", {"solar_installation": self.installation.name, "task_code": "ADV"})
+		specs = {f["fieldname"]: f for g in groups for s in g["sections"] for f in s["fields"]}
+		self.assertEqual(specs["amount"]["show_when"], "task_code=ADV|BAL")
+		self.assertNotIn("task_code", specs)
+
+	def test_opening_a_fee_task_from_the_board_inserts_nothing(self):
+		"""The board follows a link, and a GET is never committed: a draft inserted then would
+		vanish under the page it redirected to (a 404). The draft waits for Create."""
+		frappe.db.set_single_value("A3 Sola Settings", "auto_create_fee_payment_on_stage", 1)
+		before = frappe.db.count("Statutory Fee Payment", {"solar_installation": self.installation.name})
+		self.assertTrue(self.target("F1PAY").startswith("/a3solaportal/fee-payments/new?"))
+		self.assertEqual(frappe.db.count("Statutory Fee Payment", {"solar_installation": self.installation.name}), before)
+
+	def test_portal_registration_asks_for_its_number_date_and_applicant_only(self):
+		from a3_sola.api import portal_crud
+		from a3_sola.www.a3solaportal.collections import task_form_groups
+
+		values = {"solar_installation": self.installation.name, "task_code": "NPA", "application_type": "National Portal"}
+		_doc, groups = task_form_groups("portal-applications", values)
+		self.assertEqual(
+			[f["fieldname"] for g in groups for s in g["sections"] for f in s["fields"]],
+			["application_number", "application_date", "applied_by"],
+		)
+		made = portal_crud.create_record(
+			slug="portal-applications", source_dt="Solar Installation", source=self.installation.name,
+			source_task="NPA", application_number="PMSG-123", application_date=today(), sanctioned_capacity_kw="9",
+		)
+		app = frappe.get_doc("Portal Application", made["name"])
+		self.assertEqual((app.application_type, app.application_number), ("National Portal", "PMSG-123"))
+		self.assertFalse(app.get("sanctioned_capacity_kw"))

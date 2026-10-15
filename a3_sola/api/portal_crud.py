@@ -21,13 +21,14 @@ from a3_sola.api.portal_fields import NUMERIC_TYPES
 from a3_sola.www.a3solaportal.collections import (
 	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
 	is_editable, load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
+	TASK_FORM_CHECKS, task_form_groups, task_source,
 )
 
 TRUE = {"1", "true", "on", "yes"}
 
 
 @frappe.whitelist()
-def create_record(slug=None, source_dt=None, source=None, **values):
+def create_record(slug=None, source_dt=None, source=None, source_task=None, **values):
 	cfg = get_collection(slug)
 	doctype = cfg["doctype"]
 	meta = frappe.get_meta(doctype)
@@ -35,6 +36,8 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 	allowed = {s["fieldname"]: s for s in specs}
 
 	step, source_doc = None, None
+	if source_dt == "Solar Installation" and source and source_task:
+		return _create_for_task(slug, cfg, source, source_task, values)
 	if source_dt and source:
 		step, source_doc = _load_source(slug, source_dt, source)
 	# A step with a mapper starts from what the mapper builds - an order with the
@@ -86,6 +89,47 @@ def create_record(slug=None, source_dt=None, source=None, **values):
 	if cfg.get("edit_after_create") and is_editable(doc):
 		route = record_route(slug, doc.name) + "/edit"
 	return {"name": doc.name, "route": route, "desk": desk_route(doctype, doc.name)}
+
+
+def _create_for_task(slug, cfg, installation, task_code, values):
+	"""A task's document, created on its whole form from the project board.
+
+	What makes it that task's - the job, the code, the kind of document (TASK_FIXED) - is
+	worked out again here from the job, never taken from the post; the rest is the form's,
+	allowed field by field as the form rendered it (task_form_groups).
+	"""
+	task_values = task_source(slug, installation, task_code)
+	if task_values is None:
+		frappe.throw(_("Task {0} on {1} does not open a new {2}.").format(task_code, installation, cfg["singular"]),
+			frappe.ValidationError)
+	doc, groups = task_form_groups(slug, task_values)
+	allowed = {spec["fieldname"]: spec for g in groups for s in g["sections"] for spec in s["fields"]}
+	_set_posted(doc, allowed, values)
+	_set_item_rows(doc, slug, values)
+	# A select asked as a tick box (stamp paper purchased) takes its own values back.
+	for field, (_label, on, off) in TASK_FORM_CHECKS.get(task_values.get("task_code"), {}).items():
+		if field in allowed:
+			doc.set(field, on if str(values.get(field)).lower() in TRUE else off)
+	doc.insert()
+	# On to the document's page, where the task is completed (Complete task / Submit).
+	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(cfg["doctype"], doc.name)}
+
+
+def _set_posted(doc, allowed, values):
+	"""Set each allowed field the caller posted, typed as its spec says. A field not posted
+	is left as it is."""
+	for fieldname, spec in allowed.items():
+		if fieldname not in values:
+			continue
+		raw = values.get(fieldname)
+		if spec["type"] == "Check":
+			doc.set(fieldname, 1 if str(raw).lower() in TRUE else 0)
+			continue
+		text = ("" if raw is None else str(raw)).strip()
+		if spec["type"] in NUMERIC_TYPES:
+			doc.set(fieldname, (cint(text) if spec["type"] == "Int" else flt(text)) if text else None)
+		else:
+			doc.set(fieldname, text or None)
 
 
 @frappe.whitelist()
@@ -277,18 +321,26 @@ def upload_image(slug=None, fieldname=None, name=None):
 def submit_record(slug=None, name=None):
 	"""Submit a portal record, so the portal reaches the same handoff the desk does.
 
-	Only the sales order, and only through `doc.submit()`. That matters: submitting the
-	order is what opens the Solar Installation, its document register and its billing
-	plan, and all of that hangs off the `on_submit` hook. Calling `submit` rather than
-	reproducing any of it here means the portal and the desk run the identical code, and
-	a change to the handoff is picked up by both without this function being touched.
+	Only the sales order and the task documents (SUBMIT_SLUGS), and only through the
+	document's own `submit`. That matters: submitting the order is what opens the Solar
+	Installation, its document register and its billing plan, and submitting a task's
+	document is what completes the task - all of it hangs off `on_submit` hooks. Calling
+	`submit` rather than reproducing any of it here means the portal and the desk run the
+	identical code.
 	"""
 	if slug not in SUBMIT_SLUGS:
 		frappe.throw(_("A {0} cannot be submitted from the portal.").format(slug), frappe.PermissionError)
 	doc = load_record(slug, name, "submit")
 	if cint(doc.docstatus) != 0:
 		frappe.throw(_("{0} is not a draft.").format(name), frappe.ValidationError)
-	doc.submit()
+	if slug == "installation-tasks":
+		# A task is submitted as done: the same `complete` the desk's button calls, which
+		# marks it Completed (its evidence checked) and then submits it.
+		from a3_sola.solar_operations.doctype.installation_task.installation_task import complete
+
+		complete(doc.name)
+	else:
+		doc.submit()
 	return {"name": doc.name, "route": record_route(slug, doc.name)}
 
 
@@ -302,18 +354,7 @@ def update_record(slug=None, name=None, **values):
 	authority on whether this user may change the record.
 	"""
 	doc = load_record(slug, name, "write")
-	for fieldname, spec in edit_allowlist(doc).items():
-		if fieldname not in values:
-			continue
-		raw = values.get(fieldname)
-		if spec["type"] == "Check":
-			doc.set(fieldname, 1 if str(raw).lower() in TRUE else 0)
-			continue
-		text = ("" if raw is None else str(raw)).strip()
-		if spec["type"] in NUMERIC_TYPES:
-			doc.set(fieldname, (cint(text) if spec["type"] == "Int" else flt(text)) if text else None)
-		else:
-			doc.set(fieldname, text or None)
+	_set_posted(doc, edit_allowlist(doc), values)
 	_set_item_rows(doc, slug, values)
 	doc.save()
 	return {"name": doc.name, "route": record_route(slug, doc.name)}
@@ -325,7 +366,7 @@ def _set_item_rows(doc, slug, values):
 	amounts and the total are the controller's to work out."""
 	if "__items" not in values:
 		return
-	table = item_rows(slug, values.get("__items"))
+	table = item_rows(slug, values.get("__items"), doc)
 	if not table:
 		return
 	fieldname, rows = table

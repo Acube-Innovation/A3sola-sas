@@ -1,0 +1,40 @@
+{#- A loan application's bank documents, each one page as its Word original: the covering
+    letter or the feasibility report - a PDF in a new tab - with the company's signature
+    and seal while the box is ticked (as it starts), or without them to sign and stamp by
+    hand. Context: print_route, from loan-applications/view.py. -#}
+<details class="a3s-printmenu">
+	<summary class="a3s-btn a3s-btn--secondary">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+		<span>Print</span>
+		<svg class="a3s-ic a3s-printmenu__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+	</summary>
+	<div class="a3s-printmenu__list" role="menu">
+		<label class="a3s-check a3s-printmenu__sign">
+			<input type="checkbox" checked data-print-signed>
+			<span>With sign &amp; seal</span>
+		</label>
+		{%- for doc, label in (("letter", "Covering letter"), ("feasibility", "Feasibility report"), ("quotation", "Quotation"), ("ehs", "EHS checklist"), ("proposal", "Project proposal")) %}
+		<a role="menuitem" href="{{ print_route }}&document={{ doc }}&signed=1" data-print-base="{{ print_route }}&document={{ doc }}"
+		   target="_blank" rel="noopener">{{ label }}</a>
+		{%- endfor %}
+	</div>
+</details>
+<script>
+(function () {
+	var menu = document.querySelector(".a3s-printmenu");
+	if (!menu) return;
+	var signed = menu.querySelector("[data-print-signed]");
+	/* Each document's link follows the box: signed and sealed, or for signing by hand. */
+	function follow() {
+		Array.prototype.forEach.call(menu.querySelectorAll("[data-print-base]"), function (link) {
+			link.href = link.dataset.printBase + "&signed=" + (signed.checked ? "1" : "0");
+		});
+	}
+	signed.addEventListener("change", follow);
+	follow();
+	/* The menu closes on a click anywhere else, as a menu does. */
+	document.addEventListener("click", function (event) {
+		if (menu.open && !menu.contains(event.target)) menu.open = false;
+	});
+})();
+</script>

@@ -1,4 +1,9 @@
-{#- Generic create form. Fields come from collections.new_context via the doctype meta. -#}
+{#- Generic create form. Fields come from collections.new_context via the doctype meta. A
+    task's document, opened from the project board, is created on its whole form instead. -#}
+{%- if task_form %}
+{%- include "templates/includes/portal_edit_body.html" %}
+<script src="/assets/a3_sola/js/portal_record_edit.js?v={{ a3s_asset_version('js/portal_record_edit.js') }}"></script>
+{%- else %}
 <div class="a3s-page__head">
 	<div>
 		<h2 class="a3s-main__title">New {{ collection.singular }}</h2>
@@ -19,7 +24,7 @@
 
 <div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}">
 	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}" data-doctype="{{ collection.doctype | e }}"
-	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" novalidate>
+	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" data-source-task="{{ source_task | e }}" novalidate>
 		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
 		<div class="a3s-form__grid">
 		{%- for f in fields %}
@@ -255,3 +260,4 @@
 	apply();
 })();
 </script>
+{%- endif %}

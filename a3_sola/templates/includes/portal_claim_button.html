@@ -1,0 +1,17 @@
+{#- A task's reimbursement, inside the task: the claim already raised for it, to open - its
+    page offers Edit while it waits for approval, and nothing to change once approved - or
+    Claim reimbursement for a new one (portal_claim.js). Context: claim - {installation,
+    task, task_name, existing}. -#}
+{%- if claim and claim.existing %}
+<a class="a3s-btn a3s-btn--secondary" href="{{ claim.existing.route | e }}" title="{{ claim.existing.name | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-wallet"></use></svg>
+	<span>View Reimbursement · {{ claim.existing.status | e }}</span>
+</a>
+{%- elif claim %}
+<button type="button" class="a3s-btn a3s-btn--secondary" data-claim
+        data-installation="{{ claim.installation | e }}" data-task="{{ claim.task | e }}" data-task-name="{{ claim.task_name | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-wallet"></use></svg>
+	<span>Claim Reimbursement</span>
+</button>
+<script src="/assets/a3_sola/js/portal_claim.js?v={{ a3s_asset_version('js/portal_claim.js') }}"></script>
+{%- endif %}

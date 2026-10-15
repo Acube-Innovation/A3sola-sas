@@ -122,7 +122,7 @@ TASK_DOCTYPES = {
 		"reference": lambda d, c: _first(d, "payment_reference", "certificate_no", "meter_serial", "ae_acknowledgement_no"),
 		"cost": lambda d, c: flt(_first(d, "cost", "amount", "meter_cost")),
 		"reason": lambda d, c: d.get("skip_reason"),
-		"route": lambda inst, c: {"task_code": c},
+		"route": lambda inst, c: _installation_task_route(inst, c),
 	},
 	"Sales Order": {
 		"codes": lambda d: ["ORD"],
@@ -141,8 +141,11 @@ TASK_DOCTYPES = {
 	"Loan Application": {
 		"codes": lambda d: ["LOAN"],
 		"state": lambda d, c: "Completed" if _submitted(d) else "In Progress",
-		"date": lambda d, c: _first(d, "sanctioned_on", "application_date"),
+		"date": lambda d, c: _first(d, "sanctioned_on", "applied_on"),
 		"reference": lambda d, c: _first(d, "loan_sanction_no", "jan_samarth_id"),
+		# Everything the bank's documents print that the job already knows, so the
+		# application starts with it.
+		"route": lambda inst, c: _loan_defaults(inst),
 	},
 	"Solar Agreement": {
 		"codes": lambda d: ["STMP"],
@@ -150,6 +153,12 @@ TASK_DOCTYPES = {
 		"date": lambda d, c: d.get("stamp_paper_purchased_on"),
 		"reference": lambda d, c: d.get("stamp_paper_serial"),
 		"cost": lambda d, c: flt(d.get("stamp_paper_value")),
+		# The agreement is opened when its stamp paper is bought; it is dated that day, and
+		# the paper is the settings' denomination unless it says otherwise.
+		"route": lambda inst, c: {
+			"agreement_date": frappe.utils.today(),
+			"stamp_paper_value": flt(get_value("stamp_paper_denomination")) or 200,
+		},
 	},
 	"Installation Work Order": {
 		"codes": _work_order_codes,
@@ -181,8 +190,10 @@ TASK_DOCTYPES = {
 		"reference": lambda d, c: {"SUBREQ": d.get("pcr_reference_no"), "DBT": d.get("disbursement_reference")}.get(c),
 		"reason": lambda d, c: _("No correction was needed") if c == "CORR" else None,
 	},
+	# Material Procurement is worked on its own task now (its material list and purchase
+	# list); a purchase order raised in ERPNext no longer stands in for it.
 	"Purchase Order": {
-		"codes": lambda d: ["PROC"],
+		"codes": lambda d: [],
 		"state": lambda d, c: "Completed" if _submitted(d) else "In Progress",
 		"date": lambda d, c: d.get("transaction_date"),
 		"reference": lambda d, c: d.name,
@@ -318,7 +329,14 @@ def _apply(row, doc, code, rule):
 	if not row.actual_start_date:
 		row.actual_start_date = getdate(doc.get("creation") or today())
 	if doc.get("assigned_to"):
-		row.assigned_to = doc.assigned_to
+		# The person on the task's document joins the task's assignees, beside its defaults.
+		parent = getattr(row, "parent_doc", None)
+		if parent is not None:
+			from a3_sola.api import task_assignees
+
+			task_assignees.add(parent, row.stage_code, doc.assigned_to)
+		else:
+			row.assigned_to = row.assigned_to or doc.assigned_to
 	if rule.get("cost"):
 		cost = rule["cost"](doc, code)
 		if cost:
@@ -449,13 +467,39 @@ AFTER_COMPLETE = {"F1PAY": _start_form2_window}
 
 
 # ------------------------------------------------------------------ the Task button
+def _installation_task_route(inst, code):
+	"""A generic task opens with its code - and the structure's material task with the
+	project's structure BOM already chosen."""
+	values = {"task_code": code}
+	if code == "PROC":
+		values["material_bom"] = frappe.db.get_value("Solar Package", inst.solar_package, "bom") if inst.get("solar_package") else None
+	if code == "SPROC":
+		from a3_sola.api import structure_bom
+
+		values.update({
+			"structure_bom": structure_bom.bom_for(inst),
+			"structure_roof_type": inst.get("roof_type"),
+			"structure_capacity_kw": inst.get("capacity_kw"),
+		})
+	return values
+
+
+def _loan_defaults(inst):
+	from a3_sola.solar_operations.doctype.loan_application.loan_application import loan_defaults
+
+	return loan_defaults(inst)
+
+
 @frappe.whitelist()
-def open_task(installation, task_code=None):
+def open_task(installation, task_code=None, create_draft=1):
 	"""Where to go to do a task: its document if it has one, else what to create.
 
 	Returns `{"doctype", "name", "route_options"}`. `name` set means open it; `name` None
 	with `route_options` means make a new one prefilled; both None means there is nothing
 	to open (an order task on a job that has no sales order).
+
+	`create_draft=0` never inserts anything - the portal's board follows a link here, and a
+	GET is never committed, so a draft made then would vanish under the page it opens.
 	"""
 	if not task_code:
 		frappe.throw(_("Which task?"))
@@ -484,10 +528,20 @@ def open_task(installation, task_code=None):
 		"company": inst.company,
 		"task_code": task_code,
 	}
+	# The task's document starts with the task's lead person (its first assignee), its name
+	# and its due date.
+	meta = frappe.get_meta(doctype)
+	lead = next((a.user for a in inst.get("task_assignees") or [] if a.stage_code == task_code), None)
+	if lead and meta.has_field("assigned_to"):
+		route_options["assigned_to"] = lead
+	if meta.has_field("task_name"):
+		route_options["task_name"] = row.stage_name
+	if row.due_date and meta.has_field("due_date"):
+		route_options["due_date"] = str(row.due_date)
 	if rule.get("route"):
 		route_options.update(rule["route"](inst, task_code))
 
-	if doctype == "Statutory Fee Payment" and cint(get_value("auto_create_fee_payment_on_stage")):
+	if doctype == "Statutory Fee Payment" and cint(create_draft) and cint(get_value("auto_create_fee_payment_on_stage")):
 		return {"doctype": doctype, "name": _draft_fee_payment(inst, route_options), "route_options": None}
 	return {"doctype": doctype, "name": None, "route_options": route_options}
 

@@ -43,7 +43,7 @@ INTERNAL_PLATFORM_ROLES = (
 MODULE_ROLES = {
 	"Solar CRM": (
 		"Solar Sales Executive", "Solar Survey Engineer", "Solar Design Engineer",
-		"Solar Sales Manager", "Solar CRM Manager",
+		"Solar Sales Manager", "Solar CRM Manager", "Solar Sales Coordinator",
 	),
 	"Solar Operations": (
 		"Solar Operations Executive", "Solar Site Engineer", "Solar Documentation Officer",

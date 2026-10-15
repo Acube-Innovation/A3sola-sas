@@ -89,12 +89,25 @@
 					</div>
 				</td>
 
-				{#- ---- 5. where the job has got to: its latest completed task ------- #}
+				{#- ---- 5. where the job has got to: its progress, as on its page --------- #}
 				<td class="a3s-table__status a3s-projlist__status">
-					{%- if r.activity %}{% set t = r.activity %}
-					<div class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}"
-					     title="{{ t.code | e }}{% if t.reason %} &middot; {{ t.reason | e }}{% endif %}">
-						{%- include "templates/includes/portal_task_card.html" %}
+					{%- if r.progress %}{% set s = r.progress %}
+					<div class="a3s-proj__progress a3s-projlist__progress">
+						<div class="a3s-proj__progress-head">
+							<span class="a3s-proj__percent">{{ s.percent }}%</span>
+							<span class="a3s-proj__progress-sub">{{ s.done }} of {{ s.total }} tasks done</span>
+							{%- if r.status %}<span class="a3s-badge a3s-proj__status a3s-proj__status--{{ r.status_slug }}">{{ r.status | e }}</span>{% endif %}
+						</div>
+						<div class="a3s-progress" role="progressbar" aria-label="Project progress"
+						     aria-valuenow="{{ s.percent }}" aria-valuemin="0" aria-valuemax="100">
+							<span class="a3s-progress__fill{% if s.overdue %} is-overdue{% endif %}" style="width: {{ s.percent }}%"></span>
+						</div>
+						{%- if s.focus or s.overdue %}
+						<p class="a3s-proj__progress-meta">
+							{%- if s.focus %}<span>Focus: <strong>{{ s.focus | e }}</strong></span>{% endif %}
+							{%- if s.overdue %}<span class="a3s-proj__overdue">Overdue tasks</span>{% endif %}
+						</p>
+						{%- endif %}
 					</div>
 					{%- else %}
 					<span class="a3s-badge">{{ r.status | e }}</span>

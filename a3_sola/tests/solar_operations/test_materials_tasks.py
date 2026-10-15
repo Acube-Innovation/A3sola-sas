@@ -38,7 +38,7 @@ class TestProcurement(FrappeTestCase):
 		self.installation = make_installation()
 		give_the_package_items(self.installation)
 
-	def test_a_purchase_order_is_raised_from_the_bill_of_materials_and_starts_the_task(self):
+	def test_a_purchase_order_is_raised_from_the_bill_of_materials(self):
 		consumer = frappe.get_doc("Solar Consumer", self.installation.solar_consumer)
 		consumer.google_location_url = "https://maps.app.goo.gl/site"
 		consumer.landmark = "Behind the school"
@@ -49,8 +49,10 @@ class TestProcurement(FrappeTestCase):
 		self.assertEqual(order.solar_installation, self.installation.name)
 		self.assertEqual(order.site_google_location, "https://maps.app.goo.gl/site")
 		self.assertEqual(order.site_landmark, "Behind the school")
+		# Material Procurement is worked on its own task now; the order does not take it over.
 		row, _doc = task_row(self.installation, "PROC")
-		self.assertEqual((row.status, row.task_document), ("In Progress", name))
+		self.assertEqual(row.task_doctype, "Installation Task")
+		self.assertNotEqual(row.task_document, name)
 
 	def test_bom_lines_are_printable(self):
 		lines = materials.bom_lines(self.installation)

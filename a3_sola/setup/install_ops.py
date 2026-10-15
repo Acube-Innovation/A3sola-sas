@@ -47,8 +47,11 @@ SYNCED_ROW_FIELDS = (
 	"due_anchor_days", "stage_description", "document_checklist_template", "display_order",
 )
 
+#: Tasks a new template allows a reimbursement on. Not synced: the business decides after.
+REIMBURSABLE = ("STMP",)
+
 #: Fields the seed fills only while blank. The tenant decides them after that.
-SEEDED_ONCE_ROW_FIELDS = ("activity_scope",)
+SEEDED_ONCE_ROW_FIELDS = ("activity_scope", "default_assignee")
 
 
 def setup(company=None):
@@ -203,6 +206,9 @@ def _task_row(task, index, company=None):
 		"stage_code": task["code"],
 		"stage_name": task["name"],
 		"activity_scope": task["activity_scope"],
+		"default_assignee": task["default_assignee"],
+		# Only the stamp paper is bought out of pocket at first; the business ticks the rest.
+		"allow_reimbursement": 1 if task["code"] in REIMBURSABLE else 0,
 		"owner_type": task["owner_type"],
 		"sla_days": task["sla_days"],
 		"responsible_role": task["default_assignee_role"]

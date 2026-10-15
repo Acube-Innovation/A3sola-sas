@@ -1,10 +1,10 @@
-{#- The inside of one task card: icon tile, name over its date, status pill. `t` is a
-    task from project_overview._task. The caller supplies the wrapper - an <li> on the
-    project board, a <div> in the consumer list - carrying the classes
-    "a3s-proj__task is-<status>" that pick the card's colours. -#}
+{#- The inside of one task card, every card the same size: icon tile; the name (two lines at
+    most); its date beside its status; who it is with. `t` is a task from
+    project_overview._task. The caller supplies the wrapper - an <li> on the project board -
+    carrying the classes "a3s-proj__task is-<status>" that pick the card's colours. -#}
 <span class="a3s-proj__task-icon"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ t.icon }}"></use></svg></span>
 <div class="a3s-proj__task-body">
-	<p class="a3s-proj__task-name">{{ t.name | e }}</p>
+	<p class="a3s-proj__task-name" title="{{ t.name | e }}">{{ t.name | e }}</p>
 	<p class="a3s-proj__task-meta">
 		<span class="a3s-proj__when{% if t.overdue %} a3s-proj__overdue{% endif %}">
 			{%- if t.completed %}Done {{ t.completed }}
@@ -12,7 +12,14 @@
 			{%- elif t.plan %}{{ t.plan }}
 			{%- elif t.status == "Skipped" %}Not needed{% endif %}
 		</span>
-		{%- if t.document %}<a href="{{ t.document_route | e }}">{{ t.document | e }}</a>{% endif %}
+		<span class="a3s-proj__task-status">{{ t.status | e }}</span>
+	</p>
+	{#- Who it is with: the first two people by name, then how many more; the contractor. -#}
+	<p class="a3s-proj__task-who" title="{{ t.assignees | map(attribute='name') | join(', ') | e }}">
+		{%- if t.assignees or t.contractor %}
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg>
+		<span>{{ (t.assignees[:2] | map(attribute='name') | join(", ")) | e }}{% if t.assignees | length > 2 %} +{{ t.assignees | length - 2 }}{% endif %}
+		{%- if t.contractor %}{% if t.assignees %} · {% endif %}{{ t.contractor | e }}{% endif %}</span>
+		{%- endif %}
 	</p>
 </div>
-<span class="a3s-proj__task-status">{{ t.status | e }}</span>

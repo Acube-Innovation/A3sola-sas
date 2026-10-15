@@ -47,6 +47,8 @@
   "sb_mounting",
   "roof_type",
   "mounting_expenses",
+  "sb_structure_boms",
+  "structure_boms",
   "tab_installation",
   "sb_installation",
   "installation_expenses",
@@ -307,6 +309,18 @@
    "options": "Design Estimate Mounting Expense"
   },
   {
+   "fieldname": "sb_structure_boms",
+   "fieldtype": "Section Break",
+   "label": "Structure BOMs",
+   "description": "The structure material a project is built with, by its roof type and panel capacity: one ERPNext BOM per row."
+  },
+  {
+   "fieldname": "structure_boms",
+   "fieldtype": "Table",
+   "label": "Structure BOMs",
+   "options": "Solar Package Structure BOM"
+  },
+  {
    "fieldname": "tab_installation",
    "fieldtype": "Tab Break",
    "label": "Installation"
@@ -359,7 +373,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-13 19:45:00.000000",
+ "modified": "2026-10-15 17:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

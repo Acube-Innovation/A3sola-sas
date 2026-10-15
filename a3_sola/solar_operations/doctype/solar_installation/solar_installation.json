@@ -111,6 +111,7 @@
   "project_manager",
   "cb_12",
   "site_engineer",
+  "sales_coordinator",
   "sb_9",
   "installation_address",
   "discom",
@@ -139,6 +140,7 @@
   "sb_18",
   "stage_chain",
   "stages",
+  "task_assignees",
   "tab_20",
   "sb_21",
   "document_pack_complete",
@@ -172,6 +174,9 @@
   "is_financed",
   "lender",
   "lender_branch",
+  "bank_ifsc_code",
+  "bank_account_holder_name",
+  "bank_account_no",
   "loan_application",
   "cb_31",
   "sanctioned_amount",
@@ -861,7 +866,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Project Manager",
-   "options": "User"
+   "options": "User",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "cb_12",
@@ -870,8 +876,18 @@
   {
    "fieldname": "site_engineer",
    "fieldtype": "Link",
-   "label": "Site Engineer",
-   "options": "User"
+   "label": "Project Engineer",
+   "options": "User",
+   "allow_on_submit": 1,
+   "description": "Gets the project's engineering tasks (Default Assignee: Project Engineer)."
+  },
+  {
+   "fieldname": "sales_coordinator",
+   "fieldtype": "Link",
+   "label": "Sales Co-ordinator",
+   "options": "User",
+   "allow_on_submit": 1,
+   "description": "Gets the portal registration and Form 1 tasks (Default Assignee: Sales Co-ordinator)."
   },
   {
    "fieldname": "sb_9",
@@ -1053,6 +1069,14 @@
    "fieldtype": "Table",
    "label": "Tasks",
    "options": "Installation Stage Log"
+  },
+  {
+   "fieldname": "task_assignees",
+   "fieldtype": "Table",
+   "label": "Task Assignees",
+   "options": "Installation Task Assignee",
+   "allow_on_submit": 1,
+   "description": "Everyone each task is assigned to; a task's first assignee is also on its row."
   },
   {
    "fieldname": "tab_20",
@@ -1242,7 +1266,7 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Financed"
+   "label": "Loan Required"
   },
   {
    "allow_on_submit": 1,
@@ -1250,7 +1274,7 @@
    "fieldname": "lender",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Lender"
+   "label": "Lender / Bank"
   },
   {
    "allow_on_submit": 1,
@@ -1258,6 +1282,27 @@
    "fieldname": "lender_branch",
    "fieldtype": "Data",
    "label": "Branch"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.is_financed",
+   "fieldname": "bank_ifsc_code",
+   "fieldtype": "Data",
+   "label": "IFSC Code"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.is_financed",
+   "fieldname": "bank_account_holder_name",
+   "fieldtype": "Data",
+   "label": "Account Holder Name"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.is_financed",
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "label": "Account Number"
   },
   {
    "allow_on_submit": 1,
@@ -1423,7 +1468,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-14 19:30:00.000000",
+ "modified": "2026-10-15 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Installation",
@@ -1568,6 +1613,16 @@
    "read": 1,
    "role": "System Manager",
    "write": 1
+  },
+  {
+   "role": "Solar Sales Coordinator",
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "share": 1
   }
  ],
  "search_fields": "solar_consumer,consumer_number,current_stage",

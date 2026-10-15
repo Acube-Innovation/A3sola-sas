@@ -195,6 +195,10 @@ def create_solar_installation(sales_order):
 			"project_manager": frappe.session.user,
 		}
 	)
+	if installation.is_financed:
+		# The loan bank starts as the consumer's own; the quotation's lender, when named, stands.
+		for field, value in installation_lead.consumer_bank(installation.solar_consumer, installation.lender).items():
+			installation.set(field, installation.get(field) or value)
 	installation.flags.ignore_permissions = True
 	installation.insert(ignore_permissions=True)
 	installation.submit()

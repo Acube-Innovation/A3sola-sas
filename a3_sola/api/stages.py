@@ -337,13 +337,17 @@ def _derive_due_date(row, by_code):
 
 	An anchored task's window starts when its anchor completes - the thirty days for Form 2
 	run from the Form 1 fee, not from the order - and that overrides anything else while the
-	task is open. Otherwise the SLA runs from the day the task started, and a due date set
+	task is open. Until then it is expected when its anchor is due. Otherwise the SLA runs from the day the task started, and a due date set
 	by hand (assignment) is left alone.
 	"""
 	if row.due_anchor_task and row.status not in DONE:
 		anchor = by_code.get(row.due_anchor_task)
 		if anchor and anchor.status == "Completed" and anchor.actual_completion_date:
 			row.due_date = add_days(getdate(anchor.actual_completion_date), int(row.due_anchor_days or 0))
+			return
+		# Until the anchor is done, the task is expected when the anchor is due.
+		if anchor and anchor.status not in DONE and anchor.due_date:
+			row.due_date = add_days(getdate(anchor.due_date), int(row.due_anchor_days or 0))
 			return
 	if not row.due_date and row.actual_start_date and row.sla_days:
 		row.due_date = add_days(getdate(row.actual_start_date), int(row.sla_days))

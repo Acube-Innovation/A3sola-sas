@@ -684,6 +684,16 @@
    "report": 1,
    "role": "Solar Survey Engineer",
    "share": 1
+  },
+  {
+   "role": "Solar Sales Coordinator",
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "share": 1
   }
  ],
  "search_fields": "consumer_name,consumer_number,mobile_no",

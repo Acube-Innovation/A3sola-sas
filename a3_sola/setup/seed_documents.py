@@ -35,6 +35,251 @@ _EPC_BANK_BLOCK = """<table border="1" cellpadding="5" cellspacing="0" width="10
   <tr><td><strong>IFSC Code:</strong></td><td>{{ company.payee_bank_ifsc }}</td></tr>
 </table>"""
 
+# The bank pair, laid out as the Word files 01 and 02 are, line for line. Every value is
+# the loan application's own, as entered on it (`loan`); the EPC, OEM and the account the
+# bank pays into are the company's. Printed on the company letterhead (documents.letterhead_pdf).
+_SIGN_AND_STAMP = """<table class="a3s-sign" style="margin:6pt 0 2pt"><tr>
+  <td>{% if company.epc_signature_image %}<img src="{{ image_src(company.epc_signature_image) }}" style="height:22mm">{% endif %}</td>
+  <td style="padding-left:6mm">{% if company.company_stamp_image %}<img src="{{ image_src(company.company_stamp_image) }}" style="height:28mm">{% endif %}</td>
+</tr></table>"""
+
+_BANK_COVERING_LOAN = """<p style="text-align:right">{{ today }}</p>
+<p>To,<br>The Manager,<br>{{ loan.lender or "" }}{% if loan.lender_branch %}, {{ loan.lender_branch }}{% endif %}</p>
+<p style="padding-left:9mm;text-indent:-9mm;text-align:justify"><strong>Sub:</strong> Submission of documents towards Loan Application for Solar Power Plant.</p>
+<p>Dear Sir,</p>
+<p style="text-align:justify">The documents towards the loan application of the following customer is submitted herewith.</p>
+<ul style="margin:0 0 6pt">
+  <li>Customer Name &ndash; {{ loan.consumer_name or consumer.consumer_name }}</li>
+  <li>Loan Sanction No. &ndash; {{ loan.loan_sanction_no or "" }}</li>
+  <li>{{ discom_short or "KSEB" }} Consumer No. &ndash; {{ loan.discom_consumer_id or installation.consumer_number }}</li>
+</ul>
+<p style="text-align:justify">Please process the loan and transfer the amount to the following account of our EPC Company:</p>
+<table border="1" cellpadding="3" cellspacing="0" style="width:100%;border-collapse:collapse">
+  <tr><td style="width:34%;vertical-align:top">EPC Contractor Name &amp; Address<strong>:</strong></td>
+      <td>{{ company.epc_name or "" }},<br>{{ (company.epc_address or "") | replace("\\n", "<br>") }}</td></tr>
+  <tr><td>A/c No:</td><td>{{ company.payee_bank_account_no or "" }}</td></tr>
+  <tr><td>Bank:</td><td>{{ company.payee_bank_name or "" }}</td></tr>
+  <tr><td>IFSC Code:</td><td>{{ company.payee_bank_ifsc or "" }}</td></tr>
+</table>
+<p>Please contact us at below for any further clarifications:</p>
+<p>Mob - {{ company.epc_contact_no or "" }}</p>
+<p>E-mail &ndash; {{ company.epc_email or "" }}</p>
+<p>Thanks &amp; Regards</p>
+<p><strong>For {{ company.registered_vendor_name or company.company_name }}</strong></p>
+""" + _SIGN_AND_STAMP + """
+<p><strong>{{ company.epc_signatory_designation or "Authorised Signatory" }}</strong></p>"""
+
+_BANK_VENDOR_FEASIBILITY = """<p style="text-align:center;font-size:16pt;font-weight:bold;color:#1f3864;text-decoration:underline;margin:4pt 0 10pt">Residential Roof Top Solar Installation Vendor Feasibility Report</p>
+<ol style="margin:0;padding-left:8mm;line-height:1.5">
+  <li>Name of the Consumer: {{ loan.consumer_name or consumer.consumer_name }}</li>
+  <li>Discom Consumer ID: {{ loan.discom_consumer_id or installation.consumer_number }}</li>
+  <li>Discom ID<strong>:</strong> {{ loan.discom_id or "" }}</li>
+  <li>PM Surya Shakti Portal ID<strong>:</strong> {{ loan.national_portal_application_id or "" }}</li>
+  <li>Jan Samarth ID<strong>:</strong> {{ loan.jan_samarth_id or "" }}</li>
+  <li>Address for Installation<strong>:</strong> {{ (loan.installation_address or address_text) | upper }}</li>
+  <li>District of Installation<strong>:</strong> {{ (loan.district or "") | upper }}</li>
+  <li>State of Installation<strong>:</strong> {{ loan.state or "" }}</li>
+  <li>Pin Code of Installation<strong>:</strong> {{ loan.pincode or "" }}</li>
+  <li>Name of the Bank Branch from where finance for SRT is sought<strong>:</strong>
+      <div style="text-align:center">{{ loan.lender or "" }}{% if loan.lender_branch %}, {{ loan.lender_branch }}{% endif %}</div></li>
+  <li style="margin-top:6pt">OEM Name<strong>: {{ company.registered_vendor_name or "" }}</strong></li>
+  <li>EPC Contractor Name &amp; Address<strong>: {{ company.epc_name or "" }}</strong>,
+      <div style="padding-left:52mm">{{ (company.epc_address or "") | replace("\\n", "<br>") }}</div></li>
+  <li style="margin-top:6pt">EPC Contractor Bank Details<strong>:</strong> {{ company.payee_bank_name or "" }}{% if company.payee_bank_branch %}, {{ company.payee_bank_branch }} Branch{% endif %}<br>
+      <span style="padding-left:6mm">A/c No<strong>: {{ company.payee_bank_account_no or "" }}</strong></span>
+      <span style="padding-left:8mm">IFSC Code<strong>: {{ company.payee_bank_ifsc or "" }}</strong></span></li>
+  <li>RTS Capacity in KW applied: {{ "%g" | format(loan.capacity_applied_kw or installation.capacity_kw or 0) }} kW</li>
+  <li>Actual RTS Capacity to be installed<strong>:</strong> {{ "%g" | format(loan.capacity_installable_kw or installation.capacity_kw or 0) }} kW</li>
+  <li>Feasibility Report Status<strong>:</strong> {{ (loan.feasibility_status or "Feasible") | upper }}</li>
+  <li>Project Cost (all inclusive)<strong>:</strong> {{ (loan.project_cost_all_inclusive or installation.gross_contract_value or 0) | int }}</li>
+</ol>
+<div style="text-align:right;margin-top:6pt">""" + _SIGN_AND_STAMP.replace("margin:6pt 0 2pt", "margin:0 0 0 auto") + """</div>
+<table style="width:100%"><tr>
+  <td style="vertical-align:top">Date: {{ today }}<br>Place: {{ loan.place or loan.district or "" }}</td>
+  <td style="text-align:right;vertical-align:top">Signature of Authorized Person of Vendor<br>with Stamp</td>
+</tr></table>"""
+
+_BANK_PROJECT_PROPOSAL = """{% set bp = bank_proposal %}{% set cost = (loan.project_cost_all_inclusive if loan and loan.project_cost_all_inclusive else installation.gross_contract_value) or 0 %}
+<style>
+	.bp h2 { text-align: center; color: #1f3864; font-size: 15pt; margin: 4pt 0 2pt; }
+	.bp h3 { color: #1f3864; font-size: 12.5pt; margin: 10pt 0 4pt; }
+	.bp h4 { font-size: 11pt; margin: 8pt 0 3pt; }
+	.bp table.grid { width: 100%; border-collapse: collapse; margin: 0 0 6pt; }
+	.bp table.grid th, .bp table.grid td { border: 1px solid #000; padding: 3pt 5pt; vertical-align: top; font-size: 10pt; }
+	.bp table.grid th { background: #d9e2f3; }
+	.bp .c { text-align: center; }
+	.bp ol, .bp ul { margin: 0 0 6pt; padding-left: 7mm; }
+	.bp li { margin: 0 0 3pt; text-align: justify; }
+	.bp p { text-align: justify; }
+</style>
+<div class="bp">
+<p style="text-align:center;font-weight:bold;margin-bottom:0">For</p>
+<p style="text-align:center;font-weight:bold;font-size:13pt;margin-bottom:0">{{ (consumer.consumer_name or "") | upper }}</p>
+<p style="text-align:center;font-weight:bold">{{ ((section.district if section else "") or "") | upper }}</p>
+<h2>SOLAR PROJECT PROPOSAL</h2>
+<p style="text-align:center">No. {{ installation.solar_proposal or installation.name }} &nbsp;&nbsp; Date &ndash; {{ today }}</p>
+<p>Dear Sir,</p>
+<p>We thank you for your interest evinced in renewable energy solution from us. We are pleased to submit our proposal for a solar power project aimed at delivering sustainable energy solutions tailored to your environmental goals.</p>
+<p>Our team at {{ company.epc_name or "Renewcore" }} specializes in end-to-end solar project development, including feasibility studies, permitting, engineering, procurement, construction, and grid integration.</p>
+<p>This proposal outlines a custom-designed solar power system suited to your site requirements and energy consumption profile. The project is expected to deliver long-term cost savings, reduce carbon emissions, and increase energy independence&mdash;all aligned with your vision for a sustainable future.</p>
+<p>We look forward to the opportunity to collaborate and are confident in our ability to bring this project to life efficiently and professionally.</p>
+<p>Please feel free to reach out with any questions or to schedule a follow-up discussion.</p>
+<p>Thank you for considering our proposal.</p>
+<p><strong>For {{ company.registered_vendor_name or "RIM Projects" }}</strong></p>
+""" + _SIGN_AND_STAMP + """
+<p><strong>Authorized Signatory</strong></p>
+
+<div class="a3s-page-break"></div>
+<h2>Proposed Clean Energy Solution</h2>
+<h3>Executive Summary</h3>
+<table class="grid">
+	<thead><tr><th class="c" style="width:10%">Sl No</th><th style="width:40%">Particulars</th><th>Description</th></tr></thead>
+	<tr><td class="c">1</td><td>Site Location</td><td>{{ bp.site }}</td></tr>
+	<tr><td class="c">2</td><td>Capacity of the Plant Proposed</td><td>{{ bp.kw }} kWp</td></tr>
+	<tr><td class="c">3</td><td>Tilt &amp; Orientation</td><td>{{ bp.tilt }}</td></tr>
+	<tr><td class="c">4</td><td>Type of Solar Power Plant</td><td>{{ bp.plant }}</td></tr>
+	<tr><td class="c">5</td><td>Roof Area Required</td><td>{{ bp.roof_area }}</td></tr>
+	<tr><td class="c">6</td><td>Type of Roof</td><td>{{ bp.roof }}</td></tr>
+	<tr><td class="c">7</td><td>Expected generated per day</td><td>{{ bp.generation }}</td></tr>
+</table>
+<h3>Specifications &amp; Quantity of Major Components</h3>
+<table class="grid">
+	<thead><tr><th class="c" style="width:8%">Sl. No.</th><th style="width:22%">Item Description</th><th>Specification</th><th style="width:20%">Make</th><th class="c" style="width:10%">Nos.</th></tr></thead>
+	{%- for r in bp.components %}
+	<tr><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td>{{ r.spec or "" }}</td><td>{{ r.make or "" }}</td><td class="c">{{ r.nos or "" }}</td></tr>
+	{%- endfor %}
+</table>
+<h3>Project Cost</h3>
+<table class="grid">
+	<thead><tr><th class="c" style="width:10%">Sl. No.</th><th>Item</th><th class="c" style="width:22%">Amount (Rs.)</th></tr></thead>
+	<tr><td class="c">1</td><td>Design, Supply, Installation, Testing and Commissioning of {{ bp.kw }}kWp {{ bp.phase }} Grid Connected Rooftop Solar Power Plant</td><td class="c">{{ cost | int }}</td></tr>
+</table>
+<h3>KSEBL Expenses</h3>
+<p>Amount to be paid to KSEBL shall be paid as follows:</p>
+<ol>
+	<li>Application fee - Rs. {{ (installation.kseb_application_fee or 0) | int }}/-</li>
+	<li>Solar Plant Registration Fee &ndash; Rs. {{ (installation.kseb_registration_fee or 0) | int }}/- out of which Rs. {{ (installation.kseb_registration_refundable or 0) | int }} will be refunded by KSEBL after commissioning.</li>
+	<li>{{ bp.phase or "Single Phase" }} Net Meter (if not provided by KSEBL) &ndash; Rs. {{ (installation.net_meter_charge or 0) | int }}/-</li>
+</ol>
+<h3>General Terms &amp; Conditions</h3>
+<ol>
+	<li>The above price is for normal {{ (bp.roof or "flat roof") | lower }} type structure.</li>
+	<li>Load enhancement or three phase conversion if required will be extra.</li>
+	<li>The above offer includes documentation, KSEB testing and all other formalities till commissioning of system with Net Meter. Cabling till the KSEBL metering point is also considered.</li>
+	<li>Subsidy documentation will be carried out by the company. Subsidy will be credited to customer Bank account subject to approval by MNRE.</li>
+	<li>Project will be executed under the name of {{ company.registered_vendor_name or "RIM Projects" }} (registered vendor) in the MNRE portal.</li>
+	<li>Bi-Directional Energy Meter for Net Metering is not Included and the same is to procured from KSEB for monthly rent.</li>
+	<li>Remote Monitoring of System Via Internet: Wi-Fi data logger included. Internet connectivity is to be provided by customer.</li>
+	<li>Offer Validity: 30 days from the date of offer.</li>
+</ol>
+<h4>Payment Terms:</h4>
+<ol>
+	<li>70% as advance with PO.</li>
+	<li>20% after delivery and installation.</li>
+	<li>10% after commissioning of system.</li>
+</ol>
+<div style="page-break-inside:avoid">
+<h3>Bank Account Details for Payment</h3>
+<p>Payment may be transferred to our EPC &ndash; M/s {{ company.epc_name or company.company_name }}</p>
+<table class="grid">
+	<tr><td style="width:32%">Registered name of the Company</td><td colspan="2">{{ company.payee_legal_name or company.epc_name or company.company_name }}</td>
+	    <td rowspan="7" class="c" style="width:26%">{% if company.payment_qr_code %}QR Code for Payments<br><img src="{{ image_src(company.payment_qr_code) }}" style="width:34mm">{% endif %}</td></tr>
+	<tr><td>PAN</td><td colspan="2">{{ company.pan or "" }}</td></tr>
+	<tr><td>GST</td><td colspan="2">{{ company.payee_gstin or company.gstin or "" }}</td></tr>
+	<tr><td rowspan="4">Bank Credentials for Payment</td><td style="width:14%">Bank:</td><td>{{ company.payee_bank_name or "" }}</td></tr>
+	<tr><td>A/c No.:</td><td>{{ company.payee_bank_account_no or "" }}</td></tr>
+	<tr><td>Branch:</td><td>{{ company.payee_bank_branch or "" }}</td></tr>
+	<tr><td>IFS Code:</td><td>{{ company.payee_bank_ifsc or "" }}</td></tr>
+</table>
+</div>
+<h3>Schedule of Delivery, Installation and Commissioning</h3>
+<ol>
+	<li>Supply of Materials: 7 days from the date of advance payment.</li>
+	<li>Installation: Within 7 - 15 days from the date of delivery of materials.</li>
+	<li>Commissioning: Within 10 days from completion of installation and obtaining approvals from KSEBL.</li>
+</ol>
+<h3>Warranty</h3>
+<ol>
+	<li>System Warranty shall be for 5 years from the date of Commissioning.</li>
+	<li>Solar PV Modules will have performance warranty of 25 years. The PV Modules shall be warranted for output wattage, which should not be less than 90% at the end of 10 years and 80% at the end of 25 years.</li>
+</ol>
+<h3>Scope of Work</h3>
+<h4>{{ (company.epc_name or "Renewcore").split(" ")[0] }} Scope</h4>
+<ul>
+	<li><strong>Engineering:</strong> System design including civil, structural, electrical and mechanical components, with construction drawings and specifications.</li>
+	<li><strong>Procurement &amp; Construction:</strong> Procure equipment and materials, deliver to site, perform complete system installation and test all the electrical components as per manufacturer specifications. Commission the system to full operability.</li>
+	<li><strong>KSEB:</strong> Obtain the feasibility certificate from local KSEB section office and register the system. Coordinate with KSEB to test the solar power plant and verify its compliance with KSEB standards. Coordinate with local KSEB section officer to replace the existing energy meter with Bi-Directional Net Meter.</li>
+	<li><strong>Warranty Support:</strong> Free Inspection for 5 years (yearly 3 visits) and Maintenance (if required) for solar power plant. Washing of solar panels is not included and the same has to be arranged by the client. Training will be provided.</li>
+	<li><strong>Post-Installation:</strong> Training of Client&rsquo;s engineer / electrician / staff on the basic working principles, safety measures and maintenance of the solar power plant. Daily remote monitoring of system via internet.</li>
+</ul>
+<h4>Client&rsquo;s Scope</h4>
+<ul>
+	<li><strong>Storage &amp; Access:</strong> Provide access to work site for delivery of equipment and materials prior to and during project implementation. Provide a suitable and secure space for storage of equipment and materials. Facilitate access of company&rsquo;s work crew to the site 7 days a week.</li>
+	<li><strong>Local Consultation:</strong> Facilitate interfacing with the client&rsquo;s engineer / electrician / staff for consultation as needed. Provide copies of approved electrical schematics and other drawings of the building if available. Obtain all the statutory clearances, if any, required for the project.</li>
+	<li><strong>Remote Monitoring:</strong> Provide wireless internet connection in the vicinity of the grid-tied inverter to facilitate remote monitoring of system.</li>
+	<li><strong>Post-Installation:</strong> Periodic cleaning of solar panels after completion of system installation.</li>
+</ul>
+</div>"""
+
+_BANK_QUOTATION = """{% set q = quotation_doc %}
+<style>
+	.bq h2 { text-align: center; color: #1f3864; font-size: 15pt; margin: 2pt 0 8pt; letter-spacing: 0.06em; }
+	.bq table.grid { width: 100%; border-collapse: collapse; margin: 6pt 0; }
+	.bq table.grid th, .bq table.grid td { border: 1px solid #000; padding: 3pt 5pt; vertical-align: top; font-size: 10pt; }
+	.bq table.grid th { background: #d9e2f3; }
+	.bq .c { text-align: center; } .bq .r { text-align: right; }
+	.bq ol { margin: 0 0 6pt; padding-left: 7mm; } .bq li { margin: 0 0 2pt; }
+</style>
+<div class="bq">
+<h2>QUOTATION</h2>
+{% if not q %}<p>This project has no quotation.</p>{% else %}
+<table style="width:100%"><tr>
+	<td style="vertical-align:top">To,<br><strong>{{ q.customer_name or consumer.consumer_name }}</strong><br>
+		{{ (party_address or "") }}{% if installation.consumer_mobile %}<br>Phone: {{ installation.consumer_mobile }}{% endif %}</td>
+	<td style="vertical-align:top;text-align:right">No. {{ q.name }}<br>Date: {{ frappe.utils.formatdate(q.transaction_date, "dd-MM-yyyy") }}</td>
+</tr></table>
+<p><strong>Sub:</strong> Supply, installation, testing and commissioning of a {{ "%g" | format(installation.capacity_kw or 0) }} kWp {{ installation.connection_type or "" }} grid connected rooftop solar power plant.</p>
+<p>Dear Sir/Madam,</p>
+<p>With reference to your enquiry, we are pleased to quote as follows:</p>
+<table class="grid">
+	<thead><tr><th class="c" style="width:8%">Sl. No.</th><th>Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:20%">Amount (Rs.)</th></tr></thead>
+	{%- for it in q.items %}
+	<tr><td class="c">{{ loop.index }}</td><td><strong>{{ it.item_name }}</strong>{% if it.description and it.description != it.item_name %}<br>{{ it.description }}{% endif %}</td>
+	    <td class="c">{{ "%g" | format(it.qty) }}</td><td class="r">{{ frappe.utils.fmt_money(it.amount) }}</td></tr>
+	{%- endfor %}
+	{%- if q.total_taxes_and_charges %}
+	<tr><td></td><td class="r">Taxable Value</td><td></td><td class="r">{{ frappe.utils.fmt_money(q.net_total) }}</td></tr>
+	{%- for t in q.taxes %}
+	<tr><td></td><td class="r">{{ t.description }}{% if t.rate %} @ {{ "%g" | format(t.rate) }}%{% endif %}</td><td></td><td class="r">{{ frappe.utils.fmt_money(t.tax_amount) }}</td></tr>
+	{%- endfor %}
+	{%- endif %}
+	<tr><td></td><td class="r"><strong>Grand Total</strong></td><td></td><td class="r"><strong>{{ frappe.utils.fmt_money(q.grand_total) }}</strong></td></tr>
+</table>
+<p><strong>Amount in words:</strong> {{ frappe.utils.money_in_words(q.grand_total, "INR") }}</p>
+<p><strong>Terms &amp; Conditions</strong></p>
+<ol>
+	<li>The above price is inclusive of GST{% if q.total_taxes_and_charges %} as shown{% endif %}.</li>
+	<li>Payment: 70% as advance with PO, 20% after delivery and installation, 10% after commissioning of system.</li>
+	<li>Supply of materials within 7 days of the advance; installation within 7 - 15 days of delivery; commissioning within 10 days of installation and KSEBL approvals.</li>
+	<li>Subsidy, where applicable, is credited to the customer's bank account subject to MNRE approval.</li>
+	<li>Offer validity: {% if q.valid_till %}till {{ frappe.utils.formatdate(q.valid_till, "dd-MM-yyyy") }}{% else %}30 days from the date of offer{% endif %}.</li>
+</ol>
+<div style="page-break-inside:avoid">
+<p><strong>Bank Account Details for Payment</strong> &ndash; M/s {{ company.payee_legal_name or company.epc_name or company.company_name }}</p>
+<table class="grid">
+	<tr><td style="width:30%">Bank</td><td>{{ company.payee_bank_name or "" }}{% if company.payee_bank_branch %}, {{ company.payee_bank_branch }}{% endif %}</td></tr>
+	<tr><td>A/c No.</td><td>{{ company.payee_bank_account_no or "" }}</td></tr>
+	<tr><td>IFS Code</td><td>{{ company.payee_bank_ifsc or "" }}</td></tr>
+	<tr><td>PAN / GST</td><td>{{ company.pan or "" }} / {{ company.payee_gstin or company.gstin or "" }}</td></tr>
+</table>
+</div>
+{% endif %}
+<p style="margin-top:8pt">Thanks &amp; Regards</p>
+<p><strong>For {{ company.registered_vendor_name or "RIM Projects" }}</strong></p>
+""" + _SIGN_AND_STAMP + """
+<p><strong>Authorized Signatory</strong></p>
+</div>"""
+
 TEMPLATES = [
 	# ------------------------------------------------------------------ MNRE
 	{
@@ -189,22 +434,7 @@ TEMPLATES += [
 		"source_doctype": "Loan Application",
 		"notes": "SOURCE: 01_Bank Covering Letter_Loan.docx",
 		"attachment_checklist": "Vendor feasibility report\nEHS guidance checklist\nProject proposal\nCustomer KYC",
-		"body": """<div style="text-align:right">{{ today }}</div>
-<p>To,<br>The Manager,<br>{{ loan.lender if loan else "" }}, {{ loan.lender_branch if loan else "" }}</p>
-<p><strong>Sub: Submission of documents towards Loan Application for Solar Power Plant.</strong></p>
-<p>Dear Sir,</p>
-<p>The documents towards the loan application of the following customer are submitted herewith.</p>
-<ul>
-  <li>Customer Name &ndash; {{ consumer.consumer_name }}</li>
-  <li>Loan Sanction No. &ndash; {{ loan.loan_sanction_no if loan else "" }}</li>
-  <li>Jan Samarth ID &ndash; {{ loan.jan_samarth_id if loan else "" }}</li>
-  <li>{{ discom_name }} Consumer No. &ndash; {{ installation.consumer_number }}</li>
-</ul>
-<p>Please process the loan and transfer the amount to the following account of our EPC Company:</p>
-""" + _EPC_BANK_BLOCK + """
-<p>Please contact us at the below for any further clarification:</p>
-<p>Mob &ndash; {{ company.epc_contact_no }}<br>E-mail &ndash; {{ company.epc_email }}</p>
-""" + _EPC_SIGNOFF,
+		"body": _BANK_COVERING_LOAN,
 	},
 	{
 		"template_code": "BANK-VENDOR-FEASIBILITY",
@@ -216,32 +446,7 @@ TEMPLATES += [
 		"signatory": "Authorised Signatory",
 		"requires_company_seal": 1,
 		"notes": "SOURCE: 02_Vendor Feasiility Report.docx",
-		"body": """<h3 style="text-align:center">Residential Roof Top Solar Installation<br>Vendor Feasibility Report</h3>
-<ol>
-  <li>Name of the Consumer: <strong>{{ consumer.consumer_name }}</strong></li>
-  <li>Discom Consumer ID: {{ installation.consumer_number }}</li>
-  <li>Discom ID: {{ installation.discom_id or "" }}</li>
-  <li>PM Surya Shakti Portal ID: {{ installation.national_portal_application_id or "" }}</li>
-  <li>Jan Samarth ID: {{ loan.jan_samarth_id if loan else "" }}</li>
-  <li>Address for Installation: {{ address_text }}</li>
-  <li>District of Installation: {{ section.district if section else "" }}</li>
-  <li>State of Installation: Kerala</li>
-  <li>Pin Code of Installation: {{ address.pincode if address else "" }}</li>
-  <li>Name of the Bank Branch from where finance for SRT is sought:
-      {{ loan.lender if loan else "" }}, {{ loan.lender_branch if loan else "" }}</li>
-  <li>OEM Name: {{ company.registered_vendor_name }}</li>
-  <li>EPC Contractor Name &amp; Address: {{ company.epc_name }}, {{ company.epc_address }}</li>
-  <li>EPC Contractor Bank Details: {{ company.payee_bank_name }}, {{ company.payee_bank_branch }}<br>
-      A/c No: {{ company.payee_bank_account_no }} &nbsp;&nbsp; IFSC Code: {{ company.payee_bank_ifsc }}</li>
-  <li>RTS Capacity in KW applied: {{ loan.capacity_applied_kw if loan else installation.capacity_kw }} kW</li>
-  <li>Actual RTS Capacity to be installed: {{ installation.capacity_kw }} kW</li>
-  <li>Feasibility Report Status: <strong>{{ (loan.feasibility_status if loan else "FEASIBLE") | upper }}</strong></li>
-  <li>Project Cost (all inclusive): {{ (loan.project_cost_all_inclusive if loan else installation.gross_contract_value) | int }}</li>
-</ol>
-<table width="100%"><tr>
-  <td>Date: {{ today }}<br>Place: {{ section.district if section else "" }}</td>
-  <td style="text-align:right">Signature of Authorized Person of Vendor with Stamp</td>
-</tr></table>""",
+		"body": _BANK_VENDOR_FEASIBILITY,
 	},
 	{
 		"template_code": "BANK-EHS-CHECKLIST",
@@ -278,6 +483,30 @@ funded under the Rooftop Solar Program for the Residential Sector.</p>
   <td>Date: {{ today }}<br>Place: {{ section.district if section else "" }}</td>
   <td style="text-align:right">Signature of Authorized Person of Vendor with Stamp</td>
 </tr></table>""",
+	},
+	{
+		"template_code": "BANK-QUOTATION",
+		"document_name": "Quotation",
+		"category": "Bank",
+		"recipient": "Bank Manager",
+		"stage_code": "LOAN",
+		"source_doctype": "Loan Application",
+		"signatory": "Authorised Signatory",
+		"requires_company_seal": 1,
+		"notes": "The accepted quotation, as the bank receives it, in the registered vendor's (RIM) format.",
+		"body": _BANK_QUOTATION,
+	},
+	{
+		"template_code": "BANK-PROJECT-PROPOSAL",
+		"document_name": "Project proposal",
+		"category": "Bank",
+		"recipient": "Bank Manager",
+		"stage_code": "LOAN",
+		"source_doctype": "Loan Application",
+		"signatory": "Authorised Signatory",
+		"requires_company_seal": 1,
+		"notes": "SOURCE: Project Proposal_8kW_3Phase.docx - the proposal the bank receives, in the registered vendor's (RIM) format.",
+		"body": _BANK_PROJECT_PROPOSAL,
 	},
 	{
 		"template_code": "BANK-COMPLETION-REPORT",
@@ -817,19 +1046,19 @@ We will advise you on best practice at handover.</p>
 		"stage_code": "STMP",
 		"source_doctype": "Solar Agreement",
 		"notes": "SOURCE: Data for Stamp Paper_rAJAGOPALAN.pdf",
-		"body": """<h3 style="text-align:center;margin:0 0 12px">DATA FOR STAMP PAPER</h3>
-<table style="width:100%;border-collapse:collapse;font-size:12px">
-<tr><td style="border:1px solid #444;padding:6px;width:30%"><b>1st Party</b></td>
-    <td style="border:1px solid #444;padding:6px">{{ consumer.consumer_name }}<br>{{ address_text }}{% if address and address.pincode %}, PIN {{ address.pincode }}{% endif %}</td></tr>
-<tr><td style="border:1px solid #444;padding:6px"><b>2nd Party</b></td>
-    <td style="border:1px solid #444;padding:6px">The Assistant Engineer, {{ discom_name or "KSEB" }} Section - {{ section.section_name if section else "" }}</td></tr>
-<tr><td style="border:1px solid #444;padding:6px"><b>Purpose</b></td>
-    <td style="border:1px solid #444;padding:6px">Solar Agreement{% if installation.capacity_kw %} - {{ "%g"|format(installation.capacity_kw) }} kWp rooftop solar plant, Consumer No. {{ installation.consumer_number or consumer.consumer_number }}{% endif %}</td></tr>
-<tr><td style="border:1px solid #444;padding:6px"><b>Value</b></td>
-    <td style="border:1px solid #444;padding:6px">{{ fmt_money((task.stamp_paper_value if task and task.stamp_paper_value else settings.stamp_paper_denomination) or 200) }}</td></tr>
-</table>
-<p style="font-size:11px;margin-top:10px">Prepared by {{ company.epc_name or company.company_name }} on {{ today }}.</p>
-""",
+		# As the Word file "Data for Stamp Paper" lays it out: four rows and a blank one, the
+		# values centred. Printed without letterhead (api/stamp_print.py).
+		"body": """<table style="width:100%;border-collapse:collapse;margin-top:6mm">
+<tr><td style="border:1px solid #000;padding:14pt 6pt;width:22%">1<sup>st</sup> Party</td>
+    <td style="border:1px solid #000;padding:14pt 6pt;text-align:center">{{ ((task.consumer_name if task and task.get("consumer_name") else "") or consumer.consumer_name) | upper }}<br>{{ (party_address or "") | upper }}</td></tr>
+<tr><td style="border:1px solid #000;padding:14pt 6pt">2<sup>nd</sup> Party</td>
+    <td style="border:1px solid #000;padding:14pt 6pt;text-align:center">The Assistant Engineer,<br>{{ discom_short or "KSEB" }} Section - {{ section.section_name if section else "" }}</td></tr>
+<tr><td style="border:1px solid #000;padding:14pt 6pt">Purpose</td>
+    <td style="border:1px solid #000;padding:14pt 6pt;text-align:center">Solar Agreement</td></tr>
+<tr><td style="border:1px solid #000;padding:4pt 6pt">Value</td>
+    <td style="border:1px solid #000;padding:4pt 6pt;text-align:center">Rs. {{ ((task.stamp_paper_value if task and task.get("stamp_paper_value") else settings.stamp_paper_denomination) or 200) | int }}</td></tr>
+<tr><td style="border:1px solid #000;padding:5pt 6pt"></td><td style="border:1px solid #000;padding:5pt 6pt"></td></tr>
+</table>""",
 	},
 	{
 		"template_code": "WARRANTY-CERTIFICATE",
@@ -964,7 +1193,7 @@ We will advise you on best practice at handover.</p>
 TEMPLATE_SETS = {
 	"PM Surya Ghar Residential - Financed": [
 		"MNRE-CONSUMER-VENDOR-AGREEMENT", "NP-APPLICATION", "BANK-VENDOR-FEASIBILITY",
-		"BANK-EHS-CHECKLIST", "BANK-COVERING-LOAN", "KSEB-NETMETER-REQUEST",
+		"BANK-EHS-CHECKLIST", "BANK-COVERING-LOAN", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION", "KSEB-NETMETER-REQUEST",
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
 		"CUST-HANDOVER-PACK", "BANK-COMPLETION-REPORT", "BANK-COVERING-COMPLETION",

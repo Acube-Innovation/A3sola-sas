@@ -61,12 +61,25 @@ class SolarInstallation(Document):
 			stages.build_stages(self)
 		if entered_tasks:
 			stages.apply_entered_tasks(self, entered_tasks)
+		self.assign_people()
 		self.release_dangling_links()
 		self.validate_capacity()
 		self.resolve_statutory()
 		serials.validate_register(self)
 		self.roll_counts()
 		stages.recompute(self)
+
+	def assign_people(self):
+		"""The job's people, and its tasks to them: a new job's blank Project Engineer and
+		Sales Co-ordinator from their role, tasks with nobody on them to their default
+		position, and open tasks after a position changes hands."""
+		from a3_sola.api import task_assignees
+
+		if self.is_new():
+			task_assignees.prefill_people(self)
+		else:
+			task_assignees.follow_people(self, self.get_doc_before_save())
+		task_assignees.apply_defaults(self)
 
 	def resolve_template(self):
 		if self.stage_template:
@@ -321,6 +334,7 @@ class SolarInstallation(Document):
 		self.roll_counts()
 		if self.has_value_changed("is_financed"):
 			self.reapply_task_rules()
+		self.assign_people()
 		stages.recompute(self)
 
 	def reapply_task_rules(self):

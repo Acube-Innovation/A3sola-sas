@@ -31,13 +31,30 @@ BANK = "Bank Activity"
 
 #: The scope each task is seeded with. Seeded once: a scope changed on the template stays.
 SCOPES = {
-	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "LOAN": BANK, "ADV": COMPANY,
-	"STMP": KSEB, "DSGN": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
+	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
+	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "CCERT": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
 	"BCOM": BANK, "BAL": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
 	"CORR": SCHEME, "DBT": SCHEME, "GREV": COMPANY,
 }
+
+
+#: Who a task is first assigned to on a new job, as a position on the job (resolved by
+#: api/task_assignees.py). Seeded once: the business changes it on the template after that.
+PROJECT_ENGINEER = "Project Engineer"
+PROJECT_MANAGER = "Project Manager"
+SALES_COORDINATOR = "Sales Co-ordinator"
+LEAD_OWNER = "Lead Owner"
+ACCOUNTS = "Accounts"
+CONTRACTOR = "Contractor"
+DEFAULT_ASSIGNEES = {
+	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER, "GREV": LEAD_OWNER,
+	"NPA": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
+	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
+	"BAL": ACCOUNTS,
+	"IWOS": CONTRACTOR,
+}  # every other task: the Project Engineer
 
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,
@@ -52,6 +69,7 @@ def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandat
 		"task_doctype": task_doctype,
 		"task_type": task_type,
 		"default_assignee_role": role,
+		"default_assignee": DEFAULT_ASSIGNEES.get(code, PROJECT_ENGINEER),
 		"is_mandatory": is_mandatory,
 		"applicability": applicability,
 		"threshold_kw": threshold_kw,
@@ -79,6 +97,9 @@ TASKS = [
 	      documents=[("National portal application data sheet", 1, "NP-APPLICATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
+	_task("DAL", "Digital Approval Letter", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
+	      applicability="Financed Sales Only", documents=[("Digital approval letter", 1, None)],
+	      description="The digital approval letter for the loan, from the Jan Samarth portal."),
 	_task("LOAN", "Loan Documents", "Bank", 15, "Loan Application", role=DOCS,
 	      applicability="Financed Sales Only",
 	      documents=[("Bank covering letter - loan application", 1, "BANK-COVERING-LOAN"),
@@ -98,12 +119,18 @@ TASKS = [
 	      documents=[("Bill of materials", 1, "BOM-SUMMARY"), ("Approved single line diagram", 0, None),
 	                 ("Structure drawing", 0, None)],
 	      description="Bill of materials verified and frozen; BOM issued as PDF."),
+	_task("SPROC", "Structure Material Procurement", "Internal", 5, "Installation Task", role=SITE,
+	      task_type="SPROC", documents=[("Structure material bill", 0, None)],
+	      due_anchor_task="ADV", due_anchor_days=0,
+	      description="The structure's material - pipes, consumables, bolts and caps - bought to the "
+	                  "package's structure BOM for the roof type and panel capacity."),
 	_task("IWOS", "Work Order - Structure", "Internal", 5, "Installation Work Order", role=SITE,
 	      task_type="Structure", documents=[("Structure photographs", 0, None)],
 	      description="Structure erection ordered to employees or a contractor."),
-	_task("PROC", "Material Procurement", "Internal", 7, "Purchase Order",
-	      documents=[("Purchase order", 0, None), ("Purchase receipt", 0, None)],
-	      description="Purchase order raised from the bill of materials, delivered to the site "
+	_task("PROC", "Material Procurement", "Internal", 7, "Installation Task", task_type="PROC",
+	      documents=[("Material purchase list", 0, None)],
+	      description="The system's material - panels, inverter, cables, earthing, clamps, fasteners, "
+	                  "conduit - bought to the package's bill of materials, delivered to the site "
 	                  "location captured at survey."),
 	_task("DISP", "Material Dispatch", "Internal", 2, "Delivery Note",
 	      documents=[("Delivery note", 0, None), ("Serial manifest", 0, None)],

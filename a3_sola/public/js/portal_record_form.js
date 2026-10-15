@@ -14,6 +14,7 @@
 	var slug = form.dataset.slug;
 	var sourceDt = form.dataset.sourceDt || "";
 	var source = form.dataset.source || "";
+	var sourceTask = form.dataset.sourceTask || "";
 	var submit = document.getElementById("a3s-record-submit");
 	var status = document.getElementById("a3s-record-status");
 	var meta = document.querySelector('meta[name="csrf-token"]');
@@ -36,6 +37,7 @@
 		/* Created from another record: the server re-reads it and applies the rest of the
 		   mapping itself, so only the pointer travels - never the mapped values. */
 		if (sourceDt && source) { out.source_dt = sourceDt; out.source = source; }
+		if (sourceTask) out.source_task = sourceTask;
 		Array.prototype.forEach.call(form.elements, function (el) {
 			if (!el.name) return;
 			if (el.type === "checkbox") out[el.name] = el.checked ? "1" : "0";

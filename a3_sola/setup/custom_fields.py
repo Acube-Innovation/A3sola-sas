@@ -16,7 +16,7 @@ CADENCE = (
 #: Solar Consumer is also its KYC row (api/portal_attachments), then the rest.
 DOCUMENT_TYPES = (
 	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\n"
-	"Income Tax Return\nLand Tax Receipt\nPre-Installation Photo\nPhoto\nOther"
+	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nOther"
 )
 LEAD_STATUS = (
 	"New\nContacted\nIn Discussion\nSite Visit Scheduled\nConverted / Won\n"
