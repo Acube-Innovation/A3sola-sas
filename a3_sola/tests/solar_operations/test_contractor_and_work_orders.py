@@ -217,16 +217,12 @@ class TestJobContractors(FrappeTestCase):
 		order = make_work_order(self.installation, "Module Mounting", solar_contractor=other.name)
 		self.assertEqual(order.solar_contractor, other.name)
 
-	def test_the_dispatch_notice_and_certificate_go_to_the_electrical_contractor(self):
+	def test_the_dispatch_notice_goes_to_the_electrical_contractor(self):
 		notice = frappe.get_doc(
 			{"doctype": "Material Dispatch Notice", "solar_installation": self.installation.name}
 		).insert(ignore_permissions=True)
 		self.assertEqual(notice.solar_contractor, self.electrical.name)
 		self.assertEqual(notice.contractor_email, self.electrical.email_id)
-		task = frappe.get_doc(
-			{"doctype": "Installation Task", "solar_installation": self.installation.name, "task_code": "CCERT"}
-		).insert(ignore_permissions=True)
-		self.assertEqual(task.solar_contractor, self.electrical.name)
 
 	def test_one_contractor_may_do_both(self):
 		self.name_contractors(self.electrical, self.electrical)

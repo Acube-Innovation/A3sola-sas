@@ -466,15 +466,12 @@ AFTER_COMPLETE = {"F1PAY": _start_form2_window}
 # ------------------------------------------------------------------ the Task button
 def _installation_task_route(inst, code):
 	"""A generic task opens with its code - the structure's material task with the project's
-	structure BOM already chosen, the completion certificate with its electrical contractor."""
+	structure BOM already chosen."""
 	values = {"task_code": code}
 	if code == "PROC":
 		from a3_sola.api import structure_bom
 
 		values["material_bom"] = structure_bom.material_bom_for(inst)
-	if code == "CCERT":
-		# The completion certificate is the electrical contractor's.
-		values["solar_contractor"] = inst.get("electrical_contractor")
 	if code == "SPROC":
 		from a3_sola.api import structure_bom
 

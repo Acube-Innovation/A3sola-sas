@@ -188,3 +188,5 @@ a3_sola.patches.v1_2.package_optional_add_ons
 a3_sola.patches.v1_2.serials_task_page
 # Procurement pending items in a table of their own; saved Pending Qty moved into it.
 a3_sola.patches.v1_2.procurement_pending_items
+# The Completion Certificate from Contractor task is no longer needed.
+a3_sola.patches.v1_2.remove_completion_certificate_task

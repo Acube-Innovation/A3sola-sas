@@ -48,7 +48,7 @@ TASK_ICONS = {
 }
 #: Tasks worked as a generic Installation Task, by code; anything else gets the checklist.
 GENERIC_TASK_ICONS = {
-	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "SPROC": "box", "PROC": "box", "DAL": "doc", "CCERT": "shield",
+	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "SPROC": "box", "PROC": "box", "DAL": "doc",
 	"PORTUPD": "globe", "KTST": "gauge", "MTR": "gauge",
 }
 

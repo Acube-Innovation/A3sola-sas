@@ -179,7 +179,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Task",
-   "options": "\nFRM1\nDAL\nADV\nDSGN\nSPROC\nPROC\nCCERT\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
+   "options": "\nFRM1\nDAL\nADV\nDSGN\nSPROC\nPROC\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
    "reqd": 1
   },
   {
@@ -790,7 +790,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 19:30:00.000000",
+ "modified": "2026-10-16 19:45:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Task",

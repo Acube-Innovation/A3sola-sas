@@ -16,7 +16,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
-from a3_sola.api import contractors, documents
+from a3_sola.api import documents
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 
@@ -31,7 +31,6 @@ LINKS = (
 REQUIRED_EVIDENCE = {
 	"ADV": ("amount", "paid_on"),
 	"BAL": ("amount", "paid_on"),
-	"CCERT": ("certificate", "certificate_no"),
 	"PORTUPD": ("dcr_certificate",),
 	"KTST": ("result", "signed_checklist"),
 	"MTR": ("meter_serial",),
@@ -54,9 +53,6 @@ class InstallationTask(Document):
 
 	def validate(self):
 		self.pull_installation()
-		if self.task_code == "CCERT":
-			# The completion certificate is the job's electrical contractor's.
-			contractors.fill(self, contractors.ELECTRICAL)
 		assert_same_company(self, LINKS)
 		self.validate_task_code()
 		self.validate_one_open()
