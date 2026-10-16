@@ -16,7 +16,7 @@ import frappe
 from frappe.utils import format_datetime, strip_html
 
 from a3_sola.www.a3solaportal import fill_shell, require_login
-from a3_sola.api import assignments, portal_chain
+from a3_sola.api import assignments, kyc, portal_chain
 from a3_sola.api.leads import (
 	detail_sections, display_name, glance_rows, lead_route, lead_snapshot, load_lead,
 )
@@ -97,6 +97,8 @@ def get_context(context):
 	context.chain_steps = portal_chain.steps_for(doc)
 	context.record_doctype = doc.doctype
 	context.record_name = doc.name
+	# The customer's KYC papers, uploaded on the lead or on its customer.
+	context.kyc_panel = kyc.summary(doc.doctype, doc.name)
 	context.assignees = assignments.assignees(doc.doctype, doc.name)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

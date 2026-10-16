@@ -4,6 +4,10 @@
 const CTL = "a3_sola.solar_operations.doctype.installation_task.installation_task";
 
 frappe.ui.form.on("Installation Task", {
+	setup(frm) {
+		// Any active contractor of the company: one contractor may do both structure and electrical work.
+		frm.set_query("solar_contractor", () => ({ filters: { company: frm.doc.company, is_active: 1 } }));
+	},
 	refresh(frm) {
 		if (frm.is_new()) return;
 

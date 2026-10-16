@@ -78,14 +78,7 @@ def _subsidy_state(doc, code):
 
 
 def _review_state(doc, code):
-	if code == "REVIEW":
-		return "Completed" if _submitted(doc) and doc.get("status") == "Completed" else "In Progress"
-	google = doc.get("google_review_status")
-	if google == "Posted":
-		return "Completed"
-	if google == "Declined":
-		return "Skipped"
-	return "In Progress"
+	return "Completed" if _submitted(doc) and doc.get("status") == "Completed" else "In Progress"
 
 
 def _portal_state(doc, code):
@@ -167,6 +160,8 @@ TASK_DOCTYPES = {
 		"route": lambda inst, c: {
 			"work_order_kind": next(k for k, v in WORK_ORDER_TASKS.items() if v == c),
 			"work_order_type": "Structure Erection" if c == "IWOS" else "Module Mounting",
+			# Structure goes to the job's structure contractor, installation to its electrical one.
+			"solar_contractor": inst.get("structure_contractor" if c == "IWOS" else "electrical_contractor"),
 		},
 	},
 	"Statutory Fee Payment": {
@@ -218,12 +213,14 @@ TASK_DOCTYPES = {
 		"state": _generic_state,
 		"date": lambda d, c: _first(d, "sent_on", "dispatch_date"),
 		"reference": lambda d, c: d.get("sent_to"),
+		# The serials and completion data go to the job's electrical contractor.
+		"route": lambda inst, c: {"solar_contractor": inst.get("electrical_contractor")},
 	},
 	"Customer Review": {
-		"codes": lambda d: ["REVIEW", "GREV"],
+		# The Google review is part of the review, not a task of its own.
+		"codes": lambda d: ["REVIEW"],
 		"state": _review_state,
-		"date": lambda d, c: d.get("google_review_posted_on") if c == "GREV" else d.get("review_date"),
-		"reason": lambda d, c: d.get("decline_reason") if c == "GREV" else None,
+		"date": lambda d, c: d.get("review_date"),
 	},
 }
 
@@ -468,11 +465,16 @@ AFTER_COMPLETE = {"F1PAY": _start_form2_window}
 
 # ------------------------------------------------------------------ the Task button
 def _installation_task_route(inst, code):
-	"""A generic task opens with its code - and the structure's material task with the
-	project's structure BOM already chosen."""
+	"""A generic task opens with its code - the structure's material task with the project's
+	structure BOM already chosen, the completion certificate with its electrical contractor."""
 	values = {"task_code": code}
 	if code == "PROC":
-		values["material_bom"] = frappe.db.get_value("Solar Package", inst.solar_package, "bom") if inst.get("solar_package") else None
+		from a3_sola.api import structure_bom
+
+		values["material_bom"] = structure_bom.material_bom_for(inst)
+	if code == "CCERT":
+		# The completion certificate is the electrical contractor's.
+		values["solar_contractor"] = inst.get("electrical_contractor")
 	if code == "SPROC":
 		from a3_sola.api import structure_bom
 
@@ -506,6 +508,13 @@ def open_task(installation, task_code=None, create_draft=1):
 	inst = frappe.get_doc("Solar Installation", installation)
 	inst.check_permission("read")
 	row = _get_stage(inst, task_code)
+	from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serials_task
+
+	if (payment_tasks.is_payment_task(task_code) or design_freeze.is_design_task(task_code)
+			or dispatch_task.is_dispatch_task(task_code) or serials_task.is_serials_task(task_code)):
+		# Not carried out in a document: done on its own page on the project board.
+		return {"doctype": None, "name": None, "route_options": None,
+			"url": "/a3solaportal/projects/{0}/tasks/{1}".format(frappe.utils.quote(inst.name), task_code)}
 	doctype = row.task_doctype
 	if not doctype:
 		frappe.throw(_("Task {0} names no document to be carried out in.").format(task_code))

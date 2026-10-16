@@ -185,9 +185,11 @@ def get_completion_report_data(installation):
 
 	return {
 		"consumer_name": consumer.consumer_name,
-		"address": frappe.db.get_value("Address", consumer.installation_address, "address_line1")
-		if consumer.installation_address
-		else "",
+		# The installation site as typed on the customer, else its Address record's first line.
+		"address": consumer.get("installation_site_address") or (
+			frappe.db.get_value("Address", consumer.installation_address, "address_line1")
+			if consumer.installation_address else ""
+		),
 		"consumer_number": consumer.consumer_number,
 		"electrical_section": section,
 		"service_connection_type": consumer.connection_type,
@@ -203,4 +205,12 @@ def get_completion_report_data(installation):
 			f"{flt(doc.inverter_capacity_kw):g}kW {doc.system_type or ''}"
 		).strip(),
 		"inverter_serial_number": inverters[0].serial_no if inverters else "",
+		# The parts, for a sheet that lays them out its own way (Data for Completion Report).
+		"capacity_kw": flt(doc.capacity_kw),
+		"system_type": doc.system_type or "",
+		"module_make": frappe.db.get_value("Component Make", doc.module_make, "make_name") or "",
+		"module_wattage": flt(doc.module_wattage),
+		"inverter_make": frappe.db.get_value("Component Make", doc.inverter_make, "make_name") or "",
+		"inverter_capacity_kw": flt(doc.inverter_capacity_kw),
+		"inverter_serial_numbers": [r.serial_no for r in inverters],
 	}

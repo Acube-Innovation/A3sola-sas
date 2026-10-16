@@ -40,11 +40,12 @@ class TestStructureBOM(FrappeTestCase):
 		choices = structure_bom.choices_for(frappe._dict(solar_installation=inst.name))
 		self.assertEqual({c["value"] for c in choices}, {"BOM-MINE", "BOM-OTHER"})
 
-	def test_a_new_project_has_the_task_between_design_freeze_and_the_structure_order(self):
+	def test_a_new_project_has_the_task_after_design_freeze_and_the_orders_after_dispatch(self):
 		codes = [r.stage_code for r in frappe.get_doc("Solar Installation", self.installation.name).stages]
 		self.assertIn("SPROC", seed_stages.TASK_CODES)
 		self.assertEqual(codes[codes.index("DSGN") + 1], "SPROC")
-		self.assertEqual(codes[codes.index("SPROC") + 1], "IWOS")
+		# The work orders follow the dispatch: the material is on site before the crews are.
+		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 3], ["IWOS", "IWOI"])
 
 	def test_the_engineer_completes_it_with_nothing_more_to_show(self):
 		from a3_sola.solar_operations.doctype.installation_task.installation_task import complete
@@ -144,7 +145,7 @@ class TestStructureBOM(FrappeTestCase):
 		uris = [a.get_object()["/A"]["/URI"] for p in reader.pages for a in (p.get("/Annots") or [])]
 		self.assertTrue(any("google.com/maps" in u and "10.307" in u for u in uris))
 
-		self.assertEqual(task_downloads(self.installation.name, "SPROC", task.name)[0]["url"], purchase_list.url(task.name))
+		self.assertEqual(task_downloads(self.installation.name, "SPROC", task.name)[0]["url"], purchase_list.url(task.name, download=True))
 		self.assertEqual(task_downloads(self.installation.name, "SPROC"), [], "nothing to print before the task is saved")
 
 	def test_material_procurement_is_worked_on_its_own_task_with_the_package_bom(self):

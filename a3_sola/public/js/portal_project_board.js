@@ -160,12 +160,41 @@
 		html += '<ul class="a3s-taskdocs">';
 		var targets = [];
 		rows.forEach(function (d) {
-			/* The loan's pack: several files to a row (KYC), and an upload for each missing one. */
+			/* A row of several papers - the customer's KYC, the PM Surya Ghar registration - is a
+			   checklist: its name and count across the top, then each paper on a line of its own,
+			   Uploaded with Open, or Missing with Upload. */
+			var parts = {};
+			(d.files || []).forEach(function (f) { if (f.label) (parts[f.label] = parts[f.label] || []).push(f); });
+			var labels = Object.keys(parts);
+			if (d.files && !d.note && labels.length + (d.missing || []).length >= 2) {
+				var total = labels.length + d.missing.length;
+				html += '<li class="a3s-taskdocs__row a3s-taskdocs__row--group"><div class="a3s-taskdocs__info">' +
+					'<p class="a3s-taskdocs__name">' + esc(d.name) + (d.mandatory ? ' <span class="a3s-req" title="Required">*</span>' : "") + "</p>" +
+					'<p class="a3s-taskdocs__meta"><span class="a3s-taskdocs__state is-' + (d.missing.length ? (labels.length ? "partly" : "missing") : "uploaded") + '">' +
+					labels.length + " of " + total + " uploaded</span></p></div>" +
+					'<ul class="a3s-taskdocs__parts">' +
+					labels.map(function (label) {
+						return '<li class="a3s-taskdocs__part"><span class="a3s-taskdocs__part-name">' + esc(label) + "</span>" +
+							'<span class="a3s-taskdocs__state is-uploaded">Uploaded</span>' +
+							parts[label].map(function (f, i) {
+								return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(f.url) + '" target="_blank" rel="noopener">Open' + (i ? " " + (i + 1) : "") + "</a>";
+							}).join("") + "</li>";
+					}).join("") +
+					d.missing.map(function (mm) {
+						targets.push(mm.upload);
+						return '<li class="a3s-taskdocs__part"><span class="a3s-taskdocs__part-name">' + esc(mm.label) + "</span>" +
+							'<span class="a3s-taskdocs__state is-missing">Missing</span>' +
+							(data.can_upload ? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-upload-to="' + (targets.length - 1) + '">Upload</button>' : "") +
+							"</li>";
+					}).join("") + "</ul></li>";
+				return;
+			}
+			/* Several files to a row - the loan's pack - and an upload for each missing one. */
 			if (d.files) {
 				var done = d.files.length && !(d.missing || []).length;
 				var st = d.note && !d.files.length ? "Missing" : (done ? (d.kind === "Generated" ? "Generated" : "Uploaded") : (d.files.length ? "Partly" : "Missing"));
 				html += '<li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
-					'<p class="a3s-taskdocs__name">' + esc(d.name) + "</p>" +
+					'<p class="a3s-taskdocs__name">' + esc(d.name) + (d.mandatory ? ' <span class="a3s-req" title="Required">*</span>' : "") + "</p>" +
 					'<p class="a3s-taskdocs__meta">' + (d.note ? esc(d.note) : '<span class="a3s-taskdocs__state is-' + st.toLowerCase() + '">' + st + "</span>") + "</p></div>" +
 					'<div class="a3s-taskdocs__actions">' +
 					d.files.map(function (f) {

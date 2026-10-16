@@ -218,7 +218,8 @@ def loan_defaults(installation):
 		frappe.db.get_value(
 			"Solar Consumer", inst.solar_consumer,
 			["consumer_name", "consumer_number", "discom_id", "discom_section", "national_portal_consumer_id",
-			 "installation_address"],
+			 "installation_address", "site_address_line1", "site_address_line2", "site_city", "site_district",
+			 "site_state", "site_pincode"],
 			as_dict=True,
 		) if inst.solar_consumer else None
 	) or frappe._dict()
@@ -234,6 +235,14 @@ def loan_defaults(installation):
 			["address_line1", "address_line2", "city", "county", "state", "pincode"], as_dict=True,
 		) if address_name else None
 	) or frappe._dict()
+	if consumer.site_address_line1:
+		# The installation site as typed on the consumer, which the Address record only backs up.
+		address = frappe._dict(
+			address_line1=consumer.site_address_line1, address_line2=consumer.site_address_line2,
+			city=consumer.site_city, state=consumer.site_state, pincode=consumer.site_pincode,
+			county=frappe.db.get_value("Indian District", consumer.site_district, "district_name")
+			if consumer.site_district else None,
+		)
 	survey = _survey_of(inst)
 	district = section.district or address.county or address.city
 	return {

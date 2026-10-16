@@ -21,7 +21,7 @@ def execute(filters=None):
 def get_columns(filters):
 	return [
 		{"label": _("Installation"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Installation", "width": 150},
-		{"label": _("Consumer"), "fieldname": "consumer_name", "fieldtype": "Data", "width": 160},
+		{"label": _("Customer"), "fieldname": "consumer_name", "fieldtype": "Data", "width": 160},
 		{"label": _("Focus Task"), "fieldname": "current_stage", "fieldtype": "Data", "width": 180},
 		{"label": _("Assignee"), "fieldname": "assigned_to", "fieldtype": "Link", "options": "User", "width": 140},
 		{"label": _("Open Tasks"), "fieldname": "open_tasks", "fieldtype": "Data", "width": 220},

@@ -24,7 +24,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Contract"), "fieldname": "name", "fieldtype": "Link", "options": "Solar OM Contract", "width": 150},
-		{"label": _("Consumer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
+		{"label": _("Customer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
 		{"label": _("Scheme"), "fieldname": "subsidy_scheme", "fieldtype": "Link", "options": "Subsidy Scheme", "width": 170},
 		{"label": _("Visit Compliance %"), "fieldname": "visit_compliance_percent", "fieldtype": "Percent", "width": 160},
 		{"label": _("Missed Visits"), "fieldname": "missed_visits", "fieldtype": "Int", "width": 120},

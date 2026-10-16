@@ -120,10 +120,15 @@ class TestWorkOrderKinds(FrappeTestCase):
 			self.assertEqual(row.status, "Pending", code)
 
 	def test_an_installation_order_needs_located_photographs_to_submit(self):
-		order = make_work_order(self.installation, "Module Mounting", work_order_kind="Installation",
-		                        status="Completed")
+		order = make_work_order(self.installation, "Module Mounting", work_order_kind="Installation")
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			order.submit()
+		self.assertIn("geo-tagged", str(ctx.exception))
+
+	def test_marking_an_installation_order_completed_needs_located_photographs(self):
+		# Completed is submitted on save, so the same rule is met there.
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			make_work_order(self.installation, "Module Mounting", work_order_kind="Installation", status="Completed")
 		self.assertIn("geo-tagged", str(ctx.exception))
 
 	def test_a_structure_order_submits_without_them(self):
@@ -184,3 +189,95 @@ class TestPhotos(FrappeTestCase):
 	def test_a_job_without_located_photographs_has_no_collage(self):
 		with self.assertRaises(frappe.ValidationError):
 			photos.build_collage_pdf(self.installation.name)
+
+
+class TestJobContractors(FrappeTestCase):
+	"""A job names a structure contractor and an electrical contractor - sometimes the same
+	one - and the documents that go to a contractor start from the right one."""
+
+	def setUp(self):
+		self.installation = make_installation()
+		company = self.installation.company
+		self.structure = make_contractor(company=company, contractor_type="Structural")
+		self.electrical = make_contractor(company=company)
+		self.name_contractors(self.structure, self.electrical)
+
+	def name_contractors(self, structure, electrical):
+		self.installation.reload()
+		self.installation.structure_contractor = structure.name
+		self.installation.electrical_contractor = electrical.name
+		self.installation.save(ignore_permissions=True)
+
+	def test_each_work_order_goes_to_the_contractor_for_its_kind(self):
+		self.assertEqual(make_work_order(self.installation, "Structure Erection").solar_contractor, self.structure.name)
+		self.assertEqual(make_work_order(self.installation, "Module Mounting").solar_contractor, self.electrical.name)
+
+	def test_a_contractor_chosen_on_the_order_is_kept(self):
+		other = make_contractor(company=self.installation.company)
+		order = make_work_order(self.installation, "Module Mounting", solar_contractor=other.name)
+		self.assertEqual(order.solar_contractor, other.name)
+
+	def test_the_dispatch_notice_and_certificate_go_to_the_electrical_contractor(self):
+		notice = frappe.get_doc(
+			{"doctype": "Material Dispatch Notice", "solar_installation": self.installation.name}
+		).insert(ignore_permissions=True)
+		self.assertEqual(notice.solar_contractor, self.electrical.name)
+		self.assertEqual(notice.contractor_email, self.electrical.email_id)
+		task = frappe.get_doc(
+			{"doctype": "Installation Task", "solar_installation": self.installation.name, "task_code": "CCERT"}
+		).insert(ignore_permissions=True)
+		self.assertEqual(task.solar_contractor, self.electrical.name)
+
+	def test_one_contractor_may_do_both(self):
+		self.name_contractors(self.electrical, self.electrical)
+		self.assertEqual(make_work_order(self.installation, "Structure Erection").solar_contractor, self.electrical.name)
+		self.assertEqual(make_work_order(self.installation, "Module Mounting").solar_contractor, self.electrical.name)
+
+	def test_the_project_board_opens_orders_with_their_contractor(self):
+		from a3_sola.api.tasks import TASK_DOCTYPES
+
+		route = TASK_DOCTYPES["Installation Work Order"]["route"]
+		self.installation.reload()
+		self.assertEqual(route(self.installation, "IWOS")["solar_contractor"], self.structure.name)
+		self.assertEqual(route(self.installation, "IWOI")["solar_contractor"], self.electrical.name)
+
+	def test_a_new_job_starts_from_the_company_defaults(self):
+		company = self.installation.company
+		before = frappe.db.get_value("Company", company, ["default_structure_contractor", "default_electrical_contractor"])
+		self.addCleanup(lambda: frappe.db.set_value("Company", company, {
+			"default_structure_contractor": before[0], "default_electrical_contractor": before[1]}))
+		frappe.db.set_value("Company", company, {
+			"default_structure_contractor": self.structure.name, "default_electrical_contractor": self.electrical.name})
+		frappe.clear_document_cache("Company", company)
+		job = make_installation(submit=False)
+		self.assertEqual((job.structure_contractor, job.electrical_contractor), (self.structure.name, self.electrical.name))
+
+	def test_a_contractor_from_another_company_is_refused_on_the_job(self):
+		other = frappe.get_all("Company", filters={"name": ["!=", self.installation.company]}, pluck="name", limit=1)
+		if not other:
+			self.skipTest("single-company site")
+		foreign = make_contractor(company=other[0])
+		self.installation.reload()
+		self.installation.electrical_contractor = foreign.name
+		with self.assertRaises(frappe.ValidationError):
+			self.installation.save(ignore_permissions=True)
+
+
+class TestCompletedMeansDone(FrappeTestCase):
+	"""A work order saved as Completed is submitted, completing its task - once its safety
+	checks are recorded."""
+
+	def setUp(self):
+		self.installation = make_installation()
+
+	def test_completed_needs_the_safety_checks_then_submits(self):
+		order = make_work_order(self.installation, "Structure Erection", safety_briefing_done=0, ppe_verified=0)
+		order.status = "Completed"
+		with self.assertRaises(frappe.ValidationError):
+			order.save(ignore_permissions=True)
+		order.reload()
+		order.update({"status": "Completed", "safety_briefing_done": 1, "ppe_verified": 1})
+		order.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Installation Work Order", order.name, "docstatus"), 1)
+		row, _doc = task_row(self.installation, "IWOS")
+		self.assertEqual(row.status, "Completed")

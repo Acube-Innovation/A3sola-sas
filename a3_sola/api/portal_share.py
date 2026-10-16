@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Sending a document to its customer: the proposal and the quotation.
+"""Sending a document out: the proposal and the quotation to the customer, a procurement
+task's purchase list (its BOM's material) to the supplier, and a work order - the job, with
+its site, system, material and photographs - to its contractor.
 
 Each page shows the same square buttons (templates/includes/portal_share.html): the PDF to
 view and download, a WhatsApp chat and an email to the customer prefilled with a greeting,
@@ -68,25 +70,99 @@ Please review the attached document. Once you confirm, we will share the next st
 """ + SIGNATURE,
 }
 
+# A procurement task's purchase list, to the supplier.
+MESSAGES["Installation Task"] = """Hello {name},
+
+Please find our *{list} purchase list* for the solar project *{project}* ({place}) {document}
+
+Kindly confirm availability, price and the delivery date.
+
+""" + SIGNATURE
+
+# A work order, to its contractor (api/work_order_print).
+MESSAGES["Installation Work Order"] = """Hello {name},
+
+Please find *work order {number} - {kind}* for the solar project *{project}* ({place}) {document}
+
+It has the customer's details, the site location, the system and the material - and, for an installation, the single line diagram. Kindly confirm the date you will start.
+
+""" + SIGNATURE
+
+#: The other papers a document sends besides its own: a purchase list's pending items - what
+#: the first supplier could not give, for the next.
+PENDING = "pending"
+
+# A purchase list's pending items, to the next supplier.
+MESSAGES[PENDING] = """Hello {name},
+
+Please find the *pending items* of our *{list} purchase list* for the solar project *{project}* ({place}) {document}
+
+These are the items still to be supplied. Kindly confirm availability, price and the delivery date.
+
+""" + SIGNATURE
+
 SUBJECTS = {
+	"Installation Work Order": "Work Order {number} - {kind} - {project} - Renewcore Innovations LLP",
 	"Solar Proposal": "Solar Project Proposal {number} - Renewcore Innovations LLP",
 	"Quotation": "Quotation {number} - Renewcore Innovations LLP",
+	"Installation Task": "{list} Purchase List - {project} - Renewcore Innovations LLP",
+	PENDING: "{list} Pending Items - {project} - Renewcore Innovations LLP",
 }
+
+#: Procurement tasks whose purchase list can be sent (api/purchase_list).
+PURCHASE_TASKS = ("SPROC", "PROC")
+def _part(doc, part):
+	"""`part` checked against the document: "" (the document itself) or a purchase list's
+	pending items."""
+	part = (part or "").strip()
+	if part and not (part == PENDING and _is_purchase_list(doc)):
+		raise frappe.PermissionError(_("This document has no such part."))
+	return part
+
+
+def _is_purchase_list(doc):
+	return doc.doctype == "Installation Task" and doc.get("task_code") in PURCHASE_TASKS
+
+
+def _pdf(doc, part=""):
+	"""The PDF that goes out for `doc` (or its `part`)."""
+	from frappe.utils.pdf import get_pdf
+
+	if doc.doctype == "Installation Work Order":
+		from a3_sola.api import work_order_print
+
+		return work_order_print.render(doc)[1]
+	if _is_purchase_list(doc):
+		from a3_sola.api import purchase_list
+
+		return purchase_list.render(doc, pending=part == PENDING)[1]
+	if doc.doctype == "Solar Installation":
+		# A project shares one paper: the completion report data for its electrical contractor.
+		from a3_sola.api import completion_print
+
+		return completion_print.render(doc)[1]
+	return get_pdf(frappe.get_print(doc.doctype, doc.name, print_format=_print_format(doc.doctype), doc=doc, no_letterhead=0))
+
+
+def _sendable(doctype):
+	return bool(_print_format(doctype)) or doctype in ("Installation Task", "Installation Work Order", "Solar Installation")
 
 
 # ------------------------------------------------------------------ the customer's link
-def share_key(doctype, name):
+def share_key(doctype, name, part=""):
 	"""The key that opens this document's PDF without a login: an HMAC of the doctype and
-	name with the site's encryption key, so it cannot be guessed or made for another."""
+	name (and the part, for a part) with the site's encryption key, so it cannot be guessed
+	or made for another document - or for another part of this one."""
 	from frappe.utils.password import get_encryption_key
 
 	secret = (get_encryption_key() + ":document-share").encode()
-	return hmac.new(secret, "{0}|{1}".format(doctype, name).encode(), hashlib.sha256).hexdigest()[:32]
+	message = "{0}|{1}".format(doctype, name) + ("|" + part if part else "")
+	return hmac.new(secret, message.encode(), hashlib.sha256).hexdigest()[:32]
 
 
-def share_url(doctype, name):
-	return frappe.utils.get_url("/api/method/a3_sola.api.portal_share.shared_pdf?doctype={0}&name={1}&key={2}".format(
-		quote(doctype), quote(name), share_key(doctype, name)))
+def share_url(doctype, name, part=""):
+	return frappe.utils.get_url("/api/method/a3_sola.api.portal_share.shared_pdf?doctype={0}&name={1}{2}&key={3}".format(
+		quote(doctype), quote(name), "&part=" + quote(part) if part else "", share_key(doctype, name, part)))
 
 
 def _print_format(doctype):
@@ -104,6 +180,13 @@ def issued(doc):
 	proposal unless it is cancelled."""
 	if doc.doctype == "Quotation":
 		return cint(doc.docstatus) == 1
+	if doc.doctype == "Installation Task":
+		return _is_purchase_list(doc) and cint(doc.docstatus) < 2
+	if doc.doctype == "Installation Work Order":
+		return cint(doc.docstatus) < 2
+	if doc.doctype == "Solar Installation":
+		# The completion report data goes out once there are serials to give.
+		return cint(doc.docstatus) < 2 and any(not r.is_replaced for r in doc.get("serials") or [])
 	return cint(doc.docstatus) < 2
 
 
@@ -111,31 +194,43 @@ def issued(doc):
 NOT_ISSUED = {"Quotation": "Submit the quotation first to view, download or send its PDF."}
 
 
-def _file_name(doc):
+def _file_name(doc, part=""):
+	if doc.doctype == "Installation Work Order":
+		from a3_sola.api import work_order_print
+
+		return work_order_print.file_name(doc)
+	if _is_purchase_list(doc):
+		from a3_sola.api import purchase_list
+
+		return purchase_list.file_name(doc, pending=part == PENDING)
+	if doc.doctype == "Solar Installation":
+		from a3_sola.api import completion_print
+
+		return completion_print.file_name(doc)
 	return "{0}.pdf".format(doc.get("proposal_file_name") or doc.name)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 @rate_limit(limit=30, seconds=60 * 60)
-def shared_pdf(doctype, name, key):
+def shared_pdf(doctype, name, key, part=None):
 	"""The document's PDF for the customer it was sent to, from the link in the message:
-	the key stands in for a login (share_key), and only ever opens that one document."""
-	from frappe.utils.pdf import get_pdf
-
-	print_format = _print_format(doctype)
-	if not (print_format and name and key and frappe.db.exists(doctype, name)
-			and hmac.compare_digest(str(key), share_key(doctype, name))):
+	the key stands in for a login (share_key), and only ever opens that one document - or
+	the one part of it the key was made for."""
+	part = (part or "").strip()
+	if not (_sendable(doctype) and name and key and frappe.db.exists(doctype, name)
+			and hmac.compare_digest(str(key), share_key(doctype, name, part))):
 		raise frappe.PermissionError(_("This link is not valid."))
 	doc = frappe.get_doc(doctype, name)
+	part = _part(doc, part)
 	if not issued(doc):
 		raise frappe.PermissionError(_("This document is not available."))
 	frappe.flags.ignore_print_permissions = True
 	try:
-		html = frappe.get_print(doctype, name, print_format=print_format, doc=doc, no_letterhead=0)
+		content = _pdf(doc, part)
 	finally:
 		frappe.flags.ignore_print_permissions = False
-	frappe.local.response.filename = _file_name(doc)
-	frappe.local.response.filecontent = get_pdf(html)
+	frappe.local.response.filename = _file_name(doc, part)
+	frappe.local.response.filecontent = content
 	frappe.local.response.type = "pdf"
 
 
@@ -165,24 +260,22 @@ def _outgoing_account(doctype):
 
 
 @frappe.whitelist(methods=["POST"])
-def send_email(doctype, name, recipients, subject, message, cc=None):
+def send_email(doctype, name, recipients, subject, message, cc=None, part=None):
 	"""Email the document's PDF to the customer from the site's mailbox, the greeting as
 	the body, and keep a copy on the record's timeline. A proposal's dispatch is recorded on
 	its current version, as sent by email."""
 	from frappe.core.doctype.communication.email import make
 
-	print_format = _print_format(doctype)
-	if not print_format:
+	if not _sendable(doctype):
 		frappe.throw(_("{0} cannot be sent from here.").format(doctype))
-	from frappe.utils.pdf import get_pdf
-
 	doc = frappe.get_doc(doctype, name)
 	doc.check_permission("read")
+	part = _part(doc, part)
 	if not issued(doc):
 		frappe.throw(_(NOT_ISSUED.get(doctype) or "This document cannot be sent."), title=_("Not Issued Yet"))
 	recipients = ", ".join(r.strip() for r in (recipients or "").replace(";", ",").split(",") if r.strip())
 	if not recipients:
-		frappe.throw(_("Enter the customer's email address."), title=_("No Recipient"))
+		frappe.throw(_("Enter the email address to send it to."), title=_("No Recipient"))
 	for address in recipients.split(", "):
 		frappe.utils.validate_email_address(address, throw=True)
 	account = _outgoing_account(doctype)
@@ -193,11 +286,11 @@ def send_email(doctype, name, recipients, subject, message, cc=None):
 			title=_("Email Not Set Up"),
 		)
 	# The PDF made here, so it carries the name a download has.
-	pdf = get_pdf(frappe.get_print(doctype, name, print_format=print_format, doc=doc, no_letterhead=0))
+	pdf = _pdf(doc, part)
 	make(
 		doctype=doctype, name=name, content=_as_html(message), subject=subject, recipients=recipients, cc=cc or None,
 		sender=account.email_id, sender_full_name=account.get("name"), send_email=True,
-		attachments=[{"fname": _file_name(doc), "fcontent": pdf}], now=True,
+		attachments=[{"fname": _file_name(doc, part), "fcontent": pdf}], now=True,
 	)
 	if doctype == "Solar Proposal":
 		from a3_sola.solar_crm.doctype.solar_proposal import solar_proposal
@@ -217,8 +310,21 @@ def _sender():
 	return (user.full_name or DEFAULT_SENDER[0], mobile) if mobile else DEFAULT_SENDER
 
 
-def _recipient(doc):
-	"""(name, mobile, email) of the customer the document goes to."""
+def _recipient(doc, part=""):
+	"""(name, mobile, email) of who the document goes to: the customer - or, for a purchase
+	list, the supplier named on the task (blank, to type when it is sent, when none is)."""
+	if doc.doctype in ("Installation Work Order", "Solar Installation"):
+		contractor = doc.get("solar_contractor") if doc.doctype == "Installation Work Order" else doc.get("electrical_contractor")
+		row = frappe.db.get_value("Solar Contractor", contractor, ["contractor_name", "mobile_no", "email_id"],
+			as_dict=True) if contractor else None
+		return (row.contractor_name, row.mobile_no or "", row.email_id or "") if row else ("", "", "")
+	if _is_purchase_list(doc):
+		# The pending items go to the supplier asked for them, else the first one again.
+		supplier = (doc.get("pending_supplier") if part == PENDING else None) or doc.get("supplier")
+		if not supplier:
+			return "", "", ""
+		row = frappe.db.get_value("Supplier", supplier, ["supplier_name", "mobile_no", "email_id"], as_dict=True) or {}
+		return row.get("supplier_name") or supplier, row.get("mobile_no") or "", row.get("email_id") or ""
 	if doc.doctype == "Solar Proposal":
 		return doc.get("customer_name") or "", doc.get("mobile_no") or "", doc.get("email_id") or ""
 	# A quotation keeps its contact only when one was picked: else the proposal it came
@@ -243,31 +349,47 @@ def _recipient(doc):
 	return name or doc.get("customer_name") or "", mobile, email
 
 
-def share_links(doc, pdf_route):
+def share_links(doc, pdf_route, part=""):
 	"""The share buttons' routes and the greeting, for a Solar Proposal or a Quotation.
 
 	`pdf_route` is the page's own PDF endpoint (behind the login): View opens it, Download
 	saves it, and the WhatsApp and email clicks download it to drop into the message."""
 	from a3_sola.api.outreach import whatsapp_link
 
-	name, mobile, email = _recipient(doc)
+	part = _part(doc, part)
+	name, mobile, email = _recipient(doc, part)
 	sender, phone = _sender()
 	amount = doc.get("rounded_total") or doc.get("grand_total")
 	values = {
 		"name": name or "Sir/Madam", "sender": sender, "phone": phone, "number": doc.name,
 		"amount": fmt_money(amount, currency=doc.get("currency") or "INR") if amount else "",
 	}
-	template = MESSAGES[doc.doctype]
-	link = share_url(doc.doctype, doc.name)
+	if doc.doctype == "Installation Work Order":
+		inst = frappe.db.get_value("Solar Installation", doc.solar_installation,
+			["name", "consumer_name", "solar_consumer"], as_dict=True)
+		place = frappe.db.get_value("Solar Consumer", inst.solar_consumer, "site_city") if inst.solar_consumer else None
+		values.update(kind=doc.work_order_kind or "Installation", project=inst.name,
+			place=", ".join(filter(None, [inst.consumer_name, place])) or inst.name)
+	if _is_purchase_list(doc):
+		from a3_sola.api.purchase_list import TITLES
+
+		inst = frappe.db.get_value("Solar Installation", doc.solar_installation,
+			["name", "consumer_name", "solar_consumer"], as_dict=True)
+		place = frappe.db.get_value("Solar Consumer", inst.solar_consumer, "site_city") if inst.solar_consumer else None
+		values.update(list=TITLES[doc.task_code], project=inst.name,
+			place=", ".join(filter(None, [inst.consumer_name, place])) or inst.name)
+	template = MESSAGES[PENDING if part == PENDING else doc.doctype]
+	link = share_url(doc.doctype, doc.name, part)
 	attached = template.format(document="attached.", **values)
 	# Sent with the PDF dropped in beside it, and its link as well, for a phone that will
 	# not open the file.
 	linked = template.format(document="attached.\nYou can also open it here: " + link, **values)
-	subject = SUBJECTS[doc.doctype].format(number=doc.name)
+	subject = SUBJECTS[PENDING if part == PENDING else doc.doctype].format(**values)
 	whatsapp = whatsapp_link(mobile, linked) if mobile else "https://wa.me/?text=" + quote(linked)
 	return {
 		"doctype": doc.doctype,
 		"name": doc.name,
+		"part": part,
 		# Shown, but not usable, until the document may go out (a draft quotation).
 		"locked": not issued(doc),
 		"locked_note": NOT_ISSUED.get(doc.doctype) or "",
@@ -276,7 +398,7 @@ def share_links(doc, pdf_route):
 		"email_message": attached,
 		"view": pdf_route,
 		"download": pdf_route + "&download=1",
-		"file_name": _file_name(doc),
+		"file_name": _file_name(doc, part),
 		"whatsapp": whatsapp,
 		"whatsapp_to": mobile,
 		"email_to": email,

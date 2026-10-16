@@ -3454,8 +3454,10 @@ select.a3s-items__input { min-width: 9rem; }
 	display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding: 0.7rem 0.85rem;
 	border: 1px solid var(--color-border); border-radius: 0.75rem;
 }
-@media (min-width: 560px) { .a3s-taskdocs__row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+@media (min-width: 560px) { .a3s-taskdocs__row { grid-template-columns: minmax(12rem, 1fr) auto; align-items: center; } }
 .a3s-taskdocs__name { margin: 0; font-size: 0.9rem; font-weight: 700; }
+/* The name keeps its column (above); wide buttons wrap among themselves instead. */
+.a3s-taskdocs__row .a3s-taskdocs__actions { justify-content: flex-end; }
 .a3s-taskdocs__meta { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
 .a3s-taskdocs__state { display: inline-block; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); font-weight: 700; }
 .a3s-taskdocs__state.is-missing { background: var(--color-accent-soft); color: var(--color-accent-hover); }
@@ -3466,6 +3468,15 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-taskdocs__state.is-partly { background: rgba(41, 171, 226, 0.14); color: var(--color-sky-ink); }
 .a3s-taskdocs__heading { margin: 0.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .a3s-taskdocs__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* A row of several papers (the customer's KYC): its head, then one line per paper. */
+@media (min-width: 560px) { .a3s-taskdocs__row--group { grid-template-columns: minmax(0, 1fr); } }
+.a3s-taskdocs__parts { list-style: none; margin: 0.15rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
+.a3s-taskdocs__part {
+	display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem;
+	border-radius: 0.5rem; background: var(--color-bg); font-size: 0.85rem;
+}
+.a3s-taskdocs__part-name { flex: 1 1 10rem; min-width: 0; font-weight: 600; }
+.a3s-taskdocs__part .a3s-taskdocs__state { font-size: 0.75rem; }
 .a3s-taskdocs__add { display: grid; gap: 0.35rem; margin-bottom: 0.5rem; }
 .a3s-taskdocs__add label { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .a3s-taskdocs__addrow { display: flex; gap: 0.5rem; }

@@ -13,6 +13,9 @@ const LEAD_LINKS = [
 
 frappe.ui.form.on("Solar Installation", {
 	setup(frm) {
+		// Any active contractor of the company: one contractor may do both structure and electrical work.
+		frm.set_query("structure_contractor", () => ({ filters: { company: frm.doc.company, is_active: 1 } }));
+		frm.set_query("electrical_contractor", () => ({ filters: { company: frm.doc.company, is_active: 1 } }));
 		const by_lead_or_consumer = () => ({
 			filters: frm.doc.solar_consumer
 				? { solar_consumer: frm.doc.solar_consumer, docstatus: ["<", 2] }
@@ -120,7 +123,10 @@ function open_task(frm, task_code) {
 		freeze: true,
 		callback(r) {
 			const target = r.message || {};
-			if (target.name) {
+			if (target.url) {
+				// A payment task is confirmed on its page on the project board.
+				window.open(target.url, "_blank");
+			} else if (target.name) {
 				frappe.set_route("Form", target.doctype, target.name);
 			} else if (target.route_options) {
 				frappe.new_doc(target.doctype, target.route_options);

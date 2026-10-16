@@ -24,6 +24,110 @@ FORBIDDEN_WORD = "subsidy"
 
 
 # ------------------------------------------------------------ template resolution
+def package_terms(installation):
+	"""The payment terms the job's package sets - its financed terms for a financed job, else
+	its own - or None."""
+	inst = frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	if not inst.get("solar_package"):
+		return None
+	terms, financed = frappe.db.get_value("Solar Package", inst.solar_package,
+		["payment_terms", "financed_payment_terms"]) or (None, None)
+	return (financed or terms) if inst.get("is_financed") else terms
+
+
+#: The payment tasks, in the order the customer pays (api/payment_tasks).
+PHASE_TASKS = ("ADV", "BAL", "PCOM")
+
+
+def job_terms(inst):
+	"""The payment terms a job is paid by: its package's, else its billing plan's, else the
+	template that fits its arrangement."""
+	return package_terms(inst) or frappe.db.get_value("Solar Billing Plan",
+		{"solar_installation": inst.name, "docstatus": ["<", 2]}, "milestone_template") or resolve_template(
+		inst.company, inst.get("consumer_category"), inst.get("net_meter_mode"), inst.get("is_financed"))
+
+
+def payment_phases(installation):
+	"""The job's payment schedule: one phase per payment task - the advance milestone(s), the
+	next milestone, then the rest - each with its share of the contract, what it waits on,
+	what has been received against it, and the arrears carried into it from the phases
+	before. None when there are no terms to read."""
+	inst = frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	terms = job_terms(inst)
+	if not terms:
+		return None
+	rows = frappe.get_all("Billing Milestone Template Detail", filters={"parent": terms, "parenttype": "Billing Milestone Template"},
+		fields=["milestone_name", "percentage", "is_advance", "trigger_stage_code", "trigger_type"], order_by="idx asc")
+	advance = [r for r in rows if r.is_advance]
+	rest = [r for r in rows if not r.is_advance]
+	groups = {"ADV": advance, "BAL": rest[:1], "PCOM": rest[1:]}
+	base = flt(inst.get("gross_contract_value"))
+	stage = {r.stage_code: r for r in inst.get("stages") or []}
+	phases, due_before, received_before = [], 0.0, 0.0
+	for code in PHASE_TASKS:
+		milestones = groups[code]
+		if not milestones:
+			continue
+		percent = sum(flt(m.percentage) for m in milestones)
+		amount = flt(base * percent / 100, 2)
+		trigger = next((m.trigger_stage_code for m in milestones if m.trigger_stage_code), None)
+		received = _received(inst, code)
+		status = stage[code].status if code in stage else ""
+		# A payment confirmed before amounts were recorded was the phase in full.
+		assumed = not received and status == "Completed"
+		if assumed:
+			received = amount
+		# What the phases before left unpaid (arrears) - or paid ahead (credit) - comes in here.
+		carry = flt(due_before - received_before, 2)
+		phases.append({
+			"code": code, "task": stage[code].stage_name if code in stage else code,
+			"name": " + ".join(m.milestone_name for m in milestones), "percent": percent, "amount": amount,
+			"when": (stage[trigger].stage_name if trigger in stage else trigger) if trigger else _("With the order"),
+			"when_status": stage[trigger].status if trigger in stage else "",
+			"received": received, "assumed": assumed, "status": status,
+			"arrears": max(0.0, carry), "credit": max(0.0, -carry),
+			"collect": max(0.0, flt(amount + carry, 2)),
+		})
+		due_before += amount
+		received_before += received
+	# What each phase still lacks: everything received pays the phases in order, so a later
+	# overpayment clears an earlier shortfall before it counts towards its own phase.
+	pool = received_before
+	for phase in phases:
+		paid = min(phase["amount"], pool)
+		pool -= paid
+		phase["remaining"] = max(0.0, flt(phase["amount"] - paid, 2))
+	return {"terms": terms, "base": base, "phases": phases, "received": flt(received_before, 2),
+		"remaining": max(0.0, flt(base - received_before, 2))}
+
+
+def _received(inst, code):
+	"""What has been received for a payment task: the amount on its row (marked or confirmed),
+	else one recorded on an older payment Installation Task."""
+	row = next((r for r in inst.get("stages") or [] if r.stage_code == code), None)
+	if row is not None and flt(row.get("payment_amount")):
+		return flt(row.payment_amount)
+	return flt(frappe.db.get_value("Installation Task", {"solar_installation": inst.name, "task_code": code,
+		"docstatus": 1, "status": "Completed"}, "amount")) if code in ("ADV", "BAL") else 0.0
+
+
+def phase_due(installation, code):
+	"""One payment task's phase from the schedule, with the schedule; None without terms."""
+	schedule = payment_phases(installation)
+	if not schedule:
+		return None
+	phase = next((p for p in schedule["phases"] if p["code"] == code), None)
+	return {**schedule, "phase": phase} if phase else None
+
+
+def advance_due(installation):
+	"""{percent, amount, base, terms} of the advance - kept for its callers."""
+	due = phase_due(installation, "ADV")
+	if not due:
+		return None
+	return {"percent": due["phase"]["percent"], "base": due["base"], "amount": due["phase"]["amount"], "terms": due["terms"]}
+
+
 def resolve_template(company, consumer_category=None, net_meter_mode=None, is_financed=False):
 	"""Pick the milestone template matching the job's funding and meter arrangement."""
 	candidates = frappe.get_all(
@@ -66,9 +170,9 @@ def build_plan(plan):
 	if plan.milestones:
 		return plan
 	if not plan.milestone_template:
-		plan.milestone_template = resolve_template(
-			plan.company, plan.consumer_category, plan.net_meter_mode, plan.is_financed
-		)
+		# The package's payment terms first; else the template that fits the job's arrangement.
+		plan.milestone_template = (package_terms(plan.solar_installation) if plan.get("solar_installation") else None) \
+			or resolve_template(plan.company, plan.consumer_category, plan.net_meter_mode, plan.is_financed)
 	if not plan.milestone_template:
 		frappe.throw(
 			_("No billing milestone template matches this job. A billing plan cannot be built without one."),
@@ -521,6 +625,7 @@ def customer_statement(inst):
 				{"date": entry.posting_date, "particulars": _("Payment {0}{1}").format(ref.parent, mode),
 				 "debit": 0, "credit": flt(ref.allocated_amount)}
 			)
+	recorded = set()
 	for task in frappe.get_all(
 		"Installation Task",
 		filters={"solar_installation": inst.name, "docstatus": 1, "task_code": ["in", ["ADV", "BAL"]], "status": "Completed"},
@@ -529,11 +634,24 @@ def customer_statement(inst):
 	):
 		if task.payment_entry or not flt(task.amount):
 			continue
+		recorded.add(task.task_code)
 		label = _("Advance received") if task.task_code == "ADV" else _("Balance received")
 		mode = f" ({task.payment_mode})" if task.payment_mode else ""
 		rows.append(
 			{"date": task.paid_on, "particulars": f"{label} - {task.payer or _('Customer')}{mode}",
 			 "debit": 0, "credit": flt(task.amount)}
+		)
+	# A payment confirmed by Accounts on its task page (api/payment_tasks) - the amount, the
+	# bank and the firm it was received by are on the task row itself.
+	for row in inst.get("stages") or []:
+		if row.stage_code in recorded or row.status != "Completed" or not flt(row.get("payment_amount")):
+			continue
+		label = {"ADV": _("Advance received"), "BAL": _("Payment after installation received"),
+			"PCOM": _("Payment after commissioning received")}.get(row.stage_code, _("Payment received"))
+		where = " - ".join(filter(None, [row.get("payment_company"), row.get("payment_bank")]))
+		rows.append(
+			{"date": row.actual_completion_date, "particulars": f"{label}{' - ' + where if where else ''}",
+			 "debit": 0, "credit": flt(row.payment_amount)}
 		)
 	if not invoices and flt(inst.gross_contract_value):
 		rows.insert(

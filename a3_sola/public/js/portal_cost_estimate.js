@@ -366,7 +366,7 @@
 		var r = state.refs || {};
 		var sel = el("ce-reference");
 		var groups = [
-			["Solar consumer", "solar_consumer", (r.consumers || []).map(function (c) { return { value: c.name, label: (c.consumer_name || c.name) + (c.consumer_number ? " · " + c.consumer_number : "") }; })],
+			["Customer", "solar_consumer", (r.consumers || []).map(function (c) { return { value: c.name, label: (c.consumer_name || c.name) + (c.consumer_number ? " · " + c.consumer_number : "") }; })],
 			["Design estimate", "solar_design_estimate", (r.estimates || []).map(function (e) { return { value: e.name, label: e.name + " · " + num(e.final_capacity_kw, 2) + " kW" }; })],
 			["Solar proposal", "solar_proposal", (r.proposals || []).map(function (p) { return { value: p.name, label: p.name + (p.status ? " · " + p.status : "") }; })],
 			["Eligibility check", "subsidy_eligibility_check", (r.eligibility_checks || []).map(function (c) { return { value: c.name, label: c.name + (c.overall_result ? " · " + c.overall_result : "") }; })],

@@ -144,6 +144,8 @@
 		</section>
 		{%- endfor %}
 
+		{%- include "templates/includes/portal_job_card.html" %}
+		{%- include "templates/includes/portal_kyc.html" %}
 		{#- A collection may add its own section here - the proposal's version history. -#}
 		{%- if extra_template %}{% include extra_template %}{% endif %}
 	</div>

@@ -139,7 +139,7 @@
 					if (!window.confirm("File " + f.file_name + " as " + pick.value + "? It cannot be changed afterwards.")) { pick.value = ""; return; }
 					setStatus("Saving…");
 					call("set_type", form({ file: f.name, document_type: pick.value }))
-						.then(function (data) { paint(data.files || []); setStatus(f.file_name + " is filed as " + pick.value + ".", "ok"); })
+						.then(function (data) { paint(data.files || [], true); setStatus(f.file_name + " is filed as " + pick.value + ".", "ok"); })
 						.catch(function (e) { pick.value = ""; setStatus(e.message, "error"); });
 				});
 				typeCell.appendChild(pick);
@@ -158,7 +158,7 @@
 					if (!window.confirm("Remove " + f.file_name + " from " + name + "?")) return;
 					setStatus("Removing…");
 					call("remove", form({ file: f.name }))
-						.then(function (data) { paint(data.files || []); setStatus("Removed " + f.file_name + ".", "ok"); })
+						.then(function (data) { paint(data.files || [], true); setStatus("Removed " + f.file_name + ".", "ok"); })
 						.catch(function (e) { setStatus(e.message, "error"); });
 				});
 				act.appendChild(x);
@@ -167,7 +167,7 @@
 			return tr;
 		}
 
-		function paint(files) {
+		function paint(files, changed) {
 			list.textContent = "";
 			files.forEach(function (f) { list.appendChild(row(f)); });
 			table.hidden = !files.length;
@@ -178,6 +178,8 @@
 			Array.prototype.forEach.call(document.querySelectorAll("[data-attachment-count]"), function (n) {
 				n.textContent = String(files.length);
 			});
+			// The KYC Documents card counts the same files (portal_kyc.js).
+			if (changed) document.dispatchEvent(new CustomEvent("a3s:attachments-changed", { detail: { doctype: doctype, name: name } }));
 		}
 
 		function needType() {
@@ -197,7 +199,7 @@
 			busy = true; button.disabled = true; drop.classList.add("is-busy");
 			setStatus("Uploading " + label + " as " + what + "…");
 			call("upload", body).then(function (data) {
-				paint(data.files || []);
+				paint(data.files || [], true);
 				setStatus("Uploaded " + label + " as " + what + ".", "ok");
 				typeSelect.value = "";
 			}).catch(function (e) { setStatus(e.message, "error"); }).then(function () {
@@ -228,6 +230,12 @@
 		drop.addEventListener("drop", function (e) {
 			e.preventDefault(); drop.classList.remove("is-dragging");
 			upload(e.dataTransfer && e.dataTransfer.files);
+		});
+
+		/* A file uploaded elsewhere on the page - the KYC Documents card - is listed here too. */
+		document.addEventListener("a3s:attachments-reload", function (e) {
+			if (!e.detail || e.detail.doctype !== doctype || e.detail.name !== name) return;
+			call("list_files", { doctype: doctype, name: name }, true).then(function (data) { paint(data.files || []); });
 		});
 
 		call("list_files", { doctype: doctype, name: name }, true).then(function (data) {

@@ -1009,33 +1009,28 @@ We will advise you on best practice at handover.</p>
 		"stage_code": "MATL",
 		"source_doctype": "Material Dispatch Notice",
 		"notes": "SOURCE: 06_DATA FOR COMPLETION REPORT.docx / DATA FOR COMPLETION REPORT.pdf",
-		"body": """<h3 style="text-align:center;margin:0 0 10px">DATA FOR COMPLETION REPORT</h3>
-<table style="width:100%;border-collapse:collapse;font-size:12px">
-{% set cd = completion_data %}
+		# As 06_DATA FOR COMPLETION REPORT.pdf lays it out; printed with or without the
+		# letterhead from the Serials to Electrical Contractor task (api/completion_print).
+		"body": """{% set cd = completion_data %}
+{% set phase = (cd.service_connection_type or "").split(" ") %}
+{% set grid = (cd.system_type or "").replace("-", " ") %}
 {% macro row(label, value) -%}
-<tr><td style="border:1px solid #444;padding:5px;width:38%"><b>{{ label }}</b></td>
-    <td style="border:1px solid #444;padding:5px">{{ value or "" }}</td></tr>
+<tr><td style="border:1px solid #000;padding:0 5px;text-align:right;vertical-align:top;width:39%">{{ label }}</td>
+    <td style="border:1px solid #000;padding:0 5px;vertical-align:top">{{ value }}</td></tr>
 {%- endmacro %}
-{{ row("Consumer Name", cd.consumer_name) }}
-{{ row("Address", address_text or cd.address) }}
-{{ row("Consumer Number", cd.consumer_number) }}
-{{ row("KSEB Section", cd.electrical_section) }}
-{{ row("Service Connection Type", cd.service_connection_type) }}
-{{ row("Solar Plant Capacity", cd.plant_capacity) }}
-{{ row("PV Module Make &amp; Wattage", cd.module_make_and_wattage) }}
-<tr><td style="border:1px solid #444;padding:5px;vertical-align:top"><b>PV Module Serial Numbers</b>
-    <div style="font-size:10px;color:#555">{{ cd.module_count }} modules</div></td>
-    <td style="border:1px solid #444;padding:0">
-    <table style="width:100%;border-collapse:collapse">
-    {% for serial in cd.module_serial_numbers %}
-      <tr><td style="border-bottom:1px solid #bbb;padding:3px 5px">{{ loop.index }}. {{ serial }}</td></tr>
-    {% else %}<tr><td style="padding:5px;color:#888">No module serials captured yet</td></tr>{% endfor %}
-    </table></td></tr>
-{{ row("Inverter Make &amp; Capacity", cd.inverter_make_and_capacity) }}
-{{ row("Inverter Serial Number", cd.inverter_serial_number) }}
+<h3 style="text-align:center;font-size:15pt;font-weight:bold;text-decoration:underline;margin:4mm 0 11mm">DATA FOR COMPLETION REPORT</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11pt;line-height:1.35">
+{{ row("Consumer Name", (cd.consumer_name or "") | upper | e) }}
+{{ row("Address", ((cd.address or address_text or "") | upper | e).replace(",\n", "<br>").replace("\n", "<br>")) }}
+{{ row("Consumer Number", cd.consumer_number | e) }}
+{{ row("KSEB Section", (cd.electrical_section or "") | upper | e) }}
+{{ row("Service Connection Type", ((phase[0] | upper) ~ " " ~ (phase[1:] | join(" "))) | trim | e) }}
+{{ row("Solar Plant Capacity", (("%gkW" | format(cd.capacity_kw or 0)) ~ " " ~ grid) | trim | e) }}
+{{ row("PV Module Make &amp; Wattage", ((cd.module_make or "") | upper ~ " " ~ ("%gWP" | format(cd.module_wattage or 0))) | trim | e) }}
+{{ row("PV Module Serial Numbers", cd.module_serial_numbers | map("e") | join("<br>")) }}
+{{ row("Inverter Make &amp; Capacity", ((cd.inverter_make or "") | upper ~ " " ~ ("%gKW" | format(cd.inverter_capacity_kw or 0)) ~ " " ~ grid) | trim | e) }}
+{{ row("Inverter Serial Number", (cd.inverter_serial_numbers or [cd.inverter_serial_number] | select | list) | map("e") | join("<br>")) }}
 </table>
-{% if contractor %}<p style="font-size:11px;margin-top:10px">For: {{ contractor.contractor_name }}{% if contractor.licence_no %} · Licence {{ contractor.licence_no }}{% endif %}</p>{% endif %}
-<p style="font-size:11px">Prepared by {{ company.epc_name or company.company_name }} on {{ today }}.</p>
 """,
 	},
 	{

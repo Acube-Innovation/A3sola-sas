@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-16 18:20:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "add_on_type",
+  "item",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "add_on_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Extra Panel\nWarranty Extension\nOther",
+   "default": "Other",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Small Text",
+   "label": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 6,
+   "description": "As printed in the proposal. An Extra Panel row left blank reads \"Supply and Installation of 1X…Wp Solar Panel\" with the package's panel."
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount (Rs.)",
+   "options": "INR",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-16 18:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package Add-on",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

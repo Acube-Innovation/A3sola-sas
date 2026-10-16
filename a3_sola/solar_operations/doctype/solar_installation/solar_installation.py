@@ -34,7 +34,15 @@ LINKS = (
 	("subsidy_scheme", "Subsidy Scheme"),
 	("sales_order", "Sales Order"),
 	("quotation", "Quotation"),
+	("structure_contractor", "Solar Contractor"),
+	("electrical_contractor", "Solar Contractor"),
 )
+
+#: The job's contractors and the Company default each starts from.
+CONTRACTOR_DEFAULTS = {
+	"structure_contractor": "default_structure_contractor",
+	"electrical_contractor": "default_electrical_contractor",
+}
 
 
 #: The Design Estimate's system tables, copied onto the job's System tab under the same names.
@@ -51,6 +59,7 @@ class SolarInstallation(Document):
 	def validate(self):
 		self.pull_lead_context()
 		self.copy_estimate_design()
+		self.default_contractors()
 		assert_same_company(self, LINKS)
 		self.resolve_template()
 		self.execution_start_date = self.execution_start_date or self.order_date
@@ -61,6 +70,10 @@ class SolarInstallation(Document):
 			stages.build_stages(self)
 		if entered_tasks:
 			stages.apply_entered_tasks(self, entered_tasks)
+		# The payment tasks follow the payment terms: no third payment on 70:30 terms.
+		from a3_sola.api import payment_tasks
+
+		payment_tasks.apply_phases(self)
 		self.assign_people()
 		self.release_dangling_links()
 		self.validate_capacity()
@@ -112,15 +125,15 @@ class SolarInstallation(Document):
 		context = installation_lead.lead_context(self.lead, self.solar_consumer)
 		if not (self.solar_consumer or context.get("solar_consumer")):
 			frappe.throw(
-				_("Lead {0} has no Solar Consumer yet. Create the Solar Consumer from the lead first.").format(
+				_("Lead {0} has no customer yet. Create the customer from the lead first.").format(
 					self.lead
 				),
-				title=_("No Solar Consumer"),
+				title=_("No Customer"),
 			)
 		if self.solar_consumer and installation_lead.consumer_contradicts_lead(self.lead, self.solar_consumer):
 			frappe.throw(
-				_("Solar Consumer {0} did not come from lead {1}.").format(self.solar_consumer, self.lead),
-				title=_("Consumer and Lead Disagree"),
+				_("Customer {0} did not come from lead {1}.").format(self.solar_consumer, self.lead),
+				title=_("Customer and Lead Disagree"),
 			)
 
 		for field, value in context.items():
@@ -249,6 +262,15 @@ class SolarInstallation(Document):
 		if self.is_new() and not self.is_dcr_compliant:
 			self.is_dcr_compliant = package.is_dcr_compliant
 
+	def default_contractors(self):
+		"""A new job starts with the company's usual structure and electrical contractors,
+		where it names them; the office changes either per job."""
+		if not (self.is_new() and self.company):
+			return
+		for field, default in CONTRACTOR_DEFAULTS.items():
+			if not self.get(field):
+				self.set(field, frappe.get_cached_value("Company", self.company, default) or None)
+
 	def validate_capacity(self):
 		"""Capacity must match the design estimate unless a manager overrode it."""
 		if not self.solar_design_estimate:
@@ -330,6 +352,8 @@ class SolarInstallation(Document):
 		has already been written, so anything computed there is silently discarded.
 		"""
 		serials.validate_register(self)
+		# The contractors are chosen on a running job: never another company's.
+		assert_same_company(self, [link for link in LINKS if link[0] in CONTRACTOR_DEFAULTS])
 		self.release_dangling_links()
 		self.roll_counts()
 		if self.has_value_changed("is_financed"):
@@ -340,6 +364,11 @@ class SolarInstallation(Document):
 	def reapply_task_rules(self):
 		"""Financing changed: the loan tasks follow, for tasks not started yet."""
 		changed = stages.reapply_applicability(self)
+		from a3_sola.api import payment_tasks
+
+		if payment_tasks.apply_phases(self):
+			# Financing changes the terms, and with them whether there is a third payment.
+			self.flags.ignore_validate_update_after_submit = True
 		if changed:
 			# The task rows are the engine's, as on every task transition (stages._save):
 			# their status moves on a submitted job.

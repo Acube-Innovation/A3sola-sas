@@ -64,7 +64,7 @@
    "fetch_from": "solar_installation.solar_consumer",
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "read_only": 1
   },
@@ -300,7 +300,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 19:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Statutory Fee Payment",

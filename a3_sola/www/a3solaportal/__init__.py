@@ -25,7 +25,7 @@ NAV_GROUPS = [
 		# the chain in `a3_sola.api.portal_chain` creates them in exactly this sequence.
 		"items": [
 			{"title": "Lead", "sub": "Prospects and enquiries", "ic": "lead", "route": "/a3solaportal/leads"},
-			{"title": "Solar Consumer", "sub": "Homes and businesses", "ic": "user", "route": "/a3solaportal/consumers"},
+			{"title": "Customer", "sub": "Homes and businesses", "ic": "user", "route": "/a3solaportal/consumers"},
 			{"title": "Site Survey", "sub": "Roof and load", "ic": "pin", "route": "/a3solaportal/site-surveys"},
 			{"title": "Solar Design Estimate", "sub": "System sizing", "ic": "pen", "route": "/a3solaportal/design-estimates"},
 			{"title": "Subsidy Eligibility Check", "sub": "PM Surya Ghar", "ic": "check", "route": "/a3solaportal/subsidy-eligibility"},

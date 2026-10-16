@@ -133,6 +133,7 @@
   "google_review_message",
   "completion_data_email_subject",
   "completion_data_email_body",
+  "completion_report_letter_head",
   "sb_32",
   "auto_create_fee_payment_on_stage",
   "refund_follow_up_days",
@@ -480,7 +481,7 @@
    "default": "SOL-CON",
    "fieldname": "consumer_series_prefix",
    "fieldtype": "Data",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "reqd": 1
   },
   {
@@ -537,7 +538,7 @@
    "fieldtype": "Link",
    "label": "Subsidy Tariff Category",
    "default": "LT-I",
-   "description": "A subsidised design estimate needs the consumer on this KSEB tariff code (LT-I, domestic, for PM Surya Ghar).",
+   "description": "A subsidised design estimate needs the customer on this KSEB tariff code (LT-I, domestic, for PM Surya Ghar).",
    "options": "KSEB Tariff Category"
   },
   {
@@ -1182,6 +1183,13 @@
    "fieldname": "completion_data_email_body",
    "fieldtype": "Small Text",
    "label": "Completion Data Email Body"
+  },
+  {
+   "description": "The letterhead the Data for Completion Report prints on when printed with a letterhead (the Renewcore letterhead). Blank: the company's default letterhead.",
+   "fieldname": "completion_report_letter_head",
+   "fieldtype": "Link",
+   "label": "Completion Report Letter Head",
+   "options": "Letter Head"
   },
   {
    "fieldname": "sb_32",
@@ -2880,7 +2888,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-08 12:00:00.000000",
+ "modified": "2026-10-16 14:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

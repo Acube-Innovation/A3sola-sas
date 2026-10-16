@@ -14,6 +14,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt, getdate, now_datetime, today
 
+from a3_sola.api import contractors
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_int
@@ -30,13 +31,15 @@ class InstallationWorkOrder(Document):
 		set_name(self, "work_order_series_prefix", ".YYYY.-.#####", fallback="SOL-WO")
 
 	def validate(self):
-		assert_same_company(self, LINKS)
 		self.derive_primary_type()
+		self.fill_contractor()
+		assert_same_company(self, LINKS)
 		self.sync_crew_parties()
 		self.stamp_task_header()
 		self.stamp_photos()
 		self.validate_dates()
 		self.check_crew_conflicts()
+		self.complete_when_completed()
 
 	def derive_primary_type(self):
 		"""The old single type, kept for costing and the demo, now follows the first row."""
@@ -47,6 +50,12 @@ class InstallationWorkOrder(Document):
 		# Snag work is never an installation task, whatever the form defaulted the kind to.
 		if self.work_order_type == "Rectification":
 			self.work_order_kind = "Rectification"
+
+	def fill_contractor(self):
+		"""A blank contractor is the job's own for this kind of work: the structure contractor
+		for a Structure order, the electrical contractor otherwise. One chosen here is kept."""
+		if not self.solar_contractor:
+			self.solar_contractor = contractors.for_work_order(self.solar_installation, self.work_order_kind)
 
 	def sync_crew_parties(self):
 		"""A crew row is an employee or a contractor; the two columns say the same thing twice.
@@ -148,6 +157,28 @@ class InstallationWorkOrder(Document):
 					),
 					title=_("Crew Conflict"),
 				)
+
+	def complete_when_completed(self):
+		"""Completed means done. An order saved as Completed is submitted - which is what
+		completes its task on the project board - once what submitting needs is there; what
+		is missing is said here, on the form, rather than leaving a Completed order the board
+		still shows In Progress."""
+		if self.docstatus != 0 or self.status != "Completed" or self.flags.completing:
+			return
+		missing = [label for field, label in (("safety_briefing_done", _("Safety Briefing Done")),
+			("ppe_verified", _("PPE Verified"))) if not self.get(field)]
+		if missing:
+			frappe.throw(_("To mark the work order Completed, tick {0}.").format(_(" and ").join(missing)),
+				title=_("Safety Checks Required"))
+		self.gate_geo_photos()
+		self.actual_end_date = self.actual_end_date or today()
+		self.flags.submit_on_update = True
+
+	def on_update(self):
+		if self.flags.submit_on_update and self.docstatus == 0:
+			self.flags.submit_on_update = False
+			self.flags.completing = True
+			self.submit()
 
 	def before_submit(self):
 		self.gate_geo_photos()

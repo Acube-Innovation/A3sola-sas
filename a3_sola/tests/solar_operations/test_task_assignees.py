@@ -104,9 +104,10 @@ class TestTaskAssignees(FrappeTestCase):
 		from a3_sola.www.a3solaportal.collections import task_people
 
 		self.staff(site_engineer=self.engineer)
-		ta.set_task_assignees(self.installation.name, "DSGN", [self.engineer, self.manager])
-		people = task_people(self.installation.name, "DSGN")
+		# The Design Freeze has its own page now (api/design_freeze); structure procurement opens a task.
+		ta.set_task_assignees(self.installation.name, "SPROC", [self.engineer, self.manager])
+		people = task_people(self.installation.name, "SPROC")
 		self.assertEqual([p["user"] for p in people["assignees"]], [self.engineer, self.manager])
 		self.assertEqual(people["position"], "Project Engineer")
-		target = tasks.open_task(self.installation.name, "DSGN", create_draft=0)
+		target = tasks.open_task(self.installation.name, "SPROC", create_draft=0)
 		self.assertEqual(target["route_options"]["assigned_to"], self.engineer)

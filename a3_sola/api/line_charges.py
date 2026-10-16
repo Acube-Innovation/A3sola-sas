@@ -23,7 +23,7 @@ LINKS = (
 def validate(doc, row_amount):
 	"""Check the record is anchored to a customer, then price every row and total them."""
 	if not doc.lead and not doc.solar_consumer:
-		frappe.throw(_("Choose the lead or the solar consumer this {0} is for.").format(_(doc.doctype)),
+		frappe.throw(_("Choose the lead or the customer this {0} is for.").format(_(doc.doctype)),
 			frappe.MandatoryError)
 	assert_same_company(doc, LINKS)
 

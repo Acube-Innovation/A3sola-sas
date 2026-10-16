@@ -17,6 +17,58 @@
   "discom_section",
   "company",
   "amended_from",
+  "sb_report_customer",
+  "site_address",
+  "district",
+  "taluk",
+  "village",
+  "cb_report_customer",
+  "contact_no",
+  "email_id",
+  "consumer_number",
+  "connection_type",
+  "sb_report_visit",
+  "site_visit_for",
+  "system_type",
+  "cb_report_visit",
+  "capacity_applied_kw",
+  "sb_report_roof",
+  "building_type",
+  "number_of_floors",
+  "roof_accessibility",
+  "parapet_available",
+  "parapet_height_cm",
+  "roof_inclination",
+  "cb_report_roof",
+  "structure_suggested",
+  "shade_free_area_sqft",
+  "material_lifting_accessibility",
+  "additional_structure_details",
+  "sb_report_cables",
+  "total_dc_length_m",
+  "panel_to_dcdb_m",
+  "dcdb_to_inverter_m",
+  "cb_report_cables",
+  "total_ac_length_m",
+  "inverter_to_acdb_m",
+  "acdb_to_meter_m",
+  "sb_report_earthing",
+  "la_down_conductor_length_m",
+  "dc_earthing_length_m",
+  "ac_earthing_length_m",
+  "ac_connection_type",
+  "cb_report_earthing",
+  "space_for_la",
+  "dc_earthing_ground",
+  "ac_earthing_ground",
+  "sb_report_supply",
+  "supply_type",
+  "incomer",
+  "common_panel_incomer",
+  "cb_report_supply",
+  "dg_available",
+  "automatic_cos",
+  "cable_duct_trench_tray",
   "sb_3",
   "roof_type",
   "total_roof_area_sqft",
@@ -71,13 +123,21 @@
   "tab_17",
   "sb_18",
   "feasibility_status",
-  "capacity_applied_kw",
   "cb_19",
   "capacity_installable_kw",
   "infeasibility_reason",
   "sb_20",
   "recommended_capacity_kw",
   "surveyor_remarks",
+  "sb_approval",
+  "customer_approved",
+  "customer_approval_name",
+  "customer_approval_date",
+  "approval_note",
+  "cb_approval",
+  "engineer_name",
+  "engineer_approval_date",
+  "signed_report",
   "sb_21",
   "survey_images"
  ],
@@ -94,12 +154,12 @@
    "label": "Lead",
    "reqd": 1,
    "in_standard_filter": 1,
-   "description": "The enquiry surveyed. Choosing it brings in its solar consumer, and the consumer brings its lead."
+   "description": "The enquiry surveyed. Choosing it brings in its customer, and the customer brings its lead."
   },
   {
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "reqd": 1,
    "in_list_view": 1
@@ -125,7 +185,7 @@
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer",
+   "label": "Customer Name",
    "fetch_from": "solar_consumer.consumer_name",
    "read_only": 1,
    "in_list_view": 1
@@ -162,6 +222,293 @@
    "read_only": 1,
    "no_copy": 1,
    "print_hide": 1
+  },
+  {
+   "fieldname": "sb_report_customer",
+   "fieldtype": "Section Break",
+   "label": "Customer",
+   "description": "From the customer record - change it there."
+  },
+  {
+   "fieldname": "site_address",
+   "fieldtype": "Small Text",
+   "label": "Address",
+   "fetch_from": "solar_consumer.installation_site_address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "label": "District",
+   "fetch_from": "solar_consumer.site_district",
+   "read_only": 1,
+   "options": "Indian District"
+  },
+  {
+   "fieldname": "taluk",
+   "fieldtype": "Data",
+   "label": "Taluk",
+   "fetch_from": "solar_consumer.taluk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "village",
+   "fieldtype": "Data",
+   "label": "Village",
+   "fetch_from": "solar_consumer.village",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_report_customer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_no",
+   "fieldtype": "Data",
+   "label": "Contact No",
+   "fetch_from": "solar_consumer.mobile_no",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "label": "Email Id",
+   "fetch_from": "solar_consumer.email_id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumer_number",
+   "fieldtype": "Data",
+   "label": "Consumer No",
+   "fetch_from": "solar_consumer.consumer_number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Data",
+   "label": "Consumer Connection Type",
+   "fetch_from": "solar_consumer.connection_type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_report_visit",
+   "fieldtype": "Section Break",
+   "label": "Site Visit & System"
+  },
+  {
+   "fieldname": "site_visit_for",
+   "fieldtype": "Select",
+   "label": "Site Visit For",
+   "options": "\nVirgin Power\nKSEB\nANERT"
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "Type of System",
+   "options": "\nOn-grid\nOff-grid\nHybrid"
+  },
+  {
+   "fieldname": "cb_report_visit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "capacity_applied_kw",
+   "fieldtype": "Float",
+   "label": "Capacity Applied (kW)",
+   "precision": 3
+  },
+  {
+   "fieldname": "sb_report_roof",
+   "fieldtype": "Section Break",
+   "label": "Roof & Building"
+  },
+  {
+   "fieldname": "building_type",
+   "fieldtype": "Select",
+   "label": "Type of Building",
+   "options": "\nResidential\nCommercial"
+  },
+  {
+   "fieldname": "number_of_floors",
+   "fieldtype": "Int",
+   "label": "No of Floors"
+  },
+  {
+   "fieldname": "roof_accessibility",
+   "fieldtype": "Select",
+   "label": "Roof Accessibility",
+   "options": "\nStaircase\nLadder\nNil"
+  },
+  {
+   "fieldname": "parapet_available",
+   "fieldtype": "Check",
+   "label": "Parapet"
+  },
+  {
+   "fieldname": "parapet_height_cm",
+   "fieldtype": "Float",
+   "label": "Height of Parapet (cm)",
+   "depends_on": "eval:doc.parapet_available"
+  },
+  {
+   "fieldname": "roof_inclination",
+   "fieldtype": "Data",
+   "label": "Roof Inclination"
+  },
+  {
+   "fieldname": "cb_report_roof",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "structure_suggested",
+   "fieldtype": "Data",
+   "label": "Structure Suggested"
+  },
+  {
+   "fieldname": "shade_free_area_sqft",
+   "fieldtype": "Float",
+   "label": "Available Shade Free Area (sq ft)"
+  },
+  {
+   "fieldname": "material_lifting_accessibility",
+   "fieldtype": "Data",
+   "label": "Rooftop Material Lifting Accessibility"
+  },
+  {
+   "fieldname": "additional_structure_details",
+   "fieldtype": "Small Text",
+   "label": "If Additional Structure Required - Details"
+  },
+  {
+   "fieldname": "sb_report_cables",
+   "fieldtype": "Section Break",
+   "label": "Cable Lengths (m)"
+  },
+  {
+   "fieldname": "total_dc_length_m",
+   "fieldtype": "Float",
+   "label": "Total DC Length"
+  },
+  {
+   "fieldname": "panel_to_dcdb_m",
+   "fieldtype": "Float",
+   "label": "Panel to DCDB"
+  },
+  {
+   "fieldname": "dcdb_to_inverter_m",
+   "fieldtype": "Float",
+   "label": "DCDB to Inverter"
+  },
+  {
+   "fieldname": "cb_report_cables",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_ac_length_m",
+   "fieldtype": "Float",
+   "label": "Total AC Length"
+  },
+  {
+   "fieldname": "inverter_to_acdb_m",
+   "fieldtype": "Float",
+   "label": "Inverter to ACDB"
+  },
+  {
+   "fieldname": "acdb_to_meter_m",
+   "fieldtype": "Float",
+   "label": "ACDB to Meter"
+  },
+  {
+   "fieldname": "sb_report_earthing",
+   "fieldtype": "Section Break",
+   "label": "Lightning Arrester & Earthing"
+  },
+  {
+   "fieldname": "la_down_conductor_length_m",
+   "fieldtype": "Float",
+   "label": "LA Down Conductor Length (m)"
+  },
+  {
+   "fieldname": "dc_earthing_length_m",
+   "fieldtype": "Float",
+   "label": "DC Earthing Length (m)"
+  },
+  {
+   "fieldname": "ac_earthing_length_m",
+   "fieldtype": "Float",
+   "label": "AC Earthing Length (m)"
+  },
+  {
+   "fieldname": "ac_connection_type",
+   "fieldtype": "Data",
+   "label": "AC Connection Type"
+  },
+  {
+   "fieldname": "cb_report_earthing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "space_for_la",
+   "fieldtype": "Select",
+   "label": "Space for LA",
+   "options": "\nAvailable\nNot Available"
+  },
+  {
+   "fieldname": "dc_earthing_ground",
+   "fieldtype": "Select",
+   "label": "DC Earthing - Ground Type",
+   "options": "\nSoil\nRock\nConcrete"
+  },
+  {
+   "fieldname": "ac_earthing_ground",
+   "fieldtype": "Select",
+   "label": "AC Earthing - Ground Type",
+   "options": "\nSoil\nRock\nConcrete"
+  },
+  {
+   "fieldname": "sb_report_supply",
+   "fieldtype": "Section Break",
+   "label": "Supply (HT / LT)"
+  },
+  {
+   "fieldname": "supply_type",
+   "fieldtype": "Select",
+   "label": "HT / LT",
+   "options": "\nHT\nLT"
+  },
+  {
+   "fieldname": "incomer",
+   "fieldtype": "Data",
+   "label": "Incomer",
+   "depends_on": "eval:doc.supply_type"
+  },
+  {
+   "fieldname": "common_panel_incomer",
+   "fieldtype": "Data",
+   "label": "Common Panel Incomer",
+   "depends_on": "eval:doc.supply_type"
+  },
+  {
+   "fieldname": "cb_report_supply",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dg_available",
+   "fieldtype": "Check",
+   "label": "DG Availability",
+   "depends_on": "eval:doc.supply_type"
+  },
+  {
+   "fieldname": "automatic_cos",
+   "fieldtype": "Check",
+   "label": "Automatic COS",
+   "depends_on": "eval:doc.supply_type"
+  },
+  {
+   "fieldname": "cable_duct_trench_tray",
+   "fieldtype": "Data",
+   "label": "Cable Duct / Trench / Tray",
+   "depends_on": "eval:doc.supply_type"
   },
   {
    "fieldname": "sb_3",
@@ -464,12 +811,6 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "capacity_applied_kw",
-   "fieldtype": "Float",
-   "label": "Capacity Applied (kW)",
-   "precision": 3
-  },
-  {
    "fieldname": "cb_19",
    "fieldtype": "Column Break"
   },
@@ -503,6 +844,61 @@
    "label": "Surveyor Remarks"
   },
   {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval",
+   "description": "The customer reviews and approves the details for the solar rooftop system design."
+  },
+  {
+   "fieldname": "customer_approved",
+   "fieldtype": "Check",
+   "label": "Customer Reviewed and Approved",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "customer_approval_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.customer_approved"
+  },
+  {
+   "fieldname": "customer_approval_date",
+   "fieldtype": "Date",
+   "label": "Customer Approval Date",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.customer_approved"
+  },
+  {
+   "fieldname": "approval_note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "engineer_name",
+   "fieldtype": "Link",
+   "label": "Project Engineer / Coordinator",
+   "options": "User",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "engineer_approval_date",
+   "fieldtype": "Date",
+   "label": "Engineer Date",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "signed_report",
+   "fieldtype": "Attach",
+   "label": "Signed Report (scan or photo)",
+   "allow_on_submit": 1
+  },
+  {
    "fieldname": "sb_21",
    "fieldtype": "Section Break",
    "label": "Photographs"
@@ -516,7 +912,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-08 10:00:00.000000",
+ "modified": "2026-10-16 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

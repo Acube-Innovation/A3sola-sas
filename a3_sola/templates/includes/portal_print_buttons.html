@@ -1,0 +1,7 @@
+{#- A record's printed document in its page head - view it in the browser, or download it -
+    as icon buttons named by their tooltip. Context: print_buttons [{label, url, icon}]. -#}
+{%- for b in print_buttons or [] %}
+<a class="a3s-square-btn" href="{{ b.url | e }}"{% if b.icon == "eye" %} target="_blank" rel="noopener"{% endif %} title="{{ b.label | e }}" aria-label="{{ b.label | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ b.icon }}"></use></svg>
+</a>
+{%- endfor %}

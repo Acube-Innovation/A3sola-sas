@@ -87,6 +87,7 @@ class SolarDesignEstimate(Document):
 		self.compute_batteries()
 		self.validate_priced_equipment()
 		self.compute_balance_of_system()
+		self.no_dcdb_for_microinverter()
 		self.price_equipment()
 		self.compute_options()
 		self.compute_generation_and_savings()
@@ -290,7 +291,7 @@ class SolarDesignEstimate(Document):
 			self.subsidy_scheme = None
 		if not (self.lead or self.solar_consumer):
 			frappe.throw(
-				_("Select a Lead or a Solar Consumer for this estimate."),
+				_("Select a Lead or a Customer for this estimate."),
 				frappe.MandatoryError,
 				title=_("Nothing to Estimate For"),
 			)
@@ -715,7 +716,7 @@ class SolarDesignEstimate(Document):
 				)
 			return
 
-		basis = f"{package}|{inverter.inverter_phase or ''}"
+		basis = f"{package}|{inverter.inverter_phase or ''}{self.micro_basis()}"
 		if basis == self.bos_basis and self.get("bos_items"):
 			return
 		self.bos_package = package
@@ -735,12 +736,29 @@ class SolarDesignEstimate(Document):
 				},
 			)
 
+	def micro_basis(self):
+		"""Part of the BOS basis: a switch between a string and a micro inverter refills the
+		balance of system, so a string design gets back the DCDB a micro one goes without."""
+		from a3_sola.api.microinverter import uses_microinverter
+
+		return "|micro" if uses_microinverter(self) else ""
+
+	def no_dcdb_for_microinverter(self):
+		"""A micro-inverter design has no DCDB: its count is 0, whatever the package says."""
+		from a3_sola.api.microinverter import is_dcdb, uses_microinverter
+
+		if not uses_microinverter(self):
+			return
+		for row in self.get("bos_items") or []:
+			if is_dcdb(row.item):
+				row.numbers = 0
+
 	def fill_bos_from_solar_package(self, inverter):
 		"""The solar package's default balance-of-system parts, one per type, as BOS rows.
 
 		Refilled, like the BOS package, only when its basis changes, so edits survive saves.
 		"""
-		basis = f"solar-package:{self.solar_package}|{inverter.inverter_phase or ''}"
+		basis = f"solar-package:{self.solar_package}|{inverter.inverter_phase or ''}{self.micro_basis()}"
 		if basis == self.bos_basis and self.get("bos_items"):
 			return
 		options = frappe.get_meta("Design Estimate BOS Item").get_field("item").options or ""
@@ -1421,14 +1439,14 @@ class SolarDesignEstimate(Document):
 			need = kseb_code(required_tariff) or _normalise_tariff(required_tariff)
 			if have != need:
 				problems.append(
-					_("Subsidy is only for {0} customers; this consumer's tariff is {1}.").format(
+					_("Subsidy is only for {0} customers; this customer's tariff is {1}.").format(
 						frappe.bold(required_tariff), frappe.bold(tariff)
 					)
 				)
 		elif self.solar_consumer and not self.flags.in_test:
 			# Not yet recorded is not the same as wrong; say so without blocking the save.
 			frappe.msgprint(
-				_("Consumer {0} has no tariff category recorded; subsidy needs {1}.").format(
+				_("Customer {0} has no tariff category recorded; subsidy needs {1}.").format(
 					frappe.bold(self.solar_consumer), frappe.bold(required_tariff)
 				),
 				title=_("Subsidy Conditions"),

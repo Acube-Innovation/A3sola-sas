@@ -18,6 +18,11 @@ from a3_sola.api import kyc, record_links
 from a3_sola.api.permissions import assert_same_company
 
 IFSC_PATTERN = re.compile(r"^[A-Z]{4}0[A-Z0-9]{6}$")
+PIN_PATTERN = re.compile(r"^[1-9][0-9]{5}$")
+
+#: The parts of an address, each held twice on the consumer: `site_<part>` and `permanent_<part>`.
+ADDRESS_PREFIXES = ("site", "permanent")
+ADDRESS_PARTS = ("address_line1", "address_line2", "city", "district", "state", "pincode")
 
 LINKS = (
 	("customer", "Customer"),
@@ -32,7 +37,9 @@ class SolarConsumer(Document):
 		set_name(self, "consumer_series_prefix", ".YYYY.-.#####", fallback="SOL-CON")
 
 	def validate(self):
+		self.ensure_lead()
 		record_links.fill_consumer(self)
+		self.set_addresses()
 		kyc.stamp(self)
 		assert_same_company(self, LINKS)
 		self.validate_consumer_number_unique()
@@ -43,6 +50,79 @@ class SolarConsumer(Document):
 
 	def on_update(self):
 		record_links.consumer_saved(self)
+
+	def ensure_lead(self):
+		"""Every customer hangs off a lead - its installation is opened from it - but the lead
+		is not asked for. A customer entered without one is given one: an open lead of the
+		same company with the same mobile or email, else a new lead from the customer's own
+		details."""
+		if self.lead:
+			return
+		self.lead = open_lead_of(self) or make_lead_for(self)
+
+	def set_addresses(self):
+		"""The installation site is typed on the consumer, part by part. The permanent
+		address is the same place unless the consumer says it is not, and is then asked for
+		in full - it is what the agreement recites as where the consumer resides.
+
+		Each is also kept whole (`installation_site_address`, `permanent_address`), one part
+		to a line, which is what documents print.
+		"""
+		if self.installation_address and not self.site_address_line1:
+			# Given an Address record instead (the desk, the starter data): its parts.
+			for part, value in address_parts(self.installation_address).items():
+				if value and not self.get(f"site_{part}"):
+					self.set(f"site_{part}", value)
+		for prefix in ADDRESS_PREFIXES:
+			if prefix == "permanent" and self.permanent_address_same != "No":
+				continue
+			self.validate_address_parts(prefix)
+		self.installation_site_address = self.compose_address("site")
+		if self.permanent_address_same != "No":
+			self.permanent_address_same = "Yes"
+			for part in ADDRESS_PARTS:
+				self.set(f"permanent_{part}", self.get(f"site_{part}"))
+		self.permanent_address = self.compose_address("permanent")
+
+	def validate_address_parts(self, prefix):
+		label = _("Installation site") if prefix == "site" else _("Permanent address")
+		if prefix == "permanent":
+			# The desk's mandatory_depends_on is not checked on the server, so it is here.
+			missing = [
+				_(self.meta.get_label(f"permanent_{part}"))
+				for part in ADDRESS_PARTS
+				if part != "address_line2" and not (self.get(f"permanent_{part}") or "").strip()
+			]
+			if missing:
+				frappe.throw(
+					_("Permanent address: enter the {0}, or answer Yes if it is the installation site.").format(
+						", ".join(missing)
+					),
+					title=_("Permanent Address Missing"),
+				)
+		pincode = (self.get(f"{prefix}_pincode") or "").strip()
+		if pincode:
+			if not PIN_PATTERN.match(pincode):
+				frappe.throw(_("{0}: PIN code {1} is not valid. Expected six digits.").format(label, frappe.bold(pincode)))
+			self.set(f"{prefix}_pincode", pincode)
+		district, state = self.get(f"{prefix}_district"), self.get(f"{prefix}_state")
+		if district:
+			district_state = frappe.db.get_value("Indian District", district, "state")
+			if not state:
+				self.set(f"{prefix}_state", district_state)
+			elif district_state and district_state != state:
+				frappe.throw(_("{0}: district {1} is not in {2}.").format(label, frappe.bold(district), frappe.bold(state)))
+
+	def compose_address(self, prefix):
+		"""The address one part to a line: house, street, place, then district, state and PIN."""
+		district = self.get(f"{prefix}_district")
+		district_name = frappe.db.get_value("Indian District", district, "district_name") if district else None
+		last = ", ".join(p for p in (district_name, self.get(f"{prefix}_state")) if p)
+		pincode = self.get(f"{prefix}_pincode")
+		if pincode:
+			last = f"{last} - {pincode}" if last else pincode
+		lines = [self.get(f"{prefix}_address_line1"), self.get(f"{prefix}_address_line2"), self.get(f"{prefix}_city"), last]
+		return ",\n".join(str(p).strip() for p in lines if p and str(p).strip()) or None
 
 	def validate_consumer_number_unique(self):
 		"""A consumer number is unique per DISCOM. Point at the existing record, don't just refuse."""
@@ -114,7 +194,7 @@ class SolarConsumer(Document):
 			and self.bank_account_holder_name.strip().lower() != self.consumer_name.strip().lower()
 		):
 			frappe.msgprint(
-				_("Bank account holder {0} differs from the consumer name {1}. A mismatch is the most common cause of a failed Direct Benefit Transfer — confirm it is intended.").format(
+				_("Bank account holder {0} differs from the customer name {1}. A mismatch is the most common cause of a failed Direct Benefit Transfer — confirm it is intended.").format(
 					frappe.bold(self.bank_account_holder_name), frappe.bold(self.consumer_name)
 				),
 				title=_("Check Bank Details"),
@@ -130,6 +210,64 @@ class SolarConsumer(Document):
 			# never walk the status backwards on a re-submit
 			return
 		self.db_set("status", status, update_modified=False)
+
+
+def open_lead_of(doc):
+	"""A lead of the customer's company with its mobile or email that no customer has yet."""
+	for field in ("mobile_no", "email_id"):
+		value = (doc.get(field) or "").strip()
+		if not value:
+			continue
+		name = frappe.db.get_value(
+			"Lead", {field: value, "company": doc.company, "solar_consumer": ["is", "not set"]}, "name"
+		)
+		if name:
+			return name
+	return None
+
+
+#: The lead's field for each customer field it is made from.
+LEAD_FROM_CUSTOMER = {
+	"lead_name": "consumer_name", "company": "company", "mobile_no": "mobile_no", "email_id": "email_id",
+	"consumer_category": "consumer_category", "discom": "discom", "discom_section": "discom_section",
+	"consumer_number": "consumer_number", "connection_type": "connection_type", "roof_type": "roof_type",
+	"city": "site_city", "state": "site_state", "district": "site_district",
+}
+
+
+def make_lead_for(doc):
+	"""A new lead made from a customer entered without one, so the job has its enquiry."""
+	meta = frappe.get_meta("Lead")
+	values = {
+		lead_field: doc.get(field) for lead_field, field in LEAD_FROM_CUSTOMER.items()
+		if doc.get(field) and (lead_field == "lead_name" or meta.get_field(lead_field))
+	}
+	# ERPNext refuses a second lead with an email another lead already has.
+	if values.get("email_id") and frappe.db.exists("Lead", {"email_id": values["email_id"]}):
+		values.pop("email_id")
+	lead = frappe.get_doc({"doctype": "Lead", **values})
+	lead.flags.ignore_permissions = True
+	lead.insert()
+	return lead.name
+
+
+def address_parts(address):
+	"""An ERPNext Address as the consumer's address parts, {part: value}. Its county, else
+	its city, is taken as the district when the state has a district of that name."""
+	row = frappe.db.get_value(
+		"Address", address, ["address_line1", "address_line2", "city", "county", "state", "pincode"], as_dict=True
+	)
+	if not row:
+		return {}
+	state = row.state if row.state and frappe.db.exists("Indian State", row.state) else None
+	district = None
+	for place in (row.county, row.city):
+		name = place and state and f"{place}, {state}"
+		if name and frappe.db.exists("Indian District", name):
+			district = name
+			break
+	return {"address_line1": row.address_line1, "address_line2": row.address_line2, "city": row.city,
+		"district": district, "state": state, "pincode": (row.pincode or "").replace(" ", "") or None}
 
 
 # ------------------------------------------------------------------ the ERPNext Customer

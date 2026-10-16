@@ -117,7 +117,7 @@ class SolarProposal(Document):
 				self.lead = frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
 		if not (self.lead or self.solar_consumer):
 			frappe.throw(
-				_("Select a Lead or a Solar Consumer for this proposal."),
+				_("Select a Lead or a Customer for this proposal."),
 				frappe.MandatoryError,
 				title=_("Nothing to Propose For"),
 			)
@@ -134,7 +134,7 @@ class SolarProposal(Document):
 		if self.site_survey and self.solar_consumer:
 			survey_consumer = frappe.db.get_value("Site Survey", self.site_survey, "solar_consumer")
 			if survey_consumer and survey_consumer != self.solar_consumer:
-				frappe.throw(_("Site survey {0} is of another consumer.").format(self.site_survey))
+				frappe.throw(_("Site survey {0} is of another customer.").format(self.site_survey))
 		for fieldname in SITE_FIELDS:
 			if fieldname in values:
 				self.set(fieldname, values.get(fieldname))

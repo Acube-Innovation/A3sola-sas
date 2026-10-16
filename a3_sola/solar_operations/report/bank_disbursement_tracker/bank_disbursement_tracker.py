@@ -22,7 +22,7 @@ def get_columns(filters):
 		{"label": _("Loan"), "fieldname": "name", "fieldtype": "Link", "options": "Loan Application", "width": 150},
 		{"label": _("Lender"), "fieldname": "lender", "fieldtype": "Data", "width": 140},
 		{"label": _("Branch"), "fieldname": "lender_branch", "fieldtype": "Data", "width": 150},
-		{"label": _("Consumer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
+		{"label": _("Customer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
 		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 150},
 		{"label": _("Sanctioned"), "fieldname": "sanctioned_amount", "fieldtype": "Currency", "width": 130},
 		{"label": _("Disbursed"), "fieldname": "total_disbursed", "fieldtype": "Currency", "width": 130},

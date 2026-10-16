@@ -7,11 +7,16 @@
 {%- from "templates/includes/print_frame.html" import page -%}
 {#- Five component rows fit under 3.1; four when 3.1 carries the backup rows (Hybrid, Off-Grid). -#}
 {%- set FIRST_PAGE_ROWS = 4 if summary.rows | length > 7 else 5 -%}
+{#- A row with `span` heads a group (the options' inverters): its Sl. No. and item cover the
+    `spanned` rows after it, and the group counts as one item. -#}
 {%- macro component_rows(rows, start) -%}
+	{%- set n = namespace(no=start - 1) -%}
 	{%- for r in rows %}
 	<tr>
-		<td class="c">{{ start + loop.index0 }}</td>
-		<td class="a3s3-item">{{ r.item }}</td>
+		{%- if not r.spanned %}{% set n.no = n.no + 1 %}
+		<td class="c"{% if r.span %} rowspan="{{ r.span }}"{% endif %}>{{ n.no }}</td>
+		<td class="a3s3-item"{% if r.span %} rowspan="{{ r.span }}"{% endif %}>{{ r.item }}</td>
+		{%- endif %}
 		{%- if r.make is none %}
 		<td colspan="2">{{ r.spec or "—" }}</td>
 		{%- else %}
@@ -22,11 +27,18 @@
 	</tr>
 	{%- endfor %}
 {%- endmacro -%}
+{%- macro component_notes() -%}
+	{%- for note in components.notes or [] %}<p class="a3s3-note">{{ note }}</p>{% endfor %}
+{%- endmacro -%}
 {%- macro component_cols() -%}
 <colgroup><col style="width: 7%"><col style="width: 20%"><col style="width: 36%"><col style="width: 21%"><col style="width: 16%"></colgroup>
 {%- endmacro -%}
-{%- set first = components.rows[:FIRST_PAGE_ROWS] -%}
-{%- set rest = components.rows[FIRST_PAGE_ROWS:] -%}
+{#- The page break never falls inside a group of spanned rows. -#}
+{%- set cut = namespace(at=FIRST_PAGE_ROWS) -%}
+{%- for r in components.rows[FIRST_PAGE_ROWS:] %}{% if r.spanned and cut.at == FIRST_PAGE_ROWS + loop.index0 %}{% set cut.at = cut.at + 1 %}{% endif %}{% endfor -%}
+{%- set first = components.rows[:cut.at] -%}
+{%- set rest = components.rows[cut.at:] -%}
+{%- set first_items = first | rejectattr("spanned") | list | length -%}
 {% call page(letter, "a3s3") %}
 	<h2>3.&nbsp; Proposed Solar Energy Solution</h2>
 	<h3>3.1.&nbsp; <u>Executive Summary</u></h3>
@@ -44,6 +56,7 @@
 		<tr><th>Sl.<br>No.</th><th>Item<br>Description</th><th>Specification</th><th>Make</th><th>Nos.</th></tr>
 		{{ component_rows(first, 1) }}
 	</table>
+	{%- if not rest %}{{ component_notes() }}{% endif %}
 	{%- endif %}
 {% endcall %}
 {%- if rest %}
@@ -51,11 +64,13 @@
 {% call page(letter, "a3s3") %}
 	<table class="a3s3-table a3s3-components">
 		{{ component_cols() }}
-		{{ component_rows(rest, FIRST_PAGE_ROWS + 1) }}
+		{{ component_rows(rest, first_items + 1) }}
 	</table>
+	{{ component_notes() }}
 {% endcall %}
 {%- endif %}
 <style>
+	.a3s3 .a3s3-note { margin: 6pt 0 0; font-size: 12pt; font-style: italic; }
 	.a3s3 .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 15pt; line-height: 1.3; }
 	.a3s3 h2 { margin: 0 0 6pt; font-family: inherit; font-size: 17pt; font-weight: 700; color: #1f1f1f; }
 	.a3s3 h3 { margin: 0 0 6pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }

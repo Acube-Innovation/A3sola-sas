@@ -1,0 +1,257 @@
+# Copyright (c) 2026, Acube Innovations and contributors
+# For license information, please see license.txt
+"""The Design Freeze task: the job's design, settled on one page.
+
+Nothing about installation is asked here. The page shows what the design was sold on - the
+job's quotations - and what it rests on: the site survey (changeable, with its photographs),
+the structure BOM and the material BOM (each changeable, with its lines), and the design's
+own images. They are kept on the job (Solar Installation.site_survey, .structure_bom,
+.material_bom, .design_images) and stay changeable after the freeze.
+
+Structure and material procurement read the job's BOMs (api/structure_bom), so a change here
+reaches them: a procurement task still in draft is re-pointed and its list refilled; one
+already submitted is the record of what was bought and is left alone.
+"""
+
+import frappe
+from frappe import _
+from frappe.utils import fmt_money, today
+from frappe.utils.file_manager import get_max_file_size
+
+from a3_sola.api import stages, structure_bom
+from a3_sola.api.stages import _get_stage
+
+DESIGN_TASK = "DSGN"
+INSTALLATION = "Solar Installation"
+
+
+def is_design_task(code):
+	return code == DESIGN_TASK
+
+
+def _job(installation, ptype):
+	doc = frappe.get_doc(INSTALLATION, installation, for_update=ptype == "write")
+	doc.check_permission(ptype)
+	_get_stage(doc, DESIGN_TASK)
+	return doc
+
+
+def _quotations(inst):
+	"""Every quotation of the job's customer, estimate or proposal - the job's own first."""
+	names = {inst.quotation} if inst.get("quotation") else set()
+	for field, value in (("solar_consumer", inst.get("solar_consumer")),
+			("solar_design_estimate", inst.get("solar_design_estimate")), ("solar_proposal", inst.get("solar_proposal"))):
+		if value:
+			names |= set(frappe.get_all("Quotation", filters={field: value, "docstatus": ["<", 2]}, pluck="name"))
+	rows = frappe.get_all("Quotation", filters={"name": ["in", list(names) or [""]]},
+		fields=["name", "status", "transaction_date", "grand_total", "currency", "selected_option", "docstatus"],
+		order_by="transaction_date desc, creation desc")
+	out = [{
+		"name": q.name, "status": q.status, "date": frappe.utils.format_date(q.transaction_date, "d MMM yyyy"),
+		"total": fmt_money(q.grand_total, currency=q.currency or "INR"), "option": q.selected_option or "",
+		"is_job": q.name == inst.get("quotation"),
+		"route": "/a3solaportal/quotations/{0}".format(frappe.utils.quote(q.name)),
+	} for q in rows]
+	return sorted(out, key=lambda q: not q["is_job"])
+
+
+def _survey(inst):
+	"""Every site survey of the job's customer or its lead, as the quotations are listed -
+	the job's own first, each opening the survey - with the job's survey's photographs."""
+	name = inst.get("site_survey")
+	filters = [["solar_consumer", "=", inst.solar_consumer]] if inst.get("solar_consumer") else []
+	or_filters = filters + ([["lead", "=", inst.lead]] if inst.get("lead") else [])
+	rows = frappe.get_all("Site Survey", filters={"docstatus": ["<", 2]}, or_filters=or_filters,
+		fields=["name", "survey_date", "feasibility_status", "capacity_installable_kw", "docstatus"],
+		order_by="creation desc") if or_filters else []
+	if name and name not in {r.name for r in rows}:
+		rows.insert(0, frappe.db.get_value("Site Survey", name, ["name", "survey_date", "feasibility_status",
+			"capacity_installable_kw", "docstatus"], as_dict=True))
+	images = frappe.get_all("Survey Image", filters={"parent": name, "parenttype": "Site Survey"},
+		fields=["image", "caption"], order_by="idx asc") if name else []
+	surveys = [{
+		"name": r.name, "is_job": r.name == name,
+		"date": frappe.utils.format_date(r.survey_date, "d MMM yyyy") if r.survey_date else "",
+		"feasibility": r.feasibility_status or "",
+		"capacity": "{0:g} kW".format(r.capacity_installable_kw) if r.capacity_installable_kw else "",
+		"status": _("Draft") if r.docstatus == 0 else _("Submitted"),
+		"route": "/a3solaportal/site-surveys/{0}".format(frappe.utils.quote(r.name)),
+	} for r in rows if r]
+	return {
+		"name": name or "",
+		"surveys": sorted(surveys, key=lambda r: not r["is_job"]),
+		"images": [{"url": i.image, "caption": i.caption or ""} for i in images if i.image],
+		# None on file: a survey is made from the customer, as the chain makes it.
+		"create_route": "/a3solaportal/site-surveys/new?source_dt=Solar+Consumer&source={0}".format(
+			frappe.utils.quote(inst.solar_consumer)) if inst.get("solar_consumer") else "",
+	}
+
+
+def _sld(inst):
+	"""The single line diagram, filed under this task's documents; it goes to the electrical
+	contractor with the Installation work order (api/work_order_print)."""
+	from a3_sola.api.work_order_print import SLD, sld_for
+
+	url, row = sld_for(inst)
+	return {"url": url or "", "row": row or "", "name": SLD}
+
+
+def _bom(value, choices, inst=None):
+	return {"value": value or "", "choices": choices, "lines": structure_bom.bom_items(value, inst)["lines"] if value else []}
+
+
+def _procurement(inst):
+	"""The procurement tasks that read the job's BOMs, and where each stands."""
+	out = []
+	for code in structure_bom.MATERIAL_LISTS:
+		row = next((r for r in inst.stages if r.stage_code == code), None)
+		if not row:
+			continue
+		doc = frappe.db.get_value("Installation Task", {"solar_installation": inst.name, "task_code": code,
+			"docstatus": ["<", 2]}, ["name", "docstatus"], as_dict=True, order_by="creation desc")
+		out.append({"code": code, "name": row.stage_name, "status": row.status,
+			"document": doc.name if doc else "", "locked": bool(doc and doc.docstatus == 1)})
+	return out
+
+
+@frappe.whitelist()
+def state(installation):
+	"""Everything the Design Freeze page shows."""
+	inst = _job(installation, "read")
+	row = _get_stage(inst, DESIGN_TASK)
+	editable = bool(inst.has_permission("write")) and row.status != "Skipped"
+	return {
+		"task": {"code": row.stage_code, "name": row.stage_name, "status": row.status,
+			"completed_on": frappe.utils.format_date(row.actual_completion_date, "d MMM yyyy") if row.status == "Completed" and row.actual_completion_date else "",
+			"completed_by": frappe.db.get_value("User", row.completed_by, "full_name") or row.completed_by or "" if row.status == "Completed" else ""},
+		"quotations": _quotations(inst),
+		"survey": _survey(inst),
+		"structure_bom": _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else []),
+		"material_bom": _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst),
+		"frozen": {"structure_bom": inst.get("structure_bom") or "", "material_bom": inst.get("material_bom") or ""},
+		"images": [{"row": i.name, "url": i.image, "caption": i.caption or ""} for i in inst.get("design_images") or [] if i.image],
+		"sld": _sld(inst),
+		"procurement": _procurement(inst),
+		"can_edit": editable,
+		"can_freeze": editable and row.status not in ("Completed", "Skipped"),
+		"max_file_mb": get_max_file_size() // (1024 * 1024),
+	}
+
+
+def _check_bom(bom):
+	if bom and not frappe.db.exists("BOM", {"name": bom, "docstatus": 1, "is_active": 1}):
+		frappe.throw(_("{0} is not an active, submitted BOM.").format(bom), frappe.ValidationError)
+
+
+def _save_job(inst, message):
+	# The design fields change after submit; the engine's own rows are untouched here.
+	inst.flags.ignore_validate_update_after_submit = True
+	inst.save(ignore_permissions=True)
+	if message:
+		inst.add_comment("Comment", message)
+
+
+def refresh_procurement(inst):
+	"""Draft procurement tasks follow the job's BOMs: re-pointed, and their lists refilled from
+	the new BOM. A submitted one is what was bought and stays. Returns the tasks updated."""
+	updated = []
+	for code, (_table, field) in structure_bom.MATERIAL_LISTS.items():
+		wanted = structure_bom.bom_for(inst) if code == "SPROC" else structure_bom.material_bom_for(inst)
+		for name in frappe.get_all("Installation Task", filters={"solar_installation": inst.name, "task_code": code,
+				"docstatus": 0}, pluck="name"):
+			task = frappe.get_doc("Installation Task", name)
+			if not wanted or task.get(field) == wanted:
+				continue
+			task.set(field, wanted)
+			structure_bom.fill_materials(task)
+			task.flags.ignore_permissions = True
+			task.save()
+			updated.append(name)
+	return updated
+
+
+@frappe.whitelist(methods=["POST"])
+def save(installation, site_survey=None, structure_bom_name=None, material_bom=None):
+	"""Change the job's site survey or either BOM; the draft procurement tasks follow."""
+	inst = _job(installation, "write")
+	changes = []
+	if site_survey is not None and site_survey != (inst.site_survey or ""):
+		owner = frappe.db.get_value("Site Survey", site_survey, ["solar_consumer", "lead"], as_dict=True) if site_survey else None
+		if site_survey and not (owner and ((owner.solar_consumer and owner.solar_consumer == inst.solar_consumer)
+				or (owner.lead and owner.lead == inst.get("lead")))):
+			frappe.throw(_("Site survey {0} is of another customer.").format(site_survey), frappe.ValidationError)
+		inst.site_survey = site_survey or None
+		survey = frappe.db.get_value("Site Survey", site_survey, ["roof_type", "total_usable_area_sqft",
+			"structure_type_required", "capacity_installable_kw"], as_dict=True) if site_survey else frappe._dict()
+		inst.survey_roof_type = survey.get("roof_type")
+		inst.survey_usable_area_sqft = survey.get("total_usable_area_sqft")
+		inst.survey_structure_type = survey.get("structure_type_required")
+		inst.survey_installable_kw = survey.get("capacity_installable_kw")
+		changes.append(_("site survey {0}").format(site_survey or _("cleared")))
+	for field, value, label in (("structure_bom", structure_bom_name, _("structure BOM")),
+			("material_bom", material_bom, _("material BOM"))):
+		if value is None or value == (inst.get(field) or ""):
+			continue
+		_check_bom(value)
+		inst.set(field, value or None)
+		changes.append(_("{0} {1}").format(label, value or _("cleared")))
+	if changes:
+		_save_job(inst, _("Design changed: {0}.").format(", ".join(changes)))
+	updated = refresh_procurement(inst) if changes else []
+	out = state(installation)
+	out["updated_tasks"] = updated
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+def add_image(installation, caption=None):
+	"""Add each posted image to the job's design images."""
+	inst = _job(installation, "write")
+	uploads = frappe.request.files.getlist("file") if frappe.request and frappe.request.files else []
+	if not uploads:
+		frappe.throw(_("No file was sent."), frappe.ValidationError)
+	limit = get_max_file_size()
+	for upload in uploads:
+		content = upload.stream.read()
+		if len(content) > limit:
+			frappe.throw(_("{0} is larger than {1} MB.").format(upload.filename, limit // (1024 * 1024)), frappe.ValidationError)
+		file = frappe.get_doc({"doctype": "File", "file_name": upload.filename, "content": content, "is_private": 1,
+			"attached_to_doctype": INSTALLATION, "attached_to_name": inst.name}).insert(ignore_permissions=True)
+		inst.append("design_images", {"image": file.file_url, "caption": (caption or "").strip() or None})
+	_save_job(inst, None)
+	return state(installation)
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_image(installation, row):
+	inst = _job(installation, "write")
+	if not any(i.name == row for i in inst.get("design_images") or []):
+		frappe.throw(_("That image is not on this job."), frappe.ValidationError)
+	inst.set("design_images", [i for i in inst.design_images if i.name != row])
+	_save_job(inst, None)
+	return state(installation)
+
+
+@frappe.whitelist(methods=["POST"])
+def freeze(installation):
+	"""Freeze the design: the BOMs in use are written onto the job and the task is done."""
+	inst = _job(installation, "write")
+	row = _get_stage(inst, DESIGN_TASK)
+	if row.status in ("Completed", "Skipped"):
+		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
+	structure, material = structure_bom.bom_for(inst), structure_bom.material_bom_for(inst)
+	missing = [label for label, value in ((_("structure BOM"), structure), (_("material BOM"), material)) if not value]
+	if missing:
+		frappe.throw(_("Choose the {0} before freezing the design.").format(_(" and ").join(missing)), title=_("BOM Needed"))
+	inst.structure_bom, inst.material_bom = structure, material
+	row.status = "Completed"
+	row.actual_completion_date = today()
+	row.actual_start_date = row.actual_start_date or row.actual_completion_date
+	row.completed_by = frappe.session.user
+	stages._save(inst, _("{0}: design frozen by {1} - structure BOM {2}, material BOM {3}.").format(
+		row.stage_name, frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, structure, material))
+	refresh_procurement(inst)
+	from a3_sola.api.tasks import notify_task_completed
+
+	notify_task_completed(inst, DESIGN_TASK)
+	return state(installation)

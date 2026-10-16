@@ -4,8 +4,8 @@
 
 The bill, the PAN, both faces of the Aadhaar, a bank proof, the pre-installation photograph
 and - when the loan is big enough to make the bank ask - an income tax return or a land tax
-receipt. They live on the Solar Consumer, because a consumer is KYC'd once; the sales order
-fetches and shows them, and the job registers them under its first task.
+receipt. A document uploaded on the lead or on the customer counts for both - the customer is
+KYC'd once, wherever the papers were collected - and the job's order task shows them live.
 
 Aadhaar numbers are personal data with a law behind them. Only the last four digits are kept.
 """
@@ -29,9 +29,99 @@ REQUIRED_FIELDS = (
 )
 
 
+CONSUMER = "Solar Consumer"
+LEAD = "Lead"
+
+
+def required_documents(loan_amount=0):
+	"""The KYC documents asked for, as (label, document types any one of which will do)."""
+	items = [(kind, (kind,)) for kind in REQUIRED_ALWAYS]
+	items.append((_("Bank passbook or cancelled cheque"), BANK_PROOF))
+	threshold = get_float("kyc_itr_threshold_amount") or 200000
+	if flt(loan_amount) > threshold:
+		items.append((_("Income tax return or land tax receipt"), LOAN_PROOF))
+	return items
+
+
+def pair(doctype, name):
+	"""(customer, lead) for a customer or a lead: each names the other once both exist."""
+	if doctype == CONSUMER:
+		return name, frappe.db.get_value(CONSUMER, name, "lead")
+	if doctype == LEAD:
+		return frappe.db.get_value(LEAD, name, "solar_consumer"), name
+	return None, None
+
+
+def files_by_type(consumer=None, lead=None):
+	"""Every typed file of the customer and of its lead, {document type: [file url]} - a
+	paper uploaded on either counts for both - with the customer's KYC rows."""
+	by_type = {}
+
+	def add(kind, url):
+		if kind and url and url not in by_type.get(kind, []):
+			by_type.setdefault(kind, []).append(url)
+
+	for doctype, name in ((CONSUMER, consumer), (LEAD, lead)):
+		if not name:
+			continue
+		for f in frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name,
+				"is_folder": 0, "a3s_document_type": ["is", "set"]}, fields=["file_url", "a3s_document_type"],
+				order_by="creation asc"):
+			add(f.a3s_document_type, f.file_url)
+	if consumer:
+		for r in frappe.get_all("Customer KYC Document", filters={"parent": consumer, "parenttype": CONSUMER},
+				fields=["kyc_type", "attachment"], order_by="idx asc"):
+			add(r.kyc_type, r.attachment)
+	return by_type
+
+
+def documents(consumer=None, lead=None, loan_amount=0):
+	"""Each KYC document asked for, with its files, and how many of them are in."""
+	have = files_by_type(consumer, lead)
+	cheque = frappe.db.get_value(CONSUMER, consumer, "cancelled_cheque") if consumer else None
+	if cheque:
+		have.setdefault("Cancelled Cheque", []).append(cheque)
+	items = []
+	for label, kinds in required_documents(loan_amount):
+		files = [{"type": kind, "url": url} for kind in kinds for url in have.get(kind, [])]
+		items.append({"label": str(label), "types": list(kinds), "files": files, "uploaded": bool(files)})
+	done = sum(1 for i in items if i["uploaded"])
+	return {"items": items, "uploaded": done, "total": len(items), "pending": len(items) - done}
+
+
+@frappe.whitelist()
+def summary(doctype, name):
+	"""The KYC panel of a lead's or a customer's page: what is in, what is pending, and where
+	an upload from that page goes."""
+	if doctype not in (CONSUMER, LEAD) or not frappe.db.exists(doctype, name):
+		raise frappe.DoesNotExistError(_("That record does not exist."))
+	frappe.has_permission(doctype, "read", name, throw=True)
+	consumer, lead = pair(doctype, name)
+	out = documents(consumer, lead, loan_amount_for(consumer=consumer) if consumer else 0)
+	out.update(doctype=doctype, name=name, can_upload=bool(frappe.has_permission(doctype, "write", name)))
+	return out
+
+
+def refresh(consumer):
+	"""Re-derive a customer's stored KYC status after a file came or went on it or its lead,
+	without saving the customer; its jobs show the status too."""
+	if not consumer or not frappe.db.exists(CONSUMER, consumer):
+		return
+	doc = frappe.get_doc(CONSUMER, consumer)
+	result = status(doc, loan_amount_for(consumer=consumer))
+	kyc_status = "Complete" if result["complete"] else "Incomplete"
+	doc.db_set({"kyc_status": kyc_status, "kyc_missing": ", ".join(str(m) for m in result["missing"]) or None},
+		update_modified=False)
+	for job in frappe.get_all("Solar Installation", filters={"solar_consumer": consumer, "docstatus": ["<", 2]}, pluck="name"):
+		frappe.db.set_value("Solar Installation", job, "consumer_kyc_status", kyc_status, update_modified=False)
+
+
 def status(consumer, loan_amount=0):
-	"""What a consumer has and what is still missing, for a given loan size."""
+	"""What a consumer has and what is still missing, for a given loan size. A paper uploaded
+	on the customer or its lead counts, as does a KYC row."""
 	held = {row.kyc_type for row in consumer.get("kyc_documents") or [] if row.attachment}
+	own = None if callable(getattr(consumer, "is_new", None)) and consumer.is_new() else consumer.get("name")
+	held |= set(files_by_type(own, consumer.get("lead")))
 	missing = [kind for kind in REQUIRED_ALWAYS if kind not in held]
 	if not (held & set(BANK_PROOF)) and not consumer.get("cancelled_cheque"):
 		missing.append(_("Bank passbook or cancelled cheque"))

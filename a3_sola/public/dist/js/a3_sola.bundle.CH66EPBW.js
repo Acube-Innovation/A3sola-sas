@@ -1,5 +1,7 @@
 (() => {
   var __defProp = Object.defineProperty;
+  var __defProps = Object.defineProperties;
+  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -15,6 +17,7 @@
       }
     return a;
   };
+  var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
   // ../a3_sola/a3_sola/public/js/lead_outreach.js
   frappe.ui.form.on("Lead", {
@@ -22,17 +25,7 @@
       if (frm.doc.__islocal)
         return;
       if (!frm.doc.solar_consumer && frm.doc.discom) {
-        frm.add_custom_button(__("Create Solar Consumer"), () => {
-          frappe.call({
-            method: "a3_sola.overrides.lead.create_solar_consumer",
-            args: { lead: frm.doc.name },
-            freeze: true,
-            callback(r) {
-              if (r.message)
-                frappe.set_route("Form", "Solar Consumer", r.message);
-            }
-          });
-        }, __("Solar"));
+        frm.add_custom_button(__("Create Customer"), () => consumer_address_dialog(frm), __("Solar"));
       }
       frm.add_custom_button(__("Log Outreach"), () => log_outreach(frm), __("Solar"));
       if (frm.doc.followup_status === "FOLLOW UP DUE") {
@@ -106,6 +99,74 @@
     });
     d.show();
   }
+  function consumer_address_dialog(frm) {
+    const different = 'eval:doc.permanent_address_same=="No"';
+    const parts = (prefix, when) => {
+      const reqd = when ? { depends_on: when, mandatory_depends_on: when } : { reqd: 1 };
+      const shown = when ? { depends_on: when } : {};
+      return [
+        __spreadValues({ fieldname: `${prefix}_address_line1`, fieldtype: "Data", label: __("House Name / Building No.") }, reqd),
+        __spreadValues({ fieldname: `${prefix}_address_line2`, fieldtype: "Data", label: __("Street / Area") }, shown),
+        __spreadValues({ fieldname: `${prefix}_city`, fieldtype: "Data", label: __("City / Town / Village") }, reqd),
+        { fieldtype: "Column Break" },
+        __spreadProps(__spreadValues({
+          fieldname: `${prefix}_state`,
+          fieldtype: "Link",
+          options: "Indian State",
+          label: __("State"),
+          default: "Kerala"
+        }, reqd), {
+          onchange: () => dialog.set_value(`${prefix}_district`, null)
+        }),
+        __spreadProps(__spreadValues({
+          fieldname: `${prefix}_district`,
+          fieldtype: "Link",
+          options: "Indian District",
+          label: __("District")
+        }, reqd), {
+          get_query: () => ({ filters: dialog.get_value(`${prefix}_state`) ? { state: dialog.get_value(`${prefix}_state`) } : {} })
+        }),
+        __spreadValues({ fieldname: `${prefix}_pincode`, fieldtype: "Data", label: __("PIN Code") }, reqd)
+      ];
+    };
+    const dialog = new frappe.ui.Dialog({
+      title: __("Customer Address"),
+      size: "large",
+      fields: [
+        { fieldtype: "Section Break", label: __("Installation Site Address") },
+        ...parts("site"),
+        { fieldtype: "Section Break", label: __("Permanent Address") },
+        {
+          fieldname: "permanent_address_same",
+          fieldtype: "Select",
+          label: __("Permanent Address Same as Installation Site?"),
+          options: "Yes\nNo",
+          default: "Yes",
+          reqd: 1
+        },
+        { fieldtype: "Section Break", depends_on: different },
+        ...parts("permanent", different)
+      ],
+      primary_action_label: __("Create"),
+      primary_action(values) {
+        frappe.call({
+          method: "a3_sola.overrides.lead.create_solar_consumer",
+          args: { lead: frm.doc.name, address: values },
+          freeze: true,
+          callback(r) {
+            dialog.hide();
+            if (r.message)
+              frappe.set_route("Form", "Solar Consumer", r.message);
+          }
+        });
+      }
+    });
+    dialog.set_values({ site_city: frm.doc.city, site_state: frm.doc.state || "Kerala" }).then(() => {
+      if (frm.doc.district)
+        dialog.set_value("site_district", frm.doc.district);
+    });
+    dialog.show();
+  }
 
   // ../a3_sola/a3_sola/public/js/audit_trail.js
   frappe.provide("a3_sola.audit");
@@ -149,4 +210,4 @@
     frm.add_custom_button(__("Audit Trail"), () => a3_sola.audit.show_trail(frm), group);
   };
 })();
-//# sourceMappingURL=a3_sola.bundle.CV7IPTPE.js.map
+//# sourceMappingURL=a3_sola.bundle.CH66EPBW.js.map

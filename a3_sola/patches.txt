@@ -147,3 +147,42 @@ a3_sola.patches.v1_2.task_allow_reimbursement
 
 # The bank loan pack: Digital Approval Letter task, Building Tax Receipt, RIM quotation.
 a3_sola.patches.v1_2.loan_pack_and_approval_task
+
+# The consumer's installation site and permanent address, typed on the consumer part by part.
+a3_sola.patches.v1_2.consumer_addresses
+
+# A job names its structure contractor and its electrical contractor.
+a3_sola.patches.v1_2.installation_contractors
+
+# A KYC paper uploaded on the lead counts for its customer.
+a3_sola.patches.v1_2.kyc_counts_lead_files
+
+# The work orders follow Material Dispatch, on the template and on running projects.
+a3_sola.patches.v1_2.work_orders_after_dispatch
+
+# The Data for Completion Report laid out as the client's sheet.
+a3_sola.patches.v1_2.completion_report_layout
+
+# Payments received by Renewcore or RIM Projects, each mapped to its own ledger.
+a3_sola.patches.v1_2.payment_receiving_firms
+
+# Each package names its payment terms (70% advance, 20% after installation, 10% after commissioning).
+a3_sola.patches.v1_2.package_payment_terms
+
+# Each procurement task says how its material reaches the site (vendor door or company godown).
+a3_sola.patches.v1_2.procurement_delivery_method
+
+# The Google Review is no longer a task; the Customer Review stays.
+a3_sola.patches.v1_2.remove_google_review_task
+
+# The customer pays in phases: Advance, Payment after Installation, Payment after Commissioning.
+a3_sola.patches.v1_2.payment_phases
+
+# The Digital Approval Letter task is "Jan Samarth", in the PM Surya Ghar column (loan jobs only).
+a3_sola.patches.v1_2.jan_samarth_task
+# A micro-inverter system has no DCDB: 0 on its packages, designs, projects and procurement lists.
+a3_sola.patches.v1_2.microinverter_no_dcdb
+# Each package's Optional Add-ons (extra panel, inverter warranty extension), for the proposal's 3.3.3.
+a3_sola.patches.v1_2.package_optional_add_ons
+# Serials to Electrical Contractor on its own page: unsent draft dispatch notices are unlinked.
+a3_sola.patches.v1_2.serials_task_page

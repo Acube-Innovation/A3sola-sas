@@ -62,7 +62,7 @@
   {
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "fetch_from": "solar_installation.solar_consumer",
    "read_only": 1
@@ -285,7 +285,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Portal Application",

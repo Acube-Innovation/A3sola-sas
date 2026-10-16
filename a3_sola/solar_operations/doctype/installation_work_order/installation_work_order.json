@@ -70,7 +70,7 @@
    "fetch_from": "solar_installation.solar_consumer",
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "read_only": 1
   },
@@ -190,10 +190,10 @@
    "options": "Work Order Crew"
   },
   {
-   "description": "The contractor this order is placed with, when it is not the company's own crew.",
+   "description": "The job's structure contractor for a Structure order, its electrical contractor otherwise - filled from the project when left blank. Choose another to place this order elsewhere.",
    "fieldname": "solar_contractor",
    "fieldtype": "Link",
-   "label": "Contractor",
+   "label": "Contractor (Structure / Electrical)",
    "options": "Solar Contractor"
   },
   {
@@ -331,7 +331,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 11:00:00.000000",
+ "modified": "2026-10-16 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Work Order",

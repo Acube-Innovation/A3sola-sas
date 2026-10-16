@@ -226,7 +226,9 @@ def _fill_schedule_1(doc, consumer):
 	if not consumer:
 		return
 	doc.consumer_name = doc.consumer_name or consumer.consumer_name
-	doc.permanent_address = doc.permanent_address or address_text(consumer.installation_address)
+	doc.permanent_address = (
+		doc.permanent_address or consumer.get("permanent_address") or address_text(consumer.installation_address)
+	)
 	if not doc.consumer_number_and_category:
 		doc.consumer_number_and_category = " / ".join(
 			p for p in (consumer.consumer_number, consumer.tariff_category or consumer.consumer_category) if p
@@ -247,7 +249,7 @@ def _load_text(consumer):
 
 def _fill_schedule_2(doc, installation, consumer, survey):
 	doc.installation_address = doc.installation_address or (
-		consumer and address_text(consumer.installation_address)
+		consumer and (consumer.get("installation_site_address") or address_text(consumer.installation_address))
 	)
 	doc.spin = doc.spin or installation.spin or (consumer and consumer.spin)
 	doc.plant_capacity_kwp = doc.plant_capacity_kwp or flt(installation.capacity_kw)

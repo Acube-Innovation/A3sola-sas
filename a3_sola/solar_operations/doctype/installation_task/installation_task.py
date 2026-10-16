@@ -16,13 +16,14 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
-from a3_sola.api import documents
+from a3_sola.api import contractors, documents
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 
 LINKS = (
 	("solar_installation", "Solar Installation"),
 	("solar_consumer", "Solar Consumer"),
+	("solar_contractor", "Solar Contractor"),
 )
 
 #: What each task must show before it may be called Completed. A field name, or a callable
@@ -53,13 +54,37 @@ class InstallationTask(Document):
 
 	def validate(self):
 		self.pull_installation()
+		if self.task_code == "CCERT":
+			# The completion certificate is the job's electrical contractor's.
+			contractors.fill(self, contractors.ELECTRICAL)
 		assert_same_company(self, LINKS)
 		self.validate_task_code()
 		self.validate_one_open()
 		self.set_defaults()
 		self.stamp_uploads()
+		self.check_pending()
 		if self.status == "Completed":
 			self.require_evidence()
+
+	def check_pending(self):
+		"""A procurement list's pending quantities - what the supplier could not give - lie
+		between nothing and the row's own quantity, and the task is not done while any is left."""
+		from a3_sola.api.purchase_list import pending_rows
+		from a3_sola.api.structure_bom import MATERIAL_LISTS
+
+		if self.task_code not in MATERIAL_LISTS:
+			return
+		for row in self.get(MATERIAL_LISTS[self.task_code][0]) or []:
+			if flt(row.pending_qty) < 0:
+				row.pending_qty = 0
+			if flt(row.pending_qty) > flt(row.qty):
+				frappe.throw(_("Row {0} ({1}): the pending quantity {2:g} is more than the {3:g} on the list.").format(
+					row.idx, row.material, flt(row.pending_qty), flt(row.qty)), title=_("Pending Quantity"))
+		pending = pending_rows(self)
+		if pending and self.status == "Completed":
+			names = ", ".join(r.material for r in pending[:5]) + (_(" and {0} more").format(len(pending) - 5) if len(pending) > 5 else "")
+			frappe.throw(_("{0} item(s) are still pending: {1}. Receive them, or clear their Pending Qty, before completing the task.").format(
+				len(pending), names), title=_("Items Still Pending"))
 
 	def pull_installation(self):
 		"""The company is the installation's, never the session default."""
@@ -119,6 +144,8 @@ class InstallationTask(Document):
 		if self.task_code == "MTR" and flt(self.meter_cost) and not flt(self.cost):
 			self.cost = self.meter_cost
 			self.cost_category = self.cost_category or "Material"
+		if self.task_code in ("SPROC", "PROC"):
+			self.set_delivery()
 		if self.task_code == "SPROC":
 			self.pull_structure()
 		if self.task_code == "SPROC" and self.status == "Completed" and not self.structure_procured_on:
@@ -128,20 +155,40 @@ class InstallationTask(Document):
 		if self.task_code == "PROC" and self.status == "Completed" and not self.materials_procured_on:
 			self.materials_procured_on = self.completed_on or today()
 
+	def set_delivery(self):
+		"""Who is billed and where the material goes, by the delivery method (api/material_delivery)."""
+		from a3_sola.api import material_delivery
+
+		self.delivery_method = self.delivery_method or material_delivery.VENDOR
+		self.bill_to, self.ship_to = material_delivery.blocks(self)
+
+	def on_update(self):
+		self.sync_dispatch()
+
+	def on_cancel(self):
+		self.sync_dispatch()
+
+	def sync_dispatch(self):
+		"""Material Dispatch follows the procurement tasks' delivery methods."""
+		if self.task_code in ("SPROC", "PROC") and self.solar_installation:
+			from a3_sola.api import material_delivery
+
+			material_delivery.sync_dispatch(self.solar_installation)
+
 	def pull_material(self):
-		"""The package's bill of materials, unless one was chosen here, and its lines."""
+		"""The project's bill of materials - frozen in its Design Freeze, else its package's -
+		unless one was chosen here, and its lines."""
 		from a3_sola.api import structure_bom
 
 		if not self.material_bom:
-			package = frappe.db.get_value("Solar Installation", self.solar_installation, "solar_package")
-			self.material_bom = frappe.db.get_value("Solar Package", package, "bom") if package else None
+			self.material_bom = structure_bom.material_bom_for(self.solar_installation)
 		if not self.get("materials") and self.material_bom:
 			structure_bom.fill_materials(self)
 		structure_bom.match_items(self.get("materials") or [])
 
 	def pull_structure(self):
-		"""The project's roof type and capacity, and its structure BOM from the package -
-		unless one was chosen here."""
+		"""The project's roof type and capacity, and its structure BOM - frozen in its Design
+		Freeze, else the package's - unless one was chosen here."""
 		from a3_sola.api import structure_bom
 
 		inst = frappe.get_doc("Solar Installation", self.solar_installation)

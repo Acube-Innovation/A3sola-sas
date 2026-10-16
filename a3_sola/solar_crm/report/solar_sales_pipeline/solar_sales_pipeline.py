@@ -19,7 +19,7 @@ def execute(filters=None):
 
 def get_columns(filters):
 	return [
-		{"label": _("Consumer"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Consumer", "width": 160},
+		{"label": _("Customer"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Consumer", "width": 160},
 		{"label": _("Name"), "fieldname": "consumer_name", "fieldtype": "Data", "width": 170},
 		{"label": _("Category"), "fieldname": "consumer_category", "fieldtype": "Data", "width": 110},
 		{"label": _("Stage"), "fieldname": "status", "fieldtype": "Data", "width": 110},

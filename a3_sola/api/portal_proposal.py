@@ -182,9 +182,9 @@ def _sections(values):
 
 	return [
 		{"title": _("Proposal For"), "fields": [spec(f) for f in PROPOSAL_FOR],
-		 "note": _("Choose the lead first: its solar consumer, latest site survey and design estimates are filled in from it.")},
+		 "note": _("Choose the lead first: its customer, latest site survey and design estimates are filled in from it.")},
 		{"title": _("Customer"), "fields": [spec(f) for f in CUSTOMER],
-		 "note": _("Filled from the lead, its solar consumer and site survey.")},
+		 "note": _("Filled from the lead, its customer and site survey.")},
 		{"title": _("Covering Letter"), "fields": [spec(f) for f in LETTER], "wide": True,
 		 "note": _("The letter lists each design estimate as a point. Anything typed here follows them, one point per line.")},
 	]

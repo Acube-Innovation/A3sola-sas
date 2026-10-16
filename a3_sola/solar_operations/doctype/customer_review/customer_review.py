@@ -117,11 +117,11 @@ def request_review(review, via="WhatsApp"):
 		import urllib.parse
 
 		if not consumer.email_id:
-			frappe.throw(_("The consumer has no email address."))
+			frappe.throw(_("The customer has no email address."))
 		link = f"mailto:{consumer.email_id}?subject={urllib.parse.quote(_('A quick review?'))}&body={urllib.parse.quote(message)}"
 	elif via == "WhatsApp":
 		if not consumer.mobile_no:
-			frappe.throw(_("The consumer has no mobile number."))
+			frappe.throw(_("The customer has no mobile number."))
 		link = whatsapp_link(consumer.mobile_no, message)
 	else:
 		link = url

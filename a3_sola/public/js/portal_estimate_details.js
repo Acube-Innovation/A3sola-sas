@@ -251,7 +251,7 @@
 	function paintProfile(p) {
 		profile.innerHTML = "";
 		if (!p) {
-			profile.appendChild(node("p", "a3s-de-profile__empty", "Choose a lead or a solar consumer to see their details here."));
+			profile.appendChild(node("p", "a3s-de-profile__empty", "Choose a lead or a customer to see their details here."));
 			return;
 		}
 		profile.appendChild(node("p", "a3s-de-profile__source", p.source + " \u00b7 " + p.name));

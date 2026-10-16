@@ -13,7 +13,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime, today
 
-from a3_sola.api import documents
+from a3_sola.api import contractors, documents
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_value
@@ -32,6 +32,8 @@ class MaterialDispatchNotice(Document):
 
 	def validate(self):
 		self.company = frappe.db.get_value("Solar Installation", self.solar_installation, "company")
+		# The serials go to the job's electrical contractor unless another is chosen here.
+		contractors.fill(self, contractors.ELECTRICAL)
 		assert_same_company(self, LINKS)
 		if not self.assigned_by:
 			self.assigned_by = frappe.session.user

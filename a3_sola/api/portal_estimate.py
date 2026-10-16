@@ -31,7 +31,7 @@ SLUG = "design-estimates"
 DETAIL_COLUMNS = (
 	# The tariff asked for is KSEB's category code. The priced tariff the savings are worked
 	# out on (electricity_tariff) is not asked: the estimate picks it for the DISCOM.
-	("Consumer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
+	("Customer", ("lead", "solar_consumer", "site_survey", "estimate_date", "tariff_code", "building_type", "backup_load_kw")),
 	# The options: one row per package and sizing, the recommended row the estimate's own.
 	# Capacity before the package: the package list follows it, as it follows the rest.
 	("Package & Options", ("connection_type", "system_type", "subsidy_option", "subsidy_scheme",

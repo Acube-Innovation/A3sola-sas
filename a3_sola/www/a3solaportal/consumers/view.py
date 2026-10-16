@@ -24,5 +24,11 @@ def get_context(context):
 		"can_convert": not customer and bool(doc.has_permission("write")) and frappe.has_permission("Customer", "create"),
 	}
 	context.extra_template = "templates/includes/portal_consumer_customer.html"
+	# The KYC papers as a card of their own - each uploaded or pending - in place of the
+	# KYC tab's status and missing-list fields (portal_kyc.html).
+	from a3_sola.api import kyc
+
+	context.kyc_panel = kyc.summary(doc.doctype, doc.name)
+	context.groups = [g for g in context.groups if g["key"] != "kyc"]
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

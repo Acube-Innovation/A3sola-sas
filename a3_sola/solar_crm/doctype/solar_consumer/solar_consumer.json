@@ -23,6 +23,26 @@
   "status",
   "lead",
   "site_survey",
+  "sb_address",
+  "site_address_line1",
+  "site_address_line2",
+  "site_city",
+  "cb_site_address",
+  "site_state",
+  "site_district",
+  "site_pincode",
+  "installation_site_address",
+  "sb_permanent_address",
+  "permanent_address_same",
+  "sb_permanent_address_detail",
+  "permanent_address_line1",
+  "permanent_address_line2",
+  "permanent_city",
+  "cb_permanent_address",
+  "permanent_state",
+  "permanent_district",
+  "permanent_pincode",
+  "permanent_address",
   "tab_connection",
   "sb_3",
   "discom",
@@ -97,34 +117,35 @@
   {
    "fieldname": "tab_consumer",
    "fieldtype": "Tab Break",
-   "label": "Consumer"
+   "label": "Customer"
   },
   {
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
-   "label": "Consumer Details"
+   "label": "Customer Details"
   },
   {
    "fieldname": "consumer_name",
    "fieldtype": "Data",
    "in_global_search": 1,
    "in_list_view": 1,
-   "label": "Consumer Name",
+   "label": "Customer Name",
    "reqd": 1
   },
   {
    "fieldname": "consumer_photo",
    "fieldtype": "Attach Image",
    "label": "Photograph",
-   "description": "Shown as the consumer's avatar in lists, here and on the portal."
+   "description": "Shown as the customer's avatar in lists, here and on the portal."
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Customer",
+   "label": "ERPNext Customer",
    "options": "Customer",
-   "description": "The consumer as an ERPNext Customer. Made automatically when a quotation is saved, or now with Create Customer."
+   "description": "The consumer as an ERPNext Customer. Made automatically when a quotation is saved, or now with Create Customer.",
+   "hidden": 1
   },
   {
    "fieldname": "contact_person",
@@ -186,8 +207,8 @@
    "fieldtype": "Link",
    "label": "Lead",
    "options": "Lead",
-   "reqd": 1,
-   "description": "The enquiry this consumer came from. Choosing it fills in what the lead already knows."
+   "description": "The enquiry this customer came from. Kept, not shown: what the lead knows fills in the customer.",
+   "hidden": 1
   },
   {
    "fieldname": "site_survey",
@@ -195,7 +216,140 @@
    "options": "Site Survey",
    "label": "Site Survey",
    "read_only": 1,
-   "description": "The consumer's latest site survey: the newest submitted one, else the newest draft."
+   "description": "The customer's latest site survey: the newest submitted one, else the newest draft."
+  },
+  {
+   "fieldname": "sb_address",
+   "fieldtype": "Section Break",
+   "label": "Installation Site Address"
+  },
+  {
+   "fieldname": "site_address_line1",
+   "fieldtype": "Data",
+   "label": "House Name / Building No.",
+   "reqd": 1
+  },
+  {
+   "fieldname": "site_address_line2",
+   "fieldtype": "Data",
+   "label": "Street / Area"
+  },
+  {
+   "fieldname": "site_city",
+   "fieldtype": "Data",
+   "label": "City / Town / Village",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_site_address",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Kerala",
+   "fieldname": "site_state",
+   "fieldtype": "Link",
+   "label": "State",
+   "options": "Indian State",
+   "reqd": 1
+  },
+  {
+   "description": "Districts are offered for the chosen state.",
+   "fieldname": "site_district",
+   "fieldtype": "Link",
+   "label": "District",
+   "options": "Indian District",
+   "reqd": 1
+  },
+  {
+   "fieldname": "site_pincode",
+   "fieldtype": "Data",
+   "label": "PIN Code",
+   "length": 6,
+   "reqd": 1
+  },
+  {
+   "description": "The site address in full, as documents print it. Made from the fields above.",
+   "fieldname": "installation_site_address",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Installation Site Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_permanent_address",
+   "fieldtype": "Section Break",
+   "label": "Permanent Address"
+  },
+  {
+   "default": "Yes",
+   "fieldname": "permanent_address_same",
+   "fieldtype": "Select",
+   "label": "Permanent Address Same as Installation Site?",
+   "options": "Yes\nNo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_permanent_address_detail",
+   "fieldtype": "Section Break",
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "fieldname": "permanent_address_line1",
+   "fieldtype": "Data",
+   "label": "House Name / Building No.",
+   "depends_on": "eval:doc.permanent_address_same==\"No\"",
+   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "fieldname": "permanent_address_line2",
+   "fieldtype": "Data",
+   "label": "Street / Area",
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "fieldname": "permanent_city",
+   "fieldtype": "Data",
+   "label": "City / Town / Village",
+   "depends_on": "eval:doc.permanent_address_same==\"No\"",
+   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "fieldname": "cb_permanent_address",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Kerala",
+   "fieldname": "permanent_state",
+   "fieldtype": "Link",
+   "label": "State",
+   "options": "Indian State",
+   "depends_on": "eval:doc.permanent_address_same==\"No\"",
+   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "description": "Districts are offered for the chosen state.",
+   "fieldname": "permanent_district",
+   "fieldtype": "Link",
+   "label": "District",
+   "options": "Indian District",
+   "depends_on": "eval:doc.permanent_address_same==\"No\"",
+   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "fieldname": "permanent_pincode",
+   "fieldtype": "Data",
+   "label": "PIN Code",
+   "length": 6,
+   "depends_on": "eval:doc.permanent_address_same==\"No\"",
+   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+  },
+  {
+   "description": "The permanent address in full, as the agreement recites it. The site address when they are the same.",
+   "fieldname": "permanent_address",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Permanent Address",
+   "read_only": 1
   },
   {
    "fieldname": "tab_connection",
@@ -251,7 +405,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "KSEB's tariff code the connection is billed under, e.g. LT-I for domestic. A design estimate for this consumer takes it as its Electricity Tariff.",
+   "description": "KSEB's tariff code the connection is billed under, e.g. LT-I for domestic. A design estimate for this customer takes it as its Electricity Tariff.",
    "fieldname": "tariff_category",
    "fieldtype": "Link",
    "label": "Tariff Category",
@@ -330,8 +484,9 @@
   {
    "fieldname": "installation_address",
    "fieldtype": "Link",
-   "label": "Installation Address",
-   "options": "Address"
+   "label": "Installation Address Record",
+   "options": "Address",
+   "description": "The ERPNext Address for delivery notes and the customer. Optional - the installation site address above is what documents print."
   },
   {
    "fieldname": "roof_type",
@@ -598,7 +753,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-12 10:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

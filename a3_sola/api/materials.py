@@ -46,7 +46,14 @@ def get_installation_material_summary(installation):
 
 
 def _bom_requirement(installation):
-	"""Explode the package BOM to the installed capacity."""
+	"""The BOM frozen for the project in its Design Freeze, as it stands - it was chosen for
+	this job - else the package BOM scaled to the installed capacity."""
+	frozen = installation.get("material_bom")
+	if frozen and frozen != frappe.db.get_value("Solar Package", installation.get("solar_package"), "bom"):
+		return {
+			row.item_code: flt(row.qty)
+			for row in frappe.get_all("BOM Item", filters={"parent": frozen, "parenttype": "BOM"}, fields=["item_code", "qty"])
+		}
 	if not installation.solar_package:
 		return {}
 	package = frappe.get_cached_doc("Solar Package", installation.solar_package)

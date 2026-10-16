@@ -346,11 +346,23 @@ MAKE_TYPE = {"DCDB": "DCDB", "ACDB": "ACDB", "DC Cable": "Cable", "AC Cable": "C
 	"Lightning Protection": "Lightning Protection", "Solar Energy Meter": "Energy Meter", "mounting": "Mounting Structure"}
 
 
+def proposal_estimates(doc, est):
+	"""The design estimates a proposal offers, one per option, in its order - the base `est`
+	first when the proposal lists none."""
+	names = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.get("solar_design_estimate")]
+	names = list(dict.fromkeys(names)) or [est.name]
+	return [est if n == est.name else frappe.get_doc("Solar Design Estimate", n) for n in names
+		if n == est.name or frappe.db.exists("Solar Design Estimate", n)]
+
+
 def print_components(doc):
 	"""3.2 Specifications & Quantity of Major Components, from the proposal's base design
 	estimate: its priced panel, inverter and battery rows, its balance of system, mounting
-	structure and installation. Returns {"rows": [...], "missing": [...]} - each row is
-	{item, spec, make, nos}, and `missing` names the rows without a make on record."""
+	structure and installation - and, where the proposal offers options, each option's inverter.
+	Returns {"rows": [...], "missing": [...], "notes": [...]} - each row is {item, spec, make,
+	nos}, `missing` names the rows without a make on record, and `notes` explains an asterisk:
+	a micro inverter is marked, and its option has no DCDB (api/microinverter.py)."""
+	from a3_sola.api import microinverter
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
 	if not doc.get("solar_design_estimate"):
@@ -382,12 +394,28 @@ def print_components(doc):
 			if m.strip() and m.strip().lower() not in ("equivalent", make(r.panel_make).lower())]
 		rows.append({"item": "Solar Panels", "spec": spec, "make": "/ ".join(n for n in names if n), "nos": cint(r.nos)})
 	hybrid = est.system_type == "Hybrid"
-	for r in priced("inverters"):
-		phase = {"Three Phase": "3 phase", "Single Phase": "1 phase"}.get(r.inverter_phase or "", r.inverter_phase or "")
-		spec = ", ".join(p for p in ("{0:g} kW".format(flt(r.inverter_capacity_kw)) if flt(r.inverter_capacity_kw) else "",
-			phase, (r.get("specification") or "").strip() or (technology_name(r.inverter_type) if r.inverter_type else "")) if p)
-		rows.append({"item": "Solar PV Hybrid Inverter" if hybrid else "Solar PV Inverter", "spec": spec,
-			"make": make(r.inverter_make), "nos": cint(r.nos)})
+	# Each option's inverter - the options differ by inverter - or the one design's.
+	options = proposal_estimates(doc, est)
+	micro = [microinverter.uses_microinverter(e) for e in options]
+	for number, option in enumerate(options, 1):
+		for r in option.get("inverters") or []:
+			if r.get("is_option"):
+				continue
+			phase = {"Three Phase": "3 phase", "Single Phase": "1 phase"}.get(r.inverter_phase or "", r.inverter_phase or "")
+			spec = ", ".join(p for p in ("{0:g} kW".format(flt(r.inverter_capacity_kw)) if flt(r.inverter_capacity_kw) else "",
+				phase, (r.get("specification") or "").strip() or (technology_name(r.inverter_type) if r.inverter_type else "")) if p)
+			if len(options) > 1:
+				spec = "Option {0}: {1}".format(number, spec)
+			if microinverter.is_micro(r):
+				spec += " *"
+			rows.append({"item": "Solar PV Hybrid Inverter" if hybrid else "Solar PV Inverter", "spec": spec,
+				"make": make(r.inverter_make), "nos": cint(r.nos)})
+	# The options' inverters are one item: one Sl. No. and description over their rows.
+	group = [r for r in rows if r["item"] in ("Solar PV Inverter", "Solar PV Hybrid Inverter")]
+	if len(group) > 1:
+		group[0]["span"] = len(group)
+		for r in group[1:]:
+			r["spanned"] = True
 
 	bos = {}
 	for r in est.get("bos_items") or []:
@@ -403,6 +431,9 @@ def print_components(doc):
 				nos = "Ls."
 			elif item in SETS:
 				nos = "{0:g} Set{1}".format(count, "" if count == 1 else "s") if count else ""
+			elif item == "DCDB" and any(micro):
+				# None with a micro inverter: "0*" when every option has one, else "1 (0*)".
+				nos = "0*" if all(micro) else "{0} (0*)".format(dcdb_count(options, micro) or "1")
 			else:
 				nos = "{0:g}".format(count) if count else ""
 			by_part = [line.strip() for line in (r.get("component_makes") or "").splitlines() if line.strip()]
@@ -426,7 +457,14 @@ def print_components(doc):
 	for r in est.get("installation_expenses") or []:
 		rows.append({"item": r.item or "Installation, Testing, Commissioning", "spec": r.specification or INSTALLATION_DEFAULT,
 			"make": None, "nos": "Set."})
-	return {"rows": rows, "missing": [r["item"] for r in rows if r["make"] == ""]}
+	return {"rows": rows, "missing": [r["item"] for r in rows if r["make"] == ""],
+		"notes": [microinverter.NOTE] if any(micro) else []}
+
+
+def dcdb_count(options, micro):
+	"""The DCDB count of the string-inverter options, '1' - what the DCDB row says beside the 0*."""
+	counts = {flt(r.numbers) for e, m in zip(options, micro) if not m for r in e.get("bos_items") or [] if r.item == "DCDB"}
+	return "/".join("{0:g}".format(c) for c in sorted(counts) if c)
 
 
 # ------------------------------------------------------------------ sections 3.3 to 6
@@ -461,7 +499,7 @@ def print_rest(doc):
 	company = frappe.get_doc("Company", doc.company) if doc.get("company") else frappe._dict()
 	money = lambda v: fmt_money(flt(v), precision=0)  # 7,76,000 - the client prints whole rupees
 	empty = {"label": "", "rows": []}
-	out = {"cost": [], "cost_options": [empty], "cost_pages": [{"options": [empty], "kseb": True}], "kseb": [], "kseb_total": 0, "kseb_words": "", "kseb_note": "", "terms_html": "",
+	out = {"cost": [], "cost_options": [empty], "cost_pages": [{"options": [empty], "kseb": True}], "add_ons": [], "kseb": [], "kseb_total": 0, "kseb_words": "", "kseb_note": "", "terms_html": "",
 		"validity": "", "payment_terms": list(PAYMENT_TERMS), "bank": [], "schedule_html": settings.get("delivery_schedule_text") or "",
 		"warranty": [], "scope": {"company": [], "customer": []}, "pictures": list(DEFAULT_PICTURES),
 		"company_scope_label": "", "customer_scope_label": "", "system_type": ""}
@@ -491,10 +529,7 @@ def print_rest(doc):
 			rows.append({"item": "Grand Total", "amount": flt(q.rounded_total or q.grand_total), "right": True, "bold": True})
 		options = [{"label": "", "rows": rows}]
 	else:
-		names = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.get("solar_design_estimate")]
-		names = list(dict.fromkeys(names)) or [est.name]
-		estimates = [est if n == est.name else frappe.get_doc("Solar Design Estimate", n) for n in names
-			if n == est.name or frappe.db.exists("Solar Design Estimate", n)]
+		estimates = proposal_estimates(doc, est)
 		options = [{"label": _option_label(e, i) if len(estimates) > 1 else "", "rows": plant_cost_rows(e)}
 			for i, e in enumerate(estimates, 1)]
 	for option in options:
@@ -521,7 +556,9 @@ def print_rest(doc):
 		out["kseb_words"] = words.rstrip(".").replace(" only", " Only")
 	if purchased:
 		out["kseb_note"] = "*Bi-directional meter can be availed from KSEBL on rental basis also."
-	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb), bool(out["kseb_note"]))
+	# 3.3.3 what the packages offer beside their price - for information, in no total.
+	out["add_ons"] = add_on_rows(proposal_estimates(doc, est))
+	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb), bool(out["kseb_note"]), len(out["add_ons"]))
 
 	# 3.4 terms and offer validity; 3.5 the bank details from the Company.
 	out["terms_html"] = settings.get("terms_and_conditions_text") or ""
@@ -624,23 +661,50 @@ def _rows_mm(rows):
 	return sum(LINE_MM * max(1, -(-len(r["item"]) // 85)) + 2 for r in rows)
 
 
-def cost_pages(options, kseb_rows, kseb_note):
-	"""Section 3.3 as pages: [{"options": [...], "kseb": bool}]. Options fill a page in order;
-	the KSEBL expenses follow the last of them, on its page when they fit, else on the next."""
+def cost_pages(options, kseb_rows, kseb_note, add_on_rows=0):
+	"""Section 3.3 as pages: [{"options": [...], "kseb": bool, "add_ons": bool}]. Options fill
+	a page in order; the KSEBL expenses follow the last of them, on its page when they fit,
+	else on the next; the optional add-ons follow the KSEBL expenses the same way."""
 	kseb_mm = 14 + 12 + (kseb_rows + 2) * (LINE_MM + 2) + (12 if kseb_note else 0)
+	add_ons_mm = 14 + 12 + add_on_rows * (LINE_MM + 2) if add_on_rows else 0
 	pages, current, used = [], [], HEADINGS_MM
 	for option in options:
 		need = (OPTION_MM if option["label"] else 12) + _rows_mm(option["rows"])
 		if current and used + need > PAGE_MM:
-			pages.append({"options": current, "kseb": False})
+			pages.append({"options": current, "kseb": False, "add_ons": False})
 			current, used = [], CONTINUED_MM
 		current.append(option)
 		used += need
 	if used + kseb_mm > PAGE_MM:
-		pages.append({"options": current, "kseb": False})
-		current = []
-	pages.append({"options": current, "kseb": True})
+		pages.append({"options": current, "kseb": False, "add_ons": False})
+		current, used = [], 0
+	used += kseb_mm
+	if add_ons_mm and used + add_ons_mm > PAGE_MM:
+		pages.append({"options": current, "kseb": True, "add_ons": False})
+		pages.append({"options": [], "kseb": False, "add_ons": True})
+		return pages
+	pages.append({"options": current, "kseb": True, "add_ons": bool(add_ons_mm)})
 	return pages
+
+
+def add_on_rows(estimates):
+	"""3.3.3 Optional Add-ons: each add-on of the packages the options are built on, once,
+	in option order - [{item_html, amount_text}]. "13th" prints as 13<sup>th</sup>."""
+	import re
+
+	from frappe.utils import escape_html, fmt_money
+
+	rows, seen = [], set()
+	for package in dict.fromkeys(e.solar_package for e in estimates if e.get("solar_package")):
+		for r in frappe.get_all("Solar Package Add-on", filters={"parent": package, "parenttype": "Solar Package"},
+				fields=["item", "amount"], order_by="idx asc"):
+			key = ((r.item or "").strip(), flt(r.amount))
+			if not key[0] or key in seen:
+				continue
+			seen.add(key)
+			rows.append({"item_html": re.sub(r"(\d)(st|nd|rd|th)\b", r"\1<sup>\2</sup>", escape_html(key[0])),
+				"amount_text": fmt_money(flt(r.amount), precision=0)})
+	return rows
 
 
 def plant_description(est):

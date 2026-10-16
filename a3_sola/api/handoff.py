@@ -127,7 +127,7 @@ def create_solar_installation(sales_order):
 	)
 	if not lead:
 		frappe.throw(
-			_("Sales Order {0} cannot open an installation: Solar Consumer {1} is not linked to a Lead.").format(
+			_("Sales Order {0} cannot open an installation: Customer {1} is not linked to a Lead.").format(
 				payload["sales_order"], payload["solar_consumer"]
 			),
 			title=_("Incomplete Handoff"),

@@ -38,7 +38,7 @@
 	</a>
 	{#- Sent by the site from the company mailbox, the PDF attached (portal_share.send_email). -#}
 	<button type="button" class="a3s-square-btn" data-share-email
-	        data-doctype="{{ share.doctype | e }}" data-name="{{ share.name | e }}"
+	        data-doctype="{{ share.doctype | e }}" data-name="{{ share.name | e }}" data-part="{{ (share.part or '') | e }}"
 	        data-to="{{ share.email_to | e }}" data-subject="{{ share.subject | e }}" data-text="{{ share.email_message | e }}"
 	        title="Email the PDF{% if share.email_to %} to {{ share.email_to | e }}{% endif %}" aria-label="Email the PDF to the customer">
 		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-mail"></use></svg>

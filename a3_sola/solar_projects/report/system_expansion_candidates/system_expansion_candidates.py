@@ -31,7 +31,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Installation"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Installation", "width": 160},
-		{"label": _("Consumer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
+		{"label": _("Customer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
 		{"label": _("Installed kWp"), "fieldname": "capacity_kw", "fieldtype": "Float", "precision": 2, "width": 120},
 		{"label": _("Monthly Units"), "fieldname": "avg_consumption_units", "fieldtype": "Float", "precision": 0, "width": 120},
 		{"label": _("Units Offset"), "fieldname": "offset_units", "fieldtype": "Float", "precision": 0, "width": 120},
