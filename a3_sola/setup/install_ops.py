@@ -48,7 +48,7 @@ SYNCED_ROW_FIELDS = (
 )
 
 #: Tasks a new template allows a reimbursement on. Not synced: the business decides after.
-REIMBURSABLE = ("STMP",)
+REIMBURSABLE = ("STMP", "F1PAY")
 
 #: Fields the seed fills only while blank. The tenant decides them after that.
 SEEDED_ONCE_ROW_FIELDS = ("activity_scope", "default_assignee")

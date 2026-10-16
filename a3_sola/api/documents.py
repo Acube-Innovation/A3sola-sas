@@ -517,7 +517,13 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		)
 
 	target_doctype, target_name = source or ("Solar Installation", inst.name)
-	file_url = _attach(target_doctype, target_name, tpl, html)
+	# Form 1 is the team's own KSEBL form, with its printed labels (api/form1_print).
+	content = None
+	if tpl.template_code == "KSEB-FORM-1":
+		from a3_sola.api import form1_print
+
+		content = form1_print.render(inst)[1]
+	file_url = _attach(target_doctype, target_name, tpl, html, content=content)
 	_log_generation(inst, tpl, file_url, target_doctype, target_name)
 	# The task that generated the document is the truth about which task it belongs to;
 	# the template's own stage code is only the answer when nothing generated it.
@@ -546,8 +552,9 @@ def _task_code_of(doc):
 	return code_for(doc)
 
 
-def _attach(target_doctype, target_name, template, html):
-	"""The PDF, attached to the task document that produced it (or the installation).
+def _attach(target_doctype, target_name, template, html, content=None):
+	"""The PDF, attached to the task document that produced it (or the installation) - made
+	from `html`, unless the PDF itself (`content`) is given.
 
 	Regenerating replaces: the previous file of the same name on the same document goes.
 	"""
@@ -566,7 +573,9 @@ def _attach(target_doctype, target_name, template, html):
 		frappe.delete_doc("File", existing, ignore_permissions=True, force=True)
 
 	# The bank's loan pair goes on the company letterhead, as the Word originals do.
-	if template.get("template_code") in LETTERHEAD_TEMPLATES:
+	if content is not None:
+		pass
+	elif template.get("template_code") in LETTERHEAD_TEMPLATES:
 		content = letterhead_pdf(html, template.get("company"))
 	elif template.get("template_code") in LETTERHEAD_FLOW_TEMPLATES:
 		content = letterhead_flow_pdf(html, template.get("company"))

@@ -12,8 +12,8 @@
 		{%- if task_downloads or claim %}
 		<div class="a3s-detail__actions" style="margin-top:0.75rem">
 			{%- for d in task_downloads or [] %}
-			<a class="a3s-square-btn" href="{{ d.url | e }}" title="{{ d.label | e }}" aria-label="{{ d.label | e }}">
-				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg></a>
+			<a class="a3s-square-btn" href="{{ d.url | e }}" title="{{ d.label | e }}" aria-label="{{ d.label | e }}"{% if d.icon == "eye" %} target="_blank" rel="noopener"{% endif %}>
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ d.icon or 'download' }}"></use></svg></a>
 			{%- endfor %}
 			{%- include "templates/includes/portal_claim_button.html" %}
 		</div>

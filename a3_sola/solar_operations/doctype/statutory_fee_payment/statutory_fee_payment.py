@@ -25,12 +25,57 @@ class StatutoryFeePayment(Document):
 		set_name(self, "statutory_fee_payment_series_prefix", ".YYYY.-.#####", fallback="SOL-SFP")
 
 	def validate(self):
+		self.default_quick_fields()
 		self.stamp_task()
 		assert_same_company(self, LINKS)
 		self.resolve_amounts()
 		self.compute_reimbursement()
 		self.compute_refund()
 		self.require_receipt()
+		self.complete_when_paid()
+
+	def default_quick_fields(self):
+		"""The task's short form asks only whether it is paid: who paid and when follow."""
+		self.paid_by = self.paid_by or "Company on Behalf of Customer"
+		if not self.payment_date:
+			self.payment_date = today()
+
+	def complete_when_paid(self):
+		"""Payment completed means done: a draft ticked so is submitted on save, which is
+		what completes its task on the project board."""
+		if self.docstatus == 0 and self.payment_completed and not self.flags.completing:
+			self.flags.submit_on_update = True
+
+	def on_update(self):
+		self.raise_reimbursement()
+		if self.flags.submit_on_update and self.docstatus == 0:
+			self.flags.submit_on_update = False
+			self.flags.completing = True
+			self.submit()
+
+	def raise_reimbursement(self):
+		"""Paid out of pocket: the claim goes for approval once the payment is recorded as
+		completed, once - its link here says it has been raised."""
+		if not (self.claim_reimbursement and self.payment_completed) or self.reimbursement:
+			return
+		if not flt(self.amount_gross):
+			frappe.throw(_("The fee has no amount on the fee schedule, so it cannot be claimed back."), frappe.ValidationError)
+		from a3_sola.solar_operations.doctype.expense_reimbursement.expense_reimbursement import raise_claim
+
+		claim = raise_claim(
+			self.solar_installation, self.task_code, self.amount_gross,
+			_("{0} - Rs. {1}").format(_(self.fee_type), frappe.utils.fmt_money(self.amount_gross, precision=0)),
+			expense_date=self.payment_date, remarks=self.remarks, receipt=self.receipt or self._uploaded_receipt(),
+			source_doctype=self.doctype, source_document=self.name,
+		)
+		self.db_set("reimbursement", claim.name, update_modified=False)
+
+	def _uploaded_receipt(self):
+		"""The receipt uploaded on the task's Documents, when it was not attached here."""
+		rows = frappe.get_all("Installation Document", filters={"parent": self.solar_installation,
+			"parenttype": "Solar Installation", "stage_code": self.task_code, "attachment": ["is", "set"]},
+			fields=["attachment"], order_by="modified desc", limit=1)
+		return rows[0].attachment if rows else None
 
 	def resolve_amounts(self):
 		"""Never typed. A typed fee is how the client's templates drifted apart."""
@@ -105,6 +150,10 @@ class StatutoryFeePayment(Document):
 		return getdate(today()) >= add_days(getdate(commissioned), lead)
 
 	def require_receipt(self):
+		# A payment confirmed on the task's short form takes its receipt as an option, on the
+		# task's Documents.
+		if self.payment_completed:
+			return
 		if self.paid_by == "Company on Behalf of Customer" and self.docstatus == 1 and not self.receipt:
 			frappe.throw(
 				_("Attach the payment receipt. Without it the amount cannot be reimbursed by the customer."),

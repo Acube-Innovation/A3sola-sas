@@ -552,6 +552,9 @@ TASK_FORM_FIELDS = {
 	# Buying the stamp paper: bought or not, what it cost, whether it is claimed back - the
 	# rest of the agreement comes later.
 	"STMP": ("stamp_paper_status", "stamp_paper_value", "claim_reimbursement", "stamp_paper_remarks"),
+	# Paying the Form 1 application fee: paid or not, whether it is claimed back, a remark -
+	# the amount is the fee schedule's, and the receipt goes on the task's Documents.
+	"F1PAY": ("payment_completed", "claim_reimbursement", "remarks"),
 }
 
 #: Select fields a task's create form asks as a single tick box, by task code:
@@ -567,12 +570,13 @@ REIMBURSEMENT_FIELDS = {"claim_reimbursement"}
 TASK_FORM_SHOW_WHEN = {
 	# Claimed back only once it is bought.
 	"STMP": {"claim_reimbursement": "stamp_paper_status"},
+	"F1PAY": {"claim_reimbursement": "payment_completed"},
 }
 
 
 #: Tasks whose own form asks about a reimbursement (the stamp paper's "I paid" box), so
 #: their create form needs no Claim reimbursement button.
-CLAIM_IN_FORM = {"STMP"}
+CLAIM_IN_FORM = {"STMP", "F1PAY"}
 
 
 def tasks_code_for(doc):
@@ -648,7 +652,13 @@ def task_people(installation, task_code):
 def task_downloads(installation, task_code, document=None):
 	"""What a task offers to download before or after its document exists: the stamp paper
 	data the vendor writes the paper from (api/stamp_print.py); the structure material
-	and material tasks' purchase lists, once the task is saved (api/purchase_list.py)."""
+	and material tasks' purchase lists, once the task is saved (api/purchase_list.py); KSEBL
+	Form 1 with the customer's details, to view or download (api/form1_print.py)."""
+	if task_code == "FRM1":
+		from a3_sola.api import form1_print
+
+		return [{"label": "View Form 1", "url": form1_print.url(installation), "icon": "eye"},
+			{"label": "Download Form 1", "url": form1_print.url(installation, download=True)}]
 	if task_code == "STMP":
 		from a3_sola.api import stamp_print
 
