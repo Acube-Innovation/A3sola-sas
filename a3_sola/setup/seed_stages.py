@@ -33,7 +33,7 @@ BANK = "Bank Activity"
 SCOPES = {
 	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
 	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
-	"MATL": COMPANY, "CCERT": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
+	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
 	"BCOM": BANK, "BAL": COMPANY, "PCOM": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
 	"CORR": SCHEME, "DBT": SCHEME,
@@ -145,9 +145,6 @@ TASKS = [
 	      is_mandatory=0, documents=[("Completion report data sheet", 1, "COMPLETION-REPORT-DATA")],
 	      description="Material and serial details mailed to the electrical contractor in the "
 	                  "completion-report format."),
-	_task("CCERT", "Completion Certificate from Contractor", "Contractor", 5, "Installation Task",
-	      role=SITE, task_type="CCERT", documents=[("Completion certificate", 1, None)],
-	      description="Completion certificate received from the electrical contractor."),
 	# The customer pays in the phases of the package's payment terms (api/payment_tasks):
 	# the advance, after installation, after commissioning - each with what is still unpaid.
 	_task("BAL", "Payment after Installation", "Customer", 7, "Installation Task", task_type="BAL",

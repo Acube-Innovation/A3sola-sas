@@ -65,6 +65,7 @@
 		var task = {
 			code: button.dataset.code, name: button.dataset.name, status: button.dataset.status, url: button.dataset.url,
 			assignees: (button.dataset.assignees || "").split(",").filter(Boolean),
+			assigneeNames: button.dataset.assigneeNames || "", canComplete: button.dataset.canComplete === "1",
 		};
 		var el = document.createElement("div");
 		el.className = "a3s-taskmenu";
@@ -73,6 +74,7 @@
 		if (task.url) items.push('<a role="menuitem" href="' + esc(task.url) + '">Open task</a>');
 		else items.push('<span role="menuitem" aria-disabled="true" class="is-disabled">Open task <small>(skipped)</small></span>');
 		items.push('<button type="button" role="menuitem" data-act="documents">Documents</button>');
+		if (task.canComplete) items.push('<button type="button" role="menuitem" data-act="complete">Complete task</button>');
 		if (task.status === "Skipped") items.push('<button type="button" role="menuitem" data-act="unskip">Undo skip</button>');
 		else if (task.status !== "Completed") items.push('<button type="button" role="menuitem" data-act="skip">Skip task</button>');
 		el.innerHTML = items.join("");
@@ -89,6 +91,7 @@
 			if (!act) return;
 			closeMenu();
 			if (act.dataset.act === "documents") showDocuments(task);
+			else if (act.dataset.act === "complete") askComplete(task);
 			else if (act.dataset.act === "skip") askSkip(task);
 			else if (act.dataset.act === "unskip") askUnskip(task);
 		});
@@ -309,6 +312,32 @@
 				renderDocuments(m, task, data);
 				m.status("Uploaded.", "success");
 			}).catch(function (e) { m.status(e.message, "error"); });
+		});
+	}
+
+	/* ------------------------------------------------------------ complete */
+	function askComplete(task) {
+		var m = modal("Complete " + task.name, "Marked Completed straight away - nothing more to fill in on the task.");
+		m.body.innerHTML =
+			'<form class="a3s-form a3s-modal__form">' +
+			(task.assigneeNames ? '<p class="a3s-field__hint" style="margin:0 0 0.75rem">Assigned to: <b>' + esc(task.assigneeNames) + "</b></p>" : "") +
+			'<div class="a3s-field"><label for="a3s-done-remarks">Remark <span class="a3s-req">*</span></label>' +
+			'<textarea id="a3s-done-remarks" name="remarks" rows="3" required placeholder="How was it done?"></textarea></div>' +
+			'<label style="display:flex;gap:0.5rem;align-items:flex-start;margin-top:0.75rem"><input type="checkbox" name="confirmed" required>' +
+			"<span>I confirm this task is done.</span></label>" +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary">Complete task</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
+		var form = m.body.querySelector("form");
+		form.elements.remarks.focus();
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var remarks = form.elements.remarks.value.trim();
+			if (!remarks) { m.status("Add a remark: how was the task done?", "error"); return; }
+			if (!form.elements.confirmed.checked) { m.status("Tick the confirmation that the task is done.", "error"); return; }
+			m.status("Completing…");
+			call("a3_sola.api.tasks.complete_from_board", { installation: installation, task_code: task.code, remarks: remarks, confirmed: 1 })
+				.then(function () { window.location.reload(); })
+				.catch(function (e) { m.status(e.message, "error"); });
 		});
 	}
 

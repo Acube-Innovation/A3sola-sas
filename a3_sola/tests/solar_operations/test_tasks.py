@@ -129,11 +129,11 @@ class TestDocumentsDriveTasks(FrappeTestCase):
 		self.assertFalse(row.actual_completion_date)
 
 	def test_the_upload_lands_in_the_register_naming_the_task(self):
-		task = make_task(self.installation, "CCERT", certificate="/files/cc.pdf", certificate_no="CC-1")
-		_row, doc = task_row(self.installation, "CCERT")
+		task = make_task(self.installation, "KTST", signed_checklist="/files/kt.pdf", result="Passed")
+		_row, doc = task_row(self.installation, "KTST")
 		reg = next(r for r in doc.documents if r.source_document == task.name)
-		self.assertEqual(reg.attachment, "/files/cc.pdf")
-		self.assertEqual(reg.stage_code, "CCERT")
+		self.assertEqual(reg.attachment, "/files/kt.pdf")
+		self.assertEqual(reg.stage_code, "KTST")
 		self.assertEqual(reg.document_kind, "Uploaded")
 
 	def test_a_fee_payment_completes_its_fee_task_and_rolls_the_cost(self):

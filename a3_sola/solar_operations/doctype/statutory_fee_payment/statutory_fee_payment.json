@@ -17,6 +17,10 @@
   "company",
   "amended_from",
   "sb_3",
+  "payment_completed",
+  "claim_reimbursement",
+  "reimbursement",
+  "remarks",
   "paid_by",
   "payment_date",
   "task_code",
@@ -111,6 +115,31 @@
    "label": "Payment"
   },
   {
+   "fieldname": "payment_completed",
+   "fieldtype": "Check",
+   "label": "Payment completed",
+   "description": "Ticked when the fee is paid: saving then completes the task."
+  },
+  {
+   "fieldname": "claim_reimbursement",
+   "fieldtype": "Check",
+   "label": "I paid it - claim it back",
+   "description": "Paid out of your own pocket: a reimbursement claim for the fee goes for approval."
+  },
+  {
+   "fieldname": "reimbursement",
+   "fieldtype": "Link",
+   "label": "Reimbursement Claim",
+   "options": "Expense Reimbursement",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
    "default": "Company on Behalf of Customer",
    "fieldname": "paid_by",
    "fieldtype": "Select",
@@ -124,7 +153,8 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Payment Date",
-   "reqd": 1
+   "reqd": 1,
+   "default": "Today"
   },
   {
    "fieldname": "task_code",
@@ -188,7 +218,7 @@
    "read_only": 1
   },
   {
-   "description": "Mandatory when the company paid - no receipt, no reimbursement.",
+   "description": "The payment receipt - or upload it on the task's Documents.",
    "fieldname": "receipt",
    "fieldtype": "Attach",
    "label": "Receipt"
@@ -300,7 +330,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-10-16 20:10:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Statutory Fee Payment",

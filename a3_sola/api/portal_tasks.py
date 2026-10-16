@@ -152,6 +152,11 @@ def _prints(row, installation):
 
 		notice = row.task_document if row.task_doctype == "Material Dispatch Notice" else None
 		return {completion_print.CODE: completion_print.prints(installation, notice)}
+	if row.stage_code == "FRM1":
+		# KSEBL Form 1 with the customer's details (api/form1_print).
+		from a3_sola.api import form1_print
+
+		return {form1_print.CODE: form1_print.prints(installation)}
 	if row.stage_code == "STMP":
 		from a3_sola.api import stamp_print
 

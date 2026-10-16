@@ -19,7 +19,7 @@ from frappe.utils import add_days, cint, flt, getdate, now_datetime, today
 
 from a3_sola.api import stages
 from a3_sola.api.settings import get_value
-from a3_sola.api.stages import DONE, _get_stage, _require_manager, _save
+from a3_sola.api.stages import DONE, MANAGER_ROLES, _get_stage, _require_manager, _save
 
 #: Portal application types that carry a task, and which. Held here so the Portal
 #: Application controller and the Task button read one map.
@@ -466,15 +466,12 @@ AFTER_COMPLETE = {"F1PAY": _start_form2_window}
 # ------------------------------------------------------------------ the Task button
 def _installation_task_route(inst, code):
 	"""A generic task opens with its code - the structure's material task with the project's
-	structure BOM already chosen, the completion certificate with its electrical contractor."""
+	structure BOM already chosen."""
 	values = {"task_code": code}
 	if code == "PROC":
 		from a3_sola.api import structure_bom
 
 		values["material_bom"] = structure_bom.material_bom_for(inst)
-	if code == "CCERT":
-		# The completion certificate is the electrical contractor's.
-		values["solar_contractor"] = inst.get("electrical_contractor")
 	if code == "SPROC":
 		from a3_sola.api import structure_bom
 
@@ -661,6 +658,65 @@ def skip_task(installation, task_code=None, reason=None):
 	row.skip_reason = reason.strip()
 	row.blocked_reason = None
 	_save(doc, _("Task {0} skipped: {1}").format(row.stage_name, reason.strip()))
+	return doc.current_stage
+
+
+def may_complete(inst, code, user=None):
+	"""Whether `user` may complete the task straight from the board: one of its assignees, or
+	a manager - anyone who may edit the job when the task has no one assigned."""
+	from a3_sola.api import task_assignees
+
+	user = user or frappe.session.user
+	if set(frappe.get_roles(user)).intersection(MANAGER_ROLES):
+		return True
+	row = _get_stage(inst, code)
+	people = set(task_assignees.people(inst, code)) | ({row.assigned_to} if row.get("assigned_to") else set())
+	return user in people if people else bool(inst.has_permission("write", user=user))
+
+
+@frappe.whitelist(methods=["POST"])
+def complete_from_board(installation, task_code=None, remarks=None, confirmed=0):
+	"""Complete a task straight from the board, without its document's details: the assignee
+	confirms it is done and says how, in a remark kept on the task and the job's timeline.
+	Unlike complete_task, a draft document on the task does not stop it - a save never takes
+	a completed task back."""
+	from a3_sola.api import task_assignees
+
+	if not task_code:
+		frappe.throw(_("Which task?"))
+	remarks = (remarks or "").strip()
+	if not remarks:
+		frappe.throw(_("Add a remark: how was the task done?"), title=_("Remark Needed"))
+	if not cint(confirmed):
+		frappe.throw(_("Confirm that the task is done."), title=_("Confirmation Needed"))
+	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
+	doc.check_permission("write")
+	row = _get_stage(doc, task_code)
+	if row.status in DONE:
+		frappe.throw(_("Task {0} is already {1}.").format(row.stage_name, row.status.lower()))
+	if not may_complete(doc, task_code):
+		names = ", ".join(frappe.db.get_value("User", u, "full_name") or u for u in task_assignees.people(doc, task_code))
+		frappe.throw(_("Only the task's assignee ({0}) or a manager can complete it.").format(names or _("none set")),
+			frappe.PermissionError)
+	if task_code in ("SPROC", "PROC"):
+		# What a supplier has not given yet holds the procurement open, however it is completed.
+		pending = frappe.db.sql("""select count(*) from `tabInstallation Task Pending Item` p
+			join `tabInstallation Task` t on t.name = p.parent
+			where t.solar_installation = %s and t.task_code = %s and t.docstatus < 2 and ifnull(p.received, 0) = 0""",
+			(doc.name, task_code))[0][0]
+		if pending:
+			frappe.throw(_("{0} pending item(s) are still awaited on this task. Tick them Received first.").format(pending),
+				title=_("Items Still Pending"))
+	row.status = "Completed"
+	row.actual_start_date = row.actual_start_date or today()
+	row.actual_completion_date = today()
+	row.completed_by = frappe.session.user
+	row.blocked_reason = None
+	row.skip_reason = None
+	row.remarks = "\n".join(p for p in (row.remarks, _("Completed: {0}").format(remarks)) if p)
+	_save(doc, _("Task {0} completed by {1}: {2}").format(row.stage_name,
+		frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, remarks))
+	notify_task_completed(doc, task_code)
 	return doc.current_stage
 
 

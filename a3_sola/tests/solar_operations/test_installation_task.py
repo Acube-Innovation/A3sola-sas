@@ -52,16 +52,15 @@ class TestInstallationTask(FrappeTestCase):
 		self.assertEqual(task.task_name, "DISCOM Inspection & Pre-Energisation Test")
 
 	def test_completion_needs_the_tasks_evidence(self):
-		task = make_task(self.installation, "CCERT")
+		task = make_task(self.installation, "MTR")
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			ctl.complete(task.name)
-		self.assertIn("Certificate", str(ctx.exception))
+		self.assertIn("Meter", str(ctx.exception))
 
-		task.certificate = "/files/cc.pdf"
-		task.certificate_no = "CC-9"
+		task.meter_serial = "NM-9"
 		task.save(ignore_permissions=True)
 		ctl.complete(task.name)
-		row, _doc = task_row(self.installation, "CCERT")
+		row, _doc = task_row(self.installation, "MTR")
 		self.assertEqual(row.status, "Completed")
 
 	def test_generating_a_document_attaches_it_here_and_registers_it_on_the_job(self):

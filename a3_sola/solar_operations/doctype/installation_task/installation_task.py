@@ -16,7 +16,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
-from a3_sola.api import contractors, documents
+from a3_sola.api import documents
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
 
@@ -31,7 +31,6 @@ LINKS = (
 REQUIRED_EVIDENCE = {
 	"ADV": ("amount", "paid_on"),
 	"BAL": ("amount", "paid_on"),
-	"CCERT": ("certificate", "certificate_no"),
 	"PORTUPD": ("dcr_certificate",),
 	"KTST": ("result", "signed_checklist"),
 	"MTR": ("meter_serial",),
@@ -54,9 +53,6 @@ class InstallationTask(Document):
 
 	def validate(self):
 		self.pull_installation()
-		if self.task_code == "CCERT":
-			# The completion certificate is the job's electrical contractor's.
-			contractors.fill(self, contractors.ELECTRICAL)
 		assert_same_company(self, LINKS)
 		self.validate_task_code()
 		self.validate_one_open()
@@ -67,9 +63,11 @@ class InstallationTask(Document):
 			self.require_evidence()
 
 	def check_pending(self):
-		"""A procurement list's pending quantities - what the supplier could not give - lie
-		between nothing and the row's own quantity, and the task is not done while any is left."""
-		from a3_sola.api.purchase_list import pending_rows
+		"""What the supplier could not give. A row's Pending Qty - between nothing and the row's
+		own quantity - moves that much off the list into Pending Items, to be sent to the next
+		supplier; it comes back when ticked Received (api/purchase_list). The task is not done
+		while anything is still pending."""
+		from a3_sola.api.purchase_list import move_to_pending, pending_rows
 		from a3_sola.api.structure_bom import MATERIAL_LISTS
 
 		if self.task_code not in MATERIAL_LISTS:
@@ -80,10 +78,11 @@ class InstallationTask(Document):
 			if flt(row.pending_qty) > flt(row.qty):
 				frappe.throw(_("Row {0} ({1}): the pending quantity {2:g} is more than the {3:g} on the list.").format(
 					row.idx, row.material, flt(row.pending_qty), flt(row.qty)), title=_("Pending Quantity"))
+		move_to_pending(self)
 		pending = pending_rows(self)
 		if pending and self.status == "Completed":
 			names = ", ".join(r.material for r in pending[:5]) + (_(" and {0} more").format(len(pending) - 5) if len(pending) > 5 else "")
-			frappe.throw(_("{0} item(s) are still pending: {1}. Receive them, or clear their Pending Qty, before completing the task.").format(
+			frappe.throw(_("{0} item(s) are still pending: {1}. Tick them Received when they arrive, before completing the task.").format(
 				len(pending), names), title=_("Items Still Pending"))
 
 	def pull_installation(self):

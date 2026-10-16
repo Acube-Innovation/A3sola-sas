@@ -50,7 +50,8 @@
 						    button laid over it. -#}
 						{%- if t.menu %}<button type="button" class="a3s-proj__task-open" aria-haspopup="menu"
 						        data-code="{{ t.code | e }}" data-name="{{ t.name | e }}" data-status="{{ t.status | e }}"
-						        data-url="{{ t.url | e }}" data-assignees="{{ t.assignees | map(attribute='user') | join(',') | e }}"><span class="a3s-sr">{{ t.name | e }}: actions</span></button>{% endif %}
+						        data-url="{{ t.url | e }}" data-assignees="{{ t.assignees | map(attribute='user') | join(',') | e }}"
+						        data-assignee-names="{{ t.assignees | map(attribute='name') | join(', ') | e }}" data-can-complete="{{ 1 if t.can_complete else 0 }}"><span class="a3s-sr">{{ t.name | e }}: actions</span></button>{% endif %}
 					</li>
 					{%- endfor %}
 				</ol>

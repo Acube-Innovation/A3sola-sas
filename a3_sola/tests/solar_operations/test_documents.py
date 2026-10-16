@@ -84,17 +84,17 @@ class TestDocumentGeneration(FrappeTestCase):
 		).insert(ignore_permissions=True)
 
 	def test_registering_the_same_file_twice_updates_one_row(self):
-		task = self._task("CCERT")
+		task = self._task("KTST")
 		doc = frappe.get_doc("Solar Installation", self.installation.name)
 		before = len(doc.documents)
-		documents.register_document(doc, "CCERT", "Installation Task", task.name, "Completion certificate", "/files/a.pdf")
+		documents.register_document(doc, "KTST", "Installation Task", task.name, "Signed testing checklist", "/files/a.pdf")
 		doc.reload()
-		documents.register_document(doc, "CCERT", "Installation Task", task.name, "Completion certificate", "/files/b.pdf")
+		documents.register_document(doc, "KTST", "Installation Task", task.name, "Signed testing checklist", "/files/b.pdf")
 		doc.reload()
 		rows = [r for r in doc.documents if r.source_document == task.name]
 		self.assertEqual(len(rows), 1)
 		self.assertEqual(rows[0].attachment, "/files/b.pdf")
-		# it filled the expected row for CCERT rather than adding one
+		# it filled the expected row for KTST rather than adding one
 		self.assertEqual(len(doc.documents), before)
 
 	def test_an_unexpected_upload_is_appended_and_a_cancel_takes_it_away(self):
