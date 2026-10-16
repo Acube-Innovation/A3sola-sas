@@ -30,7 +30,7 @@ def get_context(context):
 
 # --- dashboard content (placeholder figures) ----------------------------------
 STAT_CARDS = [
-	{"label": "Active Consumers", "value": "128", "note": "across 3 DISCOMs", "ic": "user", "tone": "sky"},
+	{"label": "Active Customers", "value": "128", "note": "across 3 DISCOMs", "ic": "user", "tone": "sky"},
 	{"label": "Open Proposals", "value": "17", "note": "₹42.6L pipeline", "ic": "doc", "tone": "amber"},
 	{"label": "Installs In Progress", "value": "9", "note": "4 awaiting net meter", "ic": "wrench", "tone": "green"},
 ]

@@ -1,0 +1,22 @@
+{#- A procurement task's purchase list in the page head: the whole list to send to the
+    supplier, and - once rows carry a Pending Qty - the pending items, a list of their own to
+    send to the next supplier (api/purchase_list, api/portal_share). Context: share,
+    share_pending. -#}
+<div class="a3s-purchase-share">
+	<div class="a3s-purchase-share__row">
+		<span class="a3s-purchase-share__label">Full list</span>
+		{% include "templates/includes/portal_share.html" %}
+	</div>
+	{%- if share_pending %}
+	{%- set share = share_pending %}
+	<div class="a3s-purchase-share__row">
+		<span class="a3s-purchase-share__label">Pending items ({{ share_pending.count }})</span>
+		{% include "templates/includes/portal_share.html" %}
+	</div>
+	{%- endif %}
+</div>
+<style>
+	.a3s-purchase-share { display: grid; gap: 0.4rem; justify-items: end; }
+	.a3s-purchase-share__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+	.a3s-purchase-share__label { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
+</style>

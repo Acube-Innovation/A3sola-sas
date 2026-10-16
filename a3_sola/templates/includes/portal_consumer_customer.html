@@ -4,11 +4,11 @@
 	<h3 class="a3s-detail__card-title">ERPNext Customer</h3>
 	{%- if customer.name %}
 	<p><a href="{{ customer.desk }}"><b>{{ customer.customer_name | e }}</b></a> &middot; {{ customer.name | e }}</p>
-	<p class="a3s-field__hint">Quotations, orders and invoices for this consumer are raised to this customer.</p>
+	<p class="a3s-field__hint">Quotations, orders and invoices for this customer are raised to this ERPNext record.</p>
 	{%- else %}
-	<p class="a3s-field__hint">Not a customer in ERPNext yet. It becomes one when its first quotation is saved, or convert it now.</p>
+	<p class="a3s-field__hint">Not in ERPNext yet. It is added when its first quotation is saved, or add it now.</p>
 	{%- if customer.can_convert %}
-	<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-make-customer">Convert to customer</button>
+	<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-make-customer">Add to ERPNext</button>
 	<p class="a3s-form__status" id="a3s-make-customer-status" role="status" aria-live="polite"></p>
 	<script>
 	(function () {
@@ -16,14 +16,14 @@
 		var status = document.getElementById("a3s-make-customer-status");
 		btn.addEventListener("click", function () {
 			btn.disabled = true;
-			status.textContent = "Creating the customer…";
+			status.textContent = "Adding the customer to ERPNext…";
 			fetch("/api/method/a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.make_customer", {
 				method: "POST", credentials: "same-origin",
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": "{{ csrf_token }}" },
 				body: JSON.stringify({ solar_consumer: document.getElementById("a3s-consumer-customer").dataset.name })
 			}).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
 			  .then(function (res) {
-				if (!res.ok) throw new Error("Could not create the customer.");
+				if (!res.ok) throw new Error("Could not add the customer to ERPNext.");
 				window.location.reload();
 			  })
 			  .catch(function (e) { btn.disabled = false; status.textContent = e.message; });

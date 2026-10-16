@@ -14,7 +14,7 @@
 
 <form class="a3s-toolbar" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
 	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
-	       placeholder="Search consumers" aria-label="Search consumers">
+	       placeholder="Search customers" aria-label="Search customers">
 	<select name="status" aria-label="Status">
 		<option value="">All statuses</option>
 		{%- for s in statuses %}
@@ -117,7 +117,7 @@
 		</tbody>
 	</table>
 </div>
-<p class="a3s-list__note">Showing {{ total }} consumer{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.</p>
+<p class="a3s-list__note">Showing {{ total }} customer{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.</p>
 {% else %}
 <div class="a3s-card a3s-empty">
 	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ collection.icon }}"></use></svg></span>
@@ -125,9 +125,9 @@
 	<h3 class="a3s-empty__title">No matches</h3>
 	<p class="a3s-empty__text">Nothing matches that search. <a href="/a3solaportal/{{ collection.slug }}">Clear it</a> to see everything.</p>
 	{%- else %}
-	<h3 class="a3s-empty__title">No consumers yet</h3>
+	<h3 class="a3s-empty__title">No customers yet</h3>
 	<p class="a3s-empty__text">Create the first one and it will appear here.</p>
-	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">New consumer</a>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">New customer</a>
 	{%- endif %}
 </div>
 {% endif %}

@@ -38,7 +38,14 @@
   "external_reference",
   "blocked_reason",
   "skip_reason",
-  "remarks"
+  "remarks",
+  "sb_payment",
+  "payment_received_by",
+  "payment_received_on",
+  "payment_amount",
+  "payment_bank",
+  "payment_company",
+  "payment_account"
  ],
  "fields": [
   {
@@ -262,10 +269,58 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "sb_payment",
+   "fieldtype": "Section Break",
+   "label": "Payment Confirmation",
+   "depends_on": "eval:doc.payment_received_by"
+  },
+  {
+   "description": "Who said the payment came in, sending the task to Accounts to confirm.",
+   "fieldname": "payment_received_by",
+   "fieldtype": "Link",
+   "label": "Payment Received - Marked By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_received_on",
+   "fieldtype": "Datetime",
+   "label": "Marked On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_amount",
+   "fieldtype": "Currency",
+   "label": "Amount Received",
+   "read_only": 1
+  },
+  {
+   "description": "The bank the payment was received in.",
+   "fieldname": "payment_bank",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "read_only": 1
+  },
+  {
+   "description": "Which firm the payment was made to - one of the company's receiving firms (Solar Company Account Mapping).",
+   "fieldname": "payment_company",
+   "fieldtype": "Data",
+   "label": "Received By Company",
+   "read_only": 1
+  },
+  {
+   "description": "The ledger account the receiving firm is mapped to.",
+   "fieldname": "payment_account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "Account",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2026-10-15 16:00:00.000000",
+ "modified": "2026-10-16 15:10:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Log",

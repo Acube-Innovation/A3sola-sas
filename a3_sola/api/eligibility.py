@@ -188,9 +188,9 @@ def _connection(ctx):
 @rule("ELG-07", "Installation address is present and matches the consumer's district.", 7)
 def _address(ctx):
 	if not ctx.consumer.get("name"):
-		return "Fail", _("No Solar Consumer yet, so no installation address is on record.")
+		return "Fail", _("No customer yet, so no installation address is on record.")
 	if not ctx.consumer.installation_address:
-		return "Fail", _("No installation address on the consumer record.")
+		return "Fail", _("No installation address on the customer record.")
 	district = frappe.db.get_value("DISCOM Section", ctx.consumer.discom_section, "district")
 	if not district:
 		return "Pass", _("Address present; no district recorded on the section to compare.")
@@ -257,7 +257,7 @@ def _ehs(ctx):
 @rule("ELG-11", "Lender, branch and sanction reference recorded where the sale is financed.", 11)
 def _finance(ctx):
 	if not ctx.consumer.get("name"):
-		return "Not Applicable", _("Not yet quoted; financing is checked once a Solar Consumer exists.")
+		return "Not Applicable", _("Not yet quoted; financing is checked once a customer exists.")
 	quotation = frappe.db.get_value(
 		"Quotation",
 		{"solar_consumer": ctx.consumer.name, "docstatus": ["<", 2], "is_financed": 1},

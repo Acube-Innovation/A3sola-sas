@@ -11,7 +11,8 @@ desk asks. Files are stored private: they open only for someone who can read the
 Each file says what it is - the KSEB bill, an Aadhaar face, the PAN - in File's
 `a3s_document_type`, chosen when it is uploaded and fixed from then on. On a Solar Consumer a file of one of the KYC types is also its row in
 the consumer's KYC Documents, which the KYC status, the sales order and the job's register
-read, so a PAN uploaded here counts as the PAN.
+read, so a PAN uploaded here counts as the PAN. A typed file on the lead counts for its
+customer too (api/kyc), so the customer's KYC status is re-derived after every change.
 """
 
 import frappe
@@ -60,6 +61,14 @@ def _sync_kyc(consumer_name, file_url, document_type):
 		consumer.set("kyc_documents", [r for r in consumer.get("kyc_documents") or [] if r.attachment != file_url])
 	if changed:
 		consumer.save(ignore_permissions=True)
+
+
+def _refresh_kyc(doctype, name):
+	"""The customer's KYC status, after a file came or went on it or on its lead."""
+	if doctype in (CONSUMER, "Lead"):
+		from a3_sola.api import kyc
+
+		kyc.refresh(kyc.pair(doctype, name)[0])
 
 
 def _files(doctype, name):
@@ -115,6 +124,7 @@ def upload(doctype, name, document_type=None):
 				upload.filename), frappe.ValidationError)
 		if doctype == CONSUMER and document_type:
 			_sync_kyc(name, file.file_url, document_type)
+	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
 
@@ -134,6 +144,7 @@ def set_type(doctype, name, file, document_type=None):
 	frappe.db.set_value("File", file, "a3s_document_type", document_type or None)
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, document_type)
+	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
 
@@ -153,4 +164,5 @@ def remove(doctype, name, file):
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, None)  # its KYC row goes with it
 	frappe.delete_doc("File", file, ignore_permissions=True)
+	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}

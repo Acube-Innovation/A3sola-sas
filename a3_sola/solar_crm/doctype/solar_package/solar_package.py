@@ -21,6 +21,11 @@ from a3_sola.api.uniqueness import assert_unique_in_company
 
 
 class SolarPackage(Document):
+	def before_insert(self):
+		"""A new package offers the usual add-ons until its own are entered."""
+		if not self.get("optional_add_ons"):
+			self.set("optional_add_ons", default_add_ons(self))
+
 	def validate(self):
 		assert_unique_in_company(self, ["specification_code"])
 		self.validate_dcr_items()
@@ -28,12 +33,15 @@ class SolarPackage(Document):
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
 		self.validate_one_default_per_type()
+		self.no_dcdb_for_microinverter()
+		self.name_extra_panel_add_ons()
 		self.fill_package_cost()
 		self.validate_prices()
 		self.price_the_configurations()
 		self.compute_batteries()
 		self.compute_expenses()
 		self.check_regulation()
+		self.validate_payment_terms()
 
 	def on_update(self):
 		"""Drop the cached copy once the save is committed.
@@ -59,6 +67,23 @@ class SolarPackage(Document):
 		"""
 		if not flt(self.package_cost):
 			self.package_cost = default_package_cost(self)
+
+	def validate_payment_terms(self):
+		"""The package's payment terms are this company's, active, and add up to the whole price."""
+		for field in ("payment_terms", "financed_payment_terms"):
+			name = self.get(field)
+			if not name:
+				continue
+			company, active = frappe.db.get_value("Billing Milestone Template", name, ["company", "is_active"]) or (None, 0)
+			label = _(self.meta.get_label(field))
+			if company and self.company and company != self.company:
+				frappe.throw(_("{0}: {1} is {2}'s, not {3}'s.").format(label, name, company, self.company))
+			if not active:
+				frappe.throw(_("{0}: {1} is not active.").format(label, name))
+			total = sum(flt(p) for p in frappe.get_all("Billing Milestone Template Detail",
+				filters={"parent": name, "parenttype": "Billing Milestone Template"}, pluck="percentage"))
+			if abs(total - 100) > 0.01:
+				frappe.throw(_("{0}: the milestones of {1} add up to {2}%, not 100%.").format(label, name, flt(total, 2)))
 
 	def validate_one_default(self, fieldname, noun):
 		"""Exactly one option is the default, because everything downstream reads one.
@@ -105,6 +130,22 @@ class SolarPackage(Document):
 				)
 			if not defaults:
 				rows[0].is_default = 1
+
+	def no_dcdb_for_microinverter(self):
+		"""A micro-inverter package has no DCDB: its count is 0 (api/microinverter.py)."""
+		from a3_sola.api.microinverter import MICROINVERTER
+
+		if self.inverter_topology != MICROINVERTER:
+			return
+		for row in self.system_items or []:
+			if row.system_type == "DCDB":
+				row.qty = 0
+
+	def name_extra_panel_add_ons(self):
+		"""An Extra Panel add-on left blank is one more of the package's own panel."""
+		for row in self.get("optional_add_ons") or []:
+			if row.add_on_type == "Extra Panel" and not (row.item or "").strip():
+				row.item = extra_panel_item(self)
 
 	def validate_prices(self):
 		"""Every price row names a real configuration, and no two name the same one.
@@ -286,6 +327,27 @@ class SolarPackage(Document):
 			title=_("Grid Regulation"),
 			indicator="orange",
 		)
+
+
+#: What a package offers beside its price unless its own add-ons are entered: one more panel
+#: of its own, and the inverter's warranty taken to 25 years. Printed in the proposal's 3.3.3.
+DEFAULT_ADD_ONS = (
+	("Extra Panel", None, 17500),
+	("Warranty Extension", "Warranty Extension for Inverter – 13th Year to 25th year", 10000),
+)
+
+
+def extra_panel_item(package):
+	"""'Supply and Installation of 1X550Wp Solar Panel', with the package's default panel."""
+	module = _default_row(package, "modules") if package.get("modules") else None
+	watt = flt(module.module_wattage) if module else 0
+	return "Supply and Installation of 1X{0:g}Wp Solar Panel".format(watt) if watt else "Supply and Installation of 1 Solar Panel"
+
+
+def default_add_ons(package):
+	"""The DEFAULT_ADD_ONS rows for `package` (a document)."""
+	return [{"add_on_type": kind, "item": item or extra_panel_item(package), "amount": amount}
+		for kind, item, amount in DEFAULT_ADD_ONS]
 
 
 def _default_row(package, fieldname):

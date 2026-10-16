@@ -83,6 +83,11 @@ def _panel(inst, task_code):
 	for d in ([] if task_code == "LOAN" else inst.documents):
 		if d.stage_code != task_code:
 			continue
+		if d.document_name == KYC_DOCUMENTS:
+			rows.append(kyc_entry(inst, d))
+			continue
+		if (d.document_name or "").startswith(KYC_REGISTERED) and d.document_kind == "Uploaded" and task_code == "ORD":
+			continue  # each KYC paper is shown under the customer's KYC, above
 		row_prints = prints.get(templates.get(d.solar_document_template), [])
 		# A document the system prints (the bank's, in RIM format) opens as printed now, with
 		# today's values - never a copy stored before a change.
@@ -111,10 +116,42 @@ def _panel(inst, task_code):
 	}
 
 
+#: The order task's KYC row, shown live from the customer and its lead, and the prefix of
+#: the KYC papers the job's register copied from the customer (kyc.register_for_installation).
+KYC_DOCUMENTS = "Customer KYC documents"
+KYC_REGISTERED = "KYC - "
+
+
+def kyc_entry(inst, d):
+	"""The customer's KYC as it stands - uploaded on the customer or on its lead - each paper
+	to open, an upload (onto the customer) for each still pending, and how many are in."""
+	from a3_sola.api import kyc
+
+	entry = {"row": d.name, "name": d.document_name, "mandatory": bool(d.is_mandatory), "kind": "Expected",
+		"files": [], "missing": []}
+	consumer = inst.get("solar_consumer")
+	if not (consumer and frappe.has_permission("Solar Consumer", "read", consumer)):
+		entry["note"] = _("No access to the customer.")
+		return entry
+	got = kyc.documents(consumer, frappe.db.get_value("Solar Consumer", consumer, "lead"),
+		kyc.loan_amount_for(consumer=consumer))
+	entry["files"] = [{"label": f["type"], "url": f["url"]} for item in got["items"] for f in item["files"]]
+	entry["missing"] = [{"label": item["label"], "upload": {"kind": "consumer", "consumer": consumer,
+		"document_type": item["types"][0]}} for item in got["items"] if not item["uploaded"]]
+	entry["kind"] = "Uploaded" if not entry["missing"] else "Expected"
+	return entry
+
+
 def _prints(row, installation):
 	"""The documents the system prints for this task, by template code: the loan's bank
 	letter and feasibility report (api/loan_print.py), for which the panel adds `&signed=1`
 	or `0` from its "With sign & seal" box; the stamp paper data (api/stamp_print.py)."""
+	if row.stage_code == "MATL":
+		# The data for the completion report, on the letterhead or plain paper.
+		from a3_sola.api import completion_print
+
+		notice = row.task_document if row.task_doctype == "Material Dispatch Notice" else None
+		return {completion_print.CODE: completion_print.prints(installation, notice)}
 	if row.stage_code == "STMP":
 		from a3_sola.api import stamp_print
 
@@ -158,21 +195,23 @@ def loan_pack(inst, row):
 
 	dal = next((r for r in inst.stages if r.stage_code == "DAL"), None)
 	if dal and dal.status == "Skipped":
-		out.append({"name": "Digital approval letter", "kind": "Expected", "files": [], "missing": [], "note": _("Not needed - not financed.")})
+		out.append({"name": "Jan Samarth approval letter", "kind": "Expected", "files": [], "missing": [], "note": _("Not needed - not financed.")})
 	else:
 		task = frappe._dict(name=dal.task_document if dal and dal.task_doctype == "Installation Task" else None,
 			solar_installation=inst.name)
 		files = [{"label": "", "url": f["file_url"]} for f in approval_letters(task)]
-		out.append({"name": "Digital approval letter", "kind": "Uploaded" if files else "Expected", "files": files,
-			"missing": [] if files else [{"label": "Digital approval letter",
-				"upload": {"kind": "task", "task_code": "DAL", "document_name": "Digital approval letter"}}]})
+		out.append({"name": "Jan Samarth approval letter", "kind": "Uploaded" if files else "Expected", "files": files,
+			"missing": [] if files else [{"label": "Jan Samarth approval letter",
+				"upload": {"kind": "task", "task_code": "DAL", "document_name": "Jan Samarth approval letter"}}]})
+
+	out.append(_surya_ghar_entry(inst))
 
 	consumer = inst.get("solar_consumer")
 	readable = consumer and frappe.has_permission("Solar Consumer", "read", consumer)
 	have = consumer_files(consumer) if readable else {}
 	for label, types in LOAN_PACK_CONSUMER:
 		if not readable:
-			out.append({"name": label, "kind": "Expected", "files": [], "missing": [], "note": _("No access to the consumer.")})
+			out.append({"name": label, "kind": "Expected", "files": [], "missing": [], "note": _("No access to the customer.")})
 			continue
 		files = [{"label": t if len(types) > 1 else "", "url": url} for t in types for url in have.get(t, [])]
 		missing = [{"label": t, "upload": {"kind": "consumer", "consumer": consumer, "document_type": t}}
@@ -182,16 +221,28 @@ def loan_pack(inst, row):
 	return out
 
 
-def consumer_files(consumer):
-	"""The consumer's files by document type - typed on upload, or a KYC row's."""
-	by_type = {}
-	for f in frappe.get_all("File", filters={"attached_to_doctype": "Solar Consumer", "attached_to_name": consumer,
-			"is_folder": 0}, fields=["file_url", "a3s_document_type"], order_by="creation asc"):
-		if f.a3s_document_type:
-			by_type.setdefault(f.a3s_document_type, []).append(f.file_url)
-	for r in frappe.get_all("Customer KYC Document", filters={"parent": consumer, "parenttype": "Solar Consumer"},
-			fields=["kyc_type", "attachment"]):
-		if r.attachment and r.attachment not in by_type.get(r.kyc_type, []):
-			by_type.setdefault(r.kyc_type, []).append(r.attachment)
-	return by_type
+#: The PM Surya Ghar registration task, whose papers the bank also asks for.
+SURYA_GHAR_TASK = "NPA"
 
+
+def _surya_ghar_entry(inst):
+	"""The PM Surya Ghar registration's papers - the application data sheet, the portal
+	acknowledgement and anything else filed under that task - as one row of the loan pack,
+	with an upload into that task for each required one still missing. What is uploaded in
+	either place is the same register row, so it shows in both."""
+	label = _("PM Surya Ghar registration")
+	task = next((r for r in inst.stages if r.stage_code == SURYA_GHAR_TASK), None)
+	if not task or task.status == "Skipped":
+		return {"name": label, "kind": "Expected", "files": [], "missing": [], "note": _("Not needed - not subsidised.")}
+	docs = [d for d in inst.documents if d.stage_code == SURYA_GHAR_TASK]
+	files = [{"label": d.document_name, "url": d.attachment} for d in docs if d.attachment]
+	missing = [{"label": d.document_name, "upload": {"kind": "task", "task_code": SURYA_GHAR_TASK,
+		"document_name": d.document_name}} for d in docs if not d.attachment and d.is_mandatory]
+	return {"name": label, "kind": "Uploaded" if files and not missing else "Expected", "files": files, "missing": missing}
+
+
+def consumer_files(consumer):
+	"""The customer's files by document type - typed on upload on it or on its lead, or a KYC row's."""
+	from a3_sola.api import kyc
+
+	return kyc.files_by_type(consumer, frappe.db.get_value("Solar Consumer", consumer, "lead"))

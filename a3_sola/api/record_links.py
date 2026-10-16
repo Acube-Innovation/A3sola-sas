@@ -71,8 +71,8 @@ def fill_survey(doc):
 		consumer_lead = frappe.db.get_value("Solar Consumer", doc.solar_consumer, "lead")
 		if consumer_lead and consumer_lead != doc.lead:
 			frappe.throw(
-				_("Solar Consumer {0} belongs to lead {1}, not {2}.").format(doc.solar_consumer, consumer_lead, doc.lead),
-				title=_("Lead and Consumer Do Not Match"),
+				_("Customer {0} belongs to lead {1}, not {2}.").format(doc.solar_consumer, consumer_lead, doc.lead),
+				title=_("Lead and Customer Do Not Match"),
 			)
 	if doc.solar_consumer and frappe.db.exists("Solar Consumer", doc.solar_consumer):
 		fill_blanks(doc, values_from(frappe.get_doc("Solar Consumer", doc.solar_consumer), "Site Survey"))

@@ -58,8 +58,13 @@ def pull_consumer_number(doc):
 
 
 @frappe.whitelist()
-def create_solar_consumer(lead):
-	"""Map a Lead's solar fields into a new Solar Consumer and link it back."""
+def create_solar_consumer(lead, address=None):
+	"""Map a Lead's solar fields into a new Solar Consumer and link it back, with the
+	installation site and permanent address the desk button asks for."""
+	from a3_sola.solar_crm.doctype.solar_consumer.solar_consumer import ADDRESS_PARTS, ADDRESS_PREFIXES
+
+	address = frappe.parse_json(address) or {}
+	wanted = {f"{prefix}_{part}" for prefix in ADDRESS_PREFIXES for part in ADDRESS_PARTS} | {"permanent_address_same"}
 	doc = frappe.get_doc("Lead", lead)
 	doc.check_permission("write")
 
@@ -70,7 +75,7 @@ def create_solar_consumer(lead):
 			)
 		)
 	if not doc.get("discom"):
-		frappe.throw(_("Set the DISCOM on the lead before creating a Solar Consumer."))
+		frappe.throw(_("Set the DISCOM on the lead before creating a customer."))
 
 	consumer = frappe.get_doc(
 		{
@@ -89,6 +94,7 @@ def create_solar_consumer(lead):
 			"avg_bill_amount": doc.get("avg_monthly_bill"),
 			"billing_frequency": "Bimonthly",
 			"lead": doc.name,
+			**{k: v for k, v in address.items() if k in wanted and v},
 		}
 	).insert(ignore_permissions=True)
 

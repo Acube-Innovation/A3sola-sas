@@ -70,8 +70,8 @@ class NetMeteringAgreement(Document):
 		)
 
 		self.consumer_name = consumer.consumer_name
-		self.permanent_address = _address_text(address)
-		self.installation_address = _address_text(address)
+		self.permanent_address = consumer.get("permanent_address") or _address_text(address)
+		self.installation_address = consumer.get("installation_site_address") or _address_text(address)
 		self.consumer_number_and_category = f"{consumer.consumer_number} / {consumer.tariff_category or ''}".strip(" /")
 		self.connected_load_or_contract_demand = (
 			f"{consumer.connected_load_watts:g} W" if consumer.connected_load_watts else None

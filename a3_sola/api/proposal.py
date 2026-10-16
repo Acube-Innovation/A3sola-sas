@@ -141,7 +141,7 @@ def _specification_rows(package, options, packages):
 				"item": "Solar PV Inverter",
 				"specification": f"Option {index}\n{spec}" if len(options) > 1 else spec,
 				"make": make,
-				"nos": option.inverter_count or pkg.get(f"inverter_{suffix}_count"),
+				"nos": option.inverter_count or (fallback.inverter_count if fallback else None),
 			}
 		)
 

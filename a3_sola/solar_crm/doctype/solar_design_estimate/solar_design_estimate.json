@@ -126,7 +126,7 @@
   {
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
-   "label": "Consumer Documents"
+   "label": "Customer Documents"
   },
   {
    "fieldname": "lead",
@@ -134,12 +134,12 @@
    "label": "Lead",
    "options": "Lead",
    "in_list_view": 1,
-   "description": "The enquiry this estimate is for. Either a Lead or a Solar Consumer is required; a lead-only estimate is indicative until the consumer and survey exist."
+   "description": "The enquiry this estimate is for. Either a Lead or a Customer is required; a lead-only estimate is indicative until the customer and survey exist."
   },
   {
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "in_list_view": 1
   },
@@ -172,7 +172,7 @@
    "fieldtype": "Link",
    "label": "KSEB Tariff Code",
    "options": "KSEB Tariff Category",
-   "description": "The KSEB tariff category the consumer is billed under, e.g. LT-I Domestic."
+   "description": "The KSEB tariff category the customer is billed under, e.g. LT-I Domestic."
   },
   {
    "fieldname": "consumer_category",
@@ -187,7 +187,7 @@
    "fieldtype": "Select",
    "label": "Building Type",
    "options": "\nResidence Building\nVilla\nResidential Apartment\nCommercial Building\nOffice\nIndustrial Building\nFactory / Warehouse\nGovernment Building\nInstitution\nOther",
-   "description": "How the site reads in the proposal (Site Location). Filled from the consumer category when left blank."
+   "description": "How the site reads in the proposal (Site Location). Filled from the customer's category when left blank."
   },
   {
    "fieldname": "connection_type",
@@ -329,7 +329,7 @@
    "label": "Consumer Tariff Category",
    "fetch_from": "solar_consumer.tariff_category",
    "read_only": 1,
-   "description": "With subsidy, the consumer must be on LT-1A (set in A3 Sola Settings)."
+   "description": "With subsidy, the customer must be on LT-1A (set in A3 Sola Settings)."
   },
   {
    "fieldname": "cb_4",
@@ -451,7 +451,7 @@
    "fieldname": "sb_kseb",
    "fieldtype": "Section Break",
    "label": "KSEB Expenses",
-   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the consumer's single or three phase connection, and follow it on every save. Registration is charged on inverter capacity. Add rows for any other KSEB expense."
+   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the customer's single or three phase connection, and follow it on every save. Registration is charged on inverter capacity. Add rows for any other KSEB expense."
   },
   {
    "fieldname": "kseb_expenses",
@@ -837,7 +837,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-13 13:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

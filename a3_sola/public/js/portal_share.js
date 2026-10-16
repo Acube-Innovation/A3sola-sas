@@ -8,9 +8,14 @@
 (function () {
 	"use strict";
 
+	/* A page may carry more than one set (a purchase list and its pending items): each is
+	   wired once, however many times the script is included. */
+	if (window.a3sShareWired) return;
+	window.a3sShareWired = true;
+	Array.prototype.forEach.call(document.querySelectorAll("[data-share]"), wire);
+
+	function wire(share) {
 	/* ---- share the PDF itself, through the device's share sheet ---------- */
-	var share = document.querySelector("[data-share]");
-	if (!share) return;
 	var shareButton = share.querySelector("[data-share-file]");
 	if (shareButton && navigator.canShare && window.File
 			&& navigator.canShare({ files: [new File([""], "x.pdf", { type: "application/pdf" })] })) {
@@ -149,7 +154,7 @@
 					method: "POST",
 					credentials: "same-origin",
 					headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
-					body: JSON.stringify({ doctype: d.doctype, name: d.name, recipients: to.value, subject: subject.value, message: body.value })
+					body: JSON.stringify({ doctype: d.doctype, name: d.name, recipients: to.value, subject: subject.value, message: body.value, part: d.part || "" })
 				}).then(function (r) {
 					return r.json().catch(function () { return {}; }).then(function (data) { return { ok: r.ok, data: data }; });
 				}).then(function (res) {
@@ -234,5 +239,6 @@
 			var first = list.querySelector("a.a3s-btn--primary");
 			if (first) first.focus();
 		});
+	}
 	}
 })();

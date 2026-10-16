@@ -23,7 +23,9 @@
   "statutory_refund_receivable_account",
   "warranty_claim_receivable_account",
   "loan_advance_received_account",
-  "write_off_account"
+  "write_off_account",
+  "sb_receiving_firms",
+  "receiving_firms"
  ],
  "fields": [
   {
@@ -131,10 +133,22 @@
    "fieldtype": "Link",
    "label": "Write Off",
    "options": "Account"
+  },
+  {
+   "description": "The firms a customer's payment can be received by (the Received By choice on the Advance Payment), each with the ledger account it is booked to.",
+   "fieldname": "sb_receiving_firms",
+   "fieldtype": "Section Break",
+   "label": "Payment Receiving Firms"
+  },
+  {
+   "fieldname": "receiving_firms",
+   "fieldtype": "Table",
+   "label": "Receiving Firms",
+   "options": "Payment Receiving Firm"
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-16 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Projects",
  "name": "Solar Company Account Mapping",

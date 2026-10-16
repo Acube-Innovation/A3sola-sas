@@ -69,8 +69,10 @@ CUSTOM_FIELDS = {
 		{"fieldname": "a3s_customer_care_sb", "fieldtype": "Section Break", "label": "Customer Care", "insert_after": "payment_qr_code", "collapsible": 1,
 		 "description": "What the customer's completion file prints: who to call, and where to leave a review."},
 		{"fieldname": "google_review_url", "fieldtype": "Data", "options": "URL", "label": "Google Review Link", "insert_after": "a3s_customer_care_sb"},
+		# Where a new job's contractors start; each job may name others (or one for both).
 		{"fieldname": "default_electrical_contractor", "fieldtype": "Link", "options": "Solar Contractor", "label": "Default Electrical Contractor", "insert_after": "google_review_url"},
-		{"fieldname": "a3s_customer_care_cb", "fieldtype": "Column Break", "insert_after": "default_electrical_contractor"},
+		{"fieldname": "default_structure_contractor", "fieldtype": "Link", "options": "Solar Contractor", "label": "Default Structure Contractor", "insert_after": "default_electrical_contractor"},
+		{"fieldname": "a3s_customer_care_cb", "fieldtype": "Column Break", "insert_after": "default_structure_contractor"},
 		{"fieldname": "support_contacts", "fieldtype": "Table", "options": "Company Support Contact", "label": "Support Contacts", "insert_after": "a3s_customer_care_cb"},
 	],
 	# --------------------------------------------------------------------- File
@@ -123,7 +125,7 @@ CUSTOM_FIELDS = {
 		# Whether the customer means to finance the system. Known at enquiry, long before the
 		# quotation carries a lender, and read by the installation's Details tab.
 		{"fieldname": "loan_required", "fieldtype": "Select", "options": "\nYes\nNo", "label": "Loan Required", "insert_after": "approx_capacity_kw"},
-		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "loan_required", "read_only": 1},
+		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Customer", "insert_after": "loan_required", "read_only": 1},
 		{"fieldname": "site_survey", "fieldtype": "Link", "options": "Site Survey", "label": "Site Survey", "insert_after": "solar_consumer", "read_only": 1,
 		 "description": "The latest site survey of this lead's consumer."},
 		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "site_survey", "read_only": 1},
@@ -166,7 +168,8 @@ CUSTOM_FIELDS = {
 	# -------------------------------------------------------------- Opportunity
 	"Opportunity": [
 		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "opportunity_type", "collapsible": 1},
-		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "a3s_solar_sb"},
+		# Hidden: the opportunity's own party is the customer, and one Customer is shown.
+		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Customer", "insert_after": "a3s_solar_sb", "hidden": 1},
 		{"fieldname": "subsidy_scheme", "fieldtype": "Link", "options": "Subsidy Scheme", "label": "Subsidy Scheme", "insert_after": "solar_consumer"},
 		{"fieldname": "solar_design_estimate", "fieldtype": "Link", "options": "Solar Design Estimate", "label": "Design Estimate", "insert_after": "subsidy_scheme"},
 		{"fieldname": "a3s_solar_cb", "fieldtype": "Column Break", "insert_after": "solar_design_estimate"},
@@ -177,7 +180,8 @@ CUSTOM_FIELDS = {
 	# ---------------------------------------------------------------- Quotation
 	"Quotation": [
 		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "order_type", "collapsible": 1},
-		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Solar Consumer", "insert_after": "a3s_solar_sb"},
+		# Hidden: ERPNext's Customer is the quotation's party, and one Customer is shown.
+		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Customer", "insert_after": "a3s_solar_sb", "hidden": 1},
 		{"fieldname": "solar_design_estimate", "fieldtype": "Link", "options": "Solar Design Estimate", "label": "Design Estimate", "insert_after": "solar_consumer"},
 		{"fieldname": "selected_option", "fieldtype": "Data", "label": "Selected Option", "insert_after": "solar_design_estimate", "description": "The Design Estimate Option the customer chose. Mandatory when the estimate quotes more than one."},
 		{"fieldname": "subsidy_eligibility_check", "fieldtype": "Link", "options": "Subsidy Eligibility Check", "label": "Eligibility Check", "insert_after": "selected_option"},

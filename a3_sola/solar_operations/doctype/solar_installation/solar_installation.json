@@ -96,6 +96,18 @@
   "mounting_expenses",
   "sb_installation_expenses",
   "installation_expenses",
+  "sb_design",
+  "structure_bom",
+  "cb_design",
+  "material_bom",
+  "design_images",
+  "sb_dispatch",
+  "dispatch_date",
+  "dispatch_vehicle",
+  "cb_dispatch",
+  "dispatch_driver",
+  "dispatch_driver_mobile",
+  "dispatch_notes",
   "sb_7",
   "solar_package",
   "capacity_kw",
@@ -112,6 +124,8 @@
   "cb_12",
   "site_engineer",
   "sales_coordinator",
+  "structure_contractor",
+  "electrical_contractor",
   "sb_9",
   "installation_address",
   "discom",
@@ -216,7 +230,7 @@
    "options": "Lead",
    "reqd": 1,
    "in_standard_filter": 1,
-   "description": "Pick the lead first. Its consumer, site survey, eligibility check, design estimate and proposal are filled in from it."
+   "description": "Pick the lead first. Its customer, site survey, eligibility check, design estimate and proposal are filled in from it."
   },
   {
    "fieldname": "cb_lead",
@@ -239,14 +253,14 @@
   {
    "fieldname": "sb_consumer",
    "fieldtype": "Section Break",
-   "label": "Consumer Details"
+   "label": "Customer Details"
   },
   {
    "fetch_from": "solar_consumer.consumer_name",
    "fieldname": "consumer_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Consumer",
+   "label": "Customer Name",
    "read_only": 1
   },
   {
@@ -288,7 +302,8 @@
    "label": "Customer",
    "options": "Customer",
    "fetch_from": "solar_consumer.customer",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "consumer_kyc_status",
@@ -300,7 +315,7 @@
   {
    "fieldname": "consumer_status",
    "fieldtype": "Data",
-   "label": "Consumer Status",
+   "label": "Customer Status",
    "fetch_from": "solar_consumer.status",
    "read_only": 1
   },
@@ -314,7 +329,8 @@
    "fieldtype": "Link",
    "label": "Site Survey",
    "options": "Site Survey",
-   "description": "The consumer's latest survey, a submitted one first."
+   "description": "The customer's latest survey, a submitted one first.",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "survey_date",
@@ -581,7 +597,7 @@
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer",
    "reqd": 1
   },
@@ -590,7 +606,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "hidden": 1
   },
   {
    "fieldname": "sales_order",
@@ -792,6 +809,79 @@
    "read_only": 1
   },
   {
+   "description": "Frozen in the Design Freeze task; structure and material procurement take their lists from these.",
+   "fieldname": "sb_design",
+   "fieldtype": "Section Break",
+   "label": "Design"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The mounting structure's bill of materials. Blank: the package's, by roof type and capacity.",
+   "fieldname": "structure_bom",
+   "fieldtype": "Link",
+   "label": "Structure BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "cb_design",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The system's bill of materials. Blank: the package's.",
+   "fieldname": "material_bom",
+   "fieldtype": "Link",
+   "label": "Material BOM",
+   "options": "BOM"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "design_images",
+   "fieldtype": "Table",
+   "label": "Design Images",
+   "options": "Survey Image"
+  },
+  {
+   "description": "Recorded on the Material Dispatch task: the godown's delivery to the customer's site.",
+   "fieldname": "sb_dispatch",
+   "fieldtype": "Section Break",
+   "label": "Dispatch"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_date",
+   "fieldtype": "Date",
+   "label": "Dispatched On"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_vehicle",
+   "fieldtype": "Data",
+   "label": "Vehicle"
+  },
+  {
+   "fieldname": "cb_dispatch",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_driver",
+   "fieldtype": "Data",
+   "label": "Driver"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_driver_mobile",
+   "fieldtype": "Data",
+   "label": "Driver Mobile"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_notes",
+   "fieldtype": "Small Text",
+   "label": "Dispatch Notes"
+  },
+  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
    "label": "System Summary",
@@ -888,6 +978,22 @@
    "options": "User",
    "allow_on_submit": 1,
    "description": "Gets the portal registration and Form 1 tasks (Default Assignee: Sales Co-ordinator)."
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Erects the mounting structure: the Structure work order goes to them.",
+   "fieldname": "structure_contractor",
+   "fieldtype": "Link",
+   "label": "Structure Contractor",
+   "options": "Solar Contractor"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Does the installation, wiring and completion certificate: the Installation work order, material dispatch and certificate go to them. May be the structure contractor too.",
+   "fieldname": "electrical_contractor",
+   "fieldtype": "Link",
+   "label": "Electrical Contractor",
+   "options": "Solar Contractor"
   },
   {
    "fieldname": "sb_9",
@@ -1468,7 +1574,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 16:00:00.000000",
+ "modified": "2026-10-16 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Installation",

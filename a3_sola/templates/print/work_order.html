@@ -1,0 +1,89 @@
+{#- A work order for its contractor: the company, the order, the contractor, the customer and
+    the site, the system, the material and the photographs of the site before the work.
+    Context: job (api/work_order_print.job_context, photos with `src`), date. -#}
+<style>
+	.wo h1 { text-align: center; font-size: 14pt; margin: 0 0 2pt; letter-spacing: 0.02em; }
+	.wo .sub { text-align: center; margin: 0 0 9pt; }
+	.wo .co { text-align: center; margin: 0 0 8pt; font-size: 9.5pt; color: #333; }
+	.wo table { width: 100%; border-collapse: collapse; margin: 0 0 8pt; }
+	.wo .box td { border: 1px solid #000; padding: 5pt 7pt; vertical-align: top; width: 50%; }
+	.wo h4 { margin: 0 0 3pt; font-size: 9.5pt; text-transform: uppercase; letter-spacing: 0.04em; }
+	.wo .kv td { border: 1px solid #000; padding: 2.5pt 6pt; }
+	.wo .kv td.k { width: 30%; background: #f5f5f5; }
+	.wo .items th, .wo .items td { border: 1px solid #000; padding: 2.5pt 5pt; }
+	.wo .items th { background: #f0f0f0; }
+	.wo .items .n { width: 8%; text-align: center; }
+	.wo .items .q { width: 11%; text-align: center; }
+	/* Fixed sizes: old wkhtmltopdf builds let a wide photograph stretch a percentage cell. */
+	.wo .photos { width: auto; table-layout: fixed; }
+	.wo .photos td { width: 58mm; padding: 3pt; vertical-align: top; text-align: center; font-size: 8.5pt; }
+	.wo .photos img { width: 56mm; max-height: 42mm; border: 1px solid #999; }
+	.wo .sign td { width: 50%; padding-top: 28pt; text-align: center; }
+	.wo .keep { page-break-inside: avoid; }
+</style>
+<div class="wo">
+<p class="co"><strong>{{ job.company[0] | e }}</strong>{% for line in job.company[1:] if line %} · {{ line | e | replace("\n", ", ") }}{% endfor %}</p>
+<h1>{{ job.title | upper }}</h1>
+<p class="sub">{{ job.order.name or "Draft" }} · {{ job.project }} · {{ date }}
+	{%- if job.order.start %} · Work {{ job.order.start }}{% if job.order.end %} to {{ job.order.end }}{% endif %}{% endif %}</p>
+
+<table class="box"><tr>
+	<td>
+		<h4>Contractor</h4>
+		{%- if job.contractor %}
+		<strong>{{ job.contractor.contractor_name | e }}</strong>{% if job.contractor.contractor_type %} ({{ job.contractor.contractor_type | e }}){% endif %}
+		{%- if job.contractor.contact_person %}<br>Contact: {{ job.contractor.contact_person | e }}{% endif %}
+		{%- if job.contractor.mobile_no %}<br>Phone: {{ job.contractor.mobile_no | e }}{% endif %}
+		{%- if job.contractor.email_id %}<br>Email: {{ job.contractor.email_id | e }}{% endif %}
+		{%- if job.contractor.licence_no %}<br>Licence: {{ job.contractor.licence_no | e }}{% if job.contractor.licence_class %} ({{ job.contractor.licence_class | e }}){% endif %}{% endif %}
+		{%- else %}Not assigned yet.{% endif %}
+	</td>
+	<td>
+		<h4>Customer &amp; site</h4>
+		<strong>{{ job.customer.name | e }}</strong>
+		{%- if job.customer.mobile %}<br>Phone: {{ job.customer.mobile | e }}{% endif %}
+		<br>{{ (job.customer.address or "") | e | replace("\n", "<br>") }}
+		{%- if job.customer.landmark %}<br>Landmark: {{ job.customer.landmark | e }}{% endif %}
+		{%- if job.customer.map_url %}<br>Location: <a href="{{ job.customer.map_url }}">{{ "%.5f" | format(job.customer.point[0]) }}, {{ "%.5f" | format(job.customer.point[1]) }} (open in Google Maps)</a>{% endif %}
+		{%- if job.customer.consumer_number %}<br>Consumer No.: {{ job.customer.consumer_number | e }}{% if job.customer.section %} · {{ job.customer.section | e }}{% endif %}{% endif %}
+	</td>
+</tr></table>
+
+<table class="kv keep">
+	{%- for label, value in job.system %}
+	<tr><td class="k">{{ label | e }}</td><td>{{ value | e }}</td></tr>
+	{%- endfor %}
+	{%- if job.order.types %}<tr><td class="k">Work</td><td>{{ job.order.types | e }}</td></tr>{% endif %}
+	{%- if job.order.description %}<tr><td class="k">Instructions</td><td>{{ job.order.description | e | replace("\n", "<br>") }}</td></tr>{% endif %}
+</table>
+
+{%- if job.material and job.material.rows %}
+<table class="items">
+	<thead><tr><th class="n">#</th><th>{{ job.material.title | e }}{% if job.material.bom %} · {{ job.material.bom | e }}{% endif %}</th><th class="q">Qty</th><th class="q">Unit</th></tr></thead>
+	<tbody>
+	{%- for r in job.material.rows %}
+	<tr><td class="n">{{ loop.index }}</td><td>{{ r.material | e }}</td><td class="q">{{ "%g" | format(r.qty) }}</td><td class="q">{{ (r.uom or "") | e }}</td></tr>
+	{%- endfor %}
+	</tbody>
+</table>
+{%- endif %}
+
+{%- if job.serials and (job.serials.Module or job.serials.Inverter) %}
+<table class="kv keep">
+	{%- if job.serials.Module %}<tr><td class="k">Module serials ({{ job.serials.Module | length }})</td><td>{{ job.serials.Module | join(", ") | e }}</td></tr>{% endif %}
+	{%- if job.serials.Inverter %}<tr><td class="k">Inverter serials</td><td>{{ job.serials.Inverter | join(", ") | e }}</td></tr>{% endif %}
+</table>
+{%- endif %}
+
+{%- set photos = job.photos | selectattr("src") | list %}
+{%- if photos %}
+<h4>The site before the work</h4>
+<table class="photos">
+	{%- for row in photos | batch(3, None) %}
+	<tr class="keep">{% for p in row %}<td>{% if p %}<img src="{{ p.src }}"><br>{{ p.caption | e }}{% endif %}</td>{% endfor %}</tr>
+	{%- endfor %}
+</table>
+{%- endif %}
+
+<table class="sign keep"><tr><td>Site Engineer</td><td>Contractor</td></tr></table>
+</div>

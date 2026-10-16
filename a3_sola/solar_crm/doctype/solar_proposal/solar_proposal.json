@@ -79,7 +79,7 @@
    "fieldname": "sb_subject",
    "fieldtype": "Section Break",
    "label": "Proposal For",
-   "description": "Choose the lead first: its solar consumer, latest site survey and design estimates are filled in from it."
+   "description": "Choose the lead first: its customer, latest site survey and design estimates are filled in from it."
   },
   {
    "fieldname": "lead",
@@ -91,7 +91,7 @@
   {
    "fieldname": "solar_consumer",
    "fieldtype": "Link",
-   "label": "Solar Consumer",
+   "label": "Customer",
    "options": "Solar Consumer"
   },
   {
@@ -103,7 +103,7 @@
    "fieldtype": "Link",
    "label": "Site Survey",
    "options": "Site Survey",
-   "description": "The consumer's latest site survey, unless another is chosen."
+   "description": "The customer's latest site survey, unless another is chosen."
   },
   {
    "fieldname": "proposal_date",
@@ -117,7 +117,7 @@
    "fieldname": "sb_3",
    "fieldtype": "Section Break",
    "label": "Customer",
-   "description": "Filled from the lead, its solar consumer and site survey."
+   "description": "Filled from the lead, its customer and site survey."
   },
   {
    "fieldname": "salutation",
@@ -467,7 +467,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-11 15:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Proposal",

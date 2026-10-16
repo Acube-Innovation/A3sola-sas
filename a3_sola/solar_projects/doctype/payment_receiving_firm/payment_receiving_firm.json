@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-16 15:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "field_order": [
+  "firm_name",
+  "account",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "description": "As the payment page offers it, e.g. Renewcore, RIM Projects.",
+   "fieldname": "firm_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Firm",
+   "reqd": 1
+  },
+  {
+   "description": "The ledger account a payment received by this firm is booked to.",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Projects",
+ "name": "Payment Receiving Firm",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

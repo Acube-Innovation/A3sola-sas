@@ -11,6 +11,7 @@ small card per task in plan order, carrying its status and dates.
 import frappe
 from frappe.utils import cint, flt, fmt_money, format_date, quote
 
+from a3_sola.api import payment_tasks
 from a3_sola.api.portal_fields import link_title
 from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, desk_route, initials, record_route
 
@@ -25,6 +26,8 @@ BOARD_COLUMNS = (
 )
 #: The column a job shows only when it is financed: without a loan there is no bank work.
 FINANCED_ONLY = "Bank Activity"
+#: Loan tasks in other columns, likewise left off the board of a job without a loan.
+FINANCED_ONLY_TASKS = {"DAL"}
 
 
 #: The icon for a task, by the document it is carried out in - the same icons the menu uses.
@@ -224,7 +227,7 @@ def _proposal_box(doc):
 
 def _task_columns(doc):
 	"""A column per party, each with its tasks in plan order. A job that is not financed has
-	no bank column, and its bank tasks (skipped, as Financed Sales Only) are not shown."""
+	no bank column, and its loan tasks (skipped, as Financed Sales Only) are not shown."""
 	shown = [c for c in BOARD_COLUMNS if doc.is_financed or c[1] != FINANCED_ONLY]
 	columns = [
 		{"label": label, "icon": icon, "key": frappe.scrub(label).replace("_", "-"), "tasks": []}
@@ -235,7 +238,7 @@ def _task_columns(doc):
 	for a in doc.get("task_assignees") or []:
 		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
 	for row in doc.stages:
-		if row.activity_scope == FINANCED_ONLY and not doc.is_financed:
+		if not doc.is_financed and (row.activity_scope == FINANCED_ONLY or row.stage_code in FINANCED_ONLY_TASKS):
 			continue
 		task = _task(row, doc.name)
 		task["assignees"] = people.get(row.stage_code, [])
@@ -267,8 +270,9 @@ def _task(row, installation=None):
 		"code": row.stage_code,
 		"name": row.stage_name,
 		"icon": TASK_ICONS.get(row.task_doctype) or GENERIC_TASK_ICONS.get(row.stage_code, "checklist"),
-		"status": row.status,
-		"status_slug": (row.status or "").lower().replace(" ", "-"),
+		# A payment marked received waits for Accounts to confirm it (api/payment_tasks).
+		"status": payment_tasks.AWAITING if payment_tasks.awaiting(row) else row.status,
+		"status_slug": (payment_tasks.AWAITING if payment_tasks.awaiting(row) else row.status or "").lower().replace(" ", "-"),
 		"plan": " – ".join(filter(None, [
 			format_date(row.planned_start_date, "dd MMM") if row.planned_start_date else "",
 			format_date(row.planned_date, "dd MMM") if row.planned_date else "",

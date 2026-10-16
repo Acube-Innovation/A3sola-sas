@@ -29,8 +29,9 @@ CUSTOM_FIELDS = {
 		 "insert_after": "project_type", "collapsible": 1},
 		{"fieldname": "solar_installation", "fieldtype": "Link", "options": "Solar Installation",
 		 "label": "Solar Installation", "insert_after": "a3s_solar_sb", "read_only": 1},
+		# Hidden: the project's own Customer is the customer, and one Customer is shown.
 		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer",
-		 "label": "Solar Consumer", "insert_after": "solar_installation"},
+		 "label": "Customer", "insert_after": "solar_installation", "hidden": 1},
 		{"fieldname": "capacity_kw", "fieldtype": "Float", "label": "Capacity (kW)",
 		 "insert_after": "solar_consumer", "precision": "3"},
 		{"fieldname": "solar_package", "fieldtype": "Link", "options": "Solar Package",

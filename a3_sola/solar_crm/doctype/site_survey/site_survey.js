@@ -3,6 +3,12 @@
 
 frappe.ui.form.on("Site Survey", {
 	refresh(frm) {
+		if (!frm.is_new()) {
+			// The survey as the team's paper Site Survey Report.
+			frm.add_custom_button(__("Site Survey Report"), () =>
+				window.open("/api/method/a3_sola.api.survey_print.pdf?survey=" + encodeURIComponent(frm.doc.name))
+			);
+		}
 		const colour = { Cleared: "green", "Cleared with Conditions": "orange", Blocked: "red" };
 		if (frm.doc.ehs_overall_status) {
 			frm.dashboard.add_indicator(

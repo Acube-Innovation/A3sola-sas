@@ -123,6 +123,7 @@ def get_document_context(installation, template=None, source=None):
 		completion_data.module_count = len(completion_data.module_serial_numbers)
 		inverters = [r.serial_no for r in task.serials if r.component_type == "Inverter"]
 		completion_data.inverter_serial_number = inverters[0] if inverters else completion_data.inverter_serial_number
+		completion_data.inverter_serial_numbers = inverters or completion_data.inverter_serial_numbers
 
 	# The module and inverter specs moved off the package onto its option tables. Document
 	# templates are data - a tenant may have edited theirs - so `package.module_wattage` and
@@ -291,7 +292,7 @@ def letterhead_flow_pdf(html, company, signed=True):
 	return buf.getvalue()
 
 
-def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None):
+def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None, letter_head=None):
 	"""Each of `pages` (HTML, or one string) as an A4 sheet on the company's letterhead - or,
 	with `letterhead=False`, on plain paper inside `margins` (CSS padding, Word's).
 
@@ -307,7 +308,8 @@ def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None):
 
 	if isinstance(pages, str):
 		pages = [pages]
-	head = frappe.db.get_value("Company", company, "default_letter_head") if company and letterhead else None
+	# A named `letter_head` (a document printed on another firm's paper), else the company's.
+	head = (letter_head or (frappe.db.get_value("Company", company, "default_letter_head") if company else None)) if letterhead else None
 	images = frappe.db.get_value("Letter Head", head, ["image", "footer_image"], as_dict=True) if head else None
 	header = image_src(images.image) if images else ""
 	footer = image_src(images.footer_image) if images else ""
@@ -399,6 +401,9 @@ def bank_proposal(inst, survey, section):
 		return {"spec": (r.specification if r and r.specification else spec), "make": (make(r, "make") if r else "") or makes,
 			"nos": (("%g" % flt(r.numbers)) if r and flt(r.numbers) else "Ls.")}
 
+	from a3_sola.api.microinverter import uses_microinverter
+
+	micro = uses_microinverter(inst)  # no DCDB with a micro inverter
 	area = flt(survey.total_usable_area_sqft) if survey and flt(survey.get("total_usable_area_sqft")) else kw * 50
 	return frappe._dict({
 		"kw": "%g" % kw, "phase": phase,
@@ -412,7 +417,8 @@ def bank_proposal(inst, survey, section):
 			 "make": make(panel, "panel_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("panels") or []) if panel else ""},
 			{"item": "Solar PV Inverter", "spec": "{0:g}kW {1} On-Grid Inverter and Online Monitoring".format(flt(inverter.inverter_capacity_kw), inverter.inverter_phase or phase) if inverter else "",
 			 "make": make(inverter, "inverter_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("inverters") or []) if inverter else ""},
-			{"item": "DCDB", **bos_row("DCDB", "With PV Fuses at input, DC Isolator and Type 2 DC SPD in IP65 rated enclosure", "ABB/Eaton, Mersen")},
+			{"item": "DCDB", **({"spec": "Not required for micro inverter", "make": "", "nos": "0"} if micro else
+				bos_row("DCDB", "With PV Fuses at input, DC Isolator and Type 2 DC SPD in IP65 rated enclosure", "ABB/Eaton, Mersen"))},
 			{"item": "ACDB", **bos_row("ACDB", "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated enclosure", "ABB/Eaton, Mersen/Citel")},
 			{"item": "DC Cables", **bos_row("DC Cable", "UV Rated Solar Copper Cable with E-Beam Cross Linked sheath and insulation", "Apar/ Seichem")},
 			{"item": "AC Cables", **bos_row("AC Cable", "Type: PVC/XLPE Aluminium", "Apar/ Polycab")},

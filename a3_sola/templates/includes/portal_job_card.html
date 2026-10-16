@@ -1,0 +1,61 @@
+{#- The job a work order is for, on its create, edit and view pages: the customer and the
+    site (with the map), the system, the contractor and the site's photographs - what the
+    Work Order PDF sends the contractor. Context: job_card (api/work_order_print.job_context). -#}
+{%- if job_card %}
+<style>
+	.a3s-job__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+	.a3s-job__box { padding: 0.8rem 0.95rem; border: 1px solid var(--color-border); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.5; }
+	.a3s-job__box h4 { margin: 0 0 0.35rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-job__facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.15rem 0.75rem; margin: 0; }
+	.a3s-job__facts dt { color: var(--color-text-muted); }
+	.a3s-job__facts dd { margin: 0; font-weight: 600; }
+	.a3s-job__photos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+	.a3s-job__photos a { display: block; width: 8.5rem; font-size: 0.75rem; color: var(--color-text-muted); }
+	.a3s-job__photos img { width: 8.5rem; height: 6rem; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--color-border); }
+</style>
+<section class="a3s-card a3s-edit__card a3s-job">
+	<h3 class="a3s-edit__card-title">The job</h3>
+	<div class="a3s-job__grid">
+		<div class="a3s-job__box">
+			<h4>Customer &amp; site</h4>
+			<strong>{{ job_card.customer.name | e }}</strong>
+			{%- if job_card.customer.mobile %}<br><a href="tel:{{ job_card.customer.mobile | e }}">{{ job_card.customer.mobile | e }}</a>{% endif %}
+			{%- if job_card.customer.address %}<br>{{ job_card.customer.address | e | replace("\n", "<br>") }}{% endif %}
+			{%- if job_card.customer.landmark %}<br>Landmark: {{ job_card.customer.landmark | e }}{% endif %}
+			{%- if job_card.customer.map_url %}<br><a href="{{ job_card.customer.map_url | e }}" target="_blank" rel="noopener">Open in Google Maps</a>{% endif %}
+		</div>
+		<div class="a3s-job__box">
+			<h4>System</h4>
+			<dl class="a3s-job__facts">
+				{%- for label, value in job_card.system %}<dt>{{ label | e }}</dt><dd>{{ value | e }}</dd>{% endfor %}
+			</dl>
+		</div>
+		<div class="a3s-job__box">
+			<h4>Contractor</h4>
+			{%- if job_card.contractor %}
+			<strong>{{ job_card.contractor.contractor_name | e }}</strong>
+			{%- if job_card.contractor.mobile_no %}<br><a href="tel:{{ job_card.contractor.mobile_no | e }}">{{ job_card.contractor.mobile_no | e }}</a>{% endif %}
+			{%- if job_card.contractor.email_id %}<br>{{ job_card.contractor.email_id | e }}{% endif %}
+			{%- if job_card.contractor.licence_no %}<br>Licence {{ job_card.contractor.licence_no | e }}{% endif %}
+			{%- else %}<span class="a3s-field__hint">Not assigned yet - choose the contractor below, or set the job's {{ "structure" if job_card.kind == "Structure" else "electrical" }} contractor on the project.</span>{% endif %}
+		</div>
+	</div>
+	{%- if job_card.kind == "Installation" %}
+	<p class="a3s-field__hint" style="margin:0.75rem 0 0">Single line diagram:
+		{%- if job_card.sld %} <a href="{{ job_card.sld | e }}" target="_blank" rel="noopener">Open</a> - sent with the Work Order PDF.
+		{%- else %} not on file yet - upload it on the Design Freeze.{% endif %}</p>
+	{%- endif %}
+	{%- if job_card.material and job_card.material.rows %}
+	<p class="a3s-field__hint" style="margin:0.75rem 0 0">{{ job_card.material.title }}: {{ job_card.material.rows | length }} items{% if job_card.material.bom %} from {{ job_card.material.bom | e }}{% endif %} - listed in the Work Order PDF.</p>
+	{%- endif %}
+	{%- if job_card.photos %}
+	<div class="a3s-job__photos">
+		{%- for p in job_card.photos %}
+		<a href="{{ p.url | e }}" target="_blank" rel="noopener"><img src="{{ p.url | e }}" alt="{{ p.caption | e }}" loading="lazy"><br>{{ p.caption | e }}</a>
+		{%- endfor %}
+	</div>
+	{%- else %}
+	<p class="a3s-field__hint" style="margin:0.75rem 0 0">No pre-installation photograph on file yet - upload one on the customer (KYC: Pre-Installation Photo) or the site survey.</p>
+	{%- endif %}
+</section>
+{%- endif %}

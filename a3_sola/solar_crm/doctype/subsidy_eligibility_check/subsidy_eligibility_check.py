@@ -93,7 +93,7 @@ class SubsidyEligibilityCheck(Document):
 	def resolve_references(self):
 		"""Either reference is enough; the other is filled in where the link exists."""
 		if not self.lead and not self.solar_consumer:
-			frappe.throw(_("Select a Lead or a Solar Consumer to check eligibility for."))
+			frappe.throw(_("Select a Lead or a Customer to check eligibility for."))
 		details = reference_details(self.lead, self.solar_consumer, self.design_estimate)
 		for field in ("lead", "solar_consumer", "company", "subsidy_scheme", "design_estimate"):
 			if not self.get(field) and details.get(field):

@@ -80,3 +80,50 @@ class TestTheJobRegistersIt(FrappeTestCase):
 		consumer.save(ignore_permissions=True)
 		doc = frappe.get_doc("Solar Installation", installation.name)
 		self.assertTrue(any(r.document_name == "KYC - PAN" for r in doc.documents))
+
+
+def attach(doctype, name, kind):
+	return frappe.get_doc({
+		"doctype": "File", "file_name": f"{kind.lower().replace(' ', '-')}.txt", "content": b"kyc", "is_private": 1,
+		"attached_to_doctype": doctype, "attached_to_name": name, "a3s_document_type": kind,
+	}).insert(ignore_permissions=True)
+
+
+class TestPapersOnTheLeadOrTheCustomer(FrappeTestCase):
+	"""A paper uploaded on the lead counts for its customer, and the other way round."""
+
+	def test_a_paper_on_the_lead_counts_for_the_customer(self):
+		consumer = make_consumer()
+		self.assertTrue(consumer.lead)
+		attach("Lead", consumer.lead, "PAN")
+		for doctype, name in (("Solar Consumer", consumer.name), ("Lead", consumer.lead)):
+			pan = next(i for i in kyc.summary(doctype, name)["items"] if i["label"] == "PAN")
+			self.assertTrue(pan["uploaded"], doctype)
+		kyc.refresh(consumer.name)
+		self.assertNotIn("PAN", (frappe.db.get_value("Solar Consumer", consumer.name, "kyc_missing") or "").split(", "))
+
+	def test_the_count_is_of_documents_not_fields(self):
+		consumer = with_kyc(make_consumer(), FULL_SET)
+		got = kyc.summary("Solar Consumer", consumer.name)
+		self.assertEqual((got["uploaded"], got["pending"]), (got["total"], 0))
+		consumer = with_kyc(make_consumer(), ("KSEB Bill",))
+		got = kyc.summary("Solar Consumer", consumer.name)
+		self.assertEqual(got["uploaded"], 1)
+		self.assertEqual(got["pending"], got["total"] - 1)
+
+
+class TestTheOrderTaskShowsTheCustomersKyc(FrappeTestCase):
+	def test_customer_kyc_documents_follow_the_customer(self):
+		from a3_sola.api.portal_tasks import KYC_DOCUMENTS, _panel
+
+		inst = make_installation()
+		if not any(d.document_name == KYC_DOCUMENTS for d in inst.documents):
+			self.skipTest("no Customer KYC documents row in this site's order checklist")
+		bill = attach("Solar Consumer", inst.solar_consumer, "KSEB Bill")
+		row = next(d for d in _panel(frappe.get_doc("Solar Installation", inst.name), "ORD")["documents"]
+			if d["name"].startswith(KYC_DOCUMENTS))
+		self.assertIn(bill.file_url, [f["url"] for f in row["files"]])
+		missing = [m["label"] for m in row["missing"]]
+		self.assertNotIn("KSEB Bill", missing)
+		self.assertIn("PAN", missing)
+		self.assertEqual(row["missing"][0]["upload"]["kind"], "consumer")

@@ -1,5 +1,95 @@
 {% extends "templates/portal_shell.html" %}
 {% block portal_content %}
+{%- if payment %}
+{#- A payment task (api/payment_tasks): was the payment received, its receipt, then Accounts'
+    confirmation. Drawn by portal_payment_task.js from the same state the server returns. -#}
+<style>
+	.a3s-paytask__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+	.a3s-paytask__head .a3s-edit__card-title { margin: 0; }
+	.a3s-paytask__label { margin: 1.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-paytask__choice { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+	.a3s-paytask__choice button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+	.a3s-paytask__fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+	.a3s-paytask__fields .a3s-field { margin: 0; }
+	.a3s-paytask__fields input, .a3s-paytask__fields select { width: 100%; }
+	.a3s-paytask__summary { display: grid; gap: 0.5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: 0.75rem 0 0; }
+	.a3s-paytask__summary div { padding: 0.6rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0.75rem; }
+	.a3s-paytask__summary dt { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-paytask__summary dd { margin: 0.2rem 0 0; font-weight: 700; }
+	.a3s-paytask .a3s-taskdocs { margin-bottom: 0; }
+	.a3s-paytask .a3s-form__actions { margin-top: 1.25rem; }
+</style>
+<section class="a3s-card a3s-edit__card a3s-paytask" data-paytask
+         data-installation="{{ installation | e }}" data-task="{{ task_code | e }}">
+	<div data-paytask-body></div>
+	<p class="a3s-attach__status" data-paytask-status role="status" aria-live="polite" hidden></p>
+	<input type="file" hidden data-paytask-file aria-label="Choose the receipt to upload">
+	<script type="application/json" data-paytask-data>{{ payment | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</section>
+{%- elif dispatch %}
+{#- Material Dispatch (api/dispatch_task): what goes from the godown to the site, and its
+    record - date, vehicle, driver, serials, delivery slip. Drawn by portal_dispatch_task.js. -#}
+<style>
+	.a3s-paytask__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+	.a3s-paytask__head .a3s-edit__card-title { margin: 0; }
+	.a3s-paytask__label { margin: 1.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-paytask__fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+	.a3s-paytask__fields .a3s-field { margin: 0; }
+	.a3s-paytask__fields input, .a3s-paytask__fields textarea { width: 100%; }
+	.a3s-dispatch__route { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+	.a3s-dispatch__route div { padding: 0.75rem 0.9rem; border: 1px solid var(--color-border); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.45; }
+	.a3s-dispatch__route h4 { margin: 0 0 0.35rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-dispatch textarea { font-family: inherit; }
+	.a3s-dispatch .a3s-form__actions { margin-top: 1.25rem; }
+</style>
+<section class="a3s-card a3s-edit__card a3s-dispatch" data-dispatch data-installation="{{ installation | e }}">
+	<div data-dispatch-body></div>
+	<p class="a3s-attach__status" data-dispatch-status role="status" aria-live="polite" hidden></p>
+	<input type="file" hidden data-dispatch-file aria-label="Choose the delivery slip or photograph">
+	<script type="application/json" data-dispatch-data>{{ dispatch | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</section>
+{%- elif serials_page %}
+{#- Serials to Electrical Contractor (api/serials_task): the contractor, the job's serials,
+    the Data for Completion Report and its sending. Drawn by portal_serials_task.js. -#}
+<style>
+	.a3s-paytask__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+	.a3s-paytask__head .a3s-edit__card-title { margin: 0; }
+	.a3s-paytask__label { margin: 1.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-paytask__fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+	.a3s-paytask__fields .a3s-field { margin: 0; }
+	.a3s-paytask__fields input, .a3s-paytask__fields textarea { width: 100%; font-family: inherit; }
+	.a3s-serials__box { padding: 0.75rem 0.9rem; border: 1px solid var(--color-border); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.5; }
+	.a3s-serials__prints { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; }
+	.a3s-serials__prints span { font-weight: 700; margin-right: 0.25rem; }
+	.a3s-serials__send { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+	.a3s-serials .a3s-form__actions { margin-top: 1.25rem; }
+</style>
+<section class="a3s-card a3s-edit__card a3s-serials" data-serials data-installation="{{ installation | e }}">
+	<div data-serials-body></div>
+	<p class="a3s-attach__status" data-serials-status role="status" aria-live="polite" hidden></p>
+	<script type="application/json" data-serials-data>{{ serials_page | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</section>
+{%- elif design %}
+{#- The Design Freeze (api/design_freeze): the job's quotations, site survey, structure and
+    material BOMs and design images, each changeable; drawn by portal_design_freeze.js. -#}
+<style>
+	.a3s-dsgn__grid { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0 1rem; }
+	.a3s-dsgn__img { width: 9rem; display: grid; gap: 0.25rem; font-size: 0.8rem; }
+	.a3s-dsgn__img img { width: 9rem; height: 6.5rem; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--color-border, #e5e5e5); }
+	.a3s-dsgn__pick { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+	.a3s-dsgn__pick select { min-width: 16rem; max-width: 100%; }
+</style>
+<div class="a3s-dsgn" data-design data-installation="{{ installation | e }}">
+	<div data-design-body></div>
+	<p class="a3s-attach__status" data-design-status role="status" aria-live="polite" hidden></p>
+	<input type="file" accept="image/*" multiple hidden data-design-file aria-label="Choose design images">
+	<script type="application/json" data-design-data>{{ design | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</div>
+{%- else %}
 {#- Only reached when a task has nowhere to be carried out; otherwise the page redirects. -#}
 <div class="a3s-card a3s-empty">
 	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-checklist"></use></svg></span>
@@ -7,4 +97,9 @@
 	<p class="a3s-empty__text">{{ message | e }}</p>
 	<a class="a3s-btn a3s-btn--primary" href="{{ project_route | e }}">Back to project</a>
 </div>
+{%- endif %}
 {% endblock %}
+{% block portal_scripts %}{% if payment %}<script src="/assets/a3_sola/js/portal_payment_task.js?v={{ a3s_asset_version('js/portal_payment_task.js') }}"></script>{% endif %}
+{%- if design %}<script src="/assets/a3_sola/js/portal_design_freeze.js?v={{ a3s_asset_version('js/portal_design_freeze.js') }}"></script>{% endif %}
+{%- if dispatch %}<script src="/assets/a3_sola/js/portal_dispatch_task.js?v={{ a3s_asset_version('js/portal_dispatch_task.js') }}"></script>{% endif %}
+{%- if serials_page %}<script src="/assets/a3_sola/js/portal_serials_task.js?v={{ a3s_asset_version('js/portal_serials_task.js') }}"></script>{% endif %}{% endblock %}

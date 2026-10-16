@@ -26,7 +26,8 @@ class TestTaskSet(FrappeTestCase):
 		codes = [row.stage_code for row in installation.stages]
 		self.assertEqual(codes, seed_stages.TASK_CODES)
 		self.assertEqual(codes[0], "ORD")
-		self.assertEqual(codes[-1], "GREV")
+		self.assertEqual(codes[-1], "DBT")
+		self.assertNotIn("GREV", codes)  # the Google review is part of the Customer Review
 
 	def test_every_task_names_the_document_it_runs_in(self):
 		"""The Task button has nothing to open for a row that does not say where it runs."""

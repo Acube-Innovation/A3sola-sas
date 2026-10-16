@@ -45,6 +45,17 @@
 	</table>
 	{%- if rest.kseb_note %}<p class="a3r-note">{{ rest.kseb_note }}</p>{% endif %}
 	{%- endif %}
+	{%- if pg.add_ons and rest.add_ons %}
+	{#- What the packages offer beside their price (Solar Package > Optional Add-ons); in no total. -#}
+	<h4{% if pg.options or pg.kseb %} class="a3r-gap"{% endif %}>3.3.3.&nbsp; <u>Optional Add-ons</u></h4>
+	<table class="a3r-table">
+		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		{%- for r in rest.add_ons %}
+		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item_html }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+		{%- endfor %}
+	</table>
+	{%- endif %}
 {% endcall %}
 {%- endfor %}
 

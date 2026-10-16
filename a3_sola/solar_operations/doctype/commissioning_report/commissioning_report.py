@@ -96,7 +96,7 @@ class CommissioningReport(Document):
 		self.tariff_category = consumer.tariff_category
 		self.connected_load_watts = consumer.connected_load_watts
 		self.plant_owner_name = consumer.consumer_name
-		self.installation_address = _address_text(address)
+		self.installation_address = consumer.get("installation_site_address") or _address_text(address)
 		self.consumer_email = consumer.email_id
 		self.consumer_contact_no = consumer.mobile_no
 		self.alternate_contact_no = consumer.alternate_contact_no

@@ -2,10 +2,18 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Installation Work Order", {
+	setup(frm) {
+		// Any active contractor of the company: one contractor may do both structure and electrical work.
+		frm.set_query("solar_contractor", () => ({ filters: { company: frm.doc.company, is_active: 1 } }));
+	},
 	refresh(frm) {
 		if (frm.is_new()) return;
 		frm.add_custom_button(__("Open Installation"), () =>
 			frappe.set_route("Form", "Solar Installation", frm.doc.solar_installation)
+		);
+		// The order for its contractor: the job, the site, the system, the material, the photos.
+		frm.add_custom_button(__("Work Order PDF"), () =>
+			window.open("/api/method/a3_sola.api.work_order_print.pdf?work_order=" + encodeURIComponent(frm.doc.name))
 		);
 		const untagged = (frm.doc.photos || []).filter((p) => !(p.latitude && p.longitude));
 		if (untagged.length && frm.doc.docstatus === 0) {

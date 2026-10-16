@@ -173,6 +173,9 @@ def link_choices(doctype, filters=None, limit=None):
 DEPENDENT_LINKS = {
 	"district": ("state", "state"),
 	"a3s_district": ("state", "state"),
+	# A consumer's installation site and permanent address each have their own state.
+	"site_district": ("state", "site_state"),
+	"permanent_district": ("state", "permanent_state"),
 	"discom_section": ("discom", "discom"),
 }
 
@@ -208,12 +211,18 @@ SETTINGS_DEFAULTS = {
 
 def default_for(df):
 	"""A Link's default where the settings name one: the DISCOM is Kerala State Electricity
-	Board, the subsidy scheme PM Surya Ghar."""
-	setting = SETTINGS_DEFAULTS.get((df.options, df.fieldname)) if df.fieldtype == "Link" else None
+	Board, the subsidy scheme PM Surya Ghar. Otherwise the field's own fixed default (an
+	address starts in Kerala); a dynamic one ("__user", ":Company") is the desk's to resolve."""
+	if df.fieldtype != "Link":
+		return None
+	setting = SETTINGS_DEFAULTS.get((df.options, df.fieldname))
 	if setting:
 		from a3_sola.api.settings import get_value
 
 		return get_value(setting) or None
+	default = df.get("default")
+	if default and not default.startswith((":", "__")) and frappe.db.exists(df.options, default):
+		return default
 	return None
 
 
@@ -229,6 +238,11 @@ def link_filters(df, doc=None):
 	target_field, source_field = rule
 	values = doc if hasattr(doc, "get") else {}
 	value = values.get(source_field) if values else None
+	if not value and df.get("parent"):
+		# A new record starts on its source's default (an address in Kerala), so the list
+		# is narrowed by it from the start.
+		source_df = frappe.get_meta(df.parent).get_field(source_field)
+		value = default_for(source_df) if source_df else None
 	if not value and source_field == "discom":
 		# A new or empty record starts on the default DISCOM, so its sections are listed.
 		value = default_for(frappe._dict(fieldtype="Link", options="DISCOM", fieldname="discom"))

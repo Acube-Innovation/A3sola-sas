@@ -26,7 +26,11 @@ from a3_sola.www.a3solaportal import fill_shell
 # slug -> doctype and its labels. `singular` names the create page ("New consumer").
 # title/subtitle/icon mirror the sidebar so the page and the menu never disagree.
 COLLECTIONS = {
-	"consumers": {"doctype": "Solar Consumer", "title": "Solar Consumer", "singular": "consumer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number"},
+	# The street, and the permanent address - asked for only when it is not the installation
+	# site (its show-when rule) - are not mandatory, so would not be picked up on their own.
+	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
+	              "form_extra": ["site_address_line2", "permanent_address_line1", "permanent_address_line2", "permanent_city",
+	                             "permanent_state", "permanent_district", "permanent_pincode"]},
 	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
 	# detail pages are the pricing builder (www/a3solaportal/quotations).
@@ -40,7 +44,7 @@ COLLECTIONS = {
 		"defaults": {"delivery_date": "a3_sola.overrides.sales_order.default_delivery_date"},
 		"no_weekend": ("delivery_date",)},
 	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
-	                     "list_filters": ["solar_consumer"], "search_hint": "Search by consumer name, estimate, lead or site survey ID",
+	                     "list_filters": ["solar_consumer"], "search_hint": "Search by customer name, estimate, lead or site survey ID",
 	                     "list_edit": True},
 	# `edit_after_create`: the create form asks only the few fields a record needs to exist,
 	# so once it does, the person goes straight on to its full edit form.
@@ -652,8 +656,25 @@ def task_downloads(installation, task_code, document=None):
 	if task_code in ("SPROC", "PROC") and document:
 		from a3_sola.api import purchase_list
 
-		return [{"label": "Download purchase list", "url": purchase_list.url(document)}]
+		return [{"label": "Download purchase list", "url": purchase_list.url(document, download=True)}]
 	return []
+
+
+#: Work-order tasks, by the kind of order each opens.
+WORK_ORDER_KINDS = {"IWOS": "Structure", "IWOI": "Installation"}
+
+
+def job_card(installation, task_code=None, order=None):
+	"""The job a work order is for - customer, site, system, contractor, photographs - as its
+	pages show it (templates/includes/portal_job_card.html); None for any other record."""
+	is_order = order is not None and getattr(order, "doctype", None) == "Installation Work Order" and order.get("name")
+	if not is_order and task_code not in WORK_ORDER_KINDS:
+		return None
+	from a3_sola.api import work_order_print
+
+	kind = WORK_ORDER_KINDS.get(task_code) or (order.get("work_order_kind") if order else None)
+	return work_order_print.job_context(installation, kind, work_order=order if is_order else None,
+		contractor=order.get("solar_contractor") if order else None)
 
 
 def task_form_groups(slug, values):
@@ -792,6 +813,7 @@ def new_context(context, slug):
 		if context.source_task not in CLAIM_IN_FORM:
 			context.claim = task_claim(source_doc.name, context.source_task)
 		context.task_people = task_people(source_doc.name, context.source_task)
+		context.job_card = job_card(source_doc, context.source_task, context.record)
 		from a3_sola.api import structure_bom
 
 		lists = structure_bom.MATERIAL_LISTS.get(context.source_task)
@@ -921,6 +943,8 @@ EDITABLE_AFTER_SUBMIT = {
 		"bank_account_no", "loan_sanction_no", "jan_samarth_id",
 		# The job's people: its tasks are assigned to them by position.
 		"project_manager", "site_engineer", "sales_coordinator",
+		# Its contractors: work orders, the dispatch notice and the certificate go to them.
+		"structure_contractor", "electrical_contractor",
 	),
 	# What the bank's covering letter and feasibility report print, corrected before a reprint.
 	"Loan Application": (
@@ -1181,12 +1205,43 @@ def detail_context(context, slug, name):
 	)
 	context.back_link = {"href": context.list_route, "label": "Back to " + cfg["title"].lower()}
 	context.submit_label = SUBMIT_LABELS.get(slug, "Submit")
+	if doc.doctype == "Site Survey":
+		# The survey as the team's paper Site Survey Report, to view or download.
+		from a3_sola.api import survey_print
+
+		context.print_buttons = [
+			{"label": "View Site Survey Report", "url": survey_print.url(doc.name), "icon": "eye"},
+			{"label": "Download Site Survey Report", "url": survey_print.url(doc.name, download=True), "icon": "download"},
+		]
+		context.head_actions_template = context.get("head_actions_template") or "templates/includes/portal_print_buttons.html"
 	# A task's document is reached from its project's board, and leads back there.
 	if slug in TASK_SLUGS and doc.get("solar_installation"):
 		context.back_link = {"href": record_route("projects", doc.solar_installation), "label": "Back to project"}
 		context.claim = task_claim(doc.solar_installation, tasks_code_for(doc))
 		context.task_people = task_people(doc.solar_installation, tasks_code_for(doc))
 		context.task_downloads = task_downloads(doc.solar_installation, tasks_code_for(doc), doc.name)
+		from a3_sola.api import portal_share
+
+		if doc.doctype == "Installation Work Order":
+			# The job for the contractor, and its PDF to view, download and send to them.
+			from a3_sola.api import work_order_print
+
+			context.job_card = job_card(doc.solar_installation, None, doc)
+			if not context.get("head_actions_template"):
+				context.share = portal_share.share_links(doc, work_order_print.url(doc.name))
+				context.head_actions_template = "templates/includes/portal_share.html"
+		if portal_share._is_purchase_list(doc) and not context.get("head_actions_template"):
+			# The purchase list to view, download, and send to the supplier by WhatsApp or email.
+			from a3_sola.api import purchase_list
+
+			context.share = portal_share.share_links(doc, purchase_list.url(doc.name))
+			# What the supplier could not give, once marked: its own list for the next supplier.
+			pending = purchase_list.pending_rows(doc)
+			if pending:
+				context.share_pending = portal_share.share_links(doc, purchase_list.url(doc.name, pending=True),
+					part=portal_share.PENDING)
+				context.share_pending["count"] = len(pending)
+			context.head_actions_template = "templates/includes/portal_purchase_share.html"
 		if context.task_downloads and not context.get("head_actions_template"):
 			context.head_actions_template = "templates/includes/portal_task_downloads.html"
 
@@ -1223,7 +1278,7 @@ PORTAL_PREFILL = {
 	"Solar Installation": lambda doc: (
 		"Solar Consumer", installation_lead.consumer_bank(doc.solar_consumer, doc.lender)
 	),
-	"Solar Consumer": lambda doc: ("consumer name", {"bank_account_holder_name": doc.consumer_name}),
+	"Solar Consumer": lambda doc: ("customer name", {"bank_account_holder_name": doc.consumer_name}),
 }
 
 #: Fields that follow another while they still match it, as {doctype: {field: source}}: the
@@ -1326,6 +1381,8 @@ def edit_context(context, slug, name):
 	context.back_link = {"href": context.view_route, "label": "Back to " + cfg["singular"]}
 	context.endpoint = "a3_sola.api.portal_crud.update_record"
 	context.item_table = item_table(slug, doc, editable=True)
+	if doc.doctype == "Installation Work Order":
+		context.job_card = job_card(doc.solar_installation, None, doc)
 	context.update(_record_about(doc))
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()

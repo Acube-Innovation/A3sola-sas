@@ -57,18 +57,8 @@ class TestCustomerReview(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			ctl.request_review(review.name)
 
-	def test_posted_completes_the_google_task_after_submit(self):
-		review = make_review(self.installation, review_text="Great team.")
-		ctl.complete(review.name)
-		row, _doc = task_row(self.installation, "GREV")
-		self.assertEqual(row.status, "In Progress")
-		ctl.mark_posted(review.name, link="https://maps.app.goo.gl/abc")
-		row, _doc = task_row(self.installation, "GREV")
-		self.assertEqual(row.status, "Completed")
-
-	def test_declined_skips_the_google_task(self):
-		review = make_review(self.installation, review_text="Fine.")
-		ctl.complete(review.name)
-		ctl.mark_declined(review.name, "Does not use Google")
-		row, _doc = task_row(self.installation, "GREV")
-		self.assertEqual(row.status, "Skipped")
+	def test_there_is_no_separate_google_review_task(self):
+		"""Asked for and recorded on the Customer Review; the job has no task of its own for it."""
+		codes = [r.stage_code for r in frappe.get_doc("Solar Installation", self.installation.name).stages]
+		self.assertIn("REVIEW", codes)
+		self.assertNotIn("GREV", codes)

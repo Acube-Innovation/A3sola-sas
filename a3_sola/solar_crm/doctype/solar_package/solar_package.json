@@ -57,7 +57,15 @@
   "components",
   "tab_commercial",
   "sb_11",
-  "prices"
+  "prices",
+  "sb_payment_terms",
+  "payment_terms",
+  "cb_payment_terms",
+  "financed_payment_terms",
+  "payment_terms_preview",
+  "tab_add_ons",
+  "sb_add_ons",
+  "optional_add_ons"
  ],
  "fields": [
   {
@@ -369,11 +377,56 @@
    "fieldtype": "Table",
    "label": "Package Cost by Inverter",
    "options": "Solar Package Price"
+  },
+  {
+   "description": "How the customer pays for a job on this package - e.g. 70% advance, 20% after installation, 10% after commissioning. The job's billing plan is built from these, and the Advance Payment checks the advance received against them.",
+   "fieldname": "sb_payment_terms",
+   "fieldtype": "Section Break",
+   "label": "Payment Terms"
+  },
+  {
+   "fieldname": "payment_terms",
+   "fieldtype": "Link",
+   "label": "Payment Terms",
+   "options": "Billing Milestone Template",
+   "description": "For a job the customer pays for."
+  },
+  {
+   "fieldname": "cb_payment_terms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "financed_payment_terms",
+   "fieldtype": "Link",
+   "label": "Payment Terms (Financed)",
+   "options": "Billing Milestone Template",
+   "description": "For a job financed by a bank loan. Blank: the terms above."
+  },
+  {
+   "fieldname": "payment_terms_preview",
+   "fieldtype": "HTML",
+   "label": "Milestones"
+  },
+  {
+   "fieldname": "tab_add_ons",
+   "fieldtype": "Tab Break",
+   "label": "Optional Add-ons"
+  },
+  {
+   "fieldname": "sb_add_ons",
+   "fieldtype": "Section Break",
+   "description": "Extras a customer can take on top of this package - an extra panel later, an extended inverter warranty. Printed in the proposal as 3.3.3 Optional Add-ons; not part of the package price."
+  },
+  {
+   "fieldname": "optional_add_ons",
+   "fieldtype": "Table",
+   "label": "Optional Add-ons",
+   "options": "Solar Package Add-on"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-15 17:30:00.000000",
+ "modified": "2026-10-16 18:20:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

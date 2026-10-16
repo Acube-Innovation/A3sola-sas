@@ -31,7 +31,20 @@ function refresh_price_choices(frm) {
 }
 
 frappe.ui.form.on("Solar Package", {
+	// The payment terms' milestones, shown under the two choices.
+	refresh(frm) {
+		show_payment_terms(frm);
+	},
+	payment_terms(frm) {
+		show_payment_terms(frm);
+	},
+	financed_payment_terms(frm) {
+		show_payment_terms(frm);
+	},
 	setup(frm) {
+		["payment_terms", "financed_payment_terms"].forEach((field) =>
+			frm.set_query(field, () => ({ filters: { company: frm.doc.company, is_active: 1 } }))
+		);
 		// Each expense table offers only the Items of its own group (seeded by install.py).
 		[
 			["kseb_expenses", "particulars", "KSEB Expenses"],
@@ -170,3 +183,23 @@ frappe.ui.form.on("Solar Package Inverter", {
 	inverter_specification: (frm) => refresh_price_choices(frm),
 	inverters_remove: (frm) => refresh_price_choices(frm),
 });
+
+function show_payment_terms(frm) {
+	const field = frm.get_field("payment_terms_preview");
+	if (!field) return;
+	const names = [frm.doc.payment_terms, frm.doc.financed_payment_terms].filter((n, i, all) => n && all.indexOf(n) === i);
+	if (!names.length) {
+		field.$wrapper.html(`<p class="text-muted small">${__("Choose the payment terms to see their milestones.")}</p>`);
+		return;
+	}
+	Promise.all(names.map((name) => frappe.db.get_doc("Billing Milestone Template", name))).then((docs) => {
+		field.$wrapper.html(docs.map((doc) => `
+			<p class="small" style="margin:8px 0 4px"><b>${frappe.utils.escape_html(doc.template_name || doc.name)}</b></p>
+			<table class="table table-bordered table-condensed small" style="margin-bottom:8px">
+				<thead><tr><th>${__("Milestone")}</th><th>${__("When")}</th><th class="text-right">%</th></tr></thead>
+				<tbody>${(doc.milestones || []).map((m) => `<tr><td>${frappe.utils.escape_html(m.milestone_name)}${m.is_advance ? ` <span class="indicator-pill orange">${__("Advance")}</span>` : ""}</td>
+					<td>${frappe.utils.escape_html(m.trigger_type)}${m.trigger_stage_code ? " · " + frappe.utils.escape_html(m.trigger_stage_code) : ""}</td>
+					<td class="text-right">${flt(m.percentage)}%</td></tr>`).join("")}</tbody>
+			</table>`).join(""));
+	});
+}

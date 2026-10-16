@@ -21,7 +21,7 @@ def execute(filters=None):
 def get_columns(filters):
 	return [
 		{"label": _("Design Estimate"), "fieldname": "name", "fieldtype": "Link", "options": "Solar Design Estimate", "width": 170},
-		{"label": _("Consumer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
+		{"label": _("Customer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
 		{"label": _("Capacity (kW)"), "fieldname": "final_capacity_kw", "fieldtype": "Float", "precision": 2, "width": 110},
 		{"label": _("Net Meter"), "fieldname": "net_meter_mode", "fieldtype": "Data", "width": 190},
 		{"label": _("Application Fee"), "fieldname": "kseb_application_fee", "fieldtype": "Currency", "width": 130},

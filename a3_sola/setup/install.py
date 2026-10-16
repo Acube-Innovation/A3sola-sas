@@ -622,7 +622,8 @@ def seed_packages(company):
 					if row["inverter_specification"]
 				],
 				"system_items": [
-					{"system_type": "DCDB", "qty": 1, "is_default": 1,
+					# A micro-inverter system has no DCDB (api/microinverter.py).
+					{"system_type": "DCDB", "qty": 0 if topology == "Microinverter" else 1, "is_default": 1,
 					 "specification": "With PV fuses at input, DC isolator and Type 2 DC SPD "
 					                  "in IP65 rated enclosure"},
 					{"system_type": "ACDB", "qty": 1, "is_default": 1,

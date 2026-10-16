@@ -22,7 +22,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Project"), "fieldname": "name", "fieldtype": "Link", "options": "Project", "width": 150},
-		{"label": _("Consumer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
+		{"label": _("Customer"), "fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "width": 150},
 		{"label": _("kWp"), "fieldname": "capacity_kw", "fieldtype": "Float", "precision": 2, "width": 80},
 		{"label": _("Contract Value"), "fieldname": "gross_contract_value", "fieldtype": "Currency", "width": 130},
 		{"label": _("Billed"), "fieldname": "total_billed_amount", "fieldtype": "Currency", "width": 120},

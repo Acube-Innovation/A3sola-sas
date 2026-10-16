@@ -119,7 +119,8 @@ class TestLoanPack(FrappeTestCase):
 	def test_the_pack_is_the_banks_list_in_order(self):
 		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
 		self.assertEqual([d["name"] for d in panel["documents"]], [
-			"Covering letter", "Vendor feasibility report", "Quotation", "Digital approval letter", "KYC",
+			"Covering letter", "Vendor feasibility report", "Quotation", "Jan Samarth approval letter",
+			"PM Surya Ghar registration", "KYC",
 			"KSEB bill", "Land tax receipt", "Building tax receipt", "Income tax return (ITR)",
 		])
 		kyc = next(d for d in panel["documents"] if d["name"] == "KYC")
@@ -136,6 +137,18 @@ class TestLoanPack(FrappeTestCase):
 		bill = next(d for d in panel["documents"] if d["name"] == "KSEB bill")
 		self.assertEqual((len(bill["files"]), bill["missing"]), (1, []))
 
+	def test_a_paper_uploaded_on_the_pm_surya_ghar_task_shows_in_the_pack(self):
+		inst = frappe.get_doc("Solar Installation", self.installation.name)
+		npa = next((r for r in inst.stages if r.stage_code == portal_tasks.SURYA_GHAR_TASK), None)
+		if not npa or npa.status == "Skipped":
+			self.skipTest("the PM Surya Ghar task does not apply to this job")
+		with patch.object(frappe, "request", posted("ack.txt", b"Portal acknowledgement")):
+			portal_tasks.upload(self.installation.name, "NPA", document_name="Portal acknowledgement")
+		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
+		row = next(d for d in panel["documents"] if d["name"] == "PM Surya Ghar registration")
+		self.assertIn("Portal acknowledgement", [f["label"] for f in row["files"]])
+		self.assertNotIn("Portal acknowledgement", [m["label"] for m in row["missing"]])
+
 	def test_the_approval_letter_task_needs_its_letter(self):
 		row = next(r for r in frappe.get_doc("Solar Installation", self.installation.name).stages if r.stage_code == "DAL")
 		self.assertEqual(row.status, "Pending")
@@ -147,13 +160,23 @@ class TestLoanPack(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			complete(task.name)
 		with patch.object(frappe, "request", posted("approval.txt", b"approved")):
-			portal_tasks.upload(self.installation.name, "DAL", document_name="Digital approval letter")
+			portal_tasks.upload(self.installation.name, "DAL", document_name="Jan Samarth approval letter")
 		complete(task.name)
 		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
-		letter = next(d for d in panel["documents"] if d["name"] == "Digital approval letter")
+		letter = next(d for d in panel["documents"] if d["name"] == "Jan Samarth approval letter")
 		self.assertEqual(len(letter["files"]), 1)
 
 	def test_a_self_funded_job_skips_the_approval(self):
 		job = make_installation(is_financed=0)
 		row = next(r for r in frappe.get_doc("Solar Installation", job.name).stages if r.stage_code == "DAL")
 		self.assertEqual(row.status, "Skipped")
+
+	def test_jan_samarth_is_in_the_pm_surya_ghar_column_of_a_loan_job_only(self):
+		from a3_sola.www.a3solaportal.project_overview import _task_columns
+
+		def column_of(job):
+			columns = _task_columns(frappe.get_doc("Solar Installation", job.name))
+			return next((c["label"] for c in columns for t in c["tasks"] if t.get("code") == "DAL"), None)
+
+		self.assertEqual(column_of(make_installation(is_financed=1)), "PM Surya Ghar")
+		self.assertIsNone(column_of(make_installation(is_financed=0)))

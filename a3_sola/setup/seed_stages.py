@@ -35,8 +35,8 @@ SCOPES = {
 	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "CCERT": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
-	"BCOM": BANK, "BAL": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
-	"CORR": SCHEME, "DBT": SCHEME, "GREV": COMPANY,
+	"BCOM": BANK, "BAL": COMPANY, "PCOM": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
+	"CORR": SCHEME, "DBT": SCHEME,
 }
 
 
@@ -49,10 +49,10 @@ LEAD_OWNER = "Lead Owner"
 ACCOUNTS = "Accounts"
 CONTRACTOR = "Contractor"
 DEFAULT_ASSIGNEES = {
-	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER, "GREV": LEAD_OWNER,
+	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER,
 	"NPA": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
 	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
-	"BAL": ACCOUNTS,
+	"BAL": ACCOUNTS, "PCOM": ACCOUNTS,
 	"IWOS": CONTRACTOR,
 }  # every other task: the Project Engineer
 
@@ -97,8 +97,10 @@ TASKS = [
 	      documents=[("National portal application data sheet", 1, "NP-APPLICATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
-	_task("DAL", "Digital Approval Letter", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
-	      applicability="Financed Sales Only", documents=[("Digital approval letter", 1, None)],
+	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
+	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
+	_task("DAL", "Jan Samarth", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
+	      applicability="Financed Sales Only", documents=[("Jan Samarth approval letter", 1, None)],
 	      description="The digital approval letter for the loan, from the Jan Samarth portal."),
 	_task("LOAN", "Loan Documents", "Bank", 15, "Loan Application", role=DOCS,
 	      applicability="Financed Sales Only",
@@ -124,9 +126,6 @@ TASKS = [
 	      due_anchor_task="ADV", due_anchor_days=0,
 	      description="The structure's material - pipes, consumables, bolts and caps - bought to the "
 	                  "package's structure BOM for the roof type and panel capacity."),
-	_task("IWOS", "Work Order - Structure", "Internal", 5, "Installation Work Order", role=SITE,
-	      task_type="Structure", documents=[("Structure photographs", 0, None)],
-	      description="Structure erection ordered to employees or a contractor."),
 	_task("PROC", "Material Procurement", "Internal", 7, "Installation Task", task_type="PROC",
 	      documents=[("Material purchase list", 0, None)],
 	      description="The system's material - panels, inverter, cables, earthing, clamps, fasteners, "
@@ -135,6 +134,13 @@ TASKS = [
 	_task("DISP", "Material Dispatch", "Internal", 2, "Delivery Note",
 	      documents=[("Delivery note", 0, None), ("Serial manifest", 0, None)],
 	      description="Materials dispatched to the customer site with serial numbers recorded."),
+	# The work orders follow the dispatch: the material is on site before the crews are.
+	_task("IWOS", "Work Order - Structure", "Internal", 5, "Installation Work Order", role=SITE,
+	      task_type="Structure", documents=[("Structure photographs", 0, None)],
+	      description="Structure erection ordered to employees or a contractor."),
+	_task("IWOI", "Work Order - Installation", "Internal", 5, "Installation Work Order", role=SITE,
+	      task_type="Installation", documents=[("Geo-tagged installation photographs", 1, None)],
+	      description="Installation ordered and executed; photographs carry GPS coordinates."),
 	_task("MATL", "Serials to Electrical Contractor", "Internal", 1, "Material Dispatch Notice",
 	      is_mandatory=0, documents=[("Completion report data sheet", 1, "COMPLETION-REPORT-DATA")],
 	      description="Material and serial details mailed to the electrical contractor in the "
@@ -142,9 +148,11 @@ TASKS = [
 	_task("CCERT", "Completion Certificate from Contractor", "Contractor", 5, "Installation Task",
 	      role=SITE, task_type="CCERT", documents=[("Completion certificate", 1, None)],
 	      description="Completion certificate received from the electrical contractor."),
-	_task("IWOI", "Work Order - Installation", "Internal", 5, "Installation Work Order", role=SITE,
-	      task_type="Installation", documents=[("Geo-tagged installation photographs", 1, None)],
-	      description="Installation ordered and executed; photographs carry GPS coordinates."),
+	# The customer pays in the phases of the package's payment terms (api/payment_tasks):
+	# the advance, after installation, after commissioning - each with what is still unpaid.
+	_task("BAL", "Payment after Installation", "Customer", 7, "Installation Task", task_type="BAL",
+	      documents=[("Balance receipt or bank advice", 0, None)],
+	      description="The payment due once the plant is installed, with anything unpaid from the advance."),
 	_task("PORTUPD", "Installation Update on Portal", "Internal", 2, "Installation Task", role=DOCS,
 	      applicability="Subsidised Only", task_type="PORTUPD",
 	      documents=[("DCR certificate", 1, None), ("Portal acknowledgement", 0, None)],
@@ -172,6 +180,10 @@ TASKS = [
 	                 ("Commissioning certificate (customer)", 0, "CUST-COMMISSIONING-CERTIFICATE"),
 	                 ("Customer handover pack", 0, "CUST-HANDOVER-PACK")],
 	      description="Plant commissioned; certificate, net meter serial and readings recorded."),
+	_task("PCOM", "Payment after Commissioning", "Customer", 7, "Installation Task",
+	      due_anchor_task="COMM", due_anchor_days=0,
+	      documents=[("Commissioning payment receipt or bank advice", 0, None)],
+	      description="The last payment, once the plant is commissioned, with anything still unpaid."),
 	_task("KTST", "DISCOM Inspection & Pre-Energisation Test", "DISCOM", 10, "Installation Task",
 	      role=LIAISON, task_type="KTST", documents=[("Signed testing checklist", 0, None)],
 	      description="Section office inspects the installation and witnesses the protection tests."),
@@ -192,9 +204,6 @@ TASKS = [
 	                 ("Geo-tagged photograph collage", 1, None), ("Invoice", 1, None)],
 	      description="Completion report, covering letter, agreement and photo collage sent to the "
 	                  "lender for the balance."),
-	_task("BAL", "Balance Payment", "Customer", 7, "Installation Task", task_type="BAL",
-	      documents=[("Balance receipt or bank advice", 0, None)],
-	      description="Balance received from the customer or the bank."),
 	_task("CFILE", "Completion File for Customer", "Internal", 3, "Document Pack", role=DOCS,
 	      task_type="Customer Completion File",
 	      documents=[("Quotation", 0, None), ("Work orders", 0, None),
@@ -221,9 +230,6 @@ TASKS = [
 	_task("DBT", "Subsidy Disbursement", "Government", 45, "Subsidy Claim", role=DOCS,
 	      applicability="Subsidised Only", documents=[("Subsidy credit confirmation", 1, None)],
 	      description="Direct benefit transfer confirmed to the consumer's account."),
-	_task("GREV", "Google Review", "Customer", 7, "Customer Review", is_mandatory=0,
-	      documents=[("Google review screenshot", 0, None)],
-	      description="The customer asked to post a Google review; posted or declined recorded."),
 ]
 
 TASK_CODES = [task["code"] for task in TASKS]
@@ -236,7 +242,6 @@ CODES_TO_COMMISSIONING = TASK_CODES[: TASK_CODES.index("COMM") + 1]
 #: engine reads these to know that one Subsidy Claim answers for three task rows.
 SHARED_DOCUMENT_CODES = {
 	"Subsidy Claim": ("SUBREQ", "CORR", "DBT"),
-	"Customer Review": ("REVIEW", "GREV"),
 }
 
 

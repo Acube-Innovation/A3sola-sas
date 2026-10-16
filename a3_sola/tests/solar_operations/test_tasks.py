@@ -417,12 +417,14 @@ class TestTasksFromTheBoard(FrappeTestCase):
 		return task_target(self.installation.name, code, tasks.open_task(self.installation.name, code, create_draft=0))
 
 	def test_a_task_opens_its_create_form_then_its_document(self):
-		self.assertTrue(self.target("ADV").startswith("/a3solaportal/installation-tasks/new?source_dt=Solar+Installation"))
-		task = make_task(self.installation, "ADV")
-		self.assertEqual(self.target("ADV"), "/a3solaportal/installation-tasks/" + task.name)
+		# Payments are confirmed on their own page (api/payment_tasks); the DISCOM inspection opens a task.
+		self.assertTrue(self.target("KTST").startswith("/a3solaportal/installation-tasks/new?source_dt=Solar+Installation"))
+		task = make_task(self.installation, "KTST")
+		self.assertEqual(self.target("KTST"), "/a3solaportal/installation-tasks/" + task.name)
 
-	def test_a_delivery_task_is_raised_in_the_desk_material_procurement_on_the_portal(self):
-		self.assertTrue(self.target("DISP").startswith("/app/delivery-note/new?solar_installation="))
+	def test_material_dispatch_has_its_own_page_material_procurement_on_the_portal(self):
+		# Recorded on its own page on the board (api/dispatch_task), not a desk delivery note.
+		self.assertTrue(self.target("DISP").endswith("/tasks/DISP"))
 		self.assertTrue(self.target("PROC").startswith("/a3solaportal/installation-tasks/new?"))
 
 	def test_the_board_cards_link_to_their_tasks(self):
@@ -457,11 +459,11 @@ class TestTasksFromTheBoard(FrappeTestCase):
 
 		made = portal_crud.create_record(
 			slug="installation-tasks", source_dt="Solar Installation", source=self.installation.name,
-			source_task="ADV", amount="25000", paid_on=today(), task_code="BAL", solar_installation="ELSEWHERE",
+			source_task="KTST", remarks="Inspector due Monday", task_code="ADV", solar_installation="ELSEWHERE",
 		)
 		task = frappe.get_doc("Installation Task", made["name"])
-		self.assertEqual((task.task_code, task.solar_installation), ("ADV", self.installation.name))
-		self.assertEqual((task.amount, str(task.paid_on)), (25000, today()))
+		self.assertEqual((task.task_code, task.solar_installation), ("KTST", self.installation.name))
+		self.assertEqual(task.remarks, "Inspector due Monday")
 
 	def test_a_section_for_some_tasks_shows_with_them_only(self):
 		from a3_sola.www.a3solaportal.collections import section_show_when, task_form_groups

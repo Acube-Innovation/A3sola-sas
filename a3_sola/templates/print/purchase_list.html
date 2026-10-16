@@ -28,14 +28,25 @@
 	</td>
 	<td>
 		<h4>Ship To</h4>
+		{%- if godown %}
+		<strong>Company godown - {{ company.epc_name or company.company_name }}</strong><br>
+		{{ (company.epc_address or "") | e | replace("\n", "<br>") }}
+		{%- if company.epc_contact_no %}<br>Phone: {{ company.epc_contact_no | e }}{% endif %}
+		{%- else %}
 		<strong>{{ inst.consumer_name or inst.name }}</strong><br>
 		{{ (ship_address or "") | e }}
 		{%- if inst.consumer_mobile %}<br>Phone: {{ inst.consumer_mobile | e }}{% endif %}
 		{%- if map_url %}<br>Location: <a href="{{ map_url }}">{{ "%.4f" | format(point[0]) }}, {{ "%.4f" | format(point[1]) }} (open in Google Maps)</a>{% endif %}
+		{%- endif %}
 	</td>
 </tr></table>
 <p class="pl-title">Purchase List - {{ title }}</p>
+{%- if pending %}
+<p class="pl-sub">The items below are still to be supplied - kindly confirm availability, price and delivery date.</p>
+{%- endif %}
 <p class="pl-sub">{{ system }} · {{ inst.name }} · {{ date }}</p>
+<p class="pl-sub">Delivery: <strong>{{ delivery_method }}</strong>{% if godown %} - deliver to the company godown{% else %} - deliver to the customer's site, bill to the company{% endif %}
+{%- if expected %} · Expected by {{ expected }}{% endif %}</p>
 <table class="pl-items">
 	<thead><tr><th class="n">Sl. No.</th><th>Material</th><th class="u">Unit</th><th class="q">Qty</th></tr></thead>
 	<tbody>

@@ -42,6 +42,28 @@ class SiteSurvey(Document):
 		self.compute_roof_capacity()
 		self.compute_shading()
 		self.compute_ehs_status()
+		self.tidy_report()
+		self.stamp_approval()
+
+	def before_update_after_submit(self):
+		# The customer often signs after the survey is filed: the approval is set then.
+		self.stamp_approval()
+
+	def tidy_report(self):
+		"""The paper's answers that only stand with another: a parapet's height, the HT/LT set."""
+		if not self.parapet_available:
+			self.parapet_height_cm = 0
+		if not self.supply_type:
+			for field in ("incomer", "common_panel_incomer", "cable_duct_trench_tray"):
+				self.set(field, None)
+			self.dg_available = self.automatic_cos = 0
+
+	def stamp_approval(self):
+		"""The customer's approval is in their name and dated; the engineer is the surveyor."""
+		if self.customer_approved:
+			self.customer_approval_name = self.customer_approval_name or self.customer_name
+			self.customer_approval_date = self.customer_approval_date or frappe.utils.today()
+		self.engineer_name = self.engineer_name or self.surveyor
 
 	def seed_ehs_checklist(self):
 		"""Populate the checklist from the fixture when empty, preserving answers."""
