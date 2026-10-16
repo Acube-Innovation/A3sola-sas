@@ -21,11 +21,68 @@ def url(task, download=False, pending=False):
 
 
 def pending_rows(task):
-	"""The task's list rows the supplier could not give in full (a Pending Qty)."""
+	"""The task's pending items still awaited - the pending-items list."""
+	return [r for r in task.get("pending_items") or [] if not r.get("received") and flt(r.qty) > 0]
+
+
+def move_to_pending(task):
+	"""Each list row's Pending Qty, moved off the list into Pending Items - to the item
+	already pending, when the same one is - and the row's Pending Qty cleared."""
 	from a3_sola.api.structure_bom import MATERIAL_LISTS
 
 	table = MATERIAL_LISTS.get(task.get("task_code"), (None,))[0]
-	return [r for r in task.get(table) or [] if flt(r.get("pending_qty")) > 0] if table else []
+	if not table:
+		return
+	for row in task.get(table) or []:
+		qty = flt(row.get("pending_qty"))
+		if qty <= 0:
+			row.pending_qty = 0
+			continue
+		row.qty = flt(row.qty) - qty
+		row.pending_qty = 0
+		same = next((p for p in pending_rows(task) if p.material == row.material and (p.uom or "") == (row.uom or "")), None)
+		if same:
+			same.qty = flt(same.qty) + qty
+		else:
+			task.append("pending_items", {"material": row.material, "qty": qty, "uom": row.uom, "item_code": row.get("item_code"),
+				"marked_on": today(), "supplier": task.get("pending_supplier") or None, "received": 0})
+
+
+def _list_row(task, item):
+	"""The list row a pending item belongs to: the same material and unit."""
+	from a3_sola.api.structure_bom import MATERIAL_LISTS
+
+	table = MATERIAL_LISTS[task.task_code][0]
+	return next((r for r in task.get(table) or [] if r.material == item.material and (r.uom or "") == (item.uom or "")), None), table
+
+
+@frappe.whitelist(methods=["POST"])
+def receive_pending(task, row, received=1):
+	"""Tick (or untick) a pending item Received: its quantity goes back onto the list - or off
+	it again - and off (or back on) the pending-items list."""
+	doc = frappe.get_doc("Installation Task", task)
+	doc.check_permission("write")
+	if doc.docstatus != 0:
+		frappe.throw(_("{0} is already submitted.").format(doc.name))
+	item = next((r for r in doc.get("pending_items") or [] if r.name == row), None)
+	if not item:
+		frappe.throw(_("No such pending item on {0}.").format(doc.name), frappe.DoesNotExistError)
+	received = frappe.utils.cint(received)
+	if bool(item.received) == bool(received):
+		return {"received": received}
+	line, table = _list_row(doc, item)
+	if received:
+		if line:
+			line.qty = flt(line.qty) + flt(item.qty)
+		else:
+			doc.append(table, {"material": item.material, "qty": item.qty, "uom": item.uom, "item_code": item.item_code})
+		item.received, item.received_on, item.received_by = 1, today(), frappe.session.user
+	else:
+		if line:
+			line.qty = max(0.0, flt(line.qty) - flt(item.qty))
+		item.received, item.received_on, item.received_by = 0, None, None
+	doc.save()
+	return {"received": received}
 
 
 def location(inst):
@@ -57,8 +114,7 @@ def lines(task, pending=False):
 	micro = task.task_code == "PROC" and task.get("solar_installation") and microinverter.uses_microinverter(task.solar_installation)
 	starred = lambda r: micro and not flt(r.qty) and microinverter.is_dcdb(r.material)  # noqa: E731
 	source = pending_rows(task) if pending else task.get(table) or []
-	rows = [{"material": r.material + (" *" if starred(r) else ""), "uom": r.uom,
-		"qty": flt(r.pending_qty) if pending else flt(r.qty)} for r in source]
+	rows = [{"material": r.material + (" *" if starred(r) else ""), "uom": r.uom, "qty": flt(r.qty)} for r in source]
 	if any(starred(r) for r in task.get(table) or []):
 		notes.append(microinverter.NOTE)
 	return {
@@ -91,7 +147,7 @@ def render(doc, pending=False):
 	if doc.task_code not in TITLES:
 		frappe.throw(_("A purchase list is printed from the material and structure material procurement tasks."))
 	if pending and not pending_rows(doc):
-		frappe.throw(_("Nothing is pending on {0}: enter a Pending Qty on the rows the supplier could not give.").format(doc.name),
+		frappe.throw(_("Nothing is pending on {0}: enter a Pending Qty on the rows the supplier could not give, and save.").format(doc.name),
 			title=_("Nothing Pending"))
 	inst = frappe.get_doc("Solar Installation", doc.solar_installation)
 	company = frappe.get_doc("Company", inst.company)

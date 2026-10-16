@@ -1,0 +1,64 @@
+{#- A procurement task's Pending Items: what the supplier could not give, off the list while
+    awaited. Ticking Received puts it back on the list and takes it off the pending-items
+    list (api/purchase_list.receive_pending); the received ones stay below as the record.
+    On the edit page it is shown, not ticked - the form's unsaved rows would be lost.
+    Context: pending_card. -#}
+{%- if pending_card %}
+<section class="a3s-card a3s-edit__card a3s-pending" data-pending data-task="{{ pending_card.task | e }}">
+	<h3 class="a3s-edit__card-title">Pending items
+		{%- if pending_card.open %} <span class="a3s-taskdocs__state is-missing">{{ pending_card.open }} awaited</span>{% endif %}</h3>
+	{%- if not pending_card.rows %}
+	<p class="a3s-field__hint">Nothing pending. When the supplier cannot give an item, enter its Pending Qty on the list and save: it moves here, to send to the next supplier.</p>
+	{%- else %}
+	<div class="a3s-tablewrap"><table class="a3s-table">
+		<thead><tr><th>#</th><th>Material</th><th>Qty</th><th>Unit</th><th>Pending since</th><th>Asked from</th><th>Received</th></tr></thead>
+		<tbody>
+		{%- for r in pending_card.rows %}
+		<tr{% if r.received %} style="color:var(--color-text-muted)"{% endif %}>
+			<td>{{ loop.index }}</td>
+			<td>{% if r.received %}<s>{{ r.material | e }}</s>{% else %}{{ r.material | e }}{% endif %}</td>
+			<td>{{ r.qty }}</td><td>{{ (r.uom or "") | e }}</td><td>{{ r.marked_on }}</td><td>{{ (r.supplier or "") | e }}</td>
+			<td>
+				{%- if pending_card.can_tick %}
+				<label style="display:inline-flex;gap:0.4rem;align-items:center"><input type="checkbox" data-pending-row="{{ r.row | e }}"{% if r.received %} checked{% endif %}>
+					{%- if r.received %} {{ r.received_on }}{% else %} Received{% endif %}</label>
+				{%- else %}{{ ("Received " ~ r.received_on) if r.received else "Awaited" }}{% endif %}
+			</td>
+		</tr>
+		{%- endfor %}
+		</tbody>
+	</table></div>
+	{%- if pending_card.note %}<p class="a3s-field__hint" style="margin-top:0.5rem">{{ pending_card.note }}</p>{% endif %}
+	{%- endif %}
+	<p class="a3s-attach__status" data-pending-status role="status" aria-live="polite" hidden></p>
+</section>
+{%- if pending_card.can_tick %}
+<script>
+(function () {
+	var root = document.querySelector("[data-pending]");
+	if (!root) return;
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var status = root.querySelector("[data-pending-status]");
+	root.addEventListener("change", function (e) {
+		var box = e.target.closest("[data-pending-row]");
+		if (!box) return;
+		var form = new FormData();
+		form.append("task", root.dataset.task);
+		form.append("row", box.dataset.pendingRow);
+		form.append("received", box.checked ? 1 : 0);
+		status.hidden = false; status.textContent = box.checked ? "Moving it back onto the list…" : "Moving it back to pending…";
+		box.disabled = true;
+		fetch("/api/method/a3_sola.api.purchase_list.receive_pending", { method: "POST", credentials: "same-origin", body: form,
+			headers: { "X-Frappe-CSRF-Token": meta ? meta.getAttribute("content") : "", Accept: "application/json" } })
+			.then(function (r) { return r.json().then(function (d) { if (!r.ok) throw d; return d; }); })
+			.then(function () { window.location.reload(); })
+			.catch(function (d) {
+				var msg = "Could not update it.";
+				try { msg = JSON.parse(JSON.parse(d._server_messages)[0]).message.replace(/<[^>]*>/g, ""); } catch (x) { /* keep */ }
+				status.textContent = msg; status.dataset.tone = "error"; box.checked = !box.checked; box.disabled = false;
+			});
+	});
+})();
+</script>
+{%- endif %}
+{%- endif %}

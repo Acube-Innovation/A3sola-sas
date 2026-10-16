@@ -27,6 +27,7 @@
 </div>
 
 {%- include "templates/includes/portal_job_card.html" %}
+{%- include "templates/includes/portal_pending_items.html" %}
 
 <form class="a3s-edit a3s-edit--single" id="a3s-record-edit-form" data-endpoint="{{ endpoint }}" data-slug="{{ collection.slug }}"
       data-name="{{ '' if task_form else record.name | e }}" data-view="{{ view_route }}" novalidate>

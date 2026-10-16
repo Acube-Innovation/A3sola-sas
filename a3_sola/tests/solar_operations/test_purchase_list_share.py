@@ -41,7 +41,8 @@ class TestPurchaseListShare(FrappeTestCase):
 
 class TestPendingItems(FrappeTestCase):
 	"""The whole list goes to the supplier; what they could not give is marked Pending Qty and
-	goes, as its own list, to the next supplier - and the task waits until nothing is pending."""
+	moves off the list into Pending Items - its own list, for the next supplier - and back onto
+	the list when ticked Received. The task waits until nothing is pending."""
 
 	def setUp(self):
 		self.job = make_installation()
@@ -61,15 +62,34 @@ class TestPendingItems(FrappeTestCase):
 				"Supplier Group", {}, "name"), "mobile_no": mobile, "email_id": email}).insert(ignore_permissions=True)
 		return name
 
-	def test_the_pending_list_is_only_what_is_short(self):
+	def test_the_shortfall_moves_off_the_list_into_pending_items(self):
 		from a3_sola.api import purchase_list
 
 		self.mark(0, 3)
+		self.assertEqual([(r.material, r.qty, r.pending_qty) for r in self.task.materials],
+			[("Pipe A", 4, 0), ("Clamp B", 7, 0)])
+		self.assertEqual([(r.material, r.qty, r.received) for r in self.task.pending_items], [("Clamp B", 3, 0)])
 		out = purchase_list.lines(self.task, pending=True)
 		self.assertEqual(out["rows"], [{"material": "Clamp B", "uom": "Nos", "qty": 3}])
 		self.assertIn("Pending Items", out["title"])
-		self.assertEqual(len(purchase_list.lines(self.task)["rows"]), 2)
 		self.assertTrue(portal_share._pdf(self.task, portal_share.PENDING).startswith(b"%PDF"))
+		# Short again: added to the item already pending.
+		self.mark(0, 2)
+		self.assertEqual([(r.material, r.qty) for r in self.task.pending_items], [("Clamp B", 5)])
+
+	def test_received_puts_it_back_on_the_list_and_off_the_pending_list(self):
+		from a3_sola.api import purchase_list
+
+		self.mark(0, 3)
+		row = self.task.pending_items[0].name
+		purchase_list.receive_pending(self.task.name, row, 1)
+		self.task.reload()
+		self.assertEqual(self.task.materials[1].qty, 10)
+		self.assertTrue(self.task.pending_items[0].received)
+		self.assertEqual(purchase_list.pending_rows(self.task), [])
+		purchase_list.receive_pending(self.task.name, row, 0)
+		self.task.reload()
+		self.assertEqual((self.task.materials[1].qty, len(purchase_list.pending_rows(self.task))), (7, 1))
 
 	def test_nothing_pending_nothing_to_send(self):
 		from a3_sola.api import purchase_list
@@ -108,11 +128,14 @@ class TestPendingItems(FrappeTestCase):
 			portal_share.shared_pdf("Installation Task", name, pending_key, part="something-else")
 
 	def test_the_task_waits_for_the_pending_items(self):
+		from a3_sola.api import purchase_list
+
 		self.mark(0, 3)
 		self.task.status = "Completed"
 		with self.assertRaises(frappe.ValidationError):
 			self.task.save(ignore_permissions=True)
 		self.task.reload()
-		self.mark(0, 0)
+		purchase_list.receive_pending(self.task.name, self.task.pending_items[0].name, 1)
+		self.task.reload()
 		self.task.status = "Completed"
 		self.task.save(ignore_permissions=True)

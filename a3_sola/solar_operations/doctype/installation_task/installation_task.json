@@ -79,6 +79,8 @@
   "cb_proc",
   "materials_procured_on",
   "materials",
+  "sb_pending_items",
+  "pending_items",
   "sb_dal",
   "approval_reference",
   "cb_dal",
@@ -555,6 +557,19 @@
    "description": "The package BOM's lines; add, change or remove materials as bought."
   },
   {
+   "fieldname": "sb_pending_items",
+   "fieldtype": "Section Break",
+   "label": "Pending Items",
+   "depends_on": "eval:['SPROC','PROC'].includes(doc.task_code)",
+   "description": "What the supplier could not give, moved off the list by its Pending Qty. Tick Received when it arrives: it goes back onto the list and off the pending-items list."
+  },
+  {
+   "fieldname": "pending_items",
+   "fieldtype": "Table",
+   "label": "Pending Items",
+   "options": "Installation Task Pending Item"
+  },
+  {
    "depends_on": "eval:doc.task_code=='DAL'",
    "fieldname": "sb_dal",
    "fieldtype": "Section Break",
@@ -775,7 +790,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 19:00:00.000000",
+ "modified": "2026-10-16 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Task",

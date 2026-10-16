@@ -1235,6 +1235,7 @@ def detail_context(context, slug, name):
 			from a3_sola.api import purchase_list
 
 			context.share = portal_share.share_links(doc, purchase_list.url(doc.name))
+			context.pending_card = pending_card(doc, can_tick=True)
 			# What the supplier could not give, once marked: its own list for the next supplier.
 			pending = purchase_list.pending_rows(doc)
 			if pending:
@@ -1383,10 +1384,30 @@ def edit_context(context, slug, name):
 	context.item_table = item_table(slug, doc, editable=True)
 	if doc.doctype == "Installation Work Order":
 		context.job_card = job_card(doc.solar_installation, None, doc)
+	if doc.doctype == "Installation Task" and doc.get("task_code") in ("SPROC", "PROC"):
+		context.pending_card = pending_card(doc, can_tick=False)
 	context.update(_record_about(doc))
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
+
+
+def pending_card(doc, can_tick=True):
+	"""A procurement task's Pending Items card (portal_pending_items.html): the items awaited
+	first, then the received ones as the record. Ticked on the task's page while it is open."""
+	from frappe.utils import flt, format_date
+
+	rows = sorted(doc.get("pending_items") or [], key=lambda r: (bool(r.received), r.idx))
+	open_ = len([r for r in rows if not r.received])
+	tick = can_tick and doc.docstatus == 0 and bool(doc.has_permission("write"))
+	return {
+		"task": doc.name, "open": open_, "can_tick": tick,
+		"note": "" if can_tick else "Tick items Received on the task's page, after saving the list.",
+		"rows": [{"row": r.name, "material": r.material, "qty": "{0:g}".format(flt(r.qty)), "uom": r.uom,
+			"marked_on": format_date(r.marked_on, "d MMM yyyy") if r.marked_on else "", "supplier": r.supplier,
+			"received": bool(r.received), "received_on": format_date(r.received_on, "d MMM") if r.received_on else ""}
+			for r in rows],
+	}
 
 
 # ================================================================ line-item tables
