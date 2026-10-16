@@ -237,12 +237,16 @@ def _task_columns(doc):
 	people = {}
 	for a in doc.get("task_assignees") or []:
 		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
+	from a3_sola.api.tasks import may_complete
+
 	for row in doc.stages:
 		if not doc.is_financed and (row.activity_scope == FINANCED_ONLY or row.stage_code in FINANCED_ONLY_TASKS):
 			continue
 		task = _task(row, doc.name)
 		task["assignees"] = people.get(row.stage_code, [])
 		task["contractor"] = _contractor(row)
+		# Completed straight from the board, with a remark, by its assignee or a manager.
+		task["can_complete"] = row.status not in ("Completed", "Skipped") and may_complete(doc, row.stage_code)
 		# A task the template has not scoped yet is the company's own until it says otherwise.
 		columns[index.get(row.activity_scope, 0)]["tasks"].append(task)
 	for column in columns:
