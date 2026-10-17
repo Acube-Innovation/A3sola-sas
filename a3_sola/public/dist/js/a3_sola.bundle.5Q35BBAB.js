@@ -102,12 +102,11 @@
   function consumer_address_dialog(frm) {
     const different = 'eval:doc.permanent_address_same=="No"';
     const parts = (prefix, when) => {
-      const reqd = when ? { depends_on: when, mandatory_depends_on: when } : { reqd: 1 };
       const shown = when ? { depends_on: when } : {};
       return [
-        __spreadValues({ fieldname: `${prefix}_address_line1`, fieldtype: "Data", label: __("House Name / Building No.") }, reqd),
+        __spreadValues({ fieldname: `${prefix}_address_line1`, fieldtype: "Data", label: __("House Name / Building No.") }, shown),
         __spreadValues({ fieldname: `${prefix}_address_line2`, fieldtype: "Data", label: __("Street / Area") }, shown),
-        __spreadValues({ fieldname: `${prefix}_city`, fieldtype: "Data", label: __("City / Town / Village") }, reqd),
+        __spreadValues({ fieldname: `${prefix}_city`, fieldtype: "Data", label: __("City / Town / Village") }, shown),
         { fieldtype: "Column Break" },
         __spreadProps(__spreadValues({
           fieldname: `${prefix}_state`,
@@ -115,7 +114,7 @@
           options: "Indian State",
           label: __("State"),
           default: "Kerala"
-        }, reqd), {
+        }, shown), {
           onchange: () => dialog.set_value(`${prefix}_district`, null)
         }),
         __spreadProps(__spreadValues({
@@ -123,10 +122,10 @@
           fieldtype: "Link",
           options: "Indian District",
           label: __("District")
-        }, reqd), {
+        }, shown), {
           get_query: () => ({ filters: dialog.get_value(`${prefix}_state`) ? { state: dialog.get_value(`${prefix}_state`) } : {} })
         }),
-        __spreadValues({ fieldname: `${prefix}_pincode`, fieldtype: "Data", label: __("PIN Code") }, reqd)
+        __spreadValues({ fieldname: `${prefix}_pincode`, fieldtype: "Data", label: __("PIN Code") }, shown)
       ];
     };
     const dialog = new frappe.ui.Dialog({
@@ -210,4 +209,4 @@
     frm.add_custom_button(__("Audit Trail"), () => a3_sola.audit.show_trail(frm), group);
   };
 })();
-//# sourceMappingURL=a3_sola.bundle.CH66EPBW.js.map
+//# sourceMappingURL=a3_sola.bundle.5Q35BBAB.js.map

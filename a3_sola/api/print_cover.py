@@ -361,8 +361,11 @@ def print_components(doc):
 	structure and installation - and, where the proposal offers options, each option's inverter.
 	Returns {"rows": [...], "missing": [...], "notes": [...]} - each row is {item, spec, make,
 	nos}, `missing` names the rows without a make on record, and `notes` explains an asterisk:
-	a micro inverter is marked, and its option has no DCDB (api/microinverter.py)."""
+	a micro inverter is marked, and its option has no DCDB (api/microinverter.py). A panel,
+	inverter or battery row also has its unit's `capacity` (550 Wp, 3 kW, 4.8 kWh) and
+	`spec_detail`, its spec without it, for a table with a Capacity column (the BOM tab)."""
 	from a3_sola.api import microinverter
+	from a3_sola.api.proposal_comparison import unit_capacity
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
 	if not doc.get("solar_design_estimate"):
@@ -387,12 +390,13 @@ def print_components(doc):
 		filters={"parent": est.solar_package}, fields=["module_make", "module_alternate_makes"])} if est.solar_package else {}
 	rows = []
 	for r in priced("panels"):
-		spec = " ".join(p for p in ("{0:g}Wp".format(flt(r.panel_capacity_wp)) if flt(r.panel_capacity_wp) else "",
-			technology_name(r.panel_variant) if r.panel_variant else "",
+		detail = " ".join(p for p in (technology_name(r.panel_variant) if r.panel_variant else "",
 			("DCR" if r.panel_type == "DCR" else "Non DCR") if r.panel_type else "") if p)
+		spec = " ".join(p for p in ("{0:g}Wp".format(flt(r.panel_capacity_wp)) if flt(r.panel_capacity_wp) else "", detail) if p)
 		names = [make(r.panel_make)] + [m.strip() for m in (alternates.get(r.panel_make) or "").split("/")
 			if m.strip() and m.strip().lower() not in ("equivalent", make(r.panel_make).lower())]
-		rows.append({"item": "Solar Panels", "spec": spec, "make": "/ ".join(n for n in names if n), "nos": cint(r.nos)})
+		rows.append({"item": "Solar Panels", "spec": spec, "spec_detail": detail, "capacity": unit_capacity("panels", r),
+			"make": "/ ".join(n for n in names if n), "nos": cint(r.nos)})
 	hybrid = est.system_type == "Hybrid"
 	# Each option's inverter - the options differ by inverter - or the one design's.
 	options = proposal_estimates(doc, est)
@@ -402,14 +406,15 @@ def print_components(doc):
 			if r.get("is_option"):
 				continue
 			phase = {"Three Phase": "3 phase", "Single Phase": "1 phase"}.get(r.inverter_phase or "", r.inverter_phase or "")
-			spec = ", ".join(p for p in ("{0:g} kW".format(flt(r.inverter_capacity_kw)) if flt(r.inverter_capacity_kw) else "",
-				phase, (r.get("specification") or "").strip() or (technology_name(r.inverter_type) if r.inverter_type else "")) if p)
+			kind = (r.get("specification") or "").strip() or (technology_name(r.inverter_type) if r.inverter_type else "")
+			kw = "{0:g} kW".format(flt(r.inverter_capacity_kw)) if flt(r.inverter_capacity_kw) else ""
+			spec, detail = (", ".join(p for p in parts if p) for parts in ((kw, phase, kind), (phase, kind)))
 			if len(options) > 1:
-				spec = "Option {0}: {1}".format(number, spec)
+				spec, detail = ("Option {0}: {1}".format(number, text) for text in (spec, detail))
 			if microinverter.is_micro(r):
-				spec += " *"
+				spec, detail = spec + " *", detail + " *"
 			rows.append({"item": "Solar PV Hybrid Inverter" if hybrid else "Solar PV Inverter", "spec": spec,
-				"make": make(r.inverter_make), "nos": cint(r.nos)})
+				"spec_detail": detail, "capacity": unit_capacity("inverters", r), "make": make(r.inverter_make), "nos": cint(r.nos)})
 	# The options' inverters are one item: one Sl. No. and description over their rows.
 	group = [r for r in rows if r["item"] in ("Solar PV Inverter", "Solar PV Hybrid Inverter")]
 	if len(group) > 1:
@@ -442,9 +447,13 @@ def print_components(doc):
 	bos_row("DCDB", "DCDB")
 	for r in priced("batteries"):
 		described = (r.get("specification") or "").strip()
-		spec = " ".join(p for p in ("{0:g}V, {1:g}Ah".format(flt(r.battery_voltage), flt(r.battery_capacity_ah)),
+		# Volts and amp-hours as far as they are known: never "0V, 0Ah".
+		rating = ", ".join(p for p in ("{0:g}V".format(flt(r.battery_voltage)) if flt(r.battery_voltage) else "",
+			"{0:g}Ah".format(flt(r.battery_capacity_ah)) if flt(r.battery_capacity_ah) else "") if p)
+		spec = " ".join(p for p in (rating,
 			described or " ".join(p for p in (technology_name(r.battery_variant) if r.battery_variant else "", "Battery") if p)) if p)
-		rows.append({"item": "Battery", "spec": spec, "make": make(r.battery_make), "nos": cint(r.nos)})
+		rows.append({"item": "Battery", "spec": spec, "spec_detail": spec, "capacity": unit_capacity("batteries", r),
+			"make": make(r.battery_make), "nos": cint(r.nos)})
 	for item, label in BOS_ROWS[1:]:
 		bos_row(item, label)
 	known = {item for item, _label in BOS_ROWS}

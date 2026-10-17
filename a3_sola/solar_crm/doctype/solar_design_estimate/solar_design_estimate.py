@@ -532,6 +532,11 @@ class SolarDesignEstimate(Document):
 			# A count typed on the row stands; otherwise enough panels to reach the proposed size.
 			row.nos = cint(row.panel_count) or unit_count(flt(self.final_capacity_kw) * 1000, row.panel_capacity_wp)
 			row.total_capacity_kwp = flt(cint(row.nos) * flt(row.panel_capacity_wp) / 1000, 3)
+		# The system proposed is the panels designed in - six 550 Wp panels are 3.3 kW, whatever
+		# the sizing recommended - and everything after (inverters, generation, fees, subsidy,
+		# the proposal and quotation) is worked out for that. The recommendation stays as it was.
+		if self.panel_capacity_kwp():
+			self.final_capacity_kw = self.panel_capacity_kwp()
 
 	def compute_inverters(self):
 		"""Inverters to carry the panels, sized and phased within the limits in settings.

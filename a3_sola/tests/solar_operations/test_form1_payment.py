@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Form 1 Payment is a confirmation: paid or not, a remark, the receipt on the task's
-Documents - and, paid out of pocket, a reimbursement claim, as the stamp paper's is."""
+"""Form 1 Payment is a confirmation: paid or not, who paid (Company, Customer, I paid), a
+remark, the receipt on the task's Documents - and, "I paid", a reimbursement claim, as the
+stamp paper's is."""
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -25,14 +26,33 @@ class TestForm1Payment(FrappeTestCase):
 			source_task="F1PAY", **values)
 		return frappe.get_doc("Statutory Fee Payment", made["name"])
 
-	def test_the_form_asks_only_paid_claim_and_remark(self):
+	def form(self):
 		target = tasks.open_task(self.installation.name, "F1PAY", create_draft=0)
 		_doc, groups = collections.task_form_groups("fee-payments", dict(target["route_options"]))
-		fields = [f["fieldname"] for g in groups for s in g["sections"] for f in s["fields"]]
-		self.assertEqual(fields, ["payment_completed", "claim_reimbursement", "remarks"])
+		return {f["fieldname"]: f for g in groups for s in g["sections"] for f in s["fields"]}
+
+	def test_the_form_asks_only_paid_who_paid_and_remark(self):
+		fields = self.form()
+		self.assertEqual(list(fields), ["payment_completed", "paid_by", "remarks"])
+		self.assertEqual(fields["paid_by"]["options"], ["Company", "Customer", "I paid - Claim Reimbursement"])
+		self.assertEqual((fields["paid_by"]["value"], fields["paid_by"]["show_when"]), ("Company", "payment_completed"))
+
+	def test_no_i_paid_where_the_task_allows_no_reimbursement(self):
+		template = frappe.db.get_value("Solar Installation", self.installation.name, "stage_template")
+		frappe.db.set_value("Installation Stage Template Detail", {"parent": template, "stage_code": "F1PAY"},
+			"allow_reimbursement", 0)
+		self.assertEqual(self.form()["paid_by"]["options"], ["Company", "Customer"])
+		with self.assertRaises(frappe.ValidationError):
+			self.pay(payment_completed=1, paid_by="I paid - Claim Reimbursement")
+
+	def test_customer_paid_is_not_recovered_or_claimed(self):
+		doc = self.pay(payment_completed=1, paid_by="Customer")
+		self.assertEqual((doc.docstatus, doc.paid_by, doc.claim_reimbursement), (1, "Customer Directly", 0))
+		self.assertEqual(doc.reimbursement_status, "Not Applicable")
+		self.assertFalse(doc.reimbursement)
 
 	def test_payment_completed_completes_the_task(self):
-		doc = self.pay(payment_completed=1, remarks="Paid at the section office")
+		doc = self.pay(payment_completed=1, paid_by="Company", remarks="Paid at the section office")
 		self.assertEqual((doc.docstatus, doc.paid_by), (1, "Company on Behalf of Customer"))
 		self.assertTrue(doc.form2_due_date)
 		row, _inst = task_row(self.installation, "F1PAY")
@@ -46,7 +66,8 @@ class TestForm1Payment(FrappeTestCase):
 		self.assertNotEqual(row.status, "Completed")
 
 	def test_paid_out_of_pocket_is_claimed_back_once(self):
-		doc = self.pay(payment_completed=1, claim_reimbursement=1)
+		doc = self.pay(payment_completed=1, paid_by="I paid - Claim Reimbursement")
+		self.assertEqual((doc.paid_by, doc.claim_reimbursement), ("Company on Behalf of Customer", 1))
 		if not frappe.utils.flt(doc.amount_gross):
 			self.skipTest("no application fee on this site's fee schedule")
 		claim = frappe.get_doc("Expense Reimbursement", doc.reimbursement)

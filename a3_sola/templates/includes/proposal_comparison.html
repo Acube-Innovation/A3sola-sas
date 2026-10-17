@@ -20,19 +20,19 @@
 	<div class="opt">
 		<h3>{{ _("Option 1") }} &middot; {{ base.package or base.name }}</h3>
 		<p class="meta">{{ base.name }} &middot; {{ "%g" | format(base.capacity_kw) }} kW</p>
-		<table><colgroup><col style="width: 20%"><col><col style="width: 8%"><col style="width: 15%"><col style="width: 18%"></colgroup>
-			<tr><th>{{ _("Item") }}</th><th>{{ _("Description") }}</th><th class="num">{{ _("Qty") }}</th><th class="num">{{ _("Rate") }}</th><th class="num">{{ _("Amount") }}</th></tr>
+		<table><colgroup><col style="width: 17%"><col><col style="width: 11%"><col style="width: 7%"><col style="width: 14%"><col style="width: 16%"></colgroup>
+			<tr><th>{{ _("Item") }}</th><th>{{ _("Description") }}</th><th>{{ _("Capacity") }}</th><th class="num">{{ _("Qty") }}</th><th class="num">{{ _("Rate") }}</th><th class="num">{{ _("Amount") }}</th></tr>
 			{%- for table in ("panels", "inverters", "batteries") %}
 			{%- for line in base.main[table] %}
-			<tr><td>{{ line.component }}</td><td>{{ line.description }}</td><td class="num">{{ line.qty }}</td><td class="num">{{ money(line.rate) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
+			<tr><td>{{ line.component }}</td><td>{{ line.description }}</td><td>{{ line.capacity or "—" }}</td><td class="num">{{ line.qty }}</td><td class="num">{{ money(line.rate) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
 			{%- endfor %}
 			{%- endfor %}
 			{%- for line in base.other_lines %}
-			<tr><td colspan="4">{{ _(line.label) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
+			<tr><td colspan="5">{{ _(line.label) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
 			{%- endfor %}
-			<tr class="sub"><td colspan="4">{{ _("Subtotal") }}</td><td class="num">{{ money(base.subtotal) }}</td></tr>
-			<tr class="sub"><td colspan="4">{{ _("GST") }}{% if base.gst_percent %} ({{ "%g" | format(base.gst_percent) }}%){% endif %}</td><td class="num">{{ money(base.gst_amount) }}</td></tr>
-			<tr class="total"><td colspan="4">{{ _("Total") }}</td><td class="num">{{ money(base.total) }}</td></tr>
+			<tr class="sub"><td colspan="5">{{ _("Subtotal") }}</td><td class="num">{{ money(base.subtotal) }}</td></tr>
+			<tr class="sub"><td colspan="5">{{ _("GST") }}{% if base.gst_percent %} ({{ "%g" | format(base.gst_percent) }}%){% endif %}</td><td class="num">{{ money(base.gst_amount) }}</td></tr>
+			<tr class="total"><td colspan="5">{{ _("Total") }}</td><td class="num">{{ money(base.total) }}</td></tr>
 		</table>
 	</div>
 
@@ -42,21 +42,21 @@
 		<h3>{{ _("Option {0}").format(v.number) }} &middot; {{ e.package or e.name }}</h3>
 		<p class="meta">{{ e.name }} &middot; {{ "%g" | format(e.capacity_kw) }} kW &middot; {{ _("compared with Option 1") }}</p>
 		{#- Only the items this option changes, laid out as Option 1 is; the rest is as there. -#}
-		<table><colgroup><col style="width: 20%"><col><col style="width: 8%"><col style="width: 15%"><col style="width: 18%"></colgroup>
-			<tr><th>{{ _("Item") }}</th><th>{{ _("Description") }}</th><th class="num">{{ _("Qty") }}</th><th class="num">{{ _("Rate") }}</th><th class="num">{{ _("Amount") }}</th></tr>
+		<table><colgroup><col style="width: 17%"><col><col style="width: 11%"><col style="width: 7%"><col style="width: 14%"><col style="width: 16%"></colgroup>
+			<tr><th>{{ _("Item") }}</th><th>{{ _("Description") }}</th><th>{{ _("Capacity") }}</th><th class="num">{{ _("Qty") }}</th><th class="num">{{ _("Rate") }}</th><th class="num">{{ _("Amount") }}</th></tr>
 			{%- for c in v.changes %}
 			{%- for line in c.this %}
-			<tr><td>{{ line.component }}</td><td>{{ line.description }}</td><td class="num">{{ line.qty }}</td><td class="num">{{ money(line.rate) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
+			<tr><td>{{ line.component }}</td><td>{{ line.description }}</td><td>{{ line.capacity or "—" }}</td><td class="num">{{ line.qty }}</td><td class="num">{{ money(line.rate) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
 			{%- else %}
-			<tr><td>{{ c.component }}</td><td colspan="4">{{ _("Not included") }}</td></tr>
+			<tr><td>{{ c.component }}</td><td colspan="5">{{ _("Not included") }}</td></tr>
 			{%- endfor %}
 			{%- endfor %}
-			<tr class="sub"><td colspan="5"><em>
+			<tr class="sub"><td colspan="6"><em>
 				{%- if v.changes %}{{ _("All other items are as in Option 1.") }}
 				{%- else %}{{ _("Same solar panels, inverters and batteries as Option 1; the price differs in the rest of the system.") if v.difference else _("Same as Option 1.") }}{% endif %}
 			</em></td></tr>
 			<tr class="total">
-				<td colspan="3">{{ _("Total price") }}</td>
+				<td colspan="4">{{ _("Total price") }}</td>
 				<td class="num" colspan="2">{{ money(e.total) }}
 					{%- if v.difference %} <span class="{{ 'up' if v.difference > 0 else 'down' }}">({{ '+' if v.difference > 0 else '&minus;' }}{{ money(v.difference | abs) }})</span>{% endif %}</td>
 			</tr>

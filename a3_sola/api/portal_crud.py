@@ -17,11 +17,12 @@ from frappe import _
 from frappe.utils import cint, flt
 
 from a3_sola.api import portal_chain
-from a3_sola.api.portal_fields import NUMERIC_TYPES
+from a3_sola.api.portal_fields import NUMERIC_TYPES, is_portal_file
 from a3_sola.www.a3solaportal.collections import (
 	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
 	is_editable, load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
-	TASK_FORM_CHECKS, task_form_groups, task_source,
+	TASK_FORM_CHECKS, task_form_choices, task_form_groups, task_source,
+	reimbursable,
 )
 
 TRUE = {"1", "true", "on", "yes"}
@@ -110,6 +111,17 @@ def _create_for_task(slug, cfg, installation, task_code, values):
 	for field, (_label, on, off) in TASK_FORM_CHECKS.get(task_values.get("task_code"), {}).items():
 		if field in allowed:
 			doc.set(field, on if str(values.get(field)).lower() in TRUE else off)
+	# A choice that sets several fields (who paid: Company, Customer, I paid) sets them from
+	# its label; a label the form did not offer is refused.
+	can_claim = reimbursable(installation, task_values.get("task_code"))
+	for field, choices in task_form_choices(task_values.get("task_code"), can_claim).items():
+		if field not in allowed or field not in values:
+			continue
+		sets = dict(choices).get(values.get(field))
+		if sets is None:
+			frappe.throw(_("Choose who paid: {0}.").format(", ".join(label for label, _set in choices)),
+				frappe.ValidationError)
+		doc.update(sets)
 	doc.insert()
 	# On to the document's page, where the task is completed (Complete task / Submit).
 	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(cfg["doctype"], doc.name)}
@@ -272,21 +284,27 @@ def create_mapped(slug=None, source_dt=None, source=None):
 #: a photograph on a record, not to become a general file store.
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+#: A file field (PORTAL_FILE_FIELDS): a scanned report, as a PDF or a photograph of it.
+FILE_TYPES = {"application/pdf", "image/png", "image/jpeg"}
+MAX_FILE_BYTES = 10 * 1024 * 1024
 
 
 @frappe.whitelist()
 def upload_image(slug=None, fieldname=None, name=None):
-	"""Store one uploaded picture and return its URL for the form to carry.
+	"""Store one uploaded picture - or, for a file field the portal captures (a feasibility
+	report), a PDF or picture - and return its URL for the form to carry.
 
-	The field must be an Attach Image on that collection's own doctype, so this cannot be
-	pointed at some other field or doctype. The file is saved private and returned as a
-	URL; the form posts it back like any other value, which is what lets the same endpoint
-	serve both the create form, where no record exists yet, and the edit form.
+	The field must be an Attach Image, or a listed Attach (PORTAL_FILE_FIELDS), on that
+	collection's own doctype, so this cannot be pointed at some other field or doctype. The
+	file is saved private and returned as a URL; the form posts it back like any other value,
+	which is what lets the same endpoint serve both the create form, where no record exists
+	yet, and the edit form.
 	"""
 	cfg = get_collection(slug)
 	doctype = cfg["doctype"]
 	df = frappe.get_meta(doctype).get_field(fieldname)
-	if not df or df.fieldtype != "Attach Image":
+	is_file = bool(df) and is_portal_file(doctype, df)
+	if not df or (df.fieldtype != "Attach Image" and not is_file):
 		frappe.throw(_("{0} does not take a picture.").format(fieldname), frappe.ValidationError)
 
 	# Write permission on the record being edited, create permission when there is none yet.
@@ -299,10 +317,17 @@ def upload_image(slug=None, fieldname=None, name=None):
 	if not upload:
 		frappe.throw(_("No file was sent."), frappe.ValidationError)
 	content = upload.stream.read()
-	if len(content) > MAX_IMAGE_BYTES:
-		frappe.throw(_("That picture is larger than 5MB."), frappe.ValidationError)
-	if (upload.content_type or "").split(";")[0] not in IMAGE_TYPES:
-		frappe.throw(_("Choose a PNG, JPEG, WebP or GIF image."), frappe.ValidationError)
+	kind = (upload.content_type or "").split(";")[0]
+	if is_file:
+		if len(content) > MAX_FILE_BYTES:
+			frappe.throw(_("That file is larger than 10MB."), frappe.ValidationError)
+		if kind not in FILE_TYPES:
+			frappe.throw(_("Choose a PDF, or a PNG or JPEG image."), frappe.ValidationError)
+	else:
+		if len(content) > MAX_IMAGE_BYTES:
+			frappe.throw(_("That picture is larger than 5MB."), frappe.ValidationError)
+		if kind not in IMAGE_TYPES:
+			frappe.throw(_("Choose a PNG, JPEG, WebP or GIF image."), frappe.ValidationError)
 
 	doc = frappe.get_doc({
 		"doctype": "File",

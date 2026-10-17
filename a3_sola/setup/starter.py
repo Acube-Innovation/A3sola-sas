@@ -372,11 +372,13 @@ def _drive_chain(context):
 	step("solar_agreement", lambda: _solar_agreement(company, installation.name))
 
 	# The task documents the job accumulates on its way out: the contractor who certifies
-	# it, the serials mailed to them, the KYC file, the KSEB pack and the customer's word.
+	# it, the serials mailed to them, the KYC file, the KSEB Form 2 and Form 3 packs and the
+	# customer's word.
 	step("contractor", lambda: ops._contractor(company))
 	step("dispatch_notice", lambda: ops._dispatch_notice(company, installation))
 	step("kyc", lambda: ops._kyc(installation))
-	step("document_pack", lambda: ops._document_pack(installation, "KSEB Submission"))
+	step("form2_pack", lambda: ops._document_pack(installation, "KSEB Form 2"))
+	step("document_pack", lambda: ops._document_pack(installation, "KSEB Form 3"))
 	step("customer_review", lambda: ops._customer_review(installation))
 
 	# The snag comes after commissioning on purpose: an open major snag blocks the

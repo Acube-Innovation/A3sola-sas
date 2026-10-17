@@ -20,9 +20,19 @@ INPUT_TYPES = {
 # Field types a detail page can show as text or a link.
 DISPLAY_TYPES = INPUT_TYPES | {"Attach", "Attach Image", "Read Only", "Long Text"}
 
-#: A picture is the one attachment a portal form can capture: it uploads on choice
+#: A picture is the one attachment every portal form can capture: it uploads on choice
 #: and the form then carries the resulting file URL like any other value.
 INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
+
+#: Attach fields a portal form captures as a file (a PDF or a picture) the same way, by
+#: doctype. Named one by one: any other attachment stays on the detail page and the desk.
+PORTAL_FILE_FIELDS = {
+	"Installation Task": {"feasibility_report"},
+}
+
+
+def is_portal_file(doctype, df):
+	return df.fieldtype == "Attach" and df.fieldname in PORTAL_FILE_FIELDS.get(doctype, ())
 NUMERIC_TYPES = {"Int", "Float", "Currency", "Percent"}
 LINK_CHOICE_LIMIT = 300
 #: KSEB's directory has some 820 section offices; all of them are offered.
@@ -272,6 +282,9 @@ def edit_spec(df, value, doc=None):
 	}
 	if df.fieldtype == "Attach Image":
 		spec["input"] = "image"
+	elif df.fieldtype == "Attach":
+		spec["input"] = "file"
+		spec["file_name"] = str(value).rsplit("/", 1)[-1] if value else ""
 	elif df.fieldtype == "Select":
 		spec["options"] = (df.options or "").split("\n")
 	elif df.fieldtype == "Link":

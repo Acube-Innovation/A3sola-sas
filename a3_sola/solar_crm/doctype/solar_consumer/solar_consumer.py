@@ -62,8 +62,9 @@ class SolarConsumer(Document):
 
 	def set_addresses(self):
 		"""The installation site is typed on the consumer, part by part. The permanent
-		address is the same place unless the consumer says it is not, and is then asked for
-		in full - it is what the agreement recites as where the consumer resides.
+		address is the same place unless the consumer says it is not - it is what the
+		agreement recites as where the consumer resides. Neither is required: a customer is
+		saved without them, and they are filled in when known.
 
 		Each is also kept whole (`installation_site_address`, `permanent_address`), one part
 		to a line, which is what documents print.
@@ -86,20 +87,6 @@ class SolarConsumer(Document):
 
 	def validate_address_parts(self, prefix):
 		label = _("Installation site") if prefix == "site" else _("Permanent address")
-		if prefix == "permanent":
-			# The desk's mandatory_depends_on is not checked on the server, so it is here.
-			missing = [
-				_(self.meta.get_label(f"permanent_{part}"))
-				for part in ADDRESS_PARTS
-				if part != "address_line2" and not (self.get(f"permanent_{part}") or "").strip()
-			]
-			if missing:
-				frappe.throw(
-					_("Permanent address: enter the {0}, or answer Yes if it is the installation site.").format(
-						", ".join(missing)
-					),
-					title=_("Permanent Address Missing"),
-				)
 		pincode = (self.get(f"{prefix}_pincode") or "").strip()
 		if pincode:
 			if not PIN_PATTERN.match(pincode):
@@ -114,7 +101,10 @@ class SolarConsumer(Document):
 				frappe.throw(_("{0}: district {1} is not in {2}.").format(label, frappe.bold(district), frappe.bold(state)))
 
 	def compose_address(self, prefix):
-		"""The address one part to a line: house, street, place, then district, state and PIN."""
+		"""The address one part to a line: house, street, place, then district, state and PIN.
+		None while only the state (Kerala, its default) is there: that is no address yet."""
+		if not any(self.get(f"{prefix}_{part}") for part in ADDRESS_PARTS if part != "state"):
+			return None
 		district = self.get(f"{prefix}_district")
 		district_name = frappe.db.get_value("Indian District", district, "district_name") if district else None
 		last = ", ".join(p for p in (district_name, self.get(f"{prefix}_state")) if p)

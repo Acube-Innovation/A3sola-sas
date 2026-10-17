@@ -102,13 +102,14 @@ class TestTaskSet(FrappeTestCase):
 		installation = make_installation(is_financed=0)
 		codes = {r.stage_code for r in installation.documents}
 		self.assertIn("ORD", codes)
+		self.assertIn("FRM2", codes)
 		self.assertIn("KFORMS", codes)
 		self.assertIn("LOAN", codes)
 		self.assertTrue(all(r.document_kind == "Expected" for r in installation.documents))
 
 	def test_the_form2_window_is_anchored_to_the_form1_fee(self):
 		installation = make_installation()
-		row = task(installation, "KFORMS")
+		row = task(installation, "FRM2")
 		self.assertEqual(row.due_anchor_task, "F1PAY")
 		self.assertEqual(row.due_anchor_days, 30)
 
@@ -136,7 +137,7 @@ class TestDerivedStatus(FrappeTestCase):
 		installation.flags.ignore_validate_update_after_submit = True
 		installation.save(ignore_permissions=True)
 		self.assertEqual(installation.status, "Blocked")
-		self.assertEqual(installation.current_stage, "Form 2 & 3 Submission")
+		self.assertEqual(installation.current_stage, "Form 3 Submission")
 		self.assertEqual(installation.blocking_party, "Internal")
 
 	def test_awaiting_external_only_when_every_active_task_is_external(self):
@@ -176,5 +177,5 @@ class TestDerivedStatus(FrappeTestCase):
 		installation.flags.ignore_validate_update_after_submit = True
 		installation.save(ignore_permissions=True)
 		self.assertEqual(
-			str(task(installation, "KFORMS").due_date), frappe.utils.add_days(frappe.utils.today(), 30)
+			str(task(installation, "FRM2").due_date), frappe.utils.add_days(frappe.utils.today(), 30)
 		)

@@ -19,7 +19,7 @@ frappe.ui.form.on("Document Pack", {
 		frm.add_custom_button(__("Send by Email"), () => send(frm), __("Documents"));
 
 		const type = frm.doc.pack_type;
-		if (type === "KSEB Submission") {
+		if (type === "KSEB Form 2" || type === "KSEB Form 3") {
 			frm.add_custom_button(__("Mark Submitted to AE"), () => mark_sent(frm));
 			frm.add_custom_button(__("Record Acknowledgement"), () => acknowledge(frm));
 		} else if (type === "Bank Completion Pack") {

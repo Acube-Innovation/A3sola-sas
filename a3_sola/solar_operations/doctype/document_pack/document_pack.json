@@ -18,21 +18,14 @@
   "pack_type",
   "task_code",
   "status",
-  "completed_on",
   "skip_reason",
-  "sb_task",
-  "assigned_by",
-  "assigned_to",
-  "assigned_on",
-  "cb_task",
-  "due_date",
-  "task_cost",
   "sb_kseb",
   "solar_agreement",
   "form2_due_date",
   "submitted_to_ae_on",
   "cb_kseb",
   "ae_name",
+  "ae_phone",
   "ae_acknowledgement_no",
   "acknowledged_on",
   "ae_acknowledgement",
@@ -69,6 +62,16 @@
   "sent_to",
   "cb_sent",
   "communication",
+  "sb_task",
+  "assigned_by",
+  "assigned_to",
+  "assigned_on",
+  "cb_task",
+  "due_date",
+  "started_on",
+  "completed_on",
+  "task_cost",
+  "sb_remarks",
   "remarks"
  ],
  "fields": [
@@ -128,7 +131,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Pack",
-   "options": "KSEB Submission\nBank Completion Pack\nCustomer Completion File",
+   "options": "KSEB Form 2\nKSEB Form 3\nBank Completion Pack\nCustomer Completion File",
    "reqd": 1,
    "set_only_once": 1
   },
@@ -149,60 +152,13 @@
    "reqd": 1
   },
   {
-   "fieldname": "completed_on",
-   "fieldtype": "Date",
-   "label": "Completed On",
-   "read_only": 1
-  },
-  {
    "depends_on": "eval:doc.status=='Skipped'",
    "fieldname": "skip_reason",
    "fieldtype": "Small Text",
    "label": "Skip Reason"
   },
   {
-   "collapsible": 1,
-   "fieldname": "sb_task",
-   "fieldtype": "Section Break",
-   "label": "Assignment"
-  },
-  {
-   "fieldname": "assigned_by",
-   "fieldtype": "Link",
-   "label": "Assigned By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "assigned_to",
-   "fieldtype": "Link",
-   "label": "Assigned To",
-   "options": "User"
-  },
-  {
-   "fieldname": "assigned_on",
-   "fieldtype": "Date",
-   "label": "Assigned On",
-   "read_only": 1
-  },
-  {
-   "fieldname": "cb_task",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "due_date",
-   "fieldtype": "Date",
-   "label": "Due Date"
-  },
-  {
-   "description": "Courier, printing, notary - whatever the pack cost to put together.",
-   "fieldname": "task_cost",
-   "fieldtype": "Currency",
-   "label": "Cost",
-   "permlevel": 1
-  },
-  {
-   "depends_on": "eval:doc.pack_type=='KSEB Submission'",
+   "depends_on": "eval:['KSEB Form 2','KSEB Form 3'].includes(doc.pack_type)",
    "fieldname": "sb_kseb",
    "fieldtype": "Section Break",
    "label": "KSEB Submission"
@@ -211,15 +167,17 @@
    "fieldname": "solar_agreement",
    "fieldtype": "Link",
    "label": "Executed Agreement",
-   "mandatory_depends_on": "eval:doc.pack_type=='KSEB Submission'",
-   "options": "Solar Agreement"
+   "mandatory_depends_on": "eval:doc.pack_type=='KSEB Form 3'",
+   "options": "Solar Agreement",
+   "depends_on": "eval:doc.pack_type=='KSEB Form 3'"
   },
   {
    "description": "Thirty days from the Form 1 payment.",
    "fieldname": "form2_due_date",
    "fieldtype": "Date",
    "label": "Form 2 Due On",
-   "read_only": 1
+   "read_only": 1,
+   "depends_on": "eval:doc.pack_type=='KSEB Form 2'"
   },
   {
    "allow_on_submit": 1,
@@ -235,6 +193,12 @@
    "fieldname": "ae_name",
    "fieldtype": "Data",
    "label": "Assistant Engineer"
+  },
+  {
+   "fieldname": "ae_phone",
+   "fieldtype": "Data",
+   "label": "AE Phone",
+   "options": "Phone"
   },
   {
    "fieldname": "ae_acknowledgement_no",
@@ -444,6 +408,61 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
+   "fieldname": "sb_task",
+   "fieldtype": "Section Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "assigned_by",
+   "fieldtype": "Link",
+   "label": "Assigned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "assigned_on",
+   "fieldtype": "Date",
+   "label": "Assigned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_task",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Date",
+   "label": "Started On"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Completed On"
+  },
+  {
+   "description": "Courier, printing, notary - whatever the pack cost to put together.",
+   "fieldname": "task_cost",
+   "fieldtype": "Currency",
+   "label": "Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
    "allow_on_submit": 1,
    "fieldname": "remarks",
    "fieldtype": "Small Text",
@@ -453,7 +472,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-10-17 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Document Pack",

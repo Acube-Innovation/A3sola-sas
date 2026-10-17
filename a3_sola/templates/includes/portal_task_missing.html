@@ -1,0 +1,14 @@
+{#- What a task's document is still missing from the job - Form 1's row 1 details - with where
+    to fill it in. Context: task_missing, from collections.task_missing. -#}
+{%- if task_missing %}
+<div class="a3s-notice" role="note" style="margin-top:0.75rem">
+	<strong>{{ task_missing.title | e }}</strong>
+	<ul style="margin:0.4rem 0;padding-left:1.1rem">
+		{%- for m in task_missing["items"] %}
+		<li>{{ m.what | e }} &ndash; fill <b>{{ m.field | e }}</b></li>
+		{%- endfor %}
+	</ul>
+	{{ task_missing.note | e }}
+	{%- if task_missing.href %} <a href="{{ task_missing.href | e }}">{{ task_missing.label | e }}</a>{% endif %}
+</div>
+{%- endif %}
