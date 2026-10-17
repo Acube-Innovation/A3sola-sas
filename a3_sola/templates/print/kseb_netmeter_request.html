@@ -1,0 +1,37 @@
+{#- The request to the Assistant Engineer for a bidirectional meter, for the Form 3
+    Submission, as the Word file "To The Asst. Engineer-Net Meter" lays it out - the covering
+    letter's frame (kseb_covering_letter.html), Book Antiqua 12pt, bold only where the Word file
+    has it. Context: f (api/kseb_netmeter_print.context). -#}
+<style>
+	{{ fonts }}
+	.cl { font-family: "Book Antiqua", "Letter Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.4; text-align: justify; }
+	.cl p { margin: 0; }
+	.cl .gap { height: 5mm; }
+	.cl .date { text-align: right; }
+	.cl .sub b { text-decoration: underline; }
+	.cl .sign { margin-top: 16mm; font-weight: bold; text-align: left; }
+</style>
+<div class="cl">
+	<p class="date">{{ f.date }}</p>
+	<div class="gap"></div>
+	<p>To,</p>
+	<p>The Assistant Engineer,</p>
+	<p>KSEBL Section,</p>
+	<p>{{ f.section | e }}</p>
+	<div class="gap"></div>
+	<p>Sir,</p>
+	<p class="sub"><b>Sub: -</b> Request for allocation of Bi-directional Meter (Net-Meter) for Solar Plant</p>
+	<div class="gap"></div><div class="gap"></div>
+	<p>I have a service connection bearing <b>Consumer No. {{ f.consumer_number | e }}</b> under the category
+		<b>{{ f.category | e }}</b> at my residence located at {{ f.address | e }}.</p>
+	<div class="gap"></div>
+	<p>I am installing a <b>{{ f.capacity | e }}</b> solar power plant and have procured solar energy meter on my own.</p>
+	<div class="gap"></div>
+	<p><b>I hereby submit a request for allocation of a {{ f.phase | e }} bidirectional meter (Net Meter) for this project.</b></p>
+	<div class="gap"></div>
+	<p>Please do the needful.</p>
+	<div class="gap"></div><div class="gap"></div>
+	<p>Thanking You</p>
+	<p>Yours Faithfully</p>
+	<p class="sign">{{ f.name | e }}<br>{{ f.consumer_number | e }}</p>
+</div>

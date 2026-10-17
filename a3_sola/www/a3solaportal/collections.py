@@ -26,10 +26,12 @@ from a3_sola.www.a3solaportal import fill_shell
 # slug -> doctype and its labels. `singular` names the create page ("New consumer").
 # title/subtitle/icon mirror the sidebar so the page and the menu never disagree.
 COLLECTIONS = {
-	# The street, and the permanent address - asked for only when it is not the installation
-	# site (its show-when rule) - are not mandatory, so would not be picked up on their own.
+	# The installation site and the permanent address - asked for only when it is not the
+	# installation site (its show-when rule) - are not mandatory, so would not be picked up
+	# on their own.
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
-	              "form_extra": ["site_address_line2", "permanent_address_line1", "permanent_address_line2", "permanent_city",
+	              "form_extra": ["site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
+	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode"]},
 	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
@@ -81,7 +83,7 @@ COLLECTIONS = {
 	"purchase-orders": {"doctype": "Purchase Order", "title": "Purchase Order", "singular": "purchase order", "subtitle": "Material procurement", "icon": "box"},
 	"delivery-notes": {"doctype": "Delivery Note", "title": "Delivery Note", "singular": "delivery note", "subtitle": "Material dispatch", "icon": "truck"},
 	"dispatch-notices": {"doctype": "Material Dispatch Notice", "title": "Material Dispatch Notice", "singular": "dispatch notice", "subtitle": "Serials to contractor", "icon": "package"},
-	"document-packs": {"doctype": "Document Pack", "title": "Document Pack", "singular": "document pack", "subtitle": "Form 2 and 3, handover", "icon": "stack"},
+	"document-packs": {"doctype": "Document Pack", "title": "Document Pack", "singular": "document pack", "subtitle": "Form 2, Form 3, handover", "icon": "stack"},
 	"commissioning": {"doctype": "Commissioning Report", "title": "Commissioning Report", "singular": "commissioning report", "subtitle": "Handover reports", "icon": "bolt"},
 	"installation-snags": {"doctype": "Installation Snag", "title": "Installation Snag", "singular": "snag", "subtitle": "Defects and rectification", "icon": "alert"},
 	"customer-reviews": {"doctype": "Customer Review", "title": "Customer Review", "singular": "customer review", "subtitle": "Feedback and Google", "icon": "star"},
@@ -419,6 +421,7 @@ def show_when(df):
 PORTAL_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
 	"Installation Task": {"cost", "cost_category", "cost_remarks"},
+	"Document Pack": {"task_cost"},
 }
 
 
@@ -552,9 +555,22 @@ TASK_FORM_FIELDS = {
 	# Buying the stamp paper: bought or not, what it cost, whether it is claimed back - the
 	# rest of the agreement comes later.
 	"STMP": ("stamp_paper_status", "stamp_paper_value", "claim_reimbursement", "stamp_paper_remarks"),
-	# Paying the Form 1 application fee: paid or not, whether it is claimed back, a remark -
-	# the amount is the fee schedule's, and the receipt goes on the task's Documents.
-	"F1PAY": ("payment_completed", "claim_reimbursement", "remarks"),
+	# Paying the Form 1 application fee: paid or not, who paid it (TASK_FORM_CHOICES), a
+	# remark - the amount is the fee schedule's, and the receipt goes on the task's Documents.
+	"F1PAY": ("payment_completed", "paid_by", "remarks"),
+}
+
+#: Fields a task's create form asks as one choice that sets several fields, by task code:
+#: {code: {field: ((label, {field: value}), ...)}}. A choice that raises a reimbursement
+#: (it sets a REIMBURSEMENT_FIELDS field) is offered only where the task allows one.
+TASK_FORM_CHOICES = {
+	# The company's payment made from someone's own pocket is "I paid", claimed back as the
+	# stamp paper is; the customer recovery is the company's either way.
+	"F1PAY": {"paid_by": (
+		("Company", {"paid_by": "Company on Behalf of Customer", "claim_reimbursement": 0}),
+		("Customer", {"paid_by": "Customer Directly", "claim_reimbursement": 0}),
+		("I paid - Claim Reimbursement", {"paid_by": "Company on Behalf of Customer", "claim_reimbursement": 1}),
+	)},
 }
 
 #: Select fields a task's create form asks as a single tick box, by task code:
@@ -570,7 +586,7 @@ REIMBURSEMENT_FIELDS = {"claim_reimbursement"}
 TASK_FORM_SHOW_WHEN = {
 	# Claimed back only once it is bought.
 	"STMP": {"claim_reimbursement": "stamp_paper_status"},
-	"F1PAY": {"claim_reimbursement": "payment_completed"},
+	"F1PAY": {"paid_by": "payment_completed"},
 }
 
 
@@ -649,16 +665,51 @@ def task_people(installation, task_code):
 	}
 
 
+def task_missing(installation, task_code):
+	"""What a task's document is still missing from the job, for its page to say, or None:
+	Form 1's (and Forms 2 and 3's - the same) row 1 details the customer's record does not have
+	yet (api/form1_print), with a link to fill them in."""
+	form = {"FRM1": "Form 1", "FRM2": "Form 2", "KFORMS": "Form 3"}.get(task_code)
+	if not form or not installation:
+		return None
+	from a3_sola.api import form1_print
+
+	items = form1_print.missing(installation)
+	if not items:
+		return None
+	consumer = frappe.db.get_value("Solar Installation", installation, "solar_consumer")
+	return {
+		"title": "{0} is missing the customer's details in row 1".format(form),
+		"note": "Fill them on the customer's page, then view {0} again.".format(form),
+		"items": items,
+		"href": edit_route("consumers", consumer) if consumer else "",
+		"label": "Fill in on the customer's page",
+	}
+
+
 def task_downloads(installation, task_code, document=None):
 	"""What a task offers to download before or after its document exists: the stamp paper
 	data the vendor writes the paper from (api/stamp_print.py); the structure material
 	and material tasks' purchase lists, once the task is saved (api/purchase_list.py); KSEBL
-	Form 1 with the customer's details, to view or download (api/form1_print.py)."""
+	Forms 1, 2 and 3 with the customer's details, to view or download (api/form1_print.py,
+	api/form2_print.py, api/form3_print.py)."""
 	if task_code == "FRM1":
 		from a3_sola.api import form1_print
 
 		return [{"label": "View Form 1", "url": form1_print.url(installation), "icon": "eye"},
 			{"label": "Download Form 1", "url": form1_print.url(installation, download=True)}]
+	if task_code == "FRM2":
+		from a3_sola.api import form2_print
+
+		return [{"label": "View Form 2", "url": form2_print.url(installation), "icon": "eye"},
+			{"label": "Download Form 2", "url": form2_print.url(installation, download=True)}]
+	if task_code == "KFORMS":
+		# Each of the Form 3 papers the job prints, as its task row offers it: view, download.
+		from a3_sola.api import portal_tasks
+
+		prints = portal_tasks._prints(frappe._dict(stage_code="KFORMS"), installation)
+		return [{"label": p["label"], "url": p["url"], **({"icon": "eye"} if i == 0 else {})}
+			for links in prints.values() for i, p in enumerate(links)]
 	if task_code == "STMP":
 		from a3_sola.api import stamp_print
 
@@ -687,16 +738,17 @@ def job_card(installation, task_code=None, order=None):
 		contractor=order.get("solar_contractor") if order else None)
 
 
-def task_form_groups(slug, values):
+def task_form_groups(slug, values, first_label=None):
 	"""The task's create form: the doctype's whole form, as its edit form lays it out, for a
 	new document holding `values`, less the fixed fields - or only the task's own fields
 	(TASK_FORM_FIELDS). A section that applies to other tasks only (an Installation Task's,
-	by code) is hidden by its rule in the browser."""
+	by code) is hidden by its rule in the browser. The first section is `first_label` (the
+	task's name), else the collection's title."""
 	doc = frappe.new_doc(get_collection(slug)["doctype"])
 	doc.update(values)
 	only = TASK_FORM_FIELDS.get(values.get("task_code"))
 	groups = []
-	for g in edit_fields_for(doc, get_collection(slug)["title"]):
+	for g in edit_fields_for(doc, first_label or get_collection(slug)["title"]):
 		sections = [
 			{**s, "fields": [
 				f for f in s["fields"]
@@ -709,7 +761,13 @@ def task_form_groups(slug, values):
 	for field, (label, on, _off) in TASK_FORM_CHECKS.get(values.get("task_code"), {}).items():
 		for spec in (f for g in groups for s in g["sections"] for f in s["fields"] if f["fieldname"] == field):
 			spec.update({"type": "Check", "label": label, "value": 1 if doc.get(field) == on else 0, "show_when": ""})
-	if not reimbursable(values.get("solar_installation"), values.get("task_code")):
+	can_claim = reimbursable(values.get("solar_installation"), values.get("task_code"))
+	for field, choices in task_form_choices(values.get("task_code"), can_claim).items():
+		for spec in (f for g in groups for s in g["sections"] for f in s["fields"] if f["fieldname"] == field):
+			labels = [label for label, _set in choices]
+			held = next((label for label, sets in choices if all(doc.get(k) == v for k, v in sets.items())), labels[0])
+			spec.update({"type": "Select", "options": labels, "value": held, "default": held})
+	if not can_claim:
 		for g in groups:
 			for s in g["sections"]:
 				s["fields"] = [f for f in s["fields"] if f["fieldname"] not in REIMBURSEMENT_FIELDS]
@@ -717,6 +775,15 @@ def task_form_groups(slug, values):
 		for spec in (f for g in groups for s in g["sections"] for f in s["fields"] if f["fieldname"] == field):
 			spec["show_when"] = rule
 	return doc, groups
+
+
+def task_form_choices(task_code, can_claim):
+	"""The task's TASK_FORM_CHOICES, less the reimbursement choice where it allows none."""
+	return {
+		field: tuple((label, sets) for label, sets in choices
+			if can_claim or not any(sets.get(k) for k in REIMBURSEMENT_FIELDS))
+		for field, choices in TASK_FORM_CHOICES.get(task_code, {}).items()
+	}
 
 
 def source_prefill(slug):
@@ -812,14 +879,18 @@ def new_context(context, slug):
 		# the task asks for is there - not just the mandatory ones.
 		from a3_sola.api.stages import _get_stage
 
-		context.record, context.groups = task_form_groups(slug, prefill)
-		context.task_form = True
+		# Named for its task (Form 1 Generation), not for the kind of document it makes.
 		context.task_name = _get_stage(source_doc, context.source_task).stage_name
+		context.record, context.groups = task_form_groups(slug, prefill, context.task_name)
+		# What the job already knows for a blank field (the section's Assistant Engineer).
+		apply_prefill(context.record, context.groups)
+		context.task_form = True
 		context.fixed = [(k, prefill[k]) for k in TASK_FIXED if prefill.get(k)]
 		context.endpoint = "a3_sola.api.portal_crud.create_record"
 		context.view_route = context.source_route
 		context.title = "New " + cfg["singular"]
 		context.task_downloads = task_downloads(source_doc.name, context.source_task)
+		context.task_missing = task_missing(source_doc.name, context.source_task)
 		if context.source_task not in CLAIM_IN_FORM:
 			context.claim = task_claim(source_doc.name, context.source_task)
 		context.task_people = task_people(source_doc.name, context.source_task)
@@ -839,6 +910,13 @@ def new_context(context, slug):
 	)
 	if source_doc and source_doc.doctype == "Lead":
 		context.source_route = "/a3solaportal/leads/{0}".format(frappe.utils.quote(source_doc.name))
+	if context.get("task_form"):
+		context.page_title = context.page_meta_title = context.task_name
+		context.crumbs = [
+			{"label": "Home", "href": "/a3solaportal/dashboard"},
+			{"label": context.source_title, "href": context.source_route},
+			{"label": context.task_name},
+		]
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
@@ -1078,7 +1156,7 @@ def form_groups(meta, first_label=None):
 
 from a3_sola.api.portal_fields import (  # noqa: E402  - grouped with the code that uses it
 	DISPLAY_TYPES as DISPLAY_TYPES_ALL, INPUT_TYPES as INPUT_TYPES_ALL, detail_row, edit_spec,
-	link_choices, link_title,
+	is_portal_file, link_choices, link_title,
 	DEPENDENT_ALSO, DEPENDENT_LINKS, default_for, link_filters,
 )
 
@@ -1230,6 +1308,7 @@ def detail_context(context, slug, name):
 		context.claim = task_claim(doc.solar_installation, tasks_code_for(doc))
 		context.task_people = task_people(doc.solar_installation, tasks_code_for(doc))
 		context.task_downloads = task_downloads(doc.solar_installation, tasks_code_for(doc), doc.name)
+		context.task_missing = task_missing(doc.solar_installation, tasks_code_for(doc))
 		from a3_sola.api import portal_share
 
 		if doc.doctype == "Installation Work Order":
@@ -1285,7 +1364,19 @@ PORTAL_SHOW_WHEN = {
 #: Only offered: the box is filled in the browser when the field shows, and nothing is
 #: written until it is saved. A project's loan is usually with the consumer's own bank;
 #: when it is not, the person overtypes it, and the consumer's record keeps its own details.
+def _section_engineer(doc):
+	"""Form 2 and Form 3: the Assistant Engineer and phone the job's section has on record."""
+	section = frappe.db.get_value("Solar Installation", doc.get("solar_installation"), "discom_section") \
+		if doc.get("solar_installation") else None
+	if not section or doc.get("pack_type") not in ("KSEB Form 2", "KSEB Form 3"):
+		return "DISCOM Section", {}
+	ae = frappe.db.get_value("DISCOM Section", section,
+		["assistant_engineer_name", "assistant_engineer_phone"], as_dict=True) or frappe._dict()
+	return "DISCOM Section", {"ae_name": ae.assistant_engineer_name, "ae_phone": ae.assistant_engineer_phone}
+
+
 PORTAL_PREFILL = {
+	"Document Pack": _section_engineer,
 	"Solar Installation": lambda doc: (
 		"Solar Consumer", installation_lead.consumer_bank(doc.solar_consumer, doc.lender)
 	),
@@ -1316,7 +1407,8 @@ def edit_fields_for(doc, first_label=None):
 		for s in g["sections"]:
 			specs = []
 			for df in s["fields"]:
-				if (df.fieldtype not in INPUT_TYPES_ALL or df.read_only or df.fieldname in AUTO_FIELDS
+				if ((df.fieldtype not in INPUT_TYPES_ALL and not is_portal_file(doc.doctype, df))
+						or df.read_only or df.fieldname in AUTO_FIELDS
 						or df.fieldname in PORTAL_HIDDEN.get(doc.doctype, ())
 						# A task's document: its people are the task's, in the Assigned to strip.
 						or (df.fieldname == "assigned_to" and doc.doctype in TASK_DOCTYPES_WITH_PEOPLE)

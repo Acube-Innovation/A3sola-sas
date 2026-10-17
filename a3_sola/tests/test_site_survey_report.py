@@ -41,8 +41,22 @@ class TestSiteSurveyReport(FrappeTestCase):
 	def test_it_prints_as_the_paper_report(self):
 		survey = self.fill()
 		text = " ".join(PdfReader(BytesIO(survey_print.render(survey)[1])).pages[0].extract_text().split())
-		for expected in ("SITE SURVEY REPORT", "Height of parapet: 90", "63A MCB", "Cable length", "30 m"):
+		for expected in ("SITE SURVEY REPORT", "Height of parapet: 90", "63A MCB", "Cable length", "30 m",
+				"STRUCTURE", "CABLE", "HT / LT"):
 			self.assertIn(expected, text)
+
+	def test_the_form_is_grouped_by_structure_cable_and_ht_lt(self):
+		tab, tab_of = None, {}
+		for df in frappe.get_meta("Site Survey").fields:
+			if df.fieldtype == "Tab Break":
+				tab = df.label
+			tab_of[df.fieldname] = tab
+		tabs = [df.label for df in frappe.get_meta("Site Survey").fields if df.fieldtype == "Tab Break"]
+		self.assertEqual(tabs, ["Survey", "Structure", "Cable", "HT / LT", "EHS & Lender Compliance", "Outcome"])
+		for fieldname, expected in (("structure_suggested", "Structure"), ("roof_segments", "Structure"),
+				("structural_remarks", "Structure"), ("total_dc_length_m", "Cable"), ("la_down_conductor_length_m", "Cable"),
+				("cable_route_notes", "Cable"), ("incomer", "HT / LT"), ("existing_meter_type", "HT / LT")):
+			self.assertEqual(tab_of[fieldname], expected, fieldname)
 
 	def test_the_customer_can_approve_after_the_survey_is_filed(self):
 		survey = self.fill()

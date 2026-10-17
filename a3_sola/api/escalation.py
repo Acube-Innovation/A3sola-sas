@@ -132,7 +132,7 @@ def _remind_form2_windows(company):
 	):
 		row = frappe.db.get_value(
 			"Installation Stage Log",
-			{"parent": job.name, "parenttype": "Solar Installation", "stage_code": "KFORMS"},
+			{"parent": job.name, "parenttype": "Solar Installation", "stage_code": "FRM2"},
 			["status", "assigned_to"],
 			as_dict=True,
 		)
@@ -147,7 +147,7 @@ def _remind_form2_windows(company):
 			row.assigned_to or job.project_manager,
 			"Solar Installation",
 			job.name,
-			_("{0} The Form 2 submission (KSEB pack) {1}, on {2}.").format(
+			_("{0} The Form 2 submission {1}, on {2}.").format(
 				marker, when, frappe.utils.formatdate(job.form2_due_on)
 			),
 			priority="High" if days <= 0 else "Medium",

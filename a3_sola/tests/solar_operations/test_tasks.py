@@ -150,9 +150,9 @@ class TestDocumentsDriveTasks(FrappeTestCase):
 	def test_paying_the_form1_fee_opens_the_thirty_day_window_for_form2(self):
 		fee = make_fee(self.installation, "Application Fee")
 		fee.submit()
-		kforms, doc = task_row(self.installation, "KFORMS")
+		form2, doc = task_row(self.installation, "FRM2")
 		self.assertEqual(str(doc.form2_due_on), add_days(today(), 30))
-		self.assertEqual(str(kforms.due_date), add_days(today(), 30))
+		self.assertEqual(str(form2.due_date), add_days(today(), 30))
 
 	def test_the_registration_fee_is_the_form2_payment(self):
 		make_fee(self.installation, "Registration Fee").submit()
@@ -441,7 +441,7 @@ class TestTasksFromTheBoard(FrappeTestCase):
 			slug="document-packs", source_dt="Solar Installation", source=self.installation.name, source_task="KFORMS"
 		)
 		pack = frappe.get_doc("Document Pack", made["name"])
-		self.assertEqual((pack.solar_installation, pack.pack_type), (self.installation.name, "KSEB Submission"))
+		self.assertEqual((pack.solar_installation, pack.pack_type), (self.installation.name, "KSEB Form 3"))
 		self.assertEqual(made["route"], "/a3solaportal/document-packs/" + pack.name)
 		row, _doc = task_row(self.installation, "KFORMS")
 		self.assertEqual(row.task_document, pack.name)

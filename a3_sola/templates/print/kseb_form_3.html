@@ -1,0 +1,35 @@
+{#- KSEBL Form 3 (Annexure 3), as the team's KSEBL Form 3.docx lays it out: the printed
+    Malayalam heading and row labels (images, at their Word sizes) beside the customer's
+    answers, then place, date, signature, and KSEBL's blank acknowledgement receipt. Context:
+    f (api/form3_print.context), img (the label images as data URIs). -#}
+<style>
+	.f3 { font-family: Aptos, Calibri, Carlito, "Liberation Sans", Arial, sans-serif; font-size: 12pt; }
+	.f3 .head { width: 165.7mm; display: block; margin: 0 0 3mm; }
+	.f3 table { width: 100%; border-collapse: collapse; }
+	.f3 td { border: 1px solid #000; padding: 1.5mm 2.5mm; vertical-align: top; }
+	.f3 .n { width: 9mm; text-align: center; }
+	.f3 .l img { display: block; }
+	.f3 .v { font-weight: normal; }
+	.f3 .sign td { height: 17mm; vertical-align: bottom; }
+	{#- KSEBL's receipt, under the form's tear line - on the same sheet, as the docx has it. #}
+	.f3 .receipt { width: 150mm; display: block; margin: 3mm 0 0; }
+</style>
+<div class="f3">
+	<img class="head" src="{{ img.header }}">
+	<table>
+		<tr><td class="n">1</td><td class="l"><img src="{{ img.row1 }}" style="width:97.8mm"></td>
+			<td class="v">{% for line in f.details %}{{ line | e }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+		<tr><td class="n">2</td><td class="l"><img src="{{ img.row2 }}" style="width:65.6mm"></td><td class="v">{{ f.registration | e }}</td></tr>
+		<tr><td class="n">3</td><td class="l"><img src="{{ img.row3 }}" style="width:73.2mm"></td><td class="v">{{ f.capacity | e }}</td></tr>
+		<tr><td class="n">4</td><td class="l"><img src="{{ img.row4 }}" style="width:97.4mm"></td><td class="v">{{ f.certificates | e }}</td></tr>
+		<tr><td class="n">5</td><td class="l"><img src="{{ img.row5 }}" style="width:96.7mm"></td><td class="v">{{ f.specifications | e }}</td></tr>
+		<tr><td class="n">6</td><td class="l"><img src="{{ img.row6 }}" style="width:92.5mm"></td><td class="v">{{ f.inspectorate | e }}</td></tr>
+		<tr class="sign">
+			<td class="n"></td>
+			<td><img src="{{ img.place }}" style="width:16.3mm;vertical-align:middle"> {{ f.place | e }}<br><br>
+				<img src="{{ img.date }}" style="width:16.9mm;vertical-align:middle"> {{ f.date | e }}</td>
+			<td style="text-align:center"><img src="{{ img.signature }}" style="width:40.6mm"></td>
+		</tr>
+	</table>
+	<img class="receipt" src="{{ img.footer }}">
+</div>

@@ -1,0 +1,52 @@
+{#- The Payment Statement, as the team's "Rajesh P A due amount" lays it out: the date, the
+    customer, what was received and what is payable in one table, then the firm's regards,
+    signature and seal (`.a3s-sign`: hidden when printed unsigned). Context: f
+    (api/payment_statement_print.context), fonts (the embedded Book Antiqua look). -#}
+<style>
+	{{ fonts }}
+	.ps { font-family: "Book Antiqua", "Letter Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.4; }
+	.ps p { margin: 0; }
+	.ps .date { text-align: right; margin-bottom: 8mm; }
+	.ps .to { margin-bottom: 6mm; }
+	.ps .addr { font-size: 10pt; }
+	.ps .lead { margin: 10mm 0 8mm 14mm; }
+	.ps table.amounts { width: 165mm; margin: 0 auto; border-collapse: collapse; }
+	.ps .amounts td, .ps .amounts th { border: 1px solid #000; padding: 1.6mm 2mm; }
+	.ps .amounts th { font-weight: bold; text-align: center; }
+	.ps .amounts .n { width: 16mm; text-align: center; }
+	.ps .amounts .item { text-align: right; white-space: nowrap; }
+	.ps .amounts .amt { width: 34mm; text-align: center; }
+	.ps .amounts .dt { width: 28mm; text-align: center; }
+	.ps .amounts .bold td { font-weight: bold; }
+	.ps .closing { margin-top: 12mm; }
+	.ps .regards { margin-top: 8mm; }
+	.ps .firm { margin-top: 8mm; border-collapse: collapse; }
+	.ps .firm td { vertical-align: middle; padding: 0 6mm 0 0; }
+</style>
+<div class="ps">
+	<p class="date">{{ f.date }}</p>
+	<div class="to">
+		<p>To,</p>
+		<p>{{ f.name | e }}</p>
+		<p class="addr">{{ f.address | e }}</p>
+	</div>
+	<p>Dear Sir,</p>
+	<p class="lead">We hereby confirm receipt of payment below</p>
+	<table class="amounts">
+		<tr><th class="n">Sl. No.</th><th>Item</th><th class="dt">Date</th><th class="amt">Amount<br>(Rs.)</th></tr>
+		{%- for l in f.lines %}
+		<tr{% if l.bold %} class="bold"{% endif %}><td class="n">{{ l.n }}</td><td class="item">{{ l.label | e }}</td><td class="dt">{{ l.date }}</td><td class="amt">{{ l.text }}</td></tr>
+		{%- endfor %}
+	</table>
+	<p class="closing">Thanking you and assuring you of our best attention and services always.</p>
+	<p class="regards">Thanks &amp; Regards</p>
+	<table class="firm">
+		<tr>
+			<td><b>{{ f.firm | e }}</b></td>
+			<td><table class="a3s-sign"><tr>
+				<td>{% if f.signature %}<img src="{{ f.signature }}" style="height:16mm">{% endif %}</td>
+				<td style="padding-left:6mm">{% if f.stamp %}<img src="{{ f.stamp }}" style="height:26mm">{% endif %}</td>
+			</tr></table></td>
+		</tr>
+	</table>
+</div>

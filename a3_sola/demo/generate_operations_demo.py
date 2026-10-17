@@ -340,7 +340,7 @@ def run(company=None):
 			company, estimates[4], net_meter_mode="Availed from DISCOM on Rental"
 		)
 		_serials(installation)
-		_advance(installation, ["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS"])
+		_advance(installation, ["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "FRM2", "KFORMS"])
 		_backdate_stage(installation, "MTR", 28)
 		_fee_payment(company, installation)
 		built.append(installation.name)
@@ -351,7 +351,7 @@ def run(company=None):
 		_serials(installation)
 		_advance(
 			installation,
-			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS", "MTR", "KTST"],
+			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "FRM2", "KFORMS", "MTR", "KTST"],
 		)
 		_commission(company, installation)
 		built.append(installation.name)
@@ -362,7 +362,7 @@ def run(company=None):
 		_serials(installation)
 		_advance(
 			installation,
-			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "KFORMS", "MTR", "KTST"],
+			["ORD", "STMP", "NPA", "DSGN", "PROC", "DISP", "IWOI", "FRM2", "KFORMS", "MTR", "KTST"],
 		)
 		_snag(company, installation, "Major")
 		built.append(installation.name)
@@ -699,7 +699,7 @@ def _installation_task(company, installation, code):
 	return doc.name
 
 
-def _document_pack(installation, pack_type="KSEB Submission"):
+def _document_pack(installation, pack_type="KSEB Form 3"):
 	"""A pack generated, merged and delivered - the documentation officer's whole job."""
 	from a3_sola.solar_operations.doctype.document_pack import document_pack as ctl
 
@@ -714,7 +714,7 @@ def _document_pack(installation, pack_type="KSEB Submission"):
 		ctl.merge_pdf(doc.name)
 	except frappe.ValidationError as exc:
 		_log(f"pack {doc.name} not merged: {exc}")
-	if pack_type == "KSEB Submission":
+	if pack_type in ctl.KSEB_PACKS:
 		ctl.mark_acknowledged(doc.name, acknowledgement_no=f"AE/{frappe.utils.random_string(4).upper()}/2026", ae_name="Smt. Latha K.")
 	elif pack_type == "Bank Completion Pack":
 		ctl.mark_sent(doc.name, reference="BR-" + frappe.utils.random_string(6).upper(), via="Email")

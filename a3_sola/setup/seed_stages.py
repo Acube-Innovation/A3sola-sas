@@ -34,7 +34,7 @@ SCOPES = {
 	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
 	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
-	"KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
+	"FRM2": KSEB, "KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
 	"BCOM": BANK, "BAL": COMPANY, "PCOM": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
 	"CORR": SCHEME, "DBT": SCHEME,
 }
@@ -95,6 +95,10 @@ TASKS = [
 	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 3, "Portal Application", role=DOCS,
 	      applicability="Subsidised Only", task_type="National Portal",
 	      documents=[("National portal application data sheet", 1, "NP-APPLICATION"),
+	                 ("Pre-installation site photo", 1, None),
+	                 # The accepted quotation in the registered vendor's (RIM) format, as the
+	                 # bank also gets it (api/loan_print.quotation).
+	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
@@ -111,7 +115,7 @@ TASKS = [
 	      description="Covering letter, feasibility report and proposal sent to the lender; "
 	                  "sanction recorded."),
 	_task("ADV", "Advance Payment", "Customer", 5, "Installation Task", task_type="ADV",
-	      documents=[("Advance receipt or bank advice", 0, None)],
+	      documents=[("Advance receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="Advance received - from the customer, or from the bank once the loan "
 	                  "is sanctioned."),
 	_task("STMP", "Stamp Paper Purchase", "Internal", 3, "Solar Agreement",
@@ -148,7 +152,7 @@ TASKS = [
 	# The customer pays in the phases of the package's payment terms (api/payment_tasks):
 	# the advance, after installation, after commissioning - each with what is still unpaid.
 	_task("BAL", "Payment after Installation", "Customer", 7, "Installation Task", task_type="BAL",
-	      documents=[("Balance receipt or bank advice", 0, None)],
+	      documents=[("Balance receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="The payment due once the plant is installed, with anything unpaid from the advance."),
 	_task("PORTUPD", "Installation Update on Portal", "Internal", 2, "Installation Task", role=DOCS,
 	      applicability="Subsidised Only", task_type="PORTUPD",
@@ -159,19 +163,25 @@ TASKS = [
 	      task_type="Electrical Inspectorate",
 	      documents=[("Electrical inspectorate certificate", 1, None)],
 	      description="Chief Electrical Inspectorate approval, where the capacity requires one."),
-	_task("KFORMS", "Form 2 & 3 Submission", "Internal", 3, "Document Pack", role=DOCS,
-	      task_type="KSEB Submission", due_anchor_task="F1PAY", due_anchor_days=30,
-	      documents=[("Net metering agreement", 1, "KSEB-NETMETER-AGREEMENT"),
-	                 ("Annexure / Form 2", 1, "KSEB-FORM-2"), ("Annexure / Form 3", 1, "KSEB-FORM-3"),
-	                 ("Covering letter to the Assistant Engineer", 1, "KSEB-COVERING-COMPLETION"),
-	                 ("Request for allocation of bidirectional meter", 1, "KSEB-NETMETER-REQUEST"),
-	                 ("Installation and inverter testing checklist", 1, "KSEB-TESTING-CHECKLIST"),
-	                 ("AE acknowledged Form 2", 0, None), ("AE acknowledged Form 3", 0, None)],
-	      description="Agreement, Forms 2 and 3, covering letters and checklist generated and "
-	                  "submitted to the section office within thirty days of the Form 1 fee."),
+	# Form 2 and Form 3 are two submissions: Form 2 within thirty days of the Form 1 fee, its
+	# registration fee, then Form 3 - the completion papers, with the executed agreement.
+	_task("FRM2", "Form 2 Submission", "Internal", 3, "Document Pack", role=DOCS,
+	      task_type="KSEB Form 2", due_anchor_task="F1PAY", due_anchor_days=30,
+	      documents=[("Annexure / Form 2", 1, "KSEB-FORM-2"), ("AE acknowledged Form 2", 0, None)],
+	      description="Form 2 generated and submitted to the section office within thirty days of "
+	                  "the Form 1 fee."),
 	_task("F2PAY", "Form 2 Payment", "Internal", 2, "Statutory Fee Payment",
 	      task_type="Registration Fee", documents=[("Registration fee receipt", 1, None)],
 	      description="Registration fee paid; eighty percent of the base is refundable later."),
+	_task("KFORMS", "Form 3 Submission", "Internal", 3, "Document Pack", role=DOCS,
+	      task_type="KSEB Form 3",
+	      documents=[("KSEB Solar Agreement", 1, "KSEB-NETMETER-AGREEMENT"),
+	                 ("Annexure / Form 3", 1, "KSEB-FORM-3"),
+	                 ("Covering letter to the Assistant Engineer", 1, "KSEB-COVERING-COMPLETION"),
+	                 ("Request for allocation of bidirectional meter", 1, "KSEB-NETMETER-REQUEST"),
+	                 ("Installation and inverter testing checklist", 1, "KSEB-TESTING-CHECKLIST")],
+	      description="Agreement, Form 3, covering letter, net meter request and checklist generated "
+	                  "and submitted to the section office."),
 	_task("COMM", "Commissioning", "DISCOM", 10, "Commissioning Report", role=SITE,
 	      documents=[("Commissioning certificate", 1, None),
 	                 ("Commissioning certificate (customer)", 0, "CUST-COMMISSIONING-CERTIFICATE"),
@@ -179,7 +189,7 @@ TASKS = [
 	      description="Plant commissioned; certificate, net meter serial and readings recorded."),
 	_task("PCOM", "Payment after Commissioning", "Customer", 7, "Installation Task",
 	      due_anchor_task="COMM", due_anchor_days=0,
-	      documents=[("Commissioning payment receipt or bank advice", 0, None)],
+	      documents=[("Commissioning payment receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="The last payment, once the plant is commissioned, with anything still unpaid."),
 	_task("KTST", "DISCOM Inspection & Pre-Energisation Test", "DISCOM", 10, "Installation Task",
 	      role=LIAISON, task_type="KTST", documents=[("Signed testing checklist", 0, None)],

@@ -81,12 +81,14 @@
 
 	{%- elif part == "bom" %}
 	<h4>Specifications &amp; Quantity of Major Components</h4>
+	{#- The panel's, inverter's and battery's size in its own column, out of the specification. -#}
 	<table>
-		<colgroup><col style="width: 5%"><col style="width: 20%"><col><col style="width: 20%"><col style="width: 11%"></colgroup>
-		<tr><th>#</th><th>Item</th><th>Specification</th><th>Make</th><th class="num">Nos.</th></tr>
+		<colgroup><col style="width: 5%"><col style="width: 18%"><col><col style="width: 11%"><col style="width: 18%"><col style="width: 9%"></colgroup>
+		<tr><th>#</th><th>Item</th><th>Specification</th><th>Capacity</th><th>Make</th><th class="num">Nos.</th></tr>
 		{%- for r in components.rows %}
 		<tr><td>{{ loop.index }}</td><td>{{ r.item }}</td>
-			{%- if r.make is none %}<td colspan="2">{{ r.spec or "—" }}</td>{% else %}<td>{{ r.spec or "—" }}</td>
+			{%- if r.make is none %}<td colspan="3">{{ r.spec or "—" }}</td>{% else %}<td>{{ (r.spec_detail if r.capacity else r.spec) or "—" }}</td>
+			<td>{{ r.capacity or "—" }}</td>
 			<td>{% for line in (r.make or "—").split("\n") %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>{% endif %}
 			<td class="num">{{ r.nos or "—" }}</td></tr>
 		{%- endfor %}

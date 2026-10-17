@@ -35,15 +35,26 @@ def _join(*parts):
 
 
 def _describe(table, row):
-	"""A component as a customer reads it: make, size and kind."""
+	"""A component as a customer reads it: make and kind - its size is its own column
+	(_capacity). A battery keeps its volts and amp-hours, which its kWh is worked out from."""
 	if table == "panels":
-		return _join(_make(row.panel_make), f"{flt(row.panel_capacity_wp):g} Wp" if flt(row.panel_capacity_wp) else "",
-			row.panel_type, _technology(row.panel_variant))
+		return _join(_make(row.panel_make), row.panel_type, _technology(row.panel_variant))
 	if table == "inverters":
-		return _join(_make(row.inverter_make), f"{flt(row.inverter_capacity_kw):g} kW" if flt(row.inverter_capacity_kw) else "",
-			_technology(row.inverter_type), row.inverter_phase)
+		return _join(_make(row.inverter_make), _technology(row.inverter_type), row.inverter_phase)
 	return _join(_make(row.battery_make), f"{flt(row.battery_voltage):g} V" if flt(row.battery_voltage) else "",
 		f"{flt(row.battery_capacity_ah):g} Ah" if flt(row.battery_capacity_ah) else "", _technology(row.battery_variant))
+
+
+def unit_capacity(table, row):
+	"""One unit's size: a panel's Wp, an inverter's kW, a battery's kWh (volts x amp-hours, as
+	the estimate works out its total), or "" when it has none."""
+	if table == "panels":
+		value, unit = flt(row.panel_capacity_wp), "Wp"
+	elif table == "inverters":
+		value, unit = flt(row.inverter_capacity_kw), "kW"
+	else:
+		value, unit = flt(row.battery_voltage) * flt(row.battery_capacity_ah) / 1000, "kWh"
+	return f"{value:g} {unit}" if value else ""
 
 
 def _component_lines(doc, table, label):
@@ -52,6 +63,7 @@ def _component_lines(doc, table, label):
 		{
 			"component": _(label),
 			"description": _describe(table, row),
+			"capacity": unit_capacity(table, row),
 			"qty": cint(row.nos),
 			"rate": flt(row.rate),
 			"amount": flt(row.amount),
@@ -84,7 +96,7 @@ def estimate_summary(name):
 
 def _signature(lines):
 	"""What a component is, regardless of its price: compared between options."""
-	return sorted((line["description"], line["qty"]) for line in lines)
+	return sorted((line["description"], line["capacity"], line["qty"]) for line in lines)
 
 
 def comparison(estimates):

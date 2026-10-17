@@ -6,14 +6,16 @@ public/images/kseb_form1) beside the customer's answers:
 
 1. Name, consumer number, category, telephone, email and full address
 2. Connected load / contract demand
-3. Capacity of the solar plant to be installed
+3. Capacity of the solar plant to be installed - the inverters' capacity
 4. Other premises of the consumer to use the energy at, in order of priority (consumer
    number, address and electrical section) - the agreement's wheeling preferences
 5. Rooftop or ground mounted
 6. Date by which the plant is to be completed
 
 then place, date and the consumer's signature, and the panel and inverter below. Rendered for
-the Form 1 Generation task (FRM1); nothing is saved.
+the Form 1 Generation task (FRM1); nothing is saved. A row 1 detail the customer's record does
+not have yet is left blank, and the task's page says which (missing): the form is made from
+the job each time, so filling it there fills the form.
 """
 
 import base64
@@ -57,19 +59,56 @@ def _priced(inst, table):
 	return [r for r in inst.get(table) or [] if not r.get("is_option")]
 
 
-def context(inst):
-	"""The form's answers for the job `inst`."""
+#: Row 1's details: (key, what the form asks, the Customer field it comes from).
+ROW1 = (
+	("name", "Name", "Customer Name"),
+	("number", "Consumer number", "Consumer Number"),
+	("tariff", "Category", "Tariff Category"),
+	("phase", "Category (phase)", "Connection Type"),
+	("address", "Address", "Installation Site Address"),
+	("mobile", "Telephone number", "Mobile"),
+	("email", "Email address", "Email"),
+)
+
+
+def _row1(inst, consumer):
+	"""Row 1's details for the job `inst`, by ROW1 key."""
 	from a3_sola.api.material_delivery import site
 
-	consumer = frappe.get_doc("Solar Consumer", inst.solar_consumer) if inst.get("solar_consumer") else frappe._dict()
-	pick = lambda field: consumer.get(field) or inst.get(field)  # noqa: E731
 	_name, address, mobile, _point = site(inst)
+	return {
+		"name": inst.consumer_name or consumer.get("consumer_name"),
+		"number": inst.get("consumer_number") or consumer.get("consumer_number"),
+		"tariff": consumer.get("tariff_category") or inst.get("tariff_category") or "",
+		"phase": (consumer.get("connection_type") or inst.get("connection_type") or "").replace(" Phase", ""),
+		# One line, its parts once comma-separated: the lines may end in commas already.
+		"address": ", ".join(x.strip().rstrip(",").strip() for x in (address or "").splitlines() if x.strip(" ,")),
+		"mobile": mobile or consumer.get("mobile_no"),
+		"email": consumer.get("email_id"),
+	}
+
+
+def _consumer(inst):
+	return frappe.get_doc("Solar Consumer", inst.solar_consumer) if inst.get("solar_consumer") else frappe._dict()
+
+
+def missing(inst):
+	"""Row 1's details the job does not have yet, for the task's page: [{what, field}], the
+	field being the Customer's that fills it."""
+	if isinstance(inst, str):
+		inst = frappe.get_doc("Solar Installation", inst)
+	held = _row1(inst, _consumer(inst))
+	return [{"what": _(what), "field": _(field)} for key, what, field in ROW1 if not held[key]]
+
+
+def context(inst):
+	"""The form's answers for the job `inst`."""
+	consumer = _consumer(inst)
+	pick = lambda field: consumer.get(field) or inst.get(field)  # noqa: E731
+	row1 = _row1(inst, consumer)
 	# The category as the form writes it: the tariff code and the phase, "LT-I/Single".
-	tariff = pick("tariff_category") or ""
-	phase = (consumer.get("connection_type") or inst.get("connection_type") or "").replace(" Phase", "")
-	tariff = "/".join(x for x in (tariff, phase if tariff else "") if x)
-	details = [inst.consumer_name or consumer.get("consumer_name"), inst.get("consumer_number") or consumer.get("consumer_number"),
-		tariff, (address or "").replace("\n", ", "), mobile or consumer.get("mobile_no"), consumer.get("email_id")]
+	category = "/".join(x for x in (row1["tariff"], row1["phase"] if row1["tariff"] else "") if x)
+	details = [row1["name"], row1["number"], category, row1["address"], row1["mobile"], row1["email"]]
 
 	load = flt(pick("connected_load_watts"))
 	if not load and flt(pick("sanctioned_load_kw")):
@@ -98,10 +137,13 @@ def context(inst):
 	inverters = [_("{0}-{1:g}kW X {2}- {3}").format(_make(r.inverter_make), flt(r.inverter_capacity_kw), cint(r.nos) or 1,
 		(r.inverter_phase or "").replace("Single Phase", "1 Phase").replace("Three Phase", "3 Phase")).strip(" -")
 		for r in _priced(inst, "inverters")]
+	# The plant's capacity is its inverters': each one's kW times how many.
+	capacity = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in _priced(inst, "inverters"))
+
 	return frappe._dict({
 		"details": [d for d in details if d],
 		"load": "{0:g} Watts".format(load) if load else "",
-		"capacity": "{0:g}KW".format(flt(inst.capacity_kw)) if flt(inst.capacity_kw) else "",
+		"capacity": "{0:g}KW".format(capacity) if capacity else "",
 		"premises": premises,
 		"mounting": "Rooftop",
 		"complete_by": formatdate(planned, "dd.MM.yyyy") if planned else "",

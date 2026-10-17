@@ -47,6 +47,19 @@ def job_terms(inst):
 		inst.company, inst.get("consumer_category"), inst.get("net_meter_mode"), inst.get("is_financed"))
 
 
+def phase_codes(rows):
+	"""The payment task that collects each milestone of `rows` (in their order): the advance
+	milestone(s) ADV, the next one BAL, the rest PCOM."""
+	codes, rest = [], 0
+	for row in rows:
+		if row.get("is_advance"):
+			codes.append("ADV")
+		else:
+			codes.append("BAL" if rest == 0 else "PCOM")
+			rest += 1
+	return codes
+
+
 def payment_phases(installation):
 	"""The job's payment schedule: one phase per payment task - the advance milestone(s), the
 	next milestone, then the rest - each with its share of the contract, what it waits on,
@@ -58,9 +71,8 @@ def payment_phases(installation):
 		return None
 	rows = frappe.get_all("Billing Milestone Template Detail", filters={"parent": terms, "parenttype": "Billing Milestone Template"},
 		fields=["milestone_name", "percentage", "is_advance", "trigger_stage_code", "trigger_type"], order_by="idx asc")
-	advance = [r for r in rows if r.is_advance]
-	rest = [r for r in rows if not r.is_advance]
-	groups = {"ADV": advance, "BAL": rest[:1], "PCOM": rest[1:]}
+	codes = phase_codes(rows)
+	groups = {code: [r for r, c in zip(rows, codes) if c == code] for code in PHASE_TASKS}
 	base = flt(inst.get("gross_contract_value"))
 	stage = {r.stage_code: r for r in inst.get("stages") or []}
 	phases, due_before, received_before = [], 0.0, 0.0
@@ -90,20 +102,26 @@ def payment_phases(installation):
 		})
 		due_before += amount
 		received_before += received
-	# What each phase still lacks: everything received pays the phases in order, so a later
-	# overpayment clears an earlier shortfall before it counts towards its own phase.
-	pool = received_before
-	for phase in phases:
-		paid = min(phase["amount"], pool)
-		pool -= paid
+	# What each phase still lacks: its own payments pay it, and what any phase was paid over
+	# its share pays the phases still short, oldest first (allocate - as the plan stores it).
+	shares = allocate([p["amount"] for p in phases], [p["code"] for p in phases],
+		{p["code"]: p["received"] for p in phases})
+	for phase, paid in zip(phases, shares):
 		phase["remaining"] = max(0.0, flt(phase["amount"] - paid, 2))
 	return {"terms": terms, "base": base, "phases": phases, "received": flt(received_before, 2),
 		"remaining": max(0.0, flt(base - received_before, 2))}
 
 
 def _received(inst, code):
-	"""What has been received for a payment task: the amount on its row (marked or confirmed),
+	"""What has been received for a payment task: its payments Accounts confirmed on the job's
+	billing plan. A job from before the plan held payments: the amount on the task's row,
 	else one recorded on an older payment Installation Task."""
+	plan = frappe.db.get_value("Solar Billing Plan", {"solar_installation": inst.name, "docstatus": ["<", 2]}, "name")
+	if plan:
+		payments = frappe.get_all("Billing Plan Payment", filters={"parenttype": "Solar Billing Plan", "parent": plan,
+			"phase_code": code}, fields=["amount", "status"])
+		if payments:
+			return flt(sum(flt(p.amount) for p in payments if p.status == "Confirmed"), 2)
 	row = next((r for r in inst.get("stages") or [] if r.stage_code == code), None)
 	if row is not None and flt(row.get("payment_amount")):
 		return flt(row.payment_amount)
@@ -181,7 +199,8 @@ def build_plan(plan):
 
 	template = frappe.get_cached_doc("Billing Milestone Template", plan.milestone_template)
 	contract = flt(plan.gross_contract_value)
-	for row in template.milestones:
+	codes = phase_codes(template.milestones)
+	for row, code in zip(template.milestones, codes):
 		amount = flt(contract * flt(row.percentage) / 100.0, 2)
 		plan.append(
 			"milestones",
@@ -194,6 +213,8 @@ def build_plan(plan):
 				"funding_source": row.funding_source,
 				"due_date": add_days(today(), int(row.credit_days or 0)),
 				"remarks": row.description,
+				"phase_code": code,
+				"credit_days": int(row.credit_days or 0),
 			},
 		)
 	return plan
@@ -239,7 +260,142 @@ def recompute_summary(plan):
 		flt(plan.gross_contract_value) - flt(plan.expected_subsidy_amount), 2
 	)
 	_recompute_statutory(plan)
+	recompute_payments(plan)
 	return plan
+
+
+#: A milestone with less than this left to pay is paid.
+PAID_WITHIN = 0.5
+
+
+def allocate(amounts, phases, received):
+	"""What each of `amounts` (in order, each of the payment task in `phases`) is paid from
+	`received` ({phase: confirmed total}): a phase's payments pay its own milestones first,
+	in order; what is over pays the milestones still short, oldest first."""
+	paid, spare = [0.0] * len(amounts), 0.0
+	left = dict(received)
+	for i, (amount, code) in enumerate(zip(amounts, phases)):
+		take = min(flt(amount), flt(left.get(code)))
+		paid[i] = take
+		left[code] = flt(left.get(code)) - take
+	spare = sum(flt(v) for v in left.values())
+	for i, amount in enumerate(amounts):
+		take = min(flt(amount) - paid[i], spare)
+		paid[i] += take
+		spare -= take
+	return [flt(p, 2) for p in paid]
+
+
+def recompute_payments(plan):
+	"""Each milestone's payment standing from the plan's confirmed payments: each phase's
+	payments pay its own milestones, and an overpayment the ones still short, oldest first
+	(billing.allocate - as payment_phases reads it). Sets received, pending, status and last
+	payment date on each milestone, and the plan's received and pending."""
+	confirmed = [p for p in plan.get("payments") or [] if p.status == "Confirmed"]
+	received, last = {}, {}
+	for p in confirmed:
+		received[p.phase_code] = flt(received.get(p.phase_code)) + flt(p.amount)
+		if p.payment_date and (p.phase_code not in last or getdate(p.payment_date) > getdate(last[p.phase_code])):
+			last[p.phase_code] = p.payment_date
+	shares = allocate([flt(r.milestone_amount) for r in plan.milestones], [r.phase_code for r in plan.milestones], received)
+	# The special discount is off what is owed, the last milestones first.
+	discount, waived = flt(plan.get("special_discount")), [0.0] * len(shares)
+	for i in reversed(range(len(shares))):
+		take = min(max(0.0, flt(plan.milestones[i].milestone_amount) - shares[i]), discount)
+		waived[i], discount = take, discount - take
+	for i, (row, paid) in enumerate(zip(plan.milestones, shares)):
+		amount = flt(row.milestone_amount)
+		row.received_amount = flt(paid, 2)
+		row.pending_amount = max(0.0, flt(amount - paid - waived[i], 2))
+		row.payment_status = "Paid" if row.pending_amount < PAID_WITHIN else ("Partly Paid" if paid else "Unpaid")
+		row.last_payment_date = last.get(row.phase_code) if paid else None
+	plan.total_received = flt(sum(flt(p.amount) for p in confirmed), 2)
+	plan.total_pending = max(0.0, flt(flt(plan.gross_contract_value) - plan.total_received - flt(plan.get("special_discount")), 2))
+	return plan
+
+
+def plan_of(installation):
+	"""The job's billing plan (the live one), or None."""
+	name = installation if isinstance(installation, str) else installation.name
+	plan = frappe.db.get_value("Solar Billing Plan", {"solar_installation": name, "docstatus": ["<", 2]}, "name",
+		order_by="docstatus desc, creation desc")
+	return frappe.get_doc("Solar Billing Plan", plan) if plan else None
+
+
+#: How a payment can come in (the Billing Plan Payment's modes).
+PAYMENT_MODES = ("Bank Transfer", "UPI", "Cheque", "Cash", "Loan Disbursement")
+
+
+def schedule(inst):
+	"""The job page's Payment Schedule: each milestone - its share, when it falls due, what is
+	received and pending, Paid / Partly Paid / Unpaid - the payments recorded against the job
+	(newest first, with who recorded and confirmed them), the totals, the phases still open to
+	pay, and what this user may do. None when the job has no billing plan yet."""
+	from frappe.utils import fmt_money, format_date
+
+	from a3_sola.api import payment_tasks
+
+	plan = plan_of(inst)
+	if not plan:
+		return None
+	money = lambda v: fmt_money(flt(v), currency="INR")  # noqa: E731
+	stages = {r.stage_code: r for r in inst.get("stages") or []}
+	name_of = lambda user: (frappe.db.get_value("User", user, "full_name") or user) if user else ""  # noqa: E731
+
+	def when(row):
+		code = TRIGGER_CODE_MAP.get(row.trigger_stage_code, row.trigger_stage_code) if row.trigger_stage_code \
+			else IMPLIED_TRIGGER_CODES.get(row.trigger_type)
+		if row.is_triggered and row.due_date:
+			return _("Due {0}").format(format_date(row.due_date, "d MMM yyyy"))
+		if code == "ORD":
+			return _("With the order")
+		return _("After {0}").format(stages[code].stage_name) if code in stages else (row.trigger_type or "")
+
+	milestones = [{
+		"name": r.milestone_name, "phase": r.phase_code or "", "percent": flt(r.percentage),
+		"amount": flt(r.milestone_amount), "amount_text": money(r.milestone_amount), "when": when(r),
+		"received_text": money(r.received_amount) if flt(r.received_amount) else "",
+		"pending": flt(r.pending_amount), "pending_text": money(r.pending_amount),
+		"status": r.payment_status or "Unpaid",
+		"last_payment": format_date(r.last_payment_date, "d MMM yyyy") if r.last_payment_date else "",
+	} for r in plan.milestones]
+	payments = [{
+		"row": p.name, "phase": p.phase_code, "task": stages[p.phase_code].stage_name if p.phase_code in stages else p.phase_code,
+		"amount_text": money(p.amount), "date": format_date(p.payment_date, "d MMM yyyy") if p.payment_date else "",
+		"mode": p.payment_mode or "", "reference": p.reference_no or "", "bank": p.bank or "",
+		"firm": p.receiving_firm or "", "status": p.status, "receipt": p.receipt or "",
+		"recorded_by": name_of(p.recorded_by), "confirmed_by": name_of(p.confirmed_by), "remarks": p.remarks or "",
+	} for p in sorted(plan.get("payments") or [], key=lambda p: (str(p.payment_date or ""), p.idx), reverse=True)]
+	# The phases a payment can still be recorded against: due something, task still open.
+	open_phases = []
+	for code in PHASE_TASKS:
+		status, pending = phase_standing(plan, code)
+		row = stages.get(code)
+		if status and status != "Paid" and row and row.status not in ("Completed", "Skipped"):
+			open_phases.append({"code": code, "name": row.stage_name, "pending": pending, "pending_text": money(pending)})
+	contract = flt(plan.gross_contract_value)
+	awaiting = sum(flt(p.amount) for p in plan.get("payments") or [] if p.status == "Awaiting Confirmation")
+	return {
+		"plan": plan.name, "terms": plan.milestone_template or "",
+		"contract_text": money(contract), "received_text": money(plan.total_received),
+		"pending_text": money(plan.total_pending), "awaiting_text": money(awaiting) if awaiting else "",
+		"percent_paid": round(flt(plan.total_received) * 100 / contract) if contract else 0,
+		"milestones": milestones, "payments": payments, "phases": open_phases,
+		"can_record": bool(inst.has_permission("write")) and bool(open_phases),
+		"can_confirm": payment_tasks.can_confirm(),
+		"firms": list(payment_tasks.firms(inst.company)), "modes": list(PAYMENT_MODES),
+	}
+
+
+def phase_standing(plan, code):
+	"""(status, pending) of a payment task's phase: Paid, Partly Paid or Unpaid, and what
+	its milestones still lack."""
+	rows = [r for r in plan.milestones if r.phase_code == code] if plan else []
+	if not rows:
+		return "", 0.0
+	pending = flt(sum(flt(r.pending_amount) for r in rows), 2)
+	received = sum(flt(r.received_amount) for r in rows)
+	return ("Paid" if pending < PAID_WITHIN else "Partly Paid" if received else "Unpaid"), pending
 
 
 def _recompute_statutory(plan):
@@ -366,6 +522,8 @@ def on_stage_completed(installation, stage_code):
 				continue
 			row.is_triggered = 1
 			row.triggered_on = today()
+			# Due its credit days after it falls due - not after the order.
+			row.due_date = add_days(today(), int(row.get("credit_days") or 0))
 			changed = True
 			if replaying:
 				continue

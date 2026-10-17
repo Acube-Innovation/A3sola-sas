@@ -26,7 +26,8 @@ from a3_sola.api.stages import DONE, MANAGER_ROLES, _get_stage, _require_manager
 PORTAL_TASKS = {"National Portal": "NPA", "Electrical Inspectorate": "CEIG"}
 FEE_TASKS = {"Application Fee": "F1PAY", "Registration Fee": "F2PAY", "Net Meter Charge": "MTRPAY"}
 WORK_ORDER_TASKS = {"Structure": "IWOS", "Installation": "IWOI"}
-PACK_TASKS = {"KSEB Submission": "KFORMS", "Bank Completion Pack": "BCOM", "Customer Completion File": "CFILE"}
+PACK_TASKS = {"KSEB Form 2": "FRM2", "KSEB Form 3": "KFORMS", "Bank Completion Pack": "BCOM",
+	"Customer Completion File": "CFILE"}
 
 
 # ------------------------------------------------------------------ the rules
@@ -112,7 +113,7 @@ TASK_DOCTYPES = {
 		"codes": lambda d: [d.task_code] if d.get("task_code") and d.task_code != "OTHER" else [],
 		"state": _generic_state,
 		"date": lambda d, c: _first(d, "completed_on"),
-		"reference": lambda d, c: _first(d, "payment_reference", "certificate_no", "meter_serial", "ae_acknowledgement_no"),
+		"reference": lambda d, c: _first(d, "payment_reference", "certificate_no", "meter_serial"),
 		"cost": lambda d, c: flt(_first(d, "cost", "amount", "meter_cost")),
 		"reason": lambda d, c: d.get("skip_reason"),
 		"route": lambda inst, c: _installation_task_route(inst, c),

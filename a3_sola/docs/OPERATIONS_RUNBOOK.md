@@ -27,7 +27,7 @@ Weekly: **Bank Disbursement Tracker**, **Statutory Fee and Refund Register**,
 A job is thirty tasks, not a chain. On the installation, **Task** lists them with their
 status and assignee; pick one and its document opens - the Statutory Fee Payment for the
 Form 1 fee, the Solar Agreement for the stamp paper, an Installation Task for the advance,
-a Document Pack for the Form 2/3 submission. Do the work there. When the document is
+a Document Pack for the Form 2 or the Form 3 submission. Do the work there. When the document is
 submitted (or reaches its completed state) the task row on the job updates itself with the
 document id, the date, the reference and the cost. Nothing has to be done in order; a task
 the job does not need is skipped with a reason, and a document that appears for a skipped
@@ -80,14 +80,18 @@ number, a capacity change, a new bank account.
 
 ## The KSEB submission order
 
-Documents go to the Assistant Engineer as one pack at the KTST stage:
+Documents go to the Assistant Engineer as two packs:
 
-1. Covering letter (it names every enclosure)
-2. Annexure / Form 2 signed
-3. Annexure / Form 3 for completion, with the panel and inverter datasheets and BIS
-   certificates, the test-cum-completion certificate with the single line diagram and the
-   serial numbers, the installation checklist and the solar meter calibration certificate
-4. Solar agreement on stamp paper, signed
+- **Form 2 Submission** (FRM2), within thirty days of the Form 1 fee: Annexure / Form 2
+  signed. No agreement is needed yet. Form 2 Payment (the registration fee) follows.
+- **Form 3 Submission** (KFORMS), for completion:
+  1. Covering letter (it names every enclosure)
+  2. Annexure / Form 3 for completion, with the panel and inverter datasheets and BIS
+     certificates, the test-cum-completion certificate with the single line diagram and the
+     serial numbers, the installation checklist and the solar meter calibration certificate
+  3. Solar agreement on stamp paper, signed (the executed agreement)
+
+Each pack names the section's Assistant Engineer and phone, from the DISCOM Section.
 
 Generate the pack, print it, check it, then submit. The app produces it; a human submits it.
 

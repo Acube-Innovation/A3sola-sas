@@ -19,6 +19,7 @@
   "company",
   "sb_2",
   "assistant_engineer_name",
+  "assistant_engineer_phone",
   "office_address",
   "contact_person",
   "cb_3",
@@ -116,6 +117,13 @@
    "label": "Assistant Engineer"
   },
   {
+   "fieldname": "assistant_engineer_phone",
+   "fieldtype": "Data",
+   "label": "AE Phone",
+   "options": "Phone",
+   "description": "The Assistant Engineer's phone. Form 2 and Form 3 packs take it, and fill it in here when it is blank."
+  },
+  {
    "fieldname": "office_address",
    "fieldtype": "Small Text",
    "label": "Office Address"
@@ -169,7 +177,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-09 13:00:00.000000",
+ "modified": "2026-10-17 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "DISCOM Section",

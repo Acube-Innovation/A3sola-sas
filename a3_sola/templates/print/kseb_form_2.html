@@ -1,0 +1,37 @@
+{#- KSEBL Form 2 (Annexure 2), as the team's KSEBL Form 2.docx lays it out: the printed
+    Malayalam heading and row labels (images, at their Word sizes) beside the customer's
+    answers, then place, date, signature, and KSEBL's blank acknowledgement receipt. Context:
+    f (api/form2_print.context), img (the label images as data URIs). -#}
+<style>
+	.f2 { font-family: Aptos, Calibri, Carlito, "Liberation Sans", Arial, sans-serif; font-size: 12pt; }
+	.f2 .head { width: 161mm; display: block; margin: 0 0 3mm; }
+	.f2 table { width: 100%; border-collapse: collapse; }
+	.f2 td { border: 1px solid #000; padding: 1.5mm 2.5mm; vertical-align: top; }
+	.f2 .n { width: 9mm; text-align: center; }
+	.f2 .l img { display: block; }
+	.f2 .v { font-weight: normal; }
+	.f2 .sign td { height: 17mm; vertical-align: bottom; }
+	{#- KSEBL's receipt, under the form's tear line - on the same sheet, as the docx has it. #}
+	.f2 .receipt { width: 150mm; display: block; margin: 3mm 0 0; }
+</style>
+<div class="f2">
+	<img class="head" src="{{ img.header }}">
+	<table>
+		<tr><td class="n">1</td><td class="l"><img src="{{ img.row1 }}" style="width:97.8mm"></td>
+			<td class="v">{% for line in f.details %}{{ line | e }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+		<tr><td class="n">2</td><td class="l"><img src="{{ img.row2 }}" style="width:80mm"></td><td class="v">{{ f.load | e }}</td></tr>
+		<tr><td class="n">3</td><td class="l"><img src="{{ img.row3 }}" style="width:92mm"></td><td class="v">{{ f.capacity | e }}</td></tr>
+		<tr><td class="n">4</td><td class="l"><img src="{{ img.row4 }}" style="width:89.3mm"></td><td class="v">{{ f.specifications | e }}</td></tr>
+		<tr><td class="n">5</td><td class="l"><img src="{{ img.row5 }}" style="width:97.4mm"></td>
+			<td class="v">{% for m in f.meters %}{{ m | e }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
+		<tr><td class="n">6</td><td class="l"><img src="{{ img.row6 }}" style="width:97.4mm"></td><td class="v">{{ f.drawings | e }}</td></tr>
+		<tr><td class="n">7</td><td class="l"><img src="{{ img.row7 }}" style="width:94.4mm"></td><td class="v">{{ f.complete_by | e }}</td></tr>
+		<tr class="sign">
+			<td class="n"></td>
+			<td><img src="{{ img.place }}" style="width:16.3mm;vertical-align:middle"> {{ f.place | e }}<br><br>
+				<img src="{{ img.date }}" style="width:16.9mm;vertical-align:middle"> {{ f.date | e }}</td>
+			<td style="text-align:center"><img src="{{ img.signature }}" style="width:40.6mm"></td>
+		</tr>
+	</table>
+	<img class="receipt" src="{{ img.footer }}">
+</div>

@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_survey",
   "sb_1",
   "lead",
   "solar_consumer",
@@ -32,6 +33,7 @@
   "system_type",
   "cb_report_visit",
   "capacity_applied_kw",
+  "tab_structure",
   "sb_report_roof",
   "building_type",
   "number_of_floors",
@@ -44,6 +46,26 @@
   "shade_free_area_sqft",
   "material_lifting_accessibility",
   "additional_structure_details",
+  "sb_3",
+  "roof_type",
+  "total_roof_area_sqft",
+  "cb_4",
+  "total_usable_area_sqft",
+  "total_usable_kw",
+  "sb_5",
+  "roof_segments",
+  "sb_6",
+  "shadow_observations",
+  "average_shading_percent",
+  "shading_remarks",
+  "sb_9",
+  "roof_condition",
+  "structure_type_required",
+  "cb_10",
+  "civil_work_required",
+  "additional_civil_cost",
+  "structural_remarks",
+  "tab_cable",
   "sb_report_cables",
   "total_dc_length_m",
   "panel_to_dcdb_m",
@@ -61,6 +83,12 @@
   "space_for_la",
   "dc_earthing_ground",
   "ac_earthing_ground",
+  "sb_cable_route",
+  "distance_roof_to_meter_m",
+  "inverter_location",
+  "cb_8",
+  "cable_route_notes",
+  "tab_ht_lt",
   "sb_report_supply",
   "supply_type",
   "incomer",
@@ -69,33 +97,11 @@
   "dg_available",
   "automatic_cos",
   "cable_duct_trench_tray",
-  "sb_3",
-  "roof_type",
-  "total_roof_area_sqft",
-  "cb_4",
-  "total_usable_area_sqft",
-  "total_usable_kw",
-  "sb_5",
-  "roof_segments",
-  "sb_6",
-  "shadow_observations",
-  "average_shading_percent",
-  "shading_remarks",
   "sb_7",
   "existing_meter_type",
   "main_switch_rating",
+  "cb_7a",
   "earthing_available",
-  "cb_8",
-  "distance_roof_to_meter_m",
-  "inverter_location",
-  "cable_route_notes",
-  "sb_9",
-  "roof_condition",
-  "structure_type_required",
-  "cb_10",
-  "civil_work_required",
-  "additional_civil_cost",
-  "structural_remarks",
   "tab_11",
   "ehs_note",
   "sb_13",
@@ -142,6 +148,11 @@
   "survey_images"
  ],
  "fields": [
+  {
+   "fieldname": "tab_survey",
+   "fieldtype": "Tab Break",
+   "label": "Survey"
+  },
   {
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
@@ -318,6 +329,11 @@
    "precision": 3
   },
   {
+   "fieldname": "tab_structure",
+   "fieldtype": "Tab Break",
+   "label": "Structure"
+  },
+  {
    "fieldname": "sb_report_roof",
    "fieldtype": "Section Break",
    "label": "Roof & Building"
@@ -378,6 +394,120 @@
    "fieldname": "additional_structure_details",
    "fieldtype": "Small Text",
    "label": "If Additional Structure Required - Details"
+  },
+  {
+   "fieldname": "sb_3",
+   "fieldtype": "Section Break",
+   "label": "Roof Assessment"
+  },
+  {
+   "fieldname": "roof_type",
+   "fieldtype": "Link",
+   "label": "Roof Type",
+   "options": "Roof Type"
+  },
+  {
+   "fieldname": "total_roof_area_sqft",
+   "fieldtype": "Float",
+   "label": "Total Roof Area (sq ft)",
+   "precision": 2
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_usable_area_sqft",
+   "fieldtype": "Float",
+   "label": "Usable Area (sq ft)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "total_usable_kw",
+   "fieldtype": "Float",
+   "label": "Usable Capacity (kW)",
+   "read_only": 1,
+   "precision": 3,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_5",
+   "fieldtype": "Section Break",
+   "label": "Roof Segments"
+  },
+  {
+   "fieldname": "roof_segments",
+   "fieldtype": "Table",
+   "label": "Roof Segments",
+   "options": "Roof Segment"
+  },
+  {
+   "fieldname": "sb_6",
+   "fieldtype": "Section Break",
+   "label": "Shading"
+  },
+  {
+   "fieldname": "shadow_observations",
+   "fieldtype": "Table",
+   "label": "Shadow Observations",
+   "options": "Shadow Observation"
+  },
+  {
+   "fieldname": "average_shading_percent",
+   "fieldtype": "Float",
+   "label": "Average Shading %",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "fieldname": "shading_remarks",
+   "fieldtype": "Small Text",
+   "label": "Shading Remarks"
+  },
+  {
+   "fieldname": "sb_9",
+   "fieldtype": "Section Break",
+   "label": "Structural"
+  },
+  {
+   "fieldname": "roof_condition",
+   "fieldtype": "Select",
+   "label": "Roof Condition",
+   "options": "Good\nFair\nNeeds Repair",
+   "default": "Good"
+  },
+  {
+   "fieldname": "structure_type_required",
+   "fieldtype": "Select",
+   "label": "Structure Required",
+   "options": "Standard\nElevated\nCustom",
+   "default": "Standard"
+  },
+  {
+   "fieldname": "cb_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "civil_work_required",
+   "fieldtype": "Check",
+   "label": "Civil Work Required"
+  },
+  {
+   "fieldname": "additional_civil_cost",
+   "fieldtype": "Currency",
+   "label": "Additional Civil Cost",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "structural_remarks",
+   "fieldtype": "Small Text",
+   "label": "Structural Remarks"
+  },
+  {
+   "fieldname": "tab_cable",
+   "fieldtype": "Tab Break",
+   "label": "Cable"
   },
   {
    "fieldname": "sb_report_cables",
@@ -466,6 +596,36 @@
    "options": "\nSoil\nRock\nConcrete"
   },
   {
+   "fieldname": "sb_cable_route",
+   "fieldtype": "Section Break",
+   "label": "Cable Route"
+  },
+  {
+   "fieldname": "distance_roof_to_meter_m",
+   "fieldtype": "Float",
+   "label": "Roof to Meter (m)",
+   "precision": 2
+  },
+  {
+   "fieldname": "inverter_location",
+   "fieldtype": "Data",
+   "label": "Inverter Location"
+  },
+  {
+   "fieldname": "cb_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cable_route_notes",
+   "fieldtype": "Small Text",
+   "label": "Cable Route Notes"
+  },
+  {
+   "fieldname": "tab_ht_lt",
+   "fieldtype": "Tab Break",
+   "label": "HT / LT"
+  },
+  {
    "fieldname": "sb_report_supply",
    "fieldtype": "Section Break",
    "label": "Supply (HT / LT)"
@@ -511,79 +671,9 @@
    "depends_on": "eval:doc.supply_type"
   },
   {
-   "fieldname": "sb_3",
-   "fieldtype": "Section Break",
-   "label": "Roof Assessment"
-  },
-  {
-   "fieldname": "roof_type",
-   "fieldtype": "Link",
-   "label": "Roof Type",
-   "options": "Roof Type"
-  },
-  {
-   "fieldname": "total_roof_area_sqft",
-   "fieldtype": "Float",
-   "label": "Total Roof Area (sq ft)",
-   "precision": 2
-  },
-  {
-   "fieldname": "cb_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "total_usable_area_sqft",
-   "fieldtype": "Float",
-   "label": "Usable Area (sq ft)",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "total_usable_kw",
-   "fieldtype": "Float",
-   "label": "Usable Capacity (kW)",
-   "read_only": 1,
-   "precision": 3,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "sb_5",
-   "fieldtype": "Section Break",
-   "label": "Roof Segments"
-  },
-  {
-   "fieldname": "roof_segments",
-   "fieldtype": "Table",
-   "label": "Roof Segments",
-   "options": "Roof Segment"
-  },
-  {
-   "fieldname": "sb_6",
-   "fieldtype": "Section Break",
-   "label": "Shading"
-  },
-  {
-   "fieldname": "shadow_observations",
-   "fieldtype": "Table",
-   "label": "Shadow Observations",
-   "options": "Shadow Observation"
-  },
-  {
-   "fieldname": "average_shading_percent",
-   "fieldtype": "Float",
-   "label": "Average Shading %",
-   "read_only": 1,
-   "precision": 2
-  },
-  {
-   "fieldname": "shading_remarks",
-   "fieldtype": "Small Text",
-   "label": "Shading Remarks"
-  },
-  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
-   "label": "Electrical Readiness"
+   "label": "Meter & Main Switch"
   },
   {
    "fieldname": "existing_meter_type",
@@ -596,68 +686,13 @@
    "label": "Main Switch Rating"
   },
   {
+   "fieldname": "cb_7a",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "earthing_available",
    "fieldtype": "Check",
    "label": "Earthing Available"
-  },
-  {
-   "fieldname": "cb_8",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "distance_roof_to_meter_m",
-   "fieldtype": "Float",
-   "label": "Roof to Meter (m)",
-   "precision": 2
-  },
-  {
-   "fieldname": "inverter_location",
-   "fieldtype": "Data",
-   "label": "Inverter Location"
-  },
-  {
-   "fieldname": "cable_route_notes",
-   "fieldtype": "Small Text",
-   "label": "Cable Route Notes"
-  },
-  {
-   "fieldname": "sb_9",
-   "fieldtype": "Section Break",
-   "label": "Structural"
-  },
-  {
-   "fieldname": "roof_condition",
-   "fieldtype": "Select",
-   "label": "Roof Condition",
-   "options": "Good\nFair\nNeeds Repair",
-   "default": "Good"
-  },
-  {
-   "fieldname": "structure_type_required",
-   "fieldtype": "Select",
-   "label": "Structure Required",
-   "options": "Standard\nElevated\nCustom",
-   "default": "Standard"
-  },
-  {
-   "fieldname": "cb_10",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "civil_work_required",
-   "fieldtype": "Check",
-   "label": "Civil Work Required"
-  },
-  {
-   "fieldname": "additional_civil_cost",
-   "fieldtype": "Currency",
-   "label": "Additional Civil Cost",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "structural_remarks",
-   "fieldtype": "Small Text",
-   "label": "Structural Remarks"
   },
   {
    "fieldname": "tab_11",
@@ -912,7 +947,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 17:00:00.000000",
+ "modified": "2026-10-17 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

@@ -226,8 +226,7 @@
   {
    "fieldname": "site_address_line1",
    "fieldtype": "Data",
-   "label": "House Name / Building No.",
-   "reqd": 1
+   "label": "House Name / Building No."
   },
   {
    "fieldname": "site_address_line2",
@@ -237,8 +236,7 @@
   {
    "fieldname": "site_city",
    "fieldtype": "Data",
-   "label": "City / Town / Village",
-   "reqd": 1
+   "label": "City / Town / Village"
   },
   {
    "fieldname": "cb_site_address",
@@ -249,23 +247,20 @@
    "fieldname": "site_state",
    "fieldtype": "Link",
    "label": "State",
-   "options": "Indian State",
-   "reqd": 1
+   "options": "Indian State"
   },
   {
    "description": "Districts are offered for the chosen state.",
    "fieldname": "site_district",
    "fieldtype": "Link",
    "label": "District",
-   "options": "Indian District",
-   "reqd": 1
+   "options": "Indian District"
   },
   {
    "fieldname": "site_pincode",
    "fieldtype": "Data",
    "label": "PIN Code",
-   "length": 6,
-   "reqd": 1
+   "length": 6
   },
   {
    "description": "The site address in full, as documents print it. Made from the fields above.",
@@ -297,8 +292,7 @@
    "fieldname": "permanent_address_line1",
    "fieldtype": "Data",
    "label": "House Name / Building No.",
-   "depends_on": "eval:doc.permanent_address_same==\"No\"",
-   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
   },
   {
    "fieldname": "permanent_address_line2",
@@ -310,8 +304,7 @@
    "fieldname": "permanent_city",
    "fieldtype": "Data",
    "label": "City / Town / Village",
-   "depends_on": "eval:doc.permanent_address_same==\"No\"",
-   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
   },
   {
    "fieldname": "cb_permanent_address",
@@ -323,8 +316,7 @@
    "fieldtype": "Link",
    "label": "State",
    "options": "Indian State",
-   "depends_on": "eval:doc.permanent_address_same==\"No\"",
-   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
   },
   {
    "description": "Districts are offered for the chosen state.",
@@ -332,16 +324,14 @@
    "fieldtype": "Link",
    "label": "District",
    "options": "Indian District",
-   "depends_on": "eval:doc.permanent_address_same==\"No\"",
-   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
   },
   {
    "fieldname": "permanent_pincode",
    "fieldtype": "Data",
    "label": "PIN Code",
    "length": 6,
-   "depends_on": "eval:doc.permanent_address_same==\"No\"",
-   "mandatory_depends_on": "eval:doc.permanent_address_same==\"No\""
+   "depends_on": "eval:doc.permanent_address_same==\"No\""
   },
   {
    "description": "The permanent address in full, as the agreement recites it. The site address when they are the same.",
@@ -753,7 +743,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-10-17 12:10:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

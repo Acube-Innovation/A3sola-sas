@@ -151,6 +151,26 @@
 			.catch(function (e) { m.body.innerHTML = ""; m.status(e.message, "error"); });
 	}
 
+	/* The documents' actions as icons - view, download, upload - each named in its tooltip
+	   and for a screen reader (the portal's sprite, templates/includes/portal_icons.html). */
+	function svgIcon(name) {
+		return '<svg class="a3s-ic" aria-hidden="true"><use href="#ic-' + name + '"></use></svg>';
+	}
+	function iconLink(name, label, href, attrs) {
+		return '<a class="a3s-icon-btn a3s-icon-btn--framed" href="' + esc(href) + '" title="' + esc(label) +
+			'" aria-label="' + esc(label) + '"' + (attrs || "") + ">" + svgIcon(name) + "</a>";
+	}
+	function uploadButton(label, attrs) {
+		return '<button type="button" class="a3s-icon-btn a3s-icon-btn--primary" title="' + esc(label) +
+			'" aria-label="' + esc(label) + '" ' + attrs + ">" + svgIcon("upload") + "</button>";
+	}
+	/* A print opens to view, or downloads - its label says which. */
+	function printLink(p, signable) {
+		var name = /^view/i.test(p.label) ? "eye" : "download";
+		if (!signable) return iconLink(name, p.label, p.url, name === "eye" ? ' target="_blank" rel="noopener"' : "");
+		return iconLink(name, p.label, p.url + "&signed=1", ' data-print-base="' + esc(p.url) + '" target="_blank" rel="noopener"');
+	}
+
 	function renderDocuments(m, task, data) {
 		var rows = data.documents || [];
 		var html = "";
@@ -180,14 +200,14 @@
 						return '<li class="a3s-taskdocs__part"><span class="a3s-taskdocs__part-name">' + esc(label) + "</span>" +
 							'<span class="a3s-taskdocs__state is-uploaded">Uploaded</span>' +
 							parts[label].map(function (f, i) {
-								return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(f.url) + '" target="_blank" rel="noopener">Open' + (i ? " " + (i + 1) : "") + "</a>";
+								return iconLink("eye", "Open " + label + (i ? " " + (i + 1) : ""), f.url, ' target="_blank" rel="noopener"');
 							}).join("") + "</li>";
 					}).join("") +
 					d.missing.map(function (mm) {
 						targets.push(mm.upload);
 						return '<li class="a3s-taskdocs__part"><span class="a3s-taskdocs__part-name">' + esc(mm.label) + "</span>" +
 							'<span class="a3s-taskdocs__state is-missing">Missing</span>' +
-							(data.can_upload ? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-upload-to="' + (targets.length - 1) + '">Upload</button>' : "") +
+							(data.can_upload ? uploadButton("Upload " + mm.label, 'data-upload-to="' + (targets.length - 1) + '"') : "") +
 							"</li>";
 					}).join("") + "</ul></li>";
 				return;
@@ -201,20 +221,19 @@
 					'<p class="a3s-taskdocs__meta">' + (d.note ? esc(d.note) : '<span class="a3s-taskdocs__state is-' + st.toLowerCase() + '">' + st + "</span>") + "</p></div>" +
 					'<div class="a3s-taskdocs__actions">' +
 					d.files.map(function (f) {
-						return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(f.url) + '" target="_blank" rel="noopener">Open' + (f.label ? " " + esc(f.label) : "") + "</a>";
+						return iconLink("eye", "Open" + (f.label ? " " + f.label : ""), f.url, ' target="_blank" rel="noopener"');
 					}).join("") +
-					(d.prints || []).map(function (p) {
-						return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(p.url) + '&signed=1" data-print-base="' +
-							esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.label) + "</a>";
-					}).join("") +
+					(d.prints || []).map(function (p) { return printLink(p, true); }).join("") +
 					(d.missing || []).map(function (mm) {
 						targets.push(mm.upload);
-						return '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-upload-to="' + (targets.length - 1) + '">Upload ' + esc(mm.label) + "</button>";
+						return uploadButton("Upload " + mm.label, 'data-upload-to="' + (targets.length - 1) + '"');
 					}).join("") +
 					"</div></li>";
 				return;
 			}
-			var state = d.file_url ? (d.kind === "Generated" ? "Generated" : "Uploaded") : "Missing";
+			/* A paper the system prints is there to view and download before anyone uploads it -
+			   Generated, not Missing; the signed copy, once uploaded, shows as Uploaded. */
+			var state = d.file_url ? (d.kind === "Generated" ? "Generated" : "Uploaded") : ((d.prints || []).length ? "Generated" : "Missing");
 			html += '<li class="a3s-taskdocs__row">' +
 				'<div class="a3s-taskdocs__info">' +
 				'<p class="a3s-taskdocs__name">' + esc(d.name) + (d.mandatory ? ' <span class="a3s-req" title="Required">*</span>' : "") + "</p>" +
@@ -222,13 +241,14 @@
 				(d.file_name ? " " + esc(d.file_name) : "") + "</p>" +
 				"</div>" +
 				'<div class="a3s-taskdocs__actions">' +
-				(d.file_url ? '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(d.file_url) + '" target="_blank" rel="noopener">Open</a>' : "") +
-				(d.prints || []).map(function (p) {
-					if (!p.signable) return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(p.url) + '">' + esc(p.label) + "</a>";
-					return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(p.url) + '&signed=1" data-print-base="' +
-						esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.label) + "</a>";
-				}).join("") +
-				(!d.file_url && data.can_upload ? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-upload="' + esc(d.row) + '">Upload</button>' : "") +
+				/* A paper printed live has its own View: no second eye for the same PDF. */
+				(d.file_url && !(d.prints || []).some(function (p) { return d.file_url.indexOf(p.url) === 0; })
+					? iconLink("eye", "Open " + (d.file_name || d.name), d.file_url, ' target="_blank" rel="noopener"') : "") +
+				(d.prints || []).map(function (p) { return printLink(p, p.signable); }).join("") +
+				(!d.file_url && data.can_upload ? uploadButton("Upload " + d.name, 'data-upload="' + esc(d.row) + '"') : "") +
+				(d.removable && data.can_upload ? '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed a3s-icon-btn--danger" title="Remove ' +
+					esc(d.file_name || d.name) + '" aria-label="Remove ' + esc(d.file_name || d.name) + '" data-remove="' + esc(d.row) +
+					'" data-remove-name="' + esc(d.name) + '">' + svgIcon("trash") + "</button>" : "") +
 				"</div></li>";
 		});
 		html += "</ul>";
@@ -240,7 +260,7 @@
 					'<p class="a3s-taskdocs__name">' + esc(c.description) + " · " + esc(c.amount) + "</p>" +
 					'<p class="a3s-taskdocs__meta"><span class="a3s-taskdocs__state is-' + esc(c.status.toLowerCase().replace(/ /g, "-")) + '">' +
 					esc(c.status) + "</span> " + esc(c.who) + "</p></div>" +
-					'<div class="a3s-taskdocs__actions"><a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(c.route) + '">Open</a></div></li>';
+					'<div class="a3s-taskdocs__actions">' + iconLink("eye", "Open " + c.description, c.route) + "</div></li>";
 			});
 			html += "</ul>";
 		}
@@ -269,6 +289,15 @@
 			var one = event.target.closest("[data-upload]");
 			var extra = event.target.closest("[data-upload-new]");
 			var to = event.target.closest("[data-upload-to]");
+			var drop = event.target.closest("[data-remove]");
+			if (drop) {
+				if (!window.confirm("Remove the uploaded " + drop.dataset.removeName + "?")) return;
+				m.status("Removing…");
+				call("a3_sola.api.portal_tasks.remove", { installation: installation, task_code: task.code, row: drop.dataset.remove })
+					.then(function (fresh) { renderDocuments(m, task, fresh); m.status("Removed.", "success"); })
+					.catch(function (e) { m.status(e.message, "error"); });
+				return;
+			}
 			if (one) { pending = { row: one.dataset.upload }; picker.click(); }
 			if (to) { pending = { target: targets[Number(to.dataset.uploadTo)] }; picker.click(); }
 			if (extra) {
@@ -371,6 +400,102 @@
 		m.body.querySelector("[data-go]").addEventListener("click", function () {
 			m.status("Putting it back…");
 			call("a3_sola.api.tasks.unskip_task", { installation: installation, task_code: task.code })
+				.then(function () { window.location.reload(); })
+				.catch(function (e) { m.status(e.message, "error"); });
+		});
+	}
+
+	/* ------------------------------------------------------ payment schedule */
+	/* The job's payment schedule (api/billing.schedule): a payment is recorded with its
+	   receipt (payment_tasks.mark_received) and waits for Accounts, who confirm or send it
+	   back - each counts on the schedule only once confirmed. */
+	var paysched = document.querySelector(".a3s-paysched");
+	if (paysched) {
+		var payData = {};
+		try { payData = JSON.parse(paysched.querySelector("[data-payschedule]").textContent || "{}"); } catch (e) { /* none */ }
+		paysched.addEventListener("click", function (event) {
+			var record = event.target.closest("[data-pay-record]");
+			var ok = event.target.closest("[data-pay-confirm]");
+			var back = event.target.closest("[data-pay-sendback]");
+			if (record) recordPayment();
+			if (ok) confirmPayment(ok.dataset.phase, ok.dataset.payConfirm);
+			if (back) sendBackPayment(back.dataset.phase, back.dataset.paySendback, back.dataset.amount);
+		});
+	}
+
+	function options(list, selected) {
+		return list.map(function (o) {
+			var value = typeof o === "string" ? o : o.code, label = typeof o === "string" ? o : o.name + " (pending " + o.pending_text + ")";
+			return '<option value="' + esc(value) + '"' + (value === selected ? " selected" : "") + ">" + esc(label) + "</option>";
+		}).join("");
+	}
+
+	function recordPayment() {
+		var phases = payData.phases || [];
+		var m = modal("Record payment", "It counts on the schedule once Accounts confirm it.");
+		var today = new Date(); today = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+		m.body.innerHTML =
+			'<form class="a3s-form a3s-modal__form">' +
+			'<div class="a3s-field"><label for="a3s-pay-phase">For <span class="a3s-req">*</span></label>' +
+			'<select id="a3s-pay-phase" name="phase" required>' + options(phases) + "</select></div>" +
+			'<div class="a3s-field"><label for="a3s-pay-amount">Amount (₹) <span class="a3s-req">*</span></label>' +
+			'<input id="a3s-pay-amount" name="amount" type="number" min="1" step="0.01" required></div>' +
+			'<div class="a3s-field"><label for="a3s-pay-date">Payment date <span class="a3s-req">*</span></label>' +
+			'<input id="a3s-pay-date" name="payment_date" type="date" max="' + today + '" value="' + today + '" required></div>' +
+			'<div class="a3s-field"><label for="a3s-pay-mode">Mode</label><select id="a3s-pay-mode" name="mode"><option value=""></option>' +
+			options(payData.modes || [], "Bank Transfer") + "</select></div>" +
+			'<div class="a3s-field"><label for="a3s-pay-ref">Reference (UTR / cheque no.)</label><input id="a3s-pay-ref" name="reference" type="text"></div>' +
+			'<div class="a3s-field"><label for="a3s-pay-bank">Bank <span class="a3s-req">*</span></label><input id="a3s-pay-bank" name="bank" type="text" required></div>' +
+			'<div class="a3s-field"><label for="a3s-pay-firm">Received by <span class="a3s-req">*</span></label>' +
+			'<select id="a3s-pay-firm" name="company" required>' + options(payData.firms || [], (payData.firms || [])[0]) + "</select></div>" +
+			'<div class="a3s-field"><label for="a3s-pay-file">Receipt or bank advice <span class="a3s-req">*</span></label>' +
+			'<input id="a3s-pay-file" name="file" type="file" accept="image/*,application/pdf"></div>' +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary">Record payment</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
+		var form = m.body.querySelector("form");
+		/* The phase's pending amount, offered as the amount. */
+		function prefill() {
+			var phase = phases.filter(function (p) { return p.code === form.elements.phase.value; })[0];
+			if (phase) form.elements.amount.value = Number(phase.pending).toFixed(2);
+		}
+		form.elements.phase.addEventListener("change", prefill);
+		prefill();
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var data = new FormData();
+			data.append("installation", installation);
+			data.append("task_code", form.elements.phase.value);
+			["amount", "payment_date", "mode", "reference", "bank", "company"].forEach(function (k) { data.append(k, form.elements[k].value); });
+			if (form.elements.file.files.length) data.append("file", form.elements.file.files[0]);
+			m.status("Recording…");
+			call("a3_sola.api.payment_tasks.mark_received", null, data)
+				.then(function () { window.location.reload(); })
+				.catch(function (e) { m.status(e.message, "error"); });
+		});
+	}
+
+	function confirmPayment(phase, row) {
+		if (!window.confirm("Confirm this payment has been received?")) return;
+		call("a3_sola.api.payment_tasks.confirm", { installation: installation, task_code: phase, payment: row })
+			.then(function () { window.location.reload(); })
+			.catch(function (e) { window.alert(e.message); });
+	}
+
+	function sendBackPayment(phase, row, amount) {
+		var m = modal("Send back " + amount, "It will not count, and goes back to whoever recorded it.");
+		m.body.innerHTML =
+			'<form class="a3s-form a3s-modal__form">' +
+			'<div class="a3s-field"><label for="a3s-pay-reason">Why is it not confirmed? <span class="a3s-req">*</span></label>' +
+			'<textarea id="a3s-pay-reason" name="reason" rows="3" required></textarea></div>' +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary">Send back</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
+		var form = m.body.querySelector("form");
+		form.elements.reason.focus();
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var reason = form.elements.reason.value.trim();
+			if (!reason) { m.status("Say why the payment is not confirmed.", "error"); return; }
+			call("a3_sola.api.payment_tasks.send_back", { installation: installation, task_code: phase, payment: row, reason: reason })
 				.then(function () { window.location.reload(); })
 				.catch(function (e) { m.status(e.message, "error"); });
 		});

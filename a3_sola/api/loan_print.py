@@ -59,6 +59,32 @@ def pdf(name, document=None, download=0, signed=1):
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
 
 
+QUOTATION = "BANK-QUOTATION"
+
+
+def quotation_url(installation):
+	return "/api/method/a3_sola.api.loan_print.quotation?installation=" + frappe.utils.quote(installation)
+
+
+@frappe.whitelist()
+def quotation(installation, download=0, signed=1):
+	"""The job's accepted quotation in the RIM format - the bank's Quotation, which reads the
+	job and its quotation only - for a job with or without a loan (the PM Surya Ghar
+	registration asks for it too). Read with the caller's own permissions on the job."""
+	inst = frappe.get_doc("Solar Installation", installation)
+	inst.check_permission("read")
+	if not (inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation)):
+		frappe.throw(_("{0} has no quotation yet.").format(inst.name), frappe.ValidationError)
+	tpl = _template(QUOTATION, inst.company)
+	context = documents.get_document_context(inst, tpl, source=("Solar Installation", inst.name))
+	signed = frappe.utils.cint(signed)
+	page = frappe.render_template(tpl.body_template or "", context)
+	frappe.local.response.filename = "Quotation - {0}{1}.pdf".format(inst.consumer_name or inst.name,
+		"" if signed else " (unsigned)")
+	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed))
+	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
+
+
 def _template(code, company):
 	name = frappe.db.get_value(
 		"Solar Document Template", {"template_code": code, "company": company}, "name"

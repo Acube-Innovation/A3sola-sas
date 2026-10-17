@@ -38,10 +38,10 @@ letter and the consumer number on the KSEB annexure cannot differ: they are the 
 | `KSEB-NETMETER-REQUEST` | Request for Allocation of Bidirectional Meter | Document Pack | KFORMS | To The Asst. Engineer-Net Meter.docx | Consumer | — |
 | `KSEB-REFUND-REQUEST` | Request for Refund of Registration Fee | Document Pack | CFILE | To The Asst. Engineer_Refund.docx | Consumer | — |
 | `KSEB-FORM-1` | Annexure / Form 1 | Installation Task | FRM1 | KSEBL Form 1.docx | Consumer | — |
-| `KSEB-FORM-2` | Annexure / Form 2 | Document Pack | KFORMS | KSEBL Form 2.docx | Consumer | — |
+| `KSEB-FORM-2` | Annexure / Form 2 | Document Pack | FRM2 | KSEBL Form 2.docx | Consumer | — |
 | `KSEB-FORM-3` | Annexure / Form 3 | Document Pack | KFORMS | KSEBL Form 3.docx | Consumer | — |
 | `KSEB-TESTING-CHECKLIST` | Installation and Inverter Testing Checklist | Document Pack | KFORMS | KSEB/CHECKLIST.xlsx - the form the Assistant Engineer inspects against. | Consumer | — |
-| `KSEB-NETMETER-AGREEMENT` | Net Metering Agreement (Stamp Paper) | Solar Agreement | KFORMS | KSEB Agreement.docx, including the full schedule. | Consumer and Two Witnesses | **Yes** |
+| `KSEB-NETMETER-AGREEMENT` | KSEB Solar Agreement | Solar Agreement | KFORMS | KSEB Agreement.docx, including the full schedule. | Consumer and Two Witnesses | **Yes** |
 | `CUST-COMMISSIONING-CERTIFICATE` | Commissioning Certificate | Commissioning Report | COMM | Customer-facing certificate issued at handover. | Authorised Signatory | — |
 | `CUST-HANDOVER-PACK` | Customer Handover Pack | Document Pack | CFILE | Warranty by make, net meter details and the O&M contact. | Both | — |
 | `COMPLETION-REPORT-DATA` | Data for Completion Report | Material Dispatch Notice | MATL | 06_DATA FOR COMPLETION REPORT.docx / DATA FOR COMPLETION REPORT.pdf | — | — |

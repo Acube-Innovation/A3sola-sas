@@ -85,6 +85,7 @@
 	<p class="a3s-main__sub">{{ collection.singular | capitalize }} &middot; stored in ERPNext.</p>
 </div>
 {%- include "templates/includes/portal_task_people.html" %}
+{%- include "templates/includes/portal_task_missing.html" %}
 
 {#- A collection may put its own overview above the record - the project's boxes and board. -#}
 {%- if top_template %}{% include top_template %}{% endif %}

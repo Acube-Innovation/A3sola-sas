@@ -37,6 +37,10 @@ class StatutoryFeePayment(Document):
 	def default_quick_fields(self):
 		"""The task's short form asks only whether it is paid: who paid and when follow."""
 		self.paid_by = self.paid_by or "Company on Behalf of Customer"
+		# "I paid" is the company's payment, made from someone's own pocket: what the customer
+		# paid directly is nobody's to claim back.
+		if self.paid_by != "Company on Behalf of Customer":
+			self.claim_reimbursement = 0
 		if not self.payment_date:
 			self.payment_date = today()
 

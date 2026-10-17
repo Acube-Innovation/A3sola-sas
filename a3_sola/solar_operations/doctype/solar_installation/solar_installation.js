@@ -361,7 +361,7 @@ function banners(frm) {
 	if (frm.doc.is_sla_breached) {
 		frm.dashboard.add_indicator(__("Overdue task · {0}", [frm.doc.blocking_party || ""]), "red");
 	}
-	if (frm.doc.form2_due_on && !rows(frm).some((r) => r.stage_code === "KFORMS" && ["Completed", "Skipped"].includes(r.status))) {
+	if (frm.doc.form2_due_on && !rows(frm).some((r) => r.stage_code === "FRM2" && ["Completed", "Skipped"].includes(r.status))) {
 		frm.dashboard.add_indicator(
 			__("Form 2 due {0}", [frappe.datetime.str_to_user(frm.doc.form2_due_on)]),
 			frappe.datetime.get_diff(frm.doc.form2_due_on, frappe.datetime.get_today()) < 7 ? "red" : "blue"

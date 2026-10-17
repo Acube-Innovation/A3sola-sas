@@ -91,6 +91,19 @@ class TestDesignEstimate(FrappeTestCase):
 		self.assertEqual(estimate.binding_constraint, "Annual Consumption")
 		self.assertEqual(estimate.final_capacity_kw, 2.0)
 
+	def test_proposed_size_is_the_panels_designed_in(self):
+		"""Six 550 Wp panels propose 3.3 kW, whatever the sizing recommended."""
+		consumer = make_consumer(avg_consumption_units=500, sanctioned_load_kw=20)
+		survey = make_survey(consumer, segments=((1600, True),))
+		estimate = make_estimate(consumer, survey, solar_package=package("3Kw 1PH", consumer.company))
+		row = next((r for r in estimate.panels if not r.is_option), None)
+		if not row:
+			self.skipTest("the package fills no panel on this site")
+		row.panel_capacity_wp, row.panel_count = 550, 6
+		estimate.save()
+		self.assertEqual(estimate.recommended_capacity_kw, 2.0)
+		self.assertEqual(estimate.final_capacity_kw, 3.3)
+
 	def test_override_above_roof_limit_is_rejected(self):
 		consumer = make_consumer()
 		survey = make_survey(consumer, segments=((240, True),))

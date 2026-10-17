@@ -1,19 +1,19 @@
-{#- The Site Survey Report as the team's paper form lays it out (KSEB / ANERT format): the
-    customer, the visit, the roof, the cable and earthing lengths, the HT or LT supply and the
-    approval - each box where the paper has it. Context: s (the Site Survey), r (api/survey_print.report). -#}
+{#- The Site Survey Report on the team's paper form (KSEB / ANERT format): the customer and the
+    visit, then the survey's three groups - Structure, Cable (with LA and earthing) and HT / LT -
+    as its form has them, then the approval. Context: s (the Site Survey), r (api/survey_print.report). -#}
 {%- macro box(on) -%}<span class="cb">{{ "&#9745;" if on else "&#9744;" }}</span>{%- endmacro %}
 {%- macro v(x) -%}{{ (x if x not in (None, "", 0, 0.0) else "") | e }}{%- endmacro %}
 <style>
-	.ssr { font-size: 10pt; line-height: 1.3; }
+	.ssr { font-size: 9pt; line-height: 1.25; }
 	.ssr h1 { text-align: center; font-size: 13pt; margin: 0 0 1pt; }
 	.ssr .co { text-align: center; margin: 0 0 6pt; font-size: 9pt; }
 	.ssr table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-	.ssr td { border: 1px solid #000; padding: 2.5pt 4pt; vertical-align: top; }
+	.ssr td { border: 1px solid #000; padding: 2pt 4pt; vertical-align: top; }
 	.ssr .l { width: 25%; }
 	.ssr .h { text-align: center; font-weight: bold; background: #f3f3f3; }
-	.ssr .cb { font-size: 11pt; }
-	.ssr .tall { height: 46pt; }
-	.ssr .sign td { height: 52pt; }
+	.ssr .cb { font-size: 10pt; }
+	.ssr .tall { height: 38pt; }
+	.ssr .sign td { height: 46pt; }
 </style>
 <div class="ssr">
 <p class="co"><strong>{{ r.company | e }}</strong></p>
@@ -36,22 +36,28 @@
 	<tr class="tall">
 		<td>Type of system<br>{% for o in ("On-grid", "Off-grid", "Hybrid") %}{{ box(s.system_type == o) }} {{ o }} {% endfor %}</td>
 		<td>Capacity<br>{% if s.capacity_applied_kw %}{{ "%g" | format(s.capacity_applied_kw) }} kW{% endif %}</td>
+		<td>Consumer connection type</td><td>{{ v(s.connection_type) }}</td>
+	</tr>
+	<tr><td colspan="4" class="h">STRUCTURE</td></tr>
+	<tr class="tall">
 		<td colspan="2">Roof type: {{ box(r.sheet_roof) }} Sheet roof &nbsp; {{ box(r.concrete_roof) }} Concrete roof
 			{%- if r.roof_type and not (r.sheet_roof or r.concrete_roof) %} ({{ r.roof_type | e }}){% endif %}
 			<br>{{ box(s.parapet_available) }} Parapet - Height of parapet: {% if s.parapet_height_cm %}{{ "%g" | format(s.parapet_height_cm) }}{% else %}____{% endif %} CM</td>
-	</tr>
-	<tr class="tall">
 		<td>Type of Building<br>{% for o in ("Residential", "Commercial") %}{{ box(s.building_type == o) }} {{ o }}<br>{% endfor %}</td>
 		<td>Roof Accessibility<br>{% for o in ("Staircase", "Ladder", "Nil") %}{{ box(s.roof_accessibility == o) }} {{ o }} {% endfor %}
 			<br>No of floor: {{ v(s.number_of_floors) }}</td>
-		<td colspan="2">If Additional Structure required - Details:<br>{{ (s.additional_structure_details or "") | e | replace("\n", "<br>") }}</td>
 	</tr>
 	<tr><td>Roof inclination</td><td>{{ v(s.roof_inclination) }}</td><td>Roof Condition:</td><td>{{ v(s.roof_condition) }}</td></tr>
 	<tr><td>Structure suggested</td><td>{{ v(s.structure_suggested) }}</td>
 		<td colspan="2">Available shade free area: {% if s.shade_free_area_sqft %}{{ "%g" | format(s.shade_free_area_sqft) }}{% else %}______{% endif %} Sqft.</td></tr>
-	<tr><td>Total DC Length</td><td>{{ r.m(s.total_dc_length_m) }}</td>
-		<td rowspan="2">Rooftop material lifting accessibility</td><td rowspan="2">{{ v(s.material_lifting_accessibility) }}</td></tr>
-	<tr><td>Total AC Length</td><td>{{ r.m(s.total_ac_length_m) }}</td></tr>
+	<tr class="tall">
+		<td>Rooftop material lifting accessibility</td><td>{{ v(s.material_lifting_accessibility) }}</td>
+		<td colspan="2">If Additional Structure required - Details:<br>{{ (s.additional_structure_details or "") | e | replace("\n", "<br>") }}</td>
+	</tr>
+	<tr><td>Structure required</td><td>{{ v(s.structure_type_required) }}</td>
+		<td>Civil work required</td><td>{{ "Yes" if s.civil_work_required else "" }}</td></tr>
+	<tr><td colspan="4" class="h">CABLE</td></tr>
+	<tr><td>Total DC Length</td><td>{{ r.m(s.total_dc_length_m) }}</td><td>Total AC Length</td><td>{{ r.m(s.total_ac_length_m) }}</td></tr>
 	<tr><td colspan="4" class="h">Cable length</td></tr>
 	<tr><td>Panel to DCDB</td><td>DCDB to Inverter</td><td>Inverter to ACDB</td><td>ACDB to Meter</td></tr>
 	<tr><td>{{ r.m(s.panel_to_dcdb_m) }}</td><td>{{ r.m(s.dcdb_to_inverter_m) }}</td><td>{{ r.m(s.inverter_to_acdb_m) }}</td><td>{{ r.m(s.acdb_to_meter_m) }}</td></tr>
@@ -60,8 +66,11 @@
 		<td>{% for o in ("Soil", "Rock", "Concrete") %}{{ box(s.dc_earthing_ground == o) }} {{ o }} {% endfor %}</td></tr>
 	<tr><td>AC earthing length</td><td>{{ r.m(s.ac_earthing_length_m) }}</td><td>Ground Type:</td>
 		<td>{% for o in ("Soil", "Rock", "Concrete") %}{{ box(s.ac_earthing_ground == o) }} {{ o }} {% endfor %}</td></tr>
-	<tr><td>Consumer connection type</td><td>{{ v(s.connection_type) }}</td><td>AC connection type:</td><td>{{ v(s.ac_connection_type) }}</td></tr>
+	<tr><td>AC connection type:</td><td>{{ v(s.ac_connection_type) }}</td><td>Inverter location</td><td>{{ v(s.inverter_location) }}</td></tr>
+	<tr><td>Roof to meter</td><td>{{ r.m(s.distance_roof_to_meter_m) }}</td>
+		<td>Cable route</td><td>{{ (s.cable_route_notes or "") | e | replace("\n", "<br>") }}</td></tr>
 	<tr><td colspan="4" class="h">HT / LT: {{ v(s.supply_type) }}</td></tr>
+	<tr><td>Existing meter type</td><td>{{ v(s.existing_meter_type) }}</td><td>Main switch rating</td><td>{{ v(s.main_switch_rating) }}</td></tr>
 	<tr><td colspan="2" class="h">HT</td><td colspan="2" class="h">LT</td></tr>
 	{%- for label, value in r.supply %}
 	<tr><td>{{ label }}</td><td>{{ value | e if s.supply_type == "HT" else "" }}</td>

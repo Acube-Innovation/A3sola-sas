@@ -46,7 +46,7 @@ class TestPackSetup(FrappeTestCase):
 
 	def test_a_kseb_pack_starts_the_task_and_pulls_the_executed_agreement(self):
 		agreement = execute_agreement(self.installation)
-		pack = make_pack(self.installation, "KSEB Submission")
+		pack = make_pack(self.installation, "KSEB Form 3")
 		self.assertEqual((pack.task_code, pack.solar_agreement), ("KFORMS", agreement.name))
 		row, _doc = task_row(self.installation, "KFORMS")
 		self.assertEqual((row.status, row.task_document), ("In Progress", pack.name))
@@ -87,12 +87,16 @@ class TestGeneration(FrappeTestCase):
 
 	def test_the_kseb_pack_prints_the_executed_agreement(self):
 		execute_agreement(self.installation)
-		pack = make_pack(self.installation, "KSEB Submission")
+		pack = make_pack(self.installation, "KSEB Form 3")
 		ctl.generate_item(pack.name, "@agreement_print")
 		pack.reload()
 		row = next(r for r in pack.generated if r.template_code == "@agreement_print")
 		self.assertTrue(row.file.endswith(".pdf"))
 		self.assertGreaterEqual(page_count(row.file), 1)
+		# Printed as the KSEB Solar Agreement, it fills the task's row of that name.
+		self.assertEqual(row.document_name, "KSEB Solar Agreement")
+		job = frappe.get_doc("Solar Installation", self.installation.name)
+		self.assertIn(row.file, [r.attachment for r in job.documents if r.document_name == "KSEB Solar Agreement"])
 
 
 class TestMerge(FrappeTestCase):
@@ -128,10 +132,10 @@ class TestCompletion(FrappeTestCase):
 
 	def test_the_kseb_pack_completes_on_the_acknowledgement(self):
 		execute_agreement(self.installation)
-		pack = make_pack(self.installation, "KSEB Submission")
+		pack = make_pack(self.installation, "KSEB Form 3")
 		with self.assertRaises(frappe.ValidationError):
 			ctl.complete(pack.name)  # empty
-		ctl.generate_item(pack.name, "KSEB-FORM-2")
+		ctl.generate_item(pack.name, "KSEB-FORM-3")
 		with self.assertRaises(frappe.ValidationError):
 			ctl.complete(pack.name)  # not acknowledged
 		ctl.mark_acknowledged(pack.name, acknowledgement_no="AE/ATH/2026/0042", ae_name="Smt. Latha")

@@ -69,23 +69,22 @@ function log_outreach(frm) {
 	d.show();
 }
 
-// A customer is not made without its installation site; the permanent address is asked
-// for only when it is somewhere else. The site starts where the lead is.
+// The customer's installation site, and the permanent address when it is somewhere else -
+// neither required, filled in when known. The site starts where the lead is.
 function consumer_address_dialog(frm) {
 	const different = 'eval:doc.permanent_address_same=="No"';
 	const parts = (prefix, when) => {
-		const reqd = when ? { depends_on: when, mandatory_depends_on: when } : { reqd: 1 };
 		const shown = when ? { depends_on: when } : {};
 		return [
-			{ fieldname: `${prefix}_address_line1`, fieldtype: "Data", label: __("House Name / Building No."), ...reqd },
+			{ fieldname: `${prefix}_address_line1`, fieldtype: "Data", label: __("House Name / Building No."), ...shown },
 			{ fieldname: `${prefix}_address_line2`, fieldtype: "Data", label: __("Street / Area"), ...shown },
-			{ fieldname: `${prefix}_city`, fieldtype: "Data", label: __("City / Town / Village"), ...reqd },
+			{ fieldname: `${prefix}_city`, fieldtype: "Data", label: __("City / Town / Village"), ...shown },
 			{ fieldtype: "Column Break" },
-			{ fieldname: `${prefix}_state`, fieldtype: "Link", options: "Indian State", label: __("State"), default: "Kerala", ...reqd,
+			{ fieldname: `${prefix}_state`, fieldtype: "Link", options: "Indian State", label: __("State"), default: "Kerala", ...shown,
 				onchange: () => dialog.set_value(`${prefix}_district`, null) },
-			{ fieldname: `${prefix}_district`, fieldtype: "Link", options: "Indian District", label: __("District"), ...reqd,
+			{ fieldname: `${prefix}_district`, fieldtype: "Link", options: "Indian District", label: __("District"), ...shown,
 				get_query: () => ({ filters: dialog.get_value(`${prefix}_state`) ? { state: dialog.get_value(`${prefix}_state`) } : {} }) },
-			{ fieldname: `${prefix}_pincode`, fieldtype: "Data", label: __("PIN Code"), ...reqd },
+			{ fieldname: `${prefix}_pincode`, fieldtype: "Data", label: __("PIN Code"), ...shown },
 		];
 	};
 	const dialog = new frappe.ui.Dialog({

@@ -7,7 +7,7 @@
 		{%- if task_form %}
 		<p class="a3s-detail__eyebrow">{{ source_title | e }}</p>
 		<h2 class="a3s-main__title">{{ task_name | e }}</h2>
-		<p class="a3s-main__sub">A new {{ collection.singular }} for this task on {{ source_title | e }}. Fill in what the task needs and create it.</p>
+		<p class="a3s-main__sub">{{ task_name | e }} for {{ source_title | e }}. Fill in what the task needs and create it.</p>
 		{%- include "templates/includes/portal_task_people.html" %}
 		{%- if task_downloads or claim %}
 		<div class="a3s-detail__actions" style="margin-top:0.75rem">
@@ -18,6 +18,7 @@
 			{%- include "templates/includes/portal_claim_button.html" %}
 		</div>
 		{%- endif %}
+		{%- include "templates/includes/portal_task_missing.html" %}
 		{%- else %}
 		<p class="a3s-detail__eyebrow">{{ record.name | e }}</p>
 		<h2 class="a3s-main__title">Edit {{ title | e }}</h2>
@@ -139,6 +140,18 @@
 								<span class="a3s-field__hint" data-status></span>
 							</span>
 						</div>
+						{%- elif f.input == "file" %}
+						{#- A file (PDF or picture) uploads as soon as it is chosen, as a picture does; the
+						    hidden input carries its URL and the link opens what is there. -#}
+						<div class="a3s-imagefield" data-imagefield data-kind="file" data-fieldname="{{ f.fieldname }}">
+							<span class="a3s-imagefield__controls">
+								<a href="{{ f.value | e }}" target="_blank" rel="noopener" data-link{% if not f.value %} hidden{% endif %}>{{ f.file_name | e }}</a>
+								<input type="file" id="fld-{{ f.fieldname }}" accept="application/pdf,image/png,image/jpeg" data-file>
+								<input type="hidden" name="{{ f.fieldname }}" value="{{ f.value | e }}" data-value>
+								<button type="button" class="a3s-btn a3s-btn--ghost" data-clear{% if not f.value %} hidden{% endif %}>Remove</button>
+								<span class="a3s-field__hint" data-status></span>
+							</span>
+						</div>
 						{%- elif f.type == "Date" %}
 						<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
 						{%- elif f.type == "Datetime" %}
@@ -182,8 +195,8 @@
 	</div>
 </form>
 
-{#- Uploads any picture field on this form. Renders on every form and exits at once when
-    there is no image field, which keeps it in one place rather than in each page. -#}
+{#- Uploads any picture or file field on this form. Renders on every form and exits at once
+    when there is none, which keeps it in one place rather than in each page. -#}
 <script>
 (function () {
 	var fields = document.querySelectorAll("[data-imagefield]");
@@ -199,13 +212,22 @@
 		var value = root.querySelector("[data-value]");
 		var preview = root.querySelector("[data-preview]");
 		var empty = root.querySelector("[data-empty]");
+		var link = root.querySelector("[data-link]");
 		var clear = root.querySelector("[data-clear]");
 		var status = root.querySelector("[data-status]");
 
-		function show(url) {
+		function show(url, name) {
 			value.value = url || "";
-			if (url) { preview.src = url; preview.hidden = false; empty.hidden = true; clear.hidden = false; }
-			else { preview.removeAttribute("src"); preview.hidden = true; empty.hidden = false; clear.hidden = true; }
+			clear.hidden = !url;
+			if (link) {
+				/* A file: a link to it, named as it was uploaded. */
+				link.hidden = !url;
+				link.href = url || "#";
+				link.textContent = name || (url || "").split("/").pop();
+				return;
+			}
+			if (url) { preview.src = url; preview.hidden = false; empty.hidden = true; }
+			else { preview.removeAttribute("src"); preview.hidden = true; empty.hidden = false; }
 		}
 
 		file.addEventListener("change", function () {
@@ -225,7 +247,7 @@
 			}).then(function (res) {
 				var url = res.ok && res.body && res.body.message && res.body.message.file_url;
 				if (!url) throw new Error(((res.body || {})._server_messages) || "Upload failed.");
-				show(url);
+				show(url, res.body.message.file_name);
 				status.textContent = "";
 			}).catch(function (e) {
 				file.value = "";

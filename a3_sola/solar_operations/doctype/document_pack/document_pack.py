@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 """A set of documents that leaves together.
 
-Three tasks are packs: the Form 2/3 submission to KSEB, the completion pack to the bank,
-the completion file the customer keeps. Each has a fixed list of items - templates the
+Four tasks are packs: Form 2 and Form 3, each submitted to KSEB's Assistant Engineer, the
+completion pack to the bank, the completion file the customer keeps. Each has a fixed list of items - templates the
 engine renders, and prints of ERPNext documents already on the job - generated one at a
 time so one failure never blanks the rest, merged into a single PDF, and the pack completes
 when the recipient has it: acknowledged, sent, or handed over.
@@ -34,10 +34,17 @@ LINKS = (
 #: What each pack holds, in print order. A code is a Solar Document Template; an `@` item is
 #: a print of a document already on the job.
 PACKS = {
-	"KSEB Submission": {
+	# Form 2 goes on its own, within thirty days of the Form 1 fee: no agreement yet.
+	"KSEB Form 2": {
+		"code": "FRM2",
+		"items": ["KSEB-FORM-2"],
+		"done_when": ("acknowledged_on", "ae_acknowledgement_no"),
+		"done_label": "the Assistant Engineer's acknowledgement",
+	},
+	"KSEB Form 3": {
 		"code": "KFORMS",
 		"items": [
-			"KSEB-FORM-2", "KSEB-FORM-3", "KSEB-COVERING-COMPLETION", "KSEB-NETMETER-REQUEST",
+			"KSEB-FORM-3", "KSEB-COVERING-COMPLETION", "KSEB-NETMETER-REQUEST",
 			"KSEB-TESTING-CHECKLIST", "@agreement_print",
 		],
 		"done_when": ("acknowledged_on", "ae_acknowledgement_no"),
@@ -62,6 +69,9 @@ PACKS = {
 		"done_label": "the handover date",
 	},
 }
+#: The packs submitted to the section's Assistant Engineer, who acknowledges them.
+KSEB_PACKS = ("KSEB Form 2", "KSEB Form 3")
+
 SPECIAL = {
 	"@agreement_print": "Executed agreement",
 	"@photo_collage": "Site photographs",
@@ -107,14 +117,17 @@ class DocumentPack(Document):
 
 	def pull_defaults(self, installation):
 		"""Each pack knows which records it prints; the job already names them."""
-		if self.pack_type == "KSEB Submission":
+		if self.pack_type in KSEB_PACKS:
+			self.pull_assistant_engineer(installation)
+		if self.pack_type == "KSEB Form 2":
+			self.form2_due_date = installation.get("form2_due_on")
+		elif self.pack_type == "KSEB Form 3":
 			if not self.solar_agreement:
 				self.solar_agreement = frappe.db.get_value(
 					"Solar Agreement",
 					{"solar_installation": installation.name, "docstatus": 1, "is_terminated": 0},
 					"name",
 				)
-			self.form2_due_date = installation.get("form2_due_on")
 		elif self.pack_type == "Bank Completion Pack":
 			if not self.loan_application:
 				self.loan_application = installation.get("loan_application") or frappe.db.get_value(
@@ -149,6 +162,26 @@ class DocumentPack(Document):
 				"name",
 				order_by="creation desc",
 			)
+
+	def pull_assistant_engineer(self, installation):
+		"""The section's Assistant Engineer and phone, while the pack names none - and one the
+		pack names fills the section's blanks, for the next job there. A section's own entry is
+		never overwritten from a pack."""
+		section = installation.get("discom_section")
+		if not section:
+			return
+		on_section = frappe.db.get_value(
+			"DISCOM Section", section, ["assistant_engineer_name", "assistant_engineer_phone"], as_dict=True
+		) or frappe._dict()
+		self.ae_name = self.ae_name or on_section.assistant_engineer_name
+		self.ae_phone = self.ae_phone or on_section.assistant_engineer_phone
+		blanks = {
+			field: value
+			for field, value in (("assistant_engineer_name", self.ae_name), ("assistant_engineer_phone", self.ae_phone))
+			if value and not on_section.get(field)
+		}
+		if blanks:
+			frappe.db.set_value("DISCOM Section", section, blanks)
 
 	def set_defaults(self):
 		if not self.assigned_by:
@@ -240,7 +273,12 @@ def _special(doc, item):
 		)
 		if not agreement:
 			frappe.throw(_("No executed agreement on {0}.").format(installation.name))
-		return [(f"Agreement {agreement}", _print(doc, "Solar Agreement", agreement, "Solar Agreement"))]
+		# The KSEB Solar Agreement as the team's Word file lays it out - under the name the
+		# Form 3 task's checklist expects, so it fills that row (api/kseb_agreement_print).
+		from a3_sola.api import kseb_agreement_print
+
+		name, pdf = kseb_agreement_print.render(installation, agreement)
+		return [(kseb_agreement_print.TITLE, _attach_pdf(doc, name, pdf))]
 	if item == "@photo_collage":
 		from a3_sola.api import photos
 
@@ -448,7 +486,7 @@ def send(pack, recipients=None, message=None):
 	doc.sent_on = now_datetime()
 	doc.sent_to = recipients
 	doc.communication = result.get("name") if isinstance(result, dict) else None
-	if doc.pack_type == "KSEB Submission":
+	if doc.pack_type in KSEB_PACKS:
 		doc.submitted_to_ae_on = doc.submitted_to_ae_on or today()
 	elif doc.pack_type == "Bank Completion Pack":
 		doc.sent_to_bank_on = doc.sent_to_bank_on or today()
@@ -468,7 +506,7 @@ def mark_sent(pack, on=None, reference=None, via=None):
 	"""Left with the AE, sent to the bank, or handed to the customer - by whatever means."""
 	doc = _load(pack)
 	on = on or today()
-	if doc.pack_type == "KSEB Submission":
+	if doc.pack_type in KSEB_PACKS:
 		doc.submitted_to_ae_on = on
 	elif doc.pack_type == "Bank Completion Pack":
 		doc.sent_to_bank_on = on
@@ -487,8 +525,8 @@ def mark_sent(pack, on=None, reference=None, via=None):
 @frappe.whitelist()
 def mark_acknowledged(pack, acknowledgement_no=None, on=None, ae_name=None, file_url=None):
 	doc = _load(pack)
-	if doc.pack_type != "KSEB Submission":
-		frappe.throw(_("Only the KSEB submission is acknowledged by an Assistant Engineer."))
+	if doc.pack_type not in KSEB_PACKS:
+		frappe.throw(_("Only Form 2 and Form 3 are acknowledged by an Assistant Engineer."))
 	if not (acknowledgement_no or file_url):
 		frappe.throw(_("Record the acknowledgement number or attach the acknowledged copy."))
 	doc.acknowledged_on = on or today()
@@ -514,7 +552,7 @@ def complete(pack):
 	if doc.docstatus != 0:
 		frappe.throw(_("{0} is already submitted.").format(doc.name))
 	doc.status = "Completed"
-	doc.completed_on = today()
+	doc.completed_on = doc.completed_on or today()
 	doc.save()
 	doc.submit()
 	return doc.name

@@ -53,7 +53,7 @@ NAV_GROUPS = [
 			{"title": "Purchase Order", "sub": "Material procurement", "ic": "box", "route": "/a3solaportal/purchase-orders"},
 			{"title": "Delivery Note", "sub": "Material dispatch", "ic": "truck", "route": "/a3solaportal/delivery-notes"},
 			{"title": "Material Dispatch Notice", "sub": "Serials to contractor", "ic": "package", "route": "/a3solaportal/dispatch-notices"},
-			{"title": "Document Pack", "sub": "Form 2 and 3, handover", "ic": "stack", "route": "/a3solaportal/document-packs"},
+			{"title": "Document Pack", "sub": "Form 2, Form 3, handover", "ic": "stack", "route": "/a3solaportal/document-packs"},
 			{"title": "Commissioning Report", "sub": "Handover reports", "ic": "bolt", "route": "/a3solaportal/commissioning"},
 			{"title": "Installation Snag", "sub": "Defects and rectification", "ic": "alert", "route": "/a3solaportal/installation-snags"},
 			{"title": "Customer Review", "sub": "Feedback and Google", "ic": "star", "route": "/a3solaportal/customer-reviews"},
