@@ -192,3 +192,19 @@ a3_sola.patches.v1_2.procurement_pending_items
 a3_sola.patches.v1_2.remove_completion_certificate_task
 # Form 1 Payment: a confirmation, a receipt on Documents and a reimbursement claim.
 a3_sola.patches.v1_2.form1_payment_reimbursable
+# Form 2 & 3 split: Form 2 Submission (FRM2) on its own, Form 3 keeps the agreement.
+a3_sola.patches.v1_2.split_form2_form3
+# PM Surya Ghar registration: pre-installation site photo and the RIM-format quotation.
+a3_sola.patches.v1_2.surya_ghar_registration_papers
+# The registration fee refund request downloads from the Completion File task, as the Word file lays it out.
+a3_sola.patches.v1_2.refund_request_word_format
+# A design estimate's proposed size is the panels designed in, not the sizing's recommendation.
+a3_sola.patches.v1_2.proposed_size_is_the_panels
+# The Form 3 Submission's net-metering agreement is the KSEB Solar Agreement, printed from the job.
+a3_sola.patches.v1_2.kseb_solar_agreement_name
+# The Form 3 Submission no longer lists "AE acknowledged Form 3"; rows still waiting for a file go.
+a3_sola.patches.v1_2.drop_ae_acknowledged_form3
+# The job's payment schedule lives on its billing plan: milestone phases, and the payments received as rows.
+a3_sola.patches.v1_2.payment_schedule_on_plan
+# Each payment task lists the Payment Statement (received and payable, signed and sealed).
+a3_sola.patches.v1_2.payment_statement_rows

@@ -46,9 +46,22 @@ def upload(installation, task_code, row=None, document_name=None):
 	name = (expected.document_name if expected else (document_name or "")).strip()
 	if not name:
 		frappe.throw(_("Say what the document is."), frappe.ValidationError)
+	file_url = posted_file(inst)
+	if not file_url:
+		frappe.throw(_("No file was sent."), frappe.ValidationError)
+	documents.register_document(
+		inst, task_code, INSTALLATION, inst.name, name, file_url, kind="Uploaded",
+		template=expected.solar_document_template if expected else None,
+	)
+	return _panel(frappe.get_doc(INSTALLATION, inst.name), task_code)
+
+
+def posted_file(inst):
+	"""The request's posted `file`, kept private on the job: its URL, or None when no file
+	was sent. Refuses one over the size limit, or one that cannot be read."""
 	posted = frappe.request.files.get("file") if frappe.request and frappe.request.files else None
 	if not posted:
-		frappe.throw(_("No file was sent."), frappe.ValidationError)
+		return None
 	content = posted.stream.read()
 	limit = get_max_file_size()
 	if len(content) > limit:
@@ -64,10 +77,36 @@ def upload(installation, task_code, row=None, document_name=None):
 		# Frappe reads every PDF for embedded scripts; a damaged one cannot be read.
 		frappe.throw(_("{0} could not be read. If it is a PDF, it may be damaged - save it again and retry.").format(
 			posted.filename), frappe.ValidationError)
-	documents.register_document(
-		inst, task_code, INSTALLATION, inst.name, name, file.file_url, kind="Uploaded",
-		template=expected.solar_document_template if expected else None,
-	)
+	return file.file_url
+
+
+@frappe.whitelist(methods=["POST"])
+def remove(installation, task_code, row):
+	"""Take the file off the task's document row `row`: a row the task's checklist expects
+	waits for its file again (Missing), one added by hand goes. A verified file stays - it has
+	been checked. The File goes too unless another row holds it. Returns the panel."""
+	from a3_sola.setup import seed_stages
+
+	inst = _job(installation, "write")
+	_get_stage(inst, task_code)
+	d = next((r for r in inst.documents if r.name == row and r.stage_code == task_code and r.attachment), None)
+	if not d:
+		frappe.throw(_("That document has no file to remove."), frappe.ValidationError)
+	if d.is_verified:
+		frappe.throw(_("{0} has been verified; it cannot be removed here.").format(d.document_name), frappe.ValidationError)
+	file_url = d.attachment
+	expected = {name for name, _m, _t in seed_stages.checklists().get(task_code, ("", []))[1]}
+	if d.solar_document_template or d.is_mandatory or d.document_name in expected:
+		d.update({"document_kind": "Expected", "attachment": None, "source_doctype": None, "source_document": None,
+			"document_date": None})
+	else:
+		inst.remove(d)
+	inst.flags.ignore_validate_update_after_submit = True
+	inst.save(ignore_permissions=True)
+	if not any(r.attachment == file_url for r in inst.documents):
+		for name in frappe.get_all("File", filters={"file_url": file_url, "attached_to_doctype": INSTALLATION,
+				"attached_to_name": inst.name}, pluck="name"):
+			frappe.delete_doc("File", name, ignore_permissions=True)
 	return _panel(frappe.get_doc(INSTALLATION, inst.name), task_code)
 
 
@@ -90,17 +129,22 @@ def _panel(inst, task_code):
 			continue  # each KYC paper is shown under the customer's KYC, above
 		row_prints = prints.get(templates.get(d.solar_document_template), [])
 		# A document the system prints (the bank's, in RIM format) opens as printed now, with
-		# today's values - never a copy stored before a change.
-		live = next((p["url"] + ("&signed=1" if p.get("signable") else "") for p in row_prints), None)
+		# today's values - never a copy stored before a change. One the customer signs and
+		# returns (`keep_file`) keeps its uploaded copy, and its upload while there is none.
+		live = next((p["url"] + ("&signed=1" if p.get("signable") else "") for p in row_prints
+			if not p.get("keep_file")), None)
 		rows.append({
 			"row": d.name,
 			"name": d.document_name,
-			"kind": d.document_kind or "Expected",
+			# Printed live: generated, whatever the register row says.
+			"kind": "Generated" if live else (d.document_kind or "Expected"),
 			"mandatory": bool(d.is_mandatory),
 			"verified": bool(d.is_verified),
 			"file_url": live or d.attachment or "",
 			"file_name": "" if live else os.path.basename(d.attachment or ""),
 			"prints": row_prints,
+			# A file someone filed here (not a live print, not yet verified) can be taken off.
+			"removable": bool(d.attachment and not live and not d.is_verified),
 		})
 	return {
 		"task": {
@@ -157,10 +201,44 @@ def _prints(row, installation):
 		from a3_sola.api import form1_print
 
 		return {form1_print.CODE: form1_print.prints(installation)}
+	if row.stage_code in ("ADV", "BAL", "PCOM"):
+		# The payment statement - received and payable as of today (api/payment_statement_print).
+		from a3_sola.api import payment_statement_print
+
+		return {payment_statement_print.CODE: payment_statement_print.prints(installation)}
+	if row.stage_code == "FRM2":
+		# KSEBL Form 2 with the customer's details (api/form2_print); the row still takes
+		# the signed copy.
+		from a3_sola.api import form2_print
+
+		return {form2_print.CODE: form2_print.prints(installation)}
+	if row.stage_code == "KFORMS":
+		# KSEBL Form 3, the KSEB Solar Agreement, the testing checklist, the covering letter
+		# and the net meter request likewise (api/form3_print, api/kseb_agreement_print,
+		# api/kseb_checklist_print, api/kseb_covering_print, api/kseb_netmeter_print).
+		from a3_sola.api import (form3_print, kseb_agreement_print, kseb_checklist_print, kseb_covering_print,
+			kseb_netmeter_print)
+
+		return {m.CODE: m.prints(installation) for m in (form3_print, kseb_agreement_print, kseb_checklist_print,
+			kseb_covering_print, kseb_netmeter_print)}
+	if row.stage_code == "NPA":
+		# The quotation in the RIM format, as the bank gets it (api/loan_print.quotation),
+		# once the job has a quotation.
+		from a3_sola.api import loan_print
+
+		if not frappe.db.get_value("Solar Installation", installation, "quotation"):
+			return {}
+		return {loan_print.QUOTATION: [{"label": _("Print"), "url": loan_print.quotation_url(installation),
+			"signable": True}]}
 	if row.stage_code == "STMP":
 		from a3_sola.api import stamp_print
 
 		return {stamp_print.CODE: [{"label": _("Download"), "url": stamp_print.url(installation, row.task_document)}]}
+	if row.stage_code == "CFILE":
+		# The customer's request to KSEBL for the registration fee refund, to sign.
+		from a3_sola.api import refund_print
+
+		return {refund_print.CODE: refund_print.prints(installation)}
 	if row.task_doctype != "Loan Application" or not row.task_document:
 		return {}
 	from a3_sola.api.loan_print import DOCUMENTS

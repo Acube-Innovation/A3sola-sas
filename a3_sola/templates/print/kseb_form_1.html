@@ -3,16 +3,16 @@
     answers, then place, date, signature, and the panel and inverter. Context: f
     (api/form1_print.context), img (the label images as data URIs). -#}
 <style>
-	.f1 { font-family: "Times New Roman", Times, serif; font-size: 12pt; }
+	.f1 { font-family: Aptos, Calibri, Carlito, "Liberation Sans", Arial, sans-serif; font-size: 12pt; }
 	.f1 .head { width: 157mm; display: block; margin: 0 0 4mm; }
 	.f1 table { width: 100%; border-collapse: collapse; }
 	.f1 td { border: 1px solid #000; padding: 2mm 2.5mm; vertical-align: top; }
 	.f1 .n { width: 9mm; text-align: center; }
 	.f1 .l { width: 92mm; }
 	.f1 .l img { display: block; }
-	.f1 .v { font-weight: bold; }
+	.f1 .v { font-weight: normal; }
 	.f1 .sign td { border: 1px solid #000; height: 22mm; vertical-align: bottom; }
-	.f1 .sys { margin: 5mm 0 0; font-weight: bold; }
+	.f1 .sys { margin: 5mm 0 0; }
 	.f1 .sys p { margin: 0 0 1.5mm; }
 </style>
 <div class="f1">
@@ -28,8 +28,8 @@
 		<tr><td class="n">6</td><td class="l"><img src="{{ img.row6 }}" style="width:93.6mm;max-width:92mm"></td><td class="v">{{ f.complete_by | e }}</td></tr>
 		<tr class="sign">
 			<td class="n"></td>
-			<td><img src="{{ img.place }}" style="width:16.3mm;vertical-align:middle"> <b>{{ f.place | e }}</b><br><br>
-				<img src="{{ img.date }}" style="width:16.9mm;vertical-align:middle"> <b>{{ f.date | e }}</b></td>
+			<td><img src="{{ img.place }}" style="width:16.3mm;vertical-align:middle"> {{ f.place | e }}<br><br>
+				<img src="{{ img.date }}" style="width:16.9mm;vertical-align:middle"> {{ f.date | e }}</td>
 			<td style="text-align:center"><img src="{{ img.signature }}" style="width:40.6mm"></td>
 		</tr>
 	</table>

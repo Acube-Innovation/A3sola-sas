@@ -597,7 +597,7 @@ TEMPLATES += [
 		"stage_code": "KFORMS",
 		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
-		"notes": "SOURCE: To The Asst. Engineer-Covering Letter.docx",
+		"notes": "SOURCE: To The Asst. Engineer-Covering Letter.docx (printed by api/kseb_covering_print)",
 		"attachment_checklist": (
 			"Annexure 2 signed\n"
 			"Annexure 3 for completion along with the following attachments\n"
@@ -630,7 +630,7 @@ under service connection bearing Consumer No. {{ installation.consumer_number }}
 		"stage_code": "KFORMS",
 		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
-		"notes": "SOURCE: To The Asst. Engineer-Net Meter.docx",
+		"notes": "SOURCE: To The Asst. Engineer-Net Meter.docx (printed by api/kseb_netmeter_print)",
 		"body": _LETTERHEAD + """
 <p><strong>Sub: Request for allocation of Bi-directional Meter (Net-Meter) for Solar Plant</strong></p>
 <p>I have a service connection bearing Consumer No. {{ installation.consumer_number }} under the category
@@ -643,6 +643,25 @@ energy meter on my own.</p>
 """ + _SIGNOFF,
 	},
 	{
+		"template_code": "PAYMENT-STATEMENT",
+		"document_name": "Payment Statement",
+		"category": "Customer",
+		"recipient": "Consumer",
+		"stage_code": "ADV",
+		"source_doctype": "Solar Installation",
+		"signatory": "Authorised Signatory",
+		"requires_company_seal": 1,
+		"notes": "SOURCE: Rajesh P A due amount.pdf (printed by api/payment_statement_print)",
+		# What the customer owes, has paid and still has to pay, on the day it is printed: the
+		# PDF is api/payment_statement_print's; this is its outline.
+		"body": """<p style="text-align:right">{{ today }}</p>
+<p>To,<br>{{ consumer.consumer_name }}<br>{{ address_text }}</p>
+<p>Dear Sir,</p>
+<p>We hereby confirm receipt of payment below.</p>
+<p>Total project cost: {{ installation.gross_contract_value }}</p>
+""" + _SIGN_AND_STAMP,
+	},
+	{
 		"template_code": "KSEB-REFUND-REQUEST",
 		"document_name": "Request for Refund of Registration Fee",
 		"category": "KSEB",
@@ -652,26 +671,40 @@ energy meter on my own.</p>
 		"signatory": "Consumer",
 		"notes": "SOURCE: To The Asst. Engineer_Refund.docx",
 		"attachment_checklist": "Cancelled cheque",
-		"body": _LETTERHEAD + """
-<p><strong>Sub: Refund of Registration Fee paid for solar connectivity at consumer No.
-{{ installation.consumer_number }} and addition of bank account to records.</strong></p>
-<p>I had installed a {{ installation.capacity_kw }} kWp grid connected solar power plant at my building
-located at {{ address_text }} under the service connection bearing consumer No.
-{{ installation.consumer_number }}. The registration fee was paid and the plant was commissioned and
-connected to the grid.</p>
-<p>As per guidelines, 80% of the registration fee paid is refundable. Hence, it is hereby requested
-to refund {{ fmt_money(installation.kseb_registration_refundable) }} to my bank account as below:</p>
-<table border="1" cellpadding="5" cellspacing="0" width="100%">
-  <tr><td width="40%">Bank Account Number</td><td>{{ consumer.bank_account_no or "" }}</td></tr>
-  <tr><td>Name of Account Holder</td><td>{{ consumer.bank_account_holder_name or consumer.consumer_name }}</td></tr>
-  <tr><td>Bank</td><td>{{ consumer.bank_name or "" }}</td></tr>
-  <tr><td>Branch</td><td>{{ consumer.bank_branch or "" }}</td></tr>
-  <tr><td>IFSC Code</td><td>{{ consumer.bank_ifsc_code or "" }}</td></tr>
+		# As the Word file lays it out, line for line: the customer signs it, so it is printed
+		# without letterhead (api/refund_print.py). A bank detail not on the customer is left
+		# blank, to be written in by hand.
+		"body": """<div style="font-size:12pt;text-align:justify">
+<p style="text-align:right;margin:0 0 12pt">{{ today | replace("-", "/") }}</p>
+<p style="margin:0 0 12pt">To,<br>The Assistant Engineer,<br>KSEBL Section,<br>{{ section.section_name if section else "" }}</p>
+<p style="margin:0 0 12pt">Sir,</p>
+<p style="margin:0 0 12pt 10mm;text-indent:-10mm">Sub:&nbsp;-&nbsp;Refund of Registration Fee paid for solar connectivity at consumer No.
+{{ installation.consumer_number or "" }} and addition of Bank account to records.</p>
+<p style="margin:0 0 12pt;line-height:1.5">I had installed a {{ "%g" | format(installation.capacity_kw or 0) }}kWp Grid Connected
+Solar Power Plant at my building located at {{ address_text }} under the service connection bearing consumer No.
+{{ installation.consumer_number or "" }}. Registration fee was paid to KSEBL and the plant was commissioned and
+connected to the Grid.</p>
+<p style="margin:0 0 12pt;line-height:1.5">As per guidelines, 80% of the registration fee paid is refundable. Hence,
+it is hereby requested to refund the 80% of the registration fee paid to my bank account as below:</p>
+<table style="width:100%;border-collapse:collapse;margin:0 0 12pt;text-align:left">
+{% for label, value in [
+	("Bank Account Number", consumer.bank_account_no),
+	("Name of Account Holder", consumer.bank_account_holder_name or consumer.consumer_name),
+	("Bank", consumer.bank_name),
+	("Branch", consumer.bank_branch),
+	("IFSC Code", consumer.bank_ifsc_code),
+] %}
+  <tr><td style="border:1px solid #000;padding:5pt 6pt;width:36%">{{ label }}</td>
+      <td style="border:1px solid #000;padding:5pt 6pt">{{ value or "" }}</td></tr>
+{% endfor %}
 </table>
-<p>Further, the amount towards settlement of annual excess banked units may also be credited to the
-above-mentioned account.</p>
-<p>A cancelled cheque is attached. Please do the needful.</p>
-""" + _SIGNOFF,
+<p style="margin:0 0 12pt">Further, the amount towards settlement of annual excess banked units also may be credited to
+the above-mentioned account.</p>
+<p style="margin:0 0 12pt">Cancelled cheque is attached. Please do the needful.</p>
+<p style="margin:0">Thanking You</p>
+<p style="margin:0 0 48pt">Yours Faithfully</p>
+<p style="margin:0">{{ consumer.consumer_name }}</p>
+</div>""",
 	},
 	{
 		"template_code": "KSEB-FORM-1",
@@ -704,23 +737,24 @@ above-mentioned account.</p>
 		"document_name": "Annexure / Form 2",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
-		"stage_code": "KFORMS",
+		"stage_code": "FRM2",
 		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
-		"notes": "SOURCE: KSEBL Form 2.docx",
-		"body": """<h4 style="text-align:center">Annexure 2</h4>
+		# The PDF is the team's own form (api/form2_print); this is its English outline.
+		"notes": "SOURCE: KSEBL Form 2.docx (printed by api/form2_print)",
+		"body": """<h4 style="text-align:center">Annexure 2 &ndash; Application to register a solar energy system</h4>
 <table border="1" cellpadding="5" cellspacing="0" width="100%">
-  <tr><td width="6%">1</td><td width="44%">Consumer details</td>
+  <tr><td width="6%">1</td><td width="44%">Name, consumer number, category, telephone, email and full address</td>
       <td>{{ consumer.consumer_name }} / {{ installation.consumer_number }} /
           {{ consumer.tariff_category or "" }} / {{ address_text }} / {{ consumer.mobile_no or "" }}</td></tr>
-  <tr><td>2</td><td>Capacity of the plant</td><td>{{ installation.capacity_kw }} kWp</td></tr>
-  <tr><td>3</td><td>Installation completed</td><td>Yes</td></tr>
-  <tr><td>4</td><td>Whether the plant is ready for testing</td><td>Yes</td></tr>
-  <tr><td>5</td><td>Meter arrangement</td>
+  <tr><td>2</td><td>Connected load</td><td>{{ consumer.sanctioned_load_kw }} kW</td></tr>
+  <tr><td>3</td><td>Capacity of the solar plant</td><td>{{ installation.capacity_kw }} kWp</td></tr>
+  <tr><td>4</td><td>Panel, grid-tied inverter and interlock specifications attached</td><td>Yes</td></tr>
+  <tr><td>5</td><td>Solar meter and net meter bought by the consumer, specifications attached</td>
       <td>Solar Meter &ndash; Yes /
-          Net Meter &ndash; {% if installation.net_meter_mode == "Availed from DISCOM on Rental" %}From the DISCOM (Request Attached){% else %}Procured by the consumer{% endif %}</td></tr>
-  <tr><td>6</td><td>Earthing provided as per standards</td><td>Yes</td></tr>
-  <tr><td>7</td><td>Date</td><td>{{ today }}</td></tr>
+          Net Meter &ndash; {% if installation.net_meter_mode == "Availed from DISCOM on Rental" %}From KSEBL (Request Attached){% else %}Yes{% endif %}</td></tr>
+  <tr><td>6</td><td>Technical drawings of the plant attached</td><td>Yes</td></tr>
+  <tr><td>7</td><td>Date by which the installation is to be completed</td><td></td></tr>
 </table>
 """ + _SIGNOFF,
 	},
@@ -732,17 +766,18 @@ above-mentioned account.</p>
 		"stage_code": "KFORMS",
 		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
-		"notes": "SOURCE: KSEBL Form 3.docx",
-		"body": """<h4 style="text-align:center">Annexure 3 &ndash; Completion</h4>
+		# The PDF is the team's own form (api/form3_print); this is its English outline.
+		"notes": "SOURCE: KSEBL Form 3.docx (printed by api/form3_print)",
+		"body": """<h4 style="text-align:center">Annexure 3 &ndash; Application to test the installed solar energy system</h4>
 <table border="1" cellpadding="5" cellspacing="0" width="100%">
-  <tr><td width="6%">1</td><td width="54%">Installation completed as per the approved scheme</td><td>Yes</td></tr>
-  <tr><td>2</td><td>All wiring connections completed</td><td>Yes</td></tr>
-  <tr><td>3</td><td>Earthing provided for the installation as per standards</td><td>Yes</td></tr>
-  <tr><td>4</td><td>Inverter protection settings verified</td><td>Yes</td></tr>
-  <tr><td>5</td><td>Completion certificate submitted to the electrical section</td><td>Yes</td></tr>
-  <tr><td>6</td><td>Energisation approval obtained from the Electrical Inspector</td>
-      <td>{{ commissioning.energisation_approval_from_ei if commissioning else "Not Applicable" }}</td></tr>
-  <tr><td>7</td><td>Date</td><td>{{ today }}</td></tr>
+  <tr><td width="6%">1</td><td width="54%">Name, consumer number, category, telephone, email and full address</td>
+      <td>{{ consumer.consumer_name }} / {{ installation.consumer_number }} /
+          {{ consumer.tariff_category or "" }} / {{ address_text }} / {{ consumer.mobile_no or "" }}</td></tr>
+  <tr><td>2</td><td>Solar registration number</td><td></td></tr>
+  <tr><td>3</td><td>Capacity of the installed solar plant</td><td>{{ installation.capacity_kw }} kWp</td></tr>
+  <tr><td>4</td><td>Type test certificates of the MCB, ELCB, fuse, inverter and other electrical equipment provided</td><td>Yes</td></tr>
+  <tr><td>5</td><td>Panel, grid-tied inverter and interlock specifications attached</td><td>Yes</td></tr>
+  <tr><td>6</td><td>Electrical Inspector's energisation certificate attached</td><td>Not Applicable</td></tr>
 </table>
 """ + _SIGNOFF,
 	},
@@ -754,7 +789,7 @@ above-mentioned account.</p>
 		"stage_code": "KFORMS",
 		"source_doctype": "Document Pack",
 		"signatory": "Consumer",
-		"notes": "SOURCE: KSEB/CHECKLIST.xlsx - the form the Assistant Engineer inspects against.",
+		"notes": "SOURCE: KSEB/CHECKLIST.xlsx - the form the Assistant Engineer inspects against (printed by api/kseb_checklist_print).",
 		"body": """<h4 style="text-align:center">DETAILS OF INSTALLATION &amp; CHECKLIST TO BE FURNISHED ALONG WITH
 THE REQUEST FOR TESTING SOLAR INVERTERS</h4>
 {% set c = commissioning %}
@@ -840,14 +875,14 @@ out with a calibrated test kit, witnessed by the DISCOM.</p>
 	},
 	{
 		"template_code": "KSEB-NETMETER-AGREEMENT",
-		"document_name": "Net Metering Agreement (Stamp Paper)",
+		"document_name": "KSEB Solar Agreement",
 		"category": "KSEB",
 		"recipient": "Assistant Engineer",
 		"stage_code": "KFORMS",
 		"source_doctype": "Solar Agreement",
 		"requires_stamp_paper": 1,
 		"signatory": "Consumer and Two Witnesses",
-		"notes": "SOURCE: KSEB Agreement.docx, including the full schedule.",
+		"notes": "SOURCE: KSEB Agreement.docx, including the full schedule (printed by api/kseb_agreement_print).",
 		"body": """<h3 style="text-align:center">Agreement for Connecting Solar Energy System to
 The Distribution System of The Licensee</h3>
 {% set a = agreement %}
@@ -1192,20 +1227,20 @@ TEMPLATE_SETS = {
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
 		"CUST-HANDOVER-PACK", "BANK-COMPLETION-REPORT", "BANK-COVERING-COMPLETION",
-		"NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "PAYMENT-STATEMENT", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
 		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 	"PM Surya Ghar Residential - Self Funded": [
 		"MNRE-CONSUMER-VENDOR-AGREEMENT", "NP-APPLICATION", "KSEB-NETMETER-REQUEST",
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
-		"CUST-HANDOVER-PACK", "NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"CUST-HANDOVER-PACK", "NP-COMPLETION-REPORT", "KSEB-REFUND-REQUEST", "PAYMENT-STATEMENT", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
 		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 	"Commercial / Non-Subsidy": [
 		"KSEB-NETMETER-REQUEST", "KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION",
 		"KSEB-FORM-1", "KSEB-FORM-2", "KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT",
-		"CUST-COMMISSIONING-CERTIFICATE", "CUST-HANDOVER-PACK", "KSEB-REFUND-REQUEST", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
+		"CUST-COMMISSIONING-CERTIFICATE", "CUST-HANDOVER-PACK", "KSEB-REFUND-REQUEST", "PAYMENT-STATEMENT", "COMPLETION-REPORT-DATA", "STAMP-PAPER-DATA",
 		"WARRANTY-CERTIFICATE", "CUSTOMER-CONTACTS", "CUSTOMER-STATEMENT", "BOM-SUMMARY",
 	],
 }

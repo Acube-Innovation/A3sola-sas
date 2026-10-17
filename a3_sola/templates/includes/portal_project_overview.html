@@ -29,6 +29,74 @@
 		</div>
 	</section>
 
+	{#- The payment schedule: each milestone's share, received and pending, and the payments
+	    recorded against the job - recorded here, counted once Accounts confirms them. -#}
+	{%- set pay = overview.payments %}
+	{%- if pay %}
+	{%- set chip = {"Paid": "uploaded", "Partly Paid": "partly", "Unpaid": "missing", "Confirmed": "uploaded",
+		"Awaiting Confirmation": "pending-approval", "Sent Back": "rejected"} %}
+	<section class="a3s-card a3s-paysched" aria-label="Payment schedule">
+		<div class="a3s-paysched__head">
+			<h3 class="a3s-paysched__title">Payment Schedule</h3>
+			{%- if pay.can_record %}
+			<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-pay-record>
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-cash"></use></svg> Record payment</button>
+			{%- endif %}
+		</div>
+		<dl class="a3s-paysched__totals">
+			<div><dt>Contract</dt><dd>{{ pay.contract_text }}</dd></div>
+			<div><dt>Received</dt><dd>{{ pay.received_text }}</dd></div>
+			<div><dt>Pending</dt><dd>{{ pay.pending_text }}</dd></div>
+			{%- if pay.awaiting_text %}<div><dt>Awaiting Accounts</dt><dd>{{ pay.awaiting_text }}</dd></div>{% endif %}
+		</dl>
+		<div class="a3s-progress" role="progressbar" aria-label="Paid" aria-valuenow="{{ pay.percent_paid }}" aria-valuemin="0" aria-valuemax="100">
+			<span class="a3s-progress__fill" style="width: {{ pay.percent_paid }}%"></span>
+		</div>
+		<div class="a3s-tablewrap">
+			<table class="a3s-table a3s-paysched__table">
+				<thead><tr><th>Milestone</th><th class="a3s-table__num">%</th><th class="a3s-table__num">Amount</th><th>Due</th>
+					<th class="a3s-table__num">Received</th><th class="a3s-table__num">Pending</th><th>Status</th></tr></thead>
+				<tbody>
+				{%- for m in pay.milestones %}
+					<tr><td>{{ m.name | e }}</td><td class="a3s-table__num">{{ "%g" | format(m.percent) }}</td>
+						<td class="a3s-table__num">{{ m.amount_text }}</td><td>{{ m.when | e }}</td>
+						<td class="a3s-table__num">{{ m.received_text or "—" }}{% if m.last_payment %}<span class="a3s-table__sub">{{ m.last_payment }}</span>{% endif %}</td>
+						<td class="a3s-table__num">{{ m.pending_text }}</td>
+						<td><span class="a3s-taskdocs__state is-{{ chip[m.status] }}">{{ m.status }}</span></td></tr>
+				{%- endfor %}
+				</tbody>
+			</table>
+		</div>
+		{%- if pay.payments %}
+		<h4 class="a3s-paysched__sub">Payments</h4>
+		<ul class="a3s-paysched__payments">
+			{%- for p in pay.payments %}
+			<li class="a3s-paysched__payment">
+				<div class="a3s-paysched__pay-main">
+					<strong>{{ p.amount_text }}</strong> <span class="a3s-paysched__pay-task">{{ p.task | e }}</span>
+					<span class="a3s-taskdocs__state is-{{ chip[p.status] }}">{{ p.status }}</span>
+					<p class="a3s-paysched__pay-meta">{{ p.date }}{% for x in (p.mode, p.reference, p.bank, p.firm) if x %} &middot; {{ x | e }}{% endfor %}
+						{%- if p.recorded_by %} &middot; recorded by {{ p.recorded_by | e }}{% endif %}
+						{%- if p.confirmed_by %} &middot; confirmed by {{ p.confirmed_by | e }}{% endif %}</p>
+					{%- if p.remarks and p.status == "Sent Back" %}<p class="a3s-paysched__pay-meta is-warn">{{ p.remarks | e }}</p>{% endif %}
+				</div>
+				<div class="a3s-taskdocs__actions">
+					{%- if p.receipt %}<a class="a3s-icon-btn a3s-icon-btn--framed" href="{{ p.receipt | e }}" target="_blank" rel="noopener" title="Open the receipt" aria-label="Open the receipt"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg></a>{% endif %}
+					{%- if pay.can_confirm and p.status == "Awaiting Confirmation" %}
+					<button type="button" class="a3s-icon-btn a3s-icon-btn--primary" title="Confirm {{ p.amount_text }} received" aria-label="Confirm {{ p.amount_text }} received"
+						data-pay-confirm="{{ p.row }}" data-phase="{{ p.phase }}"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg></button>
+					<button type="button" class="a3s-icon-btn a3s-icon-btn--framed a3s-icon-btn--danger" title="Send back: not received" aria-label="Send back: not received"
+						data-pay-sendback="{{ p.row }}" data-phase="{{ p.phase }}" data-amount="{{ p.amount_text }}"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-back"></use></svg></button>
+					{%- endif %}
+				</div>
+			</li>
+			{%- endfor %}
+		</ul>
+		{%- endif %}
+		<script type="application/json" data-payschedule>{{ {"phases": pay.phases, "firms": pay.firms, "modes": pay.modes} | tojson }}</script>
+	</section>
+	{%- endif %}
+
 	{#- The tasks: a column per party, a small card per task with its status and dates. -#}
 	<section class="a3s-card a3s-proj__board" aria-label="Tasks by activity" data-installation="{{ record.name | e }}">
 		<div class="a3s-proj__cols" style="--a3s-proj-cols: {{ overview.columns | length }}">

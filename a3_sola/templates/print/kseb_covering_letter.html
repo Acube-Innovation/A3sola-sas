@@ -1,0 +1,51 @@
+{#- The covering letter to the Assistant Engineer for the Form 3 Submission, as the Word file
+    "To The Asst. Engineer-Covering Letter" lays it out - Book Antiqua 12pt, bold only where
+    the Word file has it. Context: f (api/kseb_covering_print.context). -#}
+<style>
+	{{ fonts }}
+	.cl { font-family: "Book Antiqua", "Letter Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.4; text-align: justify; }
+	.cl p { margin: 0; }
+	.cl .gap { height: 5mm; }
+	.cl .date { text-align: right; }
+	.cl .sub b { text-decoration: underline; }
+	.cl ol { margin: 0; padding-left: 9mm; }
+	.cl ol ol { list-style-type: lower-alpha; padding-left: 8mm; }
+	.cl li { padding-left: 1mm; }
+	.cl .sign { margin-top: 16mm; font-weight: bold; text-align: left; }
+</style>
+<div class="cl">
+	<p class="date">{{ f.date }}</p>
+	<div class="gap"></div>
+	<p>To,</p>
+	<p>The Assistant Engineer,</p>
+	<p>KSEBL Section,</p>
+	<p>{{ f.section | e }}</p>
+	<div class="gap"></div>
+	<p>Sir,</p>
+	<p class="sub"><b>Sub: -</b> Submission of Documents for Solar Plant Registration and Completion Report</p>
+	<div class="gap"></div><div class="gap"></div>
+	<p>Further to obtaining feasibility for installation of {{ f.capacity | e }} Solar Plant under service connection
+		bearing <b>Consumer No. {{ f.consumer_number | e }}</b> at my residence located at {{ f.address | e }} the plant
+		installation has been completed.</p>
+	<div class="gap"></div>
+	<p>The following document are hereby submitted:</p>
+	<ol>
+		<li><b>Annexure 2</b> signed.</li>
+		<li><b>Annexure 3</b> for completion along with following attachments
+			<ol>
+				<li>Panel Datasheet and BIS Certificate</li>
+				<li>Inverter Datasheet and BIS Certificate</li>
+				<li>Test cum Completion certificate with Single Line Diagram along with Panel and Inverter Serial Numbers.</li>
+				<li>Installation Checklist</li>
+				<li>Solar Meter calibration certificate.</li>
+			</ol>
+		</li>
+		<li>Solar Agreement on Stamp Paper signed</li>
+	</ol>
+	<div class="gap"></div>
+	<p><b>Please do the needful for commissioning of the solar plant.</b></p>
+	<div class="gap"></div><div class="gap"></div>
+	<p>Thanking You</p>
+	<p>Yours Faithfully</p>
+	<p class="sign">{{ f.name | e }}</p>
+</div>

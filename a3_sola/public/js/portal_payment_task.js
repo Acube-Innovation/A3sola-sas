@@ -125,7 +125,8 @@
 	}
 
 	function form(s) {
-		if (!draft) draft = { amount: s.payment.amount || "", bank: s.payment.bank || "", company: s.payment.company || "" };
+		if (!draft) draft = { amount: s.payment.amount || "", bank: s.payment.bank || "", company: s.payment.company || "",
+			payment_date: new Date().toISOString().slice(0, 10), mode: "Bank Transfer", reference: "" };
 		return '<p class="a3s-paytask__label">Payment details</p><div class="a3s-paytask__fields">' +
 			'<div class="a3s-field"><label for="a3s-pay-amount">Amount received (₹) <span class="a3s-req">*</span></label>' +
 			'<input type="number" min="0" step="any" id="a3s-pay-amount" data-draft="amount" placeholder="0" value="' + esc(draft.amount) + '"></div>' +
@@ -135,8 +136,32 @@
 			'<select id="a3s-pay-company" data-draft="company"><option value="">Choose the company…</option>' +
 			(s.company_options || []).map(function (c) {
 				return '<option value="' + esc(c) + '"' + (c === draft.company ? " selected" : "") + ">" + esc(c) + "</option>";
-			}).join("") + "</select></div></div>" +
+			}).join("") + "</select></div>" +
+			'<div class="a3s-field"><label for="a3s-pay-date">Payment date <span class="a3s-req">*</span></label>' +
+			'<input type="date" id="a3s-pay-date" data-draft="payment_date" value="' + esc(draft.payment_date) + '"></div>' +
+			'<div class="a3s-field"><label for="a3s-pay-mode">Mode</label><select id="a3s-pay-mode" data-draft="mode"><option value=""></option>' +
+			(s.modes || []).map(function (m) {
+				return '<option value="' + esc(m) + '"' + (m === draft.mode ? " selected" : "") + ">" + esc(m) + "</option>";
+			}).join("") + "</select></div>" +
+			'<div class="a3s-field"><label for="a3s-pay-ref">Reference (UTR / cheque no.)</label>' +
+			'<input type="text" id="a3s-pay-ref" data-draft="reference" value="' + esc(draft.reference) + '"></div></div>' +
 			'<p style="margin:0.6rem 0 0" data-verdict>' + verdict(s, draft.amount) + "</p>";
+	}
+
+	/* The phase's payments on the job's schedule - a phase can be paid in parts. */
+	function payments(s) {
+		if (!(s.payments || []).length) return "";
+		var tone = { Confirmed: "uploaded", "Awaiting Confirmation": "pending-approval", "Sent Back": "rejected" };
+		return '<p class="a3s-paytask__label">Payments' + (s.payment_status ? " &middot; " + esc(s.payment_status) +
+			(s.payment_status !== "Paid" ? ", " + esc(s.pending_text) + " pending" : "") : "") + "</p>" +
+			'<ul class="a3s-paysched__payments">' + s.payments.map(function (p) {
+				return '<li class="a3s-paysched__payment"><div class="a3s-paysched__pay-main"><strong>' + esc(p.amount_text) + "</strong>" +
+					'<span class="a3s-taskdocs__state is-' + (tone[p.status] || "missing") + '">' + esc(p.status) + "</span>" +
+					'<p class="a3s-paysched__pay-meta">' + [p.date, p.mode, p.reference, p.bank, p.firm].filter(Boolean).map(esc).join(" &middot; ") + "</p>" +
+					(p.status === "Sent Back" && p.remarks ? '<p class="a3s-paysched__pay-meta is-warn">' + esc(p.remarks) + "</p>" : "") + "</div>" +
+					(p.receipt ? '<a class="a3s-icon-btn a3s-icon-btn--framed" href="' + esc(p.receipt) + '" target="_blank" rel="noopener" title="Open the receipt" aria-label="Open the receipt">' +
+						'<svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg></a>' : "") + "</li>";
+			}).join("") + "</ul>";
 	}
 
 	function head(s) {
@@ -149,6 +174,7 @@
 	function paint(s) {
 		var t = s.task, html = head(s);
 		if (s.due) html += '<p class="a3s-paytask__label">Payment schedule</p>' + dueLine(s);
+		html += payments(s);
 		if (t.status === "Completed") {
 			html += '<p class="a3s-field__hint">Payment confirmed by Accounts' + (s.confirmed_by ? " (" + esc(s.confirmed_by) + ")" : "") +
 				(s.confirmed_on ? " on " + esc(s.confirmed_on) : "") + ".</p>" + details(s) +
@@ -213,14 +239,19 @@
 			}
 			setStatus("Sending to Accounts…");
 			call("payment_tasks.mark_received", { installation: installation, task_code: task,
-				amount: draft.amount, bank: draft.bank, company: draft.company })
-				.then(function (s) { redraw(s); setStatus("Sent to Accounts to confirm.", "ok"); })
+				amount: draft.amount, bank: draft.bank, company: draft.company, payment_date: draft.payment_date,
+				mode: draft.mode, reference: draft.reference })
+				.then(function (s) { answer = ""; draft = null; redraw(s); setStatus("Sent to Accounts to confirm.", "ok"); })
 				.catch(function (err) { setStatus(err.message, "error"); });
 		}
 		if (what === "confirm") {
 			setStatus("Confirming…");
 			call("payment_tasks.confirm", { installation: installation, task_code: task })
-				.then(function (s) { redraw(s); setStatus("Payment confirmed. The task is complete.", "ok"); })
+				.then(function (s) {
+					redraw(s);
+					setStatus(s.task.status === "Completed" ? "Payment confirmed. The task is complete."
+						: "Payment confirmed. " + (s.pending_text || "Some") + " is still pending on this phase.", "ok");
+				})
 				.catch(function (err) { setStatus(err.message, "error"); });
 		}
 		if (what === "back") body.querySelector("[data-back]").hidden = false;

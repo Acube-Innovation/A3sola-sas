@@ -11,7 +11,7 @@ payment again, with the reason, and goes back to the person who marked it.
 
 import frappe
 from frappe import _
-from frappe.utils import flt, fmt_money, format_datetime, now_datetime, today
+from frappe.utils import flt, fmt_money, format_date, format_datetime, getdate, now_datetime, today
 
 from a3_sola.api import stages, task_assignees
 from a3_sola.api.stages import _get_stage
@@ -158,14 +158,91 @@ def state(installation, task_code):
 		"remarks": row.remarks or "",
 		"can_mark": bool(inst.has_permission("write")) and row.status not in ("Completed", "Skipped"),
 		"can_confirm": can_confirm() and awaiting(row),
+		**_phase_payments(inst, task_code),
 	}
 
 
+def _phase_payments(inst, task_code):
+	"""The phase's payments on the job's schedule (newest first) and where it stands."""
+	from a3_sola.api import billing
+
+	plan = billing.plan_of(inst)
+	if not plan:
+		return {"payments": [], "payment_status": "", "pending_text": ""}
+	status, pending = billing.phase_standing(plan, task_code)
+	money = lambda v: fmt_money(flt(v), currency="INR")  # noqa: E731
+	return {
+		"payments": [{
+			"row": p.name, "amount_text": money(p.amount),
+			"date": format_date(p.payment_date, "d MMM yyyy") if p.payment_date else "",
+			"mode": p.payment_mode or "", "reference": p.reference_no or "", "bank": p.bank or "",
+			"firm": p.receiving_firm or "", "status": p.status, "receipt": p.receipt or "", "remarks": p.remarks or "",
+		} for p in sorted(_payments(plan, task_code), key=lambda p: (str(p.payment_date or ""), p.idx), reverse=True)],
+		"payment_status": status, "pending_text": money(pending) if status else "",
+		"modes": list(billing.PAYMENT_MODES),
+	}
+
+
+def _plan(inst):
+	"""The job's billing plan, where its payments are kept - made now if the job has none yet
+	- or None when it cannot have one (no customer or contract value): its payment task then
+	keeps the one payment on its row, as before the schedule."""
+	from a3_sola.api import billing
+
+	plan = billing.plan_of(inst)
+	if not plan:
+		name = billing.ensure_plan_for_installation(inst.name, replay=False)
+		plan = frappe.get_doc("Solar Billing Plan", name) if name else None
+	return plan
+
+
+def _save_plan(plan):
+	plan.flags.ignore_validate_update_after_submit = True
+	plan.flags.ignore_permissions = True
+	plan.save(ignore_permissions=True)
+
+
+def _payments(plan, code, status=None, row=None):
+	return [p for p in plan.get("payments") or [] if p.phase_code == code and (not status or p.status == status)
+		and (not row or p.name == row)]
+
+
+def _new_receipt(inst, code, plan):
+	"""The receipt for a payment being recorded: one posted with it, filed in the job's
+	register (the task's receipt row while it is empty, else a numbered one beside it) - or the
+	receipt already uploaded to the task that no payment has used yet."""
+	from a3_sola.api import documents, portal_tasks
+
+	used = {p.receipt for p in plan.get("payments") or [] if p.receipt}
+	file_url = portal_tasks.posted_file(inst)
+	if file_url:
+		name, row = PAYMENT_TASKS[code], _receipt(inst, code)
+		if row and row.attachment:
+			taken = sum(1 for d in inst.documents if d.stage_code == code and (d.document_name or "").startswith(name))
+			name = "{0} ({1})".format(name, taken + 1)
+		documents.register_document(inst, code, "Solar Installation", inst.name, name, file_url, kind="Uploaded", save=False)
+		return file_url
+	row = _receipt(inst, code)
+	if row and row.attachment and row.attachment not in used:
+		return row.attachment
+	frappe.throw(_("Upload the {0} for this payment.").format(PAYMENT_TASKS[code].lower()), title=_("Receipt Needed"))
+
+
 @frappe.whitelist(methods=["POST"])
-def mark_received(installation, task_code, amount=None, bank=None, company=None):
-	"""The payment has come - `amount`, into `bank`, received by `company` (one of the firms) -
-	and with its receipt filed, the task goes to Accounts to confirm."""
+def mark_received(installation, task_code, amount=None, bank=None, company=None, payment_date=None, mode=None,
+		reference=None):
+	"""A payment has come - `amount` on `payment_date`, by `mode` (with its `reference`), into
+	`bank`, received by `company` (one of the firms) - with its receipt (posted with it, or
+	already uploaded to the task). It goes on the job's payment schedule awaiting Accounts, and
+	the task to Accounts to confirm. A phase can be paid in parts: each is recorded the same way."""
 	amount, bank, company = flt(amount), (bank or "").strip(), (company or "").strip()
+	payment_date = getdate(payment_date) if payment_date else getdate(today())
+	if payment_date > getdate(today()):
+		frappe.throw(_("The payment date cannot be in the future."), title=_("Payment Date"))
+	from a3_sola.api.billing import PAYMENT_MODES
+
+	if mode and mode not in PAYMENT_MODES:
+		frappe.throw(_("{0} is not a payment mode.").format(mode), frappe.ValidationError)
 	missing = [label for label, value in ((_("the amount received"), amount > 0), (_("the bank"), bank),
 		(_("the company that received it"), company)) if not value]
 	if missing:
@@ -180,9 +257,19 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None)
 	row = _row(inst, task_code)
 	if row.status in ("Completed", "Skipped"):
 		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
-	receipt = _receipt(inst, task_code)
-	if not (receipt and receipt.attachment):
+	plan = _plan(inst)
+	if plan:
+		receipt = _new_receipt(inst, task_code, plan)
+		plan.append("payments", {
+			"phase_code": task_code, "amount": amount, "payment_date": payment_date, "payment_mode": mode or None,
+			"reference_no": (reference or "").strip() or None, "bank": bank, "receiving_firm": company,
+			"account": accounts[company], "receipt": receipt, "status": "Awaiting Confirmation",
+			"recorded_by": frappe.session.user, "recorded_on": now_datetime(),
+		})
+		_save_plan(plan)
+	elif not ((_receipt(inst, task_code) or frappe._dict()).attachment):
 		frappe.throw(_("Upload the {0} first.").format(PAYMENT_TASKS[task_code].lower()), title=_("Receipt Needed"))
+	# The task's row shows the latest payment (and so that it awaits Accounts).
 	row.payment_received_by = frappe.session.user
 	row.payment_received_on = now_datetime()
 	row.payment_amount, row.payment_bank, row.payment_company = amount, bank, company
@@ -204,32 +291,86 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None)
 	return state(installation, task_code)
 
 
+def _awaiting_payments(inst, row, task_code, payment):
+	"""The phase's payments awaiting Accounts - the one `payment`, else all of them. A task
+	marked before the plan held payments has none: its row's amount is moved onto the plan
+	first, so it is confirmed like any other."""
+	plan = _plan(inst)
+	if not plan:
+		if not awaiting(row):
+			frappe.throw(_("{0} is not waiting for confirmation.").format(row.stage_name))
+		return None, []
+	if not _payments(plan, task_code) and awaiting(row) and flt(row.get("payment_amount")):
+		receipt = _receipt(inst, task_code)
+		plan.append("payments", {
+			"phase_code": task_code, "amount": flt(row.payment_amount),
+			"payment_date": getdate(row.payment_received_on) if row.payment_received_on else getdate(today()),
+			"bank": row.payment_bank, "receiving_firm": row.payment_company, "account": row.payment_account,
+			"receipt": receipt.attachment if receipt else None, "status": "Awaiting Confirmation",
+			"recorded_by": row.payment_received_by, "recorded_on": row.payment_received_on,
+		})
+	waiting = _payments(plan, task_code, "Awaiting Confirmation", payment)
+	if not waiting:
+		frappe.throw(_("{0} has no payment waiting for confirmation.").format(row.stage_name))
+	return plan, waiting
+
+
+def _after_review(inst, row, plan, task_code):
+	"""The task once Accounts has looked: still awaiting while a payment of its waits; else
+	it is no longer with Accounts."""
+	if _payments(plan, task_code, "Awaiting Confirmation"):
+		return
+	row.payment_received_by = None
+	row.payment_received_on = None
+
+
 @frappe.whitelist(methods=["POST"])
-def confirm(installation, task_code):
-	"""Accounts confirms the money is in: the task is done."""
+def confirm(installation, task_code, payment=None):
+	"""Accounts confirms the money is in - the one `payment`, else every payment of the phase
+	waiting. It counts on the schedule from now; the task is done when the phase is paid in
+	full, and otherwise stays open (Partly Paid) for the rest."""
+	from a3_sola.api import billing
+
 	if not can_confirm():
 		frappe.throw(_("Only Accounts can confirm a payment."), frappe.PermissionError)
 	# Accounts reads the job; the task's own transition is the engine's to save.
 	inst = _job(installation, "read")
 	row = _row(inst, task_code)
-	if not awaiting(row):
-		frappe.throw(_("{0} is not waiting for confirmation.").format(row.stage_name))
-	row.status = "Completed"
-	row.actual_completion_date = today()
-	row.completed_by = frappe.session.user
-	row.blocked_reason = None
-	stages._save(inst, _("{0}: payment confirmed by {1}.").format(row.stage_name, _full_name(frappe.session.user)))
-	from a3_sola.api.tasks import notify_task_completed
+	plan, waiting = _awaiting_payments(inst, row, task_code, payment)
+	if plan:
+		for p in waiting:
+			p.status, p.confirmed_by, p.confirmed_on = "Confirmed", frappe.session.user, now_datetime()
+		_save_plan(plan)
+		recorders = list({p.recorded_by for p in waiting if p.recorded_by})
+		amount = fmt_money(sum(flt(p.amount) for p in waiting), currency="INR")
+		status, pending = billing.phase_standing(plan, task_code)
+		_after_review(inst, row, plan, task_code)
+	else:
+		# No schedule to keep it on: the payment on the task's row is the phase, done.
+		recorders, status, pending = [row.payment_received_by], "Paid", 0.0
+		amount = fmt_money(row.get("payment_amount"), currency="INR")
+	if status == "Paid":
+		row.status = "Completed"
+		row.actual_completion_date = today()
+		row.completed_by = frappe.session.user
+		row.blocked_reason = None
+		stages._save(inst, _("{0}: {1} confirmed by {2} - paid in full.").format(
+			row.stage_name, amount, _full_name(frappe.session.user)))
+		from a3_sola.api.tasks import notify_task_completed
 
-	notify_task_completed(inst, task_code)
-	_notify(inst, [row.payment_received_by], _("{0} on {1} confirmed by Accounts").format(row.stage_name, inst.name))
+		notify_task_completed(inst, task_code)
+	else:
+		row.status = "In Progress"
+		stages._save(inst, _("{0}: {1} confirmed by {2} - {3} still pending.").format(
+			row.stage_name, amount, _full_name(frappe.session.user), fmt_money(pending, currency="INR")))
+	_notify(inst, recorders, _("{0} of {1} on {2} confirmed by Accounts").format(row.stage_name, amount, inst.name))
 	return state(installation, task_code)
 
 
 @frappe.whitelist(methods=["POST"])
-def send_back(installation, task_code, reason=None):
-	"""Accounts has not found the money: the task waits for the payment again, with the reason,
-	back with the person who marked it."""
+def send_back(installation, task_code, reason=None, payment=None):
+	"""Accounts has not found the money - the one `payment`, else every payment of the phase
+	waiting: it does not count, it says why, and the task goes back to whoever recorded it."""
 	if not can_confirm():
 		frappe.throw(_("Only Accounts can send a payment back."), frappe.PermissionError)
 	reason = (reason or "").strip()
@@ -237,13 +378,18 @@ def send_back(installation, task_code, reason=None):
 		frappe.throw(_("Say why the payment is not confirmed."))
 	inst = _job(installation, "read")
 	row = _row(inst, task_code)
+	plan, waiting = _awaiting_payments(inst, row, task_code, payment)
+	for p in waiting:
+		p.status, p.remarks = "Sent Back", _("Not confirmed by Accounts: {0}").format(reason)
+	marked_by = next((p.recorded_by for p in waiting if p.recorded_by), None) or row.payment_received_by
+	if plan:
+		_save_plan(plan)
+		_after_review(inst, row, plan, task_code)
+	else:
+		row.payment_received_by = row.payment_received_on = None
+	# The row's amount, bank and company stay, for the person to correct rather than retype.
 	if not awaiting(row):
-		frappe.throw(_("{0} is not waiting for confirmation.").format(row.stage_name))
-	marked_by = row.payment_received_by
-	row.payment_received_by = None
-	row.payment_received_on = None
-	# The amount, bank and company stay, for the person to correct rather than retype.
-	row.status = "Pending"
+		row.status = "In Progress" if plan and _payments(plan, task_code, "Confirmed") else "Pending"
 	row.remarks = _("Not confirmed by Accounts: {0}").format(reason)
 	if marked_by:
 		task_assignees.put(inst, task_code, [marked_by])

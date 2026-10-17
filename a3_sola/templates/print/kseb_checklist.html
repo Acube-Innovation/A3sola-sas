@@ -1,0 +1,85 @@
+{#- KSEB's checklist for the request to test the solar inverters, as the team's CHECKLIST.xlsx
+    lays it out: three columns (number, item, answer), the plant details, the protection
+    settings, the declaration and the KSEB officers' boxes. Context: f
+    (api/kseb_checklist_print.context). -#}
+{%- macro row(n, label, value, cls="") -%}
+<tr{% if cls %} class="{{ cls }}"{% endif %}><td class="n">{{ n }}</td><td class="l">{{ label }}</td><td class="v">{{ value | e }}</td></tr>
+{%- endmacro -%}
+<style>
+	.ck { font-family: Calibri, Carlito, "Liberation Sans", Arial, sans-serif; font-size: 9pt; line-height: 1.25; }
+	.ck table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+	.ck td { border: 1px solid #000; padding: 1mm 1.5mm; vertical-align: middle; }
+	.ck .n { text-align: left; }
+	.ck .v { font-weight: normal; }
+	.ck .title td { text-align: center; font-weight: bold; font-size: 11pt; padding: 2mm; }
+	.ck .h td { font-weight: bold; }
+	.ck .note td { font-size: 8.5pt; }
+	.ck .tall td { height: 9mm; vertical-align: top; }
+</style>
+<div class="ck">
+<table>
+	{#- The spreadsheet's column widths: the fixed layout takes them from here, not the cells. #}
+	<colgroup><col style="width:6%"><col style="width:37%"><col style="width:57%"></colgroup>
+	<tr class="title"><td colspan="3">DETAILS OF INSTALLATION &amp; CHECKLIST TO BE FURNISHED ALONG WITH THE REQUEST FOR TESTING SOLAR INVERTERS</td></tr>
+	{{ row("1", "NAME OF ELECTRICAL DIVISION &amp; SUB DIVISION", f.division) }}
+	{{ row("2", "NAME OF ELECTRICAL SECTION", f.section) }}
+	{{ row("3", "CONSUMER NO.", f.consumer_number) }}
+	{{ row("4", "TARIFF", f.tariff) }}
+	{{ row("5", "CONNECTED LOAD", f.load) }}
+	{{ row("6", "NAME OF SOLAR PLANT OWNER", f.owner) }}
+	{{ row("7", "ADDRESS", f.address) }}
+	{{ row("8", "EMAIL ID", f.email) }}
+	{{ row("9", "CONTACT PHONE NO. OF CONSUMER", f.mobile) }}
+	{{ row("10", "ALTERNATE CONTACT NO.", f.alternate) }}
+	<tr><td class="n">11</td><td colspan="2"><b>BANK DETAILS</b></td></tr>
+	{{ row("a)", "BANK NAME", f.bank_name) }}
+	{{ row("b)", "ACCOUNT NO.", f.bank_account) }}
+	{{ row("c)", "IFSC CODE", f.bank_ifsc) }}
+	<tr><td class="n">12</td><td class="l">NAME &amp; ADDRESS OF SUPPLIER/INSTALLER</td>
+		<td class="v">{{ f.installer | e }}{% for line in f.installer_address %}<br>{{ line | e }}{% endfor %}</td></tr>
+	{{ row("13", "EMAIL ID", f.installer_email) }}
+	{{ row("14", "CONTACT PHONE NO. OF INSTALLER", f.installer_phone) }}
+
+	<tr class="h"><td colspan="3">PLANT DETAILS</td></tr>
+	{{ row("1", "TYPE OF PLANT", f.plant_type) }}
+	{{ row("2", "TOTAL CAPACITY OF SOLAR PLANT", f.capacity) }}
+	{{ row("", "NUMBER OF PANELS", f.panel_count) }}
+	{{ row("", "INDIVIDUAL CAPACITY", f.panel_capacity) }}
+	{{ row("3", "MAKE &amp; SERIAL NUMBER OF INVERTERS", f.inverter) }}
+	{{ row("", "INVERTER TYPE SINGLE PHASE/THREE PHASE", f.inverter_phase) }}
+	{{ row("", "INVERTER CAPACITY", f.inverter_capacity) }}
+	{{ row("4", "DC INPUT VOLTAGE", f.dc_voltage) }}
+	{{ row("5", "VOLTAGE AND NUMBER OF INVERTER", f.inverter_count) }}
+	{{ row("6", "IF THE INVERTER IS OF HYBRID TYPE, WHETHER THE SCHEME CONFIRMS TO THE SCHEME APPROVED BY CE (REES)", f.hybrid) }}
+	{{ row("7", "WHETHER COMPLETION CERTIFICATE SUBMITTED IN ELE. SECTION", f.completion_certificate) }}
+	{{ row("8", "WHETHER ENERGISATION APPROVAL OBTAINED FROM ELE. INSPECTORATE", f.ei_approval) }}
+	{{ row("9", "DETAILS OF ENERGISATION APPROVAL BY EI", f.ei_details) }}
+	{{ row("10", "WHETHER DC ISOLATOR PROVIDED ON INCOMING SIDE OF INVERTER", f.dc_isolator) }}
+	{{ row("11", "WHETHER VISUAL ISOLATOR PROVIDED BEFORE CONNECTIVITY POINT", f.visual_isolator) }}
+	{{ row("12", "WHETHER ALL WIRING CONNECTIONS AS PER THE APPROVED SCHEME ARE COMPLETED", f.wiring) }}
+	{{ row("13", "WHETHER EARTHING PROVIDED FOR INSTALLATION AS PER STANDARDS (SEPARATE EARTHING FOR AC DB, DC DB, STRUCTURE &amp; PANELS, LA &amp; BODY OF INVERTER, ISOLATOR ETC.)", f.earthing) }}
+	{{ row("14", "WHETHER THE INVERTER IS EQUIPPED WITH THE FOLLOWING PROTECTION FUNCTIONS", f.protection) }}
+	{%- set s = f.settings %}
+	{{ row("a)", "WHETHER OVER &amp; UNDER VOLTAGE TRIP FUNCTION PROVIDED?", s.voltage_provided) }}
+	<tr><td class="n"></td><td class="l">DETAILS OF SETTING PROVIDED IN THE INVERTER</td>
+		<td class="v">OVER VOLTAGE SETTING : {{ s.over_voltage | e }}<br>UNDER VOLTAGE SETTING : {{ s.under_voltage | e }}<br>TRIP TIME SETTING : {{ s.voltage_trip_time | e }}</td></tr>
+	{{ row("b)", "WHETHER OVER &amp; UNDER FREQUENCY TRIP FUNCTION PROVIDED?", s.frequency_provided) }}
+	<tr><td class="n"></td><td class="l">DETAILS OF SETTING PROVIDED IN THE INVERTER</td>
+		<td class="v">OVER FREQUENCY SETTING : {{ s.over_frequency | e }}<br>UNDER FREQUENCY SETTING : {{ s.under_frequency | e }}<br>TRIP TIME SETTING : {{ s.frequency_trip_time | e }}</td></tr>
+	{{ row("c)", "WHETHER PROTECTION AGAINST UNINTENTIONAL ISLANDING PROVIDED?", s.anti_islanding) }}
+	{{ row("d)", "GRID FAILURE TRIP DELAY", s.grid_failure_delay) }}
+	{{ row("e)", "WHETHER TIME DELAY FUNCTION FOR RE ENERGISATION AFTER RESUMING STABLE GRID SUPPLY PROVIDED?", s.re_energisation_provided) }}
+	{{ row("", "DETAILS OF RE ENERGISATION TIME DELAY SETTING", s.re_energisation_delay) }}
+	<tr class="note"><td class="n"></td><td colspan="2">THE SUPPLIER / INSTALLER SHALL PROVIDE ANY OF THE FOLLOWING IN PROOF OF SETTINGS PROVIDED IN THE INVERTER FOR PROTECTIONS 14(A) &amp; 14(B) LISTED ABOVE.</td></tr>
+	<tr class="note"><td class="n">i)</td><td colspan="2">ACTUAL SETTING PROVIDED IN THE INVERTER, AS DISPLAYED IN THE HMI OF THE INVERTER OR DOWNLOADED INTO A LAPTOP, PC / MOBILE PHONE WHICH IS CONNECTED TO THE DEVICE.</td></tr>
+	<tr class="note"><td class="n">ii)</td><td colspan="2">FACTORY TEST CERTIFICATE ISSUED BY THE ORIGINAL EQUIPMENT MANUFACTURER OR A NABL ACCREDITED LAB SHOWING THE SERIAL NUMBER OF THE INVERTER &amp; PROTECTION FUNCTION SETTING PROVIDED.</td></tr>
+	<tr class="note"><td class="n">iii)</td><td colspan="2">REPORT OF ON SITE TESTING CARRIED OUT AT SITE BY AN AUTHORISED TESTING AGENCY WITH A CALIBRATED TEST KIT, WITNESSED BY KSEB.</td></tr>
+	<tr><td class="n"></td><td colspan="2">ALL THE STATEMENTS FURNISHED ABOVE ARE TRUE AND CORRECT</td></tr>
+	<tr class="tall"><td class="n"></td><td class="l">DATE: {{ f.date }}</td><td>SIGNATURE OF CONSUMER/INSTALLER</td></tr>
+	<tr><td class="n"></td><td colspan="2">REMARKS OF ASSISTANT ENGINEER:</td></tr>
+	<tr><td class="n"></td><td colspan="2">INSTALLATION INSPECTED AND FOUND TO BE IN ORDER, RECOMMENDED FOR PRE-ENERGISATION TESTING.</td></tr>
+	<tr class="tall"><td class="n"></td><td class="l">DATE</td><td>SIGNATURE OF ASSISTANT ENGINEER</td></tr>
+	<tr class="tall"><td class="n"></td><td class="l">DATE<br>RECOMMENDED FOR PRE-ENERGISATION TESTING</td><td>SIGNATURE OF ASSISTANT EXECUTIVE ENGINEER</td></tr>
+	<tr class="tall"><td class="n"></td><td class="l">DATE PRE-ENERGISATION TESTING MAY BE SCHEDULED</td><td>SIGNATURE OF EXECUTIVE ENGINEER</td></tr>
+</table>
+</div>

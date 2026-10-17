@@ -44,6 +44,34 @@ class TestTaskDocuments(FrappeTestCase):
 		self.assertEqual(filled["kind"], "Uploaded")
 		self.assertTrue(filled["file_url"].startswith("/private/files/"))
 
+	def test_removing_an_upload_leaves_the_expected_row_waiting(self):
+		row = self.expected_row("BCOM")
+		with patch.object(frappe, "request", posted()):
+			panel = portal_tasks.upload(self.installation.name, "BCOM", row=row.name)
+		filled = next(d for d in panel["documents"] if d["row"] == row.name)
+		self.assertTrue(filled["removable"])
+		panel = portal_tasks.remove(self.installation.name, "BCOM", row.name)
+		waiting = next(d for d in panel["documents"] if d["row"] == row.name)
+		self.assertEqual((waiting["kind"], waiting["file_url"], waiting["removable"]), ("Expected", "", False))
+		# This job's File goes (identical content uploaded elsewhere shares the URL, and stays).
+		self.assertFalse(frappe.db.exists("File", {"file_url": filled["file_url"],
+			"attached_to_doctype": "Solar Installation", "attached_to_name": self.installation.name}))
+
+	def test_removing_a_document_added_by_hand_drops_its_row(self):
+		with patch.object(frappe, "request", posted()):
+			panel = portal_tasks.upload(self.installation.name, "BCOM", document_name="Bank query reply")
+		added = next(d for d in panel["documents"] if d["name"] == "Bank query reply")
+		panel = portal_tasks.remove(self.installation.name, "BCOM", added["row"])
+		self.assertNotIn("Bank query reply", [d["name"] for d in panel["documents"]])
+
+	def test_a_verified_file_is_not_removed(self):
+		row = self.expected_row("BCOM")
+		with patch.object(frappe, "request", posted()):
+			portal_tasks.upload(self.installation.name, "BCOM", row=row.name)
+		frappe.db.set_value("Installation Document", row.name, "is_verified", 1)
+		with self.assertRaises(frappe.ValidationError):
+			portal_tasks.remove(self.installation.name, "BCOM", row.name)
+
 	def test_another_document_needs_a_name(self):
 		with patch.object(frappe, "request", posted()):
 			with self.assertRaises(frappe.ValidationError):
@@ -107,6 +135,44 @@ class TestStampPaperTask(FrappeTestCase):
 		panel = portal_tasks.task_documents(self.installation.name, "STMP")
 		sheet = next(d for d in panel["documents"] if d["name"] == "Stamp paper data sheet")
 		self.assertTrue(sheet["prints"] and "stamp_print.pdf" in sheet["prints"][0]["url"])
+
+
+class TestRefundRequest(FrappeTestCase):
+	"""The registration fee refund request downloads from the Completion File task, and the
+	customer's signed copy is still uploaded to the same row."""
+
+	def setUp(self):
+		self.installation = make_installation()
+
+	def refund_row(self, panel):
+		return next(d for d in panel["documents"] if d["name"] == "Request for refund of registration fee")
+
+	def test_the_letter_downloads_from_the_job(self):
+		from pypdf import PdfReader
+
+		from a3_sola.api import refund_print
+
+		refund_print.pdf(self.installation.name)
+		self.assertEqual(frappe.local.response.type, "download")
+		text = " ".join(PdfReader(BytesIO(frappe.local.response.filecontent)).pages[0].extract_text().split())
+		consumer = frappe.db.get_value("Solar Consumer", self.installation.solar_consumer, "consumer_name")
+		for expected in (consumer, "The Assistant Engineer", "KSEBL Section", "80% of the registration fee",
+				"Bank Account Number", "IFSC Code"):
+			self.assertIn(expected, text)
+		if self.installation.consumer_number:
+			self.assertIn(self.installation.consumer_number, text)
+
+	def test_the_row_offers_the_download_and_keeps_its_upload(self):
+		row = self.refund_row(portal_tasks.task_documents(self.installation.name, "CFILE"))
+		self.assertTrue(row["prints"] and "refund_print.pdf" in row["prints"][0]["url"])
+		self.assertEqual(row["file_url"], "")
+		self.assertNotEqual(row["kind"], "Generated")
+		with patch.object(frappe, "request", posted("signed.txt", b"Signed refund request")):
+			panel = portal_tasks.upload(self.installation.name, "CFILE", row=row["row"])
+		row = self.refund_row(panel)
+		self.assertEqual(row["kind"], "Uploaded")
+		self.assertTrue(row["file_url"].startswith("/private/files/"))
+		self.assertTrue(row["prints"])
 
 
 class TestLoanPack(FrappeTestCase):

@@ -517,12 +517,46 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		)
 
 	target_doctype, target_name = source or ("Solar Installation", inst.name)
-	# Form 1 is the team's own KSEBL form, with its printed labels (api/form1_print).
+	# Forms 1, 2 and 3 are the team's own KSEBL forms, with their printed labels
+	# (api/form1_print, api/form2_print, api/form3_print), and the KSEB Solar Agreement its
+	# own Word layout (api/kseb_agreement_print).
 	content = None
 	if tpl.template_code == "KSEB-FORM-1":
 		from a3_sola.api import form1_print
 
 		content = form1_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-FORM-2":
+		from a3_sola.api import form2_print
+
+		content = form2_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-FORM-3":
+		from a3_sola.api import form3_print
+
+		content = form3_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-NETMETER-AGREEMENT":
+		from a3_sola.api import kseb_agreement_print
+
+		content = kseb_agreement_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-TESTING-CHECKLIST":
+		# The team's CHECKLIST.xlsx layout, from the job and its commissioning report.
+		from a3_sola.api import kseb_checklist_print
+
+		content = kseb_checklist_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-COVERING-COMPLETION":
+		# The Word file "To The Asst. Engineer-Covering Letter" (api/kseb_covering_print).
+		from a3_sola.api import kseb_covering_print
+
+		content = kseb_covering_print.render(inst)[1]
+	elif tpl.template_code == "PAYMENT-STATEMENT":
+		# What was received and what is payable, signed and sealed (api/payment_statement_print).
+		from a3_sola.api import payment_statement_print
+
+		content = payment_statement_print.render(inst)[1]
+	elif tpl.template_code == "KSEB-NETMETER-REQUEST":
+		# The Word file "To The Asst. Engineer-Net Meter" (api/kseb_netmeter_print).
+		from a3_sola.api import kseb_netmeter_print
+
+		content = kseb_netmeter_print.render(inst)[1]
 	file_url = _attach(target_doctype, target_name, tpl, html, content=content)
 	_log_generation(inst, tpl, file_url, target_doctype, target_name)
 	# The task that generated the document is the truth about which task it belongs to;

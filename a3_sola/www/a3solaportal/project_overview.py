@@ -54,12 +54,16 @@ GENERIC_TASK_ICONS = {
 
 
 def project_overview(doc):
+	from a3_sola.api import billing
+
 	consumer, electricity = _consumer_box(doc), _electricity_box(doc)
 	solar, proposal = _solar_box(doc), _proposal_box(doc)
 	return {
 		"consumer": consumer,
 		"solar": solar,
 		"summary": _summary(consumer, electricity, solar, proposal) + [_location(doc)],
+		# The payment schedule: milestones, payments received, what is pending (api/billing).
+		"payments": billing.schedule(doc),
 		"columns": _task_columns(doc),
 	}
 

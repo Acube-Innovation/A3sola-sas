@@ -27,6 +27,14 @@
   "milestone_template",
   "sb_5",
   "milestones",
+  "sb_payments",
+  "total_received",
+  "cb_payments",
+  "total_pending",
+  "special_discount",
+  "discount_reason",
+  "sb_payments_table",
+  "payments",
   "sb_6",
   "total_planned",
   "total_triggered",
@@ -173,6 +181,55 @@
    "options": "Billing Milestone Entry"
   },
   {
+   "fieldname": "sb_payments",
+   "fieldtype": "Section Break",
+   "label": "Payments",
+   "description": "Each payment received from the customer: recorded on the job, counted once Accounts confirms it."
+  },
+  {
+   "fieldname": "total_received",
+   "fieldtype": "Currency",
+   "label": "Received (Confirmed)",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_payments",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_pending",
+   "fieldtype": "Currency",
+   "label": "Pending",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "special_discount",
+   "fieldtype": "Currency",
+   "label": "Special Discount",
+   "allow_on_submit": 1,
+   "description": "Taken off what the customer still owes - the last milestones first. On the payment statement."
+  },
+  {
+   "fieldname": "discount_reason",
+   "fieldtype": "Small Text",
+   "label": "Discount Reason",
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.special_discount"
+  },
+  {
+   "fieldname": "sb_payments_table",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "payments",
+   "fieldtype": "Table",
+   "label": "Payments",
+   "options": "Billing Plan Payment",
+   "allow_on_submit": 1
+  },
+  {
    "fieldname": "sb_6",
    "fieldtype": "Section Break",
    "label": "Summary"
@@ -295,7 +352,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-09 17:00:00.000000",
+ "modified": "2026-10-17 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Projects",
  "name": "Solar Billing Plan",

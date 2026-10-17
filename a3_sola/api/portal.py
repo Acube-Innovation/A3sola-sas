@@ -41,7 +41,7 @@ INSTALLATION_FIELDS = (
 #: Engineer but which the customer signs and is entitled to a copy of. Bank and portal
 #: paperwork is deliberately absent.
 CUSTOMER_RECIPIENTS = ("Consumer",)
-CUSTOMER_EXTRA_DOCUMENTS = ("Net Metering Agreement (Stamp Paper)",)
+CUSTOMER_EXTRA_DOCUMENTS = ("KSEB Solar Agreement",)
 
 
 def _customers():

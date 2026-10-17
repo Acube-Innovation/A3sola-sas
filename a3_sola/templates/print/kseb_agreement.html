@@ -1,0 +1,94 @@
+{#- The KSEB Solar Agreement, as the team's KSEB Agreement.docx lays it out: page 1 blank at
+    the top for the stamp paper's printed head, the agreement (api/agreement.render, or the
+    wording edited on the agreement), the signatures, then the schedule on its own page.
+    Context: doc (the Solar Agreement, in memory - api/kseb_agreement_print), body (its
+    text), blank (the dotted line). -#}
+{%- macro v(x) -%}{{ x if x not in (None, "", 0, 0.0) else blank }}{%- endmacro -%}
+<style>
+	.ka { font-family: "Times New Roman", Times, "Liberation Serif", serif; font-size: 11pt; line-height: 1.35; text-align: justify; }
+	.ka .title { text-align: center; font-weight: bold; text-decoration: underline; margin-bottom: 4mm; }
+	.ka .plain { font-weight: normal; }
+	{#- The stamp paper's printed head: the docx starts its title about 160mm down the sheet. #}
+	.ka .stamp { height: 142mm; }
+	.ka p { margin: 0 0 2.5mm; }
+	.ka ol { margin: 0 0 3mm; padding-left: 8mm; }
+	.ka li { margin: 0 0 2mm; padding-left: 1mm; }
+	.ka .sig { width: 100%; margin: 8mm 0 0; border-collapse: collapse; page-break-inside: avoid; }
+	.ka .sig td { width: 50%; vertical-align: top; padding: 0 3mm 0 0; text-align: left; }
+	.ka .sig p { margin: 0 0 4mm; }
+	.ka .schedule { page-break-before: always; }
+	.ka h2 { text-align: center; font-size: 15.5pt; font-weight: normal; text-decoration: underline; margin: 0 0 4mm; }
+	{#- The schedule keeps to one page: a size smaller than the agreement. #}
+	.ka table.sch { width: 100%; border-collapse: collapse; margin: 0 0 4mm; text-align: left; font-size: 10pt; line-height: 1.25; }
+	.ka .sch td, .ka .sch th { border: 1px solid #000; padding: 1mm 2mm; vertical-align: top; font-weight: normal; }
+	.ka .wheel td { width: 25%; }
+	.ka .sch .l { width: 52%; }
+	.ka .sch .val { font-weight: normal; }
+	.ka .parties { width: 100%; margin: 14mm 0 0; }
+	.ka .parties td { width: 50%; text-align: center; font-size: 11.5pt; }
+</style>
+<div class="ka">
+	<div class="stamp"></div>
+	{{ body }}
+	<table class="sig">
+		<tr>
+			<td>
+				<p>Sd/ &hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip; (1st party)</p>
+				<p>Witness 1 {{ doc.first_party_witness_1 or blank }}</p>
+				<p>Witness 2 {{ doc.first_party_witness_2 or blank }}</p>
+			</td>
+			<td>
+				<p>Sd/ &hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip; (2nd party)</p>
+				<p>Witness 1 {{ doc.second_party_witness_1 or blank }}</p>
+				<p>Witness 2 {{ doc.second_party_witness_2 or blank }}</p>
+			</td>
+		</tr>
+	</table>
+
+	<div class="schedule">
+		<h2>SCHEDULE to Solar Net Metering Agreement</h2>
+		<table class="sch">
+			<tr><td colspan="2"><b>(I)</b> Particulars regarding the consumer at whose premises the solar energy system is installed</td></tr>
+			<tr><td class="l">Name of the consumer</td><td class="val">{{ v(doc.consumer_name) }}</td></tr>
+			<tr><td class="l">Permanent address of the consumer</td><td class="val">{{ v(doc.permanent_address) }}</td></tr>
+			<tr><td class="l">Consumer number/Code &amp; Category</td><td class="val">{{ v(doc.consumer_number_and_category) }}</td></tr>
+			<tr><td class="l">Voltage at which supply is availed</td><td class="val">{{ v(doc.supply_voltage) }}</td></tr>
+			<tr><td class="l">Connected load/Contract demand</td><td class="val">{{ v(doc.connected_load_or_contract_demand) }}</td></tr>
+			<tr><td colspan="2"><b>(II)</b> Details of premises where the solar energy system is installed</td></tr>
+			<tr><td class="l">Address of the premises where the solar energy system is installed</td><td class="val">{{ v(doc.installation_address) }}</td></tr>
+			<tr><td class="l">Solar Meter details</td><td class="val">{{ v(doc.solar_meter_type) }}</td></tr>
+			<tr><td class="l">Meter No &amp; Make</td><td class="val">{{ v([doc.solar_meter_number, doc.solar_meter_make] | select | join(" / ")) }}</td></tr>
+			<tr><td class="l">Initial Reading</td><td class="val">{{ v("%g" | format(doc.solar_meter_initial_reading) if doc.solar_meter_initial_reading else "") }}</td></tr>
+			<tr><td class="l">Particulars of Solar energy system</td><td class="val">{% if doc.plant_capacity_kwp %}Grid-interactive rooftop solar photovoltaic system, {{ "%g" | format(doc.plant_capacity_kwp) }} kWp{% else %}{{ blank }}{% endif %}</td></tr>
+			<tr><td class="l">Solar Plant Identification Number (SPIN)</td><td class="val">{{ v(doc.spin) }}</td></tr>
+			<tr><td class="l">Capacity of the Solar energy system</td><td class="val">{{ v("%gkWp" | format(doc.plant_capacity_kwp) if doc.plant_capacity_kwp else "") }}</td></tr>
+			<tr><td class="l">Name of Electrical Section</td><td class="val">{{ v(doc.electrical_section) }}</td></tr>
+			<tr><td class="l">Details of Distribution Transformer and HT feeder (for HT prosumer) to which the plant is connected</td>
+				<td class="val">{{ [doc.distribution_transformer_details, doc.ht_feeder_details] | select | join(" / ") }}</td></tr>
+			<tr><td class="l">Name of Corporation/Municipality/Panchayath</td><td class="val">
+				{#- "Aluva Municipality" already says what it is. #}
+				{{ v(doc.local_body_name if doc.local_body_type and doc.local_body_type in (doc.local_body_name or "") else [doc.local_body_name, doc.local_body_type] | select | join(" ")) }}</td></tr>
+			<tr><td class="l">Village &amp; Survey Number</td><td class="val">{{ v([doc.village, doc.survey_number] | select | join(" - ")) }}</td></tr>
+			<tr><td class="l">GPS details of the Location</td><td class="val">{{ v(doc.gps_coordinates) }}</td></tr>
+		</table>
+
+		<table class="sch wheel">
+			<tr><td colspan="4"><b>(III)</b> Particulars of premises to which the excess energy generated from the solar energy system detailed in (II) above is to be wheeled in accordance with KSERC (RE &amp; Net Metering) Regulations, 2020 as amended from time to time</td></tr>
+			<tr><td>Order of preferred premises</td><td>Consumer Number of the premises</td><td>Tariff</td><td>Name of Electrical Section</td></tr>
+			{%- set rows = doc.wheeling_preferences or [] %}
+			{%- for row in rows %}
+			<tr><td>Preference {{ row.preference_order }}</td><td class="val">{{ row.consumer_number or "" }}</td>
+				<td class="val">{{ row.tariff or "" }}</td><td class="val">{{ row.electrical_section or "" }}</td></tr>
+			{%- endfor %}
+			{#- Always three preference slots, filled or not (no `range` in Frappe's sandbox). #}
+			{%- for order in [1, 2, 3][rows | length:] %}
+			<tr><td>Preference {{ order }}</td><td>&nbsp;</td><td></td><td></td></tr>
+			{%- endfor %}
+		</table>
+
+		<table class="parties">
+			<tr><td>&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;<br>1st Party</td>
+				<td>&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;<br>2nd Party</td></tr>
+		</table>
+	</div>
+</div>

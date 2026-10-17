@@ -2545,6 +2545,13 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-icon-btn .a3s-ic { width: 1rem; height: 1rem; }
 .a3s-icon-btn:hover, .a3s-icon-btn:focus-visible { color: var(--color-accent-hover); background: var(--color-accent-soft); }
 .a3s-icon-btn--danger:hover, .a3s-icon-btn--danger:focus-visible { color: #c0392b; background: rgba(255, 95, 87, 0.12); }
+/* A task's documents: view and download framed, upload in the accent (portal_project_board.js). */
+.a3s-icon-btn--framed, .a3s a.a3s-icon-btn--framed { width: 2.1rem; height: 2.1rem; margin: 0; border-color: var(--color-border); background: var(--color-surface); color: var(--color-text-muted); }
+.a3s a.a3s-icon-btn--framed:hover, .a3s-icon-btn--framed:focus-visible { color: var(--color-accent-hover); border-color: var(--color-accent); background: var(--color-accent-soft); }
+.a3s-icon-btn--primary { width: 2.1rem; height: 2.1rem; margin: 0; background-image: var(--color-accent-gradient); color: #fff; box-shadow: var(--shadow-soft); }
+.a3s-icon-btn--primary:hover, .a3s-icon-btn--primary:focus-visible { color: #fff; background: var(--color-accent-hover); }
+.a3s-icon-btn--framed .a3s-ic, .a3s-icon-btn--primary .a3s-ic { width: 1.05rem; height: 1.05rem; }
+.a3s-icon-btn--framed.a3s-icon-btn--danger:hover, .a3s-icon-btn--framed.a3s-icon-btn--danger:focus-visible { color: #c0392b; border-color: rgba(192, 57, 43, 0.45); background: rgba(255, 95, 87, 0.12); }
 .a3s-de-option-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
 .a3s-de-item__title { display: block; margin-top: 0.3rem; font-weight: 600; }
 .a3s-de-item__title.is-first { margin-top: 0; }
@@ -3533,3 +3540,26 @@ select.a3s-items__input { min-width: 9rem; }
 #sec-structure_materials td[data-label="Material"], #sec-materials td[data-label="Material"] { min-width: 17rem; }
 #sec-structure_materials td[data-label="Qty"], #sec-materials td[data-label="Qty"] { width: 5.5rem; }
 #sec-structure_materials td[data-label="Unit"], #sec-materials td[data-label="Unit"] { width: 6rem; }
+
+/* The job page's payment schedule (portal_project_overview.html): totals, a progress bar, the
+   milestones' table, then the payments recorded - each with its receipt and, for Accounts,
+   confirm and send back. */
+.a3s-paysched { display: grid; gap: 0.9rem; }
+.a3s-paysched__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.a3s-paysched__title { margin: 0; font-size: 1.05rem; }
+.a3s-paysched__head .a3s-btn .a3s-ic { width: 1rem; height: 1rem; margin-right: 0.3rem; vertical-align: -0.15rem; }
+.a3s-paysched__totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; margin: 0; }
+.a3s-paysched__totals div { padding: 0.6rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0.7rem; background: var(--color-surface); }
+.a3s-paysched__totals dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); }
+.a3s-paysched__totals dd { margin: 0.15rem 0 0; font-weight: 700; font-size: 1.05rem; }
+.a3s-paysched__table td { vertical-align: middle; }
+.a3s-paysched__table .a3s-table__sub { display: block; }
+.a3s-paysched__sub { margin: 0.2rem 0 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); }
+.a3s-paysched__payments { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.a3s-paysched__payment { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+	padding: 0.6rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0.7rem; }
+.a3s-paysched__pay-main { min-width: 0; }
+.a3s-paysched__pay-main .a3s-taskdocs__state { margin-left: 0.4rem; font-size: 0.72rem; }
+.a3s-paysched__pay-task { color: var(--color-text-muted); margin-left: 0.3rem; }
+.a3s-paysched__pay-meta { margin: 0.15rem 0 0; font-size: 0.78rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.a3s-paysched__pay-meta.is-warn { color: #c0392b; }

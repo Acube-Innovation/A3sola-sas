@@ -134,6 +134,16 @@
   "completion_data_email_subject",
   "completion_data_email_body",
   "completion_report_letter_head",
+  "sb_kseb_checklist",
+  "kseb_over_voltage_trip_v",
+  "kseb_under_voltage_trip_v",
+  "kseb_voltage_trip_time_ms",
+  "kseb_grid_failure_trip_delay_s",
+  "cb_kseb_checklist",
+  "kseb_over_frequency_trip_hz",
+  "kseb_under_frequency_trip_hz",
+  "kseb_frequency_trip_time_ms",
+  "kseb_re_energisation_delay_s",
   "sb_32",
   "auto_create_fee_payment_on_stage",
   "refund_follow_up_days",
@@ -1118,7 +1128,7 @@
   },
   {
    "default": "30",
-   "description": "Days after the Form 1 fee is paid within which Form 2 must be submitted. Sets the KFORMS task's due date.",
+   "description": "Days after the Form 1 fee is paid within which Form 2 must be submitted. Sets the Form 2 Submission (FRM2) task's due date.",
    "fieldname": "form2_window_days",
    "fieldtype": "Int",
    "label": "Form 2 Window (Days)"
@@ -1190,6 +1200,65 @@
    "fieldtype": "Link",
    "label": "Completion Report Letter Head",
    "options": "Letter Head"
+  },
+  {
+   "fieldname": "sb_kseb_checklist",
+   "fieldtype": "Section Break",
+   "label": "KSEB Testing Checklist",
+   "collapsible": 1,
+   "description": "The inverter protection settings the Form 3 Submission's testing checklist states. Printed on the KSEB testing checklist until the job's Commissioning Report records the inverter's own."
+  },
+  {
+   "default": "264",
+   "fieldname": "kseb_over_voltage_trip_v",
+   "fieldtype": "Float",
+   "label": "Over Voltage Trip (V)"
+  },
+  {
+   "default": "192",
+   "fieldname": "kseb_under_voltage_trip_v",
+   "fieldtype": "Float",
+   "label": "Under Voltage Trip (V)"
+  },
+  {
+   "default": "200",
+   "fieldname": "kseb_voltage_trip_time_ms",
+   "fieldtype": "Float",
+   "label": "Voltage Trip Time (ms)"
+  },
+  {
+   "default": "60",
+   "fieldname": "kseb_grid_failure_trip_delay_s",
+   "fieldtype": "Float",
+   "label": "Grid Failure Trip Delay (s)"
+  },
+  {
+   "fieldname": "cb_kseb_checklist",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "50.5",
+   "fieldname": "kseb_over_frequency_trip_hz",
+   "fieldtype": "Float",
+   "label": "Over Frequency Trip (Hz)"
+  },
+  {
+   "default": "47.5",
+   "fieldname": "kseb_under_frequency_trip_hz",
+   "fieldtype": "Float",
+   "label": "Under Frequency Trip (Hz)"
+  },
+  {
+   "default": "200",
+   "fieldname": "kseb_frequency_trip_time_ms",
+   "fieldtype": "Float",
+   "label": "Frequency Trip Time (ms)"
+  },
+  {
+   "default": "60",
+   "fieldname": "kseb_re_energisation_delay_s",
+   "fieldtype": "Float",
+   "label": "Re-energisation Delay (s)"
   },
   {
    "fieldname": "sb_32",
@@ -2888,7 +2957,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-16 14:30:00.000000",
+ "modified": "2026-10-17 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

@@ -24,7 +24,15 @@
   "paid_amount",
   "outstanding",
   "matched_disbursement",
-  "remarks"
+  "remarks",
+  "sb_payment",
+  "phase_code",
+  "credit_days",
+  "payment_status",
+  "cb_payment",
+  "received_amount",
+  "pending_amount",
+  "last_payment_date"
  ],
  "fields": [
   {
@@ -140,10 +148,67 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "sb_payment",
+   "fieldtype": "Section Break",
+   "label": "Payment",
+   "description": "What the customer has paid against this milestone - the plan's confirmed payments, oldest milestone first."
+  },
+  {
+   "fieldname": "phase_code",
+   "fieldtype": "Data",
+   "label": "Payment Task",
+   "description": "ADV, BAL or PCOM: the payment task that collects it.",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Int",
+   "label": "Credit Days",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Unpaid\nPartly Paid\nPaid",
+   "default": "Unpaid",
+   "in_list_view": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "cb_payment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_amount",
+   "fieldtype": "Currency",
+   "label": "Received",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "pending_amount",
+   "fieldtype": "Currency",
+   "label": "Pending",
+   "in_list_view": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "last_payment_date",
+   "fieldtype": "Date",
+   "label": "Last Payment",
+   "read_only": 1,
+   "allow_on_submit": 1
   }
  ],
  "links": [],
- "modified": "2026-08-25 13:00:00.000000",
+ "modified": "2026-10-17 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Projects",
  "name": "Billing Milestone Entry",
