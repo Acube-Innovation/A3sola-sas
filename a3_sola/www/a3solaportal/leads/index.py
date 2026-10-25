@@ -30,6 +30,8 @@ def get_context(context):
 
 	q = (frappe.form_dict.get("q") or "").strip()
 	status = (frappe.form_dict.get("status") or "").strip()
+	# Follow Up ticked: the Assignment column shows the outreach stage and next follow-up.
+	followup = (frappe.form_dict.get("followup") or "") == "1"
 
 	filters = {}
 	if status in LEAD_STATUSES:
@@ -55,6 +57,7 @@ def get_context(context):
 	context.limit = LIMIT
 	context.q = q
 	context.status_filter = status
+	context.followup_view = followup
 	# Ordered for the dropdown; the set is unordered.
 	context.status_options = [
 		"Lead", "Open", "Replied", "Opportunity", "Quotation",
@@ -73,7 +76,8 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 	# The solar columns are custom fields; ask only for the ones this site has installed
 	# so the list still renders on a site where the fixtures have not run yet.
 	meta = frappe.get_meta("Lead")
-	extra = [f for f in ("city", "state", "subsidy_scheme", "approx_capacity_kw") if meta.has_field(f)]
+	extra = [f for f in ("city", "state", "subsidy_scheme", "approx_capacity_kw", "outreach_stage", "next_followup_date",
+		"followup_status") if meta.has_field(f)]
 
 	leads = frappe.get_list(
 		"Lead",
@@ -109,6 +113,9 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 		lead["scheme_name"] = scheme_names.get(scheme) or scheme or ""
 		lead["solar"] = [p for p in (lead["scheme_name"], lead["size_kw"]) if p]
 		lead["created"] = frappe.utils.format_date(lead.get("creation"), "medium")
+		# The follow-up view: where the lead is on the cadence, and when it is next followed up.
+		lead["next_followup"] = frappe.utils.format_date(lead.get("next_followup_date"), "medium") if lead.get("next_followup_date") else ""
+		lead["followup_due"] = lead.get("followup_status") == "FOLLOW UP DUE"
 
 	_add_assignment(leads)
 	return leads

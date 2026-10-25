@@ -75,6 +75,7 @@ def setup(packages=True):
 
 	sync_default_subsidy_scheme()
 	seed_expense_items()
+	seed_lead_sources()
 	seed_kseb_tariff_categories()
 	seed_kseb_section_offices()
 	# Platform is not tenant-scoped: it is the product's own marketing and funnel data,
@@ -88,6 +89,15 @@ def setup(packages=True):
 	dashboard_projects.install()
 	dashboard_platform.install()
 	frappe.db.commit()
+
+
+def seed_lead_sources():
+	"""The Lead Source a new lead defaults to, where the site does not have it yet - the
+	default (setup/custom_fields.PROPERTY_SETTERS) must name a source that exists."""
+	from a3_sola.setup.custom_fields import DEFAULT_LEAD_SOURCE
+
+	if not frappe.db.exists("Lead Source", DEFAULT_LEAD_SOURCE):
+		frappe.get_doc({"doctype": "Lead Source", "source_name": DEFAULT_LEAD_SOURCE}).insert(ignore_permissions=True)
 
 
 def seed_kseb_section_offices():

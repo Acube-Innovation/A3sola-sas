@@ -39,6 +39,20 @@
 					<span class="a3s-badge a3s-badge--{{ lead.status | lower | replace(' ', '-') }}">{{ lead.status | e }}</span>
 				</td>
 				<td>
+					{%- if followup_view %}
+					{#- The follow-up view (the list's Follow Up box): the outreach stage and the next follow-up. -#}
+					<div class="a3s-assigncell">
+						<span class="a3s-assigncell__line">
+							{%- if lead.outreach_stage %}<span class="a3s-badge">{{ lead.outreach_stage | e }}</span>
+							{%- else %}<span class="a3s-table__muted">No outreach stage</span>{% endif %}
+						</span>
+						<span class="a3s-assigncell__line">
+							{%- if lead.next_followup %}Next follow-up <strong>{{ lead.next_followup }}</strong>
+							{%- if lead.followup_due %} <span class="a3s-pill--due">Due</span>{% endif %}
+							{%- else %}<span class="a3s-table__muted">No follow-up date</span>{% endif %}
+						</span>
+					</div>
+					{%- else %}
 					<div class="a3s-assigncell">
 						{#- Who raised it, and how long it has been open. -#}
 						<span class="a3s-assigncell__line">
@@ -56,5 +70,6 @@
 						<span class="a3s-assigncell__line a3s-table__muted">Not assigned</span>
 						{%- endif %}
 					</div>
+					{%- endif %}
 				</td>
 			</tr>
