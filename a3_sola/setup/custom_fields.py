@@ -143,11 +143,11 @@ CUSTOM_FIELDS = {
 				"combination is exactly what the sales manager needs to see."
 			),
 		},
-		{"fieldname": "call_status", "fieldtype": "Select", "options": "\nNot Answered\nBusy\nSwitched Off\nConnected", "label": "Call Status", "insert_after": "a3s_outreach_sb", "in_standard_filter": 1},
-		{"fieldname": "outreach_stage", "fieldtype": "Select", "options": "\n" + CADENCE, "label": "Outreach Stage", "insert_after": "call_status", "in_standard_filter": 1},
-		{"fieldname": "solar_lead_status", "fieldtype": "Select", "options": "\n" + LEAD_STATUS, "label": "Lead Status", "insert_after": "outreach_stage", "in_standard_filter": 1, "in_list_view": 1},
+		{"fieldname": "call_status", "fieldtype": "Select", "options": "\nNot Answered\nBusy\nSwitched Off\nConnected", "label": "Call Status", "insert_after": "a3s_outreach_sb", "in_standard_filter": 1, "default": "Connected"},
+		{"fieldname": "outreach_stage", "fieldtype": "Select", "options": "\n" + CADENCE, "label": "Outreach Stage", "insert_after": "call_status", "in_standard_filter": 1, "default": "Step 1: First Contact"},
+		{"fieldname": "solar_lead_status", "fieldtype": "Select", "options": "\n" + LEAD_STATUS, "label": "Lead Status", "insert_after": "outreach_stage", "in_standard_filter": 1, "in_list_view": 1, "default": "In Discussion"},
 		{"fieldname": "a3s_outreach_cb", "fieldtype": "Column Break", "insert_after": "solar_lead_status"},
-		{"fieldname": "last_message_date", "fieldtype": "Date", "label": "Last Message Date", "insert_after": "a3s_outreach_cb"},
+		{"fieldname": "last_message_date", "fieldtype": "Date", "label": "Last Message Date", "insert_after": "a3s_outreach_cb", "default": "Today"},
 		{"fieldname": "next_followup_date", "fieldtype": "Date", "label": "Next Follow-up Date", "insert_after": "last_message_date", "in_list_view": 1},
 		{
 			"fieldname": "followup_status",
@@ -161,7 +161,13 @@ CUSTOM_FIELDS = {
 			"description": "Computed daily. Never editable.",
 		},
 		{"fieldname": "consecutive_non_connects", "fieldtype": "Int", "label": "Consecutive Non-Connects", "insert_after": "followup_status", "read_only": 1},
-		{"fieldname": "a3s_outreach_log_sb", "fieldtype": "Section Break", "label": "Outreach Log", "insert_after": "consecutive_non_connects"},
+		# A proposal for the lead is an outreach event (api/outreach.apply_outreach_state): made,
+		# it puts the lead on Step 2 with a follow-up the next day; edited, it moves the follow-up.
+		{"fieldname": "proposal_created_on", "fieldtype": "Date", "label": "Proposal Created On", "insert_after": "consecutive_non_connects", "read_only": 1,
+		 "description": "Set when a Solar Proposal is made for this lead."},
+		{"fieldname": "proposal_updated_on", "fieldtype": "Date", "label": "Proposal Updated On", "insert_after": "proposal_created_on", "read_only": 1,
+		 "description": "Set when a Solar Proposal for this lead is made or edited."},
+		{"fieldname": "a3s_outreach_log_sb", "fieldtype": "Section Break", "label": "Outreach Log", "insert_after": "proposal_updated_on"},
 		{"fieldname": "outreach_log", "fieldtype": "Table", "options": "Outreach Log", "label": "Outreach Log", "insert_after": "a3s_outreach_log_sb"},
 		{"fieldname": "outreach_notes", "fieldtype": "Small Text", "label": "Notes / Remarks", "insert_after": "outreach_log"},
 	],
@@ -276,4 +282,13 @@ PROPERTY_SETTERS = [
 	{"doctype": "Lead", "fieldname": "state", "property": "options", "value": "Indian State", "property_type": "Text"},
 	{"doctype": "Lead", "fieldname": "state", "property": "default", "value": "Kerala", "property_type": "Text"},
 	{"doctype": "Lead", "fieldname": "city", "property": "label", "value": "City / Town", "property_type": "Data"},
+	# What a new lead most often is: a client, from social media, being qualified, asking about
+	# the product. The desk form and the portal's create and edit forms start from these.
+	{"doctype": "Lead", "fieldname": "type", "property": "default", "value": "Client", "property_type": "Text"},
+	{"doctype": "Lead", "fieldname": "source", "property": "default", "value": "Social Media - NEXIT", "property_type": "Text"},
+	{"doctype": "Lead", "fieldname": "qualification_status", "property": "default", "value": "In Process", "property_type": "Text"},
+	{"doctype": "Lead", "fieldname": "request_type", "property": "default", "value": "Product Enquiry", "property_type": "Text"},
 ]
+
+#: The Lead Source a new lead defaults to (PROPERTY_SETTERS): made where it is missing.
+DEFAULT_LEAD_SOURCE = "Social Media - NEXIT"

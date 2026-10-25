@@ -37,4 +37,19 @@ def get_context(context):
 	]
 	# Existing Lead Sources for the optional dropdown; empty is fine.
 	context.sources = frappe.get_all("Lead Source", pluck="name", order_by="name")
+	# Lead Type, Qualification Status and Request Type, each starting on Lead's default - as
+	# does the Source (api/leads.lead_defaults).
+	from a3_sola.api.leads import lead_defaults, select_options
+
+	context.defaults = lead_defaults()
+	context.choices = [
+		{"fieldname": f, "label": label, "options": select_options(f)}
+		for f, label in (("type", "Lead Type"), ("qualification_status", "Qualification Status"),
+			("request_type", "Request Type"))
+	]
+	# The outreach the lead starts on: step 1, in discussion, the call connected, the message today.
+	context.outreach_choices = [
+		{"fieldname": f, "label": label, "options": select_options(f)}
+		for f, label in (("outreach_stage", "Outreach Stage"), ("solar_lead_status", "Lead Status"), ("call_status", "Call Status"))
+	]
 	return context

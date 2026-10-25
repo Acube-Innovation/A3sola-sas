@@ -3093,7 +3093,22 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 
 /* ---- project list: four stacked columns and the job's latest task as its status ---- */
 .a3s-projlist .a3s-stack > span:first-child, .a3s-projlist .a3s-stack > .a3s-table__link { font-size: 0.9375rem; }
-.a3s-projlist__status { min-width: 17rem; }
+/* Four columns of equal width; narrower than four 16rem columns, the table scrolls in its card. */
+.a3s-projlist { table-layout: fixed; min-width: 64rem; }
+.a3s-projlist th, .a3s-projlist td { width: 25%; overflow-wrap: anywhere; }
+.a3s-projlist__package { font-weight: 600; }
+/* The Status cell: percent and status, the bar, tasks done beside the overdue count, the focus. */
+.a3s-projlist__statushead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.a3s-projlist__tasks { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.a3s-projlist__late { display: inline-block; padding: 0.1rem 0.6rem; border-radius: var(--radius-pill); background: #e5484d; color: #fff;
+	font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+/* The Customer cell: the round initials in a column of their own, the text stacked beside them. */
+.a3s-projlist__who { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.65rem; align-items: start; }
+.a3s-projlist__badge { display: block; line-height: 0; }
+.a3s-projlist__who .a3s-table__link { font-size: 0.9375rem; font-weight: 600; }
+.a3s-projlist__conid { justify-self: start; align-self: flex-start; display: inline-block; margin: 0.15rem 0; padding: 0.1rem 0.6rem;
+	border-radius: var(--radius-pill); background: var(--color-accent-soft); color: var(--color-accent-hover);
+	font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
 /* The project page's progress bar, in a table cell: no space above, a smaller figure. */
 .a3s-projlist__progress { margin: 0; padding-top: 0; }
 .a3s-projlist__progress .a3s-proj__percent { font-size: 1.35rem; }
@@ -3563,3 +3578,9 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-paysched__pay-task { color: var(--color-text-muted); margin-left: 0.3rem; }
 .a3s-paysched__pay-meta { margin: 0.15rem 0 0; font-size: 0.78rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
 .a3s-paysched__pay-meta.is-warn { color: #c0392b; }
+
+/* The Leads list's Follow Up box (leads/index.html), and a follow-up that is due. */
+.a3s-leads__view { margin: 0.45rem 0 0; }
+.a3s-leads__view .a3s-check { font-size: 0.85rem; }
+.a3s-pill--due { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill);
+	font-size: 0.72rem; font-weight: 700; background: rgba(255, 95, 87, 0.14); color: #c0392b; }

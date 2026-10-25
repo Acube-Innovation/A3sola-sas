@@ -1,12 +1,12 @@
-{#- The consumer as an ERPNext Customer: linked, or converted from here. A quotation saved
-    for the consumer makes the Customer on its own if this has not been done. -#}
+{#- The consumer as an ERPNext Customer: made with the consumer; one from before that (or
+    whose making failed) is converted from here, or by its first quotation. -#}
 <section class="a3s-card a3s-detail__card" id="a3s-consumer-customer" data-name="{{ record.name | e }}">
 	<h3 class="a3s-detail__card-title">ERPNext Customer</h3>
 	{%- if customer.name %}
 	<p><a href="{{ customer.desk }}"><b>{{ customer.customer_name | e }}</b></a> &middot; {{ customer.name | e }}</p>
 	<p class="a3s-field__hint">Quotations, orders and invoices for this customer are raised to this ERPNext record.</p>
 	{%- else %}
-	<p class="a3s-field__hint">Not in ERPNext yet. It is added when its first quotation is saved, or add it now.</p>
+	<p class="a3s-field__hint">Not in ERPNext yet. New customers are added as they are created; add this one now.</p>
 	{%- if customer.can_convert %}
 	<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-make-customer">Add to ERPNext</button>
 	<p class="a3s-form__status" id="a3s-make-customer-status" role="status" aria-live="polite"></p>

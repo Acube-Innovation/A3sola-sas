@@ -52,9 +52,43 @@
 				<select id="source" name="source">
 					<option value="">&mdash;</option>
 					{%- for src in sources %}
-					<option value="{{ src }}">{{ src }}</option>
+					<option value="{{ src }}"{% if src == defaults.source %} selected{% endif %}>{{ src }}</option>
 					{%- endfor %}
 				</select>
+			</div>
+		</div>
+
+		{#- Each starts on the lead's default: a client, in process, a product enquiry. -#}
+		<div class="a3s-field-row">
+			{%- for c in choices %}
+			<div class="a3s-field" id="f-{{ c.fieldname }}">
+				<label for="{{ c.fieldname }}">{{ c.label }}</label>
+				<select id="{{ c.fieldname }}" name="{{ c.fieldname }}">
+					<option value="">&mdash;</option>
+					{%- for opt in c.options %}
+					<option value="{{ opt }}"{% if opt == defaults[c.fieldname] %} selected{% endif %}>{{ opt }}</option>
+					{%- endfor %}
+				</select>
+			</div>
+			{%- endfor %}
+		</div>
+
+		{#- Outreach: in discussion, the call connected, the last message today. -#}
+		<div class="a3s-field-row">
+			{%- for c in outreach_choices %}
+			<div class="a3s-field" id="f-{{ c.fieldname }}">
+				<label for="{{ c.fieldname }}">{{ c.label }}</label>
+				<select id="{{ c.fieldname }}" name="{{ c.fieldname }}">
+					<option value="">&mdash;</option>
+					{%- for opt in c.options %}
+					<option value="{{ opt }}"{% if opt == defaults[c.fieldname] %} selected{% endif %}>{{ opt }}</option>
+					{%- endfor %}
+				</select>
+			</div>
+			{%- endfor %}
+			<div class="a3s-field" id="f-last_message_date">
+				<label for="last_message_date">Last Message Date</label>
+				<input type="date" id="last_message_date" name="last_message_date" value="{{ defaults.last_message_date }}">
 			</div>
 		</div>
 

@@ -69,6 +69,13 @@
 			mobile_no: value("mobile_no"),
 			status: value("status"),
 			source: value("source"),
+			type: value("type"),
+			qualification_status: value("qualification_status"),
+			request_type: value("request_type"),
+			outreach_stage: value("outreach_stage"),
+			solar_lead_status: value("solar_lead_status"),
+			call_status: value("call_status"),
+			last_message_date: value("last_message_date"),
 			loan_required: value("loan_required")
 		};
 

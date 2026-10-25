@@ -1,0 +1,108 @@
+{#- The customer's site survey, before there is one: who it is assigned to (a to-do on the
+    customer, api/survey_assignment), or the button that assigns it. Only the assignee gets
+    "Create site survey", below. Context: survey_assign, record_name, csrf_token. -#}
+{%- set sa = survey_assign %}
+<div class="a3s-survey-assign" data-survey-assign data-consumer="{{ record_name | e }}">
+	{%- if sa.assignee %}
+	<div class="a3s-assign__row">
+		<span class="a3s-step-card__icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-pin"></use></svg></span>
+		<span class="a3s-assign__text">
+			<span class="a3s-assign__name">Site survey &middot; {{ "you" if sa.is_me else sa.assignee_name | e }}</span>
+			<span class="a3s-assign__meta">Assigned{% if sa.assigned_by %} by {{ sa.assigned_by | e }}{% endif %}{% if sa.due %} &middot; due {{ sa.due }}{% endif %}</span>
+		</span>
+	</div>
+	{%- if not sa.is_me %}<p class="a3s-edit__hint">Only {{ sa.assignee_name | e }} can create the site survey.</p>{% endif %}
+	{%- if sa.can_assign %}
+	<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--block" data-survey-assign-open>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg><span>Reassign site survey</span>
+	</button>
+	{%- endif %}
+	{%- elif sa.can_assign %}
+	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-survey-assign-open>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg><span>Assign site survey</span>
+	</button>
+	<p class="a3s-edit__hint">The person it is assigned to creates the survey.</p>
+	{%- else %}
+	<p class="a3s-edit__hint">The site survey is not assigned yet.</p>
+	{%- endif %}
+	<p class="a3s-edit__hint" data-survey-assign-error hidden></p>
+</div>
+
+{%- if sa.can_assign %}
+<div class="a3s-modal" data-survey-assign-modal hidden role="dialog" aria-modal="true" aria-labelledby="a3s-survey-assign-title">
+	<div class="a3s-modal__panel a3s-assign__panel">
+		<div class="a3s-assign__head">
+			<h3 class="a3s-modal__title" id="a3s-survey-assign-title">Assign site survey</h3>
+			<button type="button" class="a3s-assign__x" data-survey-assign-close aria-label="Close">&times;</button>
+		</div>
+		<form class="a3s-modal__form" data-survey-assign-form>
+			<div class="a3s-field">
+				<label for="a3s-survey-user">Surveyor <span class="a3s-req">*</span></label>
+				<select id="a3s-survey-user" name="user" required><option value="">Loading…</option></select>
+			</div>
+			<div class="a3s-field">
+				<label for="a3s-survey-date">Complete by</label>
+				<input type="date" id="a3s-survey-date" name="complete_by">
+			</div>
+			<div class="a3s-field">
+				<label for="a3s-survey-comment">Note</label>
+				<textarea id="a3s-survey-comment" name="comment" rows="2"></textarea>
+			</div>
+			<div class="a3s-form__actions">
+				<button type="submit" class="a3s-btn a3s-btn--primary">Assign</button>
+				<button type="button" class="a3s-btn a3s-btn--ghost" data-survey-assign-close>Cancel</button>
+			</div>
+			<p class="a3s-form__status" data-survey-assign-status role="status" aria-live="polite"></p>
+		</form>
+	</div>
+</div>
+<script>
+(function () {
+	var box = document.querySelector("[data-survey-assign]");
+	var modal = document.querySelector("[data-survey-assign-modal]");
+	if (!box || !modal) return;
+	var form = modal.querySelector("[data-survey-assign-form]");
+	var status = modal.querySelector("[data-survey-assign-status]");
+	var consumer = box.dataset.consumer;
+	var current = {{ (sa.assignee or "") | tojson }};
+	function call(method, body) {
+		return fetch("/api/method/a3_sola.api.survey_assignment." + method, {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": {{ csrf_token | tojson }} },
+			body: JSON.stringify(body)
+		}).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (data) {
+				if (!r.ok) {
+					var msg = "";
+					try { msg = JSON.parse(JSON.parse(data._server_messages || "[]")[0]).message; } catch (e) { /* none */ }
+					throw new Error((msg || "That did not go through. Try again.").replace(/<[^>]*>/g, ""));
+				}
+				return data.message;
+			});
+		});
+	}
+	function open() {
+		modal.hidden = false;
+		var select = form.elements.user;
+		call("candidates", { consumer: consumer }).then(function (data) {
+			select.innerHTML = '<option value="">Choose who surveys the site…</option>' + (data.users || []).map(function (u) {
+				var v = String(u.value).replace(/"/g, "&quot;"), l = String(u.label).replace(/</g, "&lt;");
+				return '<option value="' + v + '"' + (u.value === current ? " selected" : "") + ">" + l + "</option>";
+			}).join("");
+		}).catch(function (e) { status.textContent = e.message; });
+	}
+	box.addEventListener("click", function (e) { if (e.target.closest("[data-survey-assign-open]")) open(); });
+	modal.addEventListener("click", function (e) {
+		if (e.target === modal || e.target.closest("[data-survey-assign-close]")) modal.hidden = true;
+	});
+	form.addEventListener("submit", function (e) {
+		e.preventDefault();
+		if (!form.elements.user.value) { status.textContent = "Choose who surveys the site."; return; }
+		status.textContent = "Assigning…";
+		call("assign", { consumer: consumer, user: form.elements.user.value, complete_by: form.elements.complete_by.value,
+			comment: form.elements.comment.value }).then(function () { window.location.reload(); })
+			.catch(function (err) { status.textContent = err.message; });
+	});
+})();
+</script>
+{%- endif %}

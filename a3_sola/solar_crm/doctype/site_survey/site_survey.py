@@ -33,7 +33,16 @@ class SiteSurvey(Document):
 		set_name(self, "survey_series_prefix", ".YYYY.-.#####", fallback="SOL-SRV")
 
 	def before_insert(self):
+		from a3_sola.api import survey_assignment
+
+		# Only the person the customer's survey is assigned to creates it (api/survey_assignment).
+		survey_assignment.check_create(self)
 		self.seed_ehs_checklist()
+
+	def after_insert(self):
+		from a3_sola.api import survey_assignment
+
+		survey_assignment.close_on_create(self)
 
 	def validate(self):
 		record_links.fill_survey(self)

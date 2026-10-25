@@ -34,6 +34,7 @@
   "installation_site_address",
   "sb_permanent_address",
   "permanent_address_same",
+  "permanent_address_record",
   "sb_permanent_address_detail",
   "permanent_address_line1",
   "permanent_address_line2",
@@ -284,6 +285,14 @@
    "reqd": 1
   },
   {
+   "fieldname": "permanent_address_record",
+   "fieldtype": "Link",
+   "label": "Permanent Address",
+   "options": "Address",
+   "depends_on": "eval:doc.permanent_address_same==\"Yes\"",
+   "description": "The installation address, unless another of the customer's addresses is chosen."
+  },
+  {
    "fieldname": "sb_permanent_address_detail",
    "fieldtype": "Section Break",
    "depends_on": "eval:doc.permanent_address_same==\"No\""
@@ -399,7 +408,8 @@
    "fieldname": "tariff_category",
    "fieldtype": "Link",
    "label": "Tariff Category",
-   "options": "KSEB Tariff Category"
+   "options": "KSEB Tariff Category",
+   "default": "LT-I"
   },
   {
    "default": "Single Phase",
@@ -425,7 +435,8 @@
   {
    "fieldname": "connection_date",
    "fieldtype": "Date",
-   "label": "Connection Date"
+   "label": "Connection Date",
+   "hidden": 1
   },
   {
    "fieldname": "sb_5",
@@ -534,7 +545,8 @@
   {
    "fieldname": "survey_number",
    "fieldtype": "Data",
-   "label": "Survey Number"
+   "label": "Survey Number",
+   "hidden": 1
   },
   {
    "fieldname": "landmark",
@@ -743,7 +755,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 12:10:00.000000",
+ "modified": "2026-10-24 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

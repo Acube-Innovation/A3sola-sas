@@ -91,6 +91,12 @@ DOC_EVENTS = {
 		"validate": ["a3_sola.overrides.quotation.validate"],
 		"on_submit": ["a3_sola.overrides.quotation.on_submit"],
 	},
+	# Made or edited, a proposal moves its lead's outreach on (Step 2, followed up the next day).
+	"Solar Proposal": {
+		"on_update": ["a3_sola.api.outreach.note_proposal"],
+		"on_submit": ["a3_sola.api.outreach.note_proposal"],
+		"on_update_after_submit": ["a3_sola.api.outreach.note_proposal"],
+	},
 	"Sales Order": {
 		"validate": ["a3_sola.overrides.sales_order.validate_delivery_dates", "a3_sola.overrides.sales_order.no_gst_on_solar_orders"],
 		"on_submit": ["a3_sola.overrides.sales_order.on_submit"],

@@ -82,12 +82,15 @@ def _progress(row, stages):
 	if not stages:
 		return None
 	live = [s for s in stages if s.status != "Skipped"]
+	# The open tasks past their due date, as the job's task cards mark them.
+	late = len([s for s in live if s.status != "Completed" and cint(s.is_sla_breached)])
 	return {
 		"percent": int(round(flt(row.overall_progress_percent))),
 		"done": len([s for s in live if s.status == "Completed"]),
 		"total": len(live),
 		"focus": row.current_stage or "",
-		"overdue": bool(cint(row.is_sla_breached)),
+		"overdue": bool(cint(row.is_sla_breached)) or bool(late),
+		"overdue_count": late,
 	}
 
 

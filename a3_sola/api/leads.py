@@ -67,6 +67,33 @@ LEAD_SECTIONS = [
 # on create and keeps doing so on edit (see `_set_full_name`).
 EDITABLE_READ_ONLY = {"lead_name"}
 
+#: Fields a lead starts from its default on (setup/custom_fields.PROPERTY_SETTERS) - on the
+#: create form, and on the edit form where the lead has none yet.
+DEFAULTED = ("type", "source", "qualification_status", "request_type", "call_status", "solar_lead_status",
+	"outreach_stage", "last_message_date")
+
+
+def lead_defaults():
+	"""{field: default} of DEFAULTED, from Lead's own defaults; a Source default only where
+	that source exists."""
+	meta = frappe.get_meta("Lead")
+	out = {}
+	for fieldname in DEFAULTED:
+		df = meta.get_field(fieldname)
+		value = (df.default or "") if df else ""
+		if value and df.fieldtype == "Link" and not frappe.db.exists(df.options, value):
+			value = ""
+		if value and df.fieldtype == "Date" and value.lower() == "today":
+			value = frappe.utils.today()
+		out[fieldname] = value
+	return out
+
+
+def select_options(fieldname):
+	"""A Select field's options on Lead, without the blank."""
+	df = frappe.get_meta("Lead").get_field(fieldname)
+	return [o for o in (df.options or "").split("\n") if o] if df else []
+
 # ------------------------------------------------------------------- routes and loading
 def lead_route(name):
 	"""The portal detail page for one lead."""
@@ -204,6 +231,7 @@ def edit_fields(doc):
 	the form does not render is a field the endpoint refuses to set.
 	"""
 	meta = doc.meta
+	defaults = lead_defaults()
 	sections = []
 	for section in LEAD_SECTIONS:
 		specs = []
@@ -212,7 +240,10 @@ def edit_fields(doc):
 				continue
 			if df.read_only and df.fieldname not in EDITABLE_READ_ONLY:
 				continue
-			specs.append(edit_spec(df, doc.get(df.fieldname), doc))
+			# A lead without a type, source, qualification or request type yet starts on the
+			# default - saved with the form.
+			value = doc.get(df.fieldname) or defaults.get(df.fieldname)
+			specs.append(edit_spec(df, value, doc))
 		if specs:
 			sections.append({"key": section["key"], "label": section["label"], "fields": specs})
 	return sections
@@ -244,6 +275,13 @@ def create_lead(
 	status=None,
 	source=None,
 	loan_required=None,
+	type=None,  # noqa: A002 - the Lead field's own name
+	qualification_status=None,
+	request_type=None,
+	call_status=None,
+	solar_lead_status=None,
+	outreach_stage=None,
+	last_message_date=None,
 ):
 	"""Create a Lead from the portal form and return its name and portal route.
 
@@ -275,8 +313,19 @@ def create_lead(
 	doc.phone = (phone or "").strip() or None
 	doc.status = status
 	doc.loan_required = loan_required
-	if (source or "").strip():
-		doc.source = source.strip()
+	# What the form chose - else the lead's defaults (a client, from social media, in process,
+	# a product enquiry). A choice that is not one of the field's options is ignored.
+	defaults = lead_defaults()
+	doc.source = (source or "").strip() or defaults["source"] or None
+	for fieldname, value in (("type", type), ("qualification_status", qualification_status), ("request_type", request_type),
+			("call_status", call_status), ("solar_lead_status", solar_lead_status), ("outreach_stage", outreach_stage)):
+		value = (value or "").strip()
+		doc.set(fieldname, value if value in select_options(fieldname) else (defaults[fieldname] or None))
+	# The last message: the day the form says, else today.
+	try:
+		doc.last_message_date = frappe.utils.getdate(last_message_date) if last_message_date else defaults["last_message_date"] or None
+	except Exception:
+		doc.last_message_date = defaults["last_message_date"] or None
 
 	# Permission-checked insert: a user without create rights on Lead is refused here,
 	# which is why this endpoint does no role-checking of its own.

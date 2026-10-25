@@ -267,7 +267,13 @@ CHOICE_SOURCES = {
 	"structure_bom": "a3_sola.api.structure_bom.choices_for",
 	# The project's package's bill of materials.
 	"material_bom": "a3_sola.api.structure_bom.material_choices_for",
+	# A customer's own contacts and addresses - not every one on the site - each address in full.
+	("Solar Consumer", "contact_person"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.contact_choices",
+	("Solar Consumer", "installation_address"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
+	("Solar Consumer", "permanent_address_record"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
 }
+#: Fields that start on their first choice while blank: a customer's address, its first one.
+FIRST_CHOICE_DEFAULT = {("Solar Consumer", "installation_address"), ("Solar Consumer", "permanent_address_record")}
 
 
 def edit_spec(df, value, doc=None):
@@ -297,8 +303,11 @@ def edit_spec(df, value, doc=None):
 			value = default_for(df)
 			if value:
 				spec["value"] = value
-		source = CHOICE_SOURCES.get(df.fieldname)
+		key = (doc.doctype, df.fieldname) if doc is not None else None
+		source = CHOICE_SOURCES.get(key) or CHOICE_SOURCES.get(df.fieldname)
 		choices = frappe.get_attr(source)(doc) if source else link_choices(df.options, filters=link_filters(df, doc))
+		if not value and key in FIRST_CHOICE_DEFAULT and choices:
+			value = spec["value"] = choices[0]["value"]
 		# Past the limit the list is not the whole table, so offer a free-text field with
 		# the fetched names as suggestions rather than a dropdown that hides the rest.
 		spec["many"] = len(choices) >= LINK_CHOICE_LIMIT and df.options != "DISCOM Section"

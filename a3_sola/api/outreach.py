@@ -142,6 +142,7 @@ def apply_outreach_state(doc):
 	"""Recompute the outreach fields on a Lead from its log. Never hand-set."""
 	rows = sorted(doc.get("outreach_log") or [], key=lambda r: str(r.contact_datetime or ""))
 	if not rows:
+		apply_proposal(doc, None)
 		compute_followup_status(doc)
 		return
 
@@ -170,7 +171,43 @@ def apply_outreach_state(doc):
 	elif doc.outreach_stage == "Completed: Proposal Sent":
 		doc.next_followup_date = add_days(getdate(last.contact_datetime), 3)
 
+	apply_proposal(doc, getdate(last.contact_datetime))
 	compute_followup_status(doc)
+
+
+#: Where a proposal for the lead puts it on the cadence.
+PROPOSAL_STEP = "Step 2: 24hr Nudge"
+
+
+def apply_proposal(doc, last_contact):
+	"""A Solar Proposal for the lead is an outreach event of its own (note_proposal): made, the
+	lead goes to the 24-hour nudge; made or edited, it is followed up the next day - while no
+	contact has been logged since, which then moves the lead on as usual."""
+	created, updated = doc.get("proposal_created_on"), doc.get("proposal_updated_on")
+	if created and (not last_contact or getdate(created) >= last_contact):
+		doc.outreach_stage = PROPOSAL_STEP
+	if updated and (not last_contact or getdate(updated) >= last_contact):
+		doc.next_followup_date = add_days(getdate(updated), 1)
+
+
+def note_proposal(doc, method=None):
+	"""A Solar Proposal made or edited is an outreach event on its lead (apply_proposal):
+	made, the lead goes to the 24-hour nudge; either way it is followed up the day after. Never
+	stops the proposal: a lead that will not save is logged."""
+	lead = doc.get("lead")
+	if not lead or not frappe.db.exists("Lead", lead):
+		return
+	try:
+		lead_doc = frappe.get_doc("Lead", lead)
+		if doc.flags.in_insert:
+			lead_doc.proposal_created_on = today()
+		elif str(lead_doc.get("proposal_updated_on") or "") == today() and lead_doc.get("proposal_created_on"):
+			return  # already followed up from today
+		lead_doc.proposal_updated_on = today()
+		lead_doc.flags.ignore_permissions = True
+		lead_doc.save(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: outreach on lead {lead} from {doc.name}")
 
 
 def compute_followup_status(doc):
