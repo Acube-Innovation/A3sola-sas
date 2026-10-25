@@ -49,7 +49,13 @@ class SolarConsumer(Document):
 		self.validate_bank_details()
 
 	def on_update(self):
+		self.ensure_address_record()
 		record_links.consumer_saved(self)
+
+	def after_insert(self):
+		# Every customer is an ERPNext Customer from the start - its name, its category's type
+		# and group, its mobile and email, its installation address - not only once quoted.
+		ensure_customer(self)
 
 	def ensure_lead(self):
 		"""Every customer hangs off a lead - its installation is opened from it - but the lead
@@ -74,6 +80,10 @@ class SolarConsumer(Document):
 			for part, value in address_parts(self.installation_address).items():
 				if value and not self.get(f"site_{part}"):
 					self.set(f"site_{part}", value)
+		elif self.installation_address and not self.is_new() and self.has_value_changed("installation_address"):
+			# Another of the customer's addresses chosen as the installation address: its parts.
+			for part, value in address_parts(self.installation_address).items():
+				self.set(f"site_{part}", value)
 		for prefix in ADDRESS_PREFIXES:
 			if prefix == "permanent" and self.permanent_address_same != "No":
 				continue
@@ -81,9 +91,33 @@ class SolarConsumer(Document):
 		self.installation_site_address = self.compose_address("site")
 		if self.permanent_address_same != "No":
 			self.permanent_address_same = "Yes"
+			# The installation address, unless another of the customer's addresses is chosen.
+			self.permanent_address_record = self.get("permanent_address_record") or self.installation_address
+			chosen = self.permanent_address_record != self.installation_address and address_parts(self.permanent_address_record)
 			for part in ADDRESS_PARTS:
-				self.set(f"permanent_{part}", self.get(f"site_{part}"))
+				self.set(f"permanent_{part}", chosen.get(part) if chosen else self.get(f"site_{part}"))
 		self.permanent_address = self.compose_address("permanent")
+
+	def ensure_address_record(self):
+		"""The installation site as one of the customer's Address records, made from the parts
+		typed here when the customer has none chosen - so the address dropdowns offer it, and it
+		is selected. Linked to the customer, its lead and this record."""
+		if self.installation_address or not (self.site_address_line1 and self.site_city):
+			return
+		district = frappe.db.get_value("Indian District", self.site_district, "district_name") if self.site_district else None
+		links = [{"link_doctype": doctype, "link_name": name} for doctype, name in (
+			("Customer", self.get("customer")), ("Lead", self.get("lead")), ("Solar Consumer", self.name)) if name]
+		address = frappe.get_doc({
+			"doctype": "Address", "address_title": self.consumer_name or self.name, "address_type": "Billing",
+			"address_line1": self.site_address_line1, "address_line2": self.site_address_line2 or None,
+			"city": self.site_city, "county": district, "state": self.site_state or None, "pincode": self.site_pincode or None,
+			"country": "India", "gst_category": "Unregistered", "links": links,
+		})
+		address.flags.ignore_permissions = True
+		address.insert()
+		self.db_set("installation_address", address.name, update_modified=False)
+		if self.permanent_address_same != "No" and not self.get("permanent_address_record"):
+			self.db_set("permanent_address_record", address.name, update_modified=False)
 
 	def validate_address_parts(self, prefix):
 		label = _("Installation site") if prefix == "site" else _("Permanent address")
@@ -319,3 +353,55 @@ def make_customer(solar_consumer):
 	customer = ensure_customer(doc)
 	return {"customer": customer, "customer_name": frappe.db.get_value("Customer", customer, "customer_name"),
 		"route": "/app/customer/" + frappe.utils.quote(customer)}
+
+
+# ------------------------------------------------------- the customer's own addresses
+def _linked(doc, parenttype):
+	"""The Addresses (or Contacts) of this customer: linked to its Customer, its lead or the
+	record itself."""
+	targets = [(dt, name) for dt, name in (("Customer", doc.get("customer")), ("Lead", doc.get("lead")),
+		("Solar Consumer", doc.get("name"))) if name]
+	names = []
+	for doctype, name in targets:
+		for parent in frappe.get_all("Dynamic Link", filters={"parenttype": parenttype, "link_doctype": doctype,
+				"link_name": name}, pluck="parent"):
+			if parent not in names:
+				names.append(parent)
+	return names
+
+
+def address_line(address):
+	"""An Address in full on one line: house, street, place, district, state - PIN."""
+	row = frappe.db.get_value("Address", address, ["address_line1", "address_line2", "city", "county", "state", "pincode"],
+		as_dict=True) if address else None
+	if not row:
+		return address or ""
+	place = ", ".join(str(p).strip(" ,") for p in (row.address_line1, row.address_line2, row.city, row.county, row.state)
+		if p and str(p).strip(" ,"))
+	return f"{place} - {row.pincode}" if row.pincode else place
+
+
+def address_choices(doc):
+	"""The installation and permanent address dropdowns: only the customer's own addresses,
+	each in full - the installation address first, so a blank field starts on it."""
+	names = _linked(doc, "Address")
+	first = doc.get("installation_address")
+	if first and first in names:
+		names.remove(first)
+		names.insert(0, first)
+	elif first and frappe.db.exists("Address", first):
+		names.insert(0, first)
+	return [{"value": n, "label": address_line(n)} for n in names]
+
+
+def contact_choices(doc):
+	"""The Contact dropdown: only the customer's own contacts, by name and mobile."""
+	out = []
+	for name in _linked(doc, "Contact"):
+		row = frappe.db.get_value("Contact", name, ["first_name", "last_name", "mobile_no", "phone"], as_dict=True)
+		if not row:
+			continue
+		person = " ".join(p for p in (row.first_name, row.last_name) if p) or name
+		number = row.mobile_no or row.phone
+		out.append({"value": name, "label": f"{person} · {number}" if number else person})
+	return out

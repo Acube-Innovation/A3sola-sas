@@ -31,4 +31,13 @@ def get_context(context):
 	context.kyc_panel = kyc.summary(doc.doctype, doc.name)
 	context.groups = [g for g in context.groups if g["key"] != "kyc"]
 	context.csrf_token = frappe.sessions.get_csrf_token()
+	# The site survey, before there is one: assigned first, and created only by its assignee
+	# (api/survey_assignment) - the step's Create button is theirs alone.
+	from a3_sola.api import survey_assignment
+
+	context.survey_assign = survey_assignment.state(doc)
+	if context.survey_assign:
+		context.chain_lead_template = "templates/includes/portal_survey_assign.html"
+		if not context.survey_assign.is_me:
+			context.chain_steps = [s for s in context.chain_steps or [] if s.get("key") != "survey"]
 	return context
