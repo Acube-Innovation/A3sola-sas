@@ -25,8 +25,7 @@
 		<thead>
 			<tr>
 				<th>Customer</th>
-				<th>DISCOM</th>
-				<th>Package</th>
+				<th>System &amp; Connection</th>
 				<th>Proposal</th>
 				<th class="a3s-table__status">Status</th>
 			</tr>
@@ -34,48 +33,48 @@
 		<tbody>
 			{%- for r in rows %}
 			<tr>
-				{#- ---- 1. who it is for: name, consumer number, phone, place -------- #}
+				{#- ---- 1. who it is for: the round initials (or photo) in a column of their own,
+				    then name, phone, consumer number and place stacked beside them --------- #}
 				<td>
-					<div class="a3s-stack">
-						<a class="a3s-table__record" href="{{ r.route }}" title="{{ r.name | e }}">
+					<div class="a3s-projlist__who">
+						<a class="a3s-projlist__badge" href="{{ r.route }}" title="{{ r.name | e }}" tabindex="-1" aria-hidden="true">
 							{%- if r.photo %}
 							<img class="a3s-avatar" src="{{ r.photo | e }}" alt="" loading="lazy">
 							{%- else %}
-							<span class="a3s-avatar a3s-avatar--initials" aria-hidden="true">{{ r.initials }}</span>
+							<span class="a3s-avatar a3s-avatar--initials">{{ r.initials }}</span>
 							{%- endif %}
-							<span class="a3s-table__link">{{ r.title | e }}</span>
 						</a>
-						{%- if r.number %}<span class="a3s-stack__line">{{ r.number | e }}</span>{% endif %}
-						{%- if r.mobile %}
-						{#- A number in a list is there to be rung. -#}
-						<a class="a3s-calllink" href="tel:{{ r.tel | e }}" title="Call {{ r.mobile | e }}">
-							<svg class="a3s-ic" aria-hidden="true"><use href="#ic-phone"></use></svg>
-							<span>{{ r.mobile | e }}</span>
-						</a>
-						{%- endif %}
-						{%- if r.place %}<span class="a3s-stack__line">{{ r.place | e }}</span>{% endif %}
+						<div class="a3s-stack">
+							<a class="a3s-table__link" href="{{ r.route }}" title="{{ r.name | e }}">{{ r.title | e }}</a>
+							{%- if r.mobile %}
+							{#- A number in a list is there to be rung. -#}
+							<a class="a3s-calllink" href="tel:{{ r.tel | e }}" title="Call {{ r.mobile | e }}">
+								<svg class="a3s-ic" aria-hidden="true"><use href="#ic-phone"></use></svg>
+								<span>{{ r.mobile | e }}</span>
+							</a>
+							{%- endif %}
+							{#- The DISCOM consumer number, as a tag. -#}
+							{%- if r.number %}<span class="a3s-projlist__conid" title="DISCOM consumer number">Con.ID: {{ r.number | e }}</span>{% endif %}
+							{%- if r.place %}<span class="a3s-stack__line">{{ r.place | e }}</span>{% endif %}
+						</div>
 					</div>
 				</td>
 
-				{#- ---- 2. the connection: DISCOM, section, phase, portal id ---------- #}
+				{#- ---- 2. the system and its connection: package and type, then DISCOM and
+				    section, phase and portal id - each line only with what it has ----------- #}
+				{%- set where = [r.discom_name, r.section_name] | select | list %}
+				{%- set supply = [r.connection, r.portal_id] | select | list %}
 				<td>
 					<div class="a3s-stack">
-						{%- if r.discom_name %}<span>{{ r.discom_name | e }}</span>{% else %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
-						{%- if r.section_name %}<span class="a3s-stack__line">{{ r.section_name | e }}</span>{% endif %}
-						{%- if r.connection %}<span class="a3s-stack__line">{{ r.connection | e }}</span>{% endif %}
-						{%- if r.portal_id %}<span class="a3s-stack__line" title="PM Surya Ghar Portal ID">{{ r.portal_id | e }}</span>{% endif %}
-					</div>
-				</td>
-
-				{#- ---- 3. the system: package and type ------------------------------ #}
-				<td>
-					<div class="a3s-stack">
-						{%- if r.package_name %}<span>{{ r.package_name | e }}</span>{% else %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
+						{%- if r.package_name %}<span class="a3s-projlist__package">{{ r.package_name | e }}</span>{% endif %}
 						{%- if r.system_type %}<span class="a3s-stack__line">{{ r.system_type | e }}</span>{% endif %}
+						{%- if where %}<span class="a3s-stack__line">{{ where | map("e") | join(" &middot; ") }}</span>{% endif %}
+						{%- if supply %}<span class="a3s-stack__line"{% if r.portal_id %} title="PM Surya Ghar Portal ID: {{ r.portal_id | e }}"{% endif %}>{{ supply | map("e") | join(" &middot; ") }}</span>{% endif %}
+						{%- if not (r.package_name or r.system_type or where or supply) %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
 					</div>
 				</td>
 
-				{#- ---- 4. the offer: proposal, its date and cost, the loan ---------- #}
+				{#- ---- 3. the offer: proposal, its date and cost, the loan ---------- #}
 				<td>
 					<div class="a3s-stack">
 						{%- if r.proposal %}
@@ -89,24 +88,25 @@
 					</div>
 				</td>
 
-				{#- ---- 5. where the job has got to: its progress, as on its page --------- #}
+				{#- ---- 4. where the job has got to: the share done and its status, the bar,
+				    tasks done beside how many are overdue, then the task in focus ------------- #}
 				<td class="a3s-table__status a3s-projlist__status">
 					{%- if r.progress %}{% set s = r.progress %}
 					<div class="a3s-proj__progress a3s-projlist__progress">
-						<div class="a3s-proj__progress-head">
+						<div class="a3s-projlist__statushead">
 							<span class="a3s-proj__percent">{{ s.percent }}%</span>
-							<span class="a3s-proj__progress-sub">{{ s.done }} of {{ s.total }} tasks done</span>
 							{%- if r.status %}<span class="a3s-badge a3s-proj__status a3s-proj__status--{{ r.status_slug }}">{{ r.status | e }}</span>{% endif %}
 						</div>
 						<div class="a3s-progress" role="progressbar" aria-label="Project progress"
 						     aria-valuenow="{{ s.percent }}" aria-valuemin="0" aria-valuemax="100">
 							<span class="a3s-progress__fill{% if s.overdue %} is-overdue{% endif %}" style="width: {{ s.percent }}%"></span>
 						</div>
-						{%- if s.focus or s.overdue %}
-						<p class="a3s-proj__progress-meta">
-							{%- if s.focus %}<span>Focus: <strong>{{ s.focus | e }}</strong></span>{% endif %}
-							{%- if s.overdue %}<span class="a3s-proj__overdue">Overdue tasks</span>{% endif %}
-						</p>
+						<div class="a3s-projlist__tasks">
+							<span class="a3s-proj__progress-sub">{{ s.done }} of {{ s.total }} tasks done</span>
+							{%- if s.overdue_count %}<span class="a3s-projlist__late">{{ s.overdue_count }} overdue</span>{% endif %}
+						</div>
+						{%- if s.focus %}
+						<p class="a3s-proj__progress-meta"><span>Focus: <strong>{{ s.focus | e }}</strong></span></p>
 						{%- endif %}
 					</div>
 					{%- else %}
