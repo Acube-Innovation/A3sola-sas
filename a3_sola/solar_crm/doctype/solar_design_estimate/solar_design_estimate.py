@@ -79,6 +79,7 @@ class SolarDesignEstimate(Document):
 		self.seed_option_from_package()
 		if not self.sync_kit_from_options():
 			self.fill_from_package()
+		self.fill_add_ons_from_package()
 		self.apply_component_choices()
 		self.keep_one_priced()
 		self.record_component_choices()
@@ -454,6 +455,22 @@ class SolarDesignEstimate(Document):
 			self.final_capacity_kw = self.recommended_capacity_kw
 
 	# ------------------------------------------------------------------ options
+	def fill_add_ons_from_package(self):
+		"""The package's optional add-ons, offered beside the system and printed in the
+		proposal - never priced. Copied when the estimate is first made on a package and
+		whenever it moves to another; between those, rows changed or removed stay as left."""
+		if not self.solar_package:
+			return
+		before = self.get_doc_before_save()
+		moved = before is not None and before.get("solar_package") != self.solar_package
+		if not moved and (before is not None or not self.is_new() or self.get("optional_add_ons")):
+			return
+		package = frappe.get_cached_doc("Solar Package", self.solar_package)
+		self.set("optional_add_ons", [
+			{"add_on_type": r.add_on_type, "item": r.item, "amount": r.amount}
+			for r in package.get("optional_add_ons") or []
+		])
+
 	def fill_from_package(self):
 		"""Start the System & Options tables from the chosen package's default kit.
 

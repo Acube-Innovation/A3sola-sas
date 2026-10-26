@@ -407,7 +407,10 @@
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
-		$("de-saved-total").textContent = money.format(lineAmount(s.key));
+		/* Optional add-ons are offered beside the system: their own sum, not a commercials line. */
+		var unpriced = s.unpriced_total !== null && s.unpriced_total !== undefined;
+		$("de-saved-total").textContent = money.format(unpriced ? s.unpriced_total : lineAmount(s.key));
+		$("de-saved-total").title = unpriced ? "Optional: not added to the total" : "";
 		$("de-add").hidden = !state.editable;
 		$("de-add").disabled = busy;
 		var body = $("de-saved");

@@ -212,3 +212,5 @@ a3_sola.patches.v1_2.payment_statement_rows
 a3_sola.patches.v1_2.consumer_address_records
 # A survey with no surveyor names the person its site survey was assigned to.
 a3_sola.patches.v1_2.surveyor_from_assignment
+# A design estimate has its own Optional Add-ons, from its package.
+a3_sola.patches.v1_2.estimate_optional_add_ons

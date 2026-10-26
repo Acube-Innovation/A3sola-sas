@@ -697,16 +697,25 @@ def cost_pages(options, kseb_rows, kseb_note, add_on_rows=0):
 
 
 def add_on_rows(estimates):
-	"""3.3.3 Optional Add-ons: each add-on of the packages the options are built on, once,
+	"""3.3.3 Optional Add-ons: each add-on of the estimates the options are, once,
 	in option order - [{item_html, amount_text}]. "13th" prints as 13<sup>th</sup>."""
 	import re
 
 	from frappe.utils import escape_html, fmt_money
 
+	def add_ons(estimate):
+		"""The estimate's own add-ons; an estimate made before it had them offers its package's."""
+		own = estimate.get("optional_add_ons")
+		if own:
+			return own
+		if not estimate.get("solar_package"):
+			return []
+		return frappe.get_all("Solar Package Add-on", filters={"parent": estimate.solar_package, "parenttype": "Solar Package"},
+			fields=["item", "amount"], order_by="idx asc")
+
 	rows, seen = [], set()
-	for package in dict.fromkeys(e.solar_package for e in estimates if e.get("solar_package")):
-		for r in frappe.get_all("Solar Package Add-on", filters={"parent": package, "parenttype": "Solar Package"},
-				fields=["item", "amount"], order_by="idx asc"):
+	for estimate in estimates:
+		for r in add_ons(estimate):
 			key = ((r.item or "").strip(), flt(r.amount))
 			if not key[0] or key in seen:
 				continue
