@@ -105,12 +105,12 @@ def apply_defaults(inst):
 	hand or by its document - is left as it is."""
 	if not inst.get("stages"):
 		return
-	defaults = _template_defaults(inst)
+	defaults, named = _template_defaults(inst), template_users(inst)
 	for row in inst.stages:
 		row.default_assignee = row.get("default_assignee") or defaults.get(row.stage_code)
 		if people(inst, row.stage_code):
 			continue
-		users = resolve(inst, row.default_assignee) if row.default_assignee else []
+		users = default_people(inst, row, named)
 		if not users and row.assigned_to:
 			users = [row.assigned_to]
 		if users:
@@ -138,6 +138,26 @@ def follow_people(inst, before):
 			else:
 				continue
 			put(inst, row.stage_code, current)
+
+
+def default_people(inst, row, named=None):
+	"""Who a task goes to by default: the person the template names for it (Assign to), else
+	whoever holds its position on the job."""
+	user = (named if named is not None else template_users(inst)).get(row.stage_code)
+	if user and frappe.db.get_value("User", user, "enabled"):
+		return [user]
+	return resolve(inst, row.default_assignee) if row.get("default_assignee") else []
+
+
+def template_users(inst):
+	"""{task code: user} - the person the job's template names for each task, if any."""
+	if not inst.get("stage_template"):
+		return {}
+	return dict(frappe.db.sql(
+		"""select stage_code, default_user from `tabInstallation Stage Template Detail`
+		where parent = %s and parenttype = 'Installation Stage Template' and ifnull(default_user, '') != ''""",
+		inst.stage_template,
+	))
 
 
 def _template_defaults(inst):

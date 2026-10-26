@@ -54,7 +54,13 @@ DEFAULT_ASSIGNEES = {
 	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
 	"BAL": ACCOUNTS, "PCOM": ACCOUNTS,
 	"IWOS": CONTRACTOR,
+	"SPROC": PROJECT_MANAGER,
 }  # every other task: the Project Engineer
+
+#: The work the customer's first advance - any amount, 10% or 90% - starts at once, each to the
+#: person its template names (Assign to) else its position (api/stages.start_on_advance). Form 1
+#: Payment follows Form 1 (its due date is anchored to it).
+START_ON_ADVANCE = ("FRM1", "STMP", "DSGN", "SPROC")
 
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,
@@ -91,6 +97,7 @@ TASKS = [
 	      description="KSEBL Form 1 generated and submitted to the section office."),
 	_task("F1PAY", "Form 1 Payment", "Internal", 2, "Statutory Fee Payment",
 	      task_type="Application Fee", documents=[("Application fee receipt", 1, None)],
+	      due_anchor_task="FRM1", due_anchor_days=2,
 	      description="Application fee paid. Paying it starts the thirty-day window for Form 2."),
 	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 3, "Portal Application", role=DOCS,
 	      applicability="Subsidised Only", task_type="National Portal",

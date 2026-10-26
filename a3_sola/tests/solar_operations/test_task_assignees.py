@@ -44,14 +44,14 @@ class TestTaskAssignees(FrappeTestCase):
 		self.assertEqual(defaults.get("FRM1"), "Sales Co-ordinator")
 		self.assertEqual(defaults.get("SUBREQ"), "Project Manager")
 		self.assertEqual(defaults.get("IWOS"), "Contractor")
-		self.assertEqual(defaults.get("DSGN"), "Project Engineer")
+		self.assertEqual(defaults.get("PROC"), "Project Engineer")
 
 	def test_tasks_go_to_the_people_named_on_the_job(self):
 		doc = self.staff(site_engineer=self.engineer, project_manager=self.manager)
-		self.assertEqual(ta.people(doc, "DSGN"), [self.engineer])
+		self.assertEqual(ta.people(doc, "PROC"), [self.engineer])
 		self.assertEqual(ta.people(doc, "IWOS"), [self.engineer], "a contractor's task is the engineer's")
 		self.assertEqual(ta.people(doc, "SUBREQ"), [self.manager])
-		row = next(r for r in doc.stages if r.stage_code == "DSGN")
+		row = next(r for r in doc.stages if r.stage_code == "PROC")
 		self.assertEqual((row.assigned_to, row.default_assignee), (self.engineer, "Project Engineer"))
 
 	def test_accounts_is_everyone_in_accounts(self):
@@ -59,10 +59,10 @@ class TestTaskAssignees(FrappeTestCase):
 			self.assertEqual(ta.resolve(self.job(), "Accounts"), ["a@example.com", "b@example.com"])
 
 	def test_a_task_takes_several_people_the_first_leading(self):
-		ta.set_task_assignees(self.installation.name, "DSGN", [self.engineer2, self.engineer])
+		ta.set_task_assignees(self.installation.name, "PROC", [self.engineer2, self.engineer])
 		doc = self.job()
-		self.assertEqual(ta.people(doc, "DSGN"), [self.engineer2, self.engineer])
-		self.assertEqual(next(r for r in doc.stages if r.stage_code == "DSGN").assigned_to, self.engineer2)
+		self.assertEqual(ta.people(doc, "PROC"), [self.engineer2, self.engineer])
+		self.assertEqual(next(r for r in doc.stages if r.stage_code == "PROC").assigned_to, self.engineer2)
 
 	def test_a_new_engineer_takes_over_the_open_tasks_only(self):
 		doc = self.staff(site_engineer=self.engineer)
@@ -71,19 +71,19 @@ class TestTaskAssignees(FrappeTestCase):
 		self.assertIn(done.status, ("Completed", "Pending", "In Progress"))
 		doc = self.job()
 		for r in doc.stages:
-			if r.stage_code == "DSGN":
+			if r.stage_code == "DISP":
 				r.status = "Completed"
 		doc.flags.ignore_validate_update_after_submit = True
 		doc.save(ignore_permissions=True)
 		doc = self.staff(site_engineer=self.engineer2)
 		self.assertEqual(ta.people(doc, "PROC"), [self.engineer2, self.manager], "the extra person stays")
-		self.assertEqual(ta.people(doc, "DSGN"), [self.engineer], "a completed task keeps who did it")
+		self.assertEqual(ta.people(doc, "DISP"), [self.engineer], "a completed task keeps who did it")
 
 	def test_the_tasks_document_adds_its_person(self):
 		doc = self.staff(site_engineer=self.engineer)
-		row = next(r for r in doc.stages if r.stage_code == "DSGN")
+		row = next(r for r in doc.stages if r.stage_code == "PROC")
 		ta.add(doc, row.stage_code, self.manager)
-		self.assertEqual(ta.people(doc, "DSGN"), [self.engineer, self.manager])
+		self.assertEqual(ta.people(doc, "PROC"), [self.engineer, self.manager])
 
 	def test_an_edited_default_survives_a_reseed(self):
 		from a3_sola.setup import install_ops
@@ -105,9 +105,9 @@ class TestTaskAssignees(FrappeTestCase):
 
 		self.staff(site_engineer=self.engineer)
 		# The Design Freeze has its own page now (api/design_freeze); structure procurement opens a task.
-		ta.set_task_assignees(self.installation.name, "SPROC", [self.engineer, self.manager])
-		people = task_people(self.installation.name, "SPROC")
+		ta.set_task_assignees(self.installation.name, "PROC", [self.engineer, self.manager])
+		people = task_people(self.installation.name, "PROC")
 		self.assertEqual([p["user"] for p in people["assignees"]], [self.engineer, self.manager])
 		self.assertEqual(people["position"], "Project Engineer")
-		target = tasks.open_task(self.installation.name, "SPROC", create_draft=0)
+		target = tasks.open_task(self.installation.name, "PROC", create_draft=0)
 		self.assertEqual(target["route_options"]["assigned_to"], self.engineer)

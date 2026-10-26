@@ -392,6 +392,46 @@ def _get_stage(installation, stage_code):
 	frappe.throw(_("Stage {0} is not on installation {1}.").format(stage_code, installation.name))
 
 
+def start_on_advance(installation):
+	"""The customer's first advance - any amount - starts the work it pays for: Form 1, the
+	stamp paper, the design freeze and the structure material (seed_stages.START_ON_ADVANCE),
+	each still pending, goes In Progress from today, to the person its template names, else its
+	position. Its due date follows from the start (recompute). Returns the rows started; their
+	assignees get a to-do from `notify_started` once the job is saved."""
+	from a3_sola.api import task_assignees
+	from a3_sola.setup.seed_stages import START_ON_ADVANCE
+
+	named, started = task_assignees.template_users(installation), []
+	for row in installation.stages:
+		if row.stage_code not in START_ON_ADVANCE or row.status != "Pending":
+			continue
+		row.status = "In Progress"
+		row.actual_start_date = today()
+		# Due from today (its SLA), or from its anchor - not a date planned before the money came.
+		row.due_date = None
+		users = task_assignees.default_people(installation, row, named) or task_assignees.people(installation, row.stage_code)
+		if users:
+			task_assignees.put(installation, row.stage_code, users)
+		started.append(row)
+	return started
+
+
+def notify_started(installation, rows):
+	"""A to-do for each started task's people, due when the task is: in their own list."""
+	from frappe.desk.form.assign_to import add as assign_add
+
+	from a3_sola.api import task_assignees
+
+	for row in rows:
+		for user in task_assignees.people(installation, row.stage_code):
+			try:
+				assign_add({"assign_to": [user], "doctype": "Solar Installation", "name": installation.name,
+					"description": f"[{row.stage_code}] {row.stage_name}", "date": row.due_date})
+			except Exception:
+				# The to-do is a convenience; the task's row is the record.
+				frappe.clear_last_message()
+
+
 def _require_manager(action):
 	if not set(frappe.get_roles()).intersection(MANAGER_ROLES):
 		frappe.throw(

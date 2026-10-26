@@ -274,6 +274,8 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None,
 	row.payment_received_on = now_datetime()
 	row.payment_amount, row.payment_bank, row.payment_company = amount, bank, company
 	row.payment_account = accounts[company]
+	# The first advance, whatever its share, starts the work it pays for (stages.start_on_advance).
+	started = stages.start_on_advance(inst) if task_code == "ADV" and row.status == "Pending" else []
 	row.status = "In Progress"
 	row.actual_start_date = row.actual_start_date or today()
 	accounts = task_assignees.resolve(inst, task_assignees.ACCOUNTS)
@@ -286,6 +288,9 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None,
 			due["amount_text"], _(" + arrears {0}").format(due["arrears_text"]) if due["arrears"] else "")
 	stages._save(inst, _("{0}: {1} received in {2} by {3}{4}, marked by {5}; sent to Accounts to confirm.").format(
 		row.stage_name, fmt_money(amount, currency="INR"), bank, company, share, _full_name(frappe.session.user)))
+	if started:
+		stages.notify_started(inst, started)
+		inst.add_comment("Comment", _("Advance received: started {0}.").format(", ".join(r.stage_name for r in started)))
 	_notify(inst, accounts, _("{0} of {1} received on {2} - please confirm").format(
 		row.stage_name, fmt_money(amount, currency="INR"), inst.name))
 	return state(installation, task_code)
