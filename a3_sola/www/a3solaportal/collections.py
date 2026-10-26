@@ -703,6 +703,12 @@ def task_downloads(installation, task_code, document=None):
 
 		return [{"label": "View Form 2", "url": form2_print.url(installation), "icon": "eye"},
 			{"label": "Download Form 2", "url": form2_print.url(installation, download=True)}]
+	if task_code == "ACPT":
+		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print).
+		from a3_sola.api import net_metering_print
+
+		return [{"label": "View Net Metering Agreement", "url": net_metering_print.url(installation), "icon": "eye"},
+			{"label": "Download Net Metering Agreement", "url": net_metering_print.url(installation, download=True)}]
 	if task_code == "KFORMS":
 		# Each of the Form 3 papers the job prints, as its task row offers it: view, download.
 		from a3_sola.api import portal_tasks

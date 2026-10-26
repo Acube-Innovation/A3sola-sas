@@ -5,16 +5,20 @@ portal issues it (NET.pdf): made at the consumer's premises on the day it is pri
 the consumer - name, premises, consumer number - and KSEB, for the plant's kW; the eleven
 clauses as the portal words them.
 
-Printed in the Accept Customer task of a financed job (ACPT), in the covering letter's typeface
-(api/kseb_covering_print). Nothing is saved; the signed copy is uploaded to the task's row.
+Printed in the Accept Customer task of a financed job (ACPT) as the portal prints it: Helvetica
+(Liberation Sans, bundled), the filled-in details underlined. Nothing is saved; the signed copy
+is uploaded to the task's row.
 """
+
+import base64
+import functools
+import os
 
 import frappe
 from frappe import _
 from frappe.utils import cint, flt, getdate, today
 
 from a3_sola.api import documents
-from a3_sola.api import kseb_covering_print as covering
 from a3_sola.api.form1_print import _consumer, _row1
 from a3_sola.api.form2_print import _kwp
 
@@ -43,12 +47,29 @@ def context(inst):
 	return frappe._dict({
 		"place": row1["address"] or "",
 		"day": date.strftime("%d"),
-		"month_year": date.strftime("%B %Y"),
+		"month": date.strftime("%B"),
+		"year": date.strftime("%Y"),
 		"name": row1["name"] or "",
 		"address": row1["address"] or "",
 		"consumer_number": row1["number"] or "",
 		"capacity": "{0:g}".format(kw) if kw else "",
 	})
+
+
+@functools.lru_cache(maxsize=1)
+def fonts():
+	"""@font-face rules for "Agreement Sans": Liberation Sans, metric-compatible with the
+	portal's Helvetica (public/fonts/liberation-sans, SIL OFL) - embedded, as neither this server
+	nor the PDF renderer can be relied on to have Helvetica."""
+	folder = frappe.get_app_path("a3_sola", "public", "fonts", "liberation-sans")
+	rules = []
+	for weight, name in (("normal", "LiberationSans-Regular.ttf"), ("bold", "LiberationSans-Bold.ttf")):
+		with open(os.path.join(folder, name), "rb") as f:
+			data = base64.b64encode(f.read()).decode()
+		# No format() hint: the renderer's CSS parser rejects it, and the font loads without.
+		rules.append('@font-face { font-family: "Agreement Sans"; font-weight: %s; '
+			"src: url(data:application/x-font-ttf;base64,%s); }" % (weight, data))
+	return "\n".join(rules)
 
 
 def file_name(inst):
@@ -65,7 +86,7 @@ def render(inst):
 
 def html(inst):
 	return frappe.render_template("a3_sola/templates/print/net_metering_agreement.html", {"f": context(inst),
-		"fonts": covering.fonts()})
+		"fonts": fonts()})
 
 
 @frappe.whitelist()

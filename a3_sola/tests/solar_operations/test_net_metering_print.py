@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from a3_sola.api import net_metering_print, portal_tasks
 from a3_sola.setup import seed_stages
 from a3_sola.tests.solar_operations.fixtures import make_installation
-from a3_sola.www.a3solaportal import project_overview
+from a3_sola.www.a3solaportal import collections, project_overview
 
 
 class TestAcceptCustomerTask(FrappeTestCase):
@@ -37,8 +37,8 @@ class TestNetMeteringPrint(FrappeTestCase):
 		self.assertEqual(f.place, f.address)
 		self.assertTrue(f.capacity)
 		html = " ".join(net_metering_print.html(inst).split())
-		self.assertIn(f"Consumer No <b>{inst.consumer_number}</b>", html)
-		self.assertIn("11.0</b> This agreement stands valid upto my sanctioned electrical load capacity.", html)
+		# assertTrue, not assertIn: a failure would print the embedded font.
+		self.assertTrue("This agreement stands valid upto my sanctioned electrical load capacity." in html)
 
 	def test_it_prints_on_four_flowing_pages(self):
 		name, pdf = net_metering_print.render(self.installation.name)
@@ -51,3 +51,15 @@ class TestNetMeteringPrint(FrappeTestCase):
 	def test_the_task_offers_view_and_download(self):
 		links = portal_tasks._prints(frappe._dict(stage_code="ACPT"), self.installation.name)[net_metering_print.CODE]
 		self.assertEqual([p["label"] for p in links], ["View Net Metering Agreement", "Download Net Metering Agreement"])
+		# On the task's own form too, before and after it is created.
+		form = collections.task_downloads(self.installation.name, "ACPT")
+		self.assertEqual([p["label"] for p in form], ["View Net Metering Agreement", "Download Net Metering Agreement"])
+
+	def test_it_is_set_as_the_portal_prints_it(self):
+		inst = frappe.get_doc("Solar Installation", self.installation.name)
+		html = net_metering_print.html(inst)
+		self.assertTrue('font-family: "Agreement Sans", Helvetica' in html)
+		self.assertTrue(f"Consumer No&nbsp;<u>{inst.consumer_number}</u>" in html)
+		reader = PdfReader(BytesIO(net_metering_print.render(inst)[1]))
+		fonts = {f["/BaseFont"] for p in reader.pages for f in (p["/Resources"].get("/Font") or {}).values()}
+		self.assertTrue(any("LiberationSans" in str(f) for f in fonts))
