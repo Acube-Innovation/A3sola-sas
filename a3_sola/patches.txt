@@ -214,3 +214,5 @@ a3_sola.patches.v1_2.consumer_address_records
 a3_sola.patches.v1_2.surveyor_from_assignment
 # A design estimate has its own Optional Add-ons, from its package.
 a3_sola.patches.v1_2.estimate_optional_add_ons
+# Leftover India Compliance field rules read gst_settings only when it exists (Invalid depends_on on Item).
+a3_sola.patches.v1_2.guard_gst_settings_conditions
