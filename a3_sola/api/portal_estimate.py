@@ -191,6 +191,21 @@ TRAILING_SECTIONS = (
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
 
+# Tabs only an admin sees and changes: what the customer is let off, and what is offered
+# beside the system. Anyone else sees their effect in the commercials, not the tabs.
+ADMIN_ONLY = ("special_discount", "optional_add_ons")
+ADMIN_ROLES = ("Solar CRM Manager", "System Manager")
+
+
+def is_admin():
+	return bool(set(ADMIN_ROLES) & set(frappe.get_roles()))
+
+
+def _check_admin(section):
+	if section in ADMIN_ONLY and not is_admin():
+		label = (SECTION_BY_KEY.get(section) or LINKED_BY_KEY[section])["label"]
+		frappe.throw(_("Only an admin can change the {0}.").format(_(label)), frappe.PermissionError)
+
 INPUT = {
 	"Select": "select", "Link": "select", "Int": "number", "Float": "number", "Currency": "number",
 	"Percent": "number", "Date": "date", "Small Text": "textarea", "Text": "textarea",
@@ -657,6 +672,7 @@ def _section(doc, section, child, rows):
 
 def _sections(doc):
 	out = []
+	admin = is_admin()
 	for section in SECTIONS:
 		if section.get("only_for") and doc.system_type not in section["only_for"]:
 			continue
@@ -667,10 +683,14 @@ def _sections(doc):
 		# not saved yet has none.
 		if doc.is_new() or not frappe.has_permission(section["doctype"], "read"):
 			continue
+		if section["key"] in ADMIN_ONLY and not admin:
+			continue
 		child = frappe.get_meta(frappe.get_meta(section["doctype"]).get_field("items").options)
 		rows = [row for record in _linked_records(doc, section) for row in record.items]
 		out.append(_section(doc, section, child, rows))
 	for section in TRAILING_SECTIONS:
+		if section["key"] in ADMIN_ONLY and not admin:
+			continue
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
 		out.append(_section(doc, section, child, doc.get(section["key"])))
 	return out
@@ -759,6 +779,8 @@ def builder_state(doc, editable=None):
 			{"label": _("Package price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
+		# The Special Discount and Optional Add-ons tabs are an admin's (ADMIN_ONLY).
+		"is_admin": is_admin(),
 		"choices": _choices(doc),
 		"commercials": commercials,
 		# The proposal this saved option is offered in, or the way to one.
@@ -883,6 +905,7 @@ def _apply_change(doc, change):
 	spec = SECTION_BY_KEY.get(section)
 	if not spec:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	row = change.get("row")
 	target = next((r for r in doc.get(section) if r.name == row), None) if row else None
 	if row and not target:
@@ -1035,6 +1058,7 @@ def save_linked_row(name, section, values, option=None, row=None, ops=None):
 	"""Add or change an Additional Structure, Additional Cable or Special Discount row."""
 	if section not in LINKED_BY_KEY:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	return _linked_change(name, option, ops,
 		lambda doc: _save_linked_row(doc, LINKED_BY_KEY[section], frappe.parse_json(values) or {}, row))
 
@@ -1043,6 +1067,7 @@ def save_linked_row(name, section, values, option=None, row=None, ops=None):
 def remove_linked_row(name, section, row, option=None, ops=None):
 	if section not in LINKED_BY_KEY:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	return _linked_change(name, option, ops, lambda doc: _remove_linked_row(doc, LINKED_BY_KEY[section], row))
 
 

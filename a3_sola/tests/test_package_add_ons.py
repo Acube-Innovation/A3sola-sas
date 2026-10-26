@@ -106,3 +106,40 @@ class TestEstimateAddOns(FrappeTestCase):
 		self.assertEqual(line["amount"], 35000)
 		# Taken, it is in the price: the proposal lists only those still offered.
 		self.assertEqual([r["item_html"] for r in print_cover.add_on_rows([est])], ["Monitoring"])
+
+
+class TestAdminOnlyTabs(FrappeTestCase):
+	"""Special Discount and Optional Add-ons are an admin's: hidden from anyone else, and
+	refused on the server even when asked for directly."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.consumer = make_consumer()
+		self.est = make_estimate(self.consumer, solar_package=package("3Kw 1PH", self.consumer.company))
+		email = "estimate.designer@a3sola.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": "Designer", "send_welcome_email": 0,
+				"user_type": "System User", "roles": [{"role": "Solar Design Engineer"}]}).insert(ignore_permissions=True)
+		self.designer = email
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def keys(self):
+		from a3_sola.api import portal_estimate
+
+		return [s["key"] for s in portal_estimate._sections(self.est)]
+
+	def test_an_admin_sees_both(self):
+		self.assertIn("special_discount", self.keys())
+		self.assertEqual(self.keys()[-1], "optional_add_ons")
+
+	def test_anyone_else_sees_neither_and_cannot_change_them(self):
+		from a3_sola.api import portal_estimate
+
+		frappe.set_user(self.designer)
+		self.assertFalse({"special_discount", "optional_add_ons"} & set(self.keys()))
+		with self.assertRaises(frappe.PermissionError):
+			portal_estimate._apply_change(self.est, {"section": "optional_add_ons", "values": {"add_on_type": "Other"}})
+		with self.assertRaises(frappe.PermissionError):
+			portal_estimate.save_linked_row(self.est.name, "special_discount", "{}")

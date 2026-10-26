@@ -396,7 +396,7 @@
 			nav.appendChild(el("li", {}, [button]));
 		});
 		if (!state.saved) {
-			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: "Additional structure, cable and discount can be added once this option is saved." }));
+			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: (state.is_admin ? "Additional structure, cable and discount" : "Additional structure and cable") + " can be added once this option is saved." }));
 		}
 	}
 
