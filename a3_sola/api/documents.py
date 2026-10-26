@@ -552,6 +552,11 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		from a3_sola.api import payment_statement_print
 
 		content = payment_statement_print.render(inst)[1]
+	elif tpl.template_code == "NET-METERING-AGREEMENT":
+		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print).
+		from a3_sola.api import net_metering_print
+
+		content = net_metering_print.render(inst)[1]
 	elif tpl.template_code == "KSEB-NETMETER-REQUEST":
 		# The Word file "To The Asst. Engineer-Net Meter" (api/kseb_netmeter_print).
 		from a3_sola.api import kseb_netmeter_print

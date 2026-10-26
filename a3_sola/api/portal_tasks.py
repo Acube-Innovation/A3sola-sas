@@ -221,6 +221,11 @@ def _prints(row, installation):
 
 		return {m.CODE: m.prints(installation) for m in (form3_print, kseb_agreement_print, kseb_checklist_print,
 			kseb_covering_print, kseb_netmeter_print)}
+	if row.stage_code == "ACPT":
+		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print).
+		from a3_sola.api import net_metering_print
+
+		return {net_metering_print.CODE: net_metering_print.prints(installation)}
 	if row.stage_code == "NPA":
 		# The quotation in the RIM format, as the bank gets it (api/loan_print.quotation),
 		# once the job has a quotation.

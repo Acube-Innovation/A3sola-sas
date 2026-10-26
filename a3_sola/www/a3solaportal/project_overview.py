@@ -27,7 +27,7 @@ BOARD_COLUMNS = (
 #: The column a job shows only when it is financed: without a loan there is no bank work.
 FINANCED_ONLY = "Bank Activity"
 #: Loan tasks in other columns, likewise left off the board of a job without a loan.
-FINANCED_ONLY_TASKS = {"DAL"}
+FINANCED_ONLY_TASKS = {"ACPT", "DAL"}
 
 
 #: The icon for a task, by the document it is carried out in - the same icons the menu uses.
@@ -48,7 +48,7 @@ TASK_ICONS = {
 }
 #: Tasks worked as a generic Installation Task, by code; anything else gets the checklist.
 GENERIC_TASK_ICONS = {
-	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "SPROC": "box", "PROC": "box", "DAL": "doc",
+	"FRM1": "doc", "ADV": "cash", "BAL": "cash", "DSGN": "pen", "SPROC": "box", "PROC": "box", "ACPT": "doc", "DAL": "doc",
 	"PORTUPD": "globe", "KTST": "gauge", "MTR": "gauge",
 }
 

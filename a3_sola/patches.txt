@@ -216,3 +216,5 @@ a3_sola.patches.v1_2.surveyor_from_assignment
 a3_sola.patches.v1_2.estimate_optional_add_ons
 # Leftover India Compliance field rules read gst_settings only when it exists (Invalid depends_on on Item).
 a3_sola.patches.v1_2.guard_gst_settings_conditions
+# Accept Customer: a financed job's PM Surya Ghar task after portal registration, generating the Net Metering Agreement.
+a3_sola.patches.v1_2.accept_customer_task

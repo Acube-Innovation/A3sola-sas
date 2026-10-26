@@ -31,7 +31,7 @@ BANK = "Bank Activity"
 
 #: The scope each task is seeded with. Seeded once: a scope changed on the template stays.
 SCOPES = {
-	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
+	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "ACPT": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
 	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"FRM2": KSEB, "KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
@@ -50,7 +50,7 @@ ACCOUNTS = "Accounts"
 CONTRACTOR = "Contractor"
 DEFAULT_ASSIGNEES = {
 	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER,
-	"NPA": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
+	"NPA": SALES_COORDINATOR, "ACPT": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
 	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
 	"BAL": ACCOUNTS, "PCOM": ACCOUNTS,
 	"IWOS": CONTRACTOR,
@@ -101,6 +101,14 @@ TASKS = [
 	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
+	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
+	# Agreement the portal asks of them (api/net_metering_print). Second in the PM Surya Ghar
+	# column, shown only on a job that takes a loan.
+	_task("ACPT", "Accept Customer", "Internal", 2, "Installation Task", role=DOCS, task_type="ACPT",
+	      applicability="Financed Sales Only",
+	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT")],
+	      description="The customer accepted on the PM Surya Ghar portal for the loan; the Net Metering "
+	                  "Agreement generated for them to sign."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
 	_task("DAL", "Jan Samarth", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
