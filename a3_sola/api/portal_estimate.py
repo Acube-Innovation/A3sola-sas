@@ -171,13 +171,23 @@ LINKED_SECTIONS = (
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
 
 # After the charges: the estimate's own table of extras offered beside the system, copied
-# from the package. Shown and printed in the proposal, never added to the commercials.
+# from the package. An Option is shown and printed in the proposal; one that is not is priced.
 TRAILING_SECTIONS = (
-	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "unpriced": True, "fields": (
+	# The Solar Panel popup's fields, after the add-on's own type and item: an extra panel is
+	# chosen as a panel is. Not an Option, it is added to the commercials.
+	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "fields": (
 		{"fieldname": "add_on_type", "choices": "add_on_type"},
-		{"fieldname": "item"},
-		{"fieldname": "amount"},
-	), "computed": ()},
+		{"fieldname": "item", "column": False, "hint": "Printed in the proposal. An Extra Panel left blank is named from its panel."},
+		{"fieldname": "panel_type", "choices": "panel_type"},
+		{"fieldname": "panel_capacity_wp"},
+		{"fieldname": "panel_count", "column": False, "hint": True},
+		{"fieldname": "panel_variant", "choices": "module_technology"},
+		{"fieldname": "panel_make", "choices": "module_make", "filter_by": "panel_variant"},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: offered beside the system, not added to the commercials. No: added to the total."},
+		{"fieldname": "rate"},
+	), "computed": ("nos", "amount"),
+		"compact": {"title": (("add_on_type", ""), ("panel_make", ""), ("panel_capacity_wp", " Wp")),
+			"sub": (("item", ""),)}},
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
 
@@ -558,7 +568,7 @@ def _choices(doc):
 		("structure_type", "Additional Structure Item", "structure_type"),
 		("cable_type", "Additional Cable Item", "cable_type"),
 		("discount_type", "Special Discount Item", "discount_type"),
-		("add_on_type", "Solar Package Add-on", "add_on_type"),
+		("add_on_type", "Design Estimate Add-on", "add_on_type"),
 	):
 		out[key] = [{"value": v, "label": v} for v in (frappe.get_meta(doctype).get_field(fieldname).options or "").split("\n") if v]
 	for table, group in EXPENSE_GROUPS.items():
@@ -617,8 +627,6 @@ def _section(doc, section, child, rows):
 			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
-	# Offered beside the system, not part of its price: the tab shows its own sum.
-	unpriced_total = flt(sum(flt(row.get("amount")) for row in rows), 2) if section.get("unpriced") else None
 	rows = [{
 		"name": row.name,
 		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
@@ -642,7 +650,6 @@ def _section(doc, section, child, rows):
 		# Which field holds the count, and whether a row can be marked as an Option.
 		"count_field": (compact or {}).get("count", "nos"),
 		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
-		"unpriced_total": unpriced_total,
 		"columns": columns, "fields": fields,
 		"rows": rows,
 	}

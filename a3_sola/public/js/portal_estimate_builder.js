@@ -407,10 +407,7 @@
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
-		/* Optional add-ons are offered beside the system: their own sum, not a commercials line. */
-		var unpriced = s.unpriced_total !== null && s.unpriced_total !== undefined;
-		$("de-saved-total").textContent = money.format(unpriced ? s.unpriced_total : lineAmount(s.key));
-		$("de-saved-total").title = unpriced ? "Optional: not added to the total" : "";
+		$("de-saved-total").textContent = money.format(lineAmount(s.key));
 		$("de-add").hidden = !state.editable;
 		$("de-add").disabled = busy;
 		var body = $("de-saved");
@@ -800,6 +797,8 @@
 	function setOption(s, row, tick) {
 		change({ section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name },
 			tick.checked ? "Marked as an option: not added to the commercials. Save the tab to keep it."
+				/* Any number of add-ons can be taken; only one panel, inverter or battery is priced. */
+				: s.key === "optional_add_ons" ? "Priced: this add-on is added to the commercials. Save the tab to keep it."
 				: "Priced: this row is in the commercials, and the other rows of the table are now Options. Save the tab to keep it.");
 	}
 

@@ -83,10 +83,26 @@ class TestEstimateAddOns(FrappeTestCase):
 		est.save()
 		self.assertEqual([r["item_html"] for r in print_cover.add_on_rows([est])], ["Monitoring for 5 years"])
 
-	def test_the_builder_shows_them_after_the_charges(self):
+	def test_the_builder_shows_them_after_the_charges_with_the_panel_fields(self):
 		from a3_sola.api import portal_estimate
 
 		est = make_estimate(self.consumer, solar_package=self.pkg)
-		sections = portal_estimate._sections(est)
-		self.assertEqual(sections[-1]["key"], "optional_add_ons")
-		self.assertEqual(sections[-1]["unpriced_total"], 500)
+		section = portal_estimate._sections(est)[-1]
+		self.assertEqual(section["key"], "optional_add_ons")
+		fields = {f["fieldname"] for f in section["fields"]}
+		panel = {f["fieldname"] for f in portal_estimate.SECTION_BY_KEY["panels"]["fields"]}
+		self.assertLessEqual(panel, fields)
+		self.assertTrue({"add_on_type", "item"} <= fields)
+
+	def test_an_add_on_taken_is_added_to_the_commercials(self):
+		est = make_estimate(self.consumer, solar_package=self.pkg)
+		est.append("optional_add_ons", {"add_on_type": "Extra Panel", "panel_capacity_wp": 620, "panel_count": 2,
+			"rate": 17500, "is_option": 0})
+		est.save()
+		row = est.optional_add_ons[-1]
+		self.assertEqual((row.nos, row.amount), (2, 35000))
+		self.assertEqual(row.item, "Supply and Installation of 2X620Wp Solar Panel")
+		line = next(line for line in est.commercials()["lines"] if line["key"] == "optional_add_ons")
+		self.assertEqual(line["amount"], 35000)
+		# Taken, it is in the price: the proposal lists only those still offered.
+		self.assertEqual([r["item_html"] for r in print_cover.add_on_rows([est])], ["Monitoring"])

@@ -499,11 +499,11 @@
    "label": "Optional Add-ons"
   },
   {
-   "description": "Offered beside the system and printed in the proposal; not added to the total. Copied from the package when it is chosen.",
+   "description": "Copied from the package when it is chosen. An Option is offered beside the system and printed in the proposal; one that is not is added to the total.",
    "fieldname": "optional_add_ons",
    "fieldtype": "Table",
    "label": "Optional Add-ons",
-   "options": "Solar Package Add-on"
+   "options": "Design Estimate Add-on"
   },
   {
    "fieldname": "sb_7",
