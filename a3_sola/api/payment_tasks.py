@@ -68,6 +68,36 @@ def _receipt(inst, code):
 	return row
 
 
+def _receipts(inst, code):
+	"""The task's receipt rows on the register, oldest first: "Advance receipt or bank advice",
+	then "(2)", "(3)"... for each later payment of the phase."""
+	name = PAYMENT_TASKS[code]
+	return [d for d in inst.documents if d.stage_code == code and (d.document_name or "").startswith(name)]
+
+
+def _used_receipts(inst, code):
+	"""The receipts payments already carry - a payment sent back gives its receipt up."""
+	plan = billing_plan(inst)
+	return {p.receipt for p in (plan.get("payments") if plan else []) or [] if p.receipt and p.status != "Sent Back"}
+
+
+def _next_receipt(inst, code):
+	"""What the next payment's receipt is: {row, name, file_url} - the newest receipt row no
+	payment has used (empty or uploaded), else a new numbered row to upload into."""
+	rows, used = _receipts(inst, code), _used_receipts(inst, code)
+	free = next((d for d in reversed(rows) if not d.attachment or d.attachment not in used), None)
+	if free:
+		return {"row": free.name, "name": free.document_name, "file_url": free.attachment}
+	name = PAYMENT_TASKS[code]
+	return {"row": None, "name": "{0} ({1})".format(name, len(rows) + 1) if rows else name, "file_url": None}
+
+
+def billing_plan(inst):
+	from a3_sola.api import billing
+
+	return billing.plan_of(inst)
+
+
 def awaiting(row):
 	"""Marked received and waiting for Accounts."""
 	return bool(row.get("payment_received_by")) and row.status not in ("Completed", "Skipped")
@@ -141,11 +171,11 @@ def state(installation, task_code):
 	"""What the payment page shows: where the task stands, its receipt, and what this user may do."""
 	inst = _job(installation, "read")
 	row = _row(inst, task_code)
-	receipt = _receipt(inst, task_code)
 	return {
 		"task": {"code": row.stage_code, "name": row.stage_name, "status": AWAITING if awaiting(row) else row.status},
-		"document": {"row": receipt.name if receipt else None, "name": PAYMENT_TASKS[task_code],
-			"file_url": receipt.attachment if receipt else None},
+		# The receipt for the next payment: one uploaded and not yet used, else a fresh numbered
+		# row to upload into - a phase paid in parts has a receipt per payment.
+		"document": _next_receipt(inst, task_code),
 		"received_by": _full_name(row.payment_received_by),
 		"received_on": format_datetime(row.payment_received_on, "d MMM yyyy, h:mm a") if row.payment_received_on else "",
 		"payment": {"amount": flt(row.get("payment_amount")), "amount_text": fmt_money(row.get("payment_amount"), currency="INR") if flt(row.get("payment_amount")) else "",
@@ -222,9 +252,9 @@ def _new_receipt(inst, code, plan):
 			name = "{0} ({1})".format(name, taken + 1)
 		documents.register_document(inst, code, "Solar Installation", inst.name, name, file_url, kind="Uploaded", save=False)
 		return file_url
-	row = _receipt(inst, code)
-	if row and row.attachment and row.attachment not in used:
-		return row.attachment
+	free = _next_receipt(inst, code)
+	if free["file_url"]:
+		return free["file_url"]
 	frappe.throw(_("Upload the {0} for this payment.").format(PAYMENT_TASKS[code].lower()), title=_("Receipt Needed"))
 
 
