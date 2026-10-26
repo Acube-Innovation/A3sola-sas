@@ -81,3 +81,25 @@ class TestSurveyAssignment(FrappeTestCase):
 		doc = self.survey(self.two)
 		doc.flags.ignore_permissions = True
 		sa.check_create(doc)  # no error: starter data, imports, fixtures
+
+	def test_a_survey_the_system_makes_still_names_the_assignee(self):
+		sa.assign(consumer=self.consumer.name, user=self.one)
+		doc = self.survey("Administrator")
+		sa.check_create(doc)
+		self.assertEqual(doc.surveyor, self.one)
+
+	def test_the_form_offers_the_assignee_as_surveyor(self):
+		from a3_sola.api import record_links
+
+		sa.assign(consumer=self.consumer.name, user=self.one)
+		self.assertEqual(record_links.prefill("Site Survey", solar_consumer=self.consumer.name).get("surveyor"), self.one)
+
+	def test_the_assignee_stays_the_surveyor_after_the_to_do_closes(self):
+		sa.assign(consumer=self.consumer.name, user=self.one)
+		sa.close_on_create(frappe._dict(solar_consumer=self.consumer.name))
+		self.assertEqual(sa.assigned_surveyor(self.consumer.name), self.one)
+		doc = self.survey("Administrator")
+		from a3_sola.api import record_links
+
+		record_links.fill_survey(doc)
+		self.assertEqual(doc.surveyor, self.one)

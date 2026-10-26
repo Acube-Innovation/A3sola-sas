@@ -79,6 +79,11 @@ def fill_survey(doc):
 	if doc.lead and frappe.db.exists("Lead", doc.lead):
 		lead = frappe.get_doc("Lead", doc.lead)
 		fill_blanks(doc, lead_survey_values(lead))
+	if not doc.surveyor:
+		from a3_sola.api.survey_assignment import assigned_surveyor
+
+		# The surveyor is whoever the survey was assigned to, until someone says otherwise.
+		doc.surveyor = assigned_surveyor(doc.solar_consumer)
 
 
 def lead_survey_values(lead):
@@ -141,6 +146,10 @@ def prefill(doctype, lead=None, solar_consumer=None):
 			for fieldname, value in {"lead": lead_doc.name, **lead_survey_values(lead_doc)}.items():
 				if value and not out.get(fieldname):
 					out[fieldname] = value
+		if solar_consumer and not out.get("surveyor"):
+			from a3_sola.api.survey_assignment import assigned_surveyor
+
+			out["surveyor"] = assigned_surveyor(solar_consumer)
 		return out
 	if lead and frappe.has_permission("Lead", "read", lead):
 		out = values_from(frappe.get_doc("Lead", lead), "Solar Consumer")
