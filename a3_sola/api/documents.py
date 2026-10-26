@@ -17,6 +17,8 @@ Never scrape, log in to, or automate a government portal. These documents are pr
 a human to submit.
 """
 
+import re
+
 import frappe
 from frappe import _
 from frappe.utils import flt, get_link_to_form, now_datetime
@@ -292,6 +294,29 @@ def letterhead_flow_pdf(html, company, signed=True):
 	return buf.getvalue()
 
 
+#: Characters a file name cannot carry on Windows, macOS or in a URL path.
+_UNSAFE = re.compile(r'[\\/:*?"<>|\r\n\t]+')
+
+
+def customer_file_name(customer, document, ext="pdf"):
+	""""<Customer> - <Document>.<ext>": every document a job downloads or files - generated,
+	printed or uploaded - is named for its customer first, so a folder of them sorts and reads by
+	customer. Characters a file name cannot hold become spaces; either part may be missing."""
+	parts = [" ".join(_UNSAFE.sub(" ", str(p or "")).split()) for p in (customer, document)]
+	stem = " - ".join(p for p in parts if p) or "Document"
+	ext = (ext or "").lstrip(".")
+	return f"{stem}.{ext}" if ext else stem
+
+
+def job_customer(installation):
+	"""The customer a job (a Solar Installation, or its name) is for, by name."""
+	if not installation:
+		return ""
+	if isinstance(installation, str):
+		return frappe.db.get_value("Solar Installation", installation, "consumer_name") or installation
+	return installation.get("consumer_name") or installation.name
+
+
 def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None, letter_head=None):
 	"""Each of `pages` (HTML, or one string) as an A4 sheet on the company's letterhead - or,
 	with `letterhead=False`, on plain paper inside `margins` (CSS padding, Word's).
@@ -562,7 +587,7 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		from a3_sola.api import kseb_netmeter_print
 
 		content = kseb_netmeter_print.render(inst)[1]
-	file_url = _attach(target_doctype, target_name, tpl, html, content=content)
+	file_url = _attach(target_doctype, target_name, tpl, html, content=content, customer=job_customer(inst))
 	_log_generation(inst, tpl, file_url, target_doctype, target_name)
 	# The task that generated the document is the truth about which task it belongs to;
 	# the template's own stage code is only the answer when nothing generated it.
@@ -591,15 +616,15 @@ def _task_code_of(doc):
 	return code_for(doc)
 
 
-def _attach(target_doctype, target_name, template, html, content=None):
+def _attach(target_doctype, target_name, template, html, content=None, customer=None):
 	"""The PDF, attached to the task document that produced it (or the installation) - made
-	from `html`, unless the PDF itself (`content`) is given.
+	from `html`, unless the PDF itself (`content`) is given - named for its `customer` first.
 
 	Regenerating replaces: the previous file of the same name on the same document goes.
 	"""
 	from frappe.utils.pdf import get_pdf
 
-	file_name = f"{template.template_code}-{target_name}.pdf"
+	file_name = customer_file_name(customer, template.document_name or template.template_code)
 	for existing in frappe.get_all(
 		"File",
 		filters={
@@ -815,7 +840,7 @@ def register_print(doc, installation, document_name, task_code, print_format=Non
 	whose "generated document" is their own print.
 	"""
 	pdf = frappe.get_print(doc.doctype, doc.name, print_format, as_pdf=True)
-	file_name = f"{doc.name}.pdf"
+	file_name = customer_file_name(job_customer(installation), f"{document_name} {doc.name}")
 	for existing in frappe.get_all(
 		"File",
 		filters={"attached_to_doctype": doc.doctype, "attached_to_name": doc.name, "file_name": file_name},

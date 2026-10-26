@@ -55,7 +55,7 @@ def pdf(installation, notice=None, letterhead=1, download=0):
 
 
 def file_name(inst):
-	return "Data for Completion Report - {0}.pdf".format(inst.name)
+	return documents.customer_file_name(documents.job_customer(inst), "Data for Completion Report")
 
 
 def render(inst, notice=None, letterhead=1):

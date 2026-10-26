@@ -46,7 +46,7 @@ def upload(installation, task_code, row=None, document_name=None):
 	name = (expected.document_name if expected else (document_name or "")).strip()
 	if not name:
 		frappe.throw(_("Say what the document is."), frappe.ValidationError)
-	file_url = posted_file(inst)
+	file_url = posted_file(inst, name)
 	if not file_url:
 		frappe.throw(_("No file was sent."), frappe.ValidationError)
 	documents.register_document(
@@ -56,19 +56,24 @@ def upload(installation, task_code, row=None, document_name=None):
 	return _panel(frappe.get_doc(INSTALLATION, inst.name), task_code)
 
 
-def posted_file(inst):
+def posted_file(inst, document=None):
 	"""The request's posted `file`, kept private on the job: its URL, or None when no file
-	was sent. Refuses one over the size limit, or one that cannot be read."""
+	was sent. Refuses one over the size limit, or one that cannot be read. Filed as a
+	`document`, it is named "<Customer> - <document>" with its own extension."""
 	posted = frappe.request.files.get("file") if frappe.request and frappe.request.files else None
 	if not posted:
 		return None
+	file_name = posted.filename
+	if document:
+		ext = os.path.splitext(posted.filename or "")[1]
+		file_name = documents.customer_file_name(documents.job_customer(inst), document, ext)
 	content = posted.stream.read()
 	limit = get_max_file_size()
 	if len(content) > limit:
 		frappe.throw(_("{0} is larger than {1} MB.").format(posted.filename, limit // (1024 * 1024)), frappe.ValidationError)
 	try:
 		file = frappe.get_doc({
-			"doctype": "File", "file_name": posted.filename, "content": content, "is_private": 1,
+			"doctype": "File", "file_name": file_name, "content": content, "is_private": 1,
 			"attached_to_doctype": INSTALLATION, "attached_to_name": inst.name,
 		}).insert(ignore_permissions=True)
 	except frappe.ValidationError:

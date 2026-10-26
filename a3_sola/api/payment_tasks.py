@@ -214,7 +214,7 @@ def _new_receipt(inst, code, plan):
 	from a3_sola.api import documents, portal_tasks
 
 	used = {p.receipt for p in plan.get("payments") or [] if p.receipt}
-	file_url = portal_tasks.posted_file(inst)
+	file_url = portal_tasks.posted_file(inst, PAYMENT_TASKS[code])
 	if file_url:
 		name, row = PAYMENT_TASKS[code], _receipt(inst, code)
 		if row and row.attachment:

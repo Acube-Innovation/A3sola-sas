@@ -137,8 +137,7 @@ def job_context(installation, kind, work_order=None, contractor=None):
 
 
 def file_name(doc):
-	consumer = frappe.db.get_value("Solar Installation", doc.solar_installation, "consumer_name")
-	return "Work Order - {0} - {1}.pdf".format(consumer or doc.solar_installation, doc.name)
+	return documents.customer_file_name(documents.job_customer(doc.solar_installation), "Work Order {0}".format(doc.name))
 
 
 def render(doc):

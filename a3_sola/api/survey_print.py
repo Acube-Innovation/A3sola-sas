@@ -48,7 +48,7 @@ def report(doc):
 
 
 def file_name(doc):
-	return "Site Survey Report - {0} - {1}.pdf".format(doc.customer_name or doc.solar_consumer or "", doc.name)
+	return documents.customer_file_name(doc.customer_name or doc.solar_consumer, "Site Survey Report {0}".format(doc.name))
 
 
 def render(doc):

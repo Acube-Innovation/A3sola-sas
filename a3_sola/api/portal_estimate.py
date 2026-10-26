@@ -1136,7 +1136,11 @@ def download_pdf(name):
 		"money": lambda value: frappe.utils.fmt_money(value, currency="INR"),
 		"_": _,
 	})
-	frappe.local.response.filename = "{0}.pdf".format(doc.name)
+	from a3_sola.api.documents import customer_file_name
+
+	subject = doc.solar_consumer or doc.lead
+	customer = link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else ""
+	frappe.local.response.filename = customer_file_name(customer, "Design Estimate {0}".format(doc.name))
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download"
 

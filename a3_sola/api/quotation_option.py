@@ -353,7 +353,9 @@ def pdf(name, download=0, print_format=None):
 		frappe.throw(_("{0} is not a print format for quotations.").format(print_format))
 	html = frappe.get_print("Quotation", name, print_format=print_format, no_letterhead=0)
 	suffix = "" if print_format == DEFAULT_PRINT_FORMAT else " - " + print_format
-	frappe.local.response.filename = "{0}{1}.pdf".format(name, suffix)
+	from a3_sola.api.documents import customer_file_name
+
+	frappe.local.response.filename = customer_file_name(doc.customer_name or doc.party_name, "Quotation {0}{1}".format(name, suffix))
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download" if cint(download) else "pdf"
 

@@ -240,8 +240,10 @@ def _attach_pdf(doc, file_name, content):
 
 
 def _print(doc, doctype, name, print_format=None):
+	from a3_sola.api.documents import customer_file_name
+
 	pdf = frappe.get_print(doctype, name, print_format, as_pdf=True)
-	return _attach_pdf(doc, f"{name}.pdf", pdf)
+	return _attach_pdf(doc, customer_file_name(doc.consumer_name, f"{_(doctype)} {name}"), pdf)
 
 
 def _upsert_row(doc, item, document_name, file_url, template_name=None, version=None, status="Generated"):
@@ -435,7 +437,9 @@ def merge_pdf(pack):
 		frappe.throw(_("Nothing could be merged. Generate the pack first."), title=_("Empty Pack"))
 	out = io.BytesIO()
 	writer.write(out)
-	doc.merged_pdf = _attach_pdf(doc, f"{doc.name}-pack.pdf", out.getvalue())
+	from a3_sola.api.documents import customer_file_name
+
+	doc.merged_pdf = _attach_pdf(doc, customer_file_name(doc.consumer_name, f"{doc.pack_type or _('Document')} Pack"), out.getvalue())
 	doc.merged_on = now_datetime()
 	doc.merge_notes = "\n".join(notes) or None
 	documents.register_document(

@@ -42,7 +42,7 @@ class TestNetMeteringPrint(FrappeTestCase):
 
 	def test_it_prints_on_four_flowing_pages(self):
 		name, pdf = net_metering_print.render(self.installation.name)
-		self.assertTrue(name.startswith("Net Metering Agreement - "))
+		self.assertTrue(name.endswith(" - Net Metering Agreement.pdf"))  # the customer first
 		reader = PdfReader(BytesIO(pdf))
 		self.assertGreaterEqual(len(reader.pages), 3)
 		text = " ".join(" ".join(p.extract_text() for p in reader.pages).split())

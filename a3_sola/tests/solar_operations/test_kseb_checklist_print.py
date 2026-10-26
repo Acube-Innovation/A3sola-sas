@@ -64,7 +64,7 @@ class TestKSEBChecklistPrint(FrappeTestCase):
 		reader = PdfReader(BytesIO(pdf))
 		self.assertLessEqual(len(reader.pages), 2)
 		self.assertIn(self.installation.consumer_number, reader.pages[0].extract_text())
-		self.assertTrue(name.startswith("Installation and Inverter Testing Checklist - "))
+		self.assertTrue(name.endswith(" - Installation and Inverter Testing Checklist.pdf"))  # the customer first
 
 	def test_the_task_offers_view_and_download_and_takes_no_upload(self):
 		links = portal_tasks._prints(frappe._dict(stage_code="KFORMS"), self.installation.name)[kseb_checklist_print.CODE]

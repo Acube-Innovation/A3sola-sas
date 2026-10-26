@@ -110,7 +110,7 @@ def context(inst):
 
 
 def file_name(inst):
-	return "KSEBL Form 2 - {0}.pdf".format(inst.consumer_name or inst.name)
+	return documents.customer_file_name(documents.job_customer(inst), "KSEBL Form 2")
 
 
 def render(inst):
