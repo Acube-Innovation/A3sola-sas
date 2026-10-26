@@ -107,6 +107,7 @@ def save(installation, module_serials=None, inverter_serials=None):
 
 def _start(inst):
 	row = _get_stage(inst, SERIALS)
+	stages.check_half_paid(inst, SERIALS)  # the serials wait for half the project value
 	if row.status == "Pending":
 		row.status = "In Progress"
 		row.actual_start_date = row.actual_start_date or today()
@@ -116,6 +117,7 @@ def _complete(inst, message, sent_to=None):
 	row = _get_stage(inst, SERIALS)
 	if row.status in ("Completed", "Skipped"):
 		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
+	stages.check_half_paid(inst, SERIALS)
 	row.status = "Completed"
 	row.actual_start_date = row.actual_start_date or today()
 	row.actual_completion_date = today()

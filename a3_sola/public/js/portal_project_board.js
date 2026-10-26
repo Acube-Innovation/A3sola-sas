@@ -66,12 +66,16 @@
 			code: button.dataset.code, name: button.dataset.name, status: button.dataset.status, url: button.dataset.url,
 			assignees: (button.dataset.assignees || "").split(",").filter(Boolean),
 			assigneeNames: button.dataset.assigneeNames || "", canComplete: button.dataset.canComplete === "1",
+			locked: button.dataset.locked === "1", lockReason: button.dataset.lockReason || "",
 		};
 		var el = document.createElement("div");
 		el.className = "a3s-taskmenu";
 		el.setAttribute("role", "menu");
 		var items = [];
-		if (task.url) items.push('<a role="menuitem" href="' + esc(task.url) + '">Open task</a>');
+		/* Held for 50% payment (api/stages.check_half_paid): it opens once half is in, or on exemption. */
+		if (task.locked) items.push('<span role="menuitem" aria-disabled="true" class="is-disabled" title="' + esc(task.lockReason) +
+			'">Open task <small>(waits for 50% payment)</small></span>');
+		else if (task.url) items.push('<a role="menuitem" href="' + esc(task.url) + '">Open task</a>');
 		else items.push('<span role="menuitem" aria-disabled="true" class="is-disabled">Open task <small>(skipped)</small></span>');
 		items.push('<button type="button" role="menuitem" data-act="documents">Documents</button>');
 		if (task.canComplete) items.push('<button type="button" role="menuitem" data-act="complete">Complete task</button>');
@@ -369,6 +373,31 @@
 				.catch(function (e) { m.status(e.message, "error"); });
 		});
 	}
+
+	/* --------------------------------------------------------- 50% exemption */
+	/* An Operations Manager lets the held work go ahead before half is paid, saying why. */
+	var exemptButton = document.querySelector("[data-exempt-half]");
+	if (exemptButton) exemptButton.addEventListener("click", function () {
+		var m = modal("Exempt from the 50% payment rule",
+			"Structure and material procurement and the balance request start now, before half the project value is in.");
+		m.body.innerHTML =
+			'<form class="a3s-form a3s-modal__form">' +
+			'<div class="a3s-field"><label for="a3s-exempt-reason">Reason <span class="a3s-req">*</span></label>' +
+			'<textarea id="a3s-exempt-reason" name="reason" rows="3" required></textarea></div>' +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary">Exempt project</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
+		var form = m.body.querySelector("form");
+		form.elements.reason.focus();
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var reason = form.elements.reason.value.trim();
+			if (!reason) { m.status("Say why this project may go ahead before 50% is paid.", "error"); return; }
+			m.status("Exempting…");
+			call("a3_sola.api.stages.exempt_half_payment", { installation: installation, reason: reason })
+				.then(function () { window.location.reload(); })
+				.catch(function (e) { m.status(e.message, "error"); });
+		});
+	});
 
 	/* ---------------------------------------------------------------- skip */
 	function askSkip(task) {

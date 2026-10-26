@@ -97,6 +97,30 @@
 	</section>
 	{%- endif %}
 
+	{#- The 50% payment rule: structure and material work waits for half the project value, unless
+	    an Operations Manager exempts the job (api/stages.check_half_paid). -#}
+	{%- set hp = overview.half_paid %}
+	{%- if hp and (hp.waiting or hp.exempt) %}
+	<section class="a3s-card a3s-proj__halfpay{% if hp.open %} is-open{% endif %}" aria-label="50% payment rule"
+	         data-installation="{{ record.name | e }}">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ 'check' if hp.open else 'shield' }}"></use></svg>
+		<p>
+			{%- if hp.exempt %}
+			<strong>Exempt from the 50% payment rule</strong> &middot; by {{ hp.exempt_by | e }}: {{ hp.exempt_reason | e }}
+			{%- elif hp.open %}
+			<strong>{{ hp.share }}% received</strong> &middot; structure, material and Form 2/3 work is open.
+			{%- else %}
+			<strong>{{ hp.share }}% of {{ hp.percent }}% received</strong> &middot; structure and material procurement,
+			dispatch, work orders, serials, Forms 2 and 3 and the balance request start once {{ hp.percent }}% of the
+			project value is confirmed received.
+			{%- endif %}
+		</p>
+		{%- if hp.can_exempt and not hp.exempt and not hp.open %}
+		<button type="button" class="a3s-btn a3s-btn--ghost" data-exempt-half>Exempt this project</button>
+		{%- endif %}
+	</section>
+	{%- endif %}
+
 	{#- The tasks: a column per party, a small card per task with its status and dates. -#}
 	<section class="a3s-card a3s-proj__board" aria-label="Tasks by activity" data-installation="{{ record.name | e }}">
 		<div class="a3s-proj__cols" style="--a3s-proj-cols: {{ overview.columns | length }}">
@@ -111,7 +135,7 @@
 				<ol class="a3s-proj__tasks">
 					{%- for t in col.tasks %}
 					{#- Three columns: the task's icon, its name over its date, its status. -#}
-					<li class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}{% if t.menu %} has-link{% endif %}"
+					<li class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}{% if t.locked %} is-locked{% endif %}{% if t.menu %} has-link{% endif %}"
 					    title="{{ t.code | e }}{% if t.reason %} &middot; {{ t.reason | e }}{% endif %}">
 						{%- include "templates/includes/portal_task_card.html" %}
 						{#- The whole card opens its menu - the task, its documents, its people, skip: a
@@ -119,7 +143,8 @@
 						{%- if t.menu %}<button type="button" class="a3s-proj__task-open" aria-haspopup="menu"
 						        data-code="{{ t.code | e }}" data-name="{{ t.name | e }}" data-status="{{ t.status | e }}"
 						        data-url="{{ t.url | e }}" data-assignees="{{ t.assignees | map(attribute='user') | join(',') | e }}"
-						        data-assignee-names="{{ t.assignees | map(attribute='name') | join(', ') | e }}" data-can-complete="{{ 1 if t.can_complete else 0 }}"><span class="a3s-sr">{{ t.name | e }}: actions</span></button>{% endif %}
+						        data-assignee-names="{{ t.assignees | map(attribute='name') | join(', ') | e }}" data-can-complete="{{ 1 if t.can_complete else 0 }}"
+						        data-locked="{{ 1 if t.locked else 0 }}" data-lock-reason="{{ t.reason | e if t.locked else '' }}"><span class="a3s-sr">{{ t.name | e }}: actions</span></button>{% endif %}
 					</li>
 					{%- endfor %}
 				</ol>

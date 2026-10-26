@@ -342,6 +342,7 @@ def confirm(installation, task_code, payment=None):
 	inst = _job(installation, "read")
 	row = _row(inst, task_code)
 	plan, waiting = _awaiting_payments(inst, row, task_code, payment)
+	half_was_open = stages.half_paid_open(inst)
 	if plan:
 		for p in waiting:
 			p.status, p.confirmed_by, p.confirmed_on = "Confirmed", frappe.session.user, now_datetime()
@@ -368,6 +369,13 @@ def confirm(installation, task_code, payment=None):
 		row.status = "In Progress"
 		stages._save(inst, _("{0}: {1} confirmed by {2} - {3} still pending.").format(
 			row.stage_name, amount, _full_name(frappe.session.user), fmt_money(pending, currency="INR")))
+	if not half_was_open and stages.half_paid_open(inst):
+		# Half the project value is now in: the work held for it starts (stages.start_at_half).
+		started = stages.start_at_half(inst)
+		if started:
+			stages._save(inst, _("{0}% of the project value received: started {1}.").format(
+				"{0:g}".format(stages.paid_share(inst)), ", ".join(r.stage_name for r in started)))
+			stages.notify_started(inst, started)
 	_notify(inst, recorders, _("{0} of {1} on {2} confirmed by Accounts").format(row.stage_name, amount, inst.name))
 	return state(installation, task_code)
 

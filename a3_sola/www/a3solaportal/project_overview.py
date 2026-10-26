@@ -64,7 +64,29 @@ def project_overview(doc):
 		"summary": _summary(consumer, electricity, solar, proposal) + [_location(doc)],
 		# The payment schedule: milestones, payments received, what is pending (api/billing).
 		"payments": billing.schedule(doc),
+		"half_paid": _half_paid(doc),
 		"columns": _task_columns(doc),
+	}
+
+
+def _half_paid(doc):
+	"""The 50% payment rule as the board states it: what is received, whether the held work may
+	go ahead, who exempted the job and why, and whether this person may exempt it."""
+	from a3_sola.api import stages
+	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT, HALF_PAID_TASKS
+
+	held = [r for r in doc.stages if r.stage_code in HALF_PAID_TASKS and r.status in ("Pending", "Skipped")]
+	share = stages.paid_share(doc)
+	return {
+		"percent": HALF_PAID_PERCENT,
+		"share": "{0:g}".format(share),
+		"open": bool(doc.get("half_payment_exempt")) or share >= HALF_PAID_PERCENT,
+		"exempt": bool(doc.get("half_payment_exempt")),
+		"exempt_by": (frappe.db.get_value("User", doc.half_payment_exempt_by, "full_name") or doc.half_payment_exempt_by)
+		if doc.get("half_payment_exempt_by") else "",
+		"exempt_reason": doc.get("half_payment_exempt_reason") or "",
+		"waiting": len(held),
+		"can_exempt": bool(set(stages.MANAGER_ROLES) & set(frappe.get_roles())) and bool(doc.has_permission("write")),
 	}
 
 
@@ -243,14 +265,23 @@ def _task_columns(doc):
 		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
 	from a3_sola.api.tasks import may_complete
 
+	from a3_sola.api import stages
+	from a3_sola.setup.seed_stages import HALF_PAID_TASKS
+
+	half_open = stages.half_paid_open(doc)
 	for row in doc.stages:
 		if not doc.is_financed and (row.activity_scope == FINANCED_ONLY or row.stage_code in FINANCED_ONLY_TASKS):
 			continue
 		task = _task(row, doc.name)
+		# Held for 50% payment: shown, but not opened or completed until half is in (or exempt).
+		task["locked"] = (not half_open and row.stage_code in HALF_PAID_TASKS and row.status in ("Pending", "Skipped"))
+		if task["locked"]:
+			task["reason"] = stages.half_paid_lock(doc, row.stage_code) or task["reason"]
 		task["assignees"] = people.get(row.stage_code, [])
 		task["contractor"] = _contractor(row)
 		# Completed straight from the board, with a remark, by its assignee or a manager.
-		task["can_complete"] = row.status not in ("Completed", "Skipped") and may_complete(doc, row.stage_code)
+		task["can_complete"] = (not task["locked"] and row.status not in ("Completed", "Skipped")
+			and may_complete(doc, row.stage_code))
 		# A task the template has not scoped yet is the company's own until it says otherwise.
 		columns[index.get(row.activity_scope, 0)]["tasks"].append(task)
 	for column in columns:

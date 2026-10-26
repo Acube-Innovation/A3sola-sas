@@ -60,7 +60,20 @@ DEFAULT_ASSIGNEES = {
 #: The work the customer's first advance - any amount, 10% or 90% - starts at once, each to the
 #: person its template names (Assign to) else its position (api/stages.start_on_advance). Form 1
 #: Payment follows Form 1 (its due date is anchored to it).
-START_ON_ADVANCE = ("FRM1", "STMP", "DSGN", "SPROC")
+START_ON_ADVANCE = ("FRM1", "STMP", "DSGN")
+
+#: The work that waits for half the project value, confirmed by Accounts - structure and
+#: material, their dispatch and work orders, the serials, Forms 2 and 3 and the balance request -
+#: unless an Operations Manager exempts the job (api/stages.check_half_paid).
+HALF_PAID_PERCENT = 50
+HALF_PAID_TASKS = ("SPROC", "PROC", "DISP", "IWOS", "IWOI", "MATL", "FRM2", "F2PAY", "BAL", "KFORMS")
+#: Started the moment the half is in (Form 2 only once Form 1 is paid).
+START_AT_HALF = ("SPROC", "PROC", "BAL", "FRM2")
+#: Each task started once every task before it is done: {task: its predecessors}.
+NEXT_AT_HALF = {
+	"DISP": ("SPROC", "PROC"), "IWOS": ("DISP",), "IWOI": ("DISP",), "MATL": ("DISP",),
+	"FRM2": ("F1PAY",), "F2PAY": ("FRM2",),
+}
 
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,

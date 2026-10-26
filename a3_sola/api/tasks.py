@@ -321,6 +321,11 @@ def _apply(row, doc, code, rule):
 	before = (row.status, row.task_document, row.cost, row.actual_completion_date, row.blocked_reason)
 	state = rule["state"](doc, code)
 	was = row.status
+	if was in ("Pending", "Skipped") and state not in ("Pending", "Skipped"):
+		# Structure and material work waits for half the project value (stages.check_half_paid).
+		from a3_sola.api import stages
+
+		stages.check_half_paid(getattr(row, "parent_doc", None) or frappe.get_doc("Solar Installation", row.parent), code)
 
 	row.task_doctype = doc.doctype
 	row.task_document = doc.name
@@ -442,6 +447,7 @@ def notify_task_completed(installation, task_code):
 	handler = AFTER_COMPLETE.get(task_code)
 	if handler:
 		stages._safely(lambda doc: handler(doc, task_code), installation, f"after {task_code}")
+	stages._safely(lambda doc: _start_next(doc, task_code), installation, f"next after {task_code}")
 	try:
 		from a3_sola.api import billing
 
@@ -459,6 +465,18 @@ def _start_form2_window(installation, task_code):
 	days = cint(get_value("form2_window_days")) or 30
 	due = add_days(getdate(row.actual_completion_date or today()), days)
 	installation.db_set("form2_due_on", due, update_modified=False)
+
+
+def _start_next(installation, task_code):
+	"""The work waiting on this task starts, once all it waits on is done and the job is half
+	paid (stages.start_next) - dispatch after both procurements, and so on."""
+	# The caller's own copy, so a save it makes after this one does not find the job changed.
+	inst = frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	started = stages.start_next(inst, task_code)
+	if started:
+		stages._save(inst, _("{0} done: started {1}.").format(_row(inst, task_code).stage_name,
+			", ".join(r.stage_name for r in started)))
+		stages.notify_started(inst, started)
 
 
 AFTER_COMPLETE = {"F1PAY": _start_form2_window}
@@ -491,6 +509,13 @@ def _loan_defaults(inst):
 
 
 @frappe.whitelist()
+def _half_paid(inst, task_code):
+	"""Structure and material work waits for half the project value (stages.check_half_paid)."""
+	from a3_sola.api import stages
+
+	stages.check_half_paid(inst, task_code)
+
+
 def open_task(installation, task_code=None, create_draft=1):
 	"""Where to go to do a task: its document if it has one, else what to create.
 
@@ -506,7 +531,9 @@ def open_task(installation, task_code=None, create_draft=1):
 	inst = frappe.get_doc("Solar Installation", installation)
 	inst.check_permission("read")
 	row = _get_stage(inst, task_code)
-	from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serials_task
+	from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serials_task, stages
+
+	stages.check_half_paid(inst, task_code)
 
 	if (payment_tasks.is_payment_task(task_code) or design_freeze.is_design_task(task_code)
 			or dispatch_task.is_dispatch_task(task_code) or serials_task.is_serials_task(task_code)):
@@ -606,6 +633,7 @@ def complete_task(installation, task_code=None, actual_date=None, remarks=None, 
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
 	doc.check_permission("write")
 	row = _get_stage(doc, task_code)
+	_half_paid(doc, task_code)
 	if row.status == "Completed":
 		frappe.throw(_("Task {0} is already complete.").format(task_code))
 	if row.task_document and _live(row):
@@ -693,6 +721,7 @@ def complete_from_board(installation, task_code=None, remarks=None, confirmed=0)
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
 	doc.check_permission("write")
 	row = _get_stage(doc, task_code)
+	_half_paid(doc, task_code)
 	if row.status in DONE:
 		frappe.throw(_("Task {0} is already {1}.").format(row.stage_name, row.status.lower()))
 	if not may_complete(doc, task_code):
@@ -847,6 +876,8 @@ def link_document(installation, task_code, doctype, name, status="In Progress", 
 	if cost is not None:
 		row.cost = flt(cost)
 	was = row.status
+	if was in ("Pending", "Skipped"):
+		_half_paid(doc, task_code)
 	if status == "Completed":
 		row.status = "Completed"
 		row.actual_completion_date = getdate(actual_date or today())

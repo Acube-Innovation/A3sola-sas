@@ -22,8 +22,9 @@ def stage_template(company=None, name="Solar Installation Tasks"):
 	) or name_of("Installation Stage Template", "template_name", name, company)
 
 
-def make_installation(consumer=None, estimate=None, submit=True, **kwargs):
-	"""A Solar Installation, built the way the Sales Order handoff builds one."""
+def make_installation(consumer=None, estimate=None, submit=True, half_paid_gate=False, **kwargs):
+	"""A Solar Installation, built the way the Sales Order handoff builds one. Exempt from the
+	50% payment rule unless `half_paid_gate`, so a test can work any task without paying first."""
 	consumer = consumer or make_consumer(avg_consumption_units=750, sanctioned_load_kw=5)
 	if estimate is None:
 		survey = make_survey(consumer, segments=((240, True),))
@@ -48,6 +49,8 @@ def make_installation(consumer=None, estimate=None, submit=True, **kwargs):
 		"stage_template": stage_template(consumer.company),
 		"order_date": today(),
 	}
+	if not half_paid_gate:
+		values.update({"half_payment_exempt": 1, "half_payment_exempt_reason": "Test job"})
 	values.update(kwargs)
 	doc = frappe.get_doc(values)
 	doc.flags.ignore_permissions = True

@@ -394,16 +394,21 @@ def _get_stage(installation, stage_code):
 
 def start_on_advance(installation):
 	"""The customer's first advance - any amount - starts the work it pays for: Form 1, the
-	stamp paper, the design freeze and the structure material (seed_stages.START_ON_ADVANCE),
-	each still pending, goes In Progress from today, to the person its template names, else its
-	position. Its due date follows from the start (recompute). Returns the rows started; their
-	assignees get a to-do from `notify_started` once the job is saved."""
-	from a3_sola.api import task_assignees
+	stamp paper and the design freeze (seed_stages.START_ON_ADVANCE). Returns the rows started."""
 	from a3_sola.setup.seed_stages import START_ON_ADVANCE
+
+	return _start(installation, START_ON_ADVANCE)
+
+
+def _start(installation, codes):
+	"""Each of `codes` still pending goes In Progress from today, to the person its template
+	names, else its position. Its due date follows from the start (recompute). Returns the rows
+	started; their assignees get a to-do from `notify_started` once the job is saved."""
+	from a3_sola.api import task_assignees
 
 	named, started = task_assignees.template_users(installation), []
 	for row in installation.stages:
-		if row.stage_code not in START_ON_ADVANCE or row.status != "Pending":
+		if row.stage_code not in codes or row.status != "Pending":
 			continue
 		row.status = "In Progress"
 		row.actual_start_date = today()
@@ -414,6 +419,100 @@ def start_on_advance(installation):
 			task_assignees.put(installation, row.stage_code, users)
 		started.append(row)
 	return started
+
+
+# ------------------------------------------------------------------ half paid
+def paid_share(installation):
+	"""What share of the project value Accounts has confirmed received, in percent. A job with
+	no project value cannot be measured, so it is not held back (100)."""
+	from a3_sola.api import billing
+
+	base = flt(installation.get("gross_contract_value"))
+	if not base:
+		return 100.0
+	phases = billing.payment_phases(installation)
+	received = phases["received"] if phases else sum(billing._received(installation, c) for c in billing.PHASE_TASKS)
+	return flt(flt(received) * 100 / base, 1)
+
+
+def half_paid_open(installation):
+	"""Whether the work held for half payment may go ahead: half is in, or the job is exempt."""
+	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT
+
+	return bool(installation.get("half_payment_exempt")) or paid_share(installation) >= HALF_PAID_PERCENT
+
+
+def half_paid_lock(installation, code):
+	"""Why task `code` cannot start yet, or None: it waits for half the project value and has
+	not started, and the job is neither half paid nor exempt."""
+	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT, HALF_PAID_TASKS
+
+	if code not in HALF_PAID_TASKS:
+		return None
+	row = next((r for r in installation.get("stages") or [] if r.stage_code == code), None)
+	if row is None or row.status not in ("Pending", "Skipped") or installation.get("half_payment_exempt"):
+		return None
+	share = paid_share(installation)
+	if share >= HALF_PAID_PERCENT:
+		return None
+	return _("{0} starts once {1}% of the project value is received (now {2}%). An Operations Manager can "
+		"exempt this project.").format(row.stage_name, HALF_PAID_PERCENT, "{0:g}".format(share))
+
+
+def check_half_paid(installation, code):
+	"""Refuse to start task `code` while it waits for half payment (half_paid_lock)."""
+	if isinstance(installation, str):
+		installation = frappe.get_doc("Solar Installation", installation)
+	reason = half_paid_lock(installation, code)
+	if reason:
+		frappe.throw(reason, frappe.ValidationError, title=_("Waiting for 50% Payment"))
+
+
+def start_at_half(installation):
+	"""Half paid, or exempt: structure and material procurement and the balance request start,
+	and Form 2 if Form 1 is paid. Returns the rows started."""
+	from a3_sola.setup.seed_stages import START_AT_HALF
+
+	codes = [c for c in START_AT_HALF if c != "FRM2" or _done(installation, "F1PAY")]
+	return _start(installation, codes)
+
+
+def start_next(installation, code):
+	"""Task `code` is done: each task that waits on it starts once all it waits on are done -
+	dispatch after both procurements, the work orders and serials after dispatch, Form 2
+	after Form 1's payment, Form 2's payment after Form 2 - if the half is in. Returns the rows started."""
+	from a3_sola.setup.seed_stages import NEXT_AT_HALF
+
+	if not half_paid_open(installation):
+		return []
+	ready = [nxt for nxt, before in NEXT_AT_HALF.items()
+		if code in before and all(_done(installation, b) for b in before)]
+	return _start(installation, ready)
+
+
+def _done(installation, code):
+	row = next((r for r in installation.get("stages") or [] if r.stage_code == code), None)
+	return row is not None and row.status in DONE
+
+
+@frappe.whitelist(methods=["POST"])
+def exempt_half_payment(installation, reason=None):
+	"""An Operations Manager lets the job's half-payment work go ahead before half is paid,
+	saying why. The work starts as it would at half."""
+	_require_manager(_("exempt a project from the 50% payment rule"))
+	if not (reason or "").strip():
+		frappe.throw(_("Say why this project may go ahead before 50% is paid."), frappe.ValidationError)
+	inst = frappe.get_doc("Solar Installation", installation)
+	inst.check_permission("write")
+	if inst.half_payment_exempt:
+		return
+	inst.half_payment_exempt = 1
+	inst.half_payment_exempt_reason = reason.strip()
+	inst.half_payment_exempt_by = frappe.session.user
+	inst.half_payment_exempt_on = frappe.utils.now_datetime()
+	started = start_at_half(inst)
+	_save(inst, _("Exempted from the 50% payment rule by {0}: {1}").format(frappe.session.user, reason.strip()))
+	notify_started(inst, started)
 
 
 def notify_started(installation, rows):
