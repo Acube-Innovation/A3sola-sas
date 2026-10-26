@@ -575,7 +575,7 @@
 			var isPackage = line.key === "package";
 			lines.appendChild(el("li", { class: (line.key === active ? "is-active" : "") + (isPackage ? " is-package" : "") }, [
 				el("span", {}, [
-					isPackage ? el("small", { class: "a3s-de-com__kicker", text: "Package price" }) : null,
+					isPackage ? el("small", { class: "a3s-de-com__kicker", text: "System price" }) : null,
 					document.createTextNode(line.label)
 				]),
 				el("strong", { text: money.format(line.amount) })
@@ -641,7 +641,7 @@
 		row("Proposed size", pick(function (c) { return c.size; }));
 		row("Panels", pick(function (c) { return c.panel_kwp; }));
 		row("Inverters", pick(function (c) { return c.inverter_kw; }));
-		row("Package price", pick(function (c) { return c.package_cost; }));
+		row("System price", pick(function (c) { return c.package_cost; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
 		row("Inverter", pick(function (c) { return c.inverter; }));
 		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));

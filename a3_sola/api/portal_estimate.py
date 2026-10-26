@@ -410,7 +410,7 @@ def option_rows(doc, fields):
 
 
 def package_cost_label(amount):
-	return _("Package price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
+	return _("System price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
 
 
 def package_choices_json(columns):
@@ -776,7 +776,7 @@ def builder_state(doc, editable=None):
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
 			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
-			{"label": _("Package price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
+			{"label": _("System price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
 		# The Special Discount and Optional Add-ons tabs are an admin's (ADMIN_ONLY).
@@ -1098,7 +1098,7 @@ def compare(name, pending=None):
 			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
 			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
 			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
-			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package price")), ""),
+			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("System price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
 			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],

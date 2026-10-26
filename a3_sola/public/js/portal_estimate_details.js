@@ -330,7 +330,7 @@
 		var inv = tr.querySelector('[data-component="inverters"]');
 		var chosen = info && inv ? (info.inverters || []).filter(function (o) { return o.value === inv.value; })[0] : null;
 		var price = chosen && chosen.cost ? chosen.cost : (info ? info.package_cost : 0);
-		if (cost) cost.textContent = price ? "Package price " + money.format(price) : "";
+		if (cost) cost.textContent = price ? "System price " + money.format(price) : "";
 	}
 
 	function optionRows() {
