@@ -107,6 +107,25 @@
 		});
 	});
 
+	/* A total (data-sum-of) adds up its parts as they are typed, while it is empty or still the
+	   last sum; typed over, it is the person's own and stays (the server keeps it too). */
+	Array.prototype.forEach.call(form.querySelectorAll("[data-sum-of]"), function (el) {
+		var parts = el.dataset.sumOf.split(",").map(function (name) { return form.elements[name]; }).filter(Boolean);
+		function sum() {
+			var total = parts.reduce(function (acc, p) { return acc + (parseFloat(p.value) || 0); }, 0);
+			return String(Math.round(total * 100) / 100);
+		}
+		var was = sum();
+		parts.forEach(function (p) {
+			p.addEventListener("input", function () {
+				var now = String(el.value || "").trim();
+				if (now === "" || parseFloat(now) === 0 || parseFloat(now) === parseFloat(was)) el.value = sum();
+				was = sum();
+				refreshCounts();
+			});
+		});
+	});
+
 	var sources = {};
 	conditional.forEach(function (wrap) { sources[wrap.dataset.showWhen.split("=")[0]] = true; });
 	Object.keys(sources).forEach(function (fieldname) {

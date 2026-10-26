@@ -67,13 +67,13 @@
   "structural_remarks",
   "tab_cable",
   "sb_report_cables",
-  "total_dc_length_m",
   "panel_to_dcdb_m",
   "dcdb_to_inverter_m",
+  "total_dc_length_m",
   "cb_report_cables",
-  "total_ac_length_m",
   "inverter_to_acdb_m",
   "acdb_to_meter_m",
+  "total_ac_length_m",
   "sb_report_earthing",
   "la_down_conductor_length_m",
   "dc_earthing_length_m",
@@ -155,8 +155,7 @@
   },
   {
    "fieldname": "sb_1",
-   "fieldtype": "Section Break",
-   "label": "Survey Details"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "lead",
@@ -515,11 +514,6 @@
    "label": "Cable Lengths (m)"
   },
   {
-   "fieldname": "total_dc_length_m",
-   "fieldtype": "Float",
-   "label": "Total DC Length"
-  },
-  {
    "fieldname": "panel_to_dcdb_m",
    "fieldtype": "Float",
    "label": "Panel to DCDB"
@@ -530,13 +524,14 @@
    "label": "DCDB to Inverter"
   },
   {
-   "fieldname": "cb_report_cables",
-   "fieldtype": "Column Break"
+   "description": "Panel to DCDB + DCDB to Inverter. Change it if the route differs.",
+   "fieldname": "total_dc_length_m",
+   "fieldtype": "Float",
+   "label": "Total DC Length"
   },
   {
-   "fieldname": "total_ac_length_m",
-   "fieldtype": "Float",
-   "label": "Total AC Length"
+   "fieldname": "cb_report_cables",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "inverter_to_acdb_m",
@@ -547,6 +542,12 @@
    "fieldname": "acdb_to_meter_m",
    "fieldtype": "Float",
    "label": "ACDB to Meter"
+  },
+  {
+   "description": "Inverter to ACDB + ACDB to Meter. Change it if the route differs.",
+   "fieldname": "total_ac_length_m",
+   "fieldtype": "Float",
+   "label": "Total AC Length"
   },
   {
    "fieldname": "sb_report_earthing",
@@ -947,7 +948,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-17 12:00:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

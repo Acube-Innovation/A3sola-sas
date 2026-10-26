@@ -90,7 +90,7 @@
 			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
 			<div class="a3s-form__grid">
 				{%- for f in s.fields %}
-				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
+				<div class="a3s-field{% if f.type in ("Small Text", "Text") or f.sum_of %} a3s-field--wide{% endif %}{% if f.sum_of %} a3s-field--total{% endif %}" id="f-{{ f.fieldname }}"{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
 					{%- if f.type == "Check" %}
 					<label class="a3s-check">
 						<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
@@ -157,7 +157,8 @@
 						{%- elif f.type == "Datetime" %}
 						<input type="datetime-local" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
 						{%- elif f.input == "number" %}
-						<input type="number" step="{{ f.step }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}">
+						<input type="number" step="{{ f.step }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
+						       {%- if f.sum_of %} data-sum-of="{{ f.sum_of | e }}"{% endif %}>
 						{%- else %}
 						<input type="{{ f.input }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"
 						       {% if f.input == "email" %}autocomplete="email" spellcheck="false"{% elif f.input == "tel" %}autocomplete="tel"{% endif %}

@@ -57,3 +57,36 @@ class TestPackageAddOns(FrappeTestCase):
 		self.assertEqual(pages[-1], {"options": [], "kseb": False, "add_ons": True})
 		self.assertTrue(pages[-2]["kseb"])
 		self.assertFalse(print_cover.cost_pages(short, 3, False, 0)[-1]["add_ons"])
+
+
+class TestEstimateAddOns(FrappeTestCase):
+	"""A design estimate takes its package's optional add-ons, changed per estimate, and its
+	proposal prints the estimate's own - never added to the commercials."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.consumer = make_consumer()
+		self.pkg = package("3Kw 1PH", self.consumer.company)
+		frappe.db.delete("Solar Package Add-on", {"parent": self.pkg})
+		frappe.get_doc({"doctype": "Solar Package Add-on", "parent": self.pkg, "parenttype": "Solar Package",
+			"parentfield": "optional_add_ons", "idx": 1, "add_on_type": "Other", "item": "Monitoring", "amount": 500}).db_insert()
+		frappe.clear_document_cache("Solar Package", self.pkg)
+
+	def test_the_estimate_takes_its_packages_add_ons(self):
+		est = make_estimate(self.consumer, solar_package=self.pkg)
+		self.assertEqual([(r.item, r.amount) for r in est.optional_add_ons], [("Monitoring", 500)])
+		self.assertNotIn("optional_add_ons", [line["key"] for line in est.commercials()["lines"]])
+
+	def test_the_proposal_prints_the_estimates_own(self):
+		est = make_estimate(self.consumer, solar_package=self.pkg)
+		est.optional_add_ons[0].item = "Monitoring for 5 years"
+		est.save()
+		self.assertEqual([r["item_html"] for r in print_cover.add_on_rows([est])], ["Monitoring for 5 years"])
+
+	def test_the_builder_shows_them_after_the_charges(self):
+		from a3_sola.api import portal_estimate
+
+		est = make_estimate(self.consumer, solar_package=self.pkg)
+		sections = portal_estimate._sections(est)
+		self.assertEqual(sections[-1]["key"], "optional_add_ons")
+		self.assertEqual(sections[-1]["unpriced_total"], 500)

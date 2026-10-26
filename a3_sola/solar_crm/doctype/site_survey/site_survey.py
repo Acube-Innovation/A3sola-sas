@@ -27,6 +27,12 @@ LINKS = (
 	("roof_type", "Roof Type"),
 )
 
+#: Each cable total is the sum of its legs until the surveyor types it over.
+CABLE_TOTALS = {
+	"total_dc_length_m": ("panel_to_dcdb_m", "dcdb_to_inverter_m"),
+	"total_ac_length_m": ("inverter_to_acdb_m", "acdb_to_meter_m"),
+}
+
 
 class SiteSurvey(Document):
 	def autoname(self):
@@ -50,6 +56,7 @@ class SiteSurvey(Document):
 		self.seed_ehs_checklist()
 		self.compute_roof_capacity()
 		self.compute_shading()
+		self.fill_cable_totals()
 		self.compute_ehs_status()
 		self.tidy_report()
 		self.stamp_approval()
@@ -66,6 +73,15 @@ class SiteSurvey(Document):
 			for field in ("incomer", "common_panel_incomer", "cable_duct_trench_tray"):
 				self.set(field, None)
 			self.dg_available = self.automatic_cos = 0
+
+	def fill_cable_totals(self):
+		"""A total is its legs added up while it is blank or still the old sum; one typed over
+		is the surveyor's and is kept."""
+		before = self.get_doc_before_save()
+		for total, legs in CABLE_TOTALS.items():
+			was = flt(sum(flt(before.get(leg)) for leg in legs), 2) if before else None
+			if not flt(self.get(total)) or flt(self.get(total), 2) == was:
+				self.set(total, flt(sum(flt(self.get(leg)) for leg in legs), 2))
 
 	def stamp_approval(self):
 		"""The customer's approval is in their name and dated; the engineer is the surveyor."""

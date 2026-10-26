@@ -61,6 +61,8 @@
   "mounting_expenses",
   "sb_installation",
   "installation_expenses",
+  "sb_add_ons",
+  "optional_add_ons",
   "sb_7",
   "options",
   "excluded_inverter_makes",
@@ -492,6 +494,18 @@
    "options": "Design Estimate Installation Expense"
   },
   {
+   "fieldname": "sb_add_ons",
+   "fieldtype": "Section Break",
+   "label": "Optional Add-ons"
+  },
+  {
+   "description": "Offered beside the system and printed in the proposal; not added to the total. Copied from the package when it is chosen.",
+   "fieldname": "optional_add_ons",
+   "fieldtype": "Table",
+   "label": "Optional Add-ons",
+   "options": "Solar Package Add-on"
+  },
+  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
    "label": "Options",
@@ -837,7 +851,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

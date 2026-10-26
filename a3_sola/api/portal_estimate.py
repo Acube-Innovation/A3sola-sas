@@ -50,7 +50,7 @@ SCHEME_SUFFIX = re.compile(r"\s*\((?:PM Surya Ghar|Non-Subsidy)\)\s*$", re.IGNOR
 
 # Rebuilt from the package when an option is first worked out as an estimate of its own.
 KIT_TABLES = ("panels", "inverters", "batteries", "bos_items", "options", "quoted_options",
-	"kseb_expenses", "mounting_expenses", "installation_expenses", "cashflow")
+	"kseb_expenses", "mounting_expenses", "installation_expenses", "optional_add_ons", "cashflow")
 KIT_FIELDS = ("equipment_package", "bos_package", "bos_basis", "included_inverter_options",
 	"excluded_inverter_makes", "recommended_option")
 # Rows worked out in memory, before a save, are named with this so a change can point at them.
@@ -169,6 +169,17 @@ LINKED_SECTIONS = (
 	), "computed": ("amount",)},
 )
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
+
+# After the charges: the estimate's own table of extras offered beside the system, copied
+# from the package. Shown and printed in the proposal, never added to the commercials.
+TRAILING_SECTIONS = (
+	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "unpriced": True, "fields": (
+		{"fieldname": "add_on_type", "choices": "add_on_type"},
+		{"fieldname": "item"},
+		{"fieldname": "amount"},
+	), "computed": ()},
+)
+SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
 
 INPUT = {
 	"Select": "select", "Link": "select", "Int": "number", "Float": "number", "Currency": "number",
@@ -547,6 +558,7 @@ def _choices(doc):
 		("structure_type", "Additional Structure Item", "structure_type"),
 		("cable_type", "Additional Cable Item", "cable_type"),
 		("discount_type", "Special Discount Item", "discount_type"),
+		("add_on_type", "Solar Package Add-on", "add_on_type"),
 	):
 		out[key] = [{"value": v, "label": v} for v in (frappe.get_meta(doctype).get_field(fieldname).options or "").split("\n") if v]
 	for table, group in EXPENSE_GROUPS.items():
@@ -605,6 +617,8 @@ def _section(doc, section, child, rows):
 			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
+	# Offered beside the system, not part of its price: the tab shows its own sum.
+	unpriced_total = flt(sum(flt(row.get("amount")) for row in rows), 2) if section.get("unpriced") else None
 	rows = [{
 		"name": row.name,
 		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
@@ -628,6 +642,7 @@ def _section(doc, section, child, rows):
 		# Which field holds the count, and whether a row can be marked as an Option.
 		"count_field": (compact or {}).get("count", "nos"),
 		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
+		"unpriced_total": unpriced_total,
 		"columns": columns, "fields": fields,
 		"rows": rows,
 	}
@@ -648,6 +663,9 @@ def _sections(doc):
 		child = frappe.get_meta(frappe.get_meta(section["doctype"]).get_field("items").options)
 		rows = [row for record in _linked_records(doc, section) for row in record.items]
 		out.append(_section(doc, section, child, rows))
+	for section in TRAILING_SECTIONS:
+		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
+		out.append(_section(doc, section, child, doc.get(section["key"])))
 	return out
 
 

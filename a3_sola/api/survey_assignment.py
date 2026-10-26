@@ -28,6 +28,15 @@ def assignee(consumer):
 	return row.allocated_to if row else None
 
 
+def assigned_surveyor(consumer):
+	"""Who the customer's site survey was given to: the open to-do's person, else the one whose
+	to-do the survey closed on creation. None if it was never assigned."""
+	if not consumer:
+		return None
+	return assignee(consumer) or frappe.db.get_value("ToDo", {"reference_type": CONSUMER, "reference_name": consumer,
+		"status": "Closed", "description": ["like", f"%{MARKER}%"]}, "allocated_to", order_by="creation desc")
+
+
 def _full_name(user):
 	return (frappe.db.get_value("User", user, "full_name") or user) if user else ""
 
@@ -97,7 +106,9 @@ def assign(consumer=None, user=None, complete_by=None, comment=None):
 def check_create(survey):
 	"""A site survey for a customer is created by the person it is assigned to (Site Survey
 	before_insert). Records made by the system - starter data, imports, Administrator - are not
-	held to it."""
+	held to it, but still name the assignee their surveyor."""
+	if not survey.get("surveyor"):
+		survey.surveyor = assigned_surveyor(survey.get("solar_consumer"))
 	if not survey.get("solar_consumer") or survey.flags.ignore_permissions or frappe.session.user == "Administrator":
 		return
 	if frappe.flags.in_import or frappe.flags.in_install or frappe.flags.in_migrate:
@@ -109,8 +120,6 @@ def check_create(survey):
 	if who != frappe.session.user:
 		frappe.throw(_("The site survey for {0} is assigned to {1}: only they can create it.").format(
 			survey.solar_consumer, _full_name(who)), title=_("Assigned to Someone Else"))
-	if not survey.get("surveyor"):
-		survey.surveyor = who
 
 
 def close_on_create(survey):

@@ -1966,6 +1966,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 0.62rem 0.85rem;
 	border-radius: 0.7rem;
 }
+/* A total its parts add up to (data-sum-of): a little larger than the parts. */
+.a3s-edit .a3s-field--total label { font-size: 0.875rem; }
+.a3s-edit .a3s-field--total input { font-size: 1.125rem; font-weight: 600; }
 
 /* The step bar stays put while the sections scroll under it. */
 .a3s-edit__nav {
