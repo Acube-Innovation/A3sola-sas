@@ -188,3 +188,32 @@ class TestPaymentStatement(FrappeTestCase):
 		inst = self.job()
 		codes = {r.stage_code for r in inst.stages if r.status != "Skipped"} & set(payment_statement_rows.TASKS)
 		self.assertEqual({d.stage_code for d in inst.documents if d.document_name == payment_statement_rows.NAME}, codes)
+
+
+class TestReceiptPerPayment(FrappeTestCase):
+	"""A phase paid in parts takes a receipt per payment: after the first, the page offers a
+	fresh numbered receipt to upload for the next."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.inst = installation_with_customer()
+		ensure_firms(self.inst.company)
+		self.assertTrue(billing.ensure_plan_for_installation(self.inst.name, replay=False))
+
+	def test_the_second_payment_gets_its_own_receipt(self):
+		from a3_sola.api import portal_tasks
+
+		with patch.object(frappe, "request", posted("ADV-1.txt", b"first receipt")):
+			payment_tasks.mark_received(self.inst.name, "ADV", amount=50000, reference="UTR1", **PAID)
+		doc = payment_tasks.state(self.inst.name, "ADV")["document"]
+		self.assertIsNone(doc["file_url"], "the first receipt is the first payment's")
+		self.assertTrue(doc["name"].endswith("(2)"))
+		# The page uploads into that numbered row, then records the payment against it.
+		with patch.object(frappe, "request", posted("ADV-2.txt", b"second receipt")):
+			portal_tasks.upload(self.inst.name, "ADV", document_name=doc["name"])
+		doc = payment_tasks.state(self.inst.name, "ADV")["document"]
+		self.assertTrue(doc["file_url"])
+		with patch.object(frappe, "request", None):
+			payment_tasks.mark_received(self.inst.name, "ADV", amount=30000, reference="UTR2", **PAID)
+		receipts = [p.receipt for p in billing.plan_of(self.inst.name).payments]
+		self.assertEqual(len(set(receipts)), 2)

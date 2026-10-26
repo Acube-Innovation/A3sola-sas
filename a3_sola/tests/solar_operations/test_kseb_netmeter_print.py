@@ -33,7 +33,7 @@ class TestKSEBNetMeterPrint(FrappeTestCase):
 	def test_it_prints_on_one_page(self):
 		name, pdf = kseb_netmeter_print.render(self.installation.name)
 		self.assertEqual(len(PdfReader(BytesIO(pdf)).pages), 1)
-		self.assertTrue(name.startswith("Request for Allocation of Bidirectional Meter - "))
+		self.assertTrue(name.endswith(" - Request for Allocation of Bidirectional Meter.pdf"))  # the customer first
 		inst = frappe.get_doc("Solar Installation", self.installation.name)
 		html = " ".join(kseb_netmeter_print.html(inst).split())
 		self.assertIn("<b>Sub: -</b> Request for allocation of Bi-directional Meter", html)

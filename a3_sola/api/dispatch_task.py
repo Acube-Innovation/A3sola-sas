@@ -108,6 +108,7 @@ def save(installation, module_serials=None, inverter_serials=None, **values):
 	if inverter_serials is not None:
 		_set_serials(inst, "Inverter", inverter_serials)
 	row = _get_stage(inst, DISPATCH)
+	stages.check_half_paid(inst, DISPATCH)  # dispatch waits for half the project value
 	if row.status == "Pending":
 		row.status = "In Progress"
 		row.actual_start_date = row.actual_start_date or today()
@@ -122,6 +123,7 @@ def mark_dispatched(installation, **values):
 	save(installation, **values)
 	inst = _job(installation, "write")
 	row = _get_stage(inst, DISPATCH)
+	stages.check_half_paid(inst, DISPATCH)
 	if row.status in ("Completed", "Skipped"):
 		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
 	if not inst.dispatch_date:

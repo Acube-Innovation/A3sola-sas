@@ -75,12 +75,32 @@ class SolarInstallation(Document):
 
 		payment_tasks.apply_phases(self)
 		self.assign_people()
+		self.guard_half_payment_exempt()
 		self.release_dangling_links()
 		self.validate_capacity()
 		self.resolve_statutory()
 		serials.validate_register(self)
 		self.roll_counts()
 		stages.recompute(self)
+
+	def guard_half_payment_exempt(self):
+		"""Only an Operations Manager exempts a job from the 50% payment rule, saying why; who and
+		when are recorded. Exempted here (the desk), the held work starts as it would at half."""
+		before = self.get_doc_before_save()
+		was = int(before.get("half_payment_exempt") or 0) if before else 0
+		now = int(self.get("half_payment_exempt") or 0)
+		if now == was:
+			return
+		stages._require_manager(_("change a project's 50% payment exemption"))
+		if now:
+			if not (self.half_payment_exempt_reason or "").strip():
+				frappe.throw(_("Say why this project may go ahead before 50% is paid."), title=_("Exemption Reason"))
+			self.half_payment_exempt_by = self.half_payment_exempt_by or frappe.session.user
+			self.half_payment_exempt_on = self.half_payment_exempt_on or frappe.utils.now_datetime()
+			if not self.is_new():
+				stages.start_at_half(self)
+		else:
+			self.half_payment_exempt_by = self.half_payment_exempt_on = None
 
 	def assign_people(self):
 		"""The job's people, and its tasks to them: a new job's blank Project Engineer and

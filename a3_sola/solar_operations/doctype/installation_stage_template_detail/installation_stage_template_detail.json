@@ -15,6 +15,7 @@
   "cb_1",
   "responsible_role",
   "default_assignee",
+  "default_user",
   "allow_reimbursement",
   "is_mandatory",
   "display_order",
@@ -101,6 +102,14 @@
    "description": "Who the task is first assigned to on a new project: the person in that position on the project."
   },
   {
+   "description": "A named person this task goes to on every job, in place of the position above. Leave blank to use the position.",
+   "fieldname": "default_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assign to (person)",
+   "options": "User"
+  },
+  {
    "fieldname": "allow_reimbursement",
    "fieldtype": "Check",
    "label": "Allow Reimbursement",
@@ -178,7 +187,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-15 19:30:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",

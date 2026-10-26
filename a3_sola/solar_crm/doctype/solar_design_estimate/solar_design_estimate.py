@@ -80,6 +80,7 @@ class SolarDesignEstimate(Document):
 		if not self.sync_kit_from_options():
 			self.fill_from_package()
 		self.fill_add_ons_from_package()
+		self.compute_add_ons()
 		self.apply_component_choices()
 		self.keep_one_priced()
 		self.record_component_choices()
@@ -466,10 +467,33 @@ class SolarDesignEstimate(Document):
 		if not moved and (before is not None or not self.is_new() or self.get("optional_add_ons")):
 			return
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
-		self.set("optional_add_ons", [
-			{"add_on_type": r.add_on_type, "item": r.item, "amount": r.amount}
-			for r in package.get("optional_add_ons") or []
-		])
+		module = default_module(package)
+		self.set("optional_add_ons", [])
+		for r in package.get("optional_add_ons") or []:
+			row = {"add_on_type": r.add_on_type or "Other", "item": r.item, "rate": r.amount, "is_option": 1}
+			if r.add_on_type == "Extra Panel" and module:
+				# One more of the package's own panel.
+				row.update({"panel_capacity_wp": module.module_wattage, "panel_make": module.module_make,
+					"panel_count": 1})
+			self.append("optional_add_ons", row)
+
+	def compute_add_ons(self):
+		"""Each add-on's count and amount: its panels (one if not said) at its rate. A panel make
+		brings its variant and DCR type, as on a Solar Panel row; an Extra Panel left unnamed is
+		named from its panel."""
+		for row in self.get("optional_add_ons") or []:
+			if row.panel_make:
+				make = frappe.db.get_value("Component Make", row.panel_make, ["technology", "is_dcr"], as_dict=True)
+				if make:
+					row.panel_variant = row.panel_variant or make.technology
+					row.panel_type = row.panel_type or ("DCR" if make.is_dcr else "Non-DCR")
+				mismatch = make_mismatch(row.panel_make, row.panel_variant)
+				if mismatch:
+					frappe.throw(_("Optional add-on row {0}: {1}").format(row.idx, mismatch), title=_("Panel Make Mismatch"))
+			row.nos = cint(row.panel_count) or 1
+			row.amount = flt(row.nos * flt(row.rate), 2)
+			if row.add_on_type == "Extra Panel" and not (row.item or "").strip() and flt(row.panel_capacity_wp):
+				row.item = "Supply and Installation of {0}X{1:g}Wp Solar Panel".format(row.nos, flt(row.panel_capacity_wp))
 
 	def fill_from_package(self):
 		"""Start the System & Options tables from the chosen package's default kit.
@@ -902,6 +926,10 @@ class SolarDesignEstimate(Document):
 			for table, label in COMMERCIAL_LINES
 			if table != "batteries" or self.get("batteries")
 		]
+		# An add-on is offered beside the system; one taken (not an Option) is charged.
+		add_ons = flt(sum(flt(row.amount) for row in self.get("optional_add_ons") or [] if not row.is_option), 2)
+		if add_ons:
+			lines.append({"key": "optional_add_ons", "label": "Optional Add-ons", "amount": add_ons})
 		lines += [
 			{"key": key, "label": doctype, "amount": self.linked_charge(doctype) * sign or 0.0}
 			for key, doctype, sign in LINKED_CHARGES

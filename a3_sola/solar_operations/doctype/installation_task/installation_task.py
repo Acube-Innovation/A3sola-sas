@@ -38,7 +38,7 @@ REQUIRED_EVIDENCE = {
 }
 
 #: Documents a task can generate for itself, by task code.
-TASK_DOCUMENTS = {"FRM1": ["KSEB-FORM-1"], "DSGN": ["BOM-SUMMARY"]}
+TASK_DOCUMENTS = {"FRM1": ["KSEB-FORM-1"], "ACPT": ["NET-METERING-AGREEMENT"], "DSGN": ["BOM-SUMMARY"]}
 
 LABELS = {
 	"amount": "Amount", "paid_on": "Paid On", "certificate": "Certificate",

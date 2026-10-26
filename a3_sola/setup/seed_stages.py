@@ -31,7 +31,7 @@ BANK = "Bank Activity"
 
 #: The scope each task is seeded with. Seeded once: a scope changed on the template stays.
 SCOPES = {
-	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
+	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "ACPT": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
 	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"FRM2": KSEB, "KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
@@ -50,11 +50,30 @@ ACCOUNTS = "Accounts"
 CONTRACTOR = "Contractor"
 DEFAULT_ASSIGNEES = {
 	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER,
-	"NPA": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
+	"NPA": SALES_COORDINATOR, "ACPT": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
 	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
 	"BAL": ACCOUNTS, "PCOM": ACCOUNTS,
 	"IWOS": CONTRACTOR,
+	"SPROC": PROJECT_MANAGER,
 }  # every other task: the Project Engineer
+
+#: The work the customer's first advance - any amount, 10% or 90% - starts at once, each to the
+#: person its template names (Assign to) else its position (api/stages.start_on_advance). Form 1
+#: Payment follows Form 1 (its due date is anchored to it).
+START_ON_ADVANCE = ("FRM1", "STMP", "DSGN")
+
+#: The work that waits for half the project value, confirmed by Accounts - structure and
+#: material, their dispatch and work orders, the serials, Forms 2 and 3 and the balance request -
+#: unless an Operations Manager exempts the job (api/stages.check_half_paid).
+HALF_PAID_PERCENT = 50
+HALF_PAID_TASKS = ("SPROC", "PROC", "DISP", "IWOS", "IWOI", "MATL", "FRM2", "F2PAY", "BAL", "KFORMS")
+#: Started the moment the half is in (Form 2 only once Form 1 is paid).
+START_AT_HALF = ("SPROC", "PROC", "BAL", "FRM2")
+#: Each task started once every task before it is done: {task: its predecessors}.
+NEXT_AT_HALF = {
+	"DISP": ("SPROC", "PROC"), "IWOS": ("DISP",), "IWOI": ("DISP",), "MATL": ("DISP",),
+	"FRM2": ("F1PAY",), "F2PAY": ("FRM2",),
+}
 
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,
@@ -91,6 +110,7 @@ TASKS = [
 	      description="KSEBL Form 1 generated and submitted to the section office."),
 	_task("F1PAY", "Form 1 Payment", "Internal", 2, "Statutory Fee Payment",
 	      task_type="Application Fee", documents=[("Application fee receipt", 1, None)],
+	      due_anchor_task="FRM1", due_anchor_days=2,
 	      description="Application fee paid. Paying it starts the thirty-day window for Form 2."),
 	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 3, "Portal Application", role=DOCS,
 	      applicability="Subsidised Only", task_type="National Portal",
@@ -101,6 +121,14 @@ TASKS = [
 	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
+	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
+	# Agreement the portal asks of them (api/net_metering_print). Second in the PM Surya Ghar
+	# column, shown only on a job that takes a loan.
+	_task("ACPT", "Accept Customer", "Internal", 2, "Installation Task", role=DOCS, task_type="ACPT",
+	      applicability="Financed Sales Only",
+	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT")],
+	      description="The customer accepted on the PM Surya Ghar portal for the loan; the Net Metering "
+	                  "Agreement generated for them to sign."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
 	_task("DAL", "Jan Samarth", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",

@@ -191,3 +191,12 @@ class TestSeededTemplates(FrappeTestCase):
 		lines = [line for line in (enclosures or "").split("\n") if line.strip()]
 		self.assertGreaterEqual(len(lines), 8)
 		self.assertTrue(any("stamp paper" in line.lower() for line in lines))
+
+
+class TestCustomerFileNames(FrappeTestCase):
+	"""Every document a job downloads or files is named "<Customer> - <Document>"."""
+
+	def test_customer_first_and_safe(self):
+		self.assertEqual(documents.customer_file_name("Shiju", "KSEBL Form 1"), "Shiju - KSEBL Form 1.pdf")
+		self.assertEqual(documents.customer_file_name("A/B: Rao", "Signed  copy", ".jpg"), "A B Rao - Signed copy.jpg")
+		self.assertEqual(documents.customer_file_name("", "Quotation"), "Quotation.pdf")

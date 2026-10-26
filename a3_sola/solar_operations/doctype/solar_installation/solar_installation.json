@@ -172,6 +172,12 @@
   "cb_27",
   "gross_contract_value",
   "net_payable_by_customer",
+  "sb_half_payment",
+  "half_payment_exempt",
+  "half_payment_exempt_reason",
+  "cb_half_payment",
+  "half_payment_exempt_by",
+  "half_payment_exempt_on",
   "sb_28",
   "net_meter_mode",
   "kseb_application_fee",
@@ -1285,6 +1291,46 @@
    "permlevel": 1
   },
   {
+   "collapsible": 1,
+   "description": "Structure and material procurement, dispatch, work orders, serials, Forms 2 and 3 and the balance request wait until 50% of the contract value is confirmed received, unless an Operations Manager exempts the project.",
+   "fieldname": "sb_half_payment",
+   "fieldtype": "Section Break",
+   "label": "50% Payment Rule"
+  },
+  {
+   "default": "0",
+   "description": "Let the 50% work go ahead before half is paid. Operations Manager or System Manager only.",
+   "fieldname": "half_payment_exempt",
+   "fieldtype": "Check",
+   "label": "Exempt from 50% Payment Rule"
+  },
+  {
+   "depends_on": "half_payment_exempt",
+   "fieldname": "half_payment_exempt_reason",
+   "fieldtype": "Small Text",
+   "label": "Exemption Reason",
+   "mandatory_depends_on": "half_payment_exempt"
+  },
+  {
+   "fieldname": "cb_half_payment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "half_payment_exempt",
+   "fieldname": "half_payment_exempt_by",
+   "fieldtype": "Link",
+   "label": "Exempted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "depends_on": "half_payment_exempt",
+   "fieldname": "half_payment_exempt_on",
+   "fieldtype": "Datetime",
+   "label": "Exempted On",
+   "read_only": 1
+  },
+  {
    "fieldname": "sb_28",
    "fieldtype": "Section Break",
    "label": "Statutory"
@@ -1574,7 +1620,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 16:00:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Installation",

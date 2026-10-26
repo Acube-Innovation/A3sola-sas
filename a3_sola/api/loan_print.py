@@ -47,9 +47,8 @@ def pdf(name, document=None, download=0, signed=1):
 		context.loan = context.task = context.source = loan
 		pages.append(frappe.render_template(tpl.body_template or "", context))
 	signed = frappe.utils.cint(signed)
-	frappe.local.response.filename = "{0} - {1}{2}.pdf".format(
-		TITLES.get(document, "Loan Documents"), loan.name, "" if signed else " (unsigned)"
-	)
+	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
+		TITLES.get(document, "Loan Documents") + ("" if signed else " (unsigned)"))
 	codes = [DOCUMENTS[document]] if document else PRINTED
 	if len(codes) == 1 and codes[0] in documents.LETTERHEAD_FLOW_TEMPLATES:
 		content = documents.letterhead_flow_pdf(pages[0], inst.company, signed=bool(signed))
@@ -79,8 +78,8 @@ def quotation(installation, download=0, signed=1):
 	context = documents.get_document_context(inst, tpl, source=("Solar Installation", inst.name))
 	signed = frappe.utils.cint(signed)
 	page = frappe.render_template(tpl.body_template or "", context)
-	frappe.local.response.filename = "Quotation - {0}{1}.pdf".format(inst.consumer_name or inst.name,
-		"" if signed else " (unsigned)")
+	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
+		"Quotation" + ("" if signed else " (unsigned)"))
 	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed))
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
 

@@ -136,8 +136,8 @@ def pdf(task, download=0, pending=0):
 
 
 def file_name(doc, pending=False):
-	consumer = frappe.db.get_value("Solar Installation", doc.solar_installation, "consumer_name")
-	return "{0} - {1} - {2}.pdf".format("Pending Items" if pending else "Purchase List", consumer or doc.solar_installation, doc.name)
+	return documents.customer_file_name(documents.job_customer(doc.solar_installation),
+		"{0} {1}".format("Pending Items" if pending else "Purchase List", doc.name))
 
 
 def render(doc, pending=False):

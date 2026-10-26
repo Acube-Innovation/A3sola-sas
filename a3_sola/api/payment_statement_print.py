@@ -105,7 +105,7 @@ def context(inst):
 
 
 def file_name(inst, signed=True):
-	return "{0} - {1}{2}.pdf".format(TITLE, inst.consumer_name or inst.name, "" if signed else " (unsigned)")
+	return documents.customer_file_name(documents.job_customer(inst), TITLE + ("" if signed else " (unsigned)"))
 
 
 def html(inst):

@@ -214,3 +214,9 @@ a3_sola.patches.v1_2.consumer_address_records
 a3_sola.patches.v1_2.surveyor_from_assignment
 # A design estimate has its own Optional Add-ons, from its package.
 a3_sola.patches.v1_2.estimate_optional_add_ons
+# Leftover India Compliance field rules read gst_settings only when it exists (Invalid depends_on on Item).
+a3_sola.patches.v1_2.guard_gst_settings_conditions
+# Accept Customer: a financed job's PM Surya Ghar task after portal registration, generating the Net Metering Agreement.
+a3_sola.patches.v1_2.accept_customer_task
+# The first advance starts Form 1, stamp paper, design freeze and structure material; a person per task.
+a3_sola.patches.v1_2.start_tasks_on_advance

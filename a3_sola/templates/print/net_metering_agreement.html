@@ -1,0 +1,144 @@
+{#- The Net Metering Agreement between the eligible consumer and KSEB, as the PM Surya Ghar
+    portal issues it (NET.pdf): the consumer, the premises, the consumer number and the plant's
+    kW filled in and underlined, the eleven clauses word for word, in its Helvetica. Context: f (api/net_metering_print.context). -#}
+<style>
+	{{ fonts }}
+	{#- As the portal prints it: Helvetica (Liberation Sans, embedded) 12pt, loosely set;
+	    the details filled in underlined, headings bold, a blank line after each sub-clause. -#}
+	.nm { font-family: "Agreement Sans", Helvetica, Arial, sans-serif; font-size: 12pt; line-height: 1.6; text-align: left; color: #000; }
+	.nm h1 { font-size: 12pt; font-weight: bold; text-align: center; margin: 0 0 1mm; }
+	.nm p { margin: 0 0 1.5mm; }
+	.nm .gap { margin-bottom: 6mm; }
+	.nm h2 { font-size: 12pt; font-weight: bold; margin: 4mm 0 0; }
+	.nm h2 .n { font-weight: normal; }
+	.nm u { text-decoration: underline; }
+	.nm ul { list-style: none; margin: 2mm 0 0; padding: 0; }
+	.nm li { position: relative; padding-left: 6mm; margin: 0; }
+	.nm li:before { content: "\2022"; position: absolute; left: 0; }
+	.nm .rule { border-top: 1px dashed #000; margin: 5mm 0 2mm; }
+</style>
+<div class="nm">
+	<h1>Net Metering Agreement</h1>
+	<p class="gap">This Agreement is made and entered into at&nbsp;<u>{{ f.place | e }}</u> on this&nbsp;<u>{{ f.day }}</u> day of
+		<u>{{ f.month }}</u>&nbsp;<u>{{ f.year }}</u> between the Eligible Consumer&nbsp;<u>{{ f.name | e }}</u> having premises at
+		<u>{{ f.address | e }}</u> and Consumer No&nbsp;<u>{{ f.consumer_number | e }}</u> as the first Party,</p>
+	<p class="gap">AND</p>
+	<p>The Distribution Licensee&nbsp;<u>Kerala State Electricity Board</u>(hereinafter referred to as 'the Licensee') and
+		having its Registered Office at&nbsp;<u>Vydyuthi Bhavanam, Pattom, Thiruvananthapuram, PIN - 695004, Kerala, INDIA.</u>
+		as second Party of this Agreement.</p>
+	<p>Whereas, the Eligible Consumer has applied to the Licensee for approval of a Net Metering Arrangement under
+		the provisions of the concerned SERC (State Electricity Regulatory Commission) regulations.</p>
+	<p class="gap">And whereas, the Licensee has agreed to provide Network connectivity to the Eligible Consumer for
+		injection of electricity generated from its Roof-top Renewable Energy</p>
+	<p class="gap">Generating System of&nbsp;<u>{{ f.capacity | e }}</u> kilowatt (kW)</p>
+	<p>Both Parties hereby agree as follows:-</p>
+
+	<h2>1.&nbsp;&nbsp; Eligibility:</h2>
+	<p>The Roof-top Renewable Energy Generating System meets the applicable norms for being integrated into the
+		Distribution Network, and that the Eligible Consumer shall maintain the System accordingly for the duration
+		of this Agreement.</p>
+
+	<h2>2.&nbsp;&nbsp; Technical and Inter-connection Requirements:</h2>
+	<p class="gap">2.1&nbsp;&nbsp; The metering arrangement and the inter-connection of the Roof-top Renewable Energy Generating System
+		with the Network of the Licensee shall be as per the provisions of the Net Metering Regulations and the
+		technical standards and norms specified by the Central Electricity Authority for connectivity of
+		distributed generation resources and for the installation and operation of meters.</p>
+	<p class="gap">2.2.&nbsp;&nbsp; The Eligible Consumer agrees that he shall install, prior to connection of the Roof-top Renewable
+		Energy Generating System to the Network of the Licensee, an isolation device (both automatic and in built
+		within inverter and external manual relays); and the Licensee shall have access to it if required for the
+		repair and maintenance of the Distribution Network.</p>
+	<p class="gap">2.3.&nbsp;&nbsp; The Licensee shall specify the interface/inter-connection point and metering point.</p>
+	<p class="gap">2.4.&nbsp;&nbsp; The Eligible Consumer shall furnish all relevant data, such as voltage, frequency, circuit breaker,
+		isolator position in his System, as and when required by the Licensee.</p>
+	<p>2.5.&nbsp;&nbsp; All the equipment connected to Network of the Licensee at the time of installation shall be compliant
+		with the Technical Specifications for rooftop system as Published by MNRE.</p>
+
+	<h2>3.&nbsp;&nbsp; Safety:</h2>
+	<p class="gap">3.1&nbsp;&nbsp; The consumer shall comply with the Central Electricity Authority (Measures Relating to Safety and
+		Electricity Supply) Regulations 2010</p>
+	<p class="gap">3.2.&nbsp;&nbsp; The equipment connected to the Licensee's Distribution System shall be compliant with relevant
+		International (IEEE/IEC) or Indian Standards (BIS), as the case may be, and the installation of electrical
+		equipment shall comply with the requirements specified by the Central Electricity Authority regarding
+		safety and electricity supply.</p>
+	<p class="gap">3.3.&nbsp;&nbsp; The design, installation, maintenance and operation of the Roof-top Renewable Energy Generating System
+		shall be undertaken in a manner conducive to the safety of the Roof-top Renewable Energy Generating System
+		as well as the Licensee's Network.</p>
+	<p class="gap">3.4.&nbsp;&nbsp; If, at any time, the Licensee determines that the Eligible Consumer's Roof-top Renewable Energy
+		Generating System is causing or may cause damage to and/or results in the Licensee's other consumers or its
+		assets, the Eligible Consumer shall disconnect the Roof-top Renewable Energy Generating System from the
+		distribution Network upon direction from the Licensee and shall undertake corrective measures at his own
+		expense prior to re-connection.</p>
+	<p>3.5.&nbsp;&nbsp; The Licensee shall not be responsible for any accident resulting in injury to human beings or animals
+		or damage to property that may occur due to back- feeding from the Roof-top Renewable Energy Generating
+		System when the grid supply is off. The Licensee may disconnect the installation at any time in the event
+		of such exigencies to prevent such accident.</p>
+
+	<h2>4.&nbsp;&nbsp; Other Clearances and Approvals:</h2>
+	<p>The Eligible Consumer shall obtain any statutory approvals and clearances that may be required, such as from
+		the Electrical Inspector or the municipal or other authorities, before connecting the Roof-top Renewable
+		Energy Generating System to the distribution Network.</p>
+
+	<h2>5.&nbsp;&nbsp; Period of Agreement, and Termination:</h2>
+	<p>This Agreement shall be for a period for 25 years, but may be terminated prematurely.</p>
+	<p>(a) By mutual consent; or<br>
+		(b) By the Eligible Consumer, by giving 30 days' notice to the Licensee.<br>
+		(c) By the Licensee, by giving 30 days' notice, if the Eligible Consumer breaches any terms of this
+		Agreement or the provisions of the Net Metering Regulations and does not remedy such breach within 30 days,
+		or such other reasonable period as may be provided, of receiving notice of such breach, or for any other
+		valid reason communicated by the Licensee in writing.</p>
+
+	<h2><span class="n">6.</span> Access and Disconnection:</h2>
+	<ul>
+		<li>The Eligible Consumer shall provide access to the Licensee to the metering equipment and disconnecting
+			devices of Roof-top Renewable Energy Generating System, both automatic and manual, by the Eligible
+			Consumer.</li>
+		<li>If, in an emergent or outage situation, the Licensee cannot access the disconnecting devices of the
+			Roof-top Renewable Energy Generating System, both automatic and manual, it may disconnect power supply
+			to the premises.</li>
+		<li>Upon termination of this Agreement under Clause 5, the Eligible Consumer shall disconnect the Roof-top
+			Renewable Energy Generating System forthwith from the Network of the Licensee.</li>
+	</ul>
+
+	<h2><span class="n">7.</span> Liabilities:</h2>
+	<ul>
+		<li>The Parties shall indemnify each other for damages or adverse effects of either Party's negligence or
+			misconduct during the installation of the Roof-top Renewable Energy Generating System, connectivity
+			with the distribution Network and operation of the System.</li>
+		<li>The Parties shall not be liable to each other for any loss of profits or revenues, business
+			interruption losses, loss of contract or goodwill, or for indirect, consequential, incidental or
+			special damages including, but not limited to, punitive or exemplary damages, whether any of these
+			liabilities, losses or damages arise in contract, or otherwise.</li>
+	</ul>
+
+	<h2><span class="n">8.</span> Commercial Settlement:</h2>
+	<ul>
+		<li>The commercial settlements under this Agreement shall be in accordance with the Net Metering
+			Regulations.</li>
+		<li>The Licensee shall not be liable to compensate the Eligible Consumer if his Rooftop Renewable Energy
+			Generating System is unable to inject surplus power generated into the Licensee's Network on account of
+			failure of power supply in the grid/Network.</li>
+		<li>The existing metering System, if not in accordance with the Net Metering Regulations, shall be replaced
+			by a bi-directional meter (whole current/CT operated) or a pair of meters (as per the definition of 'Net
+			Meter' in the Regulations), and a separate generation meter may be provided to measure Solar power
+			generation. The bi-directional meter (whole current/CT operated) or pair of meters shall be installed at
+			the inter-connection point to the Licensee's Network for recording export and import of energy.</li>
+		<li>The uni-directional and bi-directional or pair of meters shall be fixed in separate meter boxes in the
+			same proximity.</li>
+	</ul>
+
+	<h2>9.&nbsp;&nbsp; Connection Costs:</h2>
+	<p class="gap">The Eligible Consumer shall bear all costs related to the setting up of the Roof-top Renewable Energy
+		Generating System and the cost of Net Meters.</p>
+
+	<h2>10.&nbsp;&nbsp; Dispute Resolution:</h2>
+	<p class="gap">10.1&nbsp;&nbsp; Any dispute arising under this Agreement shall be resolved promptly, in good faith and in an equitable
+		manner by both the Parties.</p>
+	<p>10.2.&nbsp;&nbsp; The Eligible Consumer shall have recourse to the concerned Consumer Grievance Redressal Forum
+		constituted under the relevant Regulations in respect of any grievance regarding billing which has not
+		been redressed by the Licensee.</p>
+
+	<p style="margin-top:4mm"><b>11.0</b>&nbsp;&nbsp; This agreement stands valid upto my sanctioned electrical load capacity.</p>
+	<div class="rule"></div>
+	<p>Submission of this document by the consumer shall be deemed as an automatic agreement to the terms,
+		conditions, and declarations specified above.</p>
+</div>

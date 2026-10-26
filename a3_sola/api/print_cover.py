@@ -704,10 +704,11 @@ def add_on_rows(estimates):
 	from frappe.utils import escape_html, fmt_money
 
 	def add_ons(estimate):
-		"""The estimate's own add-ons; an estimate made before it had them offers its package's."""
+		"""The estimate's own add-ons still offered (an Option; one taken is in the price), at
+		their amount; an estimate made before it had them offers its package's."""
 		own = estimate.get("optional_add_ons")
 		if own:
-			return own
+			return [r for r in own if r.is_option]
 		if not estimate.get("solar_package"):
 			return []
 		return frappe.get_all("Solar Package Add-on", filters={"parent": estimate.solar_package, "parenttype": "Solar Package"},

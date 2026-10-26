@@ -171,15 +171,40 @@ LINKED_SECTIONS = (
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
 
 # After the charges: the estimate's own table of extras offered beside the system, copied
-# from the package. Shown and printed in the proposal, never added to the commercials.
+# from the package. An Option is shown and printed in the proposal; one that is not is priced.
 TRAILING_SECTIONS = (
-	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "unpriced": True, "fields": (
+	# The Solar Panel popup's fields, after the add-on's own type and item: an extra panel is
+	# chosen as a panel is. Not an Option, it is added to the commercials.
+	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "fields": (
 		{"fieldname": "add_on_type", "choices": "add_on_type"},
-		{"fieldname": "item"},
-		{"fieldname": "amount"},
-	), "computed": ()},
+		{"fieldname": "item", "column": False, "hint": "Printed in the proposal. An Extra Panel left blank is named from its panel."},
+		{"fieldname": "panel_type", "choices": "panel_type"},
+		{"fieldname": "panel_capacity_wp"},
+		{"fieldname": "panel_count", "column": False, "hint": True},
+		{"fieldname": "panel_variant", "choices": "module_technology"},
+		{"fieldname": "panel_make", "choices": "module_make", "filter_by": "panel_variant"},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: offered beside the system, not added to the commercials. No: added to the total."},
+		{"fieldname": "rate"},
+	), "computed": ("nos", "amount"),
+		"compact": {"title": (("add_on_type", ""), ("panel_make", ""), ("panel_capacity_wp", " Wp")),
+			"sub": (("item", ""),)}},
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
+
+# Tabs only an admin sees and changes: what the customer is let off, and what is offered
+# beside the system. Anyone else sees their effect in the commercials, not the tabs.
+ADMIN_ONLY = ("special_discount", "optional_add_ons")
+ADMIN_ROLES = ("Solar CRM Manager", "System Manager")
+
+
+def is_admin():
+	return bool(set(ADMIN_ROLES) & set(frappe.get_roles()))
+
+
+def _check_admin(section):
+	if section in ADMIN_ONLY and not is_admin():
+		label = (SECTION_BY_KEY.get(section) or LINKED_BY_KEY[section])["label"]
+		frappe.throw(_("Only an admin can change the {0}.").format(_(label)), frappe.PermissionError)
 
 INPUT = {
 	"Select": "select", "Link": "select", "Int": "number", "Float": "number", "Currency": "number",
@@ -385,7 +410,7 @@ def option_rows(doc, fields):
 
 
 def package_cost_label(amount):
-	return _("Package price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
+	return _("System price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
 
 
 def package_choices_json(columns):
@@ -558,7 +583,7 @@ def _choices(doc):
 		("structure_type", "Additional Structure Item", "structure_type"),
 		("cable_type", "Additional Cable Item", "cable_type"),
 		("discount_type", "Special Discount Item", "discount_type"),
-		("add_on_type", "Solar Package Add-on", "add_on_type"),
+		("add_on_type", "Design Estimate Add-on", "add_on_type"),
 	):
 		out[key] = [{"value": v, "label": v} for v in (frappe.get_meta(doctype).get_field(fieldname).options or "").split("\n") if v]
 	for table, group in EXPENSE_GROUPS.items():
@@ -617,8 +642,6 @@ def _section(doc, section, child, rows):
 			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
-	# Offered beside the system, not part of its price: the tab shows its own sum.
-	unpriced_total = flt(sum(flt(row.get("amount")) for row in rows), 2) if section.get("unpriced") else None
 	rows = [{
 		"name": row.name,
 		# Rows the estimate computes are refreshed on every save; they are shown, not edited.
@@ -642,7 +665,6 @@ def _section(doc, section, child, rows):
 		# Which field holds the count, and whether a row can be marked as an Option.
 		"count_field": (compact or {}).get("count", "nos"),
 		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
-		"unpriced_total": unpriced_total,
 		"columns": columns, "fields": fields,
 		"rows": rows,
 	}
@@ -650,6 +672,7 @@ def _section(doc, section, child, rows):
 
 def _sections(doc):
 	out = []
+	admin = is_admin()
 	for section in SECTIONS:
 		if section.get("only_for") and doc.system_type not in section["only_for"]:
 			continue
@@ -660,10 +683,14 @@ def _sections(doc):
 		# not saved yet has none.
 		if doc.is_new() or not frappe.has_permission(section["doctype"], "read"):
 			continue
+		if section["key"] in ADMIN_ONLY and not admin:
+			continue
 		child = frappe.get_meta(frappe.get_meta(section["doctype"]).get_field("items").options)
 		rows = [row for record in _linked_records(doc, section) for row in record.items]
 		out.append(_section(doc, section, child, rows))
 	for section in TRAILING_SECTIONS:
+		if section["key"] in ADMIN_ONLY and not admin:
+			continue
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
 		out.append(_section(doc, section, child, doc.get(section["key"])))
 	return out
@@ -749,9 +776,11 @@ def builder_state(doc, editable=None):
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
 			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
-			{"label": _("Package price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
+			{"label": _("System price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
+		# The Special Discount and Optional Add-ons tabs are an admin's (ADMIN_ONLY).
+		"is_admin": is_admin(),
 		"choices": _choices(doc),
 		"commercials": commercials,
 		# The proposal this saved option is offered in, or the way to one.
@@ -876,6 +905,7 @@ def _apply_change(doc, change):
 	spec = SECTION_BY_KEY.get(section)
 	if not spec:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	row = change.get("row")
 	target = next((r for r in doc.get(section) if r.name == row), None) if row else None
 	if row and not target:
@@ -1028,6 +1058,7 @@ def save_linked_row(name, section, values, option=None, row=None, ops=None):
 	"""Add or change an Additional Structure, Additional Cable or Special Discount row."""
 	if section not in LINKED_BY_KEY:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	return _linked_change(name, option, ops,
 		lambda doc: _save_linked_row(doc, LINKED_BY_KEY[section], frappe.parse_json(values) or {}, row))
 
@@ -1036,6 +1067,7 @@ def save_linked_row(name, section, values, option=None, row=None, ops=None):
 def remove_linked_row(name, section, row, option=None, ops=None):
 	if section not in LINKED_BY_KEY:
 		frappe.throw(_("Unknown section: {0}").format(section))
+	_check_admin(section)
 	return _linked_change(name, option, ops, lambda doc: _remove_linked_row(doc, LINKED_BY_KEY[section], row))
 
 
@@ -1066,7 +1098,7 @@ def compare(name, pending=None):
 			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
 			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
 			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
-			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("Package price")), ""),
+			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("System price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
 			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],
@@ -1104,7 +1136,11 @@ def download_pdf(name):
 		"money": lambda value: frappe.utils.fmt_money(value, currency="INR"),
 		"_": _,
 	})
-	frappe.local.response.filename = "{0}.pdf".format(doc.name)
+	from a3_sola.api.documents import customer_file_name
+
+	subject = doc.solar_consumer or doc.lead
+	customer = link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else ""
+	frappe.local.response.filename = customer_file_name(customer, "Design Estimate {0}".format(doc.name))
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download"
 

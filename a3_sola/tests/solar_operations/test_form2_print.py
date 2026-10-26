@@ -75,7 +75,7 @@ class TestForm2Print(FrappeTestCase):
 		reader = PdfReader(BytesIO(pdf))
 		self.assertEqual(len(reader.pages), 1)
 		self.assertIn(self.installation.consumer_number, reader.pages[0].extract_text())
-		self.assertTrue(name.startswith("KSEBL Form 2 - "))
+		self.assertTrue(name.endswith(" - KSEBL Form 2.pdf"))  # the customer first
 
 	def test_the_task_offers_view_and_download_and_takes_no_upload(self):
 		links = portal_tasks._prints(frappe._dict(stage_code="FRM2"), self.installation.name)[form2_print.CODE]

@@ -188,7 +188,7 @@ def context(inst):
 
 
 def file_name(inst):
-	return "{0} - {1}.pdf".format(TITLE, inst.consumer_name or inst.name)
+	return documents.customer_file_name(documents.job_customer(inst), TITLE)
 
 
 def render(inst):

@@ -121,7 +121,7 @@ class TestPendingItems(FrappeTestCase):
 		pending_key = portal_share.share_key("Installation Task", name, portal_share.PENDING)
 		self.assertNotEqual(full_key, pending_key)
 		portal_share.shared_pdf("Installation Task", name, pending_key, part=portal_share.PENDING)
-		self.assertTrue(frappe.local.response.filename.startswith("Pending Items"))
+		self.assertIn(" - Pending Items ", frappe.local.response.filename)  # the customer first
 		with self.assertRaises(frappe.PermissionError):
 			portal_share.shared_pdf("Installation Task", name, full_key, part=portal_share.PENDING)
 		with self.assertRaises(frappe.PermissionError):

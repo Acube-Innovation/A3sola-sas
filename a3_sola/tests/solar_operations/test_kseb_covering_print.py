@@ -36,7 +36,7 @@ class TestKSEBCoveringPrint(FrappeTestCase):
 	def test_it_prints_on_one_page_with_what_is_enclosed(self):
 		name, pdf = kseb_covering_print.render(self.installation.name)
 		self.assertEqual(len(PdfReader(BytesIO(pdf)).pages), 1)
-		self.assertTrue(name.startswith("Covering Letter to the Assistant Engineer - "))
+		self.assertTrue(name.endswith(" - Covering Letter to the Assistant Engineer.pdf"))  # the customer first
 		html = " ".join(kseb_covering_print.html(self.job()).split())
 		for expected in (f"<b>Consumer No. {self.installation.consumer_number}</b>", "<b>Annexure 2</b> signed",
 				"Installation Checklist", "Solar Agreement on Stamp Paper signed", '"Letter Antiqua"'):

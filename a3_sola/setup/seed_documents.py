@@ -623,6 +623,22 @@ under service connection bearing Consumer No. {{ installation.consumer_number }}
 """ + _SIGNOFF,
 	},
 	{
+		"template_code": "NET-METERING-AGREEMENT",
+		"document_name": "Net Metering Agreement",
+		"category": "MNRE",
+		"recipient": "Consumer",
+		"stage_code": "ACPT",
+		"signatory": "Consumer",
+		"notes": "SOURCE: NET.pdf, the PM Surya Ghar portal's agreement (printed by api/net_metering_print)",
+		"body": """<h3 style="text-align:center">Net Metering Agreement</h3>
+<p>This Agreement is made and entered into at {{ address_text }} on {{ today }} between the Eligible Consumer
+{{ installation.consumer_name }} having premises at {{ address_text }} and Consumer No
+{{ installation.consumer_number }} as the first Party, and the Distribution Licensee Kerala State Electricity
+Board as second Party, for a Roof-top Renewable Energy Generating System of {{ installation.capacity_kw }}
+kilowatt (kW).</p>
+""",
+	},
+	{
 		"template_code": "KSEB-NETMETER-REQUEST",
 		"document_name": "Request for Allocation of Bidirectional Meter",
 		"category": "KSEB",
@@ -1223,7 +1239,8 @@ We will advise you on best practice at handover.</p>
 TEMPLATE_SETS = {
 	"PM Surya Ghar Residential - Financed": [
 		"MNRE-CONSUMER-VENDOR-AGREEMENT", "NP-APPLICATION", "BANK-VENDOR-FEASIBILITY",
-		"BANK-EHS-CHECKLIST", "BANK-COVERING-LOAN", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION", "KSEB-NETMETER-REQUEST",
+		"BANK-EHS-CHECKLIST", "BANK-COVERING-LOAN", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION", "NET-METERING-AGREEMENT",
+		"KSEB-NETMETER-REQUEST",
 		"KSEB-TESTING-CHECKLIST", "KSEB-COVERING-COMPLETION", "KSEB-FORM-1", "KSEB-FORM-2",
 		"KSEB-FORM-3", "KSEB-NETMETER-AGREEMENT", "CUST-COMMISSIONING-CERTIFICATE",
 		"CUST-HANDOVER-PACK", "BANK-COMPLETION-REPORT", "BANK-COVERING-COMPLETION",

@@ -3003,6 +3003,14 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-proj__task.is-in-progress { --tk-ink: #8a6a00; --tk-tile: #fdf0b0; --tk-card: #fffbe6; --tk-line: #f3df84; }
 .a3s-proj__task.is-blocked { --tk-ink: #c0392b; --tk-tile: #ffd9d6; --tk-card: #fff1f0; --tk-line: #ffc4c0; }
 .a3s-proj__task.is-completed { --tk-ink: #1a7a2b; --tk-tile: #cdf2d4; --tk-card: #effbf1; --tk-line: #b7e9c0; }
+/* Held for 50% payment (api/stages.check_half_paid): greyed, with a lock note in its title. */
+.a3s-proj__task.is-locked { --tk-ink: #8a6d1f; --tk-tile: #fff3cf; --tk-card: #fffbef; --tk-line: #f1dfa6; opacity: 0.85; }
+/* The 50% payment rule above the board: amber while work is held, green once it is open. */
+.a3s-proj__halfpay { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.1rem; margin-bottom: 1rem;
+	background: #fffbef; border: 1px solid #f1dfa6; color: #6b5414; }
+.a3s-proj__halfpay p { margin: 0; flex: 1; font-size: 0.9rem; line-height: 1.45; }
+.a3s-proj__halfpay.is-open { background: #effaf3; border-color: #bfe5cc; color: #1e6b3a; }
+.a3s-proj__halfpay .a3s-ic { width: 1.25rem; height: 1.25rem; flex: none; }
 .a3s-proj__task.is-skipped { --tk-ink: #6b7383; --tk-tile: rgba(42, 51, 66, 0.08); --tk-card: var(--color-bg); --tk-line: var(--color-border); }
 
 /* The tile is a 2rem square at the card's top left. */

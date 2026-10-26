@@ -396,7 +396,7 @@
 			nav.appendChild(el("li", {}, [button]));
 		});
 		if (!state.saved) {
-			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: "Additional structure, cable and discount can be added once this option is saved." }));
+			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: (state.is_admin ? "Additional structure, cable and discount" : "Additional structure and cable") + " can be added once this option is saved." }));
 		}
 	}
 
@@ -407,10 +407,7 @@
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
-		/* Optional add-ons are offered beside the system: their own sum, not a commercials line. */
-		var unpriced = s.unpriced_total !== null && s.unpriced_total !== undefined;
-		$("de-saved-total").textContent = money.format(unpriced ? s.unpriced_total : lineAmount(s.key));
-		$("de-saved-total").title = unpriced ? "Optional: not added to the total" : "";
+		$("de-saved-total").textContent = money.format(lineAmount(s.key));
 		$("de-add").hidden = !state.editable;
 		$("de-add").disabled = busy;
 		var body = $("de-saved");
@@ -578,7 +575,7 @@
 			var isPackage = line.key === "package";
 			lines.appendChild(el("li", { class: (line.key === active ? "is-active" : "") + (isPackage ? " is-package" : "") }, [
 				el("span", {}, [
-					isPackage ? el("small", { class: "a3s-de-com__kicker", text: "Package price" }) : null,
+					isPackage ? el("small", { class: "a3s-de-com__kicker", text: "System price" }) : null,
 					document.createTextNode(line.label)
 				]),
 				el("strong", { text: money.format(line.amount) })
@@ -644,7 +641,7 @@
 		row("Proposed size", pick(function (c) { return c.size; }));
 		row("Panels", pick(function (c) { return c.panel_kwp; }));
 		row("Inverters", pick(function (c) { return c.inverter_kw; }));
-		row("Package price", pick(function (c) { return c.package_cost; }));
+		row("System price", pick(function (c) { return c.package_cost; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
 		row("Inverter", pick(function (c) { return c.inverter; }));
 		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));
@@ -800,6 +797,8 @@
 	function setOption(s, row, tick) {
 		change({ section: s.key, values: { is_option: tick.checked ? 1 : 0 }, row: row.name },
 			tick.checked ? "Marked as an option: not added to the commercials. Save the tab to keep it."
+				/* Any number of add-ons can be taken; only one panel, inverter or battery is priced. */
+				: s.key === "optional_add_ons" ? "Priced: this add-on is added to the commercials. Save the tab to keep it."
 				: "Priced: this row is in the commercials, and the other rows of the table are now Options. Save the tab to keep it.");
 	}
 
