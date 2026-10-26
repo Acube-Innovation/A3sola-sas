@@ -1390,6 +1390,14 @@ PORTAL_FOLLOWS = {
 	"Solar Consumer": {"bank_account_holder_name": "consumer_name"},
 }
 
+#: Totals the form adds up as their parts are typed, as {doctype: {field: (parts)}}. Still
+#: editable: one typed over stops following, as the server keeps it (Site Survey).
+from a3_sola.solar_crm.doctype.site_survey.site_survey import CABLE_TOTALS  # noqa: E402
+
+PORTAL_SUMS = {
+	"Site Survey": CABLE_TOTALS,
+}
+
 
 def edit_fields_for(doc, first_label=None):
 	"""The fields the edit form renders, grouped like the form, with current values.
@@ -1431,14 +1439,15 @@ def edit_fields_for(doc, first_label=None):
 
 def apply_prefill(doc, groups):
 	"""Mark each blank field in `groups` with the value it is offered (PORTAL_PREFILL), and
-	each field that follows another (PORTAL_FOLLOWS).
+	each field that follows another (PORTAL_FOLLOWS) or adds others up (PORTAL_SUMS).
 
 	A value the record already has is never replaced. Kept off `edit_fields_for`, which is
 	also the save allow-list and has no use for the lookup.
 	"""
 	rule = PORTAL_PREFILL.get(doc.doctype)
 	follows = PORTAL_FOLLOWS.get(doc.doctype, {})
-	if not (rule or follows):
+	sums = PORTAL_SUMS.get(doc.doctype, {})
+	if not (rule or follows or sums):
 		return groups
 	source, values = rule(doc) if rule else ("", {})
 	for g in groups:
@@ -1450,6 +1459,8 @@ def apply_prefill(doc, groups):
 					spec["prefill_from"] = source
 				if spec["fieldname"] in follows:
 					spec["follows"] = follows[spec["fieldname"]]
+				if spec["fieldname"] in sums:
+					spec["sum_of"] = ",".join(sums[spec["fieldname"]])
 	return groups
 
 

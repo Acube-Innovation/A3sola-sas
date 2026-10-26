@@ -65,3 +65,23 @@ class TestSiteSurveyReport(FrappeTestCase):
 		survey.customer_approved = 1
 		survey.save(ignore_permissions=True)
 		self.assertEqual(survey.customer_approval_name, survey.customer_name)
+
+
+class TestCableTotals(FrappeTestCase):
+	"""Panel to DCDB + DCDB to Inverter is the DC total, Inverter to ACDB + ACDB to Meter the AC
+	total - added up while blank or still the old sum, kept once typed over."""
+
+	def survey(self, **values):
+		doc = frappe.new_doc("Site Survey")
+		doc.update(values)
+		doc.fill_cable_totals()
+		return doc
+
+	def test_blank_totals_are_the_sum_of_their_legs(self):
+		doc = self.survey(panel_to_dcdb_m=12, dcdb_to_inverter_m=3.5, inverter_to_acdb_m=2, acdb_to_meter_m=8)
+		self.assertEqual(doc.total_dc_length_m, 15.5)
+		self.assertEqual(doc.total_ac_length_m, 10)
+
+	def test_a_typed_total_is_kept(self):
+		doc = self.survey(panel_to_dcdb_m=12, dcdb_to_inverter_m=3, total_dc_length_m=20)
+		self.assertEqual(doc.total_dc_length_m, 20)
