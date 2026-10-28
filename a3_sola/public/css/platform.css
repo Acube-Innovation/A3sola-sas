@@ -3415,7 +3415,9 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-tab__x:disabled { opacity: 0.4; cursor: progress; }
 .a3s-de-tabwrap .a3s-de-tab { padding-right: 2rem; }
 /* At the row's right edge, under the back button and its size, so the two line up. */
-.a3s-de-saveall-btn { flex: 0 0 auto; align-self: center; margin-left: auto; }
+.a3s-de-tabs__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.a3s-de-tabs__actions [hidden] { display: none; }
+.a3s-de-saveall-btn { flex: 0 0 auto; }
 .a3s-de-saveall-btn:disabled { opacity: 0.5; cursor: progress; }
 /* A button whose action is running: a spinner before its label. */
 .a3s-btn.is-busy { display: inline-flex; align-items: center; gap: 0.5rem; cursor: progress; }

@@ -607,8 +607,12 @@ def print_rest(doc):
 					parts.append("product warranty of {0} years".format(cint(m.product_warranty_years)))
 				if parts:
 					warranty.append("Solar PV Modules will have {0} as offered by the manufacturer.".format(" and ".join(parts)))
-			elif cint(m.product_warranty_years):
-				warranty.append("{0} Warranty – {1} Years as offered by the manufacturer.".format(label, cint(m.product_warranty_years)))
+			else:
+				# An inverter on a price-list model carries that model's warranty, not the make's.
+				model = r.get("inverter_model") if label == "Inverter" else None
+				years_ = cint(frappe.db.get_value("Inverter Model", model, "warranty_years")) if model else cint(m.product_warranty_years)
+				if years_:
+					warranty.append("{0} Warranty – {1} Years as offered by the manufacturer.".format(label, years_))
 	out["warranty"] = warranty
 
 	# 4 scope of work, from Settings, by responsibility.

@@ -402,6 +402,13 @@
 				setStatus(droppedNote(dropped, why, phaseValue, system ? system.value : ""));
 			} else if (capNote) {
 				setStatus(capNote);
+			} else if (options.length && !fitting.length) {
+				/* Nothing fits: say which choice empties the list rather than show it blank. */
+				var subsidyValue = subsidy ? subsidy.value : "";
+				setStatus("No active package fits " + [phaseValue, system ? system.value : "", subsidyValue].filter(Boolean).join(", ") + ". "
+					+ (subsidyValue === "Without Subsidy"
+						? "Every package that fits is a subsidy (DCR) package - add a non-subsidy package, or choose With Subsidy."
+						: "Add a package for these choices, or change them."));
 			}
 			/* One package left for these choices: it is the one. */
 			if (!pkg.value && fitting.length === 1) {

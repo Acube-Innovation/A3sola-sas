@@ -1,0 +1,290 @@
+{
+ "actions": [],
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Design Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "owner": "Administrator",
+ "allow_rename": 1,
+ "creation": "2026-10-28 18:00:00.000000",
+ "modified": "2026-10-28 18:00:00.000000",
+ "doctype": "DocType",
+ "module": "Solar CRM",
+ "name": "Inverter Model",
+ "custom": 0,
+ "istable": 0,
+ "autoname": "hash",
+ "title_field": "model_name",
+ "show_title_field_in_link": 0,
+ "search_fields": "model_name,inverter_make,inverter_phase,capacity_kw",
+ "description": "Every inverter model sold, as the master price list gives it: price, GST, warranty and its extension, the optimizer and the micro inverter kit.",
+ "field_order": [
+  "inverter_make",
+  "model_name",
+  "inverter_phase",
+  "category",
+  "cb_1",
+  "capacity_kw",
+  "units",
+  "is_active",
+  "sb_price",
+  "rate",
+  "cb_2",
+  "gst_note",
+  "gst_percent",
+  "sb_warranty",
+  "warranty_years",
+  "extension_available",
+  "cb_3",
+  "extension_years",
+  "extension_rate",
+  "sb_optimizer",
+  "optimizer_model",
+  "optimizer_price",
+  "cb_4",
+  "optimizer_qty",
+  "optimizer_total",
+  "sb_kit",
+  "kit_includes"
+ ],
+ "fields": [
+  {
+   "fieldname": "inverter_make",
+   "fieldtype": "Link",
+   "label": "Make",
+   "options": "Component Make",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "model_name",
+   "fieldtype": "Data",
+   "label": "Model",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "inverter_phase",
+   "fieldtype": "Select",
+   "label": "Phase",
+   "options": "Single Phase\nThree Phase",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "On-Grid\nHybrid",
+   "default": "On-Grid",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "capacity_kw",
+   "fieldtype": "Float",
+   "label": "Capacity (kW)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "units",
+   "fieldtype": "Int",
+   "label": "Units",
+   "default": "1",
+   "description": "Inverters in the kit: a micro inverter kit of 3 kW is three 1 kW units. 1 for a string inverter."
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1"
+  },
+  {
+   "fieldname": "sb_price",
+   "fieldtype": "Section Break",
+   "label": "Price"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "in_list_view": 1,
+   "description": "The model's price, GST as the note says. A package priced on another model is repriced by the difference."
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gst_note",
+   "fieldtype": "Select",
+   "label": "GST",
+   "options": "GST Extra\nGST @ 5%",
+   "default": "GST Extra"
+  },
+  {
+   "fieldname": "gst_percent",
+   "fieldtype": "Percent",
+   "label": "GST %"
+  },
+  {
+   "fieldname": "sb_warranty",
+   "fieldtype": "Section Break",
+   "label": "Warranty"
+  },
+  {
+   "fieldname": "warranty_years",
+   "fieldtype": "Int",
+   "label": "Warranty (Years)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "extension_available",
+   "fieldtype": "Check",
+   "label": "Warranty Extension Available"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "extension_years",
+   "fieldtype": "Int",
+   "label": "Extension (Years)",
+   "depends_on": "eval:doc.extension_available",
+   "description": "Years the extension adds beyond the warranty."
+  },
+  {
+   "fieldname": "extension_rate",
+   "fieldtype": "Currency",
+   "label": "Extension Rate",
+   "depends_on": "eval:doc.extension_available",
+   "description": "Offered as the proposal's optional Warranty Extension."
+  },
+  {
+   "fieldname": "sb_optimizer",
+   "fieldtype": "Section Break",
+   "label": "Optimizer",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "optimizer_model",
+   "fieldtype": "Data",
+   "label": "Optimizer Model"
+  },
+  {
+   "fieldname": "optimizer_price",
+   "fieldtype": "Currency",
+   "label": "Optimizer Price"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "optimizer_qty",
+   "fieldtype": "Int",
+   "label": "Optimizer Qty"
+  },
+  {
+   "fieldname": "optimizer_total",
+   "fieldtype": "Currency",
+   "label": "Optimizer Total",
+   "read_only": 1,
+   "description": "Price x Qty: added when an inverter row is taken with the optimizer."
+  },
+  {
+   "fieldname": "sb_kit",
+   "fieldtype": "Section Break",
+   "label": "Kit",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "kit_includes",
+   "fieldtype": "Small Text",
+   "label": "Kit Includes",
+   "description": "Printed as the inverter's specification."
+  }
+ ]
+}

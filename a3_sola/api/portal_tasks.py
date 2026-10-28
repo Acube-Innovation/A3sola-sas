@@ -227,19 +227,14 @@ def _prints(row, installation):
 		return {m.CODE: m.prints(installation) for m in (form3_print, kseb_agreement_print, kseb_checklist_print,
 			kseb_covering_print, kseb_netmeter_print)}
 	if row.stage_code == "ACPT":
-		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print).
-		from a3_sola.api import net_metering_print
+		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print), the
+		# consumer-vendor agreement (api/vendor_agreement_print) and the RIM quotation.
+		from a3_sola.api import net_metering_print, vendor_agreement_print
 
-		return {net_metering_print.CODE: net_metering_print.prints(installation)}
+		return {net_metering_print.CODE: net_metering_print.prints(installation),
+			vendor_agreement_print.CODE: vendor_agreement_print.prints(installation), **_rim_quotation(installation)}
 	if row.stage_code == "NPA":
-		# The quotation in the RIM format, as the bank gets it (api/loan_print.quotation),
-		# once the job has a quotation.
-		from a3_sola.api import loan_print
-
-		if not frappe.db.get_value("Solar Installation", installation, "quotation"):
-			return {}
-		return {loan_print.QUOTATION: [{"label": _("Print"), "url": loan_print.quotation_url(installation),
-			"signable": True}]}
+		return _rim_quotation(installation)
 	if row.stage_code == "STMP":
 		from a3_sola.api import stamp_print
 
@@ -255,6 +250,17 @@ def _prints(row, installation):
 
 	base = "/api/method/a3_sola.api.loan_print.pdf?name=" + frappe.utils.quote(row.task_document)
 	return {code: [{"label": _("Print"), "url": f"{base}&document={key}", "signable": True}] for key, code in DOCUMENTS.items()}
+
+
+def _rim_quotation(installation):
+	"""The quotation in the RIM format, as the bank gets it (api/loan_print.quotation), once
+	the job has a quotation."""
+	from a3_sola.api import loan_print
+
+	if not frappe.db.get_value("Solar Installation", installation, "quotation"):
+		return {}
+	return {loan_print.QUOTATION: [{"label": _("Print"), "url": loan_print.quotation_url(installation),
+		"signable": True}]}
 
 
 #: What the bank receives for the loan, in order: printed by us in the RIM format, the

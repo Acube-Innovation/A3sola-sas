@@ -53,7 +53,7 @@ class TestNetMeteringPrint(FrappeTestCase):
 		self.assertEqual([p["label"] for p in links], ["View Net Metering Agreement", "Download Net Metering Agreement"])
 		# On the task's own form too, before and after it is created.
 		form = collections.task_downloads(self.installation.name, "ACPT")
-		self.assertEqual([p["label"] for p in form], ["View Net Metering Agreement", "Download Net Metering Agreement"])
+		self.assertEqual([p["label"] for p in form][:2], ["View Net Metering Agreement", "Download Net Metering Agreement"])
 
 	def test_it_is_set_as_the_portal_prints_it(self):
 		inst = frappe.get_doc("Solar Installation", self.installation.name)

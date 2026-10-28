@@ -95,6 +95,9 @@ SECTIONS = (
 		{"fieldname": "inverter_count", "column": False, "hint": True},
 		{"fieldname": "inverter_phase", "choices": "phase"},
 		{"fieldname": "inverter_make", "choices": "inverter_make", "filter_by": "inverter_type"},
+		{"fieldname": "inverter_model", "choices": "inverter_model", "filter_by": "inverter_make",
+			"hint": "From the inverter price list: sets the size, phase and price. Another model than the package's changes its price by the difference."},
+		{"fieldname": "with_optimizer", "choices": "yes_no", "hint": "Yes: the model's optimizers are added at the price list's quantity and price."},
 		{"fieldname": "specification", "column": False, "hint": "Printed in the proposal after the rating, e.g. Hybrid with MPPT and Online Monitoring."},
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
@@ -573,6 +576,16 @@ def _choices(doc):
 		"module_make": makes("Module"),
 		"inverter_technology": technologies("Inverter"),
 		"inverter_make": makes("Inverter"),
+		# The price list's models of each make, for the estimate's own connection.
+		"inverter_model": [
+			{"value": r.name, "filter": r.inverter_make, "label": "{0} \u00b7 {1:g} kW \u00b7 {2}{3}".format(
+				r.model_name, flt(r.capacity_kw), frappe.utils.fmt_money(r.rate, currency="INR"),
+				" + optimizer {0}".format(frappe.utils.fmt_money(r.optimizer_total, currency="INR")) if flt(r.optimizer_total) else "")}
+			for r in frappe.get_all("Inverter Model",
+				filters={"is_active": 1, **({"inverter_phase": doc.connection_type} if doc.get("connection_type") else {})},
+				fields=["name", "model_name", "inverter_make", "capacity_kw", "rate", "optimizer_total"],
+				order_by="inverter_make, capacity_kw")
+		],
 		"battery_technology": technologies("Battery"),
 		"battery_make": makes("Battery"),
 		"bos_item": [{"value": v, "label": v} for v in bos_items],

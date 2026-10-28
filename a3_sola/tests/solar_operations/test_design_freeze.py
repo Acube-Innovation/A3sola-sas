@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The Design Freeze: the job's BOMs are settled on its own page, and procurement follows."""
+"""The design freezes: Solar Design Freeze settles the material BOM, Structural Design Freeze the
+structure BOM, each on its own page, and procurement follows."""
 
 from unittest.mock import patch
 
@@ -21,11 +22,19 @@ class TestDesignFreeze(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.job = make_installation()
 
-	def test_it_opens_its_own_page(self):
-		self.assertTrue(tasks.open_task(self.job.name, "DSGN", create_draft=0)["url"].endswith("/tasks/DSGN"))
-		state = design_freeze.state(self.job.name)
-		for key in ("quotations", "survey", "structure_bom", "material_bom", "images", "procurement"):
-			self.assertIn(key, state)
+	def test_each_opens_its_own_page_with_its_own_side(self):
+		for code in ("DSGN", "SDSGN"):
+			self.assertTrue(tasks.open_task(self.job.name, code, create_draft=0)["url"].endswith("/tasks/" + code))
+		solar = design_freeze.state(self.job.name)
+		self.assertEqual(solar["task"]["name"], "Solar Design Freeze")
+		for key in ("quotations", "survey", "material_bom", "images", "procurement"):
+			self.assertIn(key, solar)
+		self.assertNotIn("structure_bom", solar)
+		structural = design_freeze.state(self.job.name, "SDSGN")
+		self.assertEqual(structural["task"]["name"], "Structural Design Freeze")
+		self.assertIn("structure_bom", structural)
+		self.assertNotIn("material_bom", structural)
+		self.assertEqual(structural["sld"]["name"], "Structure drawing")
 
 	def test_the_jobs_boms_come_before_the_packages(self):
 		self.job.db_set({"structure_bom": "BOM-S", "material_bom": "BOM-M"})
@@ -49,17 +58,26 @@ class TestDesignFreeze(FrappeTestCase):
 		self.assertEqual(task.structure_bom, "BOM-NEW")
 		self.assertEqual([(r.material, r.qty) for r in task.structure_materials], [("Pipe A", 7)])
 
-	def test_freezing_needs_both_boms_and_completes_the_task(self):
-		job = frappe.get_doc("Solar Installation", self.job.name)
-		if not (structure_bom.bom_for(job) and structure_bom.material_bom_for(job)):
-			with self.assertRaises(frappe.ValidationError):
-				design_freeze.freeze(self.job.name)
-		self.job.db_set({"structure_bom": "BOM-S", "material_bom": "BOM-M"})
+	def test_each_freeze_needs_only_its_own_bom_and_completes_only_its_task(self):
+		self.job.db_set({"material_bom": "BOM-M"})
 		with patch.object(structure_bom, "bom_items", return_value={"bom": None, "lines": []}), \
 				patch.object(Document, "_validate_links", lambda self: None):
-			state = design_freeze.freeze(self.job.name)
-		self.assertEqual(state["task"]["status"], "Completed")
-		self.assertEqual(state["frozen"], {"structure_bom": "BOM-S", "material_bom": "BOM-M"})
+			solar = design_freeze.freeze(self.job.name)
+		self.assertEqual(solar["task"]["status"], "Completed")
+		self.assertEqual(solar["frozen"]["material_bom"], "BOM-M")
+		self.assertNotEqual(design_freeze.state(self.job.name, "SDSGN")["task"]["status"], "Completed")
+
+		self.job.db_set({"structure_bom": "BOM-S"})
+		with patch.object(structure_bom, "bom_items", return_value={"bom": None, "lines": []}), \
+				patch.object(Document, "_validate_links", lambda self: None):
+			structural = design_freeze.freeze(self.job.name, "SDSGN")
+		self.assertEqual(structural["task"]["status"], "Completed")
+		self.assertEqual(structural["frozen"], {"structure_bom": "BOM-S", "material_bom": "BOM-M"})
+
+	def test_the_structural_freeze_needs_a_structure_bom(self):
+		with patch.object(structure_bom, "bom_for", return_value=None):
+			with self.assertRaises(frappe.ValidationError):
+				design_freeze.freeze(self.job.name, "SDSGN")
 
 	def test_a_survey_of_another_customer_is_refused(self):
 		other = frappe.get_all("Site Survey", filters={"solar_consumer": ["!=", self.job.solar_consumer]}, pluck="name", limit=1)

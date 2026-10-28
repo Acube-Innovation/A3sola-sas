@@ -294,6 +294,7 @@ def seed_masters(company=None, packages=True):
 	fee_schedule = seed_fee_schedule(company, discom)
 	seed_regulation_rules(company, discom)
 	seed_component_makes(company)
+	seed_inverter_models(company)
 	seed_outreach_templates(company)
 	if packages:
 		seed_packages(company)
@@ -528,6 +529,12 @@ def seed_regulation_rules(company, discom):
 			),
 		}
 	)
+
+
+def seed_inverter_models(company):
+	from a3_sola.setup.inverter_models import seed_inverter_models as seed
+
+	seed(company)
 
 
 def seed_component_makes(company):

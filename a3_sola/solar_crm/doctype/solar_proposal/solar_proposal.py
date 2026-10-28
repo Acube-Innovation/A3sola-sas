@@ -707,6 +707,13 @@ def create_quotation(solar_proposal, version_no=None):
 
 	quotation_to, party_name = _quotation_party(doc)
 	option = _recommended_option(estimate)
+	if not ((option and option.solar_package) or estimate.solar_package):
+		# Quoted without a package, the line has no item to sell - say what to fix, not that.
+		frappe.throw(
+			_("Design estimate {0} has no package chosen. Choose one on its Package & Sizing row, "
+				"save it, then regenerate this proposal.").format(estimate.name),
+			title=_("No Package Chosen"),
+		)
 
 	payload = {
 		"company": doc.company,

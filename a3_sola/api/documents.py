@@ -357,7 +357,8 @@ def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None, l
 	.a3s-sheet:last-child {{ page-break-after: auto; }}
 	.a3s-sheet__head {{ position: absolute; top: 0; left: 0; width: 210mm; }}
 	.a3s-sheet__foot {{ position: absolute; bottom: 0; left: 0; width: 210mm; }}
-	.a3s-letter {{ padding: {margins or (("37mm" if header else "25mm") + " 20mm 0 17.5mm")};
+	.a3s-letter {{ position: relative; z-index: 1; /* over a footer that runs up the page, as a watermark */
+		padding: {margins or (("37mm" if header else "25mm") + " 20mm 0 17.5mm")};
 		font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.45; color: #000; }}
 	.a3s-letter p {{ margin: 0 0 6pt; }}
 	.a3s-letter table {{ border-collapse: collapse; }}
@@ -582,6 +583,11 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		from a3_sola.api import net_metering_print
 
 		content = net_metering_print.render(inst)[1]
+	elif tpl.template_code == "MNRE-CONSUMER-VENDOR-AGREEMENT":
+		# The consumer-vendor agreement, word for word as the team's Word file (api/vendor_agreement_print).
+		from a3_sola.api import vendor_agreement_print
+
+		content = vendor_agreement_print.render(inst)[1]
 	elif tpl.template_code == "KSEB-NETMETER-REQUEST":
 		# The Word file "To The Asst. Engineer-Net Meter" (api/kseb_netmeter_print).
 		from a3_sola.api import kseb_netmeter_print

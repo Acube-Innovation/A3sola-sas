@@ -1,9 +1,10 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * The Design Freeze page (www/a3solaportal/projects/task.html, api/design_freeze): the job's
- * quotations; its site survey, with the survey's photographs; its structure and material
- * BOMs, with their lines; its design images; and Freeze. A change is saved as it is made,
+ * The design freeze pages (www/a3solaportal/projects/task.html, api/design_freeze): the job's
+ * quotations; its site survey, with the survey's photographs; then the task's own side -
+ * Solar Design Freeze: the material BOM, single line diagram and design images; Structural
+ * Design Freeze: the structure BOM and structure drawing - and Freeze. A change is saved as it is made,
  * and the procurement tasks still in draft take the new BOM. Every step redraws the page
  * from the state the server returns.
  */
@@ -21,7 +22,10 @@
 	var picker = root.querySelector("[data-design-file]");
 	var state = JSON.parse(root.querySelector("[data-design-data]").textContent);
 	var pickFor = "images";
-	/* The single line diagram: one file, a PDF or an image, filed under the task's documents. */
+	var taskCode = state.task.code;
+	var structural = taskCode === "SDSGN";
+	/* The single line diagram (or, structural, the structure drawing): one file, a PDF or an
+	   image, filed under the task's documents. */
 	var sldPicker = document.createElement("input");
 	sldPicker.type = "file"; sldPicker.accept = "application/pdf,image/*"; sldPicker.hidden = true;
 	root.appendChild(sldPicker);
@@ -29,15 +33,15 @@
 		if (!sldPicker.files.length) return;
 		var form = new FormData();
 		form.append("file", sldPicker.files[0]);
-		form.append("installation", installation); form.append("task_code", "DSGN");
+		form.append("installation", installation); form.append("task_code", taskCode);
 		if (state.sld && state.sld.row && !state.sld.url) form.append("row", state.sld.row);
 		else form.append("document_name", (state.sld && state.sld.name) || "Approved single line diagram");
-		setStatus("Uploading the single line diagram…");
+		setStatus("Uploading the " + (structural ? "structure drawing" : "single line diagram") + "…");
 		fetch("/api/method/a3_sola.api.portal_tasks.upload", { method: "POST", credentials: "same-origin", body: form,
 			headers: { "X-Frappe-CSRF-Token": csrf, Accept: "application/json" } })
 			.then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(message(d, "Upload failed.")); }); })
 			.then(function () { return call("state", {}); })
-			.then(function (s) { apply(s, "Single line diagram uploaded."); })
+			.then(function (s) { apply(s, (structural ? "Structure drawing" : "Single line diagram") + " uploaded."); })
 			.catch(function (err) { setStatus(err.message, "error"); });
 		sldPicker.value = "";
 	});
@@ -59,6 +63,7 @@
 	function call(method, args, form) {
 		form = form || new FormData();
 		form.append("installation", installation);
+		form.append("task_code", taskCode);
 		Object.keys(args || {}).forEach(function (k) { form.append(k, args[k]); });
 		return fetch(API + method, { method: "POST", credentials: "same-origin", body: form,
 			headers: { "X-Frappe-CSRF-Token": csrf, Accept: "application/json" } })
@@ -125,7 +130,7 @@
 			esc(t.status) + "</span>" + (t.completed_on ? " · frozen " + esc(t.completed_on) + (t.completed_by ? " by " + esc(t.completed_by) : "") : "") + "</p>";
 		if (s.can_freeze) {
 			head += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">Freeze design</button></div>' +
-				'<p class="a3s-field__hint">Freezing keeps the BOMs below on the job and completes the task. Everything here stays changeable afterwards.</p>';
+				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure" : "material") + ' BOM below on the job and completes the task. Everything here stays changeable afterwards.</p>';
 		}
 		html += card(t.name, head);
 
@@ -153,24 +158,26 @@
 		}
 		html += card("Site Survey", survey, sv.surveys.length ? String(sv.surveys.length) : "");
 
-		html += bomCard("Structure BOM", "structure_bom", s.structure_bom, s.frozen.structure_bom);
-		html += bomCard("Material BOM", "material_bom", s.material_bom, s.frozen.material_bom);
+		if (s.structure_bom) html += bomCard("Structure BOM", "structure_bom", s.structure_bom, s.frozen.structure_bom);
+		if (s.material_bom) html += bomCard("Material BOM", "material_bom", s.material_bom, s.frozen.material_bom);
 
 		var sld = s.sld || {};
-		html += card("Single Line Diagram", '<ul class="a3s-taskdocs"><li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
+		html += card(structural ? "Structure Drawing" : "Single Line Diagram", '<ul class="a3s-taskdocs"><li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
 			'<p class="a3s-taskdocs__name">' + esc(sld.name) + "</p>" +
 			'<p class="a3s-taskdocs__meta"><span class="a3s-taskdocs__state is-' + (sld.url ? "uploaded" : "missing") + '">' + (sld.url ? "Uploaded" : "Missing") +
-			"</span> Sent to the electrical contractor with the Installation work order.</p></div>" +
+			"</span> " + (structural ? "The structure the crew erects, for the structure BOM above." : "Sent to the electrical contractor with the Installation work order.") + "</p></div>" +
 			'<div class="a3s-taskdocs__actions">' +
 			(sld.url ? '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(sld.url) + '" target="_blank" rel="noopener">Open</a>' : "") +
 			(s.can_edit ? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-act="sld">' + (sld.url ? "Replace" : "Upload") + "</button>" : "") +
 			"</div></li></ul>");
 
-		var imgs = images(s.images, s.can_edit);
-		if (s.can_edit) imgs += '<div class="a3s-dsgn__pick"><input type="text" data-caption placeholder="Caption (optional), e.g. Module layout">' +
-			'<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-act="upload">Upload images</button>' +
-			'<span class="a3s-field__hint">Up to ' + esc(s.max_file_mb) + " MB each.</span></div>";
-		html += card("Design Images", imgs, s.images.length ? String(s.images.length) : "");
+		if (s.images) {
+			var imgs = images(s.images, s.can_edit);
+			if (s.can_edit) imgs += '<div class="a3s-dsgn__pick"><input type="text" data-caption placeholder="Caption (optional), e.g. Module layout">' +
+				'<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-act="upload">Upload images</button>' +
+				'<span class="a3s-field__hint">Up to ' + esc(s.max_file_mb) + " MB each.</span></div>";
+			html += card("Design Images", imgs, s.images.length ? String(s.images.length) : "");
+		}
 
 		if (s.procurement.length) {
 			html += card("Procurement", '<ul class="a3s-taskdocs">' + s.procurement.map(function (p) {

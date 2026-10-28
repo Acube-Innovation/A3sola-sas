@@ -250,7 +250,10 @@ def _warranty_rows(options, package):
 		if not option.inverter_make or option.inverter_make in seen:
 			continue
 		make = frappe.get_cached_doc("Component Make", option.inverter_make)
-		rows.append({"component": "Inverter", "make": make.make_name, "terms": _warranty_sentence(make)})
+		# The option's years are its inverter model's where it has one (compute_options).
+		years = cint(option.get("inverter_warranty_years"))
+		terms = f"{years} years product warranty" if years and years != cint(make.product_warranty_years) else _warranty_sentence(make)
+		rows.append({"component": "Inverter", "make": make.make_name, "terms": terms})
 		seen.add(make.name)
 
 	return rows
