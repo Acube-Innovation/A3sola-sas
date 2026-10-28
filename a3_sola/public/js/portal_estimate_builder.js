@@ -119,7 +119,7 @@
 	}
 
 	function paintTabs() {
-		var bar = $("de-tabs");
+		var bar = $("de-tabs"), back = $("de-details-link");
 		bar.innerHTML = "";
 		page.tabs.forEach(function (t) {
 			var dirty = changes(t.key).length > 0;
@@ -155,13 +155,16 @@
 			compare.addEventListener("click", function () { selectTab(COMPARE); });
 			bar.appendChild(compare);
 		}
-		/* Save all: every option saved in turn. */
+		/* Save all (every option saved in turn), with the way back to the details beside it. */
+		var actions = el("div", { class: "a3s-de-tabs__actions" });
 		if (page.tabs.some(function (t) { return t.docstatus !== 1; })) {
 			var saveAll = el("button", { type: "button", class: "a3s-square-btn a3s-de-saveall-btn", title: "Save all options",
 				"aria-label": "Save all options", disabled: busy ? "disabled" : null }, [icon("save")]);
 			saveAll.addEventListener("click", saveAllOptions);
-			bar.appendChild(saveAll);
+			actions.appendChild(saveAll);
 		}
+		if (back) actions.appendChild(back);
+		bar.appendChild(actions);
 	}
 
 	/* ---------------------------------------------- remove an option */

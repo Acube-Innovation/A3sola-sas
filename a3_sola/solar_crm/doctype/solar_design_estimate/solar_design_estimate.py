@@ -22,6 +22,7 @@ from a3_sola.api.permissions import assert_same_company
 from a3_sola.api.settings import get_float, get_value
 from a3_sola.solar_crm.doctype.balance_of_system_package.balance_of_system_package import package_for
 from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
+from a3_sola.solar_crm.doctype.inverter_model import inverter_model
 from a3_sola.solar_crm.doctype.kseb_tariff_category.kseb_tariff_category import kseb_code
 from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_inverter,
@@ -85,7 +86,9 @@ class SolarDesignEstimate(Document):
 		self.keep_one_priced()
 		self.record_component_choices()
 		self.compute_panels()
+		self.apply_inverter_models()
 		self.compute_inverters()
+		self.warranty_extension_from_model()
 		self.compute_batteries()
 		self.validate_priced_equipment()
 		self.compute_balance_of_system()
@@ -542,6 +545,7 @@ class SolarDesignEstimate(Document):
 				"inverter_phase": inverter_phase(package, row) or None,
 				"inverter_make": row.inverter_make,
 				"specification": row.inverter_specification or None,
+				**model_values(row),
 				"is_option": 0 if row is inverter else 1,
 				"in_package": 1,
 			})
@@ -578,6 +582,57 @@ class SolarDesignEstimate(Document):
 		# the proposal and quotation) is worked out for that. The recommendation stays as it was.
 		if self.panel_capacity_kwp():
 			self.final_capacity_kw = self.panel_capacity_kwp()
+
+	def apply_inverter_models(self):
+		"""A row on a price-list model takes its make, size, phase and count from it.
+
+		A model of another make than the row's was left behind by a make changed on the row:
+		the make stands and the model goes. A micro inverter kit, or a model other than the
+		package's, prints as the model says.
+		"""
+		before = self.get_doc_before_save()
+		was = {r.name: (r.get("inverter_model"), cint(r.get("with_optimizer"))) for r in (before.get("inverters") if before else [])}
+		for row in self.get("inverters"):
+			if row.name in was and was[row.name] != (row.get("inverter_model"), cint(row.get("with_optimizer"))):
+				# Another model, or its optimizer taken or dropped: priced afresh from the list.
+				row.rate = 0
+			model = inverter_model.details(row.get("inverter_model"))
+			if model and row.inverter_make and model.inverter_make != row.inverter_make:
+				model = None
+			if not model:
+				row.inverter_model, row.with_optimizer = None, 0
+				continue
+			if not model.optimizer_model:
+				row.with_optimizer = 0
+			inverter_model.fill_row(row, model.name, None)
+			if model.kit_includes or row.inverter_model != row.package_model:
+				row.specification = inverter_model.specification(model.name)
+
+	def inverter_warranty_years(self, make, package=None):
+		"""The warranty of the inverter of this make on the estimate: its model's, else the make's."""
+		rows = [r for r in self.get("inverters") or [] if r.inverter_make == make and r.get("inverter_model")]
+		row = next((r for r in rows if package and (r.option_key or "").startswith(package + "|")), None) \
+			or next((r for r in rows if not r.is_option), None) or (rows[0] if rows else None)
+		if row:
+			return cint(frappe.db.get_value("Inverter Model", row.inverter_model, "warranty_years"))
+		return cint(frappe.db.get_value("Component Make", make, "product_warranty_years"))
+
+	def warranty_extension_from_model(self):
+		"""The optional Warranty Extension is the priced inverter model's: its years and rate,
+		and none where that model has no extension. Without a model the row stays as left."""
+		priced = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("inverter_model")), None)
+		if not priced:
+			return
+		offer = inverter_model.extension(priced.inverter_model)
+		rows = [r for r in self.get("optional_add_ons") or [] if r.add_on_type == "Warranty Extension"]
+		if not offer:
+			for row in rows:
+				self.remove(row)
+			return
+		row = rows[0] if rows else self.append("optional_add_ons", {"add_on_type": "Warranty Extension", "is_option": 1})
+		row.item, row.rate = offer
+		row.nos = cint(row.panel_count) or 1
+		row.amount = flt(row.nos * flt(row.rate), 2)
 
 	def compute_inverters(self):
 		"""Inverters to carry the panels, sized and phased within the limits in settings.
@@ -853,10 +908,13 @@ class SolarDesignEstimate(Document):
 		priced = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("in_package")), None)
 		if priced:
 			rows = inverters_for_phase(package, self.connection_type) or package.get("inverters") or []
-			match = next((r for r in rows if r.inverter_make == priced.inverter_make), None)
+			match = (
+				next((r for r in rows if priced.package_model and r.get("inverter_model") == priced.package_model), None)
+				or next((r for r in rows if r.inverter_make == priced.inverter_make), None)
+			)
 			if match and flt(match.cost):
-				return flt(match.cost)
-		return package_cost(package)
+				return flt(match.cost) + model_difference(priced)
+		return package_cost(package) + (model_difference(priced) if priced else 0.0)
 
 	def price_rows_from_backend(self):
 		# Read fresh, not from the cache: these are prices, and a stale copy prices wrongly.
@@ -876,6 +934,9 @@ class SolarDesignEstimate(Document):
 			inverters = package.get("inverters") or []
 			for row in self.get("inverters"):
 				if flt(row.rate) or self.included(row):
+					continue
+				if row.get("inverter_model"):
+					row.rate = flt(inverter_model.price(row.inverter_model, row.with_optimizer) / (cint(row.nos) or 1), 2)
 					continue
 				same_make = [i for i in inverters if i.inverter_make == row.inverter_make]
 				match = (
@@ -976,9 +1037,7 @@ class SolarDesignEstimate(Document):
 		for row in self.options:
 			row.total_option_cost = flt(row.system_cost) + flt(row.additional_structure_cost)
 			if row.inverter_make:
-				row.inverter_warranty_years = (
-					frappe.db.get_value("Component Make", row.inverter_make, "product_warranty_years") or 0
-				)
+				row.inverter_warranty_years = self.inverter_warranty_years(row.inverter_make, row.solar_package)
 
 		self.recommended_option = recommended[0].option_name if recommended else None
 
@@ -1031,7 +1090,7 @@ class SolarDesignEstimate(Document):
 				row.inverter_make = row.component_make
 				row.inverter_specification = make.technology
 				row.inverter_count = cint(row.units) or 1
-				row.inverter_warranty_years = make.product_warranty_years or 0
+				row.inverter_warranty_years = self.inverter_warranty_years(row.component_make, row.solar_package)
 			elif make.component_type == "Module":
 				row.module_make = row.component_make
 				row.module_specification = make.technology
@@ -1239,6 +1298,7 @@ class SolarDesignEstimate(Document):
 					"inverter_phase": inverter_phase(package, source) or None,
 					"inverter_make": option.inverter_make,
 					"specification": source.inverter_specification or None,
+					**model_values(source),
 					"option_key": key,
 					"in_package": 1,
 				}
@@ -1260,6 +1320,7 @@ class SolarDesignEstimate(Document):
 						"inverter_phase": inverter_phase(package, source) or None,
 						"inverter_make": source.inverter_make,
 						"specification": source.inverter_specification or None,
+						**model_values(source),
 						"is_option": 1,
 						"option_key": key,
 						"in_package": 1,
@@ -1286,6 +1347,9 @@ class SolarDesignEstimate(Document):
 					"is_option": old.is_option if old else values.get("is_option", 0),
 					# A specification typed on the row stands over the package's.
 					**({"specification": old.get("specification")} if old and old.get("specification") else {}),
+					# So does a model chosen on it, with or without its optimizer.
+					**({"inverter_model": old.inverter_model, "with_optimizer": old.with_optimizer}
+						if old and old.get("inverter_model") else {}),
 					**({count_field[table]: cint(old.get(count_field[table]))} if old and cint(old.get(count_field[table])) else {})})
 			for row in by_hand:
 				self.append(table, row)
@@ -1908,3 +1972,22 @@ def package_component_query(doctype, txt, searchfield, start, page_len, filters)
 	rows = [(o["value"], o["label"] + (" (in package)" if o["default"] else "")) for o in offered
 		if not txt or txt in o["label"].lower() or txt in o["value"].lower()]
 	return rows[cint(start):cint(start) + cint(page_len or 20)]
+
+
+def model_values(package_row):
+	"""An estimate inverter row's model fields from the package row it is built on: the
+	model chosen, and the model the package's price is built on."""
+	model = package_row.get("inverter_model")
+	optimizer = cint(package_row.get("with_optimizer"))
+	return {"inverter_model": model, "with_optimizer": optimizer,
+		"package_model": model, "package_with_optimizer": optimizer}
+
+
+def model_difference(row):
+	"""What an inverter row's model costs over the model its package is priced on: an SE5000H
+	where the package is built on an SE3000H, or the optimizer taken off. 0 without both."""
+	if not (row.get("inverter_model") and row.get("package_model")):
+		return 0.0
+	return flt(
+		inverter_model.price(row.inverter_model, row.with_optimizer)
+		- inverter_model.price(row.package_model, row.package_with_optimizer), 2)

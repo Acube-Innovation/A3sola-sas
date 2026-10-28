@@ -1,12 +1,13 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The Design Freeze task: the job's design, settled on one page.
+"""The design freeze tasks: the job's design, settled in two pages.
 
-Nothing about installation is asked here. The page shows what the design was sold on - the
-job's quotations - and what it rests on: the site survey (changeable, with its photographs),
-the structure BOM and the material BOM (each changeable, with its lines), and the design's
-own images. They are kept on the job (Solar Installation.site_survey, .structure_bom,
-.material_bom, .design_images) and stay changeable after the freeze.
+Nothing about installation is asked here. Each page shows what the design was sold on - the
+job's quotations - and what it rests on: the site survey (changeable, with its photographs).
+Solar Design Freeze (DSGN) then settles the system: the material BOM, the single line diagram
+and the design's own images. Structural Design Freeze (SDSGN) settles what it stands on: the
+structure BOM and the structure drawing. They are kept on the job (Solar Installation.site_survey,
+.structure_bom, .material_bom, .design_images) and stay changeable after the freeze.
 
 Structure and material procurement read the job's BOMs (api/structure_bom), so a change here
 reaches them: a procurement task still in draft is re-pointed and its list refilled; one
@@ -22,17 +23,26 @@ from a3_sola.api import stages, structure_bom
 from a3_sola.api.stages import _get_stage
 
 DESIGN_TASK = "DSGN"
+STRUCTURE_TASK = "SDSGN"
 INSTALLATION = "Solar Installation"
+#: The structure drawing, filed under Structural Design Freeze's documents.
+STRUCTURE_DRAWING = "Structure drawing"
 
 
 def is_design_task(code):
-	return code == DESIGN_TASK
+	return code in (DESIGN_TASK, STRUCTURE_TASK)
 
 
-def _job(installation, ptype):
+def _task(task_code):
+	if not is_design_task(task_code):
+		frappe.throw(_("{0} is not a design freeze task.").format(task_code), frappe.ValidationError)
+	return task_code
+
+
+def _job(installation, ptype, task_code=DESIGN_TASK):
 	doc = frappe.get_doc(INSTALLATION, installation, for_update=ptype == "write")
 	doc.check_permission(ptype)
-	_get_stage(doc, DESIGN_TASK)
+	_get_stage(doc, _task(task_code))
 	return doc
 
 
@@ -96,6 +106,13 @@ def _sld(inst):
 	return {"url": url or "", "row": row or "", "name": SLD}
 
 
+def _drawing(inst):
+	"""The structure drawing, filed under Structural Design Freeze's documents."""
+	row = next((d for d in inst.get("documents") or [] if d.stage_code == STRUCTURE_TASK
+		and (d.document_name or "").lower() == STRUCTURE_DRAWING.lower()), None)
+	return {"url": (row.attachment if row else "") or "", "row": row.name if row else "", "name": STRUCTURE_DRAWING}
+
+
 def _bom(value, choices, inst=None):
 	return {"value": value or "", "choices": choices, "lines": structure_bom.bom_items(value, inst)["lines"] if value else []}
 
@@ -115,27 +132,32 @@ def _procurement(inst):
 
 
 @frappe.whitelist()
-def state(installation):
-	"""Everything the Design Freeze page shows."""
-	inst = _job(installation, "read")
-	row = _get_stage(inst, DESIGN_TASK)
+def state(installation, task_code=DESIGN_TASK):
+	"""Everything a design freeze page shows: the shared parts, then the task's own - the
+	material BOM, single line diagram and images (DSGN), or the structure BOM and drawing (SDSGN)."""
+	inst = _job(installation, "read", task_code)
+	row = _get_stage(inst, task_code)
 	editable = bool(inst.has_permission("write")) and row.status != "Skipped"
-	return {
+	out = {
 		"task": {"code": row.stage_code, "name": row.stage_name, "status": row.status,
 			"completed_on": frappe.utils.format_date(row.actual_completion_date, "d MMM yyyy") if row.status == "Completed" and row.actual_completion_date else "",
 			"completed_by": frappe.db.get_value("User", row.completed_by, "full_name") or row.completed_by or "" if row.status == "Completed" else ""},
 		"quotations": _quotations(inst),
 		"survey": _survey(inst),
-		"structure_bom": _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else []),
-		"material_bom": _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst),
 		"frozen": {"structure_bom": inst.get("structure_bom") or "", "material_bom": inst.get("material_bom") or ""},
-		"images": [{"row": i.name, "url": i.image, "caption": i.caption or ""} for i in inst.get("design_images") or [] if i.image],
-		"sld": _sld(inst),
 		"procurement": _procurement(inst),
 		"can_edit": editable,
 		"can_freeze": editable and row.status not in ("Completed", "Skipped"),
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
+	if task_code == STRUCTURE_TASK:
+		out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
+		out["sld"] = _drawing(inst)
+	else:
+		out["material_bom"] = _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst)
+		out["sld"] = _sld(inst)
+		out["images"] = [{"row": i.name, "url": i.image, "caption": i.caption or ""} for i in inst.get("design_images") or [] if i.image]
+	return out
 
 
 def _check_bom(bom):
@@ -171,9 +193,9 @@ def refresh_procurement(inst):
 
 
 @frappe.whitelist(methods=["POST"])
-def save(installation, site_survey=None, structure_bom_name=None, material_bom=None):
+def save(installation, site_survey=None, structure_bom_name=None, material_bom=None, task_code=DESIGN_TASK):
 	"""Change the job's site survey or either BOM; the draft procurement tasks follow."""
-	inst = _job(installation, "write")
+	inst = _job(installation, "write", task_code)
 	changes = []
 	if site_survey is not None and site_survey != (inst.site_survey or ""):
 		owner = frappe.db.get_value("Site Survey", site_survey, ["solar_consumer", "lead"], as_dict=True) if site_survey else None
@@ -198,7 +220,7 @@ def save(installation, site_survey=None, structure_bom_name=None, material_bom=N
 	if changes:
 		_save_job(inst, _("Design changed: {0}.").format(", ".join(changes)))
 	updated = refresh_procurement(inst) if changes else []
-	out = state(installation)
+	out = state(installation, task_code)
 	out["updated_tasks"] = updated
 	return out
 
@@ -233,25 +255,26 @@ def remove_image(installation, row):
 
 
 @frappe.whitelist(methods=["POST"])
-def freeze(installation):
-	"""Freeze the design: the BOMs in use are written onto the job and the task is done."""
-	inst = _job(installation, "write")
-	row = _get_stage(inst, DESIGN_TASK)
+def freeze(installation, task_code=DESIGN_TASK):
+	"""Freeze the task's side of the design: its BOM in use is written onto the job - the
+	material BOM (DSGN) or the structure BOM (SDSGN) - and the task is done."""
+	inst = _job(installation, "write", task_code)
+	row = _get_stage(inst, task_code)
 	if row.status in ("Completed", "Skipped"):
 		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
-	structure, material = structure_bom.bom_for(inst), structure_bom.material_bom_for(inst)
-	missing = [label for label, value in ((_("structure BOM"), structure), (_("material BOM"), material)) if not value]
-	if missing:
-		frappe.throw(_("Choose the {0} before freezing the design.").format(_(" and ").join(missing)), title=_("BOM Needed"))
-	inst.structure_bom, inst.material_bom = structure, material
+	field, label, bom = (("structure_bom", _("structure BOM"), structure_bom.bom_for(inst)) if task_code == STRUCTURE_TASK
+		else ("material_bom", _("material BOM"), structure_bom.material_bom_for(inst)))
+	if not bom:
+		frappe.throw(_("Choose the {0} before freezing the design.").format(label), title=_("BOM Needed"))
+	inst.set(field, bom)
 	row.status = "Completed"
 	row.actual_completion_date = today()
 	row.actual_start_date = row.actual_start_date or row.actual_completion_date
 	row.completed_by = frappe.session.user
-	stages._save(inst, _("{0}: design frozen by {1} - structure BOM {2}, material BOM {3}.").format(
-		row.stage_name, frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, structure, material))
+	stages._save(inst, _("{0}: design frozen by {1} - {2} {3}.").format(
+		row.stage_name, frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, label, bom))
 	refresh_procurement(inst)
 	from a3_sola.api.tasks import notify_task_completed
 
-	notify_task_completed(inst, DESIGN_TASK)
-	return state(installation)
+	notify_task_completed(inst, task_code)
+	return state(installation, task_code)

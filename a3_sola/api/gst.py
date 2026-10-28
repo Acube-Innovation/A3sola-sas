@@ -20,6 +20,25 @@ from frappe.utils import flt, getdate, today
 def resolve_valuation(company, consumer_category=None, on_date=None):
 	"""The applicable rule, or a clear error - never a silent default."""
 	on_date = getdate(on_date or today())
+	rule = find_valuation(company, consumer_category, on_date)
+	if rule:
+		return rule
+
+	frappe.throw(
+		_("No active GST valuation rule for {0} on {1}. An invoice cannot be built without one.").format(
+			company, on_date
+		),
+		title=_("GST Rule Missing"),
+	)
+
+
+def find_valuation(company, consumer_category=None, on_date=None):
+	"""The applicable rule, or None. For callers that have a fallback of their own.
+
+	Catching resolve_valuation's error is not enough: frappe.throw has already queued the
+	message for the response, and the portal would show it as if the request failed on it.
+	"""
+	on_date = getdate(on_date or today())
 	rules = frappe.get_all(
 		"Solar GST Valuation Rule",
 		filters={"company": company, "is_active": 1, "effective_from": ["<=", on_date]},
@@ -38,13 +57,7 @@ def resolve_valuation(company, consumer_category=None, on_date=None):
 	generic = [r for r in candidates if r.applicable_consumer_category in ("All", None, "")]
 	if generic:
 		return generic[0].name
-
-	frappe.throw(
-		_("No active GST valuation rule for {0} on {1}. An invoice cannot be built without one.").format(
-			company, on_date
-		),
-		title=_("GST Rule Missing"),
-	)
+	return None
 
 
 def build_invoice_items(project, milestone_amount, rule_name, capacity_kw=None):

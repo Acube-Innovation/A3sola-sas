@@ -84,8 +84,9 @@ def _payment(context, name, code, project):
 
 
 def _design(context, name, code, project):
-	"""The Design Freeze page: the job's quotations, site survey, BOMs and design images."""
-	context.design = design_freeze.state(name)
+	"""A design freeze page (Solar or Structural): the job's quotations, site survey, and the
+	task's own BOM and documents."""
+	context.design = design_freeze.state(name, code)
 	fill_shell(
 		context,
 		active_route="/a3solaportal/projects",

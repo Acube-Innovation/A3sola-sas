@@ -11,6 +11,8 @@
   "inverter_count",
   "inverter_phase",
   "inverter_make",
+  "inverter_model",
+  "with_optimizer",
   "specification",
   "is_option",
   "nos",
@@ -18,7 +20,9 @@
   "rate",
   "amount",
   "in_package",
-  "option_key"
+  "option_key",
+  "package_model",
+  "package_with_optimizer"
  ],
  "fields": [
   {
@@ -61,6 +65,20 @@
    "options": "Component Make",
    "in_list_view": 1,
    "description": "Makes of the chosen Inverter Type only."
+  },
+  {
+   "fieldname": "inverter_model",
+   "fieldtype": "Link",
+   "label": "Model",
+   "options": "Inverter Model",
+   "description": "From the inverter price list: fills the make, size, phase, specification and rate."
+  },
+  {
+   "fieldname": "with_optimizer",
+   "fieldtype": "Check",
+   "label": "With Optimizer",
+   "depends_on": "eval:doc.inverter_model",
+   "description": "Takes the model's optimizers at the price list's quantity."
   },
   {
    "fieldname": "specification",
@@ -118,11 +136,27 @@
    "hidden": 1,
    "read_only": 1,
    "description": "The ticked inverter option this inverter row came from (package, or package|make). Rebuilt from the ticked options on save; a row without it was added by hand and is kept."
+  },
+  {
+   "fieldname": "package_model",
+   "fieldtype": "Link",
+   "label": "Package Model",
+   "options": "Inverter Model",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "The model the package's price is built on: a row on another model is priced by the difference."
+  },
+  {
+   "fieldname": "package_with_optimizer",
+   "fieldtype": "Check",
+   "label": "Package With Optimizer",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-13 18:00:00.000000",
+ "modified": "2026-10-28 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate Inverter",

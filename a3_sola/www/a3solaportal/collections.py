@@ -704,11 +704,19 @@ def task_downloads(installation, task_code, document=None):
 		return [{"label": "View Form 2", "url": form2_print.url(installation), "icon": "eye"},
 			{"label": "Download Form 2", "url": form2_print.url(installation, download=True)}]
 	if task_code == "ACPT":
-		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print).
-		from a3_sola.api import net_metering_print
+		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print), the
+		# consumer-vendor agreement (api/vendor_agreement_print) and, once the job has one, the
+		# quotation in the RIM format (api/loan_print.quotation).
+		from a3_sola.api import loan_print, net_metering_print, vendor_agreement_print
 
-		return [{"label": "View Net Metering Agreement", "url": net_metering_print.url(installation), "icon": "eye"},
-			{"label": "Download Net Metering Agreement", "url": net_metering_print.url(installation, download=True)}]
+		links = [{"label": "View Net Metering Agreement", "url": net_metering_print.url(installation), "icon": "eye"},
+			{"label": "Download Net Metering Agreement", "url": net_metering_print.url(installation, download=True)},
+			{"label": "View Vendor Agreement", "url": vendor_agreement_print.url(installation)},
+			{"label": "Download Vendor Agreement", "url": vendor_agreement_print.url(installation, download=True)}]
+		if frappe.db.get_value("Solar Installation", installation, "quotation"):
+			links += [{"label": "View Quotation (RIM)", "url": loan_print.quotation_url(installation)},
+				{"label": "Download Quotation (RIM)", "url": loan_print.quotation_url(installation) + "&download=1"}]
+		return links
 	if task_code == "KFORMS":
 		# Each of the Form 3 papers the job prints, as its task row offers it: view, download.
 		from a3_sola.api import portal_tasks

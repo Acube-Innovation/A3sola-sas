@@ -179,7 +179,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Task",
-   "options": "\nFRM1\nACPT\nDAL\nADV\nDSGN\nSPROC\nPROC\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
+   "options": "\nFRM1\nACPT\nDAL\nADV\nDSGN\nSDSGN\nSPROC\nPROC\nPORTUPD\nKTST\nMTR\nBAL\nOTHER",
    "reqd": 1
   },
   {
@@ -384,7 +384,7 @@
    "depends_on": "eval:doc.task_code=='DSGN'",
    "fieldname": "sb_dsgn",
    "fieldtype": "Section Break",
-   "label": "Design Freeze"
+   "label": "Solar Design Freeze"
   },
   {
    "fieldname": "bom",

@@ -18,6 +18,7 @@ from a3_sola.api import calculations, regulation, statutory
 from a3_sola.api.expenses import fill_expense_tables
 from a3_sola.api.settings import get_value
 from a3_sola.api.uniqueness import assert_unique_in_company
+from a3_sola.solar_crm.doctype.inverter_model import inverter_model
 
 
 class SolarPackage(Document):
@@ -30,11 +31,13 @@ class SolarPackage(Document):
 		assert_unique_in_company(self, ["specification_code"])
 		self.validate_dcr_items()
 		self.validate_one_default("modules", _("module"))
+		self.fill_from_inverter_models()
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
 		self.validate_one_default_per_type()
 		self.no_dcdb_for_microinverter()
 		self.name_extra_panel_add_ons()
+		self.warranty_extension_from_model()
 		self.fill_package_cost()
 		self.validate_prices()
 		self.price_the_configurations()
@@ -52,6 +55,32 @@ class SolarPackage(Document):
 		"""
 		frappe.clear_document_cache(self.doctype, self.name)
 		frappe.db.after_commit.add(lambda: frappe.clear_document_cache(self.doctype, self.name))
+
+	def fill_from_inverter_models(self):
+		"""A row on a price-list model takes its make, size, phase and unit rate from it.
+
+		The specification is left as typed: the package's prices are keyed by it.
+		"""
+		for row in self.get("inverters") or []:
+			if row.get("inverter_model"):
+				inverter_model.fill_row(row, row.inverter_model, "unit_rate")
+			else:
+				row.with_optimizer = 0
+
+	def warranty_extension_from_model(self):
+		"""The Warranty Extension add-on is the default inverter model's, and none where
+		that model has no extension. A package without a model keeps its own row."""
+		inverter = _default_row(self, "inverters")
+		if not (inverter and inverter.get("inverter_model")):
+			return
+		offer = inverter_model.extension(inverter.inverter_model)
+		rows = [r for r in self.get("optional_add_ons") or [] if r.add_on_type == "Warranty Extension"]
+		if not offer:
+			for row in rows:
+				self.remove(row)
+			return
+		row = rows[0] if rows else self.append("optional_add_ons", {"add_on_type": "Warranty Extension"})
+		row.item, row.amount = offer
 
 	def fill_inverter_phases(self):
 		"""An inverter row without a phase is for the package's own connection type."""
@@ -502,8 +531,10 @@ def package_components(package, phase=None):
 			"cost": flt(row.cost) or (package_cost(doc) if row is inverter else 0.0),
 			# Its own panels, when the price list builds it on other panels than the default.
 			"panel": panel_of.get(row.inverter_specification, ""),
-			"label": label(makes.get(row.inverter_make) or row.inverter_make, number(row.inverter_capacity_kw, "kW"),
-				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else ""),
+			"label": label(makes.get(row.inverter_make) or row.inverter_make, row.get("inverter_model") and
+				frappe.db.get_value("Inverter Model", row.inverter_model, "model_name"), number(row.inverter_capacity_kw, "kW"),
+				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else "",
+				_("with optimizer") if row.get("with_optimizer") else ""),
 		})
 
 	batteries = []
@@ -704,13 +735,10 @@ def _package_hsn_code(company):
 	on any Indian site. Prefer the company's active Solar GST Valuation Rule - it is the
 	recorded position on how the plant is billed - and fall back to the module HSN.
 	"""
-	from a3_sola.api.gst import resolve_valuation
+	from a3_sola.api.gst import find_valuation
 
-	try:
-		rule = resolve_valuation(company)
-		hsn = frappe.db.get_value("Solar GST Valuation Rule", rule, "goods_hsn_code")
-	except frappe.ValidationError:
-		hsn = None
+	rule = find_valuation(company)
+	hsn = rule and frappe.db.get_value("Solar GST Valuation Rule", rule, "goods_hsn_code")
 	hsn = hsn or DEFAULT_PACKAGE_HSN
 	if frappe.db.exists("DocType", "GST HSN Code") and not frappe.db.exists("GST HSN Code", hsn):
 		return None

@@ -220,3 +220,9 @@ a3_sola.patches.v1_2.guard_gst_settings_conditions
 a3_sola.patches.v1_2.accept_customer_task
 # The first advance starts Form 1, stamp paper, design freeze and structure material; a person per task.
 a3_sola.patches.v1_2.start_tasks_on_advance
+# Accept Customer also prints the quotation in the RIM format and the consumer-vendor agreement, word for word.
+a3_sola.patches.v1_2.accept_customer_documents
+# Design Freeze is Solar Design Freeze; Structural Design Freeze (structure BOM, drawing) follows it.
+a3_sola.patches.v1_2.structural_design_freeze_task
+# Inverters come from the master price list: models with price, warranty, extension, optimizer and kit.
+a3_sola.patches.v1_2.inverter_models

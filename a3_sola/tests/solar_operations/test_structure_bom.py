@@ -43,7 +43,8 @@ class TestStructureBOM(FrappeTestCase):
 	def test_a_new_project_has_the_task_after_design_freeze_and_the_orders_after_dispatch(self):
 		codes = [r.stage_code for r in frappe.get_doc("Solar Installation", self.installation.name).stages]
 		self.assertIn("SPROC", seed_stages.TASK_CODES)
-		self.assertEqual(codes[codes.index("DSGN") + 1], "SPROC")
+		# Solar, then Structural Design Freeze, then the structure's material.
+		self.assertEqual(codes[codes.index("DSGN") + 1: codes.index("DSGN") + 3], ["SDSGN", "SPROC"])
 		# The work orders follow the dispatch: the material is on site before the crews are.
 		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 3], ["IWOS", "IWOI"])
 

@@ -32,7 +32,7 @@ BANK = "Bank Activity"
 #: The scope each task is seeded with. Seeded once: a scope changed on the template stays.
 SCOPES = {
 	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "ACPT": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
-	"STMP": KSEB, "DSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
+	"STMP": KSEB, "DSGN": COMPANY, "SDSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
 	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"FRM2": KSEB, "KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
 	"BCOM": BANK, "BAL": COMPANY, "PCOM": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
@@ -60,7 +60,7 @@ DEFAULT_ASSIGNEES = {
 #: The work the customer's first advance - any amount, 10% or 90% - starts at once, each to the
 #: person its template names (Assign to) else its position (api/stages.start_on_advance). Form 1
 #: Payment follows Form 1 (its due date is anchored to it).
-START_ON_ADVANCE = ("FRM1", "STMP", "DSGN")
+START_ON_ADVANCE = ("FRM1", "STMP", "DSGN", "SDSGN")
 
 #: The work that waits for half the project value, confirmed by Accounts - structure and
 #: material, their dispatch and work orders, the serials, Forms 2 and 3 and the balance request -
@@ -122,13 +122,18 @@ TASKS = [
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
 	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
-	# Agreement the portal asks of them (api/net_metering_print). Second in the PM Surya Ghar
-	# column, shown only on a job that takes a loan.
+	# Agreement the portal asks of them (api/net_metering_print), the quotation in the RIM
+	# format (api/loan_print.quotation) and the consumer-vendor agreement word for word
+	# (api/vendor_agreement_print). Second in the PM Surya Ghar column, shown only on a job
+	# that takes a loan.
 	_task("ACPT", "Accept Customer", "Internal", 2, "Installation Task", role=DOCS, task_type="ACPT",
 	      applicability="Financed Sales Only",
-	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT")],
+	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT"),
+	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
+	                 ("Consumer-vendor agreement", 1, "MNRE-CONSUMER-VENDOR-AGREEMENT")],
 	      description="The customer accepted on the PM Surya Ghar portal for the loan; the Net Metering "
-	                  "Agreement generated for them to sign."),
+	                  "Agreement, the RIM quotation and the consumer-vendor agreement generated for them "
+	                  "to sign."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
 	_task("DAL", "Jan Samarth", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
@@ -149,10 +154,14 @@ TASKS = [
 	_task("STMP", "Stamp Paper Purchase", "Internal", 3, "Solar Agreement",
 	      documents=[("Stamp paper data sheet", 0, "STAMP-PAPER-DATA"), ("Stamp paper scan", 0, None)],
 	      description="Stamp paper bought for the net-metering agreement; serial and value recorded."),
-	_task("DSGN", "Design Freeze", "Internal", 3, "Installation Task", role=SITE, task_type="DSGN",
-	      documents=[("Bill of materials", 1, "BOM-SUMMARY"), ("Approved single line diagram", 0, None),
-	                 ("Structure drawing", 0, None)],
-	      description="Bill of materials verified and frozen; BOM issued as PDF."),
+	# The design is frozen in two: the system (material BOM, single line diagram) and the
+	# structure it stands on (structure BOM, drawing) - each on its own page (api/design_freeze).
+	_task("DSGN", "Solar Design Freeze", "Internal", 3, "Installation Task", role=SITE, task_type="DSGN",
+	      documents=[("Bill of materials", 1, "BOM-SUMMARY"), ("Approved single line diagram", 0, None)],
+	      description="Material BOM verified and frozen; single line diagram approved; BOM issued as PDF."),
+	_task("SDSGN", "Structural Design Freeze", "Internal", 3, "Installation Task", role=SITE, task_type="SDSGN",
+	      documents=[("Structure drawing", 0, None)],
+	      description="Structure BOM for the roof verified and frozen; structure drawing approved."),
 	_task("SPROC", "Structure Material Procurement", "Internal", 5, "Installation Task", role=SITE,
 	      task_type="SPROC", documents=[("Structure material bill", 0, None)],
 	      due_anchor_task="ADV", due_anchor_days=0,
