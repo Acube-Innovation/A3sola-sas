@@ -211,7 +211,53 @@ def print_letter(doc):
 		"email": company.email or get_value("sales_email") or "",
 	}
 	letter.update(_company(doc.get("company")))
+	letter["font_pt"] = _letter_pt(letter)
 	return letter
+
+
+#: The letter's type size, in pt: the largest, in quarter points, at which the signature
+#: still ends above the page's footer. Every gap in print_letter.html is in em, so the
+#: whole letter scales with it. Past the minimum, the remarks are too long for one page.
+LETTER_MAX_PT, LETTER_MIN_PT = 12.5, 9.5
+#: The text column of the A4 frame (print_frame.html), in pt: its width, and the height
+#: from its top to just above the footer's address.
+LETTER_WIDTH_PT, LETTER_ROOM_PT = 458, 610
+#: P052's average character width, in em, with a margin for words that wrap early.
+CHAR_EM = 0.46
+LINE_HEIGHT = 1.38  # .a3lt .a3l-body
+
+
+def _letter_pt(letter):
+	for quarters in range(int(LETTER_MAX_PT * 4), int(LETTER_MIN_PT * 4), -1):
+		if _letter_height(letter, quarters / 4) <= LETTER_ROOM_PT:
+			return quarters / 4
+	return LETTER_MIN_PT
+
+
+def _letter_height(letter, pt):
+	"""The letter's height, in pt, set at `pt`: its wrapped lines, and the gaps (in em)
+	print_letter.html puts after each paragraph."""
+
+	def lines(text, indent_em=0):
+		per_line = (LETTER_WIDTH_PT - indent_em * pt) / (pt * CHAR_EM)
+		return max(1, -(-len(text or "") // int(per_line)))
+
+	# (text, gap after it in em, indent in em)
+	to = letter["to"] + (", " + letter["place"] if letter.get("place") else "")
+	paras = [(letter["date"], 0.6, 0)] if letter.get("date") else []
+	paras += [("To,", 0.3, 0), (to, 1.0, 0), (letter["dear"], 0.8, 0)]
+	paras += [(p, 0.6, 0) for p in letter["opening"][:-1]]
+	paras += [(letter["opening"][-1], 0.9, 0)] if letter["opening"] else []  # .a3l-intro's margin
+	paras += [(letter["intro"], 0.6, 0)]
+	paras += [(p, 0.5, 1.8) for p in letter["points"]]
+	if letter["points"]:
+		paras[-1] = (paras[-1][0], 0.9, 1.8)  # the list's own margin
+	paras += [(p, 0.6, 0) for p in letter["closing"][:-1]]
+	paras += [(letter["closing"][-1], 0.9, 0)] if letter["closing"] else []  # .a3l-thanks's margin
+	paras += [("Thanking you and assuring you of our best attention and services always.", 0.6, 0),
+		("Thanks & Regards", 0.6, 0), ("For " + letter["company_name"], 2.0, 0)]
+	paras += [(p, 0.6, 0) for p in (letter["signatory"], letter["designation"]) if p]
+	return pt * sum(lines(text, indent) * LINE_HEIGHT + gap for text, gap, indent in paras)
 
 
 def _option_line(est, technology_name):
@@ -567,7 +613,8 @@ def print_rest(doc):
 		out["kseb_note"] = "*Bi-directional meter can be availed from KSEBL on rental basis also."
 	# 3.3.3 what the packages offer beside their price - for information, in no total.
 	out["add_ons"] = add_on_rows(proposal_estimates(doc, est))
-	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb), bool(out["kseb_note"]), len(out["add_ons"]))
+	# The amount in words is one more row of the KSEBL table.
+	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb) + bool(out["kseb_words"]), bool(out["kseb_note"]), len(out["add_ons"]))
 
 	# 3.4 terms and offer validity; 3.5 the bank details from the Company.
 	out["terms_html"] = settings.get("terms_and_conditions_text") or ""
@@ -583,6 +630,7 @@ def print_rest(doc):
 	# The company's payment QR (Company > Payee Bank > Payment QR Code): a column of its own
 	# beside the bank details, for the customer to scan and pay.
 	out["payment_qr"] = company.get("payment_qr_code") or ""
+	out["payment_page"] = payment_on_own_page(out)
 
 	# 3.7 warranty: the package's system warranty, then each make's own terms.
 	def make_doc(name):
@@ -698,6 +746,106 @@ def cost_pages(options, kseb_rows, kseb_note, add_on_rows=0):
 		return pages
 	pages.append({"options": current, "kseb": True, "add_ons": bool(add_ons_mm)})
 	return pages
+
+
+#: 3.2's table, as print_summary.html sets it, measured on the print: the height its
+#: frame's column has, in pt; a row's padding and border; each column's width and type
+#: size (its text room is the width less the padding); and 3.1's line, at 15pt.
+COMPONENTS_ROOM_PT = 615
+COMPONENTS_LINE = 1.3
+ROW_PAD_PT = 9
+COMPONENTS_COLS = {"item": (94, 12), "spec": (169, 14), "make": (99, 13), "nos": (75, 14)}
+SUMMARY_COLS = ((221, 15), (188, 15))  # 3.1's Particulars and Description
+SUMMARY_LINE_PT = 21
+
+
+def _cell_lines(text, width_pt, size_pt):
+	"""The lines `text` wraps to in a cell, broken between words as the print breaks them."""
+	import textwrap
+
+	per_line = max(1, int((width_pt - 12) / (size_pt * 0.5)))
+	return sum(len(textwrap.wrap(part, per_line)) or 1 for part in str(text or "—").split("\n"))
+
+
+def _component_pt(row):
+	"""One row of 3.2's table, in pt: its tallest cell, and the cell's padding."""
+	cells = [("spec", row.get("spec")), ("make", row.get("make")), ("nos", row.get("nos"))]
+	if row.get("make") is None:  # the spec spans the make's column too
+		cells = [("spec", row.get("spec")), ("nos", row.get("nos"))]
+	tallest = max(_cell_lines(text, *COMPONENTS_COLS[col]) * COMPONENTS_COLS[col][1] for col, text in cells)
+	return tallest * COMPONENTS_LINE + ROW_PAD_PT
+
+
+def component_pages(summary, components):
+	"""3.2 laid out page by page, as the frame clips what runs past its footer:
+	{"under_summary", "pages": [{"rows", "start"}]}. The first page has what fits under
+	3.1 (`under_summary`; else 3.2 starts on the next page), each next page what fits on a
+	page. A group of spanned rows is never split, and the notes follow the last row.
+	`start` is the Sl. No. the page's first row takes."""
+	rows = components.get("rows") or []
+	if not rows:
+		return {"under_summary": True, "pages": []}
+	# Groups: a row with `span` and the `spanned` rows after it, as one block.
+	groups = []
+	for r in rows:
+		if r.get("spanned") and groups:
+			groups[-1].append(r)
+		else:
+			groups.append([r])
+
+	def group_pt(group):
+		head = group[0]
+		item = _cell_lines(head.get("item"), *COMPONENTS_COLS["item"]) * COMPONENTS_COLS["item"][1] * COMPONENTS_LINE + ROW_PAD_PT
+		return max(item, sum(_component_pt(r) for r in group))
+
+	summary_pt = 62 + 28 + sum(  # 3. and 3.1's headings, the table's header
+		max(_cell_lines(p, *SUMMARY_COLS[0]), _cell_lines(d, *SUMMARY_COLS[1])) * SUMMARY_LINE_PT + ROW_PAD_PT
+		for p, d in summary.get("rows") or [])
+	notes_pt = sum(_cell_lines(n, 482, 12) * 12 * 1.3 + 6 for n in components.get("notes") or [])
+	table_head_pt = 46 + 46  # 3.2's heading and its gap, the two-line header row
+
+	pages, used = [[]], summary_pt + table_head_pt
+	for i, group in enumerate(groups):
+		need = group_pt(group) + (notes_pt if i == len(groups) - 1 else 0)
+		if used + need > COMPONENTS_ROOM_PT:
+			if pages[-1]:
+				pages.append([])
+				used = 0
+			elif len(pages) == 1:  # 3.1 leaves no room: 3.2, heading and all, starts the next page
+				pages.append([])
+				used = table_head_pt - 20  # no gap above the heading
+		pages[-1].extend(group)
+		used += need
+	under_summary = bool(pages[0])
+	out, start = [], 1
+	for page_rows in pages[0 if under_summary else 1:]:
+		out.append({"rows": page_rows, "start": start})
+		start += sum(1 for r in page_rows if not r.get("spanned"))
+	return {"under_summary": under_summary, "pages": out}
+
+
+#: Sections 3.4 and 3.5 share a page while both fit, in printed lines of the page's
+#: column (print_rest.html, 12.5pt): the terms are the company's own text, of any length.
+TERMS_PAGE_LINES = 36
+TERMS_LINE_CHARS = 74  # a bulleted line of the column
+
+
+def payment_on_own_page(rest):
+	"""Whether 3.5, the payment terms and the bank details, starts a page of its own
+	rather than following 3.4's terms on theirs."""
+	import re
+
+	from frappe.utils import strip_html
+
+	def lines(text):
+		return max(1, -(-len(text) // TERMS_LINE_CHARS)) + 0.25  # the item's gap
+
+	blocks = [strip_html(b).strip() for b in re.split(r"</li>|</p>|<br\s*/?>", rest["terms_html"] or "")]
+	need = 1.5 + sum(lines(b) for b in blocks if b) + (lines(rest["validity"]) if rest["validity"] else 0)
+	need += 2.5 + sum(lines(t) for t in rest["payment_terms"])  # 3.5's heading and gap
+	bank_rows = len(rest["bank"]) + len(rest["bank_credentials"])
+	need += 1.5 + max(bank_rows * 1.6 + 1, 11 if rest["payment_qr"] else 0)  # its heading, the table
+	return need > TERMS_PAGE_LINES
 
 
 def add_on_rows(estimates):

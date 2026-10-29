@@ -26,17 +26,19 @@
 		</div>
 {% endcall %}
 <style>
-	.a3l-body p { margin: 0 0 9pt; }
+	/* The size is the largest that keeps the signature above the footer, however many
+	   options and remarks the letter lists (print_cover._letter_pt). Every gap is in em so
+	   the whole letter scales with it, and _letter_height counts these same gaps. */
+	.a3lt .a3l-body { font-size: {{ letter.font_pt }}pt; line-height: 1.38; }
+	.a3l-body p { margin: 0 0 0.6em; }
 	.a3l-date { text-align: right; }
-	.a3l-to { margin-top: 4pt !important; }
-	/* Tighter than a bare letter: the opening paragraphs share the page, with up to three options. */
-	.a3lt .a3l-body { font-size: 13.5pt; line-height: 1.4; }
-	.a3l-dear { margin: 16pt 0 12pt !important; }
+	.a3l-to { margin-top: 0.3em !important; }
+	.a3l-dear { margin: 1em 0 0.8em !important; }
 	.a3l-opening { text-align: justify; }
-	.a3l-thanks { margin-top: 14pt !important; }
-	.a3l-intro { margin-top: 14pt !important; }
-	.a3l-points { margin: 0 0 14pt 0; padding-left: 22pt; }
-	.a3l-points li { margin-bottom: 9pt; padding-left: 3pt; }
-	.a3l-sign { margin-top: 30pt; }
-	.a3l-sign p { margin: 0 0 9pt; }
+	.a3l-thanks { margin-top: 0.9em !important; }
+	.a3l-intro { margin-top: 0.9em !important; }
+	.a3l-points { margin: 0 0 0.9em 0; padding-left: 1.6em; }
+	.a3l-points li { margin-bottom: 0.5em; padding-left: 0.2em; }
+	.a3l-sign { margin-top: 2em; }
+	.a3l-sign p { margin: 0 0 0.6em; }
 </style>

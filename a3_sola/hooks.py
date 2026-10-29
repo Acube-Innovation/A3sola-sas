@@ -71,6 +71,7 @@ jinja = {
 		"a3_sola.api.print_cover.print_letter",
 		"a3_sola.api.print_cover.print_summary",
 		"a3_sola.api.print_cover.print_components",
+		"a3_sola.api.print_cover.component_pages",
 		"a3_sola.api.print_cover.print_rest",
 		"a3_sola.api.quotation_option.quotation_print_doc",
 	],

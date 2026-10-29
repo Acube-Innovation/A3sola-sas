@@ -59,12 +59,15 @@
 {% endcall %}
 {%- endfor %}
 
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}
+{#- 3.4 and 3.5 share a page while both fit; with long terms, 3.5 starts the next
+    (print_cover.payment_on_own_page). -#}
+{%- macro terms_section() %}
 	<h3>3.4.&nbsp; <u>General Terms &amp; Conditions</u></h3>
 	<div class="a3r-rich">{{ rest.terms_html }}</div>
 	{%- if rest.validity %}<ul><li>{{ rest.validity }}</li></ul>{% endif %}
-	<h3 class="a3r-gap">3.5.&nbsp; <u>Payment Terms:</u></h3>
+{%- endmacro %}
+{%- macro payment_section(own_page) %}
+	<h3{% if not own_page %} class="a3r-gap"{% endif %}>3.5.&nbsp; <u>Payment Terms:</u></h3>
 	<ol>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ol>
 	<ul class="a3r-bankhead"><li><b><u>Bank Account Details for Payment</u></b></li></ul>
 	{%- set qr = rest.payment_qr %}
@@ -86,7 +89,16 @@
 		<tr>{% if loop.first %}<td class="c" rowspan="{{ rest.bank_credentials | length }}">Bank Credentials for Payment</td>{% endif %}<td class="r">{{ label }}</td><td>{{ value or "—" }}</td></tr>
 		{%- endfor %}
 	</table>
-{% endcall %}
+{%- endmacro %}
+
+<div style="page-break-before: always;"></div>
+{%- if rest.payment_page %}
+{% call page(letter, "a3r") %}{{ terms_section() }}{% endcall %}
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}{{ payment_section(True) }}{% endcall %}
+{%- else %}
+{% call page(letter, "a3r") %}{{ terms_section() }}{{ payment_section(False) }}{% endcall %}
+{%- endif %}
 
 <div style="page-break-before: always;"></div>
 {% call page(letter, "a3r") %}
@@ -130,12 +142,12 @@
 	</table>
 {% endcall %}
 <style>
-	.a3r .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 14pt; line-height: 1.35; }
-	.a3r h2 { margin: 0 0 8pt; font-family: inherit; font-size: 17pt; font-weight: 700; color: #1f1f1f; }
-	.a3r h3 { margin: 0 0 8pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }
-	.a3r h4 { margin: 0 0 6pt 14pt; font-family: inherit; font-size: 14pt; font-weight: 700; color: #1f1f1f; }
+	.a3r .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 12.5pt; line-height: 1.35; }
+	.a3r h2 { margin: 0 0 8pt; font-family: inherit; font-size: 15.5pt; font-weight: 700; color: #1f1f1f; }
+	.a3r h3 { margin: 0 0 8pt; font-family: inherit; font-size: 14pt; font-weight: 700; color: #1f1f1f; }
+	.a3r h4 { margin: 0 0 6pt 14pt; font-family: inherit; font-size: 13pt; font-weight: 700; color: #1f1f1f; }
 	.a3r .a3r-gap { margin-top: 18pt; }
-	.a3r h5.a3r-option { margin: 10pt 0 4pt 14pt; font-family: inherit; font-size: 13pt; font-weight: 700; color: #1f1f1f; }
+	.a3r h5.a3r-option { margin: 10pt 0 4pt 14pt; font-family: inherit; font-size: 12pt; font-weight: 700; color: #1f1f1f; }
 	.a3r .a3r-table--option { margin-bottom: 6pt; }
 	.a3r p { margin: 0 0 7pt; }
 	.a3r ul, .a3r ol { margin: 0 0 6pt; padding-left: 40pt; }
@@ -150,8 +162,8 @@
 	.a3r tr.b td { font-weight: 700; }
 	.a3r-note { margin-top: 10pt !important; }
 	.a3r-bankhead { margin: 8pt 0 2pt; }
-	.a3r-bank { width: 82%; margin-left: 10%; font-size: 13pt; }
-	.a3r-bank--qr { width: 92%; margin-left: 5%; font-size: 12pt; }
+	.a3r-bank { width: 82%; margin-left: 10%; font-size: 12pt; }
+	.a3r-bank--qr { width: 92%; margin-left: 5%; font-size: 11pt; }
 	.a3r-bank td.a3r-qr { text-align: center; vertical-align: middle; padding: 6pt; }
 	.a3r-qr img { display: block; width: 100%; max-width: 4.2cm; height: auto; margin: 0 auto 4pt; }
 	.a3r-qr span { font-size: 11pt; font-weight: 700; }
