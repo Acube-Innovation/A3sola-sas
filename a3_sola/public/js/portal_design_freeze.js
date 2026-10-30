@@ -3,7 +3,7 @@
  *
  * The design freeze pages (www/a3solaportal/projects/task.html, api/design_freeze): the job's
  * quotations; its site survey, with the survey's photographs; then the task's own side -
- * Solar Design Freeze: the structure and material BOMs, single line diagram and design images;
+ * Solar Design Freeze: the material BOM, single line diagram and design images;
  * Structural Design Freeze: the structure BOM and structure drawing - and Freeze. A change is saved
  * as it is made, and the procurement tasks still in draft take the new BOM. A BOM's lines are
  * edited in place (quantity, remove, add an item) and saved as the job's own BOM. Every step
@@ -155,7 +155,7 @@
 			esc(t.status) + "</span>" + (t.completed_on ? " · frozen " + esc(t.completed_on) + (t.completed_by ? " by " + esc(t.completed_by) : "") : "") + "</p>";
 		if (s.can_freeze) {
 			head += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">Freeze design</button></div>' +
-				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "structure and material BOMs") + ' below on the job and completes the task. Everything here stays changeable afterwards.</p>';
+				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "material BOM") + ' below on the job and completes the task. Everything here stays changeable afterwards.</p>';
 		}
 		html += card(t.name, head);
 

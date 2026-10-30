@@ -150,9 +150,8 @@ def state(installation, task_code=DESIGN_TASK):
 		"can_freeze": editable and row.status not in ("Completed", "Skipped"),
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
-	# Solar Design Freeze settles both BOMs; Structural Design Freeze keeps the structure's.
-	out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
 	if task_code == STRUCTURE_TASK:
+		out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
 		out["sld"] = _drawing(inst)
 	else:
 		out["material_bom"] = _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst)
@@ -270,9 +269,6 @@ def freeze(installation, task_code=DESIGN_TASK):
 	if field == "material_bom" and bom in structure_bom.capacity_boms():
 		bom = _with_panels(inst, bom)
 	inst.set(field, bom)
-	if task_code == DESIGN_TASK and not inst.get("structure_bom"):
-		# The structure BOM shown beside it is kept too, when there is one.
-		inst.structure_bom = structure_bom.bom_for(inst)
 	row.status = "Completed"
 	row.actual_completion_date = today()
 	row.actual_start_date = row.actual_start_date or row.actual_completion_date
@@ -332,8 +328,8 @@ def _retire(bom, inst):
 def save_lines(installation, bom_field, lines, task_code=DESIGN_TASK):
 	"""The job's own BOM from the lines edited on the page: a new BOM made for this job (the
 	package's is never changed), put on the job, and the draft procurement tasks follow."""
-	if bom_field not in ("material_bom", "structure_bom"):
-		frappe.throw(_("Unknown BOM {0}.").format(bom_field), frappe.ValidationError)
+	if bom_field != {DESIGN_TASK: "material_bom", STRUCTURE_TASK: "structure_bom"}.get(task_code):
+		frappe.throw(_("{0} is not settled on this task.").format(bom_field), frappe.ValidationError)
 	inst = _job(installation, "write", task_code)
 	rows = frappe.parse_json(lines) if isinstance(lines, str) else lines
 	items, seen = [], set()
