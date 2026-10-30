@@ -56,6 +56,8 @@ CHAIN = {
 			"map": {
 				"consumer_name": ("lead_name", "company_name"),
 				"mobile_no": ("mobile_no", "phone"),
+				# The lead's number is kept as it was given, whoever's it is.
+				"lead_mobile_no": ("mobile_no", "phone"),
 				"email_id": "email_id",
 				"consumer_category": "consumer_category",
 				"discom": "discom",

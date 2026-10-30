@@ -237,13 +237,14 @@ class SolarConsumer(Document):
 
 
 def open_lead_of(doc):
-	"""A lead of the customer's company with its mobile or email that no customer has yet."""
-	for field in ("mobile_no", "email_id"):
+	"""A lead of the customer's company with its mobile (the lead's number given, else the
+	customer's) or email that no customer has yet."""
+	for field, lead_field in (("lead_mobile_no", "mobile_no"), ("mobile_no", "mobile_no"), ("email_id", "email_id")):
 		value = (doc.get(field) or "").strip()
 		if not value:
 			continue
 		name = frappe.db.get_value(
-			"Lead", {field: value, "company": doc.company, "solar_consumer": ["is", "not set"]}, "name"
+			"Lead", {lead_field: value, "company": doc.company, "solar_consumer": ["is", "not set"]}, "name"
 		)
 		if name:
 			return name
@@ -266,6 +267,9 @@ def make_lead_for(doc):
 		lead_field: doc.get(field) for lead_field, field in LEAD_FROM_CUSTOMER.items()
 		if doc.get(field) and (lead_field == "lead_name" or meta.get_field(lead_field))
 	}
+	# The enquiry's own number, when one was given apart from the customer's.
+	if doc.get("lead_mobile_no"):
+		values["mobile_no"] = doc.lead_mobile_no
 	# ERPNext refuses a second lead with an email another lead already has.
 	if values.get("email_id") and frappe.db.exists("Lead", {"email_id": values["email_id"]}):
 		values.pop("email_id")
