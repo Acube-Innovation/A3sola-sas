@@ -32,7 +32,10 @@ COLLECTIONS = {
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
 	              "form_extra": ["site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
-	                             "permanent_state", "permanent_district", "permanent_pincode"]},
+	                             "permanent_state", "permanent_district", "permanent_pincode",
+	                             # Read from the KSEB bill (api/kseb_bill.py), so on the form to be filled in.
+	                             "discom_section", "tariff_category", "connection_type", "connected_load_watts",
+	                             "avg_consumption_units", "avg_bill_amount", "billing_frequency"]},
 	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
 	# detail pages are the pricing builder (www/a3solaportal/quotations).
