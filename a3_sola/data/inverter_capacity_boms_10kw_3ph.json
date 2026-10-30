@@ -1,0 +1,199 @@
+{
+ "items": [
+  {
+   "item_code": "SWG-ISO-40A-4P",
+   "item_name": "40A 4 Pole MCB-Type Isolator",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "40A 4 Pole MCB-Type Isolator",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "ACDB-3PH-10KW-STRIDER-ABB-CITEL",
+   "item_name": "ACDB 3 Phase 10 kW (Strider enclosure, ABB MCB, Citel SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "ACDB 3 Phase 10 kW (Strider enclosure, ABB MCB, Citel SPD)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MAT-KIT-3PH-10KW",
+   "item_name": "Material Kit 10 kW 3 Phase",
+   "item_group": "Sub Assemblies",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Material Kit 10 kW 3 Phase",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  }
+ ],
+ "templates": [
+  {
+   "inverter_phase": "Three Phase",
+   "inverter_capacity_kw": 10,
+   "item": "MAT-KIT-3PH-10KW",
+   "source": "Lijo Kurian",
+   "items": [
+    [
+     "INV-HOY-MIT-5000-S",
+     2
+    ],
+    [
+     "CON-MC4",
+     36
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1
+    ],
+    [
+     "ERT-STRIP-CB-25X3",
+     1
+    ],
+    [
+     "ERT-STRIP-INSULATOR-25X3",
+     6
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2
+    ],
+    [
+     "SWG-ISO-40A-4P",
+     1
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2
+    ],
+    [
+     "MTR-LT-3PH-10-60A",
+     1
+    ],
+    [
+     "MTR-BOX-3PH-EXCEL",
+     1
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     2
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     16
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     32
+    ],
+    [
+     "CNS-NUT-M4",
+     32
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     32
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     32
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100
+    ],
+    [
+     "CNS-SCREW-8X38-DRYWALL",
+     50
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     200
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     45
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     12
+    ],
+    [
+     "CND-PIPE-UPVC-25",
+     20
+    ],
+    [
+     "CND-TEE-25",
+     20
+    ],
+    [
+     "CND-BEND-25",
+     20
+    ],
+    [
+     "CND-ELBOW-25",
+     20
+    ],
+    [
+     "CND-COUPLING-25",
+     20
+    ],
+    [
+     "CND-SADDLE-SS-25",
+     100
+    ],
+    [
+     "ACDB-3PH-10KW-STRIDER-ABB-CITEL",
+     1
+    ],
+    [
+     "CND-CHANNEL-SALZER-45",
+     1
+    ]
+   ]
+  }
+ ]
+}

@@ -26,7 +26,13 @@ RETIRED_ITEMS = ("PMSG 3KW SYSTEM 1PH", "PMSG 5KW SYSTEM 1PH")
 def execute():
 	frappe.reload_doc("solar_crm", "doctype", "inverter_capacity_bom")
 	frappe.reload_doc("solar_crm", "doctype", "a3_sola_settings")
-	data = json.load(open(DATA, encoding="utf-8"))
+	add_templates(json.load(open(DATA, encoding="utf-8")))
+	retire_package_boms()
+
+
+def add_templates(data):
+	"""Create the data's items and its BOMs by inverter capacity, and list each in A3 Sola Settings
+	where no row has its phase and capacity yet."""
 	if not frappe.db.exists("Item Group", "Sub Assemblies"):
 		frappe.get_doc({"doctype": "Item Group", "item_group_name": "Sub Assemblies",
 			"parent_item_group": "All Item Groups"}).insert(ignore_permissions=True)
@@ -54,7 +60,6 @@ def execute():
 		settings.flags.ignore_mandatory = True
 		settings.save()
 	frappe.db.commit()
-	retire_package_boms()
 
 
 def retire_package_boms():
