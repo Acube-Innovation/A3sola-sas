@@ -55,7 +55,7 @@ class TestInverterCapacityBOM(FrappeTestCase):
 			{"panel_capacity_wp": 545, "panel_count": 9, "panel_type": "DCR", "is_option": 1},
 		])
 		code = ensure_item("Test Panel 545 Wp")
-		with patch.object(structure_bom, "panel_item", side_effect=lambda make, wp, dcr: code if wp == 545 else None):
+		with patch.object(structure_bom, "panel_item", side_effect=lambda make, wp, dcr, technology=None: code if wp == 545 else None):
 			lines = structure_bom.panel_lines(doc)
 		self.assertEqual([(l["item_code"], l["qty"]) for l in lines], [(code, 6), ("", 4)])
 		# A panel with no module Item is shown, to be chosen.

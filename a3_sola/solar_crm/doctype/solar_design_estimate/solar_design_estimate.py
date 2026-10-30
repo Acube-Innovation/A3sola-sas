@@ -963,6 +963,18 @@ class SolarDesignEstimate(Document):
 			rate = bos_rates.get((row.item, row.phase or "")) or bos_rates.get((row.item, ""))
 			if rate:
 				row.rate = rate
+		self.price_panels_from_list()
+
+	def price_panels_from_list(self):
+		"""A panel row the package rates leave at 0 - and no package covers - is priced at its
+		panel's selling price: Wp x rate per watt, from the panel list (api/structure_bom)."""
+		from a3_sola.api.structure_bom import panel_rate
+
+		for row in self.get("panels"):
+			if flt(row.rate) or self.included(row) or not (row.panel_make and flt(row.panel_capacity_wp)):
+				continue
+			make = frappe.db.get_value("Component Make", row.panel_make, "make_name")
+			row.rate = panel_rate(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR", row.panel_variant)
 
 	def commercials(self):
 		"""Each System & Options table's total, the tax on them and the grand total.

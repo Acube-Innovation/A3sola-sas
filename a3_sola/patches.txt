@@ -238,3 +238,5 @@ a3_sola.patches.v1_2.panel_capacity_structure_boms
 a3_sola.patches.v1_2.inverter_capacity_bom_10kw_3ph
 # The company is Renewcore Innovations LLP (abbreviation RIL), not "Acube Innovations".
 a3_sola.patches.v1_2.rename_company_renewcore
+# The panel list: DCR and Non-DCR panels, each sold at Wp x its rate per watt (Standard Selling).
+a3_sola.patches.v1_2.solar_panel_variants
