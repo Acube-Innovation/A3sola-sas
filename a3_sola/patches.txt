@@ -242,3 +242,5 @@ a3_sola.patches.v1_2.rename_company_renewcore
 a3_sola.patches.v1_2.solar_panel_variants
 # A customer's own mobile and its lead's mobile, side by side; existing customers take the lead's.
 a3_sola.patches.v1_2.consumer_lead_mobile
+# Renewcore's staff designations (Managing Partner, Project Coordinator/Engineer, Sales Coordinator).
+a3_sola.patches.v1_2.staff_designations
