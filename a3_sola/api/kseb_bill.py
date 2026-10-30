@@ -82,11 +82,18 @@ def tesseract():
 
 
 def ocr_image(content):
-	from PIL import Image, ImageOps
-
 	ocr = tesseract()
 	if not ocr:
 		frappe.throw(NO_OCR, title=_("Photo Not Read"))
+	# English only: the bill's labels and details are English, and the Malayalam model reads
+	# English text as Malayalam letters. Mode 4 keeps the bill's columns apart.
+	return ocr.image_to_string(prepared_image(content), lang="eng", config="--psm 4")
+
+
+def prepared_image(content):
+	"""A photo as OCR reads it best: upright, grey, full contrast, about 300 dpi wide."""
+	from PIL import Image, ImageOps
+
 	try:
 		image = Image.open(io.BytesIO(content))
 		image = ImageOps.exif_transpose(image)
@@ -96,9 +103,7 @@ def ocr_image(content):
 	# Tesseract reads best near 300 dpi - an A4 bill about 2500 px wide: a smaller photo is scaled up.
 	if image.width < 2500:
 		image = image.resize((2500, int(image.height * 2500 / image.width)))
-	# English only: the bill's labels and details are English, and the Malayalam model reads
-	# English text as Malayalam letters. Mode 4 keeps the bill's columns apart.
-	return ocr.image_to_string(image, lang="eng", config="--psm 4")
+	return image
 
 
 def ocr_pdf(content, password=None):

@@ -62,6 +62,8 @@
 	var style = document.createElement("style");
 	style.textContent =
 		".a3s-kseb{border:1px dashed var(--color-border,#d9dee5);border-radius:10px;padding:.75rem 1rem;margin:0 0 1rem;background:var(--color-surface-muted,#fafbfc)}" +
+		/* A row the page hides stays hidden: the password row shows only for a locked PDF. */
+		".a3s-kseb [hidden]{display:none!important}" +
 		".a3s-kseb__row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}.a3s-kseb__password{margin-top:.6rem}.a3s-kseb__password input{max-width:12rem}" +
 		".a3s-kseb__status{margin:.5rem 0 0;font-size:.9rem}.a3s-kseb__status.is-error{color:#b42318}.a3s-kseb__status.is-success{color:#067647}" +
 		".a3s-kseb__warnings{margin:.35rem 0 0 1.1rem;font-size:.85rem;color:#b54708}" +

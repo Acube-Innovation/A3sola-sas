@@ -55,6 +55,19 @@ class TestAadhaarCard(FrappeTestCase):
 		p = aadhaar_card.parse(FRONT)
 		self.assertEqual((p["name"], p["dob"], p["gender"]), ("Anna Varghese", "15/08/1990", "Female"))
 
+	def test_a_photographed_front_with_only_a_year_of_birth(self):
+		# The Malayalam label before "/ Year of Birth" reads as noise on that line: the name is above it.
+		p = aadhaar_card.parse("mM) O& eaureuMm\nK P Rajan\namm cudae/Year of Birth: 1967\nalam | Male\n")
+		self.assertEqual((p["name"], p["year_of_birth"], p["gender"]), ("K P Rajan", "1967", "Male"))
+		with patch.object(frappe.db, "exists", return_value=True):
+			fields, warnings = aadhaar_card.to_fields(p)
+		self.assertNotIn("date_of_birth", fields)
+		self.assertIn("1967", warnings[0])
+
+	def test_specks_at_the_cards_edge_are_not_address(self):
+		self.assertEqual(aadhaar_card._parts("S/O: K P Raman, Kunnel House, Kalady Koratti, 4, 4 Kerala"),
+			["Kunnel House", "Kalady Koratti", "Kerala"])
+
 	def test_the_customers_fields(self):
 		with patch.object(aadhaar_card, "find_state", return_value="Kerala"), \
 				patch.object(aadhaar_card, "find_district", return_value="Ernakulam, Kerala"), \
