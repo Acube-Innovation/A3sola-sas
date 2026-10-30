@@ -80,6 +80,11 @@ def create_record(slug=None, source_dt=None, source=None, source_task=None, **va
 
 	_set_item_rows(doc, slug, values)
 	doc.insert()
+	# A KSEB bill read on the form (api/kseb_bill.py) becomes this record's.
+	if values.get("kseb_bill_file"):
+		from a3_sola.api import kseb_bill
+
+		kseb_bill.claim(values["kseb_bill_file"], doctype, doc.name)
 
 	# Only once the record exists: the source now points at it, so the button on the
 	# source's page becomes the card for this record.

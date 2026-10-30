@@ -194,6 +194,20 @@ class TestKSEBBill(FrappeTestCase):
 		self.assertEqual(source, "ocr")
 		self.assertIn("1100000000002", text.replace(" ", ""))
 
+	def test_a_bill_read_on_a_new_form_becomes_the_new_records(self):
+		file = frappe._dict(name="F1", owner="Administrator", attached_to_doctype=None, a3s_document_type="KSEB Bill",
+			file_url="/private/files/bill.pdf")
+		with patch.object(frappe.db, "get_value", return_value=file), patch.object(frappe.db, "set_value") as set_value, \
+				patch("a3_sola.api.portal_attachments._sync_kyc") as sync, patch("a3_sola.api.portal_attachments._refresh_kyc"):
+			self.assertEqual(kseb_bill.claim("F1", "Solar Consumer", "CUST-1"), "/private/files/bill.pdf")
+		set_value.assert_called_once_with("File", "F1", {"attached_to_doctype": "Solar Consumer", "attached_to_name": "CUST-1"})
+		sync.assert_called_once()
+		# Someone else's, or one already attached, is not taken.
+		for other in (dict(file, owner="someone@x"), dict(file, attached_to_doctype="Lead")):
+			with patch.object(frappe.db, "get_value", return_value=frappe._dict(other)), patch.object(frappe.db, "set_value") as set_value:
+				self.assertIsNone(kseb_bill.claim("F1", "Solar Consumer", "CUST-1"))
+			set_value.assert_not_called()
+
 	def test_only_a_lead_or_customer(self):
 		with self.assertRaises(frappe.ValidationError):
 			kseb_bill.read("Quotation")

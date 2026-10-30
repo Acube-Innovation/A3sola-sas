@@ -9,7 +9,8 @@ Load, Billing Period, the meter readings' Units, Total Amt.) and turned into the
 fields, its DISCOM, section and tariff found among their records.
 
 Nothing is saved here: the page fills its form with what is returned, and the person checks
-it and saves. On a record that exists, the bill is also attached to it as its KSEB Bill.
+it and saves. On a record that exists, the bill is also attached to it as its KSEB Bill; on a
+new one it is kept, and attached as the record is created (`claim`).
 """
 
 import io
@@ -315,11 +316,33 @@ def read(doctype, name=None):
 		frappe.throw(_("This does not read as a KSEB bill. Upload the bill's first page, clear and straight."),
 			title=_("Bill Not Read"))
 	fields, warnings = to_fields(parsed, doctype)
-	attached = False
+	attached, pending = False, None
 	if name:
 		attach(doctype, name, upload.filename, content)
 		attached = True
-	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached}
+	else:
+		# No record yet: the bill waits, private and the reader's own, for the one created.
+		pending = frappe.get_doc({"doctype": "File", "file_name": upload.filename, "content": content, "is_private": 1,
+			"a3s_document_type": KSEB_BILL}).insert(ignore_permissions=True).name
+	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached, "pending_file": pending}
+
+
+def claim(file_name, doctype, name):
+	"""The bill read on a create form, attached to the record it created as its KSEB Bill: only
+	the reader's own, and only one not yet attached to anything."""
+	if not file_name or doctype not in DOCTYPES:
+		return None
+	file = frappe.db.get_value("File", file_name, ["name", "owner", "attached_to_doctype", "a3s_document_type",
+		"file_url"], as_dict=True)
+	if not file or file.owner != frappe.session.user or file.attached_to_doctype or file.a3s_document_type != KSEB_BILL:
+		return None
+	from a3_sola.api import portal_attachments
+
+	frappe.db.set_value("File", file.name, {"attached_to_doctype": doctype, "attached_to_name": name})
+	if doctype == CONSUMER:
+		portal_attachments._sync_kyc(name, file.file_url, KSEB_BILL)
+	portal_attachments._refresh_kyc(doctype, name)
+	return file.file_url
 
 
 def attach(doctype, name, filename, content):
