@@ -236,3 +236,5 @@ a3_sola.patches.v1_2.inverter_capacity_material_boms
 a3_sola.patches.v1_2.panel_capacity_structure_boms
 # The 10 kW three phase material BOM (Hoymiles MIT-5000-S x 2), by inverter capacity.
 a3_sola.patches.v1_2.inverter_capacity_bom_10kw_3ph
+# The company is Renewcore Innovations LLP (abbreviation RIL), not "Acube Innovations".
+a3_sola.patches.v1_2.rename_company_renewcore
