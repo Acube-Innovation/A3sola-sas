@@ -246,3 +246,5 @@ a3_sola.patches.v1_2.consumer_lead_mobile
 a3_sola.patches.v1_2.staff_designations
 # A customer's date of birth and gender, read from the Aadhaar card with the permanent address.
 a3_sola.patches.v1_2.consumer_dob_gender
+# KSEB sections customers' bills name that the list lacked: Meloor (5650), Thuravoor (5577).
+a3_sola.patches.v1_2.discom_sections_from_bills
