@@ -3,10 +3,11 @@
  *
  * The design freeze pages (www/a3solaportal/projects/task.html, api/design_freeze): the job's
  * quotations; its site survey, with the survey's photographs; then the task's own side -
- * Solar Design Freeze: the material BOM, single line diagram and design images; Structural
- * Design Freeze: the structure BOM and structure drawing - and Freeze. A change is saved as it is made,
- * and the procurement tasks still in draft take the new BOM. Every step redraws the page
- * from the state the server returns.
+ * Solar Design Freeze: the structure and material BOMs, single line diagram and design images;
+ * Structural Design Freeze: the structure BOM and structure drawing - and Freeze. A change is saved
+ * as it is made, and the procurement tasks still in draft take the new BOM. A BOM's lines are
+ * edited in place (quantity, remove, add an item) and saved as the job's own BOM. Every step
+ * redraws the page from the state the server returns.
  */
 (function () {
 	"use strict";
@@ -24,6 +25,9 @@
 	var pickFor = "images";
 	var taskCode = state.task.code;
 	var structural = taskCode === "SDSGN";
+	/* Lines being edited, per BOM field, until saved or discarded; items found by the search. */
+	var drafts = { material_bom: null, structure_bom: null };
+	var found = {};
 	/* The single line diagram (or, structural, the structure drawing): one file, a PDF or an
 	   image, filed under the task's documents. */
 	var sldPicker = document.createElement("input");
@@ -93,14 +97,34 @@
 			}).join("") + "</select>";
 	}
 
-	function lines(rows) {
-		if (!rows.length) return '<p class="a3s-field__hint">No lines.</p>';
-		return '<div class="a3s-tablewrap"><table class="a3s-table"><thead><tr><th>Item</th><th>Qty</th><th>UOM</th></tr></thead><tbody>' +
-			rows.map(function (l) {
+	function lines(rows, field, editable) {
+		var table = !rows.length ? '<p class="a3s-field__hint">No lines.</p>' :
+			'<div class="a3s-tablewrap"><table class="a3s-table"><thead><tr><th>Item</th><th>Qty</th><th>UOM</th>' + (editable ? "<th></th>" : "") + "</tr></thead><tbody>" +
+			rows.map(function (l, i) {
+				var qty = editable
+					? '<input type="number" min="0" step="any" class="a3s-dsgn__qty" data-qty="' + field + '" data-i="' + i + '" value="' + esc(l.qty) + '">'
+					: esc(l.qty) + (l.note ? "*" : "");
 				return "<tr><td>" + esc(l.item_name) + (l.item_code && l.item_code !== l.item_name ? ' <small class="a3s-field__hint">' + esc(l.item_code) + "</small>" : "") +
 					(l.note ? '<br><small class="a3s-field__hint">' + esc(l.note) + "</small>" : "") +
-					"</td><td>" + esc(l.qty) + (l.note ? "*" : "") + "</td><td>" + esc(l.uom || "") + "</td></tr>";
+					"</td><td>" + qty + "</td><td>" + esc(l.uom || "") + "</td>" +
+					(editable ? '<td><button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-del="' + field + '" data-i="' + i + '" title="Remove line">×</button></td>' : "") + "</tr>";
 			}).join("") + "</tbody></table></div>";
+		if (!editable) return table;
+		table += '<div class="a3s-dsgn__pick"><input type="text" list="a3s-items-' + field + '" data-find="' + field + '" placeholder="Add item - type its code or name">' +
+			'<datalist id="a3s-items-' + field + '"></datalist>' +
+			'<input type="number" min="0" step="any" class="a3s-dsgn__qty" data-add-qty="' + field + '" placeholder="Qty">' +
+			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-act="add-line" data-bom="' + field + '">Add</button></div>';
+		if (drafts[field]) {
+			table += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-act="save-lines" data-bom="' + field + '">Save BOM</button>' +
+				'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-act="discard" data-bom="' + field + '">Discard changes</button></div>' +
+				'<p class="a3s-field__hint">Unsaved changes. Saving makes a BOM for this job only; the package\'s BOM is not changed.</p>';
+		}
+		return table;
+	}
+
+	function draft(field) {
+		if (!drafts[field]) drafts[field] = state[field].lines.map(function (l) { return Object.assign({}, l); });
+		return drafts[field];
 	}
 
 	function images(list, removable) {
@@ -121,7 +145,8 @@
 			inner += '<p class="a3s-field__hint">' + esc(bom.value || "None chosen") + "</p>";
 		}
 		if (!frozen && bom.value) inner += '<p class="a3s-field__hint">From the package; freezing the design keeps it on the job.</p>';
-		return card(title, inner + lines(bom.lines), bom.lines.length ? bom.lines.length + " lines" : "");
+		var rows = drafts[field] || bom.lines;
+		return card(title, inner + lines(rows, field, state.can_edit), rows.length ? rows.length + " lines" : "");
 	}
 
 	function paint() {
@@ -130,7 +155,7 @@
 			esc(t.status) + "</span>" + (t.completed_on ? " · frozen " + esc(t.completed_on) + (t.completed_by ? " by " + esc(t.completed_by) : "") : "") + "</p>";
 		if (s.can_freeze) {
 			head += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">Freeze design</button></div>' +
-				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure" : "material") + ' BOM below on the job and completes the task. Everything here stays changeable afterwards.</p>';
+				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "structure and material BOMs") + ' below on the job and completes the task. Everything here stays changeable afterwards.</p>';
 		}
 		html += card(t.name, head);
 
@@ -196,15 +221,46 @@
 	}
 
 	body.addEventListener("change", function (e) {
-		var field = e.target.dataset && e.target.dataset.field;
+		var d = e.target.dataset || {};
+		if (d.qty) {
+			draft(d.qty)[+d.i].qty = e.target.value === "" ? 0 : +e.target.value;
+			paint();
+			return;
+		}
+		var field = d.field;
 		if (!field) return;
+		drafts[field] = null;
 		var args = {};
 		args[field === "structure_bom" ? "structure_bom_name" : field] = e.target.value;
 		setStatus("Saving…");
 		call("save", args).then(function (s) { apply(s, "Saved."); }).catch(function (err) { setStatus(err.message, "error"); paint(); });
 	});
 
+	var findTimer;
+	body.addEventListener("input", function (e) {
+		var field = e.target.dataset && e.target.dataset.find;
+		if (!field) return;
+		var txt = e.target.value, list = document.getElementById("a3s-items-" + field);
+		clearTimeout(findTimer);
+		findTimer = setTimeout(function () {
+			fetch(API + "item_options?txt=" + encodeURIComponent(txt), { credentials: "same-origin", headers: { Accept: "application/json" } })
+				.then(function (r) { return r.json(); })
+				.then(function (d) {
+					list.innerHTML = (d.message || []).map(function (it) {
+						found[it.item_code] = it;
+						return '<option value="' + esc(it.item_code) + '">' + esc(it.item_name) + " (" + esc(it.stock_uom) + ")</option>";
+					}).join("");
+				});
+		}, 250);
+	});
+
 	body.addEventListener("click", function (e) {
+		var del = e.target.closest("[data-del]");
+		if (del) {
+			draft(del.dataset.del).splice(+del.dataset.i, 1);
+			paint();
+			return;
+		}
 		var act = e.target.closest("[data-act]"), remove = e.target.closest("[data-remove]");
 		var use = e.target.closest("[data-use-survey]");
 		if (use) {
@@ -220,6 +276,25 @@
 		if (!act) return;
 		if (act.dataset.act === "upload") { pickFor = "images"; picker.click(); }
 		if (act.dataset.act === "sld") { pickFor = "sld"; sldPicker.click(); }
+		var bomField = act.dataset.bom;
+		if (act.dataset.act === "add-line") {
+			var find = body.querySelector('[data-find="' + bomField + '"]'), qtyIn = body.querySelector('[data-add-qty="' + bomField + '"]');
+			var code = (find.value || "").trim(), qty = +qtyIn.value, item = found[code];
+			if (!item) { setStatus("Pick an item from the list.", "error"); return; }
+			if (!(qty > 0)) { setStatus("Enter a quantity for " + item.item_name + ".", "error"); return; }
+			var rows = draft(bomField), have = rows.filter(function (r) { return r.item_code === code; })[0];
+			if (have) have.qty = qty;
+			else rows.push({ item_code: code, item_name: item.item_name, qty: qty, uom: item.stock_uom });
+			setStatus("");
+			paint();
+		}
+		if (act.dataset.act === "discard") { drafts[bomField] = null; setStatus(""); paint(); }
+		if (act.dataset.act === "save-lines") {
+			setStatus("Saving the BOM…");
+			call("save_lines", { bom_field: bomField, lines: JSON.stringify(drafts[bomField] || []) })
+				.then(function (s) { drafts[bomField] = null; apply(s, "BOM saved for this job."); })
+				.catch(function (err) { setStatus(err.message, "error"); });
+		}
 		if (act.dataset.act === "freeze") {
 			setStatus("Freezing…");
 			call("freeze").then(function (s) { apply(s, "Design frozen."); }).catch(function (err) { setStatus(err.message, "error"); });

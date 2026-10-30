@@ -43,6 +43,15 @@ def structure_boms():
 	return set(frappe.get_all("Solar Package Structure BOM", filters={"parenttype": "Solar Package"}, pluck="bom"))
 
 
+def job_boms():
+	"""Every BOM a project holds that no package lists - a job's own, edited in its Design
+	Freeze; it is offered to that job only."""
+	held = set()
+	for field in ("material_bom", "structure_bom"):
+		held |= set(frappe.get_all("Solar Installation", filters={field: ["is", "set"]}, pluck=field))
+	return held - structure_boms() - set(frappe.get_all("Solar Package", filters={"bom": ["is", "set"]}, pluck="bom"))
+
+
 def _label(bom):
 	return "{0} · {1}".format(frappe.db.get_value("BOM", bom, "item_name") or bom, bom)
 
@@ -149,9 +158,9 @@ def material_choices_for(doc):
 	inst = (doc.get("solar_installation") if doc.doctype != "Solar Installation" else doc.name) if doc else None
 	project = frappe.db.get_value("Solar Installation", inst, ["material_bom", "solar_package"], as_dict=True) if inst else None
 	package_bom = frappe.db.get_value("Solar Package", project.solar_package, "bom") if project and project.solar_package else None
-	structure = structure_boms()
+	skip = structure_boms() | job_boms()
 	others = frappe.get_all("BOM", filters={"is_active": 1, "docstatus": 1}, fields=["name", "item_name"], order_by="item_name asc")
-	choices = [{"value": b.name, "label": f"{b.item_name or b.name} · {b.name}"} for b in others if b.name not in structure]
+	choices = [{"value": b.name, "label": f"{b.item_name or b.name} · {b.name}"} for b in others if b.name not in skip]
 	return _with(choices, project.material_bom if project else None, package_bom, doc.get("material_bom") if doc else None)
 
 
