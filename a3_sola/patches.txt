@@ -228,3 +228,5 @@ a3_sola.patches.v1_2.structural_design_freeze_task
 a3_sola.patches.v1_2.inverter_models
 # The 1 phase 3 kW and 5 kW packages get their Material BOM, with the RIM Projects items it is made of.
 a3_sola.patches.v1_2.package_material_boms
+# The 3 kW and 5 kW packages get the sheet roof structure BOM; procurement tasks with an empty list are filled.
+a3_sola.patches.v1_2.package_structure_boms

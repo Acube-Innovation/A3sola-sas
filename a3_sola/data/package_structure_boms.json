@@ -1,0 +1,315 @@
+{
+ "uoms": [
+  "Pack",
+  "Litre"
+ ],
+ "items": [
+  {
+   "item_code": "MNT-STRUCT-SHEET-ROOF",
+   "item_name": "Sheet Roof Mounting Structure (5 kW list)",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Sheet Roof Mounting Structure (5 kW list)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-GP-TUBE-16G-40X40",
+   "item_name": "16 Gauge GP Apollo Tube 1½ x 1½ in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apollo",
+   "description": "16 Gauge GP Apollo Tube 1½ x 1½ in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-GP-TUBE-16G-80X40",
+   "item_name": "16 Gauge GP Apollo Tube 3 x 1½ in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apollo",
+   "description": "16 Gauge GP Apollo Tube 3 x 1½ in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-GP-TUBE-16G-50X25",
+   "item_name": "16 Gauge GP Apollo Tube 2 x 1 in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apollo",
+   "description": "16 Gauge GP Apollo Tube 2 x 1 in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-CUTTING-WHEEL",
+   "item_name": "Cutting Wheel",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Cutting Wheel",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-EPOXY-BLACK-EZDEE",
+   "item_name": "Epoxy Paint Black (EZDEE)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Litre",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "EZDEE",
+   "description": "Epoxy Paint Black (EZDEE)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-THINNER",
+   "item_name": "Thinner",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Litre",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Thinner",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-SILICONE-BLACK",
+   "item_name": "Silicone Sealant Black",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Silicone Sealant Black",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-WELDING-ROD-12",
+   "item_name": "Welding Rod 12 in",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Pack",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Welding Rod 12 in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-HOLE-PLATE-4IN",
+   "item_name": "4 inch Hole Plate",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "4 inch Hole Plate",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-ROLLER-BRUSH-4IN",
+   "item_name": "4 inch Roller Brush Combo",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "4 inch Roller Brush Combo",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-ANCHOR-BOLT",
+   "item_name": "Anchor Bolt",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Anchor Bolt",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-END-CAP-80X40",
+   "item_name": "End Cap 3 x 1½ in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "End Cap 3 x 1½ in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-END-CAP-50X25",
+   "item_name": "End Cap 2 x 1 in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "End Cap 2 x 1 in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-END-CAP-40X40",
+   "item_name": "End Cap 1½ x 1½ in",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "End Cap 1½ x 1½ in",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  }
+ ],
+ "boms": [
+  {
+   "item": "MNT-STRUCT-SHEET-ROOF",
+   "items": [
+    [
+     "MNT-GP-TUBE-16G-40X40",
+     5,
+     "Nos"
+    ],
+    [
+     "MNT-GP-TUBE-16G-80X40",
+     5,
+     "Nos"
+    ],
+    [
+     "MNT-GP-TUBE-16G-50X25",
+     4,
+     "Nos"
+    ],
+    [
+     "CNS-CUTTING-WHEEL",
+     3,
+     "Nos"
+    ],
+    [
+     "CNS-EPOXY-BLACK-EZDEE",
+     1.5,
+     "Litre"
+    ],
+    [
+     "CNS-THINNER",
+     1,
+     "Litre"
+    ],
+    [
+     "CNS-SILICONE-BLACK",
+     4,
+     "Nos"
+    ],
+    [
+     "CNS-WELDING-ROD-12",
+     1,
+     "Pack"
+    ],
+    [
+     "MNT-HOLE-PLATE-4IN",
+     5,
+     "Nos"
+    ],
+    [
+     "CNS-ROLLER-BRUSH-4IN",
+     1,
+     "Nos"
+    ],
+    [
+     "MNT-ANCHOR-BOLT",
+     28,
+     "Nos"
+    ],
+    [
+     "MNT-END-CAP-80X40",
+     10,
+     "Nos"
+    ],
+    [
+     "MNT-END-CAP-50X25",
+     15,
+     "Nos"
+    ],
+    [
+     "MNT-END-CAP-40X40",
+     15,
+     "Nos"
+    ]
+   ],
+   "roof_type": "Metal Sheet",
+   "packages": [
+    "PMSG 5KW SYSTEM 1PH",
+    "PMSG 3KW SYSTEM 1PH"
+   ]
+  }
+ ]
+}
