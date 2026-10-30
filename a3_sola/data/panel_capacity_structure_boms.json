@@ -1,0 +1,364 @@
+{
+ "uoms": [
+  "Litre",
+  "Pack",
+  "Bag"
+ ],
+ "items": [
+  {
+   "item_code": "CNS-EPOXY-2PACK-EZDEE",
+   "item_name": "Epoxy 2 Pack (EZDEE)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Litre",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "EZDEE",
+   "description": "Epoxy 2 Pack (EZDEE)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-PAINT-BLACK",
+   "item_name": "Black Paint",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Litre",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Black Paint",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-CEMENT-MIX",
+   "item_name": "Cement Mixture",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Bag",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Cement Mixture",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-EXHAUST-PIPE-6IN",
+   "item_name": "6 inch Exhaust Pipe",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "6 inch Exhaust Pipe",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-J-CLAMP-SET",
+   "item_name": "J Clamp with Washer and Nut",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "J Clamp with Washer and Nut",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-GP-PIPE-1IN-3M",
+   "item_name": "1 inch GP Pipe, 3 m",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "1 inch GP Pipe, 3 m",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CNS-SELF-SCREW-3-4IN",
+   "item_name": "3/4 inch Self-Drilling Screw",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "3/4 inch Self-Drilling Screw",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-ROOF-SHEET-4FT",
+   "item_name": "Roofing Sheet 4 ft (state the core)",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Roofing Sheet 4 ft (state the core)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-STRUCT-FLAT-3KW",
+   "item_name": "Flat Roof Mounting Structure 3 kW",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Flat Roof Mounting Structure 3 kW",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-STRUCT-FLAT-5KW",
+   "item_name": "Flat Roof Mounting Structure 5 kW",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Flat Roof Mounting Structure 5 kW",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MNT-STRUCT-SHEET-5KW",
+   "item_name": "Sheet Roof Mounting Structure 5 kW",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Sheet Roof Mounting Structure 5 kW",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  }
+ ],
+ "templates": [
+  {
+   "roof_type": "RCC Flat",
+   "panel_capacity_kw": 5,
+   "item": "MNT-STRUCT-FLAT-5KW",
+   "source": "5kw flat roof structure material list",
+   "items": [
+    [
+     "MNT-GP-TUBE-16G-40X40",
+     5
+    ],
+    [
+     "MNT-GP-TUBE-16G-80X40",
+     4
+    ],
+    [
+     "MNT-HOLE-PLATE-4IN",
+     7
+    ],
+    [
+     "MNT-ANCHOR-BOLT",
+     28
+    ],
+    [
+     "CNS-WELDING-ROD-12",
+     1
+    ],
+    [
+     "CNS-EPOXY-BLACK-EZDEE",
+     1
+    ],
+    [
+     "CNS-THINNER",
+     1
+    ],
+    [
+     "CNS-ROLLER-BRUSH-4IN",
+     1
+    ],
+    [
+     "CNS-CUTTING-WHEEL",
+     2
+    ],
+    [
+     "CNS-CEMENT-MIX",
+     1
+    ],
+    [
+     "MNT-EXHAUST-PIPE-6IN",
+     3
+    ],
+    [
+     "CNS-SILICONE-BLACK",
+     1
+    ],
+    [
+     "MNT-END-CAP-80X40",
+     12
+    ],
+    [
+     "MNT-END-CAP-40X40",
+     10
+    ]
+   ]
+  },
+  {
+   "roof_type": "RCC Flat",
+   "panel_capacity_kw": 3,
+   "item": "MNT-STRUCT-FLAT-3KW",
+   "source": "3kw structure material flat roof",
+   "items": [
+    [
+     "MNT-GP-TUBE-16G-40X40",
+     3
+    ],
+    [
+     "MNT-GP-TUBE-16G-80X40",
+     3
+    ],
+    [
+     "MNT-HOLE-PLATE-4IN",
+     5
+    ],
+    [
+     "MNT-ANCHOR-BOLT",
+     20
+    ],
+    [
+     "CNS-EPOXY-2PACK-EZDEE",
+     1
+    ],
+    [
+     "CNS-PAINT-BLACK",
+     1
+    ],
+    [
+     "CNS-THINNER",
+     1
+    ],
+    [
+     "CNS-ROLLER-BRUSH-4IN",
+     1
+    ],
+    [
+     "MNT-J-CLAMP-SET",
+     30
+    ],
+    [
+     "MNT-END-CAP-80X40",
+     10
+    ],
+    [
+     "MNT-END-CAP-40X40",
+     8
+    ]
+   ]
+  },
+  {
+   "roof_type": "Metal Sheet",
+   "panel_capacity_kw": 5,
+   "item": "MNT-STRUCT-SHEET-5KW",
+   "source": "5kw sheet roof structure material",
+   "items": [
+    [
+     "MNT-GP-TUBE-16G-40X40",
+     5
+    ],
+    [
+     "MNT-GP-TUBE-16G-80X40",
+     4
+    ],
+    [
+     "MNT-GP-TUBE-16G-50X25",
+     4
+    ],
+    [
+     "MNT-GP-PIPE-1IN-3M",
+     1
+    ],
+    [
+     "CNS-SELF-SCREW-3-4IN",
+     20
+    ],
+    [
+     "MNT-ROOF-SHEET-4FT",
+     1
+    ],
+    [
+     "CNS-CUTTING-WHEEL",
+     3
+    ],
+    [
+     "CNS-EPOXY-BLACK-EZDEE",
+     1.5
+    ],
+    [
+     "CNS-THINNER",
+     1
+    ],
+    [
+     "CNS-SILICONE-BLACK",
+     4
+    ],
+    [
+     "CNS-WELDING-ROD-12",
+     1
+    ],
+    [
+     "MNT-HOLE-PLATE-4IN",
+     1
+    ],
+    [
+     "CNS-ROLLER-BRUSH-4IN",
+     1
+    ],
+    [
+     "MNT-END-CAP-80X40",
+     10
+    ],
+    [
+     "MNT-END-CAP-50X25",
+     15
+    ],
+    [
+     "MNT-END-CAP-40X40",
+     15
+    ]
+   ]
+  }
+ ]
+}

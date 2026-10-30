@@ -267,6 +267,8 @@ def freeze(installation, task_code=DESIGN_TASK):
 		else ("material_bom", _("material BOM"), structure_bom.material_bom_for(inst)))
 	if not bom:
 		frappe.throw(_("Choose the {0} before freezing the design.").format(label), title=_("BOM Needed"))
+	if field == "material_bom" and bom in structure_bom.capacity_boms():
+		bom = _with_panels(inst, bom)
 	inst.set(field, bom)
 	if task_code == DESIGN_TASK and not inst.get("structure_bom"):
 		# The structure BOM shown beside it is kept too, when there is one.
@@ -316,7 +318,8 @@ def _job_bom_item(inst, field, base):
 def _retire(bom, inst):
 	"""A job's own BOM it no longer uses goes inactive, unless a package, another job or a
 	submitted procurement task still holds it."""
-	if not bom or frappe.db.get_value("Solar Package", {"bom": bom}) or bom in structure_bom.structure_boms():
+	if not bom or frappe.db.get_value("Solar Package", {"bom": bom}) or bom in structure_bom.structure_boms() \
+			or bom in structure_bom.capacity_boms():
 		return
 	for field in ("material_bom", "structure_bom"):
 		if frappe.db.exists(INSTALLATION, {field: bom, "name": ["!=", inst.name]}) or frappe.db.exists(
@@ -348,6 +351,32 @@ def save_lines(installation, bom_field, lines, task_code=DESIGN_TASK):
 		frappe.throw(_("Add at least one line with a quantity."), frappe.ValidationError)
 
 	base = structure_bom.bom_for(inst) if bom_field == "structure_bom" else structure_bom.material_bom_for(inst)
+	name = _make_job_bom(inst, bom_field, base, items)
+	label = _("structure BOM") if bom_field == "structure_bom" else _("material BOM")
+	inst.set(bom_field, name)
+	_save_job(inst, _("Design changed: {0} edited for this job - {1} ({2} lines).").format(label, name, len(items)))
+	_retire(base, inst)
+	updated = refresh_procurement(inst)
+	out = state(installation, task_code)
+	out["updated_tasks"] = updated
+	return out
+
+
+def _with_panels(inst, bom):
+	"""The BOM by inverter capacity, frozen with the job's panels as a BOM of its own."""
+	lines = structure_bom.bom_items(bom, inst)["lines"]
+	missing = [l["item_name"] for l in lines if not l["item_code"]]
+	if missing:
+		frappe.throw(_("Choose the module Item for {0} in the Material BOM before freezing.").format(", ".join(missing)),
+			title=_("Panel Item Needed"))
+	if len(lines) == frappe.db.count("BOM Item", {"parent": bom, "parenttype": "BOM"}):
+		return bom
+	return _make_job_bom(inst, "material_bom", bom, [{"item_code": l["item_code"], "qty": l["qty"],
+		"uom": frappe.db.get_value("Item", l["item_code"], "stock_uom")} for l in lines if frappe.utils.flt(l["qty"]) > 0])
+
+
+def _make_job_bom(inst, bom_field, base, items):
+	"""A submitted BOM made for this job from `items` ({item_code, qty, uom}), costed as `base` is."""
 	bom = frappe.get_doc({
 		"doctype": "BOM",
 		"item": _job_bom_item(inst, bom_field, base),
@@ -367,11 +396,4 @@ def save_lines(installation, bom_field, lines, task_code=DESIGN_TASK):
 		frappe.db.set_value("BOM", bom.name, "is_default", 0)
 		if frappe.db.get_value("Item", bom.item, "default_bom") == bom.name:
 			frappe.db.set_value("Item", bom.item, "default_bom", None)
-	label = _("structure BOM") if bom_field == "structure_bom" else _("material BOM")
-	inst.set(bom_field, bom.name)
-	_save_job(inst, _("Design changed: {0} edited for this job - {1} ({2} lines).").format(label, bom.name, len(items)))
-	_retire(base, inst)
-	updated = refresh_procurement(inst)
-	out = state(installation, task_code)
-	out["updated_tasks"] = updated
-	return out
+	return bom.name

@@ -230,3 +230,7 @@ a3_sola.patches.v1_2.inverter_models
 a3_sola.patches.v1_2.package_material_boms
 # The 3 kW and 5 kW packages get the sheet roof structure BOM; procurement tasks with an empty list are filled.
 a3_sola.patches.v1_2.package_structure_boms
+# The material BOM follows the inverter: one per phase and capacity in A3 Sola Settings; the package BOMs are retired.
+a3_sola.patches.v1_2.inverter_capacity_material_boms
+# The structure BOM follows roof and panel capacity: flat 3/5 kW and sheet 5 kW in A3 Sola Settings; the package sheet roof BOM is retired.
+a3_sola.patches.v1_2.panel_capacity_structure_boms

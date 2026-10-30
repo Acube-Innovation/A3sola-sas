@@ -47,13 +47,17 @@ def get_installation_material_summary(installation):
 
 def _bom_requirement(installation):
 	"""The BOM frozen for the project in its Design Freeze, as it stands - it was chosen for
-	this job - else the package BOM scaled to the installed capacity."""
+	this job - else the BOM for its inverter's capacity with its panels, else the package BOM
+	scaled to the installed capacity."""
+	from a3_sola.api import structure_bom
+
 	frozen = installation.get("material_bom")
 	if frozen and frozen != frappe.db.get_value("Solar Package", installation.get("solar_package"), "bom"):
-		return {
-			row.item_code: flt(row.qty)
-			for row in frappe.get_all("BOM Item", filters={"parent": frozen, "parenttype": "BOM"}, fields=["item_code", "qty"])
-		}
+		return _lines(frozen, installation)
+	# The BOM for the job's inverter capacity, with its panels.
+	by_capacity = structure_bom.capacity_bom_for(installation)
+	if by_capacity:
+		return _lines(by_capacity, installation)
 	if not installation.solar_package:
 		return {}
 	package = frappe.get_cached_doc("Solar Package", installation.solar_package)
@@ -68,6 +72,18 @@ def _bom_requirement(installation):
 		row.item_code: flt(row.qty) * scale
 		for row in frappe.get_all("BOM Item", filters={"parent": package.bom}, fields=["item_code", "qty"])
 	}
+
+
+def _lines(bom, installation):
+	"""A BOM's quantities by item as the job reads them (api/structure_bom.bom_items): a BOM by
+	inverter capacity carries the job's panels; a panel with no Item yet is not counted."""
+	from a3_sola.api import structure_bom
+
+	out = {}
+	for line in structure_bom.bom_items(bom, installation)["lines"]:
+		if line["item_code"]:
+			out[line["item_code"]] = out.get(line["item_code"], 0) + flt(line["qty"])
+	return out
 
 
 def _sum_child(child_doctype, parent_doctype, installation, qty_field):
