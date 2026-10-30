@@ -198,6 +198,17 @@
 			if (out.attached) {
 				document.dispatchEvent(new CustomEvent("a3s:attachments-reload", { detail: { doctype: doctype, name: recordName } }));
 			}
+			if (out.pending_file) {
+				/* No record yet: the bill is kept and becomes the new record's KSEB Bill as it is created. */
+				var keep = form.elements.kseb_bill_file;
+				if (!keep) {
+					keep = document.createElement("input");
+					keep.type = "hidden"; keep.name = "kseb_bill_file";
+					form.appendChild(keep);
+				}
+				keep.value = out.pending_file;
+				warn(["The bill will be kept as the " + (doctype === "Lead" ? "lead" : "customer") + "'s KSEB Bill when you create it."], true);
+			}
 		}).catch(function (e) {
 			say(e.message || "The bill could not be read.", "error");
 		}).then(function () {

@@ -76,7 +76,8 @@
 			solar_lead_status: value("solar_lead_status"),
 			call_status: value("call_status"),
 			last_message_date: value("last_message_date"),
-			loan_required: value("loan_required")
+			loan_required: value("loan_required"),
+			kseb_bill_file: value("kseb_bill_file")
 		};
 
 		fetch("/api/method/a3_sola.api.leads.create_lead", {
