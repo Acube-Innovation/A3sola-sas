@@ -83,7 +83,7 @@ def panel_lines(inst):
 		if row.is_option or not (count and row.panel_capacity_wp):
 			continue
 		make = frappe.db.get_value("Component Make", row.panel_make, "make_name") if row.panel_make else ""
-		item = panel_item(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR")
+		item = panel_item(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR", row.get("panel_variant"))
 		name = frappe.db.get_value("Item", item, "item_name") if item else "{0} {1:g} Wp {2} Module".format(
 			make or "", flt(row.panel_capacity_wp), row.panel_type or "").strip()
 		lines.append({"item_code": item or "", "item_name": name, "description": "", "qty": count, "uom": "Nos",
@@ -91,19 +91,49 @@ def panel_lines(inst):
 	return lines
 
 
-def panel_item(make, wp, dcr=True):
-	"""The module Item of a make and Wp: brand the make (without "Non-DCR"), name carrying the Wp,
-	its DCR flag the panel's when both exist."""
-	brand = (make or "").replace("Non-DCR", "").strip()
+def panel_item(make, wp, dcr=True, technology=None):
+	"""The module Item of a make and Wp: brand the make (without "Non-DCR" or a technology word),
+	name carrying the Wp. Of several, the one whose DCR flag is the panel's, then whose name
+	carries its technology (TOPCon, PERC)."""
+	brand = make_brand(make)
 	if not brand:
 		return None
 	filters = {"brand": brand, "disabled": 0, "item_name": ["like", "%{0:g} Wp%".format(wp)]}
 	if frappe.db.exists("Item Group", "Modules"):
 		lft, rgt = frappe.db.get_value("Item Group", "Modules", ["lft", "rgt"])
 		filters["item_group"] = ["in", frappe.get_all("Item Group", filters={"lft": [">=", lft], "rgt": ["<=", rgt]}, pluck="name")]
-	found = frappe.get_all("Item", filters=filters, fields=["name", "is_dcr"] if frappe.db.has_column("Item", "is_dcr") else ["name"],
-		order_by="name asc")
-	return next((f.name for f in found if bool(f.get("is_dcr")) == dcr), None) or (found[0].name if found else None)
+	fields = ["name", "item_name"] + (["is_dcr"] if frappe.db.has_column("Item", "is_dcr") else [])
+	found = frappe.get_all("Item", filters=filters, fields=fields, order_by="name asc")
+	word = technology_word(technology)
+	ranked = sorted(found, key=lambda f: (bool(f.get("is_dcr")) != dcr, not (word and word in (f.item_name or "").lower())))
+	return ranked[0].name if ranked else None
+
+
+#: Words a module make's name may carry beside its brand.
+MAKE_WORDS = ("Non-DCR", "Mono PERC", "TOPCon", "Bifacial")
+
+
+def make_brand(make):
+	"""The brand of a module make's name: "Vikram TOPCon" and "Rayzon Non-DCR" are Vikram and Rayzon."""
+	name = make or ""
+	for word in MAKE_WORDS:
+		name = name.replace(word, "")
+	return " ".join(name.split())
+
+
+def technology_word(technology):
+	"""The word an Item name carries for a module technology (a Component Technology or its name)."""
+	name = (frappe.db.get_value("Component Technology", technology, "technology_name") or technology) if technology else ""
+	name = name.lower()
+	return "topcon" if "topcon" in name else ("perc" if "perc" in name else "")
+
+
+def panel_rate(make, wp, dcr=True, technology=None):
+	"""The selling price of one panel of a make and Wp: its module Item's Standard Selling price
+	(the panel list's Wp x rate per watt), else 0."""
+	item = panel_item(make, wp, dcr, technology)
+	return flt(frappe.db.get_value("Item Price", {"item_code": item, "price_list": "Standard Selling"},
+		"price_list_rate")) if item else 0.0
 
 
 def structure_boms():
