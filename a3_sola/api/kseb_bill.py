@@ -79,12 +79,12 @@ def ocr_image(content):
 	except Exception:
 		frappe.throw(_("The photo could not be opened. Take it again as a JPG or PNG."), frappe.ValidationError)
 	image = ImageOps.autocontrast(ImageOps.grayscale(image))
-	# Tesseract reads best near 300 dpi: a small phone photo is scaled up.
-	if image.width < 1800:
-		scale = 1800 / image.width
-		image = image.resize((1800, int(image.height * scale)))
-	langs = "eng+mal" if "mal" in (ocr.get_languages(config="") or []) else "eng"
-	return ocr.image_to_string(image, lang=langs, config="--psm 6")
+	# Tesseract reads best near 300 dpi - an A4 bill about 2500 px wide: a smaller photo is scaled up.
+	if image.width < 2500:
+		image = image.resize((2500, int(image.height * 2500 / image.width)))
+	# English only: the bill's labels and details are English, and the Malayalam model reads
+	# English text as Malayalam letters. Mode 4 keeps the bill's columns apart.
+	return ocr.image_to_string(image, lang="eng", config="--psm 4")
 
 
 def ocr_pdf(content):
@@ -118,15 +118,18 @@ def _left(line):
 
 def parse(text):
 	"""What a KSEB bill says, by its labels. A label not found is left out."""
-	text = text.replace("\r", "")
+	# A photo read by OCR draws the bill's table borders as "|", and loses a label's first
+	# letter at a border ("ariff/Phase", "onnected Load", "otal Amt."): read past both.
+	text = text.replace("\r", "").replace("|", " ")
 	out = {}
-	out["consumer_number"] = _first(r"Consumer\s*(?:#|No\.?|Number)\s*:?\s*(\d{9,15})", text)
+	number = _first(r"Consum\w*\s*(?:#|No\.?|Number)?\s*:?\s*((?:\d\s?){9,15})", text)
+	out["consumer_number"] = re.sub(r"\s", "", number) if number else None
 	section = re.search(r"Section\s*(?:#|:)?\s*\[\s*(\d{3,6})\s*\]\s*-?\s*([^\n]+?)(?:\s{2,}|$)", text, re.IGNORECASE | re.MULTILINE)
 	if section:
 		out["section_code"] = section.group(1)
 		out["section_name"] = re.sub(r"(?i)^electrical\s+section\s*", "", section.group(2)).strip()
 	out.update(_name_and_address(text))
-	tariff = re.search(r"Tariff\s*/\s*Phase\s*:?\s*([A-Z]{2}\s*-?\s*[\dIVX]+\s*\(?[A-Z]?\)?)\s*/\s*(Single|Three|1|3)",
+	tariff = re.search(r"T?ariff\s*/\s*Phase\s*:?\s*([A-Z]{2}\s*-?\s*[\dIVX]+\s*\(?[A-Z]?\)?)\s*/\s*(Single|Three|1|3)",
 		text, re.IGNORECASE)
 	if tariff:
 		out["tariff"] = re.sub(r"\s+", "", tariff.group(1)).upper()
@@ -136,7 +139,7 @@ def parse(text):
 		phase = _first(r"Phase\s*:?\s*(Single|Three|1|3)\b", text)
 		if phase:
 			out["phase"] = "Three" if phase.lower() in ("three", "3") else "Single"
-	load = re.search(r"Connected\s*Load\s*:?\s*([\d,]+(?:\.\d+)?)\s*(kW|W|Watts)?", text, re.IGNORECASE)
+	load = re.search(r"C?onnected\s*Load\s*:?\s*([\d,]+(?:\.\d+)?)\s*(kW|W|Watts)?", text, re.IGNORECASE)
 	if load:
 		watts = _number(load.group(1))
 		out["connected_load_watts"] = watts * 1000 if (load.group(2) or "").lower() == "kw" else watts
@@ -146,7 +149,7 @@ def parse(text):
 	elif re.search(r"\bmonthly\b", period, re.IGNORECASE):
 		out["billing_frequency"] = "Monthly"
 	out["units"] = _units(text)
-	amount = _first(r"Total\s*Amt\.?[^\n]*?([\d,]+\.\d{2})\s*$", text, flags=re.IGNORECASE | re.MULTILINE) \
+	amount = _first(r"T?otal\s*Amt\.?[^\n]*?([\d,]+\.\d{2})\s*$", text, flags=re.IGNORECASE | re.MULTILINE) \
 		or _first(r"Net\s*Amount\s*(?:Payable)?\s*:?\s*(?:Rs\.?)?\s*([\d,]+(?:\.\d{2})?)", text)
 	out["bill_amount"] = _number(amount)
 	out["bill_date"] = _first(r"Bill\s*Date\s*:?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{4})", text)
@@ -174,6 +177,11 @@ def _name_and_address(text):
 			block.append(part)
 	if not block:
 		return {}
+	# Read as one line by OCR, a line runs on into the CGRF column beside it ("South: ...",
+	# "...SubStation,Kalamassery-683503,Ph:0484-..."): cut it there.
+	block = [re.split(r"\s+(?:South|Central|North)\s*:|\s+\S*,\s*[A-Za-z]+-\d{6}\s*,\s*Ph\s*:|\s+\S*Ph\s*:\s*\d",
+		part)[0].strip() for part in block]
+	block = [part for part in block if part]
 	name, address = block[0], ""
 	for part in block[1:]:
 		# A line as wide as the column was cut there, mid-word: it runs on without a space.

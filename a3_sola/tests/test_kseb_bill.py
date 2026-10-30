@@ -71,6 +71,21 @@ Contract Demand                   (Nil) VA [75% : 0KV, 130% : 0KV]             C
 """
 
 
+# An e-bill photographed and read by OCR: table borders as "|", labels missing their first
+# letter, the consumer number split, lines running on into the CGRF column.
+OCR_EBILL = """Section [1234]-Electrical Section Testoor Phone# _[o480-0000000 Customer Care |i 912
+consumert 1 100000000004 Reg. Mob# 900xxxx000 Regular CC Bill(PostPaid) | KSEBL GSTIN: 32AAECK2277NBZ1
+Name & Mailing Address
+KP RAJAN South: Chairperson,cgrf(south),ksebl,vydyuthi Bhavanam, Kottarakkara-691506, Ph:0474-2451300
+PUTHUR H, P O TESTNAGAR tion, Kalamassery-683503, Ph:0484-2556500
+Bill# 1234260903708 Bill Area A03/9
+Billing Period 9/2026[Bi-Monthly] ariff/Phase LT-1/Single |Pole# IMMR-106/3
+Contract Demand Nil) VA [75% : OKV, 130% : OKV] onnected Load 3728 Watts ecurity Deposit Rs.2046.00
+KWH Cumulative Import 17284.00 17499.00 | 1 | 215
+e) otal Amt.(Bill#1234260903708) (a+b+c+d) 1015.00
+"""
+
+
 class TestKSEBBill(FrappeTestCase):
 	def test_an_ebill_is_read_by_its_labels(self):
 		p = kseb_bill.parse(EBILL)
@@ -94,6 +109,18 @@ class TestKSEBBill(FrappeTestCase):
 		self.assertEqual(p["bill_amount"], 1015)
 		self.assertEqual(kseb_bill.name_case(p["name"]), "KP Rajan")
 		self.assertEqual(kseb_bill.name_case("ANNA VARGHESE"), "Anna Varghese")
+
+	def test_a_photographed_ebill_reads_past_ocr_noise(self):
+		p = kseb_bill.parse(OCR_EBILL)
+		self.assertEqual(p["consumer_number"], "1100000000004")
+		self.assertEqual(p["name"], "KP RAJAN")
+		# The CGRF column beside it is not the customer's address (nor its PIN).
+		self.assertEqual(p["address"], "PUTHUR H, P O TESTNAGAR")
+		self.assertNotIn("pincode", p)
+		self.assertEqual((p["tariff"], p["phase"]), ("LT-1", "Single"))
+		self.assertEqual(p["connected_load_watts"], 3728)
+		self.assertEqual(p["units"], 215)
+		self.assertEqual(p["bill_amount"], 1015)
 
 	def test_a_photo_read_loosely_still_reads(self):
 		p = kseb_bill.parse(SPOT_BILL)
