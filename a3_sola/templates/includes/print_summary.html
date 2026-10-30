@@ -1,12 +1,12 @@
 {#- Section 3 of the Solar Proposal print: 3. Proposed Solar Energy Solution, 3.1 Executive
     Summary (`summary`, print_summary(doc)) and 3.2 Specifications & Quantity of Major
     Components (`components`, print_components(doc)), both from the base design estimate.
-    As in the client's document, 3.2 starts under 3.1 on page 7 with its first five rows and
-    continues on page 8 without repeating the header. A row with nothing on record prints a
-    dash. In the shared frame (print_frame.html). -#}
+    As in the client's document, 3.2 starts under 3.1 on page 7 and continues on the next
+    page(s) without repeating the header. A row with nothing on record prints a dash. In the shared frame (print_frame.html). -#}
 {%- from "templates/includes/print_frame.html" import page -%}
-{#- Five component rows fit under 3.1; four when 3.1 carries the backup rows (Hybrid, Off-Grid). -#}
-{%- set FIRST_PAGE_ROWS = 4 if summary.rows | length > 7 else 5 -%}
+{#- 3.2's rows page by page, by their printed height (print_cover.component_pages): what
+    fits under 3.1, then as many pages as the rest takes. -#}
+{%- set cp = component_pages(summary, components) -%}
 {#- A row with `span` heads a group (the options' inverters): its Sl. No. and item cover the
     `spanned` rows after it, and the group counts as one item. -#}
 {%- macro component_rows(rows, start) -%}
@@ -33,12 +33,20 @@
 {%- macro component_cols() -%}
 <colgroup><col style="width: 7%"><col style="width: 20%"><col style="width: 36%"><col style="width: 21%"><col style="width: 16%"></colgroup>
 {%- endmacro -%}
-{#- The page break never falls inside a group of spanned rows. -#}
-{%- set cut = namespace(at=FIRST_PAGE_ROWS) -%}
-{%- for r in components.rows[FIRST_PAGE_ROWS:] %}{% if r.spanned and cut.at == FIRST_PAGE_ROWS + loop.index0 %}{% set cut.at = cut.at + 1 %}{% endif %}{% endfor -%}
-{%- set first = components.rows[:cut.at] -%}
-{%- set rest = components.rows[cut.at:] -%}
-{%- set first_items = first | rejectattr("spanned") | list | length -%}
+{%- macro components_table(pg, head, last) -%}
+	{%- if head %}
+	<h3 class="a3s3-next{% if not cp.under_summary %} a3s3-top{% endif %}">3.2.&nbsp; <u>Specifications &amp; Quantity of Major Components</u></h3>
+	{%- endif %}
+	<table class="a3s3-table a3s3-components">
+		{{ component_cols() }}
+		{%- if head %}
+		<tr><th>Sl.<br>No.</th><th>Item<br>Description</th><th>Specification</th><th>Make</th><th>Nos.</th></tr>
+		{%- endif %}
+		{{ component_rows(pg.rows, pg.start) }}
+	</table>
+	{%- if last %}{{ component_notes() }}{% endif %}
+{%- endmacro -%}
+{%- set later = cp.pages[1:] if cp.under_summary else cp.pages -%}
 {% call page(letter, "a3s3") %}
 	<h2>3.&nbsp; Proposed Solar Energy Solution</h2>
 	<h3>3.1.&nbsp; <u>Executive Summary</u></h3>
@@ -49,32 +57,19 @@
 		<tr><td class="c">{{ loop.index }}</td><td>{{ particular }}</td><td>{{ description or "—" }}</td></tr>
 		{%- endfor %}
 	</table>
-	{%- if components.rows %}
-	<h3 class="a3s3-next">3.2.&nbsp; <u>Specifications &amp; Quantity of Major Components</u></h3>
-	<table class="a3s3-table a3s3-components">
-		{{ component_cols() }}
-		<tr><th>Sl.<br>No.</th><th>Item<br>Description</th><th>Specification</th><th>Make</th><th>Nos.</th></tr>
-		{{ component_rows(first, 1) }}
-	</table>
-	{%- if not rest %}{{ component_notes() }}{% endif %}
-	{%- endif %}
+	{%- if cp.under_summary and cp.pages %}{{ components_table(cp.pages[0], True, not later) }}{% endif %}
 {% endcall %}
-{%- if rest %}
+{%- for pg in later %}
 <div style="page-break-before: always;"></div>
-{% call page(letter, "a3s3") %}
-	<table class="a3s3-table a3s3-components">
-		{{ component_cols() }}
-		{{ component_rows(rest, first_items + 1) }}
-	</table>
-	{{ component_notes() }}
-{% endcall %}
-{%- endif %}
+{% call page(letter, "a3s3") %}{{ components_table(pg, loop.first and not cp.under_summary, loop.last) }}{% endcall %}
+{%- endfor %}
 <style>
 	.a3s3 .a3s3-note { margin: 6pt 0 0; font-size: 12pt; font-style: italic; }
 	.a3s3 .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 15pt; line-height: 1.3; }
 	.a3s3 h2 { margin: 0 0 6pt; font-family: inherit; font-size: 17pt; font-weight: 700; color: #1f1f1f; }
 	.a3s3 h3 { margin: 0 0 6pt; font-family: inherit; font-size: 15pt; font-weight: 700; color: #1f1f1f; }
 	.a3s3 h3.a3s3-next { margin-top: 18pt; }
+	.a3s3 h3.a3s3-top { margin-top: 0; }
 	.a3s3-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 	.a3s3-table th, .a3s3-table td { border: 1px solid #222; padding: 2pt 6pt; vertical-align: middle; text-align: left; }
 	.a3s3-table th { font-weight: 700; text-align: center; }
