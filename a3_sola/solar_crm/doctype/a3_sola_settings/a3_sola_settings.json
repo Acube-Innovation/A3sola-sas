@@ -212,6 +212,8 @@
   "ticket_reopen_escalation_threshold",
   "sb_material_boms",
   "material_boms",
+  "sb_structure_boms",
+  "structure_boms",
   "platform_tab",
   "sb_902",
   "signup_series_prefix",
@@ -1653,6 +1655,18 @@
    "options": "Inverter Capacity BOM"
   },
   {
+   "fieldname": "sb_structure_boms",
+   "fieldtype": "Section Break",
+   "label": "Structure BOM by Panel Capacity",
+   "description": "The structure BOM a job's structure procurement starts from, by its roof type and panel capacity. A package's own structure BOMs come first."
+  },
+  {
+   "fieldname": "structure_boms",
+   "fieldtype": "Table",
+   "label": "Structure BOMs",
+   "options": "Panel Capacity Structure BOM"
+  },
+  {
    "fieldname": "platform_tab",
    "fieldtype": "Tab Break",
    "label": "Platform"
@@ -2971,7 +2985,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-30 15:00:00.000000",
+ "modified": "2026-10-30 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

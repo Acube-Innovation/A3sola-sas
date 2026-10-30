@@ -88,3 +88,25 @@ class TestInverterCapacityBOM(FrappeTestCase):
 		bom = frappe.get_doc("BOM", frozen)
 		self.assertEqual(sorted((r.item_code, r.qty) for r in bom.items), sorted([(cable, 12), (panel, 6)]))
 		self.assertEqual(bom.is_default, 0)
+
+
+class TestPanelCapacityStructureBOM(FrappeTestCase):
+	"""The structure BOM follows the roof and the panel capacity: the package's own first, else the
+	one A3 Sola Settings lists."""
+
+	def rows(self, package_rows):
+		settings = [{"panel_capacity_kw": 3, "bom": "BOM-FLAT-3"}, {"panel_capacity_kw": 5, "bom": "BOM-FLAT-5"}]
+		return lambda doctype, **kw: package_rows if doctype == "Solar Package Structure BOM" else settings
+
+	def job(self, kw, package="PKG"):
+		return frappe._dict({"roof_type": "ROOF", "capacity_kw": kw, "solar_package": package, "structure_bom": None})
+
+	def test_settings_by_panel_capacity_when_the_package_has_none(self):
+		with patch.object(frappe, "get_all", side_effect=self.rows([])):
+			self.assertEqual(structure_bom.bom_for(self.job(2.5)), "BOM-FLAT-3")
+			self.assertEqual(structure_bom.bom_for(self.job(3.3)), "BOM-FLAT-5")
+			self.assertEqual(structure_bom.bom_for(self.job(9, package=None)), "BOM-FLAT-5")
+
+	def test_the_packages_own_comes_first(self):
+		with patch.object(frappe, "get_all", side_effect=self.rows([{"panel_capacity_kw": 3, "bom": "BOM-PKG"}])):
+			self.assertEqual(structure_bom.bom_for(self.job(3)), "BOM-PKG")
