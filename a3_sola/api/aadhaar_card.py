@@ -58,8 +58,9 @@ def parse(text):
 
 
 def _name_above(text, at):
-	"""The holder's name: the nearest English line above the date of birth."""
-	for line in reversed(text[:at].split("\n")):
+	"""The holder's name: the nearest English line above the date of birth's line - not the
+	Malayalam label before "/ Year of Birth" on that line itself."""
+	for line in reversed(text[:at].split("\n")[:-1]):
 		line = re.sub(r"[^A-Za-z .']", " ", line)
 		line = " ".join(w for w in line.split() if len(w) > 1 or w.isupper())
 		if len(line) >= 3 and not NOT_A_NAME.search(line) and sum(c.isalpha() for c in line) >= 3:
@@ -89,6 +90,24 @@ def _address(text):
 		"district": district, "state": state, "pincode": pin}
 
 
+def english_column(content):
+	"""The English address on a photo of a card's back. The card prints the address twice, in
+	Malayalam and in English, side by side, and OCR reading across both mixes them: so the column
+	is read from the English word "Address" rightwards and down, on its own."""
+	ocr = kseb_bill.tesseract()
+	if not ocr:
+		return None
+	image = kseb_bill.prepared_image(content)
+	data = ocr.image_to_data(image, lang="eng", config="--psm 4", output_type=ocr.Output.DICT)
+	found = [i for i, word in enumerate(data["text"]) if re.fullmatch(r"Address\s*:?", (word or "").strip(), re.IGNORECASE)]
+	if not found:
+		return None
+	# The English label is the rightmost "Address" (the Malayalam column is to its left).
+	i = max(found, key=lambda k: data["left"][k])
+	box = (max(0, data["left"][i] - 15), max(0, data["top"][i] - 15), image.width, image.height)
+	return ocr.image_to_string(image.crop(box), lang="eng", config="--psm 6")
+
+
 def _label(raw, label):
 	# "District:" is not the one inside "Sub District:".
 	before = r"(?<!Sub )(?<!Sub)" if label == "District" else ""
@@ -100,7 +119,10 @@ def _label(raw, label):
 def _parts(raw):
 	"""Comma parts of an address, without the relation it starts with (S/O ...) or stray dashes."""
 	raw = RELATION.sub("", raw)
-	return [p.strip(" -.") for p in raw.split(",") if p.strip(" -.")]
+	# OCR picks up specks at the card's edges as stray marks: "4 Kerala", "Koratti i".
+	parts = [re.sub(r"^(?:[^A-Za-z\s]{1,3}\s+)+|(?:\s+[^A-Za-z\s]{1,3})+$|\s+[a-z]$", "", p.strip(" -.")) for p in raw.split(",")]
+	parts = [p.strip(" -.") for p in parts]
+	return [p for p in parts if re.search(r"[A-Za-z]", p) or len(p) >= 3]
 
 
 # ------------------------------------------------------------------ into the customer's fields
@@ -143,6 +165,8 @@ def to_fields(parsed):
 			fields["date_of_birth"] = str(getdate(parsed["dob"].replace(".", "/").replace("-", "/"), parse_day_first=True))
 		except Exception:
 			warnings.append(_("Date of birth {0} could not be read.").format(parsed["dob"]))
+	elif parsed.get("year_of_birth"):
+		warnings.append(_("The card gives only the year of birth ({0}): enter the date of birth.").format(parsed["year_of_birth"]))
 	if parsed.get("gender") and frappe.db.exists("Gender", parsed["gender"]):
 		fields["gender"] = parsed["gender"]
 	return {k: v for k, v in fields.items() if v not in (None, "")}, warnings
@@ -170,6 +194,12 @@ def read(doctype=CONSUMER, name=None, password=None):
 			frappe.ValidationError)
 	text, source = kseb_bill.extract_text(content, upload.filename, password)
 	parsed = parse(text)
+	if source == "ocr" and not upload.filename.lower().endswith(".pdf"):
+		# A photo of the back: its English address column, read on its own.
+		column = english_column(content)
+		address = parse(column).get("address") if column else None
+		if address:
+			parsed["address"] = address
 	if not (parsed.get("address") or parsed.get("dob") or parsed.get("year_of_birth")):
 		frappe.throw(_("This does not read as an Aadhaar card. Upload the side with the address, clear and straight, "
 			"or the e-Aadhaar PDF."), title=_("Card Not Read"))
