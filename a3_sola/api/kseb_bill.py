@@ -190,9 +190,9 @@ def _name_and_address(text):
 
 
 def _units(text):
-	"""Units billed: the meter readings' Units column summed over its zones (an ToD meter has
-	three), else a "Units Consumed" figure."""
-	rows = re.findall(r"^\s*KWH\s+(?:Normal|Off\s*Peak|Peak)\s+Import\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s*$",
+	"""Units billed: the meter readings' Units column summed over its zones (a ToD meter has
+	three - Normal, Off Peak, Peak; others one, Cumulative), else a "Units Consumed" figure."""
+	rows = re.findall(r"^\s*KWH\s+[A-Za-z][A-Za-z ]*?\s+Import\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s*$",
 		text, re.IGNORECASE | re.MULTILINE)
 	if rows:
 		return sum(flt(r) for r in rows)
@@ -213,7 +213,7 @@ def to_fields(parsed, doctype):
 	discom = discom or kseb_discom()
 	phase = {"Single": "Single Phase", "Three": "Three Phase"}.get(parsed.get("phase"))
 	cycle_months = 2 if parsed.get("billing_frequency") == "Bimonthly" else 1
-	name = (parsed.get("name") or "").title() or None
+	name = name_case(parsed.get("name")) or None
 	if doctype == "Lead":
 		fields.update({
 			"lead_name": name, "consumer_number": parsed.get("consumer_number"), "discom": discom,
@@ -233,6 +233,13 @@ def to_fields(parsed, doctype):
 			"site_address_line1": line1, "site_address_line2": line2, "site_pincode": parsed.get("pincode"),
 		})
 	return {k: v for k, v in fields.items() if v not in (None, "")}, warnings
+
+
+def name_case(name):
+	"""A bill's capitals as a name is written: "LIJO KURIAN" is Lijo Kurian; initials stay as
+	they are ("CK BOBAN" is CK Boban, "K. RAJAN" is K. Rajan)."""
+	words = (name or "").split()
+	return " ".join(w if len(w.rstrip(".")) <= 2 else w.capitalize() for w in words)
 
 
 def kseb_discom():

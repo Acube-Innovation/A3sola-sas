@@ -52,6 +52,25 @@ Bill Date : 05/07/2026
 """
 
 
+# A bill on a non-ToD meter: one Cumulative zone, a short address, a name in initials.
+CUMULATIVE_BILL = """
+Section              [1234]-Electrical Section Testoor                                           Phone#            0480-0000000
+Consumer#            1100000000003                                          Reg. Mob# 900xxxx000
+Name & Mailing Address                                                      For redressing complaints/grievance approach the concerned CGRF
+
+KP RAJAN                                                                    South: Chairperson,CGRF(South),KSEBL,Vydyuthi Bhavanam, Kottarakkara-691506, Ph:0474-2451300
+
+PUTHUR H, P O TESTNAGAR,TESTOOR                                             Central: Chairperson,CGRF(Central),KSEBL,220KV SubStation,Kalamassery-683503,Ph:0484-2556500
+
+Bill#                             1234260903708                                Bill Area                A03/9
+Billing Period                    9/2026[Bi-Monthly]                           Tariff/Phase             LT-1/Single         Pole#                      MMR-1/3
+Bill Date                         09-09-2026                                   Due Date                 19-09-2026
+Contract Demand                   (Nil) VA [75% : 0KV, 130% : 0KV]             Connected Load           3728 Watts
+            KWH                         Cumulative                Import                 17284.00                  17499.00                    1                                215
+                                                                                                   e)   Total Amt.(Bill#1234260903708)      (a+b+c+d)                       1015.00
+"""
+
+
 class TestKSEBBill(FrappeTestCase):
 	def test_an_ebill_is_read_by_its_labels(self):
 		p = kseb_bill.parse(EBILL)
@@ -67,6 +86,14 @@ class TestKSEBBill(FrappeTestCase):
 		self.assertEqual(p["units"], 538)  # three ToD zones
 		self.assertEqual(p["bill_amount"], 4210)
 		self.assertEqual(p["bill_date"], "20-07-2026")
+
+	def test_a_bill_on_a_cumulative_meter(self):
+		p = kseb_bill.parse(CUMULATIVE_BILL)
+		self.assertEqual(p["units"], 215)
+		self.assertEqual(p["address"], "PUTHUR H, P O TESTNAGAR,TESTOOR")
+		self.assertEqual(p["bill_amount"], 1015)
+		self.assertEqual(kseb_bill.name_case(p["name"]), "KP Rajan")
+		self.assertEqual(kseb_bill.name_case("ANNA VARGHESE"), "Anna Varghese")
 
 	def test_a_photo_read_loosely_still_reads(self):
 		p = kseb_bill.parse(SPOT_BILL)
