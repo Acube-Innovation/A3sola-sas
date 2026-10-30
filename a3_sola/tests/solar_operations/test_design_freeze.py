@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The design freezes: Solar Design Freeze settles the structure and material BOMs, Structural
-Design Freeze the structure BOM, each on its own page, and procurement follows. A BOM's lines
+"""The design freezes: Solar Design Freeze settles the material BOM, Structural Design Freeze
+the structure BOM, each on its own page, and procurement follows. A BOM's lines
 edited on the page become the job's own BOM."""
 
 from unittest.mock import patch
@@ -29,8 +29,9 @@ class TestDesignFreeze(FrappeTestCase):
 			self.assertTrue(tasks.open_task(self.job.name, code, create_draft=0)["url"].endswith("/tasks/" + code))
 		solar = design_freeze.state(self.job.name)
 		self.assertEqual(solar["task"]["name"], "Solar Design Freeze")
-		for key in ("quotations", "survey", "structure_bom", "material_bom", "images", "procurement"):
+		for key in ("quotations", "survey", "material_bom", "images", "procurement"):
 			self.assertIn(key, solar)
+		self.assertNotIn("structure_bom", solar)
 		structural = design_freeze.state(self.job.name, "SDSGN")
 		self.assertEqual(structural["task"]["name"], "Structural Design Freeze")
 		self.assertIn("structure_bom", structural)
@@ -90,7 +91,7 @@ class TestDesignFreeze(FrappeTestCase):
 	def test_edited_lines_become_the_jobs_own_bom(self):
 		pipe, bolt = ensure_item("Design Test Pipe"), ensure_item("Design Test Bolt")
 		lines = frappe.as_json([{"item_code": pipe, "qty": 4}, {"item_code": bolt, "qty": 0}])
-		first = design_freeze.save_lines(self.job.name, "structure_bom", lines)["structure_bom"]
+		first = design_freeze.save_lines(self.job.name, "structure_bom", lines, "SDSGN")["structure_bom"]
 		bom = frappe.get_doc("BOM", first["value"])
 		self.assertEqual((bom.docstatus, bom.is_default), (1, 0))
 		# A line at 0 is dropped; the job holds the new BOM.
@@ -98,7 +99,7 @@ class TestDesignFreeze(FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Solar Installation", self.job.name, "structure_bom"), bom.name)
 
 		lines = frappe.as_json([{"item_code": pipe, "qty": 6}, {"item_code": bolt, "qty": 20}])
-		second = design_freeze.save_lines(self.job.name, "structure_bom", lines)["structure_bom"]
+		second = design_freeze.save_lines(self.job.name, "structure_bom", lines, "SDSGN")["structure_bom"]
 		self.assertNotEqual(second["value"], bom.name)
 		self.assertEqual([(r["item_code"], r["qty"]) for r in second["lines"]], [(pipe, 6), (bolt, 20)])
 		# The job's earlier edit, held by nothing now, goes inactive.
@@ -108,6 +109,9 @@ class TestDesignFreeze(FrappeTestCase):
 		pipe = ensure_item("Design Test Pipe")
 		with self.assertRaises(frappe.ValidationError):
 			design_freeze.save_lines(self.job.name, "material_bom", "[]")
+		# The structure BOM is settled on Structural Design Freeze, not here.
+		with self.assertRaises(frappe.ValidationError):
+			design_freeze.save_lines(self.job.name, "structure_bom", frappe.as_json([{"item_code": pipe, "qty": 1}]))
 		with self.assertRaises(frappe.ValidationError):
 			design_freeze.save_lines(self.job.name, "material_bom",
 				frappe.as_json([{"item_code": pipe, "qty": 1}, {"item_code": pipe, "qty": 2}]))
