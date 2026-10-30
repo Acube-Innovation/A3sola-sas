@@ -210,6 +210,8 @@
   "underperformance_threshold_percent",
   "underperformance_consecutive_readings",
   "ticket_reopen_escalation_threshold",
+  "sb_material_boms",
+  "material_boms",
   "platform_tab",
   "sb_902",
   "signup_series_prefix",
@@ -1639,6 +1641,18 @@
    "label": "Reopen Escalation Threshold"
   },
   {
+   "fieldname": "sb_material_boms",
+   "fieldtype": "Section Break",
+   "label": "Material BOM by Inverter Capacity",
+   "description": "The material BOM a job's procurement starts from, by its inverter's phase and capacity. The job's panels are added from its design."
+  },
+  {
+   "fieldname": "material_boms",
+   "fieldtype": "Table",
+   "label": "Material BOMs",
+   "options": "Inverter Capacity BOM"
+  },
+  {
    "fieldname": "platform_tab",
    "fieldtype": "Tab Break",
    "label": "Platform"
@@ -2957,7 +2971,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-17 18:00:00.000000",
+ "modified": "2026-10-30 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

@@ -1,0 +1,776 @@
+{
+ "items": [
+  {
+   "item_code": "MOD-RYZ-550-DCR-PERC",
+   "item_name": "Rayzon 550 Wp DCR Mono PERC Module",
+   "item_group": "Mono PERC Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Rayzon",
+   "description": "Rayzon 550 Wp DCR Mono PERC Module",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MOD-RNS-565-DCR-TC",
+   "item_name": "Renewsys 565 Wp DCR TOPCon Module",
+   "item_group": "TOPCon Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Renewsys",
+   "description": "Renewsys 565 Wp DCR TOPCon Module",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MOD-RNS-615-DCR-TC",
+   "item_name": "Renewsys 615 Wp DCR TOPCon Module",
+   "item_group": "TOPCon Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Renewsys",
+   "description": "Renewsys 615 Wp DCR TOPCon Module",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "INV-HOY-MICRO-8X1K-3PH",
+   "item_name": "Hoymiles 1 kW x 8 Microinverter Full Kit, 3 Phase",
+   "item_group": "On-Grid Inverters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "Hoymiles 1 kW x 8 Microinverter Full Kit, 3 Phase",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MTR-LT-3PH-10-60A",
+   "item_name": "L&T 3 Phase Unidirectional LCD Meter 10-60A",
+   "item_group": "Meters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "L&T",
+   "description": "L&T 3 Phase Unidirectional LCD Meter 10-60A",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-4CX4-CU-FLEX",
+   "item_name": "4C x 4 sq mm Copper Flexible Cable",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "4C x 4 sq mm Copper Flexible Cable",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-4SQ-YEL",
+   "item_name": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Yellow",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Yellow",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-4SQ-BLU",
+   "item_name": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Blue",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Blue",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-4SQ-GRN",
+   "item_name": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Green",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Green",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "ACDB-1PH-STRIDER-VG-CITEL",
+   "item_name": "ACDB 1 Phase (Strider enclosure, V-Guard MCB, Citel SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "ACDB 1 Phase (Strider enclosure, V-Guard MCB, Citel SPD)",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "SWG-CONTACTOR-RELAY-3PH-8KW",
+   "item_name": "3 Phase Contactor + Relay Box, 8 kW",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "3 Phase Contactor + Relay Box, 8 kW",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MAT-KIT-1PH-5KW",
+   "item_name": "Material Kit 5 kW 1 Phase",
+   "item_group": "Sub Assemblies",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Material Kit 5 kW 1 Phase",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MAT-KIT-1PH-3KW",
+   "item_name": "Material Kit 3 kW 1 Phase",
+   "item_group": "Sub Assemblies",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Material Kit 3 kW 1 Phase",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MAT-KIT-3PH-8KW",
+   "item_name": "Material Kit 8 kW 3 Phase",
+   "item_group": "Sub Assemblies",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Material Kit 8 kW 3 Phase",
+   "disabled": 0,
+   "gst_hsn_code": null,
+   "purchase_rate": null
+  }
+ ],
+ "templates": [
+  {
+   "inverter_phase": "Single Phase",
+   "inverter_capacity_kw": 5,
+   "item": "MAT-KIT-1PH-5KW",
+   "source": "Joseph PA",
+   "items": [
+    [
+     "INV-SOL-OGS-5K",
+     1
+    ],
+    [
+     "CBL-DC-4SQ-BLK",
+     30
+    ],
+    [
+     "CBL-DC-4SQ-RED",
+     30
+    ],
+    [
+     "CON-MC4",
+     2
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2
+    ],
+    [
+     "SWG-CS-ISO-40A-DP",
+     1
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2
+    ],
+    [
+     "MTR-LT-1PH-5-30A",
+     1
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     1
+    ],
+    [
+     "MNT-CLAMP-MID-35",
+     14
+    ],
+    [
+     "MNT-CLAMP-END-35",
+     8
+    ],
+    [
+     "MNT-CLAMP-MID-30",
+     14
+    ],
+    [
+     "MNT-CLAMP-END-30",
+     8
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     8
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     15
+    ],
+    [
+     "CNS-NUT-M4",
+     15
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     15
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     15
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     100
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20
+    ],
+    [
+     "MTR-BOX-1PH-EXCEL",
+     1
+    ],
+    [
+     "ERT-CU-WIRE-10SWG",
+     1.6
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     32
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     15
+    ],
+    [
+     "CBL-AC-4SQ-RED",
+     12
+    ],
+    [
+     "CBL-AC-4SQ-YEL",
+     12
+    ],
+    [
+     "CBL-AC-4SQ-BLU",
+     12
+    ],
+    [
+     "CBL-AC-4SQ-BLK-FLEX",
+     12
+    ],
+    [
+     "CBL-AC-4SQ-GRN",
+     12
+    ],
+    [
+     "CND-PIPE-UPVC-20",
+     18
+    ],
+    [
+     "CND-BEND-20",
+     15
+    ],
+    [
+     "CND-ELBOW-20",
+     15
+    ],
+    [
+     "CND-TEE-20",
+     5
+    ],
+    [
+     "CND-COUPLING-20",
+     10
+    ],
+    [
+     "CND-FLEX-PG16-BLK",
+     2
+    ],
+    [
+     "CND-SADDLE-SS-20",
+     100
+    ],
+    [
+     "ACDB-1PH-STRIDER-VG-CITEL",
+     1
+    ],
+    [
+     "DCDB-1I1O-STRIDER-MERSEN",
+     1
+    ],
+    [
+     "CND-CHANNEL-SALZER-45-GRY",
+     2
+    ]
+   ]
+  },
+  {
+   "inverter_phase": "Single Phase",
+   "inverter_capacity_kw": 3,
+   "item": "MAT-KIT-1PH-3KW",
+   "source": "Salin KT",
+   "items": [
+    [
+     "INV-SOL-OGS-3K",
+     1
+    ],
+    [
+     "CBL-DC-4SQ-BLK",
+     30
+    ],
+    [
+     "CBL-DC-4SQ-RED",
+     30
+    ],
+    [
+     "CON-MC4",
+     2
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2
+    ],
+    [
+     "SWG-CS-ISO-40A-DP",
+     1
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2
+    ],
+    [
+     "MTR-LT-1PH-5-30A",
+     1
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     1
+    ],
+    [
+     "MNT-CLAMP-MID-35",
+     8
+    ],
+    [
+     "MNT-CLAMP-END-35",
+     8
+    ],
+    [
+     "MNT-CLAMP-MID-30",
+     8
+    ],
+    [
+     "MNT-CLAMP-END-30",
+     8
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     6
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     11
+    ],
+    [
+     "CNS-NUT-M4",
+     11
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     11
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     11
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     100
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20
+    ],
+    [
+     "MTR-BOX-1PH-EXCEL",
+     1
+    ],
+    [
+     "ERT-CU-WIRE-10SWG",
+     1.6
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     32
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     15
+    ],
+    [
+     "CBL-AC-4CX4-CU-FLEX",
+     10
+    ],
+    [
+     "CBL-AC-6SQ-RED",
+     12
+    ],
+    [
+     "CBL-AC-6SQ-BLK",
+     12
+    ],
+    [
+     "CND-PIPE-UPVC-20",
+     18
+    ],
+    [
+     "CND-BEND-20",
+     15
+    ],
+    [
+     "CND-ELBOW-20",
+     15
+    ],
+    [
+     "CND-TEE-20",
+     5
+    ],
+    [
+     "CND-COUPLING-20",
+     10
+    ],
+    [
+     "CND-FLEX-PG16-BLK",
+     2
+    ],
+    [
+     "CND-SADDLE-SS-20",
+     100
+    ],
+    [
+     "ACDB-1PH-STRIDER-VG-CITEL",
+     1
+    ],
+    [
+     "DCDB-1I1O-STRIDER-MERSEN",
+     1
+    ],
+    [
+     "CND-CHANNEL-SALZER-45-GRY",
+     2
+    ]
+   ]
+  },
+  {
+   "inverter_phase": "Three Phase",
+   "inverter_capacity_kw": 8,
+   "item": "MAT-KIT-3PH-8KW",
+   "source": "Abraham Paul",
+   "items": [
+    [
+     "INV-HOY-MICRO-8X1K-3PH",
+     1
+    ],
+    [
+     "CBL-DC-4SQ-BLK",
+     20
+    ],
+    [
+     "CBL-DC-4SQ-RED",
+     20
+    ],
+    [
+     "CON-MC4",
+     18
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2
+    ],
+    [
+     "SWG-CS-ISO-40A-DP",
+     1
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2
+    ],
+    [
+     "MTR-LT-3PH-10-60A",
+     1
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     1
+    ],
+    [
+     "MNT-CLAMP-MID-30",
+     14
+    ],
+    [
+     "MNT-CLAMP-END-30",
+     8
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     9
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     17
+    ],
+    [
+     "CNS-NUT-M4",
+     17
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     17
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     17
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     100
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20
+    ],
+    [
+     "MTR-BOX-3PH-EXCEL",
+     1
+    ],
+    [
+     "ERT-CU-WIRE-10SWG",
+     1.5
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     32
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     15
+    ],
+    [
+     "CBL-AC-4SQ-RED",
+     30
+    ],
+    [
+     "CBL-AC-4SQ-YEL",
+     30
+    ],
+    [
+     "CBL-AC-4SQ-BLU",
+     30
+    ],
+    [
+     "CBL-AC-4SQ-BLK-FLEX",
+     30
+    ],
+    [
+     "CBL-AC-4SQ-GRN",
+     30
+    ],
+    [
+     "CND-PIPE-UPVC-20",
+     20
+    ],
+    [
+     "CND-BEND-20",
+     15
+    ],
+    [
+     "CND-ELBOW-20",
+     15
+    ],
+    [
+     "CND-TEE-20",
+     5
+    ],
+    [
+     "CND-COUPLING-20",
+     10
+    ],
+    [
+     "CND-FLEX-PG16-BLK",
+     2
+    ],
+    [
+     "CND-SADDLE-SS-20",
+     100
+    ],
+    [
+     "ACDB-1PH-STRIDER-VG-CITEL",
+     1
+    ],
+    [
+     "SWG-CONTACTOR-RELAY-3PH-8KW",
+     1
+    ],
+    [
+     "CND-CHANNEL-SALZER-45-GRY",
+     2
+    ]
+   ]
+  }
+ ]
+}
