@@ -234,3 +234,5 @@ a3_sola.patches.v1_2.package_structure_boms
 a3_sola.patches.v1_2.inverter_capacity_material_boms
 # The structure BOM follows roof and panel capacity: flat 3/5 kW and sheet 5 kW in A3 Sola Settings; the package sheet roof BOM is retired.
 a3_sola.patches.v1_2.panel_capacity_structure_boms
+# The 10 kW three phase material BOM (Hoymiles MIT-5000-S x 2), by inverter capacity.
+a3_sola.patches.v1_2.inverter_capacity_bom_10kw_3ph
