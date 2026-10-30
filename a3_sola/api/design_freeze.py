@@ -150,8 +150,9 @@ def state(installation, task_code=DESIGN_TASK):
 		"can_freeze": editable and row.status not in ("Completed", "Skipped"),
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
+	# Solar Design Freeze settles both BOMs; Structural Design Freeze keeps the structure's.
+	out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
 	if task_code == STRUCTURE_TASK:
-		out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
 		out["sld"] = _drawing(inst)
 	else:
 		out["material_bom"] = _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst)
@@ -267,6 +268,9 @@ def freeze(installation, task_code=DESIGN_TASK):
 	if not bom:
 		frappe.throw(_("Choose the {0} before freezing the design.").format(label), title=_("BOM Needed"))
 	inst.set(field, bom)
+	if task_code == DESIGN_TASK and not inst.get("structure_bom"):
+		# The structure BOM shown beside it is kept too, when there is one.
+		inst.structure_bom = structure_bom.bom_for(inst)
 	row.status = "Completed"
 	row.actual_completion_date = today()
 	row.actual_start_date = row.actual_start_date or row.actual_completion_date
@@ -278,3 +282,96 @@ def freeze(installation, task_code=DESIGN_TASK):
 
 	notify_task_completed(inst, task_code)
 	return state(installation, task_code)
+
+
+#: The item a job's own structure BOM is made for when it starts from no BOM at all.
+JOB_STRUCTURE_ITEM = "MNT-STRUCT-JOB"
+
+
+@frappe.whitelist()
+def item_options(txt=""):
+	"""Items a design BOM line can be: enabled, not a package, matching `txt` by code or name."""
+	txt = "%{0}%".format((txt or "").strip())
+	return frappe.get_list("Item", filters={"disabled": 0, "item_group": ["!=", "Solar Packages"]},
+		or_filters={"item_code": ["like", txt], "item_name": ["like", txt]},
+		fields=["item_code", "item_name", "stock_uom"], order_by="item_name asc", limit_page_length=20)
+
+
+def _job_bom_item(inst, field, base):
+	"""The item a job's own BOM is made for: its current BOM's, else the package's (material)
+	or a generic mounting structure (structure)."""
+	if base:
+		return frappe.db.get_value("BOM", base, "item")
+	if field == "material_bom":
+		item = frappe.db.get_value("Solar Package", inst.solar_package, "item") if inst.get("solar_package") else None
+		if item:
+			return item
+	if not frappe.db.exists("Item", JOB_STRUCTURE_ITEM):
+		frappe.get_doc({"doctype": "Item", "item_code": JOB_STRUCTURE_ITEM, "item_name": "Mounting Structure (job design)",
+			"item_group": frappe.db.exists("Item Group", "Mounting Structures") or "All Item Groups",
+			"stock_uom": "Nos", "is_stock_item": 0}).insert(ignore_permissions=True)
+	return JOB_STRUCTURE_ITEM
+
+
+def _retire(bom, inst):
+	"""A job's own BOM it no longer uses goes inactive, unless a package, another job or a
+	submitted procurement task still holds it."""
+	if not bom or frappe.db.get_value("Solar Package", {"bom": bom}) or bom in structure_bom.structure_boms():
+		return
+	for field in ("material_bom", "structure_bom"):
+		if frappe.db.exists(INSTALLATION, {field: bom, "name": ["!=", inst.name]}) or frappe.db.exists(
+				"Installation Task", {field: bom, "docstatus": 1}):
+			return
+	frappe.db.set_value("BOM", bom, "is_active", 0)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_lines(installation, bom_field, lines, task_code=DESIGN_TASK):
+	"""The job's own BOM from the lines edited on the page: a new BOM made for this job (the
+	package's is never changed), put on the job, and the draft procurement tasks follow."""
+	if bom_field not in ("material_bom", "structure_bom"):
+		frappe.throw(_("Unknown BOM {0}.").format(bom_field), frappe.ValidationError)
+	inst = _job(installation, "write", task_code)
+	rows = frappe.parse_json(lines) if isinstance(lines, str) else lines
+	items, seen = [], set()
+	for row in rows or []:
+		code, qty = (row.get("item_code") or "").strip(), frappe.utils.flt(row.get("qty"))
+		if not code or qty <= 0:
+			continue
+		if code in seen:
+			frappe.throw(_("{0} is listed twice.").format(code), frappe.ValidationError)
+		if not frappe.db.exists("Item", {"name": code, "disabled": 0}):
+			frappe.throw(_("Item {0} does not exist.").format(code), frappe.ValidationError)
+		seen.add(code)
+		items.append({"item_code": code, "qty": qty, "uom": frappe.db.get_value("Item", code, "stock_uom")})
+	if not items:
+		frappe.throw(_("Add at least one line with a quantity."), frappe.ValidationError)
+
+	base = structure_bom.bom_for(inst) if bom_field == "structure_bom" else structure_bom.material_bom_for(inst)
+	bom = frappe.get_doc({
+		"doctype": "BOM",
+		"item": _job_bom_item(inst, bom_field, base),
+		"company": inst.company,
+		"quantity": 1,
+		"is_active": 1,
+		"is_default": 0,
+		"project": inst.get("project"),
+		"items": items,
+	})
+	if base:
+		bom.update({k: v for k, v in frappe.db.get_value("BOM", base, ["rm_cost_as_per", "buying_price_list"], as_dict=True).items() if v})
+	bom.insert(ignore_permissions=True)
+	bom.submit()
+	# ERPNext makes the first BOM of an item its default; a job's own BOM is never anyone's default.
+	if frappe.db.get_value("BOM", bom.name, "is_default"):
+		frappe.db.set_value("BOM", bom.name, "is_default", 0)
+		if frappe.db.get_value("Item", bom.item, "default_bom") == bom.name:
+			frappe.db.set_value("Item", bom.item, "default_bom", None)
+	label = _("structure BOM") if bom_field == "structure_bom" else _("material BOM")
+	inst.set(bom_field, bom.name)
+	_save_job(inst, _("Design changed: {0} edited for this job - {1} ({2} lines).").format(label, bom.name, len(items)))
+	_retire(base, inst)
+	updated = refresh_procurement(inst)
+	out = state(installation, task_code)
+	out["updated_tasks"] = updated
+	return out
