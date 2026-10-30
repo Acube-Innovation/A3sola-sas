@@ -9,6 +9,8 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
+    # Reads photos of KSEB bills (api/kseb_bill.py), with the tesseract-ocr apt package below.
+    "pytesseract~=0.3.10",
 ]
 
 [build-system]
@@ -32,7 +34,9 @@ erpnext = ">=15.0.0,<16.0.0"
 
 # These apt dependencies will be installed from Ubuntu repositories when you host your app on Frappe Cloud
 [deploy.dependencies.apt]
-packages = []
+# OCR for photos and scans of KSEB bills (api/kseb_bill.py): English and Malayalam, and
+# pdftoppm (poppler-utils) to read a scanned PDF's pages as images.
+packages = ["tesseract-ocr", "tesseract-ocr-eng", "tesseract-ocr-mal", "poppler-utils"]
 
 [tool.ruff]
 line-length = 110
