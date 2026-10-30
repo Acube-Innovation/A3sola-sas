@@ -30,7 +30,7 @@ COLLECTIONS = {
 	# installation site (its show-when rule) - are not mandatory, so would not be picked up
 	# on their own.
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
-	              "form_extra": ["site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
+	              "form_extra": ["lead_mobile_no", "site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode",
 	                             # Read from the KSEB bill (api/kseb_bill.py), so on the form to be filled in.
