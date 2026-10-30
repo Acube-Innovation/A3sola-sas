@@ -3,11 +3,11 @@
 {% block portal_content %}
 <div class="a3s-main__head">
 	<h2 class="a3s-main__title">Welcome, {{ user_first_name }}</h2>
-	<p class="a3s-main__sub">Here's an overview of {{ workspace_name }}.</p>
+	<p class="a3s-main__sub">{{ "Here is what the team has to do." if scope == "team" else "Here is what you have to do." }}</p>
 </div>
 
-{#- stat cards -#}
-<section class="a3s-dash-stats" aria-label="Summary">
+{#- the work's counts -#}
+<section class="a3s-dash-stats a3s-dash-stats--four" aria-label="Summary">
 	{%- for stat in stats %}
 	<div class="a3s-card a3s-dash-stat">
 		<span class="a3s-dash-stat__icon a3s-dash-stat__icon--{{ stat.tone }}" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ stat.ic }}"></use></svg></span>
@@ -18,6 +18,52 @@
 		</div>
 	</div>
 	{%- endfor %}
+</section>
+
+{#- the work itself: Pending, Today, Upcoming (api/my_work.py) -#}
+<section class="a3s-work" aria-label="{{ 'Team work' if scope == 'team' else 'My work' }}">
+	<div class="a3s-work__head">
+		<h3 class="a3s-work__title">{{ "Team work" if scope == "team" else "My work" }}</h3>
+		{%- if can_team %}
+		<nav class="a3s-work__switch" aria-label="Whose work">
+			<a href="/a3solaportal/dashboard" class="{{ 'is-active' if scope != 'team' }}">My work</a>
+			<a href="/a3solaportal/dashboard?scope=team" class="{{ 'is-active' if scope == 'team' }}">All team</a>
+		</nav>
+		{%- endif %}
+	</div>
+	<div class="a3s-work__cols">
+		{%- for col in work_columns %}
+		{%- set rows = work[col.key] %}
+		<div class="a3s-card a3s-work__col a3s-work__col--{{ col.tone }}">
+			<div class="a3s-work__colhead">
+				<span class="a3s-work__coltitle">{{ col.title }}</span>
+				<span class="a3s-work__count">{{ rows | length }}</span>
+			</div>
+			<p class="a3s-work__colnote">{{ col.note }}</p>
+			{%- if rows %}
+			<ul class="a3s-work__list">
+				{%- for w in rows[:show_per_column] %}
+				<li class="a3s-work__item">
+					<div class="a3s-work__line">
+						<span class="a3s-work__kind a3s-work__kind--{{ w.kind | lower | replace('-', '') }}">{{ w.kind }}</span>
+						{%- if w.late_days %}<span class="a3s-work__due is-late">{{ w.late_days }} day{{ "" if w.late_days == 1 else "s" }} late</span>
+						{%- elif w.due and col.key == "upcoming" %}<span class="a3s-work__due">{{ frappe.utils.formatdate(w.due, "EEE d MMM") }}</span>
+						{%- elif not w.due %}<span class="a3s-work__due is-undated">No date</span>{% endif %}
+					</div>
+					<a class="a3s-work__link" href="{{ w.url }}">{{ w.title }}</a>
+					{%- if w.context %}<span class="a3s-work__context">{{ w.context }}</span>{% endif %}
+					{%- if scope == "team" and w.people_names %}<span class="a3s-work__people">{{ w.people_names }}</span>{% endif %}
+				</li>
+				{%- endfor %}
+			</ul>
+			{%- if rows | length > show_per_column %}<p class="a3s-work__more">and {{ rows | length - show_per_column }} more</p>{% endif %}
+			{%- else %}
+			<p class="a3s-work__empty">Nothing here.</p>
+			{%- endif %}
+			{%- if col.key == "upcoming" and work.later %}<p class="a3s-work__more">{{ work.later }} more due later</p>{% endif %}
+		</div>
+		{%- endfor %}
+	</div>
 </section>
 
 {#- action cards -#}
