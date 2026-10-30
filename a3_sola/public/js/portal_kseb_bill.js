@@ -1,8 +1,10 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * "Read KSEB bill" on the lead and customer forms (api/kseb_bill.py). The bill - a PDF or a
- * photo - is read on the server and its details come back as the record's fields. A blank
+ * "Read KSEB bill" on the lead and customer forms (api/kseb_bill.py), and "Read Aadhaar" on the
+ * customer's (api/aadhaar_card.py: the permanent address, name, date of birth, gender - never the
+ * Aadhaar number). The document - a PDF or a photo; an e-Aadhaar asks for its password - is read
+ * on the server and its details come back as the record's fields. A blank
  * field - or, on a new record, one still at the page's default - is filled and marked; a
  * field already holding something else is left alone, the bill's value offered beside it. Nothing is saved until the form is. On a record that
  * exists, the server also attaches the bill as its KSEB Bill.
@@ -32,16 +34,27 @@
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	/* Parents before the fields that depend on them. */
-	var ORDER = ["discom", "discom_section"];
+	var ORDER = ["discom", "discom_section", "permanent_address_same", "permanent_state", "permanent_district"];
+	/* What each button reads, and the hidden field that keeps it for a record not yet created. */
+	var KINDS = {
+		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill", kept: "KSEB Bill" },
+		aadhaar: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card", kept: "Aadhaar" }
+	};
 
 	var bar = document.createElement("div");
 	bar.className = "a3s-kseb";
 	bar.innerHTML =
 		'<div class="a3s-kseb__row">' +
-		'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick>Read KSEB bill</button>' +
-		'<span class="a3s-field__hint">Upload the bill (PDF or a clear photo) and its details fill in below' +
-		(recordName ? "; it is also kept as the KSEB Bill." : ".") + "</span>" +
+		'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="bill">Read KSEB bill</button>' +
+		(doctype === "Solar Consumer" ? '<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="aadhaar">Read Aadhaar</button>' : "") +
+		'<span class="a3s-field__hint">Upload the bill' + (doctype === "Solar Consumer" ? " or the Aadhaar card" : "") +
+		' (PDF or a clear photo) and its details fill in below' + (recordName ? "; it is also kept with the KYC documents." : ".") + "</span>" +
 		'<input type="file" accept="application/pdf,image/*" hidden data-kseb-file>' +
+		"</div>" +
+		'<div class="a3s-kseb__row a3s-kseb__password" data-kseb-password hidden>' +
+		'<input type="password" autocomplete="off" placeholder="PDF password" data-kseb-pw>' +
+		'<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-kseb-pw-go>Open</button>' +
+		'<span class="a3s-field__hint">An e-Aadhaar\'s password is the first 4 letters of the name in CAPITALS and the year of birth, e.g. LIJO1985.</span>' +
 		"</div>" +
 		'<p class="a3s-kseb__status" data-kseb-status hidden></p>' +
 		'<ul class="a3s-kseb__warnings" data-kseb-warnings hidden></ul>';
@@ -49,23 +62,32 @@
 	var style = document.createElement("style");
 	style.textContent =
 		".a3s-kseb{border:1px dashed var(--color-border,#d9dee5);border-radius:10px;padding:.75rem 1rem;margin:0 0 1rem;background:var(--color-surface-muted,#fafbfc)}" +
-		".a3s-kseb__row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}" +
+		".a3s-kseb__row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}.a3s-kseb__password{margin-top:.6rem}.a3s-kseb__password input{max-width:12rem}" +
 		".a3s-kseb__status{margin:.5rem 0 0;font-size:.9rem}.a3s-kseb__status.is-error{color:#b42318}.a3s-kseb__status.is-success{color:#067647}" +
 		".a3s-kseb__warnings{margin:.35rem 0 0 1.1rem;font-size:.85rem;color:#b54708}" +
 		".a3s-kseb-filled{outline:2px solid #f79009;outline-offset:1px;background:#fffaeb}" +
 		".a3s-kseb-offer{display:block;font-size:.8rem;color:#b54708;margin-top:.2rem}.a3s-kseb-offer button{border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0 0 0 .3rem}";
 	document.head.appendChild(style);
 
-	var pick = bar.querySelector("[data-kseb-pick]");
+	var picks = bar.querySelectorAll("[data-kseb-pick]");
 	var file = bar.querySelector("[data-kseb-file]");
 	var status = bar.querySelector("[data-kseb-status]");
 	var warningsList = bar.querySelector("[data-kseb-warnings]");
+	var pwRow = bar.querySelector("[data-kseb-password]");
+	var pwInput = bar.querySelector("[data-kseb-pw]");
+	var current = null, chosen = null;
+
+	function busy(on) { Array.prototype.forEach.call(picks, function (b) { b.disabled = on; }); }
 
 	function say(text, kind) {
 		status.textContent = text || "";
 		status.hidden = !text;
 		status.classList.toggle("is-error", kind === "error");
 		status.classList.toggle("is-success", kind === "success");
+	}
+
+	function serverTitle(body) {
+		try { return JSON.parse(JSON.parse((body && body._server_messages) || "[]")[0]).title || ""; } catch (e) { return ""; }
 	}
 
 	function serverMessage(body) {
@@ -158,7 +180,8 @@
 				else missed.push(name.replace(/_/g, " "));
 				next();
 			};
-			if (el.tagName === "SELECT" && el.dataset.dependsOn && !hasOption(el, value)) {
+			/* A list still reloading for its parent (set just before) would drop a value set now. */
+			if (el.tagName === "SELECT" && el.dataset.dependsOn && (el.disabled || !hasOption(el, value))) {
 				whenOffered(el, value, function () { go(); });
 			} else go();
 		})();
@@ -174,24 +197,33 @@
 		warningsList.hidden = !warningsList.children.length;
 	}
 
-	pick.addEventListener("click", function () { file.click(); });
-	file.addEventListener("change", function () {
-		var chosen = file.files && file.files[0];
-		if (!chosen) return;
+	function read(password) {
+		var kind = KINDS[current];
 		var body = new FormData();
 		body.append("doctype", doctype);
 		if (recordName) body.append("name", recordName);
+		if (password) body.append("password", password);
 		body.append("file", chosen, chosen.name);
-		pick.disabled = true;
+		busy(true);
 		warn([]);
-		say(/\.pdf$/i.test(chosen.name) ? "Reading the bill…" : "Reading the photo… (this can take a few seconds)");
-		fetch("/api/method/a3_sola.api.kseb_bill.read", {
+		say(/\.pdf$/i.test(chosen.name) ? "Reading the " + kind.what + "\u2026" : "Reading the photo\u2026 (this can take a few seconds)");
+		fetch("/api/method/" + kind.method, {
 			method: "POST", credentials: "same-origin",
 			headers: { "X-Frappe-CSRF-Token": csrf, "Accept": "application/json" }, body: body
 		}).then(function (r) {
 			return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, body: b }; });
 		}).then(function (res) {
-			if (!res.ok) throw new Error(serverMessage(res.body));
+			if (!res.ok) {
+				/* A locked PDF: ask for its password and read it again. */
+				var title = serverTitle(res.body);
+				if (title === "Password Needed" || title === "Wrong Password") {
+					pwRow.hidden = false;
+					pwInput.value = "";
+					pwInput.focus();
+				}
+				throw new Error(serverMessage(res.body));
+			}
+			pwRow.hidden = true;
 			var out = res.body.message || {};
 			warn(out.warnings);
 			fill(out.fields || {});
@@ -199,21 +231,34 @@
 				document.dispatchEvent(new CustomEvent("a3s:attachments-reload", { detail: { doctype: doctype, name: recordName } }));
 			}
 			if (out.pending_file) {
-				/* No record yet: the bill is kept and becomes the new record's KSEB Bill as it is created. */
-				var keep = form.elements.kseb_bill_file;
+				/* No record yet: the document is kept and becomes the new record's as it is created. */
+				var keep = form.elements[kind.keep];
 				if (!keep) {
 					keep = document.createElement("input");
-					keep.type = "hidden"; keep.name = "kseb_bill_file";
+					keep.type = "hidden"; keep.name = kind.keep;
 					form.appendChild(keep);
 				}
-				keep.value = out.pending_file;
-				warn(["The bill will be kept as the " + (doctype === "Lead" ? "lead" : "customer") + "'s KSEB Bill when you create it."], true);
+				/* Both sides of a card, read one after the other, are both kept. */
+				keep.value = keep.value ? keep.value + "," + out.pending_file : out.pending_file;
+				warn(["The " + kind.what + " will be kept as the " + (doctype === "Lead" ? "lead" : "customer") + "'s " + kind.kept + " when you create it."], true);
 			}
 		}).catch(function (e) {
-			say(e.message || "The bill could not be read.", "error");
+			say(e.message || "The " + kind.what + " could not be read.", "error");
 		}).then(function () {
-			pick.disabled = false;
-			file.value = "";
+			busy(false);
 		});
+	}
+
+	Array.prototype.forEach.call(picks, function (b) {
+		b.addEventListener("click", function () { current = b.dataset.ksebPick; pwRow.hidden = true; file.click(); });
+	});
+	file.addEventListener("change", function () {
+		chosen = file.files && file.files[0];
+		file.value = "";
+		if (chosen) read();
+	});
+	bar.querySelector("[data-kseb-pw-go]").addEventListener("click", function () { if (chosen && pwInput.value) read(pwInput.value); });
+	pwInput.addEventListener("keydown", function (e) {
+		if (e.key === "Enter") { e.preventDefault(); if (chosen && pwInput.value) read(pwInput.value); }
 	});
 })();

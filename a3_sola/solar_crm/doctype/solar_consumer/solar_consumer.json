@@ -16,6 +16,8 @@
   "contact_person",
   "mobile_no",
   "lead_mobile_no",
+  "date_of_birth",
+  "gender",
   "email_id",
   "alternate_contact_no",
   "cb_2",
@@ -167,6 +169,18 @@
    "fieldtype": "Data",
    "label": "Lead Mobile",
    "description": "The number the enquiry came from - it may be a relative's. Filled from the lead."
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth",
+   "description": "As on the Aadhaar card."
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
   },
   {
    "fieldname": "email_id",
@@ -763,7 +777,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 17:45:00.000000",
+ "modified": "2026-10-30 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",
