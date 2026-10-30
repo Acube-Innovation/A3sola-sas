@@ -1,0 +1,1737 @@
+{
+ "item_groups": [
+  {
+   "name": "Modules",
+   "parent": "All Item Groups",
+   "is_group": 1,
+   "description": "Solar PV panels / modules"
+  },
+  {
+   "name": "TOPCon Modules",
+   "parent": "Modules",
+   "is_group": 0,
+   "description": "TOPCon cell technology modules"
+  },
+  {
+   "name": "Bifacial Modules",
+   "parent": "Modules",
+   "is_group": 0,
+   "description": "Bifacial modules (generate from both faces)"
+  },
+  {
+   "name": "Mono PERC Modules",
+   "parent": "Modules",
+   "is_group": 0,
+   "description": "Mono PERC cell technology modules"
+  },
+  {
+   "name": "Inverters",
+   "parent": "All Item Groups",
+   "is_group": 1,
+   "description": "Solar inverters"
+  },
+  {
+   "name": "On-Grid Inverters",
+   "parent": "Inverters",
+   "is_group": 0,
+   "description": "Grid-tied string inverters"
+  },
+  {
+   "name": "Hybrid Inverters",
+   "parent": "Inverters",
+   "is_group": 0,
+   "description": "Grid-tied inverters with battery support"
+  },
+  {
+   "name": "Off-Grid Inverters",
+   "parent": "Inverters",
+   "is_group": 0,
+   "description": "Stand-alone inverters with battery"
+  },
+  {
+   "name": "Mounting Structures",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "GI / aluminium structures, rails, clamps"
+  },
+  {
+   "name": "Cables and BOS",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "DC/AC cables, ACDB/DCDB, MC4, earthing, lightning arrestor"
+  },
+  {
+   "name": "Meters",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "Net meters, generation meters, CTs"
+  },
+  {
+   "name": "Batteries",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "Lithium / lead-acid storage"
+  },
+  {
+   "name": "Solar Consumables",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "Lugs, ties, conduits, fasteners, tapes"
+  },
+  {
+   "name": "Solar Services",
+   "parent": "All Item Groups",
+   "is_group": 0,
+   "description": "Installation, civil work, liaison and other services"
+  }
+ ],
+ "items": [
+  {
+   "item_code": "MOD-RNS-615-DCR-GG",
+   "item_name": "Renewsys Deserv 615 Wp DCR Mono Glass-Glass Module",
+   "item_group": "Bifacial Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Renewsys",
+   "description": "RENEWSYS DESERV 615WP DCR EXT-GG MONO BIS 1500V",
+   "disabled": 0,
+   "gst_hsn_code": "85414300",
+   "purchase_rate": 15436.5
+  },
+  {
+   "item_code": "MOD-RYZ-600-DCR-TC",
+   "item_name": "Rayzon 600 Wp DCR TOPCon Module",
+   "item_group": "TOPCon Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Rayzon",
+   "description": "SPVM 600W DCR T-CON RS600144TGC RAYZON-DCR",
+   "disabled": 0,
+   "gst_hsn_code": "85414300",
+   "purchase_rate": 14580
+  },
+  {
+   "item_code": "INV-HOY-MIT-5000-S",
+   "item_name": "Hoymiles Microinverter MIT-5000-S",
+   "item_group": "On-Grid Inverters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM-Microinverter MIT-5000-S",
+   "disabled": 0,
+   "gst_hsn_code": "85044090",
+   "purchase_rate": 31490
+  },
+  {
+   "item_code": "INV-POL-PSIS-3K0",
+   "item_name": "Polycab 3 kW 1 Phase On-Grid Inverter with RMS (PSIS-3K0)",
+   "item_group": "On-Grid Inverters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Polycab",
+   "description": "POLYCAB SOLAR GRID TIE INVERTER - 1PH & 1MPPT 3000 WATT WITH RMS- PSIS-3K0",
+   "disabled": 0,
+   "gst_hsn_code": "85049090",
+   "purchase_rate": 16000
+  },
+  {
+   "item_code": "INV-SOL-OGS-5K",
+   "item_name": "Solinteg OGS-5K On-Grid Inverter",
+   "item_group": "On-Grid Inverters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Solinteg",
+   "description": "Solinteg OGS- 5K Ongrid Inverter GSS",
+   "disabled": 0,
+   "gst_hsn_code": "85044090",
+   "purchase_rate": 31500
+  },
+  {
+   "item_code": "MON-HOY-DTU-PRO-S",
+   "item_name": "Hoymiles Data Transfer Unit DTU-Pro-S (WiFi)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM- Data Transfer Unit DTU-Pro-S(WIFI)",
+   "disabled": 0,
+   "gst_hsn_code": "85176290",
+   "purchase_rate": 12890
+  },
+  {
+   "item_code": "ACC-HOY-T5-EC",
+   "item_name": "Hoymiles Flex-T5 Extension Connector T5-EC",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM - Flex-T5 Extension Connector T5-EC",
+   "disabled": 0,
+   "gst_hsn_code": "85369090",
+   "purchase_rate": 450
+  },
+  {
+   "item_code": "ACC-HOY-T5-TC",
+   "item_name": "Hoymiles Flex-T5 Trunk Connector T5-TC",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM -Flex-T5 Trunk Connector T5-TC",
+   "disabled": 0,
+   "gst_hsn_code": "85369090",
+   "purchase_rate": 940
+  },
+  {
+   "item_code": "ACC-HOY-T5-CC",
+   "item_name": "Hoymiles Flex-T5 Connection Cable T5-CC-EN60-460",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM - Flex-T5 Connection Cable T5-CC-EN60-460",
+   "disabled": 0,
+   "gst_hsn_code": "39269099",
+   "purchase_rate": 6900
+  },
+  {
+   "item_code": "ACC-HOY-T5-DT",
+   "item_name": "Hoymiles Flex-T5 Disconnect Tool T5-DT",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Hoymiles",
+   "description": "HOYM- Flex-T5 Disconnect Tool T5-DT",
+   "disabled": 0,
+   "gst_hsn_code": "85369090",
+   "purchase_rate": 450
+  },
+  {
+   "item_code": "CBL-DC-4SQ-BLK",
+   "item_name": "4 sq mm Apar Solar DC Cable Black",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4Sqmm Apar Make Solar Cable Black",
+   "disabled": 0,
+   "gst_hsn_code": "85446030",
+   "purchase_rate": 63.5
+  },
+  {
+   "item_code": "CBL-DC-4SQ-RED",
+   "item_name": "4 sq mm Apar Solar DC Cable Red",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4Sqmm Apar Make Solar Cable Red",
+   "disabled": 0,
+   "gst_hsn_code": "85446030",
+   "purchase_rate": 63.5
+  },
+  {
+   "item_code": "CBL-AC-4SQ-BLK",
+   "item_name": "4 sq mm Apar Anushakthi 1.1 kV FRLSH Cable Black",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4SQMM APAR 1.1KV Y-HR-FRLSH ANUSHAKTHI BLACK",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": 70
+  },
+  {
+   "item_code": "CBL-AC-4SQ-RED",
+   "item_name": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Red",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4Sqmm-Apar Anushkati EBXL HRFR Flexible Red",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": 70
+  },
+  {
+   "item_code": "CBL-AC-6SQ-BLK",
+   "item_name": "6 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Black",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "6Sqmm-Apar Anushkati EBXL HRFR Flexible Black",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": 105
+  },
+  {
+   "item_code": "CBL-AC-6SQ-RED",
+   "item_name": "6 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Red",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "6Sqmm-Apar Anushkati EBXL HRFR Flexible RED",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": 105
+  },
+  {
+   "item_code": "CBL-AC-6SQ-BLU",
+   "item_name": "6 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Blue",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "6Sqmm-Apar Anushkati EBXL HRFR Flexible Blue",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": 105
+  },
+  {
+   "item_code": "CON-MC4",
+   "item_name": "Solar MC4 Connector",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Solar MC4 Connector",
+   "disabled": 0,
+   "gst_hsn_code": "85366990",
+   "purchase_rate": 40
+  },
+  {
+   "item_code": "CBL-PANEL-JUMPER",
+   "item_name": "Panel Jumper",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Panel Jumber",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 22
+  },
+  {
+   "item_code": "ERT-ROD-CB-14.2-250",
+   "item_name": "Copper Bonded Earth Rod 14.2 x 1220 mm, 250 micron",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Copper Bonded Rod 14 2x1220mmx250microns",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 570
+  },
+  {
+   "item_code": "ERT-ROD-CB-14-100",
+   "item_name": "Copper Bonded Earth Rod 14 x 1220 mm, 100 micron",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Copper Bonded Rod 14x1220mmx100microns",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 340
+  },
+  {
+   "item_code": "ERT-PIT-CHAMBER-18",
+   "item_name": "Earth Pit Chamber 18 x 18 cm",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Earth Pit Chamber 18 x 18 cm",
+   "disabled": 0,
+   "gst_hsn_code": "39189090",
+   "purchase_rate": 280
+  },
+  {
+   "item_code": "ERT-COMPOUND-10KG",
+   "item_name": "Excel Earthing Compound 10 kg",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Bag",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Excel",
+   "description": "Excel Earthing Compound 10Kg",
+   "disabled": 0,
+   "gst_hsn_code": "382499",
+   "purchase_rate": 210
+  },
+  {
+   "item_code": "ERT-STRIP-CB-25X3",
+   "item_name": "Flexible Copper Bonded Strip 25 x 3 mm, 3 m",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Flexible Copper Bonded Strip 25x3mmx3 Mtr",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 760
+  },
+  {
+   "item_code": "ERT-STRIP-INSULATOR-25X3",
+   "item_name": "Earth Strip Insulator 25 x 3",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "25X3 Earth Strip Insulator",
+   "disabled": 0,
+   "gst_hsn_code": "85469090",
+   "purchase_rate": 20
+  },
+  {
+   "item_code": "ERT-CU-WIRE-10SWG",
+   "item_name": "10 SWG Copper Wire",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Kg",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "10swg Copper Wire Kg",
+   "disabled": 0,
+   "gst_hsn_code": "74081990",
+   "purchase_rate": 1615
+  },
+  {
+   "item_code": "ERT-TERMINAL-SS-4P",
+   "item_name": "SS Terminal Strip 4 Pole",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "SS Terminal Strip -4 Pole",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 170
+  },
+  {
+   "item_code": "LA-MULTISPIKE-17X1000",
+   "item_name": "Lightning Arrestor 17 x 1000 mm Multi Spike",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Lightning Arrestor 17x1000mm Multi Spike",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 1120
+  },
+  {
+   "item_code": "LA-DOWN-CONDUCTOR-AL-8",
+   "item_name": "Aluminium 8 mm Down Conductor with Insulation",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Aluminium 8mm DownConductor with Insulation",
+   "disabled": 0,
+   "gst_hsn_code": "76011040",
+   "purchase_rate": 94
+  },
+  {
+   "item_code": "LA-HOLDER-NYLON-8",
+   "item_name": "Nylon Holder for 8 mm Insulated Cable",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Nylon Holder for 8mm Insulated Cable",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 9
+  },
+  {
+   "item_code": "SWG-ABB-ISO-63A-FP",
+   "item_name": "ABB 63A FP Isolator SDB204/63",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "ABB",
+   "description": "ABB 63A FP ISOLATER-SDB204/63 1SYD274115R0063",
+   "disabled": 0,
+   "gst_hsn_code": "85365090",
+   "purchase_rate": 702
+  },
+  {
+   "item_code": "SWG-VG-MCB-32A-DP",
+   "item_name": "V-Guard MCB 32A DP C-Curve",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "V-Guard",
+   "description": "MCB 32A DP C - V-Guard",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 295
+  },
+  {
+   "item_code": "ACDB-3PH-5-8KW",
+   "item_name": "ACDB 3 Phase 5-8 kW (Strider SH 9-Way, ABB 16A FP MCB, Citel SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "5-8 KW 3Ph AC DBSH9A16FPC280FP: STRIDER SH-9WAY Electrical DB, ABB 16A FP MCB SH204M-C16, AC SPD 3PH TYPE2 CITEL DS440-280",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 4540
+  },
+  {
+   "item_code": "ACDB-1PH-3KW",
+   "item_name": "ACDB 1 Phase 3 kW (Strider SH 4-Way, Eaton 16A DP MCB, Citel SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "3 KW AC DBSH4E16ACC280DP: AC SPD 1Ph Type 2 CITEL DS 240-280, Eaton 16A AC DP MCB, SH-Strider 4Way Enclosure",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 2288
+  },
+  {
+   "item_code": "ACDB-1PH-5KW",
+   "item_name": "ACDB 1 Phase 5 kW (ABS 1813T, V-Guard 32A DP MCB, Citel SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "5 KW AC DBT1813V32ACC280DP: BA ABS 1813T, MCB 32A DP C - V-Guard, AC SPD 1Ph Type 2 CITEL DS 240-280",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 2255
+  },
+  {
+   "item_code": "DCDB-1I1O-500V-SH6",
+   "item_name": "DCDB 1 In 1 Out 500 V (Strider SH 6-Way, V-Guard 32A DC MCB, Salzer SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "1-1 500 SH6MF25V32DCS600: Strider enclosure SH 6-way, HP10M25J1000VDC 25A Midget PV Fuse, V-Guard 500V 32A DC MCB, Salzer DC SPD 600V",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 2510
+  },
+  {
+   "item_code": "DCDB-1I1O-500V-T1818",
+   "item_name": "DCDB 1 In 1 Out 500 V (180x180x100 ABS Box, V-Guard 32A DC MCB, Salzer SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "1-1 500 T1818MF25V32DCS600: 180X180X100 ABS Base with Transparent Lid-11700587, V-Guard 500V 32A DC MCB, Salzer DC SPD 600V, HP10M25J1000VDC 25A Midget PV Fuse",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": 2360
+  },
+  {
+   "item_code": "MTR-BOX-3PH-EXCEL",
+   "item_name": "Excel 3 Phase Concealed Meter Box with Isolator Provision",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Excel",
+   "description": "Excel 3 Phase Concealed Meter Box-Isolator Prov",
+   "disabled": 0,
+   "gst_hsn_code": "85371000",
+   "purchase_rate": 1200
+  },
+  {
+   "item_code": "MTR-BOX-1PH-EXCEL",
+   "item_name": "Excel 1 Phase Concealed Meter Box with Isolator & Fuse Provision, Louvered",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Excel",
+   "description": "Excel 1 Phase Concealed Meter Box-Isolator & Fuse Prov With Louver",
+   "disabled": 0,
+   "gst_hsn_code": "85371000",
+   "purchase_rate": 930
+  },
+  {
+   "item_code": "MTR-GENUS-3PH-10-60A",
+   "item_name": "Genus 3 Phase Unidirectional Meter 10-60A (Tested)",
+   "item_group": "Meters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Genus",
+   "description": "Genus Unidirectional Mtr 10-60A TP TESTED",
+   "disabled": 0,
+   "gst_hsn_code": "90283010",
+   "purchase_rate": 3513
+  },
+  {
+   "item_code": "MTR-LT-1PH-5-30A",
+   "item_name": "L&T 1 Phase Unidirectional LCD Meter 5-30A WM101BC5D (Tested)",
+   "item_group": "Meters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "L&T",
+   "description": "L&T Unidirectional5-30A SP LCD MTR WM101BC5D Tested",
+   "disabled": 0,
+   "gst_hsn_code": "90283010",
+   "purchase_rate": 1233
+  },
+  {
+   "item_code": "MNT-CLAMP-MID-35",
+   "item_name": "Aluminium Middle Clamp 35 mm",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Aluminium Middle Clamp-35mm",
+   "disabled": 0,
+   "gst_hsn_code": "76169910",
+   "purchase_rate": 29
+  },
+  {
+   "item_code": "MNT-CLAMP-END-35",
+   "item_name": "Aluminium End Clamp 35 mm",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Aluminium End Clamp 35 mm",
+   "disabled": 0,
+   "gst_hsn_code": "76169910",
+   "purchase_rate": 20
+  },
+  {
+   "item_code": "MNT-CLAMP-MID-30",
+   "item_name": "Aluminium Middle Clamp 30 mm",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Aluminium Middle Clamp-30mm",
+   "disabled": 0,
+   "gst_hsn_code": "76169910",
+   "purchase_rate": 28
+  },
+  {
+   "item_code": "MNT-CLAMP-END-30",
+   "item_name": "Aluminium End Clamp 30 mm",
+   "item_group": "Mounting Structures",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Aluminium End Clamp 30mm",
+   "disabled": 0,
+   "gst_hsn_code": "76169910",
+   "purchase_rate": 20
+  },
+  {
+   "item_code": "CNS-CABLE-TIE-GT300-UV",
+   "item_name": "GT-300 UV Cable Tie Black (GT-300STUV-CB G5NC)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "GT-300STUV-CB BLACK G5NC",
+   "disabled": 0,
+   "gst_hsn_code": "39269099",
+   "purchase_rate": 380
+  },
+  {
+   "item_code": "CNS-WASHER-M4-PLAIN",
+   "item_name": "M4 Plain Washer SS304 (ISI)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "M4 ISI Plain Washer SS304",
+   "disabled": 0,
+   "gst_hsn_code": "73182200",
+   "purchase_rate": 0.8
+  },
+  {
+   "item_code": "CNS-NUT-M4",
+   "item_name": "M4 Nut SS304",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "M4 Nut SS304",
+   "disabled": 0,
+   "gst_hsn_code": "73181600",
+   "purchase_rate": 1
+  },
+  {
+   "item_code": "CNS-WASHER-M4-SPRING",
+   "item_name": "M4 Spring Washer SS304",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "M4 Spring Washer Flat SS304",
+   "disabled": 0,
+   "gst_hsn_code": "73182100",
+   "purchase_rate": 0.8
+  },
+  {
+   "item_code": "CNS-BOLT-M4X16-HH",
+   "item_name": "M4 x 16 Hex Head Bolt SS304",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "M4x16 HH SS304",
+   "disabled": 0,
+   "gst_hsn_code": "73181500",
+   "purchase_rate": 2.55
+  },
+  {
+   "item_code": "CNS-SCREW-6X25-CSK",
+   "item_name": "No.6 x 25 CSK Philips Self-Tapping Screw SS304",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "NO.6X25 CSK PHILIPS/T AB TYPE SS304",
+   "disabled": 0,
+   "gst_hsn_code": "73181400",
+   "purchase_rate": 1.5
+  },
+  {
+   "item_code": "CNS-SCREW-8X38-DRYWALL",
+   "item_name": "No.8 x 38 CSK Philips Drywall Screw SS304",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "APL",
+   "description": "Drywall NO 8 x 38 CSK PHILIPS S\\T SCREW \"APL\" SS (304)",
+   "disabled": 0,
+   "gst_hsn_code": "73181500",
+   "purchase_rate": 3
+  },
+  {
+   "item_code": "CNS-FIBER-PLUG-6",
+   "item_name": "No.6 Fiber Plug",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "No.6 Fiber Plug",
+   "disabled": 0,
+   "gst_hsn_code": "39259010",
+   "purchase_rate": 0.35
+  },
+  {
+   "item_code": "CNS-PRESS-SLEEVE-6-12",
+   "item_name": "Press Sleeve 6-12 mm",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Ashwin",
+   "description": "Press Sleeve 6-12mm (Ashwin)",
+   "disabled": 0,
+   "gst_hsn_code": "85366990",
+   "purchase_rate": 3.5
+  },
+  {
+   "item_code": "CNS-RING-M6-4-6SQ",
+   "item_name": "Non-Insulated Ring Terminal M6, 4-6 sq mm",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "NON-INSULATED RING M6 dia 4-6sqmm 11704221-TTRNBS5-6",
+   "disabled": 0,
+   "gst_hsn_code": "85369090",
+   "purchase_rate": 5
+  },
+  {
+   "item_code": "CNS-SOCKET-AL-50SQ",
+   "item_name": "Aluminium Hex Socket 50 sq mm (HAS 312)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Socket Palm Alu. HEX 50sqmm - HAS 312",
+   "disabled": 0,
+   "gst_hsn_code": "85369090",
+   "purchase_rate": 12.5
+  },
+  {
+   "item_code": "CND-PIPE-UPVC-25",
+   "item_name": "25 mm UPVC Pipe ISI(L) Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Poniard",
+   "description": "25mm Pipe ISI(L) Ivory PONIARD UPVC",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 74
+  },
+  {
+   "item_code": "CND-TEE-25",
+   "item_name": "25 mm Tee Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "25mm TEE [Ivory]",
+   "disabled": 0,
+   "gst_hsn_code": "39174000",
+   "purchase_rate": 7
+  },
+  {
+   "item_code": "CND-BEND-25",
+   "item_name": "25 mm PVC Bend ISI Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "25mm PVC Bend ISI ( Ivory)",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 11.5
+  },
+  {
+   "item_code": "CND-ELBOW-25",
+   "item_name": "25 mm Elbow Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "25mm Elbow [Ivory]",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 4.5
+  },
+  {
+   "item_code": "CND-COUPLING-25",
+   "item_name": "25 mm Coupling Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "25mm COUPLING ( Ivory)",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 6
+  },
+  {
+   "item_code": "CND-SADDLE-SS-25",
+   "item_name": "25 mm SS Saddle",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "SADDLE 25mm SS",
+   "disabled": 0,
+   "gst_hsn_code": "73072900",
+   "purchase_rate": 3
+  },
+  {
+   "item_code": "CND-PIPE-UPVC-20",
+   "item_name": "20 mm UPVC Pipe ISI(L) Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Poniard",
+   "description": "20mm Pipe ISI(L) Ivory PONIARD UPVC",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 48
+  },
+  {
+   "item_code": "CND-BEND-20",
+   "item_name": "20 mm PVC Bend ISI(L) Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "20mm PVC Bend -ISI(L) Ivory",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 7
+  },
+  {
+   "item_code": "CND-ELBOW-20",
+   "item_name": "20 mm Elbow Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "20mm Elbow [Ivory]",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 7
+  },
+  {
+   "item_code": "CND-TEE-20",
+   "item_name": "20 mm Tee Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "20mm TEE [Ivory]",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 4
+  },
+  {
+   "item_code": "CND-COUPLING-20",
+   "item_name": "20 mm Coupling Ivory",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "20mm Coupling Ivory",
+   "disabled": 0,
+   "gst_hsn_code": "39172310",
+   "purchase_rate": 4
+  },
+  {
+   "item_code": "CND-SADDLE-SS-20",
+   "item_name": "20 mm SS Saddle",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "SADDLE 20mm SS",
+   "disabled": 0,
+   "gst_hsn_code": "73072900",
+   "purchase_rate": 2.55
+  },
+  {
+   "item_code": "CND-FLEX-PG16-BLK",
+   "item_name": "Eleczar Polyamide Flexible Conduit PG16 Black (EBPA16)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Eleczar",
+   "description": "Eleczar polyamide flexible conduit PG16 black EBPA16",
+   "disabled": 0,
+   "gst_hsn_code": "39174000",
+   "purchase_rate": 49
+  },
+  {
+   "item_code": "CND-CHANNEL-SALZER-45",
+   "item_name": "Salzer Cable Channel 45 x 45 mm, 1 m, Unslotted, White",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Salzer",
+   "description": "Salzer B 45 x 45 ( W x H ) – 1Mtr – UnSlot- White",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 146
+  },
+  {
+   "item_code": "CND-CHANNEL-TRINITY-45",
+   "item_name": "Trinity PVC Channel 45 x 45 (TBWDN 45X45LG1)",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Trinity",
+   "description": "Trinity Make PVC Channel TBWDN 45X45LG1 -011701589",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": 133
+  },
+  {
+   "item_code": "MOD-VKM-550-DCR-PERC",
+   "item_name": "Vikram 550 Wp DCR Mono PERC Module",
+   "item_group": "Mono PERC Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Vikram",
+   "description": "Vikram 550Wp Mono PERC DCR",
+   "disabled": 0,
+   "gst_hsn_code": "85414300",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "MOD-RNS-625-DCR-TC",
+   "item_name": "Renewsys 625 Wp DCR TOPCon Module",
+   "item_group": "TOPCon Modules",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 1,
+   "dcr_certificate_no": null,
+   "brand": "Renewsys",
+   "description": "Renewsys 625 Wp DCR Topcon",
+   "disabled": 0,
+   "gst_hsn_code": "85414300",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "INV-SOL-OGS-3K",
+   "item_name": "Solinteg OGS 3 kW 1 Phase On-Grid Inverter",
+   "item_group": "On-Grid Inverters",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 1,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Solinteg",
+   "description": "3 KW 1 Phase Ongrid PV Solar inverter Solinteg OGS",
+   "disabled": 0,
+   "gst_hsn_code": "85044090",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "SWG-CS-ISO-40A-DP",
+   "item_name": "C&S 40A DP MCB-Type Isolator",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "C&S",
+   "description": "C&S 40A DP MCB Type Isolator",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-6SQ-GRN",
+   "item_name": "6 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Green",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "6Sqmm Apar Anushkati EBXL HRFR Flexible Green",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CBL-AC-4SQ-BLK-FLEX",
+   "item_name": "4 sq mm Apar Anushakthi EBXL HRFR Flexible Cable Black",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Meter",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Apar",
+   "description": "4 Sqmm Apar Anushkati EBXL HRFR Flexible Black",
+   "disabled": 0,
+   "gst_hsn_code": "85446020",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "DCDB-1I1O-STRIDER-MERSEN",
+   "item_name": "DCDB 1 In 1 Out (Strider enclosure, Mersen SPD)",
+   "item_group": "Cables and BOS",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Strider",
+   "description": "1/1 DCDB Strider Mersen SPD",
+   "disabled": 0,
+   "gst_hsn_code": "85362030",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "CND-CHANNEL-SALZER-45-GRY",
+   "item_name": "Salzer Cable Channel 45 x 45 mm, 1 m, Unslotted, Grey",
+   "item_group": "Solar Consumables",
+   "stock_uom": "Nos",
+   "is_stock_item": 1,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "Salzer",
+   "description": "Salzer B 45 x 45 ( W x H ) – 1Mtr – UnSlot- Grey",
+   "disabled": 0,
+   "gst_hsn_code": "85389000",
+   "purchase_rate": null
+  },
+  {
+   "item_code": "SRV-TESTING-CHARGE",
+   "item_name": "Testing Charge",
+   "item_group": "Solar Services",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": null,
+   "description": "Testing Charge Outward [Gst]",
+   "disabled": 0,
+   "gst_hsn_code": "996211",
+   "purchase_rate": 555
+  },
+  {
+   "item_code": "SRV-LT-METER-TEST-1PH",
+   "item_name": "L&T Energy Meter Testing Charge 1 Phase",
+   "item_group": "Solar Services",
+   "stock_uom": "Nos",
+   "is_stock_item": 0,
+   "has_serial_no": 0,
+   "is_dcr": 0,
+   "dcr_certificate_no": null,
+   "brand": "L&T",
+   "description": "L&T Testing Charge 1PH Energy",
+   "disabled": 0,
+   "gst_hsn_code": "998346",
+   "purchase_rate": 284
+  }
+ ],
+ "boms": [
+  {
+   "item": "PMSG 5KW SYSTEM 1PH",
+   "items": [
+    [
+     "MOD-RNS-625-DCR-TC",
+     8,
+     "Nos"
+    ],
+    [
+     "INV-SOL-OGS-5K",
+     1,
+     "Nos"
+    ],
+    [
+     "CBL-DC-4SQ-BLK",
+     30,
+     "Meter"
+    ],
+    [
+     "CBL-DC-4SQ-RED",
+     30,
+     "Meter"
+    ],
+    [
+     "CON-MC4",
+     2,
+     "Nos"
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3,
+     "Nos"
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3,
+     "Nos"
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3,
+     "Bag"
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1,
+     "Nos"
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2,
+     "Nos"
+    ],
+    [
+     "SWG-CS-ISO-40A-DP",
+     1,
+     "Nos"
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30,
+     "Meter"
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40,
+     "Nos"
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2,
+     "Nos"
+    ],
+    [
+     "MTR-LT-1PH-5-30A",
+     1,
+     "Nos"
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     1,
+     "Nos"
+    ],
+    [
+     "MNT-CLAMP-MID-35",
+     14,
+     "Nos"
+    ],
+    [
+     "MNT-CLAMP-END-35",
+     8,
+     "Nos"
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     8,
+     "Nos"
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     15,
+     "Nos"
+    ],
+    [
+     "CNS-NUT-M4",
+     15,
+     "Nos"
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     15,
+     "Nos"
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     15,
+     "Nos"
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100,
+     "Nos"
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     100,
+     "Nos"
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20,
+     "Nos"
+    ],
+    [
+     "MTR-BOX-1PH-EXCEL",
+     1,
+     "Nos"
+    ],
+    [
+     "ERT-CU-WIRE-10SWG",
+     1.6,
+     "Kg"
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     32,
+     "Meter"
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     15,
+     "Nos"
+    ],
+    [
+     "CBL-AC-6SQ-RED",
+     12,
+     "Meter"
+    ],
+    [
+     "CBL-AC-6SQ-BLK",
+     12,
+     "Meter"
+    ],
+    [
+     "CND-PIPE-UPVC-20",
+     18,
+     "Nos"
+    ],
+    [
+     "CND-BEND-20",
+     15,
+     "Nos"
+    ],
+    [
+     "CND-ELBOW-20",
+     15,
+     "Nos"
+    ],
+    [
+     "CND-TEE-20",
+     5,
+     "Nos"
+    ],
+    [
+     "CND-COUPLING-20",
+     10,
+     "Nos"
+    ],
+    [
+     "CND-FLEX-PG16-BLK",
+     2,
+     "Meter"
+    ],
+    [
+     "CND-SADDLE-SS-20",
+     100,
+     "Nos"
+    ],
+    [
+     "ACDB-1PH-5KW",
+     1,
+     "Nos"
+    ],
+    [
+     "DCDB-1I1O-STRIDER-MERSEN",
+     1,
+     "Nos"
+    ],
+    [
+     "CND-CHANNEL-SALZER-45-GRY",
+     2,
+     "Nos"
+    ]
+   ]
+  },
+  {
+   "item": "PMSG 3KW SYSTEM 1PH",
+   "items": [
+    [
+     "MOD-VKM-550-DCR-PERC",
+     6,
+     "Nos"
+    ],
+    [
+     "INV-SOL-OGS-3K",
+     1,
+     "Nos"
+    ],
+    [
+     "CBL-DC-4SQ-BLK",
+     30,
+     "Meter"
+    ],
+    [
+     "CBL-DC-4SQ-RED",
+     30,
+     "Meter"
+    ],
+    [
+     "CON-MC4",
+     2,
+     "Nos"
+    ],
+    [
+     "ERT-ROD-CB-14.2-250",
+     3,
+     "Nos"
+    ],
+    [
+     "ERT-PIT-CHAMBER-18",
+     3,
+     "Nos"
+    ],
+    [
+     "ERT-COMPOUND-10KG",
+     3,
+     "Bag"
+    ],
+    [
+     "LA-MULTISPIKE-17X1000",
+     1,
+     "Nos"
+    ],
+    [
+     "ERT-TERMINAL-SS-4P",
+     2,
+     "Nos"
+    ],
+    [
+     "SWG-CS-ISO-40A-DP",
+     1,
+     "Nos"
+    ],
+    [
+     "LA-DOWN-CONDUCTOR-AL-8",
+     30,
+     "Meter"
+    ],
+    [
+     "LA-HOLDER-NYLON-8",
+     40,
+     "Nos"
+    ],
+    [
+     "CNS-SOCKET-AL-50SQ",
+     2,
+     "Nos"
+    ],
+    [
+     "MTR-LT-1PH-5-30A",
+     1,
+     "Nos"
+    ],
+    [
+     "CNS-CABLE-TIE-GT300-UV",
+     1,
+     "Nos"
+    ],
+    [
+     "MNT-CLAMP-MID-35",
+     8,
+     "Nos"
+    ],
+    [
+     "MNT-CLAMP-END-35",
+     8,
+     "Nos"
+    ],
+    [
+     "CBL-PANEL-JUMPER",
+     6,
+     "Nos"
+    ],
+    [
+     "CNS-WASHER-M4-PLAIN",
+     11,
+     "Nos"
+    ],
+    [
+     "CNS-NUT-M4",
+     11,
+     "Nos"
+    ],
+    [
+     "CNS-WASHER-M4-SPRING",
+     11,
+     "Nos"
+    ],
+    [
+     "CNS-BOLT-M4X16-HH",
+     11,
+     "Nos"
+    ],
+    [
+     "CNS-SCREW-6X25-CSK",
+     100,
+     "Nos"
+    ],
+    [
+     "CNS-FIBER-PLUG-6",
+     100,
+     "Nos"
+    ],
+    [
+     "CNS-PRESS-SLEEVE-6-12",
+     20,
+     "Nos"
+    ],
+    [
+     "MTR-BOX-1PH-EXCEL",
+     1,
+     "Nos"
+    ],
+    [
+     "ERT-CU-WIRE-10SWG",
+     1.6,
+     "Kg"
+    ],
+    [
+     "CBL-AC-6SQ-GRN",
+     32,
+     "Meter"
+    ],
+    [
+     "CNS-RING-M6-4-6SQ",
+     15,
+     "Nos"
+    ],
+    [
+     "CBL-AC-4SQ-RED",
+     12,
+     "Meter"
+    ],
+    [
+     "CBL-AC-4SQ-BLK-FLEX",
+     12,
+     "Meter"
+    ],
+    [
+     "CND-PIPE-UPVC-20",
+     18,
+     "Nos"
+    ],
+    [
+     "CND-BEND-20",
+     15,
+     "Nos"
+    ],
+    [
+     "CND-ELBOW-20",
+     15,
+     "Nos"
+    ],
+    [
+     "CND-TEE-20",
+     5,
+     "Nos"
+    ],
+    [
+     "CND-COUPLING-20",
+     10,
+     "Nos"
+    ],
+    [
+     "CND-FLEX-PG16-BLK",
+     2,
+     "Meter"
+    ],
+    [
+     "CND-SADDLE-SS-20",
+     100,
+     "Nos"
+    ],
+    [
+     "ACDB-1PH-3KW",
+     1,
+     "Nos"
+    ],
+    [
+     "DCDB-1I1O-STRIDER-MERSEN",
+     1,
+     "Nos"
+    ],
+    [
+     "CND-CHANNEL-SALZER-45-GRY",
+     2,
+     "Nos"
+    ]
+   ]
+  }
+ ]
+}

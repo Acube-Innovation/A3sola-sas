@@ -226,3 +226,5 @@ a3_sola.patches.v1_2.accept_customer_documents
 a3_sola.patches.v1_2.structural_design_freeze_task
 # Inverters come from the master price list: models with price, warranty, extension, optimizer and kit.
 a3_sola.patches.v1_2.inverter_models
+# The 1 phase 3 kW and 5 kW packages get their Material BOM, with the RIM Projects items it is made of.
+a3_sola.patches.v1_2.package_material_boms
