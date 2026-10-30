@@ -80,11 +80,14 @@ def create_record(slug=None, source_dt=None, source=None, source_task=None, **va
 
 	_set_item_rows(doc, slug, values)
 	doc.insert()
-	# A KSEB bill read on the form (api/kseb_bill.py) becomes this record's.
-	if values.get("kseb_bill_file"):
-		from a3_sola.api import kseb_bill
+	# A KSEB bill or an Aadhaar card read on the form (api/kseb_bill.py, api/aadhaar_card.py)
+	# becomes this record's.
+	for kept in ("kseb_bill_file", "aadhaar_file"):
+		for file_name in (values.get(kept) or "").split(","):
+			if file_name.strip():
+				from a3_sola.api import kseb_bill
 
-		kseb_bill.claim(values["kseb_bill_file"], doctype, doc.name)
+				kseb_bill.claim(file_name.strip(), doctype, doc.name)
 
 	# Only once the record exists: the source now points at it, so the button on the
 	# source's page becomes the card for this record.

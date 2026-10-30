@@ -332,10 +332,11 @@ def create_lead(
 	# which is why this endpoint does no role-checking of its own.
 	doc.insert()
 	# A KSEB bill read on the form (api/kseb_bill.py) becomes this lead's.
-	if kseb_bill_file:
-		from a3_sola.api import kseb_bill
+	for file_name in (kseb_bill_file or "").split(","):
+		if file_name.strip():
+			from a3_sola.api import kseb_bill
 
-		kseb_bill.claim(kseb_bill_file, "Lead", doc.name)
+			kseb_bill.claim(file_name.strip(), "Lead", doc.name)
 
 	# Straight on to the full edit form, so the rest of the lead is filled in without a detour.
 	return {"name": doc.name, "route": lead_route(doc.name) + "/edit"}

@@ -28,30 +28,43 @@ from frappe.utils.file_manager import get_max_file_size
 CONSUMER = "Solar Consumer"
 DOCTYPES = ("Lead", CONSUMER)
 KSEB_BILL = "KSEB Bill"
+#: Documents read on a create form and attached as the record is created (`claim`).
+CLAIMABLE = (KSEB_BILL, "Aadhaar Front", "Aadhaar Back")
+PASSWORD_NEEDED, WRONG_PASSWORD = "Password Needed", "Wrong Password"
 IMAGE_TYPES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".heic")
 NO_OCR = _("Photos of bills can't be read on this server yet (OCR is not installed). Upload the PDF bill, "
 	"or fill the details in.")
 
 
 # ------------------------------------------------------------------ reading the text
-def extract_text(content, filename):
-	"""The bill's text, and how it was read: "pdf-text" or "ocr"."""
+def extract_text(content, filename, password=None):
+	"""The document's text, and how it was read: "pdf-text" or "ocr". A PDF locked with a
+	password (an e-Aadhaar) needs it."""
 	name = (filename or "").lower()
 	if name.endswith(".pdf") or content[:5] == b"%PDF-":
-		text = pdf_text(content)
+		text = pdf_text(content, password)
 		if len(text.strip()) > 50:
 			return text, "pdf-text"
-		return ocr_pdf(content), "ocr"
+		return ocr_pdf(content, password), "ocr"
 	if name.endswith(IMAGE_TYPES) or content[:4] in (b"\x89PNG", b"\xff\xd8\xff\xe0", b"\xff\xd8\xff\xe1", b"\xff\xd8\xff\xdb"):
 		return ocr_image(content), "ocr"
 	frappe.throw(_("Upload the KSEB bill as a PDF or a photo (JPG or PNG)."), frappe.ValidationError)
 
 
-def pdf_text(content):
+def pdf_text(content, password=None):
 	from pypdf import PdfReader
 
 	try:
 		reader = PdfReader(io.BytesIO(content))
+	except Exception:
+		frappe.throw(_("The PDF could not be read. Save it again and retry."), frappe.ValidationError)
+	if reader.is_encrypted:
+		# The page asks for the password on these titles and sends the file again with it.
+		if not password:
+			frappe.throw(_("This PDF is locked with a password. Enter it to read the document."), title=PASSWORD_NEEDED)
+		if not reader.decrypt(password):
+			frappe.throw(_("That password does not open this PDF."), title=WRONG_PASSWORD)
+	try:
 		return "\n".join(page.extract_text(extraction_mode="layout") or "" for page in reader.pages[:3])
 	except Exception:
 		frappe.throw(_("The PDF could not be read. Save it again and retry."), frappe.ValidationError)
@@ -88,7 +101,7 @@ def ocr_image(content):
 	return ocr.image_to_string(image, lang="eng", config="--psm 4")
 
 
-def ocr_pdf(content):
+def ocr_pdf(content, password=None):
 	"""A scanned PDF: its first pages as images, read with OCR."""
 	if not (tesseract() and shutil.which("pdftoppm")):
 		frappe.throw(NO_OCR, title=_("Scan Not Read"))
@@ -96,7 +109,8 @@ def ocr_pdf(content):
 		path = f"{tmp}/bill.pdf"
 		with open(path, "wb") as f:
 			f.write(content)
-		subprocess.run(["pdftoppm", "-r", "300", "-png", "-f", "1", "-l", "2", path, f"{tmp}/page"],
+		subprocess.run(["pdftoppm", "-r", "300", "-png", "-f", "1", "-l", "2"] + (["-upw", password] if password else [])
+			+ [path, f"{tmp}/page"],
 			check=True, timeout=60, capture_output=True)
 		pages = sorted(p for p in os.listdir(tmp) if p.startswith("page"))
 		return "\n".join(ocr_image(open(f"{tmp}/{p}", "rb").read()) for p in pages)
@@ -322,36 +336,50 @@ def read(doctype, name=None):
 		attached = True
 	else:
 		# No record yet: the bill waits, private and the reader's own, for the one created.
-		pending = frappe.get_doc({"doctype": "File", "file_name": upload.filename, "content": content, "is_private": 1,
-			"a3s_document_type": KSEB_BILL}).insert(ignore_permissions=True).name
+		pending = keep(upload.filename, content)
 	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached, "pending_file": pending}
 
 
 def claim(file_name, doctype, name):
-	"""The bill read on a create form, attached to the record it created as its KSEB Bill: only
-	the reader's own, and only one not yet attached to anything."""
+	"""A document read on a create form - a KSEB bill, an Aadhaar card - attached to the record it
+	created as what it is: only the reader's own, and only one not yet attached to anything."""
 	if not file_name or doctype not in DOCTYPES:
 		return None
 	file = frappe.db.get_value("File", file_name, ["name", "owner", "attached_to_doctype", "a3s_document_type",
 		"file_url"], as_dict=True)
-	if not file or file.owner != frappe.session.user or file.attached_to_doctype or file.a3s_document_type != KSEB_BILL:
+	if not file or file.owner != frappe.session.user or file.attached_to_doctype or file.a3s_document_type not in CLAIMABLE:
 		return None
-	from a3_sola.api import portal_attachments
-
 	frappe.db.set_value("File", file.name, {"attached_to_doctype": doctype, "attached_to_name": name})
-	if doctype == CONSUMER:
-		portal_attachments._sync_kyc(name, file.file_url, KSEB_BILL)
-	portal_attachments._refresh_kyc(doctype, name)
+	kyc_rows(doctype, name, file.file_url, file.a3s_document_type)
 	return file.file_url
 
 
-def attach(doctype, name, filename, content):
-	"""The bill on the record as its KSEB Bill - and, on a customer, its KYC row."""
+def kyc_rows(doctype, name, file_url, document_type):
+	"""A customer's KYC row for the file - an e-Aadhaar, front and back in one, counts for both -
+	and the KYC status, which follows."""
 	from a3_sola.api import portal_attachments
 
-	file = frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
-		"attached_to_doctype": doctype, "attached_to_name": name, "a3s_document_type": KSEB_BILL}).insert(ignore_permissions=True)
 	if doctype == CONSUMER:
-		portal_attachments._sync_kyc(name, file.file_url, KSEB_BILL)
+		portal_attachments._sync_kyc(name, file_url, document_type)
+		if document_type == "Aadhaar Front" and file_url.lower().endswith(".pdf"):
+			consumer = frappe.get_doc(CONSUMER, name)
+			if not any(r.kyc_type == "Aadhaar Back" for r in consumer.get("kyc_documents") or []):
+				consumer.append("kyc_documents", {"kyc_type": "Aadhaar Back", "attachment": file_url})
+				consumer.save(ignore_permissions=True)
 	portal_attachments._refresh_kyc(doctype, name)
+
+
+def attach(doctype, name, filename, content, document_type=KSEB_BILL):
+	"""The document on the record as what it is (its KSEB Bill unless said) - and, on a
+	customer, its KYC row."""
+	file = frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
+		"attached_to_doctype": doctype, "attached_to_name": name, "a3s_document_type": document_type}).insert(ignore_permissions=True)
+	kyc_rows(doctype, name, file.file_url, document_type)
 	return file.file_url
+
+
+def keep(filename, content, document_type=KSEB_BILL):
+	"""A document read on a create form, kept private and the reader's own until the record it
+	is for is created and claims it."""
+	return frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
+		"a3s_document_type": document_type}).insert(ignore_permissions=True).name

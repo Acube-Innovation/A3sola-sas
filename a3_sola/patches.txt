@@ -244,3 +244,5 @@ a3_sola.patches.v1_2.solar_panel_variants
 a3_sola.patches.v1_2.consumer_lead_mobile
 # Renewcore's staff designations (Managing Partner, Project Coordinator/Engineer, Sales Coordinator).
 a3_sola.patches.v1_2.staff_designations
+# A customer's date of birth and gender, read from the Aadhaar card with the permanent address.
+a3_sola.patches.v1_2.consumer_dob_gender
