@@ -25,6 +25,7 @@
   "company",
   "status",
   "lead",
+  "dealer",
   "site_survey",
   "sb_address",
   "site_address_line1",
@@ -232,6 +233,14 @@
    "options": "Lead",
    "description": "The enquiry this customer came from. Kept, not shown: what the lead knows fills in the customer.",
    "hidden": 1
+  },
+  {
+   "fieldname": "dealer",
+   "fieldtype": "Link",
+   "label": "Dealer",
+   "options": "User",
+   "read_only": 1,
+   "description": "The dealer who brought this customer in. Set when a dealer creates the customer, or from the lead."
   },
   {
    "fieldname": "site_survey",
@@ -873,6 +882,28 @@
    "email": 1,
    "export": 1,
    "share": 1
+  },
+  {
+   "role": "Solar Dealer",
+   "read": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "report": 0,
+   "export": 0,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Solar Contractor Partner",
+   "read": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "report": 0,
+   "export": 0,
+   "permlevel": 0
   }
  ],
  "search_fields": "consumer_name,consumer_number,mobile_no",

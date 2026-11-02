@@ -33,6 +33,7 @@ BANK = "Bank Activity"
 SCOPES = {
 	"ORD": COMPANY, "FRM1": KSEB, "F1PAY": KSEB, "NPA": SCHEME, "ACPT": SCHEME, "DAL": SCHEME, "LOAN": BANK, "ADV": COMPANY,
 	"STMP": KSEB, "DSGN": COMPANY, "SDSGN": COMPANY, "SPROC": COMPANY, "IWOS": COMPANY, "PROC": COMPANY, "DISP": COMPANY,
+	"SUPINV": COMPANY, "SERIAL": COMPANY,
 	"MATL": COMPANY, "IWOI": COMPANY, "PORTUPD": SCHEME, "CEIG": KSEB,
 	"FRM2": KSEB, "KFORMS": KSEB, "F2PAY": KSEB, "COMM": KSEB, "KTST": KSEB, "MTR": KSEB, "MTRPAY": KSEB,
 	"BCOM": BANK, "BAL": COMPANY, "PCOM": COMPANY, "CFILE": COMPANY, "REVIEW": COMPANY, "SUBREQ": SCHEME,
@@ -52,7 +53,7 @@ DEFAULT_ASSIGNEES = {
 	"ADV": LEAD_OWNER, "REVIEW": LEAD_OWNER,
 	"NPA": SALES_COORDINATOR, "ACPT": SALES_COORDINATOR, "FRM1": SALES_COORDINATOR, "DAL": SALES_COORDINATOR,
 	"PORTUPD": PROJECT_MANAGER, "SUBREQ": PROJECT_MANAGER, "CORR": PROJECT_MANAGER, "DBT": PROJECT_MANAGER,
-	"BAL": ACCOUNTS, "PCOM": ACCOUNTS,
+	"BAL": ACCOUNTS, "PCOM": ACCOUNTS, "SUPINV": ACCOUNTS,
 	"IWOS": CONTRACTOR,
 	"SPROC": PROJECT_MANAGER,
 }  # every other task: the Project Engineer
@@ -71,7 +72,7 @@ HALF_PAID_TASKS = ("SPROC", "PROC", "DISP", "IWOS", "IWOI", "MATL", "FRM2", "F2P
 START_AT_HALF = ("SPROC", "PROC", "BAL", "FRM2")
 #: Each task started once every task before it is done: {task: its predecessors}.
 NEXT_AT_HALF = {
-	"DISP": ("SPROC", "PROC"), "IWOS": ("DISP",), "IWOI": ("DISP",), "MATL": ("DISP",),
+	"DISP": ("SPROC", "PROC"), "IWOS": ("DISP",), "IWOI": ("DISP",), "MATL": ("DISP",), "SUPINV": ("DISP",), "SERIAL": ("SUPINV",),
 	"FRM2": ("F1PAY",), "F2PAY": ("FRM2",),
 }
 
@@ -175,6 +176,18 @@ TASKS = [
 	_task("DISP", "Material Dispatch", "Internal", 2, "Delivery Note",
 	      documents=[("Delivery note", 0, None), ("Serial manifest", 0, None)],
 	      description="Materials dispatched to the customer site with serial numbers recorded."),
+	# The supplier's bill for the material, once it is on its way (api/supplier_bill): read
+	# from the bill's PDF into an ERPNext Purchase Invoice on the job.
+	_task("SUPINV", "Supplier Invoice", "Internal", 3, "Purchase Invoice",
+	      due_anchor_task="DISP", due_anchor_days=3, documents=[("Supplier tax invoice", 0, None)],
+	      description="The supplier's bill for the job's material read from its PDF and entered as "
+	                  "a Purchase Invoice."),
+	# The job's serial numbers, once the bill is in (api/serial_entry): fetched from the
+	# supplier's bill where it lists them, read off a photo of the labels, or typed.
+	_task("SERIAL", "Enter Serial Numbers", "Internal", 2, "Installation Task",
+	      due_anchor_task="SUPINV", due_anchor_days=2, documents=[("Serial number labels", 0, None)],
+	      description="The modules', inverters' and other equipment's serial numbers entered on the job's "
+	                  "register - from the supplier's invoice, a photo of the labels, or typed."),
 	# The work orders follow the dispatch: the material is on site before the crews are.
 	_task("IWOS", "Work Order - Structure", "Internal", 5, "Installation Work Order", role=SITE,
 	      task_type="Structure", documents=[("Structure photographs", 0, None)],

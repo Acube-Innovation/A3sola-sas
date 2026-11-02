@@ -23,7 +23,9 @@
 	.options tr.line td.label { padding-left: 14px; }
 	.options tr.sum td { font-weight: bold; }
 	.options tr.grand td { font-size: 13px; font-weight: bold; border-top: 2px solid #2a3342; border-bottom: 0; }
-	.options .lowest { background: #fff4e0; }
+	.options tr.inverter td { background: #eaf6fc; font-weight: bold; }
+	.options tr.inverter td.label { color: #1b6f99; }
+	.options .lowest, .options tr.inverter td.lowest { background: #fff4e0; }
 	.options tr.grand td.lowest { color: #c76a00; }
 	.tag { display: inline-block; white-space: nowrap; margin-top: 3px; padding: 1px 6px; border-radius: 8px; font-size: 8px; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; }
 	.tag.recommended { color: #5b6575; border: 1px solid #c9ced6; }
@@ -74,19 +76,21 @@
 		</tr>
 		<tr><td class="label">{{ _("Package") }}</td>{% for c in columns %}<td{% if c.key in lowest %} class="lowest"{% endif %}>{{ c.package | e }}</td>{% endfor %}</tr>
 		{{- row(_("Proposed size"), "size") }}
-		{{- row(_("Panels"), "panel_kwp") }}
-		{{- row(_("Inverters"), "inverter_kw") }}
 		{{- row(_("System price"), "package_cost") }}
+		{{- row(_("Panels"), "panel_kwp") }}
 		{{- row(_("Solar panel"), "panel") }}
 		{{- row(_("Panel qty"), "panel_nos") }}
-		{{- row(_("Inverter"), "inverter") }}
-		{{- row(_("Inverter qty"), "inverter_nos") }}
+		{{- row(_("Inverters"), "inverter_kw", "inverter") }}
+		{{- row(_("Inverter"), "inverter", "inverter") }}
+		{{- row(_("Inverter qty"), "inverter_nos", "inverter") }}
 		{%- if columns | selectattr("battery") | list %}{{ row(_("Battery"), "battery") }}{% endif %}
 		{%- for key, label in lines %}
 		<tr class="line"><td class="label">{{ label | e }}</td>{% for c in columns %}{{ cell(c, money(amounts[loop.index0].get(key) or 0)) }}{% endfor %}</tr>
 		{%- endfor %}
 		<tr class="sum"><td class="label">{{ _("Subtotal") }}</td>{% for c in columns %}{{ cell(c, money(c.subtotal)) }}{% endfor %}</tr>
+		{%- if columns | rejectattr("error") | selectattr("gst_amount") | list %}
 		<tr><td class="label">{{ _("GST") }}</td>{% for c in columns %}{{ cell(c, money(c.gst_amount)) }}{% endfor %}</tr>
+		{%- endif %}
 		<tr class="grand">
 			<td class="label">{{ _("Total") }}</td>
 			{%- for c in columns %}

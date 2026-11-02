@@ -115,6 +115,11 @@ DOC_EVENTS = {
 	**{doctype: dict(_SYNC_EVENTS) for doctype in TASK_DOCTYPES},
 	# The purchase order carries the site to the supplier and files its own print.
 	"Purchase Receipt": {"on_submit": ["a3_sola.api.documents.register_erpnext_document"]},
+	# A supplier's material bill moves the job's Supplier Invoice task (api/supplier_bill).
+	"Purchase Invoice": {
+		"on_submit": ["a3_sola.api.supplier_bill.on_bill_change"],
+		"on_cancel": ["a3_sola.api.supplier_bill.on_bill_change"],
+	},
 }
 DOC_EVENTS["Purchase Order"]["validate"] = ["a3_sola.api.materials.set_site_fields"]
 DOC_EVENTS["Purchase Order"]["on_submit"] = DOC_EVENTS["Purchase Order"]["on_submit"] + [

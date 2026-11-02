@@ -62,7 +62,7 @@
 	}
 
 	function lists(s) {
-		if (!s.lists.length) return '<p class="a3s-field__hint">No procurement task on this job yet.</p>';
+		if (!s.lists.length) return '<p class="a3s-field__hint">No procurement task on this project yet.</p>';
 		return s.lists.map(function (l) {
 			var head = "<b>" + esc(l.title) + "</b> &middot; " + esc(l.method);
 			if (!l.godown) {
@@ -93,7 +93,7 @@
 		var html = '<div class="a3s-paytask__head"><h3 class="a3s-edit__card-title">' + esc(t.name) + "</h3>" +
 			'<span class="a3s-taskdocs__state is-' + tone + '">' + esc(t.status) + "</span></div>";
 		if (t.status === "Skipped") {
-			html += '<p class="a3s-field__hint">Not needed on this job' + (t.reason ? ": " + esc(t.reason) : "") + ".</p>";
+			html += '<p class="a3s-field__hint">Not needed on this project' + (t.reason ? ": " + esc(t.reason) : "") + ".</p>";
 		}
 		if (t.status === "Completed") html += '<p class="a3s-field__hint">Dispatched on ' + esc(t.completed_on) + ".</p>";
 

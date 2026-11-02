@@ -63,6 +63,43 @@ def _sync_kyc(consumer_name, file_url, document_type):
 		consumer.save(ignore_permissions=True)
 
 
+#: Document types a record holds one of: a newer one replaces the one before.
+SINGLE_TYPES = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "Digital Approval Letter")
+
+
+def supersede(doctype, name, document_type, file_url):
+	"""The record's file at `file_url` is now its `document_type`: of a type it holds one of
+	(SINGLE_TYPES), only the newest file at that URL is kept - the same bill uploaded twice is
+	one File per upload, at one URL - and the other files of the type are removed, with, on a
+	customer, their KYC rows and any row of that type on another file (an e-Aadhaar's back,
+	once a photo of the back replaces it)."""
+	if document_type not in SINGLE_TYPES:
+		return
+	files = frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name,
+		"a3s_document_type": document_type, "is_folder": 0}, fields=["name", "file_url"], order_by="creation desc")
+	keep = next((f for f in files if f.file_url == file_url), None)
+	if not keep:
+		return
+	older = [f for f in files if f.name != keep.name]
+	if doctype == CONSUMER:
+		consumer = frappe.get_doc(CONSUMER, name)
+		rows = consumer.get("kyc_documents") or []
+		gone = {f.file_url for f in older} - {file_url}
+		kept, seen = [], set()
+		for r in rows:
+			if r.attachment in gone or (r.kyc_type == document_type and r.attachment != file_url):
+				continue
+			if (r.kyc_type, r.attachment) in seen:  # the same file's row twice
+				continue
+			seen.add((r.kyc_type, r.attachment))
+			kept.append(r)
+		if len(kept) != len(rows):
+			consumer.set("kyc_documents", kept)
+			consumer.save(ignore_permissions=True)
+	for f in older:
+		frappe.delete_doc("File", f.name, ignore_permissions=True)
+
+
 def _refresh_kyc(doctype, name):
 	"""The customer's KYC status, after a file came or went on it or on its lead."""
 	if doctype in (CONSUMER, "Lead"):
@@ -96,6 +133,14 @@ def list_files(doctype, name):
 		"document_types": document_types(), "max_file_mb": get_max_file_size() // (1024 * 1024)}
 
 
+@frappe.whitelist()
+def held_card(doctype):
+	"""The card's choices for a record not yet created: the types, the size limit, and whether
+	the person may create one - its files are held on the card until it is."""
+	return {"files": [], "can_upload": bool(frappe.has_permission(doctype, "create")),
+		"document_types": document_types(), "max_file_mb": get_max_file_size() // (1024 * 1024)}
+
+
 @frappe.whitelist(methods=["POST"])
 def upload(doctype, name, document_type=None):
 	"""Attach each file posted as `file` to the record, private, as `document_type`, and
@@ -124,6 +169,12 @@ def upload(doctype, name, document_type=None):
 				upload.filename), frappe.ValidationError)
 		if doctype == CONSUMER and document_type:
 			_sync_kyc(name, file.file_url, document_type)
+		# Several of a one-only type sent together: the last one sent is kept.
+		supersede(doctype, name, document_type, file.file_url)
+		if doctype == "Installation Task" and document_type == "Digital Approval Letter":
+			from a3_sola.api import approval_letter
+
+			approval_letter.fill_task(name, content, upload.filename)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
@@ -144,6 +195,7 @@ def set_type(doctype, name, file, document_type=None):
 	frappe.db.set_value("File", file, "a3s_document_type", document_type or None)
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, document_type)
+	supersede(doctype, name, document_type, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 

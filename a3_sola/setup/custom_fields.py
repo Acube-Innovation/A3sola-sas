@@ -16,7 +16,7 @@ CADENCE = (
 #: Solar Consumer is also its KYC row (api/portal_attachments), then the rest.
 DOCUMENT_TYPES = (
 	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\n"
-	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nOther"
+	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nDigital Approval Letter\nOther"
 )
 LEAD_STATUS = (
 	"New\nContacted\nIn Discussion\nSite Visit Scheduled\nConverted / Won\n"
@@ -107,6 +107,10 @@ CUSTOM_FIELDS = {
 		{"fieldname": "district", "fieldtype": "Link", "options": "Indian District",
 		 "label": "District", "insert_after": "city",
 		 "description": "Districts are offered for the chosen state."},
+		# The dealer who brought the lead in: set when a dealer creates it, or by staff to hand
+		# a lead to a dealer. A dealer sees only his own leads (api/partner_scope).
+		{"fieldname": "a3s_dealer", "fieldtype": "Link", "options": "User", "label": "Dealer",
+		 "insert_after": "lead_owner"},
 		# Solar Details lives in its own "Solar" tab, placed right after the Details tab
 		# (its last field is `blog_subscriber`, just before ERPNext's `activities_tab`).
 		{"fieldname": "a3s_solar_tab", "fieldtype": "Tab Break", "label": "Solar", "insert_after": "blog_subscriber"},

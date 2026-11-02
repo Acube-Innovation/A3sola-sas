@@ -5,8 +5,9 @@
 Each task on the template names a default position (`default_assignee`: Project Engineer,
 Project Manager, Sales Co-ordinator, Lead Owner, Accounts, Contractor). On a project that
 position is a person: the job's own Project Manager, Project Engineer (`site_engineer`) and
-Sales Co-ordinator fields, its lead's owner, and everyone in Accounts. A contractor has no
-login, so a contractor's task goes to the Project Engineer, with the contractor named on
+Sales Co-ordinator fields, its lead's owner, and everyone in Accounts. A contractor's task
+goes to the electrical contractor's portal login (Solar Contractor's Portal User); a
+contractor with no login leaves it to the Project Engineer, with the contractor named on
 the card.
 
 The people are the job's `task_assignees` rows (task code, user); the task row's own
@@ -63,6 +64,12 @@ def prefill_people(inst):
 def resolve(inst, position):
 	"""The people a position means on this job."""
 	if position == CONTRACTOR:
+		# The contractor himself, where his Solar Contractor record has a portal login.
+		from a3_sola.api.partner_scope import contractor_user
+
+		user = contractor_user(inst)
+		if user:
+			return [user]
 		position = PROJECT_ENGINEER
 	field = POSITION_FIELDS.get(position)
 	if field:

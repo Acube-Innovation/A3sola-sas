@@ -310,6 +310,29 @@
 		busy(true);
 		setStatus("Saving…");
 
+		/* A new task with files held on its Attachments card: they can only go up once it
+		   exists, and a task is completed only with its evidence - so one asked to be created
+		   Completed is created In Progress, given its files, then completed. */
+		var body = collect();
+		var heldFiles = !form.dataset.name && window.a3sAttachHeld && window.a3sAttachHeld.count() > 0;
+		var completeAfter = heldFiles && body.status === "Completed";
+		if (completeAfter) body.status = "In Progress";
+
+		function complete(saved) {
+			if (!completeAfter) return Promise.resolve();
+			return fetch("/api/method/a3_sola.api.portal_crud.update_record", {
+				method: "POST",
+				credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ slug: slug, name: saved.name, status: "Completed" })
+			}).then(function (response) {
+				return response.json().catch(function () { return {}; }).then(function (data) {
+					if (!response.ok) throw new Error("Saved as In Progress, but it could not be completed: " +
+						(serverMessage(data) || "try again on the task's page."));
+				});
+			});
+		}
+
 		fetch("/api/method/" + endpoint, {
 			method: "POST",
 			credentials: "same-origin",
@@ -318,14 +341,25 @@
 				"Accept": "application/json",
 				"X-Frappe-CSRF-Token": csrf
 			},
-			body: JSON.stringify(collect())
+			body: JSON.stringify(body)
 		}).then(function (response) {
 			return response.json().catch(function () { return {}; })
 				.then(function (data) { return { ok: response.ok, code: response.status, data: data }; });
 		}).then(function (result) {
 			if (result.ok && result.data && result.data.message) {
-				setStatus("Saved. Taking you back…", "success");
-				window.location.assign(result.data.message.route || viewRoute);
+				var saved = result.data.message;
+				/* A new task's files, held on its Attachments card, go up to it now. */
+				var held = heldFiles && saved.name;
+				setStatus(held ? "Saved. Uploading the attachments…" : "Saved. Taking you back…", "success");
+				(held ? window.a3sAttachHeld(saved.name).then(function () { return complete(saved); }, function (error) {
+					throw new Error("Saved, but the attachments did not upload: " + error.message + " Add them on the task's page.");
+				}) : Promise.resolve()).then(function () {
+					window.location.assign(saved.route || viewRoute);
+				}, function (error) {
+					/* The task exists now: shown the problem, then taken to it to finish there. */
+					setStatus(error.message, "error");
+					setTimeout(function () { window.location.assign(saved.route || viewRoute); }, 4000);
+				});
 				return;
 			}
 			busy(false);

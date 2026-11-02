@@ -117,7 +117,7 @@
 		if (drafts[field]) {
 			table += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-act="save-lines" data-bom="' + field + '">Save BOM</button>' +
 				'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-act="discard" data-bom="' + field + '">Discard changes</button></div>' +
-				'<p class="a3s-field__hint">Unsaved changes. Saving makes a BOM for this job only; the package\'s BOM is not changed.</p>';
+				'<p class="a3s-field__hint">Unsaved changes. Saving makes a BOM for this project only; the package\'s BOM is not changed.</p>';
 		}
 		return table;
 	}
@@ -144,7 +144,7 @@
 		} else {
 			inner += '<p class="a3s-field__hint">' + esc(bom.value || "None chosen") + "</p>";
 		}
-		if (!frozen && bom.value) inner += '<p class="a3s-field__hint">From the package; freezing the design keeps it on the job.</p>';
+		if (!frozen && bom.value) inner += '<p class="a3s-field__hint">From the package; freezing the design keeps it on the project.</p>';
 		var rows = drafts[field] || bom.lines;
 		return card(title, inner + lines(rows, field, state.can_edit), rows.length ? rows.length + " lines" : "");
 	}
@@ -155,14 +155,14 @@
 			esc(t.status) + "</span>" + (t.completed_on ? " · frozen " + esc(t.completed_on) + (t.completed_by ? " by " + esc(t.completed_by) : "") : "") + "</p>";
 		if (s.can_freeze) {
 			head += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">Freeze design</button></div>' +
-				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "material BOM") + ' below on the job and completes the task. Everything here stays changeable afterwards.</p>';
+				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "material BOM") + ' below on the project and completes the task. Everything here stays changeable afterwards.</p>';
 		}
 		html += card(t.name, head);
 
 		var q = s.quotations;
 		html += card("Quotations", q.length ? '<div class="a3s-tablewrap"><table class="a3s-table"><thead><tr><th>Quotation</th><th>Date</th><th>Option</th><th>Total</th><th>Status</th></tr></thead><tbody>' +
 			q.map(function (r) {
-				return '<tr><td><a href="' + esc(r.route) + '">' + esc(r.name) + "</a>" + (r.is_job ? ' <span class="a3s-pill a3s-pill--amber">This job</span>' : "") +
+				return '<tr><td><a href="' + esc(r.route) + '">' + esc(r.name) + "</a>" + (r.is_job ? ' <span class="a3s-pill a3s-pill--amber">This project</span>' : "") +
 					"</td><td>" + esc(r.date) + "</td><td>" + esc(r.option) + "</td><td>" + esc(r.total) + "</td><td>" + esc(r.status) + "</td></tr>";
 			}).join("") + "</tbody></table></div>" : '<p class="a3s-field__hint">No quotations on file.</p>', q.length ? String(q.length) : "");
 
@@ -171,9 +171,9 @@
 		if (sv.surveys.length) {
 			survey += '<div class="a3s-tablewrap"><table class="a3s-table"><thead><tr><th>Site survey</th><th>Date</th><th>Feasibility</th><th>Installable</th><th>Status</th><th></th></tr></thead><tbody>' +
 				sv.surveys.map(function (r) {
-					return '<tr><td><a href="' + esc(r.route) + '">' + esc(r.name) + "</a>" + (r.is_job ? ' <span class="a3s-pill a3s-pill--amber">This job</span>' : "") +
+					return '<tr><td><a href="' + esc(r.route) + '">' + esc(r.name) + "</a>" + (r.is_job ? ' <span class="a3s-pill a3s-pill--amber">This project</span>' : "") +
 						"</td><td>" + esc(r.date) + "</td><td>" + esc(r.feasibility) + "</td><td>" + esc(r.capacity) + "</td><td>" + esc(r.status) + "</td><td>" +
-						(!r.is_job && s.can_edit ? '<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-use-survey="' + esc(r.name) + '">Use for this job</button>' : "") +
+						(!r.is_job && s.can_edit ? '<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-use-survey="' + esc(r.name) + '">Use for this project</button>' : "") +
 						"</td></tr>";
 				}).join("") + "</tbody></table></div>";
 			if (sv.name) survey += images(sv.images, false);
@@ -265,7 +265,7 @@
 		var use = e.target.closest("[data-use-survey]");
 		if (use) {
 			setStatus("Saving…");
-			call("save", { site_survey: use.dataset.useSurvey }).then(function (s) { apply(s, "Site survey set for this job."); })
+			call("save", { site_survey: use.dataset.useSurvey }).then(function (s) { apply(s, "Site survey set for this project."); })
 				.catch(function (err) { setStatus(err.message, "error"); });
 		}
 		if (remove) {
@@ -292,7 +292,7 @@
 		if (act.dataset.act === "save-lines") {
 			setStatus("Saving the BOM…");
 			call("save_lines", { bom_field: bomField, lines: JSON.stringify(drafts[bomField] || []) })
-				.then(function (s) { drafts[bomField] = null; apply(s, "BOM saved for this job."); })
+				.then(function (s) { drafts[bomField] = null; apply(s, "BOM saved for this project."); })
 				.catch(function (err) { setStatus(err.message, "error"); });
 		}
 		if (act.dataset.act === "freeze") {

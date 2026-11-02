@@ -74,7 +74,7 @@ frappe.ui.form.on("Solar Design Estimate", {
 			const filters = { is_active: 1 };
 			if (row.inverter_make) filters.inverter_make = row.inverter_make;
 			if (row.inverter_phase) filters.inverter_phase = row.inverter_phase;
-			return { filters };
+			return { query: "a3_sola.solar_crm.doctype.inverter_model.inverter_model.search", filters };
 		});
 		frm.set_query("make", "bos_items", (doc, cdt, cdn) => ({
 			filters: {

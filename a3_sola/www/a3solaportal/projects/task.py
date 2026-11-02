@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 import frappe
 
-from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serials_task, tasks
+from a3_sola.api import design_freeze, dispatch_task, partner_scope, payment_tasks, serial_entry, serials_task, supplier_bill, tasks
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, desk_route, record_route
 
@@ -27,6 +27,8 @@ def get_context(context):
 	code = (frappe.form_dict.get("task") or "").strip()
 	project = record_route("projects", name)
 	require_login(f"{project}/tasks/{code}")
+	if not partner_scope.may_open_task(name, code):
+		frappe.throw(frappe._("This task is not yours to open."), frappe.PermissionError)
 	if payment_tasks.is_payment_task(code):
 		return _payment(context, name, code, project)
 	if design_freeze.is_design_task(code):
@@ -35,6 +37,10 @@ def get_context(context):
 		return _dispatch(context, name, code, project)
 	if serials_task.is_serials_task(code):
 		return _serials(context, name, code, project)
+	if supplier_bill.is_supplier_bill_task(code):
+		return _supplier_bill(context, name, code, project)
+	if serial_entry.is_serial_entry_task(code):
+		return _serial_entry(context, name, code, project)
 	try:
 		target = tasks.open_task(name, code, create_draft=0)
 	except frappe.ValidationError as e:
@@ -117,6 +123,50 @@ def _dispatch(context, name, code, project):
 			{"label": "Project", "href": "/a3solaportal/projects"},
 			{"label": name, "href": project},
 			{"label": context.dispatch["task"]["name"]},
+		],
+	)
+	context.installation = name
+	context.task_code = code
+	context.project_route = project
+	context.csrf_token = frappe.sessions.get_csrf_token()
+	return context
+
+
+def _supplier_bill(context, name, code, project):
+	"""The Supplier Invoice page: the supplier's bill read from its PDF, checked, entered as a
+	Purchase Invoice on the job (api/supplier_bill)."""
+	context.supplier_bill = supplier_bill.state(name)
+	fill_shell(
+		context,
+		active_route="/a3solaportal/projects",
+		page_title=context.supplier_bill["task"]["name"],
+		crumbs=[
+			{"label": "Home", "href": "/a3solaportal/dashboard"},
+			{"label": "Project", "href": "/a3solaportal/projects"},
+			{"label": name, "href": project},
+			{"label": context.supplier_bill["task"]["name"]},
+		],
+	)
+	context.installation = name
+	context.task_code = code
+	context.project_route = project
+	context.csrf_token = frappe.sessions.get_csrf_token()
+	return context
+
+
+def _serial_entry(context, name, code, project):
+	"""The Enter Serial Numbers page: the job's serial register, from the supplier's bill, a
+	photo of the labels, or typed (api/serial_entry)."""
+	context.serial_entry = serial_entry.state(name)
+	fill_shell(
+		context,
+		active_route="/a3solaportal/projects",
+		page_title=context.serial_entry["task"]["name"],
+		crumbs=[
+			{"label": "Home", "href": "/a3solaportal/dashboard"},
+			{"label": "Project", "href": "/a3solaportal/projects"},
+			{"label": name, "href": project},
+			{"label": context.serial_entry["task"]["name"]},
 		],
 	)
 	context.installation = name

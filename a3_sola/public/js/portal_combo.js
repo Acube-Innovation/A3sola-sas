@@ -4,7 +4,8 @@
  * The portal's search-select, shared by the forms that pick a lead, consumer or survey
  * (the design estimate details, the proposal). `a3sCombo.wire(wrap)` puts a search box
  * over the <select> inside `wrap`. Setting the select from a script and dispatching
- * "a3s:sync" on it updates the box.
+ * "a3s:sync" on it updates the box - as does setting its value or rebuilding its options.
+ * `a3sCombo.wireAll(root)` wires every [data-combo] field under root.
  */
 (function () {
 	"use strict";
@@ -23,7 +24,11 @@
 	var comboCount = 0;
 	function wireCombo(wrap) {
 		var select = wrap.querySelector("select");
-		if (!select) return;
+		if (!select || wrap.dataset.comboWired) return;
+		wrap.dataset.comboWired = "1";
+		/* data-combo-add names what can be added from the list ("section"): its last entry
+		   offers it, and choosing that fires "a3s:combo-add" on the select with what was typed. */
+		var adds = wrap.dataset.comboAdd || "";
 		var listId = "a3s-combo-list-" + (++comboCount);
 		var input = document.createElement("input");
 		input.type = "search";
@@ -98,6 +103,20 @@
 				opt.addEventListener("mousedown", function (e) { e.preventDefault(); choose(o.value); });
 				list.appendChild(opt);
 			});
+			if (adds) {
+				var add = node("button", "a3s-combo__opt a3s-combo__add");
+				add.type = "button";
+				add.tabIndex = -1;
+				add.textContent = "+ Add a new " + adds + (query && query.trim() ? " “" + query.trim() + "”" : "");
+				add.addEventListener("mousedown", function (e) {
+					e.preventDefault();
+					var typed = (query || "").trim();
+					close();
+					input.value = labelOf(select.value);
+					select.dispatchEvent(new CustomEvent("a3s:combo-add", { bubbles: true, detail: { query: typed } }));
+				});
+				list.appendChild(add);
+			}
 			list.hidden = false;
 			input.setAttribute("aria-expanded", "true");
 			highlight(-1);
@@ -112,7 +131,20 @@
 
 		input.value = labelOf(select.value);
 		/* Set from the script rather than picked here: show what the field now holds. */
-		select.addEventListener("a3s:sync", function () { input.value = labelOf(select.value); });
+		function sync() { if (document.activeElement !== input) input.value = labelOf(select.value); input.disabled = select.disabled; }
+		select.addEventListener("a3s:sync", sync);
+		select.addEventListener("change", sync);
+		/* Other scripts set the select's value directly (a bill read, a lead's details) or
+		   rebuild its options (a list that follows its parent): the box follows both. */
+		var native = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+		Object.defineProperty(select, "value", {
+			configurable: true,
+			get: function () { return native.get.call(select); },
+			set: function (v) { native.set.call(select, v); sync(); }
+		});
+		if (window.MutationObserver) {
+			new MutationObserver(sync).observe(select, { childList: true, attributes: true, attributeFilter: ["disabled"] });
+		}
 		input.addEventListener("focus", function () { input.select(); });
 		input.addEventListener("click", function () { if (list.hidden) render(""); });
 		input.addEventListener("input", function () { render(input.value); });
@@ -141,5 +173,10 @@
 		});
 	}
 
-	window.a3sCombo = { wire: wireCombo };
+	/* Every [data-combo] field under `root` not wired yet: the portal's create and edit forms. */
+	function wireAll(root) {
+		Array.prototype.forEach.call((root || document).querySelectorAll("[data-combo]"), wireCombo);
+	}
+
+	window.a3sCombo = { wire: wireCombo, wireAll: wireAll };
 })();

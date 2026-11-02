@@ -14,7 +14,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, today
 
-from a3_sola.api import material_delivery, stages
+from a3_sola.api import material_delivery, partner_scope, stages
 from a3_sola.api.stages import _get_stage
 
 DISPATCH = material_delivery.DISPATCH
@@ -30,6 +30,7 @@ def is_dispatch_task(code):
 
 
 def _job(installation, ptype):
+	partner_scope.refuse_partners(_("Material dispatch"))
 	doc = frappe.get_doc(INSTALLATION, installation, for_update=True)
 	doc.check_permission(ptype)
 	_get_stage(doc, DISPATCH)

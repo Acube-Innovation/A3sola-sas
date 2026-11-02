@@ -1,7 +1,7 @@
 {#- Generic record edit form. Context from collections.edit_context: a step per form tab,
     section headings inside each step, every control in one form. A task's new document is
     created on the same form (task_form, from collections.new_context): nothing saved yet,
-    so no About card or attachments, and the fields that make it the task's ride along. -#}
+    so no About card, its attachments held until it is, and the fields that make it the task's ride along. -#}
 <div class="a3s-page__head">
 	<div>
 		{%- if task_form %}
@@ -90,7 +90,9 @@
 			{%- if s.label %}<h4 class="a3s-edit__subtitle">{{ s.label | e }}</h4>{% endif %}
 			<div class="a3s-form__grid">
 				{%- for f in s.fields %}
-				<div class="a3s-field{% if f.type in ("Small Text", "Text") or f.sum_of %} a3s-field--wide{% endif %}{% if f.sum_of %} a3s-field--total{% endif %}" id="f-{{ f.fieldname }}"{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
+				{#- A link's list, or a long one, can be typed in to find its entry (portal_combo_fields.html). -#}
+				{%- set combo = (f.type == "Link" and not f.many) or (f.type == "Select" and f.options | length > 8) %}
+				<div class="a3s-field{% if f.type in ("Small Text", "Text") or f.sum_of %} a3s-field--wide{% endif %}{% if f.sum_of %} a3s-field--total{% endif %}{% if combo %} a3s-combo a3s-combo--field{% endif %}" id="f-{{ f.fieldname }}"{% if combo %} data-combo{% if f.fieldname == "discom_section" %} data-combo-add="section"{% endif %}{% endif %}{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>
 					{%- if f.type == "Check" %}
 					<label class="a3s-check">
 						<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
@@ -184,9 +186,8 @@
 		{#- A collection with a rows table (Additional Structure, ...) edits it here, in the form. -#}
 		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
 
-		{%- if not task_form %}
-		{%- with att_doctype=record.doctype, att_name=record.name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
-		{%- endif %}
+		{#- A task not yet created holds its files on the card and uploads them once it is. -#}
+		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		<div class="a3s-form__actions a3s-edit__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>{{ "Save" if task_form else "Save changes" }}</button>
@@ -307,3 +308,5 @@
 	});
 })();
 </script>
+
+{%- with combo_doctype=record.doctype %}{% include "templates/includes/portal_combo_fields.html" %}{% endwith %}

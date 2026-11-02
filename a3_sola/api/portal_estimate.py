@@ -1269,7 +1269,7 @@ def whatsapp_link(name):
 	not send on anyone's behalf. The PDF is not attached - wa.me cannot carry a file - so
 	it is downloaded beside it and sent in the chat.
 	"""
-	from a3_sola.api import outreach
+	from a3_sola.api import outreach, portal_share
 
 	doc = _load(name, "read")
 	mobile, person = None, None
@@ -1281,19 +1281,22 @@ def whatsapp_link(name):
 		frappe.throw(_("Neither the consumer nor the lead has a mobile number to send to."))
 	commercials = doc.commercials()
 	package = link_title("Solar Package", doc.solar_package) if doc.solar_package else ""
+	# Greeted and signed as the proposal and the quotation are (portal_share.MESSAGES).
 	lines = [
-		_("Dear {0},").format(person or _("Sir/Madam")),
+		"Hi {0},".format(person or _("Sir/Madam")),
 		"",
-		_("Here is the solar design estimate {0} prepared for you.").format(doc.name),
-		_("System: {0:g} kW, {1}, {2}").format(flt(doc.final_capacity_kw), doc.connection_type or "", doc.system_type or "").strip(", "),
+		_("*Thank you for your interest in Renewcore Innovations LLP.* It was a pleasure discussing your solar requirements with you."),
+		"",
+		_("Here is the solar design estimate *{0}* prepared for you.").format(doc.name),
+		_("*System:* {0:g} kW, {1}, {2}").format(flt(doc.final_capacity_kw), doc.connection_type or "", doc.system_type or "").strip(", "),
 	]
 	if package:
-		lines.append(_("Package: {0}").format(package))
+		lines.append(_("*Package:* {0}").format(package))
 	lines += [
-		_("Estimated total: {0}").format(frappe.utils.fmt_money(commercials["total"], currency="INR")),
+		_("*Estimated total:* {0}").format(frappe.utils.fmt_money(commercials["total"], currency="INR")),
 		"",
-		_("The detailed estimate PDF follows. Please reach out with any questions."),
+		_("The detailed estimate PDF follows. I will follow up with you shortly to answer any technical questions and discuss the next steps for your installation."),
 		"",
-		doc.company or "",
+		portal_share.SIGNATURE.format(**dict(zip(("sender", "phone"), portal_share._sender()))),
 	]
 	return outreach.whatsapp_link(mobile, "\n".join(lines).strip())

@@ -34,12 +34,16 @@
 	<div class="a3s-work__cols">
 		{%- for col in work_columns %}
 		{%- set rows = work[col.key] %}
-		<div class="a3s-card a3s-work__col a3s-work__col--{{ col.tone }}">
-			<div class="a3s-work__colhead">
-				<span class="a3s-work__coltitle">{{ col.title }}</span>
-				<span class="a3s-work__count">{{ rows | length }}</span>
-			</div>
-			<p class="a3s-work__colnote">{{ col.note }}</p>
+		{#- closed to its title and count; a click opens the list -#}
+		<details class="a3s-card a3s-work__col a3s-work__col--{{ col.tone }}">
+			<summary class="a3s-work__summary">
+				<span class="a3s-work__colhead">
+					<span class="a3s-work__coltitle">{{ col.title }}</span>
+					<span class="a3s-work__count">{{ rows | length }}</span>
+					<svg class="a3s-ic a3s-work__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</span>
+				<span class="a3s-work__colnote">{{ col.note }}</span>
+			</summary>
 			{%- if rows %}
 			<ul class="a3s-work__list">
 				{%- for w in rows[:show_per_column] %}
@@ -61,7 +65,7 @@
 			<p class="a3s-work__empty">Nothing here.</p>
 			{%- endif %}
 			{%- if col.key == "upcoming" and work.later %}<p class="a3s-work__more">{{ work.later }} more due later</p>{% endif %}
-		</div>
+		</details>
 		{%- endfor %}
 	</div>
 </section>

@@ -59,13 +59,18 @@ Please review the attached document. I will follow up with you shortly to answer
 """ + SIGNATURE,
 	"Quotation": """Hi {name},
 
-*Thank you for choosing Renewcore Innovations LLP.* As discussed, please find our *Quotation {number}* for your solar power system {document}
+*Thank you for your interest in Renewcore Innovations LLP.* It was a pleasure discussing your solar requirements with you.
 
-*Quotation amount:* {amount}
+As promised, please find our formal *Quotation {number}* {document}
 
-The quotation covers the system as finalised in our proposal, along with all KSEB documentation, installation, and commissioning.
+This quotation includes:
+*Custom System Design:* Engineered specifically for your site and energy needs.
+*Premium Technology:* High-efficiency modules with a 25-year performance warranty.
+*End-to-End Support:* We handle all KSEB documentation, installation, and commissioning.
+*Smart Monitoring:* Integrated remote monitoring to track your savings in real-time.
 
-Please review the attached document. Once you confirm, we will share the next steps to schedule your installation.
+At *Renewcore*, we pride ourselves on delivering sustainable, long-term value and energy independence.
+Please review the attached document. I will follow up with you shortly to answer any technical questions and discuss the next steps for your installation.
 
 """ + SIGNATURE,
 }

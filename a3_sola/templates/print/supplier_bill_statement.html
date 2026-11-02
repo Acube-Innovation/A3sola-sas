@@ -1,0 +1,106 @@
+{#- The project's material statement: every supplier's bill on the project in one document, for
+    the project team and Accounts - each bill's lines, GST by rate, the total, paid and due.
+    Rendered by supplier_bill.render_statement and laid on the company letterhead by
+    documents.letterhead_flow_pdf. Context: s (supplier_bill.statement), money, qty. -#}
+<style>
+	.a3s-estimate { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; line-height: normal; color: #2a3342; }
+	h1 { font-size: 18px; margin: 0; }
+	h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #e8840c; margin: 16px 0 6px; }
+	h3 { font-size: 11px; margin: 12px 0 4px; }
+	table { width: 100%; border-collapse: collapse; }
+	th { text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 4px 5px; }
+	td { padding: 4px 5px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+	tr { page-break-inside: avoid; }
+	.head td { border: 0; padding: 0; }
+	.muted { color: #5b6575; }
+	.right, th.right { text-align: right; white-space: nowrap; }
+	.facts td { border: 0; padding: 1px 12px 1px 0; }
+	.facts .label { color: #5b6575; width: 24%; }
+	.rule { border-top: 3px solid #f5a524; margin: 10px 0 4px; }
+	.serials { font-size: 8px; color: #5b6575; word-break: break-all; }
+	tr.sum td { font-weight: bold; border-top: 1px solid #c9ced6; }
+	tr.grand td { font-size: 12px; font-weight: bold; border-top: 2px solid #2a3342; border-bottom: 0; }
+	.paid { color: #1a7a2b; font-weight: bold; }
+	.due { color: #b42318; font-weight: bold; }
+	.bill { page-break-inside: auto; }
+</style>
+<div class="a3s-estimate">
+	<table class="head">
+		<tr>
+			<td><h1>{{ _("Project Material Statement") }}</h1></td>
+			<td class="right">
+				<div><strong>{{ s.installation | e }}</strong></div>
+				<div class="muted">{{ _("Date") }}: {{ s.date }}</div>
+			</td>
+		</tr>
+	</table>
+	<div class="rule"></div>
+
+	<table class="facts">
+		<tr><td class="label">{{ _("Project") }}</td><td><strong>{{ s.installation | e }}</strong></td></tr>
+		<tr><td class="label">{{ _("Customer") }}</td><td>{{ s.customer | e }}</td></tr>
+		{%- if s.site %}<tr><td class="label">{{ _("Site") }}</td><td>{{ s.site | e }}</td></tr>{% endif %}
+		<tr><td class="label">{{ _("Supplier bills") }}</td><td>{{ s.bills | length }} {{ _("from") }} {{ s.suppliers }} {{ _("supplier") if s.suppliers == 1 else _("suppliers") }}</td></tr>
+	</table>
+
+	<h2>{{ _("Due to each supplier") }}</h2>
+	<table>
+		<tr><th>{{ _("Supplier") }}</th><th>{{ _("GSTIN") }}</th><th class="right">{{ _("Bills") }}</th><th class="right">{{ _("Total") }}</th>
+			<th class="right">{{ _("Paid") }}</th><th class="right">{{ _("Due") }}</th></tr>
+		{%- for r in s.by_supplier %}
+		<tr><td><strong>{{ r.supplier | e }}</strong></td><td>{{ r.gstin }}</td><td class="right">{{ r.bills }}</td><td class="right">{{ money(r.total) }}</td>
+			<td class="right paid">{{ money(r.paid) }}</td><td class="right {{ 'due' if r.due > 0 else 'paid' }}">{{ money(r.due) }}</td></tr>
+		{%- endfor %}
+		<tr class="sum"><td colspan="3">{{ _("All suppliers") }}</td><td class="right">{{ money(s.total) }}</td>
+			<td class="right">{{ money(s.paid) }}</td><td class="right">{{ money(s.due) }}</td></tr>
+	</table>
+
+	<h2>{{ _("Bills") }}</h2>
+	<table>
+		<tr><th>{{ _("Supplier") }}</th><th>{{ _("Bill no.") }}</th><th>{{ _("Date") }}</th><th>{{ _("Purchase Invoice") }}</th>
+			<th class="right">{{ _("Taxable") }}</th><th class="right">{{ _("GST") }}</th><th class="right">{{ _("Total") }}</th><th class="right">{{ _("Status") }}</th></tr>
+		{%- for b in s.bills %}
+		<tr><td>{{ b.supplier | e }}{% if b.gstin %}<br><span class="muted">{{ b.gstin }}</span>{% endif %}</td><td>{{ b.bill_no | e }}</td>
+			<td>{{ b.bill_date }}</td><td>{{ b.invoice }}</td><td class="right">{{ money(b.taxable) }}</td><td class="right">{{ money(b.tax) }}</td>
+			<td class="right">{{ money(b.total) }}</td><td class="right {{ 'paid' if b.due <= 0 else 'due' }}">{{ b.status | e }}</td></tr>
+		{%- endfor %}
+		<tr class="sum"><td colspan="4">{{ _("All bills") }}</td><td class="right">{{ money(s.taxable) }}</td><td class="right">{{ money(s.tax) }}</td>
+			<td class="right">{{ money(s.total) }}</td><td></td></tr>
+	</table>
+
+	<h2>{{ _("GST by rate") }}</h2>
+	<table>
+		<tr><th>{{ _("GST rate") }}</th><th class="right">{{ _("Taxable value") }}</th><th class="right">{{ _("GST") }}</th></tr>
+		{%- for slab in s.slabs %}
+		<tr><td>{{ ("%g%%" % slab.rate) if slab.rate is not none else _("Not set") }}</td><td class="right">{{ money(slab.taxable) }}</td><td class="right">{{ money(slab.tax) }}</td></tr>
+		{%- endfor %}
+		{%- if s.cgst or s.sgst %}<tr><td>{{ _("CGST") }} / {{ _("SGST") }}</td><td></td><td class="right">{{ money(s.cgst) }} / {{ money(s.sgst) }}</td></tr>{% endif %}
+		{%- if s.igst %}<tr><td>{{ _("IGST") }}</td><td></td><td class="right">{{ money(s.igst) }}</td></tr>{% endif %}
+	</table>
+
+	<table style="margin-top: 10px">
+		<tr class="grand"><td>{{ _("Total of all bills") }}</td><td class="right">{{ money(s.total) }}</td></tr>
+		<tr><td>{{ _("Paid") }}</td><td class="right paid">{{ money(s.paid) }}</td></tr>
+		<tr><td>{{ _("Due") }}</td><td class="right due">{{ money(s.due) }}</td></tr>
+	</table>
+
+	<h2>{{ _("Lines, bill by bill") }}</h2>
+	{%- for b in s.bills %}
+	<div class="bill">
+		<h3>{{ b.supplier | e }} &middot; {{ _("Bill") }} {{ b.bill_no | e }}{% if b.bill_date %} &middot; {{ b.bill_date }}{% endif %} <span class="muted">({{ b.invoice }})</span></h3>
+		<table>
+			<tr><th>#</th><th>{{ _("Description") }}</th><th>{{ _("HSN") }}</th><th class="right">{{ _("GST") }}</th><th class="right">{{ _("Qty") }}</th>
+				<th class="right">{{ _("Rate") }}</th><th class="right">{{ _("Taxable") }}</th></tr>
+			{%- for l in b.lines %}
+			<tr><td>{{ loop.index }}</td><td>{{ l.description | e }}{% if l.serials %}<div class="serials">{{ _("Serial nos.") }}: {{ l.serials | e }}</div>{% endif %}</td>
+				<td>{{ l.hsn }}</td><td class="right">{{ ("%g%%" % l.gst_rate) if l.gst_rate is not none else "" }}</td>
+				<td class="right">{{ qty(l.qty) }} {{ l.uom | e }}</td><td class="right">{{ money(l.rate) }}</td><td class="right">{{ money(l.amount) }}</td></tr>
+			{%- endfor %}
+			<tr class="sum"><td colspan="6">{{ _("Taxable") }}</td><td class="right">{{ money(b.taxable) }}</td></tr>
+			{%- for t in b.taxes %}<tr><td colspan="6">{{ t.label | e }}</td><td class="right">{{ money(t.amount) }}</td></tr>{% endfor %}
+			{%- if b.rounding %}<tr><td colspan="6">{{ _("Rounding") }}</td><td class="right">{{ money(b.rounding) }}</td></tr>{% endif %}
+			<tr class="sum"><td colspan="6">{{ _("Bill total") }}</td><td class="right">{{ money(b.total) }}</td></tr>
+		</table>
+	</div>
+	{%- endfor %}
+</div>

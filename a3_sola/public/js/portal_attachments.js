@@ -80,6 +80,26 @@
 		});
 	}
 
+	/* Documents read as they are picked, filling the form's fields: {doctype: {type: method}}.
+	   The Jan Samarth letter gives the task its reference and approval date. */
+	var READERS = { "Installation Task": { "Digital Approval Letter": "a3_sola.api.approval_letter.read" } };
+	var LABELS = { approval_reference: "Jan Samarth Reference", approval_received_on: "Approval Received On" };
+
+	/* A field is filled only while blank, or still as this reader last filled it. */
+	function fillFields(fields) {
+		var filled = [];
+		Object.keys(fields || {}).forEach(function (name) {
+			var input = document.getElementById("fld-" + name);
+			if (!input || (input.value && input.value !== input.dataset.readFilled)) return;
+			input.value = fields[name];
+			input.dataset.readFilled = fields[name];
+			input.dispatchEvent(new Event("input", { bubbles: true }));
+			input.dispatchEvent(new Event("change", { bubbles: true }));
+			filled.push((LABELS[name] || name) + " " + fields[name]);
+		});
+		return filled;
+	}
+
 	Array.prototype.forEach.call(document.querySelectorAll("[data-attach]"), function (card) {
 		var doctype = card.dataset.doctype, name = card.dataset.name;
 		var list = card.querySelector("[data-attach-list]");
@@ -94,6 +114,9 @@
 		var status = card.querySelector("[data-attach-status]");
 		var types = [];
 		var busy = false;
+		/* A record not yet created (data-held): the files picked wait here, as rows, and go up
+		   once the form has created it - window.a3sAttachHeld. */
+		var held = card.hasAttribute("data-held") ? [] : null;
 
 		/* tone: "" for progress, "ok" or "error". */
 		function setStatus(text, tone) {
@@ -117,7 +140,8 @@
 			fileCell.appendChild(el("span", "a3s-attach__badge a3s-attach__badge--" + k.tone, k.label));
 			var text = el("span", "a3s-attach__text");
 			var a = el("a", "a3s-attach__name", f.file_name);
-			a.href = f.file_url; a.target = "_blank"; a.rel = "noopener"; a.title = "Open " + f.file_name;
+			var openUrl = f.file_url || (f.file && window.URL ? (f.blobUrl = f.blobUrl || URL.createObjectURL(f.file)) : "");
+			if (openUrl) { a.href = openUrl; a.target = "_blank"; a.rel = "noopener"; a.title = "Open " + f.file_name; }
 			text.appendChild(a);
 			text.appendChild(el("span", "a3s-attach__meta", [size(f.size), f.by, f.on].filter(Boolean).join(" · ")));
 			fileCell.appendChild(text);
@@ -149,7 +173,28 @@
 			tr.appendChild(typeCell);
 
 			var act = el("span", "a3s-attach__act"); act.setAttribute("role", "cell");
-			if (f.can_remove) {
+			/* View opens the file in a new tab, as its name does - one not uploaded yet from
+			   the browser's own copy of it. */
+			var viewUrl = f.file_url || (f.file && window.URL ? (f.blobUrl = f.blobUrl || URL.createObjectURL(f.file)) : "");
+			if (viewUrl) {
+				var view = el("a", "a3s-attach__remove a3s-attach__view");
+				view.href = viewUrl; view.target = "_blank"; view.rel = "noopener";
+				view.title = "View " + f.file_name;
+				view.setAttribute("aria-label", "View " + f.file_name);
+				view.appendChild(icon("ic-eye"));
+				act.appendChild(view);
+			}
+			if (f.held) {
+				var drop1 = el("button", "a3s-attach__remove");
+				drop1.type = "button"; drop1.title = "Remove " + f.file_name;
+				drop1.setAttribute("aria-label", "Remove " + f.file_name);
+				drop1.appendChild(icon("ic-trash"));
+				drop1.addEventListener("click", function () {
+					held.splice(held.indexOf(f), 1);
+					paint(held);
+				});
+				act.appendChild(drop1);
+			} else if (f.can_remove) {
 				var x = el("button", "a3s-attach__remove");
 				x.type = "button"; x.title = "Remove " + f.file_name;
 				x.setAttribute("aria-label", "Remove " + f.file_name);
@@ -190,12 +235,50 @@
 			return true;
 		}
 
+		/* Read the first file picked, where its type has a reader, into the form's fields. */
+		function readInto(file, what) {
+			var method = (READERS[doctype] || {})[what];
+			if (!method || !file) return;
+			var body = new FormData();
+			body.append("file", file, file.name);
+			/* The job it is for - the new task's, posted with its form - or the task itself,
+			   so a letter naming someone else is caught. */
+			var source = document.querySelector('#a3s-record-edit-form [name="source"]');
+			if (source && source.value) body.append("installation", source.value);
+			if (name) body.append("task", name);
+			fetch("/api/method/" + method, {
+				method: "POST", credentials: "same-origin",
+				headers: { "X-Frappe-CSRF-Token": csrf, Accept: "application/json" }, body: body
+			}).then(function (r) { return r.json().catch(function () { return {}; }); }).then(function (data) {
+				var fields = (data && data.message && data.message.fields) || {};
+				var warned = (data && data.message && data.message.warnings) || [];
+				var filled = fillFields(fields);
+				/* Said after what the upload said, whichever answered first. */
+				var before = status.dataset.tone === "ok" && !status.hidden ? status.textContent + " " : "";
+				var said = filled.length ? "Read from the " + what.toLowerCase() + ": " + filled.join(", ") + "." : "";
+				/* A letter naming someone other than the job's customer: said, and shown as a warning. */
+				if (warned.length) setStatus([before + said].concat(warned).join(" ").trim(), "warn");
+				else if (filled.length) setStatus(before + said, "ok");
+				else if (!Object.keys(fields).length) setStatus("The " + what.toLowerCase() + " was kept, but its reference and date could not be read. Enter them above.", "error");
+			}).catch(function () { /* the file is still attached; the fields are typed */ });
+		}
+
 		function upload(files) {
 			if (!files || !files.length || busy || needType()) return;
+			readInto(files[files.length - 1], typeSelect.value);
 			var body = form({ document_type: typeSelect.value });
 			Array.prototype.forEach.call(files, function (file) { body.append("file", file, file.name); });
 			var n = files.length, what = typeSelect.value;
 			var label = n + " file" + (n === 1 ? "" : "s");
+			if (held) {
+				Array.prototype.forEach.call(files, function (file) {
+					held.push({ held: true, file: file, file_name: file.name, size: file.size, document_type: what, by: "Uploads when saved" });
+				});
+				paint(held);
+				setStatus(label + " added as " + what + ". They upload when you save.", "ok");
+				typeSelect.value = ""; input.value = "";
+				return;
+			}
 			busy = true; button.disabled = true; drop.classList.add("is-busy");
 			setStatus("Uploading " + label + " as " + what + "…");
 			call("upload", body).then(function (data) {
@@ -238,7 +321,22 @@
 			call("list_files", { doctype: doctype, name: name }, true).then(function (data) { paint(data.files || []); });
 		});
 
-		call("list_files", { doctype: doctype, name: name }, true).then(function (data) {
+		/* Held files go up to the record the form has just created, a call per type. */
+		if (held) window.a3sAttachHeld = function (newName) {
+			var byType = {};
+			held.forEach(function (f) { (byType[f.document_type] = byType[f.document_type] || []).push(f.file); });
+			return Object.keys(byType).reduce(function (chain, what) {
+				return chain.then(function () {
+					var body = new FormData();
+					body.append("doctype", doctype); body.append("name", newName); body.append("document_type", what);
+					byType[what].forEach(function (file) { body.append("file", file, file.name); });
+					return call("upload", body);
+				});
+			}, Promise.resolve());
+		};
+		if (held) window.a3sAttachHeld.count = function () { return held.length; };
+
+		(held ? call("held_card", { doctype: doctype }, true) : call("list_files", { doctype: doctype, name: name }, true)).then(function (data) {
 			types = data.document_types || [];
 			fillTypes(typeSelect, types, "", "Document type…");
 			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each.";

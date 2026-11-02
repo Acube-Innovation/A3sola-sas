@@ -162,7 +162,14 @@ def _material_cost(doc):
 				_entry("Material", "Stock Entry", se.name, se.posting_date, amount, se.stock_entry_type)
 			)
 
-	for note in _source_docs("Delivery Note", doc):
+	# A supplier's bill for the job's material (the Supplier Invoice task) is what it cost; a
+	# delivery from the godown would value the same material again, so it is left out then.
+	bills = _source_docs("Purchase Invoice", doc, {"a3s_material_bill": 1}) if frappe.get_meta(
+		"Purchase Invoice").has_field("a3s_material_bill") else []
+	for invoice in bills:
+		pi = frappe.db.get_value("Purchase Invoice", invoice, ["name", "posting_date", "base_net_total"], as_dict=True)
+		entries.append(_entry("Material", "Purchase Invoice", pi.name, pi.posting_date, flt(pi.base_net_total)))
+	for note in ([] if bills else _source_docs("Delivery Note", doc)):
 		dn = frappe.get_doc("Delivery Note", note)
 		amount = sum(flt(row.incoming_rate) * flt(row.qty) for row in dn.items)
 		if amount:
@@ -270,6 +277,8 @@ def _subcontractor_cost(doc):
 	entries = []
 	for invoice in _source_docs("Purchase Invoice", doc):
 		pi = frappe.get_doc("Purchase Invoice", invoice)
+		if pi.get("a3s_material_bill"):
+			continue  # the job's material (_material_cost)
 		entries.append(
 			_entry("Subcontractor", "Purchase Invoice", pi.name, pi.posting_date, flt(pi.base_net_total))
 		)

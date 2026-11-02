@@ -17,7 +17,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, getdate, now_datetime, today
 
-from a3_sola.api import stages
+from a3_sola.api import partner_scope, stages
 from a3_sola.api.settings import get_value
 from a3_sola.api.stages import DONE, MANAGER_ROLES, _get_stage, _require_manager, _save
 
@@ -531,12 +531,13 @@ def open_task(installation, task_code=None, create_draft=1):
 	inst = frappe.get_doc("Solar Installation", installation)
 	inst.check_permission("read")
 	row = _get_stage(inst, task_code)
-	from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serials_task, stages
+	from a3_sola.api import design_freeze, dispatch_task, payment_tasks, serial_entry, serials_task, stages, supplier_bill
 
 	stages.check_half_paid(inst, task_code)
 
 	if (payment_tasks.is_payment_task(task_code) or design_freeze.is_design_task(task_code)
-			or dispatch_task.is_dispatch_task(task_code) or serials_task.is_serials_task(task_code)):
+			or dispatch_task.is_dispatch_task(task_code) or serials_task.is_serials_task(task_code)
+			or supplier_bill.is_supplier_bill_task(task_code) or serial_entry.is_serial_entry_task(task_code)):
 		# Not carried out in a document: done on its own page on the project board.
 		return {"doctype": None, "name": None, "route_options": None,
 			"url": "/a3solaportal/projects/{0}/tasks/{1}".format(frappe.utils.quote(inst.name), task_code)}
@@ -700,6 +701,8 @@ def may_complete(inst, code, user=None):
 		return True
 	row = _get_stage(inst, code)
 	people = set(task_assignees.people(inst, code)) | ({row.assigned_to} if row.get("assigned_to") else set())
+	if partner_scope.is_partner(user):
+		return user in people  # a partner completes only what is given to him
 	return user in people if people else bool(inst.has_permission("write", user=user))
 
 
