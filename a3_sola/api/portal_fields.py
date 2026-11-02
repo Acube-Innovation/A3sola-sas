@@ -27,7 +27,7 @@ INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
 #: Attach fields a portal form captures as a file (a PDF or a picture) the same way, by
 #: doctype. Named one by one: any other attachment stays on the detail page and the desk.
 PORTAL_FILE_FIELDS = {
-	"Installation Task": {"feasibility_report"},
+	"Installation Task": {"feasibility_report", "approval_letter"},
 }
 
 
