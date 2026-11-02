@@ -250,3 +250,5 @@ a3_sola.patches.v1_2.consumer_dob_gender
 a3_sola.patches.v1_2.discom_sections_from_bills
 # The proposal's terms, delivery schedule and scope of work as the client's revised proposal words them.
 a3_sola.patches.v1_2.proposal_wording_r1
+# Renewcore's own letter pad as its Letter Head and default, from the images shipped in public/images/letterhead.
+a3_sola.patches.v1_2.renewcore_letter_head
