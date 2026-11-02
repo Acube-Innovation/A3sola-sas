@@ -132,17 +132,17 @@ SOLAR_PACKAGES = [
 	 1, 3, 1),
 ]
 
-# SOURCE: the client's proposal "Scope of Work" section.
+# SOURCE: the client's proposal "Scope of Work" section (RENC/PROP/26-27/089_R1).
 SCOPE_OF_WORK = [
 	("Company", "Engineering", "System design including civil, structural, electrical and mechanical components, with construction drawings and specifications."),
-	("Company", "Procurement & Construction", "Procure equipment and materials, deliver to site, perform complete system installation and test all electrical components as per manufacturer specifications. Commission the system to full operability."),
-	("Company", "DISCOM & Statutory", "Obtain the feasibility certificate from the local DISCOM section office and register the system. Coordinate testing and compliance verification, and coordinate replacement of the existing energy meter with a bi-directional net meter."),
-	("Company", "Warranty & Support", "Free inspection for five years (three visits a year) and maintenance if required. Washing of solar panels is not included and is arranged by the client. Training will be provided."),
-	("Company", "Post-Installation", "Training of the client's engineer, electrician or staff on working principles, safety measures and maintenance. Daily remote monitoring of the system via internet."),
-	("Customer", "Storage & Access", "Provide access to the work site for delivery of equipment and materials before and during implementation. Provide suitable and secure storage. Facilitate access for the work crew seven days a week."),
-	("Customer", "Local Consultation", "Facilitate interfacing with the client's engineer, electrician or staff. Provide copies of approved electrical schematics and building drawings if available. Obtain all statutory clearances required for the project."),
-	("Customer", "Remote Monitoring", "Provide a wireless internet connection in the vicinity of the grid-tied inverter to facilitate remote monitoring."),
-	("Customer", "Post-Installation", "Periodic cleaning of solar panels after completion of system installation, and water for cleaning."),
+	("Company", "Procurement & Construction", "Procure equipment and materials, deliver to site, perform complete system installation and test all the electrical components as per manufacturer specifications. Commission the system to full operability."),
+	("Company", "KSEB", "Obtain the feasibility certificate from local KSEB section office and register the system. Coordinate with KSEB to test the solar power plant and verify its compliance with KSEB standards. Coordinate with local KSEB section officer to replace the existing energy meter with Bi-Directional Net Meter."),
+	("Company", "Warranty Support", "Free Inspection for 5 years (yearly 3 visits) and Maintenance (if required) for solar power plant. Washing of solar panels is not included and the same has to be arranged by the client. Training will be provided."),
+	("Company", "Post-Installation", "Training of Client’s engineer / electrician / staff on the basic working principles, safety measures and maintenance of the solar power plant. Daily remote monitoring of system via internet."),
+	("Customer", "Storage & Access", "Provide access to work site for delivery of equipment and materials prior to and during project implementation. Provide a suitable and secure space for storage of equipment and materials. Facilitate access of company’s work crew to the site 7 days a week."),
+	("Customer", "Local Consultation", "Facilitate interfacing with the client’s engineer / electrician / staff for consultation as needed. Provide copies of approved electrical schematics and other drawings of the building if available. Obtain all the statutory clearances, if any, required for the project."),
+	("Customer", "Remote Monitoring", "Provide wireless internet connection in the vicinity of the grid-tied inverter to facilitate remote monitoring of system."),
+	("Customer", "Post-Installation", "Periodic cleaning of solar panels after completion of system installation."),
 ]
 
 # SOURCE: Greeting message with quotation.docx - reproduced faithfully, with the WhatsApp
@@ -197,17 +197,14 @@ BRAND_LINKS = [
 	("Threads", "https://www.threads.com/@renewcoreinnovations"),
 ]
 
-# SOURCE: the client's proposal general terms. The three-phase clause is NOT here - it is
+# SOURCE: the client's proposal general terms (RENC/PROP/26-27/089_R1). The offer validity
+# is printed from Settings > Offer Validity Days; the three-phase clause is NOT here - it is
 # rendered from the Grid Regulation Rule so it can never go stale.
-PROPOSAL_TERMS = """<ol>
-<li>The above price is for a normal flat roof type mounting structure. If additional structure work is required for a sheet roof or a raised platform, the same will be chargeable extra.</li>
-<li>Load enhancement or three phase conversion, if required, will be extra.</li>
-<li>The above offer includes documentation, DISCOM testing and all other formalities till commissioning of the system with the net meter. Cabling up to the DISCOM metering point is also considered.</li>
-<li>Subsidy documentation will be carried out by the company. The subsidy will be credited to the customer's bank account subject to approval by MNRE.</li>
-<li>The project will be executed under the name of the registered vendor on the MNRE portal.</li>
-<li>DISCOM fees are not included. 80% of the registration amount without GST will be refunded after commissioning of the plant.</li>
-<li>Remote monitoring of the system via internet: Wi-Fi data logger included. Internet connectivity is to be provided by the customer.</li>
-</ol>"""
+PROPOSAL_TERMS = """<ul>
+<li>The above offer includes documentation, KSEB testing and all other formalities till commissioning of system with Net Meter. Cabling till the KSEBL metering point is also considered.</li>
+<li>Reverse power protection for DG is not considered and the same will be in customer scope if required.</li>
+<li>Remote Monitoring of System Via Internet: Wi-Fi data logger included. Internet connectivity is to be provided by customer.</li>
+</ul>"""
 
 PROPOSAL_COVERING_LETTER = """<p>Dear Sir/Madam,</p>
 <p>We thank you for your interest evinced in a renewable energy solution from us. We are pleased to submit our proposal for a solar power project aimed at delivering sustainable energy solutions tailored to your environmental goals.</p>
@@ -217,9 +214,9 @@ PROPOSAL_COVERING_LETTER = """<p>Dear Sir/Madam,</p>
 <p>Please feel free to reach out with any questions or to schedule a follow-up discussion.</p>"""
 
 PROPOSAL_DELIVERY_SCHEDULE = """<ul>
-<li>Supply of materials: within 7 days from the date of advance payment.</li>
-<li>Installation: within 7 to 15 days from the date of delivery of materials.</li>
-<li>Commissioning: within 1 week from completion of installation where the net meter is purchased by the customer; 2 to 4 weeks where the net meter is availed from the DISCOM.</li>
+<li>Supply of Materials: 7 days from the date of advance payment.</li>
+<li>Installation: Within 7 - 15 days from the date of delivery of materials.</li>
+<li>Commissioning: Within 10 days from completion of installation and obtaining approvals from KSEBL.</li>
 </ul>"""
 
 SUBSIDY_NOTE = """<p><strong>Government subsidy.</strong> The amount shown is the central financial assistance expected

@@ -272,8 +272,9 @@ def letterhead_flow_pdf(html, company, signed=True):
 	from pypdf import PdfReader, PdfWriter
 
 	zoom = 1 if _patched_wkhtmltopdf() else 1.3046
+	top, bottom = letterhead_margins(company)
 	content = get_pdf(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-	.print-format {{ margin-top: 38mm; margin-bottom: 27mm; margin-left: 17.5mm; margin-right: 20mm; }}
+	.print-format {{ margin-top: {top}mm; margin-bottom: {bottom}mm; margin-left: 17.5mm; margin-right: 20mm; }}
 	body {{ margin: 0; zoom: {zoom}; font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
 		font-size: 11pt; line-height: 1.4; color: #000; }}
 	p {{ margin: 0 0 5pt; }}
@@ -292,6 +293,46 @@ def letterhead_flow_pdf(html, company, signed=True):
 	buf = BytesIO()
 	out.write(buf)
 	return buf.getvalue()
+
+
+#: Text keeps this far (mm) from a letterhead's header and footer bands.
+BAND_GAP_MM = (8, 5)
+#: A footer image taller than this (mm across A4) is a watermark the text runs over, as
+#: RIM's is - not a band to keep clear of; such a letterhead keeps this much at the foot.
+WATERMARK_MM, WATERMARK_FOOT_MM = 60, 27
+
+
+def letterhead_margins(company, letter_head=None):
+	"""(top, bottom) in mm that text on the company's letterhead keeps clear: the header and
+	footer images' heights when drawn across the A4 width, plus BAND_GAP_MM. Without a
+	letterhead, 25mm and 20mm."""
+	head = letter_head or (frappe.db.get_value("Company", company, "default_letter_head") if company else None)
+	images = frappe.db.get_value("Letter Head", head, ["image", "footer_image"], as_dict=True) if head else None
+	header = _image_height_mm(images.image) if images else 0
+	footer = _image_height_mm(images.footer_image) if images else 0
+	top = round(header + BAND_GAP_MM[0], 1) if header else 25
+	if footer > WATERMARK_MM:
+		bottom = WATERMARK_FOOT_MM
+	else:
+		bottom = round(footer + BAND_GAP_MM[1], 1) if footer else 20
+	return top, bottom
+
+
+def _image_height_mm(file_url, width_mm=210):
+	"""How tall (mm) an attached image is drawn `width_mm` wide; 0 when it cannot be read."""
+	from io import BytesIO
+
+	from PIL import Image
+
+	name = frappe.db.get_value("File", {"file_url": file_url}, "name") if file_url else None
+	if not name:
+		return 0
+	try:
+		content = frappe.get_doc("File", name).get_content()
+		width, height = Image.open(BytesIO(content if isinstance(content, bytes) else content.encode())).size
+	except Exception:
+		return 0
+	return width_mm * height / width if width else 0
 
 
 #: Characters a file name cannot carry on Windows, macOS or in a URL path.
@@ -358,7 +399,7 @@ def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None, l
 	.a3s-sheet__head {{ position: absolute; top: 0; left: 0; width: 210mm; }}
 	.a3s-sheet__foot {{ position: absolute; bottom: 0; left: 0; width: 210mm; }}
 	.a3s-letter {{ position: relative; z-index: 1; /* over a footer that runs up the page, as a watermark */
-		padding: {margins or (("37mm" if header else "25mm") + " 20mm 0 17.5mm")};
+		padding: {margins or ((str(letterhead_margins(company, head)[0]) if header else "25") + "mm 20mm 0 17.5mm")};
 		font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif; font-size: 12pt; line-height: 1.45; color: #000; }}
 	.a3s-letter p {{ margin: 0 0 6pt; }}
 	.a3s-letter table {{ border-collapse: collapse; }}

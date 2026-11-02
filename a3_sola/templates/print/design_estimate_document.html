@@ -1,0 +1,20 @@
+{#- A design estimate as the client's proposal document (RENC/PROP's Word layout): the cover,
+    the covering letter, About Us and the components offered, section 3 for every option of
+    the estimate, then the cost, terms, schedule, warranty, scope and way forward. The pages
+    of the Solar Proposal Document print format - `doc` is the estimate's proposal-shaped
+    record (portal_estimate.document_doc). -#}
+{{ print_fonts() }}
+{%- set cover = print_cover(doc) -%}
+{% include "templates/includes/print_cover.html" %}
+<div style="page-break-before: always;"></div>
+{%- set letter = print_letter(doc) -%}
+{% include "templates/includes/print_letter.html" %}
+<div style="page-break-before: always;"></div>
+{% include "templates/includes/print_about_us.html" %}
+<div style="page-break-before: always;"></div>
+{%- set summary = print_summary(doc) -%}
+{%- set components = print_components(doc) -%}
+{% include "templates/includes/print_summary.html" %}
+<div style="page-break-before: always;"></div>
+{%- set rest = print_rest(doc) -%}
+{% include "templates/includes/print_rest.html" %}

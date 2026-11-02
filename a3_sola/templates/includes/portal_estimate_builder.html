@@ -33,6 +33,11 @@
 		<button type="button" class="a3s-square-btn a3s-square-btn--whatsapp" id="de-whatsapp" title="Send to WhatsApp" aria-label="Send to WhatsApp" hidden>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
 		</button>
+		{#- The saved option's proposal: View, Add to or Create (api/portal_proposal.proposal_action). -#}
+		<a class="a3s-btn a3s-btn--ghost" id="de-proposal-link" href="#" hidden>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+			<span id="de-proposal-label"></span>
+		</a>
 		<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" id="de-discard" hidden>Discard changes</button>
 		<button type="button" class="a3s-btn a3s-btn--primary" id="de-save">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
@@ -71,9 +76,18 @@
 	</div>
 </div>
 
-{#- Every option side by side, its unsaved changes included. -#}
+{#- Every option side by side, its unsaved changes included - and, as a PDF of the saved
+    options, to the customer (api/portal_share, part "comparison"). -#}
 <section class="a3s-card a3s-de-compare" id="de-compare" hidden aria-labelledby="de-compare-title">
-	<h3 class="a3s-de-card__title" id="de-compare-title">Compare options</h3>
+	<div class="a3s-de-compare__head">
+		<h3 class="a3s-de-card__title" id="de-compare-title">Compare options</h3>
+		{%- if compare_share %}
+		<div class="a3s-de-compare__send">
+			{% with share = compare_share %}{% include "templates/includes/portal_share.html" %}{% endwith %}
+			<small class="a3s-de-sub">The PDF and messages show the saved options.</small>
+		</div>
+		{%- endif %}
+	</div>
 	<p class="a3s-form__status" id="de-compare-status" role="status" aria-live="polite"></p>
 	<div class="a3s-de-table" id="de-compare-body"></div>
 </section>

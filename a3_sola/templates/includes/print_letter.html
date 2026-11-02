@@ -3,21 +3,32 @@
 {%- from "templates/includes/print_frame.html" import page, frame_style -%}
 {{ frame_style() }}
 {% call page(letter, "a3lt") %}
+		{#- A revised proposal's letter is the client's short one (`letter.short`): no address
+		    block or introduction; the Remarks follow the options as paragraphs. -#}
 		{%- if letter.date %}<p class="a3l-date">{{ letter.date }}</p>{% endif %}
+		{%- if not letter.short %}
 		<p>To,</p>
 		<p class="a3l-to">{{ letter.to }}{% if letter.place %},<br>{{ letter.place }}{% endif %}</p>
+		{%- endif %}
 		<p class="a3l-dear">{{ letter.dear }}</p>
 		{%- for para in letter.opening %}
 		<p class="a3l-opening">{{ para }}</p>
 		{%- endfor %}
+		{%- if not letter.short %}
 		<p class="a3l-intro">{{ letter.intro }}</p>
+		{%- endif %}
 		<ol class="a3l-points">
 			{%- for p in letter.points %}<li>{{ p }}</li>{% endfor %}
 		</ol>
+		{%- for para in letter.remarks or [] %}
+		<p class="a3l-opening">{{ para }}</p>
+		{%- endfor %}
 		{%- for para in letter.closing %}
 		<p class="a3l-opening">{{ para }}</p>
 		{%- endfor %}
+		{%- if not letter.short %}
 		<p class="a3l-thanks">Thanking you and assuring you of our best attention and services always.</p>
+		{%- endif %}
 		<p>Thanks &amp; Regards</p>
 		<p><strong>For {{ letter.company_name }}</strong></p>
 		<div class="a3l-sign">

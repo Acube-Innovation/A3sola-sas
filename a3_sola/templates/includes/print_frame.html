@@ -31,10 +31,18 @@
 {%- endmacro -%}
 {%- macro page(brand, cls="") -%}
 <div class="a3l-page{% if cls %} {{ cls }}{% endif %}">
+	{#- The company's Letter Head artwork when it has it; else the bands drawn here. -#}
+	{%- if brand.header_image %}
+	<img class="a3l-band" src="{{ brand.header_image }}" alt="">
+	{%- else %}
 	{{ facets() }}
 	{%- if brand.logo %}<img class="a3l-logo" src="{{ brand.logo }}" alt="">{% endif %}
 	{%- if brand.website %}<p class="a3l-web">{{ icon("web") }}<span>{{ brand.website }}</span></p>{% endif %}
+	{%- endif %}
 	<div class="a3l-body">{{ caller() }}</div>
+	{%- if brand.footer_image %}
+	<img class="a3l-band a3l-band--bottom" src="{{ brand.footer_image }}" alt="">
+	{%- else %}
 	{{ facets(bottom=True) }}
 	<div class="a3l-foot">
 		<div class="a3l-foot__left">
@@ -45,6 +53,7 @@
 			{%- if brand.email %}<p>{{ icon("mail") }}<span>{{ brand.email }}</span></p>{% endif %}
 		</div>
 	</div>
+	{%- endif %}
 </div>
 {%- endmacro -%}
 {%- macro frame_style() -%}
@@ -52,6 +61,8 @@
 	.a3l-page { position: relative; width: 100%; height: 0; padding-bottom: 141.42%; overflow: hidden; background: #fff; }
 	.a3l-art { position: absolute; left: 0; top: 0; width: 100%; height: 15%; }
 	.a3l-art--bottom { top: auto; bottom: 0; height: 12%; -webkit-transform: scale(-1, -1); transform: scale(-1, -1); }
+	.a3l-band { position: absolute; left: 0; top: 0; width: 100%; height: auto; }
+	.a3l-band--bottom { top: auto; bottom: 0; }
 	.a3l-logo { position: absolute; left: 4.5%; top: 2%; width: 20%; height: auto; }
 	.a3l-web { position: absolute; right: 4.5%; top: 2.6%; margin: 0; font-family: "A3 Print Sans", Poppins, sans-serif; font-size: 13pt; color: #333; }
 	.a3l-icon { width: 15pt; height: 15pt; vertical-align: middle; margin-right: 6pt; }

@@ -1,0 +1,97 @@
+{#- Compare options as a PDF: every option of an estimate side by side, for the customer to
+    choose from. Rendered by portal_estimate.render_comparison from the same columns the
+    builder's Compare options paints, in the same rows. The option that costs least is tinted
+    and tagged (portal_estimate.lowest_keys). A fragment laid on the company letterhead by
+    documents.letterhead_flow_pdf. -#}
+<style>
+	.a3s-estimate { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5px; line-height: normal; color: #2a3342; }
+	h1 { font-size: 18px; margin: 0; }
+	h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #e8840c; margin: 18px 0 6px; }
+	table { width: 100%; border-collapse: collapse; }
+	th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 5px 6px; }
+	td { padding: 5px 6px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+	tr { page-break-inside: avoid; }
+	.head td { border: 0; padding: 0; }
+	.muted { color: #5b6575; }
+	.right { text-align: right; }
+	.facts td { border: 0; padding: 1px 12px 1px 0; }
+	.facts .label { color: #5b6575; width: 30%; }
+	.rule { border-top: 3px solid #f5a524; margin: 10px 0 4px; }
+	.options th.option { text-align: right; font-size: 11px; color: #2a3342; vertical-align: bottom; }
+	.options td { text-align: right; padding: 3px 6px; }
+	.options td.label { text-align: left; color: #5b6575; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; }
+	.options tr.line td.label { padding-left: 14px; }
+	.options tr.sum td { font-weight: bold; }
+	.options tr.grand td { font-size: 13px; font-weight: bold; border-top: 2px solid #2a3342; border-bottom: 0; }
+	.options .lowest { background: #fff4e0; }
+	.options tr.grand td.lowest { color: #c76a00; }
+	.tag { display: inline-block; white-space: nowrap; margin-top: 3px; padding: 1px 6px; border-radius: 8px; font-size: 8px; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; }
+	.tag.recommended { color: #5b6575; border: 1px solid #c9ced6; }
+	.tag.best { color: #fff; background: #e8840c; }
+	.error { font-size: 9px; color: #b42318; font-weight: normal; }
+</style>
+<div class="a3s-estimate">
+	<table class="head">
+		<tr>
+			<td>
+				<h1>{{ _("Solar System Options") }}</h1>
+			</td>
+			<td class="right">
+				<div><strong>{{ doc.name | e }}</strong></div>
+				<div class="muted">{{ _("Date") }}: {{ frappe.utils.formatdate(doc.estimate_date or doc.creation) }}</div>
+			</td>
+		</tr>
+	</table>
+	<div class="rule"></div>
+
+	<h2>{{ _("Prepared for") }}</h2>
+	<table class="facts">
+		<tr><td class="label">{{ _("Name") }}</td><td><strong>{{ title | e }}</strong></td></tr>
+		{%- if profile %}
+		{%- for r in profile.rows %}
+		<tr><td class="label">{{ r.label | e }}</td><td>{{ r.value | e }}</td></tr>
+		{%- endfor %}
+		{%- endif %}
+	</table>
+
+	<h2>{{ _("Options compared") }}</h2>
+	{%- macro cell(c, value) -%}
+	<td{% if c.key in lowest %} class="lowest"{% endif %}>{{ "" if c.error else (value or "—") | e }}</td>
+	{%- endmacro %}
+	{%- macro row(label, field, cls="") %}
+	<tr{% if cls %} class="{{ cls }}"{% endif %}><td class="label">{{ label }}</td>{% for c in columns %}{{ cell(c, c[field]) }}{% endfor %}</tr>
+	{%- endmacro %}
+	<table class="options">
+		<tr>
+			<th></th>
+			{%- for c in columns %}
+			<th class="option{% if c.key in lowest %} lowest{% endif %}">
+				{{ _("Option") }} {{ c.number }}
+				{%- if c.recommended %}<br><span class="tag recommended">{{ _("Recommended") }}</span>{% endif %}
+				{%- if c.key in lowest %}<br><span class="tag best">{{ _("Lowest price") }}</span>{% endif %}
+			</th>
+			{%- endfor %}
+		</tr>
+		<tr><td class="label">{{ _("Package") }}</td>{% for c in columns %}<td{% if c.key in lowest %} class="lowest"{% endif %}>{{ c.package | e }}</td>{% endfor %}</tr>
+		{{- row(_("Proposed size"), "size") }}
+		{{- row(_("Panels"), "panel_kwp") }}
+		{{- row(_("Inverters"), "inverter_kw") }}
+		{{- row(_("System price"), "package_cost") }}
+		{{- row(_("Solar panel"), "panel") }}
+		{{- row(_("Panel qty"), "panel_nos") }}
+		{{- row(_("Inverter"), "inverter") }}
+		{{- row(_("Inverter qty"), "inverter_nos") }}
+		{%- if columns | selectattr("battery") | list %}{{ row(_("Battery"), "battery") }}{% endif %}
+		{%- for key, label in lines %}
+		<tr class="line"><td class="label">{{ label | e }}</td>{% for c in columns %}{{ cell(c, money(amounts[loop.index0].get(key) or 0)) }}{% endfor %}</tr>
+		{%- endfor %}
+		<tr class="sum"><td class="label">{{ _("Subtotal") }}</td>{% for c in columns %}{{ cell(c, money(c.subtotal)) }}{% endfor %}</tr>
+		<tr><td class="label">{{ _("GST") }}</td>{% for c in columns %}{{ cell(c, money(c.gst_amount)) }}{% endfor %}</tr>
+		<tr class="grand">
+			<td class="label">{{ _("Total") }}</td>
+			{%- for c in columns %}
+			<td{% if c.key in lowest %} class="lowest"{% endif %}>{% if c.error %}<span class="error">{{ c.error | e }}</span>{% else %}{{ money(c.total) }}{% endif %}</td>
+			{%- endfor %}
+		</tr>
+	</table>
+</div>

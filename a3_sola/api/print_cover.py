@@ -74,22 +74,34 @@ def print_cover(doc):
 	return cover
 
 
-def _proposal(doc):
+def proposal_number(doc, version=None):
+	"""RENC/PROP/26-27/351, and _R2 for its second version on: the client's own numbering, as
+	the version's file name has it (solar_proposal._version_file_name). `version` numbers an
+	earlier version instead of the current one."""
 	from a3_sola.api.settings import get_value
 	from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import _fiscal_label
 
-	# RENC/PROP/26-27/351, and _R2 once it has been revised: the client's own numbering.
 	prefix = (get_value("proposal_series_prefix") or "RENC-PROP").replace("-", "/")
-	fiscal = _fiscal_label(doc.fiscal_year, get_value("proposal_fiscal_year_format") or "YY-YY")
-	number = "/".join(str(p) for p in (prefix, fiscal, doc.proposal_sequence) if p) if doc.proposal_sequence else doc.name
-	if cint(doc.get("current_version")):
-		number += "_R{0}".format(cint(doc.current_version))
+	fiscal = _fiscal_label(doc.get("fiscal_year"), get_value("proposal_fiscal_year_format") or "YY-YY")
+	number = "/".join(str(p) for p in (prefix, fiscal, doc.proposal_sequence) if p) if doc.get("proposal_sequence") else doc.name
+	version = cint(doc.get("current_version")) if version is None else cint(version)
+	if version > 1:
+		number += "_R{0}".format(version)
+	return number
+
+
+def is_revised(doc):
+	"""Whether the proposal is past its first version (current_version is the latest version's number)."""
+	return cint(doc.get("current_version")) > 1
+
+
+def _proposal(doc):
 	return {
 		"title": "Solar Project Proposal",
 		"salutation": doc.get("salutation"),
 		"customer": doc.customer_name,
 		"place": _place(doc.get("location"), doc.get("district")),
-		"number": number,
+		"number": proposal_number(doc),
 		"date": doc.proposal_date,
 		"estimate": doc.solar_design_estimate,
 	}
@@ -146,7 +158,19 @@ def _company(company):
 			address = "\n".join(p for p in (first, second) if p)
 	if not address:
 		address = get_value("office_address") or ""
-	return {"logo": logo, "address_lines": [line.strip() for line in address.splitlines() if line.strip()]}
+	return {"logo": logo, "address_lines": [line.strip() for line in address.splitlines() if line.strip()],
+		**_letterhead_bands(company)}
+
+
+def _letterhead_bands(company):
+	"""The company letterhead's own header and footer artwork, as data URIs, for the inner
+	pages' frame to print in place of the bands it otherwise draws (print_frame.html)."""
+	from a3_sola.api.documents import image_src
+
+	head = frappe.db.get_value("Company", company, "default_letter_head") if company else None
+	images = frappe.db.get_value("Letter Head", head, ["image", "footer_image"], as_dict=True) if head else None
+	return {"header_image": image_src(images.image) if images else "",
+		"footer_image": image_src(images.footer_image) if images else ""}
 
 
 # ------------------------------------------------------------------ page 2: the letter
@@ -172,21 +196,33 @@ LETTER_CLOSING = (
 )
 
 
+#: The revised letter's close, as the client's revised proposal (RENC/PROP/.._R1) ends it.
+REVISED_CLOSING = LETTER_CLOSING + ("Thank you for considering our proposal.",)
+
+
 def print_letter(doc):
 	"""The covering letter of a Solar Proposal: one point per design estimate, in the
-	table's order (Option 1 first), then one per line of the proposal's Remarks."""
+	table's order (Option 1 first), then one per line of the proposal's Remarks.
+
+	A revised proposal (R1, R2...) has the client's short letter instead (`short`): no
+	address block or introduction, the earlier proposal's number and date, each option as
+	"With 20kWp Solar Panels and 25kW Inverter.", and the Remarks as paragraphs under them."""
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
-	names = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.solar_design_estimate]
-	if not names and doc.get("solar_design_estimate"):
-		names = [doc.solar_design_estimate]
-	options = [_option_line(frappe.get_doc("Solar Design Estimate", n), technology_name) for n in names]
-	points = [("Option {0}: {1}".format(i, line) if len(options) > 1 else line) for i, line in enumerate(options, 1) if line]
-	points += [line.strip() for line in (doc.get("remarks") or "").splitlines() if line.strip()]
+	base = base_estimate(doc)
+	estimates = proposal_estimates(doc, base) if base else []
+	revised = is_revised(doc)
+	remarks = [line.strip() for line in (doc.get("remarks") or "").splitlines() if line.strip()]
+	if revised:
+		points = [_short_option_line(e) for e in estimates]
+		points = [p for p in points if p]
+	else:
+		options = [_option_line(e, technology_name) for e in estimates]
+		points = [("Option {0}: {1}".format(i, line) if len(options) > 1 else line) for i, line in enumerate(options, 1) if line]
+		points += remarks
 
 	salutation = (doc.get("salutation") or "").strip().rstrip(".")
 	dear = "Dear Madam," if salutation.lower() in MADAM else ("Dear Sir," if salutation else "Dear Sir/Madam,")
-	revised = cint(doc.get("current_version")) > 0
 	company = frappe.db.get_value("Company", doc.company, ["company_name", "website", "phone_no", "email",
 		"epc_authorised_signatory", "epc_signatory_designation"], as_dict=True) if doc.get("company") else frappe._dict()
 	from a3_sola.api.settings import get_value
@@ -201,7 +237,7 @@ def print_letter(doc):
 		"closing": list(LETTER_CLOSING),
 		"intro": "Please find enclosed our quotation for the following:" if doc.get("quotation") else
 			"Please find enclosed our {0}offer with the following {1}:".format(
-				"revised " if revised else "", "options" if len(options) > 1 else "details"),
+				"revised " if revised else "", "options" if len(estimates) > 1 else "details"),
 		"points": points,
 		"company_name": company.company_name or doc.get("company") or "",
 		"signatory": company.epc_authorised_signatory or "",
@@ -209,10 +245,35 @@ def print_letter(doc):
 		"website": website.replace("https://", "").replace("http://", "").rstrip("/"),
 		"phone": company.phone_no or get_value("sales_phone") or "",
 		"email": company.email or get_value("sales_email") or "",
+		"short": revised,
+		"remarks": remarks if revised else [],
 	}
+	if revised:
+		versions = doc.get("versions") or []
+		earlier = versions[-2] if len(versions) > 1 else None
+		dated = " dated {0}".format(getdate(earlier.version_date).strftime("%d.%m.%Y")) if earlier and earlier.get("version_date") else ""
+		kinds = {r.panel_type for e in estimates for r in e.get("panels") or [] if not r.get("is_option") and r.panel_type}
+		system = " for {0} system".format("DCR" if kinds == {"DCR"} else "Non DCR") if len(kinds) == 1 else ""
+		letter["opening"] = ["Further to our proposal No. {0}{1}, we hereby submit our revised proposal{2} as below:".format(
+			proposal_number(doc, cint(doc.get("current_version")) - 1), dated, system)]
+		letter["closing"] = list(REVISED_CLOSING)
 	letter.update(_company(doc.get("company")))
 	letter["font_pt"] = _letter_pt(letter)
 	return letter
+
+
+def _short_option_line(est):
+	"""'With 20kWp Solar Panels and 25kW Inverter.': an option as the revised letter lists it."""
+	priced = lambda table: [r for r in est.get(table) or [] if not r.get("is_option")]
+	kwp = round(sum(flt(r.get("total_capacity_kwp")) or flt(r.panel_capacity_wp) * cint(r.nos) / 1000 for r in priced("panels")), 2)
+	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in priced("inverters"))
+	kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000
+		for r in priced("batteries"))
+	parts = [p for p in ("{0:g}kWp Solar Panels".format(kwp) if kwp else "", "{0:g}kW Inverter".format(inv_kw) if inv_kw else "",
+		"{0:g}kWh Battery".format(round(kwh, 2)) if kwh else "") if p]
+	if not parts:
+		return ""
+	return "With " + (parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]) + "."
 
 
 #: The letter's type size, in pt: the largest, in quarter points, at which the signature
@@ -244,18 +305,24 @@ def _letter_height(letter, pt):
 
 	# (text, gap after it in em, indent in em)
 	to = letter["to"] + (", " + letter["place"] if letter.get("place") else "")
+	short = letter.get("short")
 	paras = [(letter["date"], 0.6, 0)] if letter.get("date") else []
-	paras += [("To,", 0.3, 0), (to, 1.0, 0), (letter["dear"], 0.8, 0)]
+	if not short:
+		paras += [("To,", 0.3, 0), (to, 1.0, 0)]
+	paras += [(letter["dear"], 0.8, 0)]
 	paras += [(p, 0.6, 0) for p in letter["opening"][:-1]]
 	paras += [(letter["opening"][-1], 0.9, 0)] if letter["opening"] else []  # .a3l-intro's margin
-	paras += [(letter["intro"], 0.6, 0)]
+	if not short:
+		paras += [(letter["intro"], 0.6, 0)]
 	paras += [(p, 0.5, 1.8) for p in letter["points"]]
 	if letter["points"]:
 		paras[-1] = (paras[-1][0], 0.9, 1.8)  # the list's own margin
+	paras += [(p, 0.6, 0) for p in letter.get("remarks") or []]
 	paras += [(p, 0.6, 0) for p in letter["closing"][:-1]]
 	paras += [(letter["closing"][-1], 0.9, 0)] if letter["closing"] else []  # .a3l-thanks's margin
-	paras += [("Thanking you and assuring you of our best attention and services always.", 0.6, 0),
-		("Thanks & Regards", 0.6, 0), ("For " + letter["company_name"], 2.0, 0)]
+	if not short:
+		paras += [("Thanking you and assuring you of our best attention and services always.", 0.6, 0)]
+	paras += [("Thanks & Regards", 0.6, 0), ("For " + letter["company_name"], 2.0, 0)]
 	paras += [(p, 0.6, 0) for p in (letter["signatory"], letter["designation"]) if p]
 	return pt * sum(lines(text, indent) * LINE_HEIGHT + gap for text, gap, indent in paras)
 
@@ -308,7 +375,7 @@ def print_summary(doc):
 	Returns {"rows": [(particular, description)], "missing": [particular]} - a row whose data is
 	on no record prints a dash and is named in `missing`.
 	"""
-	est = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate) if doc.get("solar_design_estimate") else None
+	est = base_estimate(doc)
 	survey_name = (est.site_survey if est else None) or doc.get("site_survey")
 	survey = frappe.get_doc("Site Survey", survey_name) if survey_name and frappe.db.exists("Site Survey", survey_name) else None
 	consumer = frappe.db.get_value("Solar Consumer", doc.solar_consumer, ["consumer_category", "roof_type"], as_dict=True) \
@@ -332,10 +399,15 @@ def print_summary(doc):
 	place = _place(doc.get("location"), doc.get("district"))
 	building = (est.get("building_type") if est else None) or BUILDING.get(category or "")
 	rows.append(("Site Location", " in ".join(p for p in (building, place) if p)))
-	rows.append(("Capacity of Solar Panels Proposed", "{0:g} kWp".format(kwp) if kwp else ""))
+	# Every option's plant, as the client writes it: "20 kWp/25kWp, Three Phase".
+	sizes = list(dict.fromkeys(_kwp(e) for e in (proposal_estimates(doc, est) if est else []) if _kwp(e))) or ([kwp] if kwp else [])
+	capacity = "/".join("{0:g}kWp".format(k) for k in sizes)
+	if capacity and est and est.connection_type:
+		capacity += ", " + est.connection_type
+	rows.append(("Capacity of the Plant Proposed", capacity))
 	rows.append(("Tilt & Orientation", _tilt(survey, roof)))
 	system = est.system_type if est else None
-	rows.append(("Type of Solar Power Plant", "{0} Rooftop".format(system) if system else ""))
+	rows.append(("Type of Solar Power Plant", "{0} Rooftop".format(SYSTEM_NAMES.get(system, system)) if system else ""))
 	area = flt(roof.area_per_kw_sqft) * kwp if roof and flt(roof.area_per_kw_sqft) and kwp else \
 		flt(frappe.db.get_value("Solar Package", est.solar_package, "area_required_sqft")) if est and est.solar_package else 0
 	rows.append(("Roof Area Required", "{0:,.0f} Sq. Ft.".format(area) if area else ""))
@@ -350,18 +422,54 @@ def print_summary(doc):
 		load = flt(est.get("backup_load_kw")) or kwp
 		hours = round(kwh / load, 1) if kwh and load else 0
 		rows.append(("Back up Hours", "{0:g} hour{1} for {2:g} kW".format(hours, "" if hours == 1 else "s", load) if hours else ""))
-	# The band for the panels proposed, as the estimate works it out for its own capacity.
-	if kwp:
+	# The band for the panels proposed, as the estimate works it out for its own capacity:
+	# from the smallest option's low to the largest's high.
+	if sizes:
 		from a3_sola.api.calculations import estimate_daily_generation_band
 
 		section = frappe.db.get_value("Solar Consumer", doc.solar_consumer, "discom_section") if doc.get("solar_consumer") else None
-		band = estimate_daily_generation_band(kwp, section)
-		low, high = flt(band["low_units_per_day"]), flt(band["high_units_per_day"])
+		low = flt(estimate_daily_generation_band(min(sizes), section)["low_units_per_day"])
+		high = flt(estimate_daily_generation_band(max(sizes), section)["high_units_per_day"])
 	else:
 		low, high = (flt(est.expected_daily_units_low), flt(est.expected_daily_units_high)) if est else (0, 0)
-	rows.append(("Estimated Annual Average Generation",
-		"{0:.0f}-{1:.0f} units per day".format(low, high) if low and high else ("{0:.0f} units per day".format(low or high) if (low or high) else "")))
-	return {"rows": rows, "missing": [p for p, v in rows if not v]}
+	rows.append(("Expected generated per day",
+		"{0:.0f} - {1:.0f} units".format(low, high) if low and high else ("{0:.0f} units".format(low or high) if (low or high) else "")))
+	layout = image_src_of(est.get("tentative_layout")) if est else ""
+	return {"rows": rows, "missing": [p for p, v in rows if not v], "layout": layout, "sections": section_numbers(bool(layout))}
+
+
+#: The plant's kind as the client's executive summary names it.
+SYSTEM_NAMES = {"On-Grid": "Grid Connected"}
+
+
+def _kwp(est):
+	return round(sum(flt(r.get("total_capacity_kwp")) or flt(r.panel_capacity_wp) * cint(r.nos) / 1000
+		for r in est.get("panels") or [] if not r.get("is_option")), 2)
+
+
+def image_src_of(file_url):
+	from a3_sola.api.documents import image_src
+
+	return image_src(file_url) if file_url else ""
+
+
+def section_numbers(layout):
+	"""Section 3's numbers: 3.2 is the Tentative Layout when the estimate has one, and every
+	later section moves down one."""
+	n = 1 if layout else 0
+	keys = ("specs", "cost", "terms", "payment", "schedule", "warranty")
+	return {key: "3.{0}".format(i + 2 + n) for i, key in enumerate(keys)}
+
+
+def base_estimate(doc):
+	"""The design estimate a proposal-shaped record prints from: its first option's own
+	record when the options are worked out in memory (an estimate's unsaved options), else
+	its Design Estimate."""
+	rows = doc.get("design_estimates") or []
+	if rows and rows[0].get("estimate_doc"):
+		return rows[0].estimate_doc
+	name = doc.get("solar_design_estimate")
+	return frappe.get_doc("Solar Design Estimate", name) if name else None
 
 
 def _tilt(survey, roof):
@@ -394,7 +502,10 @@ MAKE_TYPE = {"DCDB": "DCDB", "ACDB": "ACDB", "DC Cable": "Cable", "AC Cable": "C
 
 def proposal_estimates(doc, est):
 	"""The design estimates a proposal offers, one per option, in its order - the base `est`
-	first when the proposal lists none."""
+	first when the proposal lists none. Options worked out in memory are their own records."""
+	docs = [r.estimate_doc for r in doc.get("design_estimates") or [] if r.get("estimate_doc")]
+	if docs:
+		return docs
 	names = [r.solar_design_estimate for r in doc.get("design_estimates") or [] if r.get("solar_design_estimate")]
 	names = list(dict.fromkeys(names)) or [est.name]
 	return [est if n == est.name else frappe.get_doc("Solar Design Estimate", n) for n in names
@@ -414,9 +525,9 @@ def print_components(doc):
 	from a3_sola.api.proposal_comparison import unit_capacity
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
-	if not doc.get("solar_design_estimate"):
+	est = base_estimate(doc)
+	if not est:
 		return {"rows": [], "missing": []}
-	est = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate)
 
 	def make(name):
 		return frappe.db.get_value("Component Make", name, "make_name") if name else ""
@@ -531,46 +642,55 @@ CHARGES = (("Additional Structure", 1), ("Additional Cable", 1), ("Special Disco
 #: The client's payment terms. Nothing on file holds them yet, so they are printed as standing.
 PAYMENT_TERMS = (
 	"70% as advance with PO.",
-	"20% after installation completion.",
-	"10% after commissioning of system with Net Meter. In case of net meter availed from KSEBL, "
-	"10% to be transferred after submission of completion documents to KSEBL.",
+	"20% after delivery and installation.",
+	"10% after commissioning of system.",
 )
-#: Shipped with the app, used while nothing on file names installation photographs.
-DEFAULT_PICTURES = tuple("/assets/a3_sola/images/installations/installation-{0}.jpg".format(i) for i in (1, 2, 3))
+#: The PV modules' output guarantee the client prints under their performance warranty.
+MODULE_OUTPUT_WARRANTY = ("The PV Modules shall be warranted for output wattage, which should not be less than 90% "
+	"at the end of 12 years and 80% at the end of {0} years.")
+#: 5. Way Forward, as the client's document has it, and who it names to reach.
+WAY_FORWARD = (
+	"The proposed solar power plant represents a sustainable, cost-effective, and environmentally friendly solution "
+	"to meet growing energy demands while reducing carbon emissions. By harnessing the abundant solar energy resource, "
+	"this project aligns with global efforts to combat climate change and transition to renewable energy sources.",
+	"We are confident that this project will not only contribute to energy independence but also create economic "
+	"opportunities and promote sustainable development.",
+	"Should you require any further details or clarifications, please do not hesitate to contact us. We would be "
+	"delighted to address any questions or provide additional information to support your decision-making process.",
+	"Please feel free to reach out to us:",
+)
+#: (name, designation, phone) - the company's authorised signatory, if set, takes the first.
+CONTACTS = (("Nevil Jose", "Managing Partner", "+91 8891024312"), ("Shiju N K", "Strategic Partner", "+91 9895778516"))
 
 
 def print_rest(doc):
-	"""Sections 3.3 to 6 of a Solar Proposal print: the project cost and KSEBL expenses, the
-	terms, payment and bank details, the schedule, the warranty, the scope of work, the
-	pictures of similar installations and the way forward. All from the base design
-	estimate, the records it links to, the Company and A3 Sola Settings."""
+	"""Sections 3.3/3.4 to 5 of a Solar Proposal print: the solar power plant cost and KSEBL
+	expenses, the terms, payment and bank details, the schedule, the warranty, the scope of
+	work and the way forward. All from the base design estimate, the records it links to,
+	the Company and A3 Sola Settings."""
 	from frappe.utils import fmt_money, money_in_words
 
 	from a3_sola.api.settings import get_settings
-	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
 	settings = get_settings()
-	est = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate) if doc.get("solar_design_estimate") else None
+	est = base_estimate(doc)
 	company = frappe.get_doc("Company", doc.company) if doc.get("company") else frappe._dict()
 	money = lambda v: fmt_money(flt(v), precision=0)  # 7,76,000 - the client prints whole rupees
 	empty = {"label": "", "rows": []}
 	out = {"cost": [], "cost_options": [empty], "cost_pages": [{"options": [empty], "kseb": True}], "add_ons": [], "kseb": [], "kseb_total": 0, "kseb_words": "", "kseb_note": "", "terms_html": "",
-		"validity": "", "payment_terms": list(PAYMENT_TERMS), "bank": [], "schedule_html": settings.get("delivery_schedule_text") or "",
-		"warranty": [], "scope": {"company": [], "customer": []}, "pictures": list(DEFAULT_PICTURES),
-		"company_scope_label": "", "customer_scope_label": "", "system_type": ""}
+		"validity": "", "payment_terms": list(PAYMENT_TERMS), "bank": [], "bank_credentials": [], "payment_qr": "",
+		"schedule_html": settings.get("delivery_schedule_text") or "",
+		"warranty": [], "scope": {"company": [], "customer": []}, "way_forward": list(WAY_FORWARD), "contacts": _contacts(company),
+		"company_scope_label": "", "customer_scope_label": "", "system_type": "",
+		"sections": section_numbers(bool(est and est.get("tentative_layout"))), "flow": []}
 	if not est:
 		return out
 
-	priced = lambda table: [r for r in est.get(table) or [] if not r.get("is_option")]
-	panels, inverters, batteries = priced("panels"), priced("inverters"), priced("batteries")
-	kwp = round(sum(flt(r.get("total_capacity_kwp")) or flt(r.panel_capacity_wp) * cint(r.nos) / 1000 for r in panels), 2)
-	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in inverters)
-	kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000 for r in batteries)
 	out["system_type"] = est.system_type or ""
 
-	# 3.3.1 Every option of the proposal, in its order - Option 1 is the base - each with its
-	# plant, its linked charges, the total and the price after discount. A quotation is one
-	# option, and prints what it charges.
+	# Solar Power Plant Cost: every option of the proposal, in its order - Option 1 is the
+	# base - each with its plant, its linked charges, GST, the total and the price after
+	# discount. A quotation is one option, and prints what it charges.
 	q = doc.get("quotation")
 	if q:
 		rows = [{"item": frappe.utils.strip_html(r.description or r.item_name or ""), "amount": flt(r.amount)} for r in q.items]
@@ -593,7 +713,8 @@ def print_rest(doc):
 	out["cost"] = options[0]["rows"]
 	out["cost_options"] = options
 
-	# 3.3.2 KSEBL expenses, as the fee schedule resolved them for the estimate.
+	# KSEBL expenses, as the fee schedule resolved them for the estimate - each fee, no total,
+	# as the client's table lists them.
 	import json
 
 	statutory = json.loads(est.statutory_breakdown) if est.statutory_breakdown else {}
@@ -611,12 +732,11 @@ def print_rest(doc):
 		out["kseb_words"] = words.rstrip(".").replace(" only", " Only")
 	if purchased:
 		out["kseb_note"] = "*Bi-directional meter can be availed from KSEBL on rental basis also."
-	# 3.3.3 what the packages offer beside their price - for information, in no total.
+	# What the packages offer beside their price - for information, in no total.
 	out["add_ons"] = add_on_rows(proposal_estimates(doc, est))
-	# The amount in words is one more row of the KSEBL table.
-	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb) + bool(out["kseb_words"]), bool(out["kseb_note"]), len(out["add_ons"]))
+	out["cost_pages"] = cost_pages(out["cost_options"], len(kseb), bool(out["kseb_note"]), len(out["add_ons"]))
 
-	# 3.4 terms and offer validity; 3.5 the bank details from the Company.
+	# The terms and offer validity; the payment terms and the bank details from the Company.
 	out["terms_html"] = settings.get("terms_and_conditions_text") or ""
 	if cint(settings.get("offer_validity_days")) and "validity" not in out["terms_html"].lower():
 		out["validity"] = "Offer Validity: {0} days from the date of offer.".format(cint(settings.offer_validity_days))
@@ -630,38 +750,11 @@ def print_rest(doc):
 	# The company's payment QR (Company > Payee Bank > Payment QR Code): a column of its own
 	# beside the bank details, for the customer to scan and pay.
 	out["payment_qr"] = company.get("payment_qr_code") or ""
-	out["payment_page"] = payment_on_own_page(out)
 
-	# 3.7 warranty: the package's system warranty, then each make's own terms.
-	def make_doc(name):
-		return frappe.get_cached_doc("Component Make", name) if name and frappe.db.exists("Component Make", name) else None
-
-	years = cint(frappe.db.get_value("Solar Package", est.solar_package, "warranty_years")) if est.solar_package else 0
-	warranty = []
-	if years:
-		warranty.append("System Warranty shall be for {0} years from the date of initial Commissioning.".format(years))
-	seen = set()
-	for label, rows_, field in (("Solar PV Modules", panels, "panel_make"), ("Inverter", inverters, "inverter_make"), ("Battery", batteries, "battery_make")):
-		for r in rows_:
-			m = make_doc(r.get(field))
-			if not m or m.name in seen:
-				continue
-			seen.add(m.name)
-			if label == "Solar PV Modules":
-				parts = []
-				if cint(m.performance_warranty_years):
-					parts.append("performance warranty of {0} years".format(cint(m.performance_warranty_years)))
-				if cint(m.product_warranty_years):
-					parts.append("product warranty of {0} years".format(cint(m.product_warranty_years)))
-				if parts:
-					warranty.append("Solar PV Modules will have {0} as offered by the manufacturer.".format(" and ".join(parts)))
-			else:
-				# An inverter on a price-list model carries that model's warranty, not the make's.
-				model = r.get("inverter_model") if label == "Inverter" else None
-				years_ = cint(frappe.db.get_value("Inverter Model", model, "warranty_years")) if model else cint(m.product_warranty_years)
-				if years_:
-					warranty.append("{0} Warranty – {1} Years as offered by the manufacturer.".format(label, years_))
-	out["warranty"] = warranty
+	# Warranty, as the client numbers it: the package's system warranty, the modules' performance
+	# warranty, then each option's inverter (and battery) by make and size.
+	out["warranty_items"] = warranty_items(est, proposal_estimates(doc, est))
+	out["warranty"] = [w["text"] + "".join(" " + s for s in w["sub"]) for w in out["warranty_items"]]
 
 	# 4 scope of work, from Settings, by responsibility.
 	for r in sorted(settings.get("scope_of_work") or [], key=lambda r: (cint(r.display_order), r.idx)):
@@ -670,7 +763,61 @@ def print_rest(doc):
 	short = (company.get("company_name") or "").split(" ")[0]
 	out["company_scope_label"] = "{0} Scope".format(short) if short else (settings.get("company_scope_label") or "Our Scope")
 	out["customer_scope_label"] = settings.get("customer_scope_label") or "Client's Scope"
+	out["flow"] = flow_pages(out)
 	return out
+
+
+def _contacts(company):
+	"""5. Way Forward's contacts: CONTACTS, the first named as the company's authorised signatory."""
+	contacts = [list(c) for c in CONTACTS]
+	if company.get("epc_authorised_signatory"):
+		contacts[0][0] = company.epc_authorised_signatory
+		contacts[0][1] = company.get("epc_signatory_designation") or contacts[0][1]
+	return [tuple(c) for c in contacts]
+
+
+def warranty_items(est, estimates):
+	"""[{"text", "sub": [...]}]: the system warranty, the modules', and "Inverter Warranty" with
+	one line per option's inverter ("Solinteg 25kW - 10 years"), the battery likewise."""
+
+	def make_doc(name):
+		return frappe.get_cached_doc("Component Make", name) if name and frappe.db.exists("Component Make", name) else None
+
+	items = []
+	years = cint(frappe.db.get_value("Solar Package", est.solar_package, "warranty_years")) if est.solar_package else 0
+	if years:
+		items.append({"text": "System Warranty shall be for {0} years from the date of Commissioning.".format(years), "sub": []})
+	priced = lambda e, table: [r for r in e.get(table) or [] if not r.get("is_option")]
+	seen = set()
+	for e in estimates:
+		for r in priced(e, "panels"):
+			m = make_doc(r.panel_make)
+			if not m or m.name in seen or not cint(m.performance_warranty_years):
+				continue
+			seen.add(m.name)
+			n = cint(m.performance_warranty_years)
+			items.append({"text": "Solar PV Modules will have performance warranty of {0} years. {1}".format(n,
+				MODULE_OUTPUT_WARRANTY.format(n)), "sub": []})
+	for label, table, field, size in (("Inverter", "inverters", "inverter_make", "inverter_capacity_kw"),
+			("Battery", "batteries", "battery_make", None)):
+		lines = []
+		for e in estimates:
+			for r in priced(e, table):
+				m = make_doc(r.get(field))
+				if not m:
+					continue
+				# An inverter on a price-list model carries that model's warranty, not the make's.
+				model = r.get("inverter_model") if table == "inverters" else None
+				years_ = cint(frappe.db.get_value("Inverter Model", model, "warranty_years")) if model else cint(m.product_warranty_years)
+				if not years_:
+					continue
+				name = " ".join(p for p in (m.make_name, "{0:g}kW".format(flt(r.get(size))) if size and flt(r.get(size)) else "") if p)
+				line = "{0} - {1} years".format(name, years_)
+				if line not in lines:
+					lines.append(line)
+		if lines:
+			items.append({"text": "{0} Warranty".format(label), "sub": lines})
+	return items
 
 
 def plant_cost_rows(est):
@@ -698,12 +845,10 @@ def plant_cost_rows(est):
 
 
 def _option_label(est, number):
-	"""'Option 2 – 3 kW Single Phase On-Grid (PM Surya Ghar) – Solinteg': the package it is
-	built on and the inverter it is priced with, since two options often share a package."""
-	package = frappe.db.get_value("Solar Package", est.solar_package, "package_name") if est.solar_package else None
-	makes = [frappe.db.get_value("Component Make", r.inverter_make, "make_name") for r in est.get("inverters") or []
-		if r.inverter_make and not r.get("is_option")]
-	label = " – ".join(part for part in (package, " + ".join(dict.fromkeys(m for m in makes if m))) if part)
+	"""'Option 2 – 25kWp with 30kW Inverter': the option as the client heads its cost table."""
+	kwp = _kwp(est)
+	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in est.get("inverters") or [] if not r.get("is_option"))
+	label = " with ".join(p for p in ("{0:g}kWp".format(kwp) if kwp else "", "{0:g}kW Inverter".format(inv_kw) if inv_kw else "") if p)
 	return "Option {0}{1}".format(number, " – " + label if label else "")
 
 
@@ -801,6 +946,9 @@ def component_pages(summary, components):
 	summary_pt = 62 + 28 + sum(  # 3. and 3.1's headings, the table's header
 		max(_cell_lines(p, *SUMMARY_COLS[0]), _cell_lines(d, *SUMMARY_COLS[1])) * SUMMARY_LINE_PT + ROW_PAD_PT
 		for p, d in summary.get("rows") or [])
+	if summary.get("layout"):
+		# The Tentative Layout fills the rest of 3.1's page: the components start the next.
+		summary_pt = COMPONENTS_ROOM_PT
 	notes_pt = sum(_cell_lines(n, 482, 12) * 12 * 1.3 + 6 for n in components.get("notes") or [])
 	table_head_pt = 46 + 46  # 3.2's heading and its gap, the two-line header row
 
@@ -824,28 +972,48 @@ def component_pages(summary, components):
 	return {"under_summary": under_summary, "pages": out}
 
 
-#: Sections 3.4 and 3.5 share a page while both fit, in printed lines of the page's
-#: column (print_rest.html, 12.5pt): the terms are the company's own text, of any length.
-TERMS_PAGE_LINES = 36
-TERMS_LINE_CHARS = 74  # a bulleted line of the column
+#: The pages after the cost hold the terms, the payment terms and bank details, the schedule,
+#: the warranty, the scope of work and the way forward one after another, as many to a page
+#: as fit, in printed lines of the page's column (print_rest.html, 12.5pt). A section is not
+#: split: one that does not fit starts the next page.
+TERMS_PAGE_LINES = 38
+TERMS_LINE_CHARS = 78  # a bulleted line of the column
+#: The scope of work is two sections here, as the client's document breaks it over a page.
+FLOW = ("terms", "payment", "schedule", "warranty", "scope_company", "scope_customer", "way_forward")
 
 
-def payment_on_own_page(rest):
-	"""Whether 3.5, the payment terms and the bank details, starts a page of its own
-	rather than following 3.4's terms on theirs."""
+def flow_pages(rest):
+	"""[[section, ...], ...]: FLOW's sections laid out page by page by their printed lines."""
 	import re
 
 	from frappe.utils import strip_html
 
-	def lines(text):
-		return max(1, -(-len(text) // TERMS_LINE_CHARS)) + 0.25  # the item's gap
+	def lines(text, chars=TERMS_LINE_CHARS):
+		return max(1, -(-len(text or "") // chars)) + 0.25  # the item's gap
 
-	blocks = [strip_html(b).strip() for b in re.split(r"</li>|</p>|<br\s*/?>", rest["terms_html"] or "")]
-	need = 1.5 + sum(lines(b) for b in blocks if b) + (lines(rest["validity"]) if rest["validity"] else 0)
-	need += 2.5 + sum(lines(t) for t in rest["payment_terms"])  # 3.5's heading and gap
-	bank_rows = len(rest["bank"]) + len(rest["bank_credentials"])
-	need += 1.5 + max(bank_rows * 1.6 + 1, 11 if rest["payment_qr"] else 0)  # its heading, the table
-	return need > TERMS_PAGE_LINES
+	def html_lines(html):
+		return sum(lines(b) for b in (strip_html(b).strip() for b in re.split(r"</li>|</p>|<br\s*/?>", html or "")) if b)
+
+	bank_rows = len(rest.get("bank") or []) + len(rest.get("bank_credentials") or [])
+	scope = rest.get("scope") or {}
+	need = {
+		"terms": 2 + html_lines(rest.get("terms_html")) + (lines(rest["validity"]) if rest.get("validity") else 0),
+		"payment": 2 + sum(lines(t) for t in rest.get("payment_terms") or [])
+			+ 1.5 + max(bank_rows * 1.4 + 1, 11 if rest.get("payment_qr") else 0),
+		"schedule": 2 + html_lines(rest.get("schedule_html")),
+		"warranty": 2 + sum(lines(w["text"]) + sum(lines(x, 70) for x in w["sub"]) for w in rest.get("warranty_items") or []),
+		"scope_company": 2.5 + 1.5 + sum(lines("{0}: {1}".format(x.get("category"), x.get("text"))) for x in scope.get("company") or []),
+		"scope_customer": 1.5 + sum(lines("{0}: {1}".format(x.get("category"), x.get("text"))) for x in scope.get("customer") or []),
+		"way_forward": 2.5 + sum(lines(p, 82) for p in rest.get("way_forward") or []) + 7,  # the contacts' table
+	}
+	pages, used = [[]], 0
+	for key in FLOW:
+		if pages[-1] and used + need[key] > TERMS_PAGE_LINES:
+			pages.append([])
+			used = 0
+		pages[-1].append(key)
+		used += need[key] + 1  # the gap before the next section
+	return pages
 
 
 def add_on_rows(estimates):
@@ -879,16 +1047,20 @@ def add_on_rows(estimates):
 
 
 def plant_description(est):
-	"""'Design, Supply, Installation, Testing and Commissioning of 4.95 kWp Single Phase Hybrid
-	Solar Power Plant with 5kW Inverter, 10.24kWh LiFePO4 battery (51.2V, 100Ah X 2) and
-	Balance of System and other accessories.' - the plant as the proposal prices it."""
+	"""'Design, Supply, Installation, Testing and Commissioning of 20kWp Non-DCR Grid Connected
+	Rooftop Solar Power Plant with 25 kW Inverter including AC Cabling and earthing from roof to
+	the electrical room' - the plant as the client's cost table prices it, with the battery
+	(10.24kWh LiFePO4 battery (51.2V, 100Ah X 2)) of a hybrid or off-grid plant."""
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
 
 	priced = lambda table: [r for r in est.get(table) or [] if not r.get("is_option")]
 	panels, inverters, batteries = priced("panels"), priced("inverters"), priced("batteries")
-	kwp = round(sum(flt(r.get("total_capacity_kwp")) or flt(r.panel_capacity_wp) * cint(r.nos) / 1000 for r in panels), 2)
+	kwp = _kwp(est)
 	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in inverters)
 	kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000 for r in batteries)
+	kinds = {r.panel_type for r in panels if r.panel_type}
+	dcr = ("DCR " if kinds == {"DCR"} else "Non-DCR ") if len(kinds) == 1 else ""
+	system = SYSTEM_NAMES.get(est.system_type or "", est.system_type or "")
 	battery_text = ""
 	if batteries:
 		b = batteries[0]
@@ -896,6 +1068,6 @@ def plant_description(est):
 			technology_name(b.battery_variant) if b.battery_variant else "",
 			", ".join("{0:g}V, {1:g}Ah X {2}".format(flt(r.battery_voltage), flt(r.battery_capacity_ah), cint(r.nos)) for r in batteries)
 		).replace("  ", " ")
-	description = "Design, Supply, Installation, Testing and Commissioning of {0:g} kWp {1}{2}Solar Power Plant with {3:g}kW Inverter{4} and Balance of System and other accessories.".format(
-		kwp, (est.connection_type + " ") if est.connection_type else "", (est.system_type + " ") if est.system_type else "", inv_kw, battery_text)
-	return description
+	return ("Design, Supply, Installation, Testing and Commissioning of {0:g}kWp {1}{2}Rooftop Solar Power Plant with "
+		"{3:g} kW Inverter{4} including AC Cabling and earthing from roof to the electrical room").format(
+		kwp, dcr, (system + " ") if system else "", inv_kw, battery_text)
