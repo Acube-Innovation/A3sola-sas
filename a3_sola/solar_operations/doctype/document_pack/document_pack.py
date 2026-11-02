@@ -138,7 +138,7 @@ class DocumentPack(Document):
 				)
 			if not self.loan_application:
 				frappe.throw(
-					_("A bank completion pack is for a financed job; {0} has no loan application.").format(
+					_("A bank completion pack is for a financed project; {0} has no loan application.").format(
 						installation.name
 					),
 					title=_("Not Financed"),

@@ -21,6 +21,13 @@ CUSTOM_FIELDS = {
 	"Delivery Note": [dict(_LINK, insert_after="customer")],
 	"Purchase Order": [dict(_LINK, insert_after="supplier")],
 	"Purchase Receipt": [dict(_LINK, insert_after="supplier")],
+	# A supplier's bill for a job's material (the Supplier Invoice task, api/supplier_bill).
+	"Purchase Invoice": [
+		dict(_LINK, insert_after="supplier"),
+		{"fieldname": "a3s_material_bill", "fieldtype": "Check", "label": "Material Bill for the Job",
+		 "insert_after": "solar_installation", "read_only": 1,
+		 "description": "Entered on the job's Supplier Invoice task: costed as the job's material."},
+	],
 	"Sales Invoice": [dict(_LINK, insert_after="customer")],
 	"Serial No": [
 		{

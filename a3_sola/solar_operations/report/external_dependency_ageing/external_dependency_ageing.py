@@ -23,7 +23,7 @@ def get_columns(filters):
 		{"label": _("Owner"), "fieldname": "owner_type", "fieldtype": "Data", "width": 120},
 		{"label": _("Section"), "fieldname": "discom_section", "fieldtype": "Link", "options": "DISCOM Section", "width": 150},
 		{"label": _("Stage"), "fieldname": "stage_name", "fieldtype": "Data", "width": 200},
-		{"label": _("Jobs Waiting"), "fieldname": "jobs", "fieldtype": "Int", "width": 110},
+		{"label": _("Projects Waiting"), "fieldname": "jobs", "fieldtype": "Int", "width": 110},
 		{"label": _("Avg Days"), "fieldname": "avg_days", "fieldtype": "Float", "precision": 1, "width": 100},
 		{"label": _("Max Days"), "fieldname": "max_days", "fieldtype": "Int", "width": 100},
 		{"label": _("SLA"), "fieldname": "sla_days", "fieldtype": "Int", "width": 70},

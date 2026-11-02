@@ -193,7 +193,7 @@ def build_plan(plan):
 			or resolve_template(plan.company, plan.consumer_category, plan.net_meter_mode, plan.is_financed)
 	if not plan.milestone_template:
 		frappe.throw(
-			_("No billing milestone template matches this job. A billing plan cannot be built without one."),
+			_("No billing milestone template matches this project. A billing plan cannot be built without one."),
 			title=_("Milestone Template Missing"),
 		)
 

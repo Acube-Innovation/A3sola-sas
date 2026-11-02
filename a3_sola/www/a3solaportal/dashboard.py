@@ -64,7 +64,7 @@ ACTION_CARDS = [
 	},
 	{
 		"title": "Installations",
-		"text": "Track every job from work order to commissioning, with the DISCOM and bank documents on one record.",
+		"text": "Track every project from work order to commissioning, with the DISCOM and bank documents on one record.",
 		"ic": "wrench",
 		"tone": "sky",
 		"cta": "Open installations",

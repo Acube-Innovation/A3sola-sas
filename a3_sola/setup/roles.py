@@ -19,7 +19,13 @@ ROLES = [
 	("Solar Sales Manager", "Approves designs, waives eligibility rules, sees commercials."),
 	("Solar CRM Manager", "Full access including master data and settings."),
 	("Solar Sales Coordinator", "Registers the job on the PM Surya Ghar portal and raises Form 1 - the paperwork between the sale and the site."),
+	("Solar Dealer", "A partner who brings in customers: his own leads, customers, surveys, estimates, proposals and quotations, and his customers' projects to read. Portal only."),
+	("Solar Contractor Partner", "An installation contractor: the projects he is contractor on, the tasks given to him, work orders, design freeze and serial numbers. No prices or costs. Portal only."),
 ]
+
+#: Roles held by people outside the company - a dealer, a contractor. They use the portal only,
+#: never the desk, and see only their own records (api/partner_scope).
+PORTAL_ONLY_ROLES = ("Solar Dealer", "Solar Contractor Partner")
 
 ROLE_PROFILES = {
 	"Solar Sales": ["Solar Sales Executive", "Sales User", "Employee"],
@@ -28,6 +34,8 @@ ROLE_PROFILES = {
 	"Solar Sales Management": ["Solar Sales Manager", "Solar Sales Executive", "Sales Manager", "Employee"],
 	"Solar CRM Administration": ["Solar CRM Manager", "Solar Sales Manager", "Sales Manager", "Employee"],
 	"Solar Sales Coordination": ["Solar Sales Coordinator", "Employee"],
+	"Solar Dealer": ["Solar Dealer"],
+	"Solar Contractor": ["Solar Contractor Partner"],
 }
 
 
@@ -35,12 +43,15 @@ def create_roles():
 	"""Create every role and role profile this module needs. Idempotent."""
 	for role, description in ROLES:
 		if frappe.db.exists("Role", role):
+			# A doctype's permission rows can create the role first, with desk access on.
+			if role in PORTAL_ONLY_ROLES and frappe.db.get_value("Role", role, "desk_access"):
+				frappe.db.set_value("Role", role, "desk_access", 0)
 			continue
 		frappe.get_doc(
 			{
 				"doctype": "Role",
 				"role_name": role,
-				"desk_access": 1,
+				"desk_access": 0 if role in PORTAL_ONLY_ROLES else 1,
 				"is_custom": 1,
 				"search_bar": 1,
 				"notifications": 1,

@@ -214,7 +214,7 @@ class InstallationTask(Document):
 		if self.task_code == "FRM1" and not (self.generated or self.uploads):
 			missing.append(_("Form 1 (generated or uploaded)"))
 		if self.task_code == "DAL" and not approval_letters(self):
-			missing.append(_("the digital approval letter (attach it under Digital Approval Letter)"))
+			missing.append(_("the digital approval letter (attach it under Attachments as Digital Approval Letter)"))
 		if missing:
 			frappe.throw(
 				_("Task {0} cannot be completed without: {1}").format(self.task_code, ", ".join(missing)),

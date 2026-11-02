@@ -72,6 +72,132 @@
 	<script type="application/json" data-serials-data>{{ serials_page | tojson }}</script>
 	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
 </section>
+{%- elif supplier_bill %}
+{#- Supplier Invoice (api/supplier_bill): the supplier's tax invoice read from its PDF, its lines
+    checked, then entered as a submitted Purchase Invoice on the job. Drawn by portal_supplier_bill.js. -#}
+<style>
+	.a3s-paytask__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+	.a3s-paytask__head .a3s-edit__card-title { margin: 0; }
+	.a3s-paytask__label { margin: 1.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-paytask__fields { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+	.a3s-paytask__fields .a3s-field { margin: 0; }
+	.a3s-paytask__fields input { width: 100%; }
+	.a3s-supbill__lines input { padding: 0.3rem 0.45rem; font: inherit; font-size: 0.85rem; }
+	.a3s-supbill__lines th, .a3s-supbill__lines td { padding-left: 0.35rem; padding-right: 0.35rem; }
+	.a3s-supbill__lines tr[data-row] td:nth-child(2) { min-width: 11rem; }
+	.a3s-supbill__lines tr[data-row] td:nth-child(2) input { width: 100%; }
+	.a3s-supbill__lines td:nth-child(3) input { width: 6.2rem; }
+	.a3s-supbill__lines td:nth-child(4) select { width: 7.8rem; padding: 0.3rem 0.4rem; font: inherit; font-size: 0.82rem; }
+	.a3s-supbill__lines td:nth-child(5) input { width: 4.2rem; }
+	.a3s-supbill__lines td:nth-child(6) input { width: 3.6rem; }
+	.a3s-supbill__lines td:nth-child(7) input { width: 5rem; }
+	.a3s-supbill__no { white-space: nowrap; }
+	.a3s-supbill__rowx { margin-left: 0.15rem; background: none; border: 0; padding: 0.1rem 0.35rem; font-size: 1.1rem; line-height: 1; color: var(--color-text-muted); cursor: pointer; border-radius: 4px; }
+	.a3s-supbill__rowx:hover, .a3s-supbill__rowx:focus-visible { color: #b42318; background: #fef3f2; }
+	.a3s-supbill__lines tr[data-row] td { border-bottom: 0; padding-bottom: 0.2rem; }
+	.a3s-supbill__lines tr.a3s-supbill__calcrow td { padding-top: 0; font-size: 0.78rem; color: var(--color-text-muted); }
+	.a3s-supbill__lines tr.a3s-supbill__calcrow b { color: var(--color-text); }
+	.a3s-supbill__calc th { text-align: left; font-weight: 600; }
+	.a3s-supbill__calc td.num, .a3s-supbill__calc th.num { text-align: right; white-space: nowrap; }
+	.a3s-supbill__calc tr.is-total th, .a3s-supbill__calc tr.is-total td { font-weight: 800; border-top: 2px solid var(--color-text); }
+	.a3s-supbill__calc td.is-off { color: #b42318; font-weight: 700; }
+	#sb-tax-template { width: 100%; }
+	.a3s-supbill__pill { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+	.a3s-supbill__pill.is-unpaid { background: rgba(247, 144, 9, 0.14); color: #93370d; }
+	.a3s-supbill__pill.is-paid { background: rgba(40, 200, 64, 0.14); color: #1a7a2b; }
+	.a3s-supbill__pay { padding: 0.35rem 0.8rem; font-size: 0.82rem; }
+	.a3s-supbill__paychoice { display: flex; gap: 0.5rem; }
+	[data-reimb][hidden] { display: none !important; }
+	/* One card per supplier: its bills, what it is owed, its own upload and payment. */
+	.a3s-supbill__card { border: 1px solid var(--color-border); border-radius: var(--radius-tile); padding: 0.8rem 1rem; margin-bottom: 0.75rem; }
+	.a3s-supbill__cardhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+	.a3s-supbill__cardfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.5rem; }
+	.a3s-supbill__cardfoot .is-due { color: #b42318; }
+	.a3s-supbill__cardfoot .is-paidtext { color: #1a7a2b; }
+	.a3s-supbill__pill.is-none { background: var(--color-surface-muted, #f2f4f7); color: var(--color-text-muted); }
+	/* A supplier not in ERPNext: its details from the invoice, to create it. */
+	.a3s-supbill__newsup { margin: 0.75rem 0; padding: 0.9rem 1rem; border: 1px solid rgba(217, 45, 32, 0.4); border-left: 4px solid #d92d20; border-radius: var(--radius-tile); background: rgba(217, 45, 32, 0.04); }
+	.a3s-supbill__newsup .a3s-modal__title { color: #b42318; }
+	.a3s-supbill__newsup input, .a3s-supbill__newsup select { width: 100%; }
+	.a3s-supbill__fromread { font-size: 0.68rem; font-weight: 700; color: #1b6f99; text-transform: none; letter-spacing: 0; }
+	.a3s-supbill__chip.is-new .a3s-supbill__chipstate { color: #b42318; }
+	.a3s-supbill__chip.is-wrong .a3s-supbill__chipstate { color: #b42318; }
+	label.a3s-supbill__pay { cursor: pointer; }
+	.a3s-modal__panel.a3s-supbill__edpanel { width: min(52rem, 100%); }
+	.a3s-supbill__edpanel input, .a3s-supbill__edpanel select { width: 100%; }
+	.a3s-supbill__bank { border: 1px solid var(--color-border); border-radius: 0.75rem; padding: 0.6rem 0.75rem; margin-bottom: 0.6rem; }
+	.a3s-supbill__banktools { display: flex; align-items: center; gap: 1.25rem; margin-top: 0.4rem; }
+	.a3s-supbill__banktools .a3s-check { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; margin: 0; }
+	.a3s-supbill__newbank { border-left: 4px solid #f79009; }
+	.a3s-supbill__cardtools { display: inline-flex; align-items: center; gap: 0.75rem; }
+	.a3s-supbill__more { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0.25rem 0 0.75rem; }
+	.a3s-supbill__textbtn { background: none; border: 0; padding: 0.2rem 0; font: inherit; font-weight: 700; color: #e8840c; cursor: pointer; }
+	.a3s-supbill__textbtn:hover, .a3s-supbill__textbtn:focus-visible { color: #c76a00; text-decoration: underline; text-underline-offset: 3px; }
+	/* Bills read together: one chip each, coloured by what it needs. */
+	.a3s-supbill__queue { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+	.a3s-supbill__chip { display: grid; gap: 0.1rem; text-align: left; min-width: 13rem; padding: 0.55rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-surface); font: inherit; font-size: 0.82rem; cursor: pointer; }
+	.a3s-supbill__chip.is-open { border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-accent-soft); }
+	.a3s-supbill__chipstate { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+	.a3s-supbill__chip.is-ready .a3s-supbill__chipstate, .a3s-supbill__chip.is-entered .a3s-supbill__chipstate { color: #1a7a2b; }
+	.a3s-supbill__chip.is-check .a3s-supbill__chipstate { color: #93370d; }
+	.a3s-supbill__chip.is-dup .a3s-supbill__chipstate, .a3s-supbill__chip.is-error .a3s-supbill__chipstate { color: #b42318; }
+	.a3s-supbill__stmt { display: grid; gap: 0.5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); margin: 0; }
+	.a3s-supbill__stmt div { padding: 0.55rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0.75rem; }
+	.a3s-supbill__stmt dt { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-supbill__stmt dd { margin: 0.2rem 0 0; font-weight: 700; }
+	.a3s-supbill__stmt dd.is-paid { color: #1a7a2b; }
+	.a3s-supbill__stmt dd.is-due { color: #b42318; }
+	/* A bill for another customer: red, on the page and in its pop-up. */
+	.a3s-supbill__mismatch { border-left: 4px solid #d92d20; font-size: 0.95rem; }
+	.a3s-supbill__mismatch b { color: #b42318; }
+	.a3s-modal__panel.a3s-supbill__mismatchpanel { border-top: 6px solid #d92d20; }
+	.a3s-supbill__mismatchpanel .a3s-modal__title { color: #b42318; font-size: 0.95rem; }
+	.a3s-supbill__mismatchpanel > p b { color: #b42318; }
+	.a3s-supbill__mismatchpanel .a3s-check { padding: 0.6rem 0.75rem; border: 1px solid rgba(217, 45, 32, 0.35); border-radius: 0.6rem; background: rgba(217, 45, 32, 0.06); }
+	.a3s-supbill__mismatchpanel [data-mm-go]:not([disabled]) { background: #d92d20; border-color: #d92d20; color: #fff; }
+	.a3s-modal__panel.a3s-supbill__paypanel { width: min(40rem, 100%); }
+	.a3s-supbill [data-paybox] select, .a3s-supbill [data-paybox] input, .a3s-supbill__paypanel select, .a3s-supbill__paypanel input { width: 100%; }
+	.a3s-supbill__lines td { vertical-align: top; }
+	.a3s-supbill__lines td.num, .a3s-supbill__lines th.num { text-align: right; white-space: nowrap; }
+	.a3s-supbill__lines small { display: block; color: var(--color-text-muted); font-size: 0.75rem; margin-top: 0.2rem; word-break: break-all; }
+	.a3s-supbill__drop { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 1rem; border: 1px dashed var(--color-accent); border-radius: var(--radius-tile); background: var(--color-accent-soft); }
+	.a3s-supbill .a3s-form__actions { margin-top: 1.25rem; }
+</style>
+<section class="a3s-card a3s-edit__card a3s-supbill" data-supbill data-installation="{{ installation | e }}">
+	<div data-supbill-body></div>
+	<p class="a3s-attach__status" data-supbill-status role="status" aria-live="polite" hidden></p>
+	<input type="file" accept="application/pdf,image/*" multiple hidden data-supbill-file aria-label="Choose the suppliers' invoices">
+	<script type="application/json" data-supbill-data>{{ supplier_bill | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</section>
+{%- elif serial_entry %}
+{#- Enter Serial Numbers (api/serial_entry): the job's serial register - fetched from the supplier's
+    bill, read off a photo of the labels, or typed. Drawn by portal_serial_entry.js. -#}
+<style>
+	.a3s-paytask__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+	.a3s-paytask__head .a3s-edit__card-title { margin: 0; }
+	.a3s-paytask__label { margin: 1.25rem 0 0.5rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-serent__boxes { display: grid; gap: 0.85rem 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+	.a3s-serent__boxes .a3s-field { margin: 0; }
+	.a3s-serent__boxes textarea { width: 100%; min-height: 9rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+	.a3s-serent__count { font-weight: 700; font-size: 0.8rem; color: var(--color-text-muted); margin-left: 0.35rem; }
+	.a3s-serent__count.is-ok { color: #1a7a2b; }
+	.a3s-serent__count.is-short { color: #b42318; }
+	.a3s-serent__dup { color: #b42318; font-size: 0.8rem; margin: 0.25rem 0 0; }
+	.a3s-serent__read { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.9rem 1rem; border: 1px dashed var(--color-accent); border-radius: var(--radius-tile); background: var(--color-accent-soft); }
+	.a3s-serent__read select { min-width: 10rem; }
+	.a3s-serent__picks { display: grid; gap: 0.3rem 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); margin: 0.75rem 0; }
+	.a3s-serent__picks label { display: flex; gap: 0.45rem; align-items: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+	.a3s-serent .a3s-table td.new { color: var(--color-accent-hover); font-weight: 700; }
+	.a3s-serent .a3s-form__actions { margin-top: 1.25rem; }
+</style>
+<section class="a3s-card a3s-edit__card a3s-serent" data-serent data-installation="{{ installation | e }}">
+	<div data-serent-body></div>
+	<p class="a3s-attach__status" data-serent-status role="status" aria-live="polite" hidden></p>
+	<input type="file" accept="application/pdf,image/*" hidden data-serent-file aria-label="Choose a photo or PDF of the serial numbers">
+	<script type="application/json" data-serent-data>{{ serial_entry | tojson }}</script>
+	<div class="a3s-form__actions"><a class="a3s-btn a3s-btn--ghost" href="{{ project_route | e }}">&larr; Back to project</a></div>
+</section>
 {%- elif design %}
 {#- The Design Freeze (api/design_freeze): the job's quotations, site survey, structure and
     material BOMs and design images, each changeable; drawn by portal_design_freeze.js. -#}
@@ -104,4 +230,6 @@
 {% block portal_scripts %}{% if payment %}<script src="/assets/a3_sola/js/portal_payment_task.js?v={{ a3s_asset_version('js/portal_payment_task.js') }}"></script>{% endif %}
 {%- if design %}<script src="/assets/a3_sola/js/portal_design_freeze.js?v={{ a3s_asset_version('js/portal_design_freeze.js') }}"></script>{% endif %}
 {%- if dispatch %}<script src="/assets/a3_sola/js/portal_dispatch_task.js?v={{ a3s_asset_version('js/portal_dispatch_task.js') }}"></script>{% endif %}
-{%- if serials_page %}<script src="/assets/a3_sola/js/portal_serials_task.js?v={{ a3s_asset_version('js/portal_serials_task.js') }}"></script>{% endif %}{% endblock %}
+{%- if serials_page %}<script src="/assets/a3_sola/js/portal_serials_task.js?v={{ a3s_asset_version('js/portal_serials_task.js') }}"></script>{% endif %}
+{%- if supplier_bill %}<script src="/assets/a3_sola/js/portal_supplier_bill.js?v={{ a3s_asset_version('js/portal_supplier_bill.js') }}"></script>{% endif %}
+{%- if serial_entry %}<script src="/assets/a3_sola/js/portal_serial_entry.js?v={{ a3s_asset_version('js/portal_serial_entry.js') }}"></script>{% endif %}{% endblock %}

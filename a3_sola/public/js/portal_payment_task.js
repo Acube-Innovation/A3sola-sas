@@ -148,7 +148,7 @@
 			'<p style="margin:0.6rem 0 0" data-verdict>' + verdict(s, draft.amount) + "</p>";
 	}
 
-	/* The phase's payments on the job's schedule - a phase can be paid in parts. */
+	/* The phase's payments on the project's schedule - a phase can be paid in parts. */
 	function payments(s) {
 		if (!(s.payments || []).length) return "";
 		var tone = { Confirmed: "uploaded", "Awaiting Confirmation": "pending-approval", "Sent Back": "rejected" };
@@ -192,7 +192,7 @@
 					'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="send-back">Send back</button></div></div>';
 			}
 		} else if (t.status === "Skipped") {
-			html += '<p class="a3s-field__hint">This task is not needed on this job.</p>';
+			html += '<p class="a3s-field__hint">This task is not needed on this project.</p>';
 		} else {
 			if (s.remarks) html += '<p class="a3s-field__hint">' + esc(s.remarks) + "</p>";
 			if (s.can_mark) {

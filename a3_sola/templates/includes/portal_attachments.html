@@ -3,10 +3,12 @@
     so nothing here waits for the form's Save, and none of its controls is named - the edit
     form posts only named controls.
 
-    Context: att_doctype, att_name (set with `{% with %}` by the including page). -#}
-{%- if att_doctype and att_name %}
+    Context: att_doctype, att_name (set with `{% with %}` by the including page); att_held for
+    a record not yet created - its files wait on the card and go up once it is saved
+    (window.a3sAttachHeld, called by portal_record_edit.js). -#}
+{%- if att_doctype and (att_name or att_held) %}
 <section class="a3s-card a3s-edit__card a3s-attach" id="a3s-attachments" tabindex="-1" data-attach
-         data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}">
+         data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}"{% if att_held %} data-held{% endif %}>
 	<div class="a3s-attach__head">
 		<h3 class="a3s-edit__card-title">Attachments</h3>
 		<span class="a3s-attach__count" data-attach-count hidden></span>

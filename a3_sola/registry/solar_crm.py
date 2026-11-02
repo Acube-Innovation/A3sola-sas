@@ -80,6 +80,7 @@ PERMISSION_DOCTYPES = [
 
 DOC_EVENTS = {
 	"Lead": {
+		"before_insert": ["a3_sola.api.partner_scope.stamp_dealer"],
 		"validate": ["a3_sola.overrides.lead.validate"],
 	},
 	"Opportunity": {
@@ -102,7 +103,8 @@ DOC_EVENTS = {
 		"on_submit": ["a3_sola.overrides.sales_order.on_submit"],
 	},
 	# A KYC file added after the job opened still reaches the job's register.
-	"Solar Consumer": {"on_update": ["a3_sola.api.kyc.sync_register"]},
+	"Solar Consumer": {"before_insert": ["a3_sola.api.partner_scope.stamp_dealer"],
+		"on_update": ["a3_sola.api.kyc.sync_register"]},
 	"Company": {
 		"validate": ["a3_sola.overrides.company.validate"],
 	},

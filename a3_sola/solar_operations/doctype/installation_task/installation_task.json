@@ -953,6 +953,27 @@
    "create": 1,
    "write": 1,
    "submit": 1
+  },
+  {
+   "role": "Solar Dealer",
+   "read": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "report": 0,
+   "export": 0,
+   "permlevel": 0
+  },
+  {
+   "role": "Solar Contractor Partner",
+   "read": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "report": 0,
+   "export": 0,
+   "permlevel": 0,
+   "write": 1
   }
  ],
  "search_fields": "solar_installation,task_code,consumer_name",

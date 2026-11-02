@@ -248,7 +248,7 @@ def add_image(installation, caption=None):
 def remove_image(installation, row):
 	inst = _job(installation, "write")
 	if not any(i.name == row for i in inst.get("design_images") or []):
-		frappe.throw(_("That image is not on this job."), frappe.ValidationError)
+		frappe.throw(_("That image is not on this project."), frappe.ValidationError)
 	inst.set("design_images", [i for i in inst.design_images if i.name != row])
 	_save_job(inst, None)
 	return state(installation)
@@ -350,7 +350,7 @@ def save_lines(installation, bom_field, lines, task_code=DESIGN_TASK):
 	name = _make_job_bom(inst, bom_field, base, items)
 	label = _("structure BOM") if bom_field == "structure_bom" else _("material BOM")
 	inst.set(bom_field, name)
-	_save_job(inst, _("Design changed: {0} edited for this job - {1} ({2} lines).").format(label, name, len(items)))
+	_save_job(inst, _("Design changed: {0} edited for this project - {1} ({2} lines).").format(label, name, len(items)))
 	_retire(base, inst)
 	updated = refresh_procurement(inst)
 	out = state(installation, task_code)

@@ -55,6 +55,7 @@ GENERIC_TASK_ICONS = {
 
 def project_overview(doc):
 	from a3_sola.api import billing
+	from a3_sola.api.partner_scope import partner_kind
 
 	consumer, electricity = _consumer_box(doc), _electricity_box(doc)
 	solar, proposal = _solar_box(doc), _proposal_box(doc)
@@ -63,7 +64,8 @@ def project_overview(doc):
 		"solar": solar,
 		"summary": _summary(consumer, electricity, solar, proposal) + [_location(doc)],
 		# The payment schedule: milestones, payments received, what is pending (api/billing).
-		"payments": billing.schedule(doc),
+		# Not the contractor's to see - he is paid by the company, not by the customer.
+		"payments": None if partner_kind() == "contractor" else billing.schedule(doc),
 		"half_paid": _half_paid(doc),
 		"columns": _task_columns(doc),
 	}
@@ -230,6 +232,10 @@ def _component_line(count, rating, unit, make):
 
 
 def _proposal_box(doc):
+	from a3_sola.api.partner_scope import partner_kind
+
+	# The customer's price is no business of the installation contractor's.
+	money = (lambda value: "") if partner_kind() == "contractor" else _money
 	return {
 		"name": doc.solar_proposal or "",
 		"route": _route("Solar Proposal", doc.solar_proposal),
@@ -240,10 +246,10 @@ def _proposal_box(doc):
 		"facts": [
 			("Proposed Size", "{0:g} kW".format(flt(doc.estimate_capacity_kw, 3)) if flt(doc.estimate_capacity_kw) else ""),
 			("Proposal Date", _date(doc.proposal_date)),
-			("Project Cost", _money(doc.estimate_project_cost)),
-			("Subsidy", _money(doc.estimate_subsidy)),
+			("Project Cost", money(doc.estimate_project_cost)),
+			("Subsidy", money(doc.estimate_subsidy)),
 		],
-		"net_cost": _money(doc.estimate_net_cost),
+		"net_cost": money(doc.estimate_net_cost),
 		# The job's own Financed (the lead's answer as quoted, editable on the project), not
 		# the lead's first answer.
 		"loan": "Yes" if doc.is_financed else ("No" if doc.loan_required or doc.quotation else ""),

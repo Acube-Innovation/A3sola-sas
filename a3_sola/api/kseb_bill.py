@@ -169,6 +169,13 @@ def parse(text):
 	elif re.search(r"\bmonthly\b", period, re.IGNORECASE):
 		out["billing_frequency"] = "Monthly"
 	out["units"] = _units(text)
+	zones = _average_zones(text)
+	# A ToD meter's consumption is its three zones together; the bill's monthly average of
+	# them is the steady figure (its own readings may be a short interim bill's, even nil),
+	# taken over the billing cycle as the units field holds.
+	if len(zones) > 1:
+		out["monthly_average_zones"] = zones
+		out["units"] = sum(zones.values()) * (2 if out.get("billing_frequency") == "Bimonthly" else 1)
 	amount = _first(r"T?otal\s*Amt\.?[^\n]*?([\d,]+\.\d{2})\s*$", text, flags=re.IGNORECASE | re.MULTILINE) \
 		or _first(r"Net\s*Amount\s*(?:Payable)?\s*:?\s*(?:Rs\.?)?\s*([\d,]+(?:\.\d{2})?)", text)
 	out["bill_amount"] = _number(amount)
@@ -227,6 +234,28 @@ def _units(text):
 	return _number(_first(r"Units\s*(?:Consumed|Billed)?\s*:?\s*([\d,]+(?:\.\d+)?)", text))
 
 
+def _average_zones(text):
+	"""The bill's "Average consumption(Monthly)" box, as {zone: units}: under its Power
+	Unit/Zone heading (CUMULATIVE; or NORMAL, OFF PEAK, PEAK for a ToD meter) the KWH line's
+	figures, one per zone. Empty when the box is not found."""
+	lines = text.split("\n")
+	start = next((i for i, l in enumerate(lines) if re.search(r"Average\s*consumption", l, re.IGNORECASE)), None)
+	if start is None:
+		return {}
+	heading = None
+	for line in lines[start + 1:start + 6]:
+		zone = re.search(r"Power\s*Unit\s*/\s*Zone\s+(.+)$", line, re.IGNORECASE)
+		if zone:
+			heading = re.findall(r"OFF\s*PEAK|PEAK|NORMAL|CUMULATIVE", zone.group(1), re.IGNORECASE)
+			continue
+		figures = re.search(r"\bKWH\s+([\d.,]+(?:\s+[\d.,]+)*)\s*$", line, re.IGNORECASE)
+		if heading and figures:
+			values = [_number(v) for v in figures.group(1).split()]
+			names = [re.sub(r"\s+", " ", h).title() for h in heading]
+			return dict(zip(names, values)) if len(values) == len(names) else {}
+	return {}
+
+
 # ------------------------------------------------------------------ into the record's fields
 def to_fields(parsed, doctype):
 	"""The record's fields from a read bill, its DISCOM, section and tariff found among their
@@ -239,6 +268,10 @@ def to_fields(parsed, doctype):
 		warnings.append(_("Section [{0}] {1} is not among the DISCOM Sections: choose it.").format(
 			parsed["section_code"], parsed.get("section_name") or ""))
 	discom = discom or kseb_discom()
+	if parsed.get("monthly_average_zones"):
+		zones = parsed["monthly_average_zones"]
+		warnings.append(_("ToD meter: {0} = {1:g} units a month, so {2:g} units a billing cycle.").format(
+			" + ".join("{0} {1:g}".format(z, u) for z, u in zones.items()), sum(zones.values()), parsed["units"]))
 	phase = {"Single": "Single Phase", "Three": "Three Phase"}.get(parsed.get("phase"))
 	cycle_months = 2 if parsed.get("billing_frequency") == "Bimonthly" else 1
 	name = name_case(parsed.get("name")) or None
@@ -289,6 +322,9 @@ def find_section(parsed):
 	if name:
 		exact = frappe.get_all("DISCOM Section", filters={"section_name": name}, fields=fields)
 		found = exact or frappe.get_all("DISCOM Section", filters={"section_name": ["like", f"{name}%"]}, fields=fields)
+		# A name filed under a second, older KSEB DISCOM as well is the bill's own DISCOM's.
+		if len(found) > 1:
+			found = [s for s in found if s.discom == kseb_discom()] or found
 		if len(found) == 1:
 			return found[0].name, found[0].discom
 	if code:
@@ -366,6 +402,9 @@ def kyc_rows(doctype, name, file_url, document_type):
 
 	if doctype == CONSUMER:
 		portal_attachments._sync_kyc(name, file_url, document_type)
+	# A bill or an Aadhaar side read again replaces the one the record had.
+	portal_attachments.supersede(doctype, name, document_type, file_url)
+	if doctype == CONSUMER:
 		if document_type == "Aadhaar Front" and file_url.lower().endswith(".pdf"):
 			consumer = frappe.get_doc(CONSUMER, name)
 			if not any(r.kyc_type == "Aadhaar Back" for r in consumer.get("kyc_documents") or []):

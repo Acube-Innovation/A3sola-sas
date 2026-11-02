@@ -81,13 +81,21 @@ def merged_fixtures():
 #: Frappe passes the doctype on each call.
 QUERY_CONDITIONS_METHOD = "a3_sola.api.permissions.query_conditions"
 HAS_PERMISSION_METHOD = "a3_sola.api.permissions.has_company_permission"
+#: Doctypes with no company scoping that a partner (a dealer) still sees only his own of.
+PARTNER_ONLY_DOCTYPES = ("Lead", "Customer", "Quotation")
+PARTNER_QUERY_METHOD = "a3_sola.api.partner_scope.query_conditions"
+PARTNER_PERMISSION_METHOD = "a3_sola.api.partner_scope.has_permission"
 
 
 def permission_query_conditions():
 	"""Bind the shared query-condition implementation to every registered doctype."""
-	return {dt: QUERY_CONDITIONS_METHOD for dt in all_permission_doctypes()}
+	out = {dt: PARTNER_QUERY_METHOD for dt in PARTNER_ONLY_DOCTYPES}
+	out.update({dt: QUERY_CONDITIONS_METHOD for dt in all_permission_doctypes()})
+	return out
 
 
 def has_permission_map():
 	"""Bind the shared row-level check to every registered doctype."""
-	return {dt: HAS_PERMISSION_METHOD for dt in all_permission_doctypes()}
+	out = {dt: PARTNER_PERMISSION_METHOD for dt in PARTNER_ONLY_DOCTYPES}
+	out.update({dt: HAS_PERMISSION_METHOD for dt in all_permission_doctypes()})
+	return out

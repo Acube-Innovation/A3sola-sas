@@ -252,3 +252,19 @@ a3_sola.patches.v1_2.discom_sections_from_bills
 a3_sola.patches.v1_2.proposal_wording_r1
 # Renewcore's own letter pad as its Letter Head and default, from the images shipped in public/images/letterhead.
 a3_sola.patches.v1_2.renewcore_letter_head
+# Digital Approval Letter as a document type, for the Jan Samarth task's Attachments card.
+a3_sola.patches.v1_2.approval_letter_document_type
+# Koovappady's section code (5590), for the bill reader.
+a3_sola.patches.v1_2.discom_section_koovappady
+# One KSEB bill and one of each Aadhaar side per lead or customer: the newest kept.
+a3_sola.patches.v1_2.one_bill_and_aadhaar_per_record
+# The Supplier Invoice task after Material Dispatch, and Purchase Invoice linked to the job.
+a3_sola.patches.v1_2.supplier_invoice_task
+# GST rounded per line, half a paisa up - as the suppliers' tax invoices are.
+a3_sola.patches.v1_2.gst_rounding_as_suppliers_bill
+# The Enter Serial Numbers task after Supplier Invoice.
+a3_sola.patches.v1_2.serial_entry_task
+# NEFT/RTGS and UPI as Modes of Payment.
+a3_sola.patches.v1_2.neft_and_upi_payment_modes
+# An Employee Reimbursement account, for supplier bills an employee paid.
+a3_sola.patches.v1_2.employee_reimbursement_account

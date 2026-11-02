@@ -43,11 +43,11 @@ NAV_GROUPS = [
 		# materials, then the site, then commissioning, then closing. Each item is the
 		# document a task is executed in.
 		"items": [
-			{"title": "Solar Installation", "sub": "The job itself", "ic": "wrench", "route": "/a3solaportal/installations"},
+			{"title": "Solar Installation", "sub": "The project itself", "ic": "wrench", "route": "/a3solaportal/installations"},
 			{"title": "Installation Task", "sub": "The thirty tasks", "ic": "checklist", "route": "/a3solaportal/installation-tasks"},
 			{"title": "Statutory Fee Payment", "sub": "Form 1, Form 2, meter", "ic": "cash", "route": "/a3solaportal/fee-payments"},
 			{"title": "Portal Application", "sub": "PM Surya Ghar, CEIG", "ic": "globe", "route": "/a3solaportal/portal-applications"},
-			{"title": "Loan Application", "sub": "Financed jobs", "ic": "bank", "route": "/a3solaportal/loan-applications"},
+			{"title": "Loan Application", "sub": "Financed projects", "ic": "bank", "route": "/a3solaportal/loan-applications"},
 			{"title": "Solar Agreement", "sub": "Stamp paper and terms", "ic": "scroll", "route": "/a3solaportal/agreements"},
 			{"title": "Installation Work Order", "sub": "Structure and install", "ic": "clipboard", "route": "/a3solaportal/work-orders"},
 			{"title": "Purchase Order", "sub": "Material procurement", "ic": "box", "route": "/a3solaportal/purchase-orders"},
@@ -70,6 +70,7 @@ NAV_GROUPS = [
 			{"title": "Project", "sub": "Delivery and service", "ic": "briefcase", "route": "/a3solaportal/projects"},
 			{"title": "Solar Billing Plan", "sub": "Milestones to invoice", "ic": "calendar", "route": "/a3solaportal/billing-plans"},
 			{"title": "Sales Invoice", "sub": "Raised against milestones", "ic": "receipt", "route": "/a3solaportal/sales-invoices"},
+			{"title": "Purchase Invoice", "sub": "Supplier bills", "ic": "receipt", "route": "/a3solaportal/purchase-invoices"},
 			{"title": "Payment Entry", "sub": "Money received", "ic": "wallet", "route": "/a3solaportal/payment-entries"},
 			{"title": "Solar OM Contract", "sub": "Service cover", "ic": "scroll", "route": "/a3solaportal/om-contracts"},
 			{"title": "Solar OM Visit", "sub": "Scheduled maintenance", "ic": "pin", "route": "/a3solaportal/om-visits"},
@@ -120,6 +121,32 @@ def require_login(landing):
 		raise frappe.Redirect(302)
 
 
+#: The doctype behind each menu item a partner may be shown; anything else is the company's own.
+PARTNER_NAV = {
+	"/a3solaportal/leads": "Lead", "/a3solaportal/consumers": "Solar Consumer",
+	"/a3solaportal/site-surveys": "Site Survey", "/a3solaportal/design-estimates": "Solar Design Estimate",
+	"/a3solaportal/subsidy-eligibility": "Subsidy Eligibility Check", "/a3solaportal/proposals": "Solar Proposal",
+	"/a3solaportal/quotations": "Quotation", "/a3solaportal/projects": "Solar Installation",
+	"/a3solaportal/installation-tasks": "Installation Task", "/a3solaportal/work-orders": "Installation Work Order",
+}
+
+
+def nav_groups(user=None):
+	"""The menu: all of it for staff; for a partner - a dealer, a contractor - only the items
+	he may read, and no empty group."""
+	from a3_sola.api.partner_scope import is_partner
+
+	if not is_partner(user):
+		return NAV_GROUPS
+	out = []
+	for group in NAV_GROUPS:
+		items = [i for i in group["items"] if i["route"] in PARTNER_NAV
+			and frappe.has_permission(PARTNER_NAV[i["route"]], "read", user=user)]
+		if items:
+			out.append({**group, "items": items})
+	return out
+
+
 def fill_shell(context, *, active_route, page_title, crumbs):
 	"""Populate the shared shell: identity, navigation, breadcrumbs, page title.
 
@@ -139,7 +166,7 @@ def fill_shell(context, *, active_route, page_title, crumbs):
 	context.user_first_name = (full_name or "").split(" ")[0] or context.user_full_name
 
 	context.workspace_name, context.workspace_logo = user_company()
-	context.nav_groups = NAV_GROUPS
+	context.nav_groups = nav_groups()
 	context.active_route = active_route
 	context.page_title = page_title
 	context.crumbs = crumbs

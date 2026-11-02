@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, fmt_money, format_date, format_datetime, getdate, now_datetime, today
 
-from a3_sola.api import stages, task_assignees
+from a3_sola.api import partner_scope, stages, task_assignees
 from a3_sola.api.stages import _get_stage
 
 #: Payment tasks, and the one document each asks for (its register row).
@@ -49,6 +49,7 @@ def can_confirm():
 
 
 def _job(installation, ptype):
+	partner_scope.refuse_partners(_("Payments"))
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
 	doc.check_permission(ptype)
 	return doc

@@ -352,3 +352,38 @@ def dependent_options(doctype=None, fieldname=None, value=None, also=None):
 	also = frappe.parse_json(also) if also else {}
 	filters = ([[target_field, "=", value]] if value else []) + _also_filters(fieldname, also if isinstance(also, dict) else {})
 	return {"choices": link_choices(df.options, filters=filters or None)}
+
+
+@frappe.whitelist(methods=["POST"])
+def add_discom_section(discom=None, section_name=None, section_code=None, district=None, doctype=None):
+	"""A KSEB section a customer's bill names that the list lacks, added from the form's
+	DISCOM Section dropdown: under the DISCOM chosen beside it, with the code the list is
+	keyed by. Open to whoever may create or edit the form's record (`doctype`) - the
+	salesperson filling in the customer - as well as to those who keep the sections; a
+	section already on file under that DISCOM, by name or code, is the one returned.
+	Returns the new option as {value, label}."""
+	section_name, section_code = (section_name or "").strip(), (section_code or "").strip()
+	district = (district or "").strip()
+	if not (discom and frappe.db.exists("DISCOM", discom)):
+		frappe.throw(frappe._("Choose the DISCOM first."))
+	if not section_name or not section_code:
+		frappe.throw(frappe._("Enter the section's name and its code, as the bill shows them (Section [5590]-Koovappady)."))
+	if not section_code.isdigit():
+		frappe.throw(frappe._("The section code is the number in the bill's brackets, such as 5590."))
+	if not (frappe.has_permission("DISCOM Section", "create") or (doctype and (
+			frappe.has_permission(doctype, "create") or frappe.has_permission(doctype, "write")))):
+		frappe.throw(frappe._("You may not add a DISCOM Section."), frappe.PermissionError)
+	existing = frappe.db.get_value("DISCOM Section", {"discom": discom, "section_name": section_name}, "name") \
+		or frappe.db.get_value("DISCOM Section", {"discom": discom, "section_code": section_code}, "name")
+	if existing:
+		if not frappe.db.get_value("DISCOM Section", existing, "section_code"):
+			frappe.db.set_value("DISCOM Section", existing, "section_code", section_code)
+		name = existing
+	else:
+		company = frappe.db.get_value("DISCOM", discom, "company") or frappe.db.get_value(
+			"DISCOM Section", {"discom": discom}, "company")
+		name = frappe.get_doc({"doctype": "DISCOM Section", "section_name": section_name, "section_code": section_code,
+			"discom": discom, "district": district or None, "company": company}).insert(ignore_permissions=True).name
+	row = frappe.db.get_value("DISCOM Section", name, ["section_name", "section_code", "district"], as_dict=True)
+	return {"value": name, "label": "{0} – {1}{2}".format(
+		row.section_name, row.section_code, " ({0})".format(row.district) if row.district else "")}

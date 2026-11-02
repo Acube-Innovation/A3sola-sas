@@ -74,13 +74,13 @@ COLLECTIONS = {
 	                      "subtitle": "Approved concessions", "icon": "refund", "item_table": "items", "row_amount": "discount",
 	                      "form_extra": ["solar_design_estimate", "approved_by", "reason"]},
 	# ---------------------------------------------------- Solar Operations
-	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The job itself", "icon": "wrench"},
+	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The project itself", "icon": "wrench"},
 	# The procurement tasks' material lists are a rows grid, each on the task that buys it.
 	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist",
 	                       "item_table_by": ("task_code", {"SPROC": "structure_materials", "PROC": "materials"}), "item_total": False},
 	"fee-payments": {"doctype": "Statutory Fee Payment", "title": "Statutory Fee Payment", "singular": "fee payment", "subtitle": "Form 1, Form 2, meter", "icon": "cash"},
 	"portal-applications": {"doctype": "Portal Application", "title": "Portal Application", "singular": "portal application", "subtitle": "PM Surya Ghar, CEIG", "icon": "globe"},
-	"loan-applications": {"doctype": "Loan Application", "title": "Loan Application", "singular": "loan application", "subtitle": "Financed jobs", "icon": "bank"},
+	"loan-applications": {"doctype": "Loan Application", "title": "Loan Application", "singular": "loan application", "subtitle": "Financed projects", "icon": "bank"},
 	"agreements": {"doctype": "Solar Agreement", "title": "Solar Agreement", "singular": "agreement", "subtitle": "Stamp paper and terms", "icon": "scroll"},
 	"work-orders": {"doctype": "Installation Work Order", "title": "Installation Work Order", "singular": "work order", "subtitle": "Structure and install", "icon": "clipboard"},
 	"purchase-orders": {"doctype": "Purchase Order", "title": "Purchase Order", "singular": "purchase order", "subtitle": "Material procurement", "icon": "box"},
@@ -110,6 +110,8 @@ COLLECTIONS = {
 	             "first_tab_first": True},
 	"billing-plans": {"doctype": "Solar Billing Plan", "title": "Solar Billing Plan", "singular": "billing plan", "subtitle": "Milestones to invoice", "icon": "calendar"},
 	"sales-invoices": {"doctype": "Sales Invoice", "title": "Sales Invoice", "singular": "sales invoice", "subtitle": "Raised against milestones", "icon": "receipt"},
+	# A supplier's bill for a job's material, entered on its Supplier Invoice task (api/supplier_bill).
+	"purchase-invoices": {"doctype": "Purchase Invoice", "title": "Purchase Invoice", "singular": "purchase invoice", "subtitle": "Supplier bills", "icon": "receipt"},
 	"payment-entries": {"doctype": "Payment Entry", "title": "Payment Entry", "singular": "payment entry", "subtitle": "Money received", "icon": "wallet"},
 	"om-contracts": {"doctype": "Solar OM Contract", "title": "Solar OM Contract", "singular": "O&M contract", "subtitle": "Service cover", "icon": "scroll"},
 	"om-visits": {"doctype": "Solar OM Visit", "title": "Solar OM Visit", "singular": "O&M visit", "subtitle": "Scheduled maintenance", "icon": "pin"},
@@ -149,10 +151,11 @@ def desk_route(doctype, name):
 # ---------------------------------------------------------------- list rendering
 def _list_columns(meta):
 	cols = []
+	hidden = partner_hidden(meta)
 	for f in meta.fields:
 		if len(cols) >= MAX_LIST_COLUMNS:
 			break
-		if f.in_list_view and f.fieldtype in DISPLAY_TYPES and not f.hidden:
+		if f.in_list_view and f.fieldtype in DISPLAY_TYPES and not f.hidden and f.fieldname not in hidden:
 			cols.append(f)
 	return cols
 
@@ -423,9 +426,25 @@ def show_when(df):
 #: are the office's business, kept in ERPNext (a task's cost).
 PORTAL_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
-	"Installation Task": {"cost", "cost_category", "cost_remarks"},
+	# The approval letter goes on the task's Attachments card, as Digital Approval Letter.
+	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter"},
 	"Document Pack": {"task_cost"},
 }
+
+
+def partner_hidden(meta):
+	"""The fields a partner - a dealer, a contractor - may not read on this doctype: those at a
+	permission level his roles do not open (costs, contract values), and the portal's hidden
+	ones. Empty for staff: their screens show what they always have."""
+	from a3_sola.api.partner_scope import partner_kind
+
+	kind = partner_kind()
+	if not kind:
+		return set()
+	levels = set(meta.get_permlevel_access("read") or []) | {0}
+	# A contractor sees no money at all - not even the customer's price.
+	return {f.fieldname for f in meta.fields if (f.permlevel or 0) not in levels
+		or (kind == "contractor" and f.fieldtype == "Currency")} | set(PORTAL_HIDDEN.get(meta.name, ()))
 
 
 def form_fields(meta, prefill=None, extra=()):
@@ -447,7 +466,7 @@ def form_fields(meta, prefill=None, extra=()):
 
 	optional = 0
 	wanted = set(extra or ())
-	hidden = PORTAL_HIDDEN.get(meta.name, set())
+	hidden = set(PORTAL_HIDDEN.get(meta.name, set())) | partner_hidden(meta)
 	for f in meta.fields:
 		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only or f.fieldname in hidden:
 			continue
@@ -952,7 +971,7 @@ DETAIL_SLUGS = {
 	"installation-tasks", "fee-payments", "portal-applications", "loan-applications",
 	"agreements", "work-orders", "purchase-orders", "delivery-notes",
 	"dispatch-notices", "document-packs", "commissioning", "customer-reviews",
-	"subsidy-claims", "projects", "billing-plans", "sales-invoices",
+	"subsidy-claims", "projects", "billing-plans", "sales-invoices", "purchase-invoices",
 	"payment-entries", "om-contracts", "om-visits", "service-tickets",
 	"warranty-claims", "generation-readings", "reimbursements", "fee-recoveries", "installation-snags",
 	"material-requests", "purchase-receipts", "stock-entries", "serial-numbers",
@@ -1071,7 +1090,14 @@ def is_editable(doc):
 	"""
 	docstatus = frappe.utils.cint(doc.get("docstatus"))
 	editable_state = docstatus == 0 or (docstatus == 1 and doc.doctype in EDITABLE_AFTER_SUBMIT)
-	return bool(doc.has_permission("write")) and editable_state
+	return bool(doc.has_permission("write")) and editable_state and not _partner_read_only(doc.doctype)
+
+
+def _partner_read_only(doctype):
+	"""A contractor works a project's tasks, but its details are the office's to change."""
+	from a3_sola.api.partner_scope import is_partner
+
+	return doctype == "Solar Installation" and is_partner()
 
 
 def load_record(slug, name, permtype="read"):
@@ -1088,6 +1114,8 @@ def load_record(slug, name, permtype="read"):
 		raise frappe.DoesNotExistError(_("That record does not exist."))
 	doc = frappe.get_doc(doctype, name)
 	doc.check_permission(permtype)
+	if permtype == "write" and _partner_read_only(doctype):
+		raise frappe.PermissionError(_("The project's details are changed by the office."))
 	# A submitted record is closed, except the few fields its doctype lets change after
 	# submit (EDITABLE_AFTER_SUBMIT) - the edit form then offers only those.
 	docstatus = frappe.utils.cint(doc.get("docstatus"))
@@ -1133,6 +1161,7 @@ def form_groups(meta, first_label=None):
 	person can read are kept - no hidden fields, no child tables, no HTML blocks.
 	"""
 	groups, group, section = [], None, None
+	unreadable = partner_hidden(meta)
 
 	def new_group(label, key):
 		g = {"key": key, "label": label, "sections": []}
@@ -1159,7 +1188,7 @@ def form_groups(meta, first_label=None):
 			continue
 		if df.fieldtype == "Column Break":
 			continue
-		if df.hidden or df.fieldtype not in DISPLAY_TYPES_ALL:
+		if df.hidden or df.fieldtype not in DISPLAY_TYPES_ALL or df.fieldname in unreadable:
 			continue
 		if section is None:
 			section = {"label": "", "fields": [], "depends_on": ""}
@@ -1234,8 +1263,9 @@ def record_glance(doc):
 	seen = set()
 	ordered = [meta.get_field("status")] if meta.get_field("status") else []
 	ordered += [f for f in meta.fields if f.in_list_view]
+	unreadable = partner_hidden(meta)
 	for df in ordered:
-		if not df or df.fieldname in seen or df.fieldname == meta.title_field or df.hidden:
+		if not df or df.fieldname in seen or df.fieldname == meta.title_field or df.hidden or df.fieldname in unreadable:
 			continue
 		if df.fieldtype not in DISPLAY_TYPES_ALL or df.fieldtype in ("Small Text", "Text", "Long Text", "Attach", "Attach Image"):
 			continue

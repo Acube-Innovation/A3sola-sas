@@ -16,6 +16,7 @@
   "contact_person",
   "mobile_no",
   "email_id",
+  "user",
   "company",
   "sb_licence",
   "licence_no",
@@ -87,6 +88,14 @@
    "in_list_view": 1,
    "label": "Email",
    "options": "Email"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "Portal User",
+   "options": "User",
+   "unique": 1,
+   "description": "The contractor's portal login: he sees the projects he is contractor on and the tasks given to him."
   },
   {
    "fieldname": "company",
@@ -334,6 +343,16 @@
    "read": 1,
    "role": "Solar Operations Executive",
    "write": 1
+  },
+  {
+   "role": "Solar Contractor Partner",
+   "read": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "report": 0,
+   "export": 0,
+   "permlevel": 0
   }
  ],
  "search_fields": "contractor_name,contractor_type,mobile_no",

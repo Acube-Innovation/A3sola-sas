@@ -165,7 +165,25 @@
 		}
 		if (back) actions.appendChild(back);
 		bar.appendChild(actions);
+		placeTabActions();
 	}
+
+	/* Save all and the way back end the tabs' row while every option fits in it; once the
+	   row has to scroll, they go up beside the title, where they stay in sight. */
+	function placeTabActions() {
+		var bar = $("de-tabs"), actions = document.querySelector(".a3s-de-tabs__actions");
+		var head = document.querySelector(".a3s-de-head__actions");
+		if (!bar || !actions || !head) return;
+		bar.appendChild(actions);
+		var crowded = bar.scrollWidth > bar.clientWidth + 1;
+		if (crowded) head.appendChild(actions);
+		head.classList.toggle("is-holding", crowded);
+	}
+	var placing;
+	window.addEventListener("resize", function () {
+		clearTimeout(placing);
+		placing = setTimeout(placeTabActions, 120);
+	});
 
 	/* ---------------------------------------------- remove an option */
 	/* With `work`, the dialog stays open on OK while it runs: the button spins, nothing else
@@ -656,27 +674,33 @@
 
 		row("Package", cols.map(function (c) { return c.package; }));
 		row("Proposed size", pick(function (c) { return c.size; }));
-		row("Panels", pick(function (c) { return c.panel_kwp; }));
-		row("Inverters", pick(function (c) { return c.inverter_kw; }));
 		row("System price", pick(function (c) { return c.package_cost; }));
+		row("Panels", pick(function (c) { return c.panel_kwp; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
 		row("Panel qty", pick(function (c) { return c.panel_nos || "—"; }));
-		row("Inverter", pick(function (c) { return c.inverter; }));
-		row("Inverter qty", pick(function (c) { return c.inverter_nos || "—"; }));
+		/* The inverter is what the options differ in: its rows together, marked out. */
+		row("Inverters", pick(function (c) { return c.inverter_kw; }), "is-inverter");
+		row("Inverter", pick(function (c) { return c.inverter; }), "is-inverter");
+		row("Inverter qty", pick(function (c) { return c.inverter_nos || "—"; }), "is-inverter");
 		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));
 		var keys = [];
 		/* Lines in the order of the option with the most of them, so a battery sits where it does there. */
 		cols.slice().sort(function (a, b) { return (b.lines || []).length - (a.lines || []).length; }).forEach(function (c) {
 			(c.lines || []).forEach(function (l) { if (!keys.some(function (k) { return k.key === l.key; })) keys.push({ key: l.key, label: l.label }); });
 		});
-		keys.forEach(function (k) {
-			row(k.label, pick(function (c) {
-				var line = (c.lines || []).find(function (l) { return l.key === k.key; });
-				return money.format(line ? line.amount : 0);
-			}), "is-line");
+		function amount(c, k) {
+			var line = (c.lines || []).find(function (l) { return l.key === k.key; });
+			return line ? line.amount : 0;
+		}
+		/* A line that is nil in every option is left out, as it is in the PDF. */
+		keys.filter(function (k) {
+			return cols.some(function (c) { return !c.error && amount(c, k); });
+		}).forEach(function (k) {
+			row(k.label, pick(function (c) { return money.format(amount(c, k)); }), "is-line");
 		});
 		row("Subtotal", pick(function (c) { return money.format(c.subtotal); }), "is-sum");
-		row("GST", pick(function (c) { return money.format(c.gst_amount); }));
+		/* GST only where some option carries it; nil everywhere, it is left out like a nil line. */
+		if (cols.some(function (c) { return !c.error && c.gst_amount; })) row("GST", pick(function (c) { return money.format(c.gst_amount); }));
 		rows.push(el("tr", { class: "is-grand" }, [el("th", { scope: "row", text: "Total" })].concat(cols.map(function (c) {
 			return el("td", { class: "a3s-de-money" + (isLowest(c) ? " is-lowest" : "") },
 				c.error ? [el("small", { class: "a3s-de-compare__error", text: c.error })] : [document.createTextNode(money.format(c.total))]);

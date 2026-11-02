@@ -58,7 +58,7 @@
 	function contractor(s) {
 		var c = s.contractor;
 		if (!c) {
-			return '<div class="a3s-serials__box"><span class="a3s-field__hint">No electrical contractor on this job yet. ' +
+			return '<div class="a3s-serials__box"><span class="a3s-field__hint">No electrical contractor on this project yet. ' +
 				'Set it on the project (<a href="' + esc(s.project_route) + '">open the project</a>), then come back to send.</span></div>';
 		}
 		return '<div class="a3s-serials__box"><b>' + esc(c.contractor_name) + "</b>" +
@@ -116,7 +116,7 @@
 		var html = '<div class="a3s-paytask__head"><h3 class="a3s-edit__card-title">' + esc(t.name) + "</h3>" +
 			'<span class="a3s-taskdocs__state is-' + tone + '">' + esc(t.status) + "</span></div>";
 		if (t.status === "Skipped") {
-			html += '<p class="a3s-field__hint">Not needed on this job' + (t.reason ? ": " + esc(t.reason) : "") + ".</p>";
+			html += '<p class="a3s-field__hint">Not needed on this project' + (t.reason ? ": " + esc(t.reason) : "") + ".</p>";
 		}
 		html += label("Electrical contractor") + contractor(s);
 		html += label("Serial numbers") + serials(s);

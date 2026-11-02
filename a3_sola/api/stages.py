@@ -56,7 +56,7 @@ def resolve_template(scheme=None, system_type=None, consumer_category=None, comp
 	)
 	if not active:
 		frappe.throw(
-			_("No active Installation Stage Template for {0}. A job cannot be executed without its tasks.").format(
+			_("No active Installation Stage Template for {0}. A project cannot be executed without its tasks.").format(
 				company or _("this site")
 			),
 			title=_("Task Template Missing"),
@@ -77,9 +77,9 @@ def stage_applies(row, context):
 	if rule == "Self-Funded Only":
 		return not context.get("is_financed"), _("Financed sale")
 	if rule == "Subsidised Only":
-		return bool(context.get("subsidy_scheme")), _("No subsidy scheme on this job")
+		return bool(context.get("subsidy_scheme")), _("No subsidy scheme on this project")
 	if rule == "Non-Subsidised Only":
-		return not context.get("subsidy_scheme"), _("Subsidised job")
+		return not context.get("subsidy_scheme"), _("Subsidised project")
 	if rule == "Above Capacity Threshold":
 		threshold = flt(row.applicability_threshold_kw)
 		applies = flt(context.get("capacity_kw")) > threshold
@@ -207,7 +207,7 @@ def apply_entered_tasks(installation, entered):
 		if not code or not values.get("stage_name"):
 			frappe.throw(_("Each added task needs a code and a name."), title=_("Task Incomplete"))
 		if code in by_code:
-			frappe.throw(_("Task code {0} is already used on this job.").format(code), title=_("Duplicate Task"))
+			frappe.throw(_("Task code {0} is already used on this project.").format(code), title=_("Duplicate Task"))
 		row = installation.append("stages", {
 			field: values.get(field) or None for field in TASK_OWN_FIELDS + TASK_JOB_FIELDS
 		})
@@ -541,6 +541,10 @@ def _require_manager(action):
 def _save(installation, message):
 	recompute(installation)
 	installation.flags.ignore_validate_update_after_submit = True
+	# A stage moving writes its own row: a job short of a field it was submitted without is
+	# put right on the job, not by every task on it failing. (A row linked to a document
+	# since deleted is let go of before the links are checked - SolarInstallation._validate_links.)
+	installation.flags.ignore_mandatory = True
 	installation.save(ignore_permissions=True)
 	installation.add_comment("Comment", message)
 

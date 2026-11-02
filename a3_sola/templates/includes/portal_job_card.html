@@ -14,7 +14,7 @@
 	.a3s-job__photos img { width: 8.5rem; height: 6rem; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--color-border); }
 </style>
 <section class="a3s-card a3s-edit__card a3s-job">
-	<h3 class="a3s-edit__card-title">The job</h3>
+	<h3 class="a3s-edit__card-title">The project</h3>
 	<div class="a3s-job__grid">
 		<div class="a3s-job__box">
 			<h4>Customer &amp; site</h4>
@@ -37,7 +37,7 @@
 			{%- if job_card.contractor.mobile_no %}<br><a href="tel:{{ job_card.contractor.mobile_no | e }}">{{ job_card.contractor.mobile_no | e }}</a>{% endif %}
 			{%- if job_card.contractor.email_id %}<br>{{ job_card.contractor.email_id | e }}{% endif %}
 			{%- if job_card.contractor.licence_no %}<br>Licence {{ job_card.contractor.licence_no | e }}{% endif %}
-			{%- else %}<span class="a3s-field__hint">Not assigned yet - choose the contractor below, or set the job's {{ "structure" if job_card.kind == "Structure" else "electrical" }} contractor on the project.</span>{% endif %}
+			{%- else %}<span class="a3s-field__hint">Not assigned yet - choose the contractor below, or set the project's {{ "structure" if job_card.kind == "Structure" else "electrical" }} contractor.</span>{% endif %}
 		</div>
 	</div>
 	{%- if job_card.kind == "Installation" %}

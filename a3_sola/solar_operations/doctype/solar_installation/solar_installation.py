@@ -398,6 +398,13 @@ class SolarInstallation(Document):
 			self.add_comment("Comment", _("{0} by {1}. Tasks updated: {2}.").format(
 				_("Marked financed") if self.is_financed else _("Marked self-funded"), frappe.session.user, "; ".join(lines)))
 
+	def _validate_links(self):
+		# Frappe checks the links before any hook runs - validate and before_update_after_submit
+		# alike - so a row still pointing at a deleted document is let go of here first, or the
+		# release below never gets the chance.
+		self.release_dangling_links()
+		super()._validate_links()
+
 	def release_dangling_links(self):
 		"""A task document deleted behind the engine's back must not make the job unsaveable."""
 		if self.is_new():

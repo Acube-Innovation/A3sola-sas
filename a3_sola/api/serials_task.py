@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, today
 
-from a3_sola.api import completion_print, portal_share, stages
+from a3_sola.api import completion_print, partner_scope, portal_share, stages
 from a3_sola.api.dispatch_task import SERIAL_TYPES, _set_serials
 from a3_sola.api.settings import get_value
 from a3_sola.api.stages import _get_stage
@@ -27,6 +27,7 @@ def is_serials_task(code):
 
 
 def _job(installation, ptype):
+	partner_scope.refuse_partners(_("Serials to the electrical contractor"))
 	doc = frappe.get_doc(INSTALLATION, installation, for_update=ptype == "write")
 	doc.check_permission(ptype)
 	_get_stage(doc, SERIALS)

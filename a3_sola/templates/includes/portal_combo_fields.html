@@ -1,0 +1,118 @@
+{#- The create and edit forms' long dropdowns as search boxes (portal_combo.js), and the DISCOM
+    Section's "Add a new section": a section a customer's bill names that the list lacks is
+    added under the DISCOM chosen beside it (portal_fields.add_discom_section) and chosen.
+
+    Context: combo_doctype, the form's doctype. -#}
+<script src="/assets/a3_sola/js/portal_combo.js?v={{ a3s_asset_version('js/portal_combo.js') }}"></script>
+<script>
+(function () {
+	if (!window.a3sCombo || window.a3sComboFields) return;
+	window.a3sComboFields = true;
+	window.a3sCombo.wireAll(document);
+
+	var select = document.getElementById("fld-discom_section");
+	if (!select) return;
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	var wrap = document.getElementById("f-discom_section");
+	var panel = null;
+
+	function field(label, name, value, hint) {
+		var box = document.createElement("label");
+		box.className = "a3s-field";
+		box.innerHTML = "<span></span>";
+		box.firstChild.textContent = label;
+		var input = document.createElement("input");
+		input.type = "text"; input.name = ""; input.dataset.addField = name; input.value = value || "";
+		if (hint) input.placeholder = hint;
+		box.appendChild(input);
+		return box;
+	}
+
+	/* The district the form holds, as its list shows it, is the new section's too. */
+	function district() {
+		var d = document.getElementById("fld-district");
+		if (!d || !d.value) return "";
+		var o = d.options ? d.options[d.selectedIndex] : null;
+		return (o ? o.textContent : d.value).trim();
+	}
+
+	function open(typed) {
+		if (panel) panel.remove();
+		var discom = document.getElementById("fld-discom");
+		panel = document.createElement("div");
+		panel.className = "a3s-section-add";
+		var title = document.createElement("p");
+		title.className = "a3s-section-add__title";
+		title.textContent = "New DISCOM Section" + (discom && discom.value && discom.options
+			? " under " + discom.options[discom.selectedIndex].textContent : "");
+		panel.appendChild(title);
+		/* "5590 Koovappady" or "Koovappady 5590" typed in the search: split into its parts. */
+		var code = (typed.match(/\d{3,6}/) || [""])[0];
+		var name = typed.replace(/[\[\]\-–]/g, " ").replace(code, "").replace(/\s+/g, " ").trim();
+		var grid = document.createElement("div");
+		grid.className = "a3s-section-add__grid";
+		grid.appendChild(field("Section name", "section_name", name, "Koovappady"));
+		grid.appendChild(field("Section code", "section_code", code, "5590"));
+		grid.appendChild(field("District (optional)", "district", district(), "Ernakulam"));
+		panel.appendChild(grid);
+		var actions = document.createElement("div");
+		actions.className = "a3s-section-add__actions";
+		var add = document.createElement("button");
+		add.type = "button"; add.className = "a3s-btn a3s-btn--primary"; add.textContent = "Add section";
+		var cancel = document.createElement("button");
+		cancel.type = "button"; cancel.className = "a3s-btn a3s-btn--ghost"; cancel.textContent = "Cancel";
+		var status = document.createElement("p");
+		status.className = "a3s-form__status"; status.setAttribute("role", "status");
+		actions.appendChild(add); actions.appendChild(cancel); actions.appendChild(status);
+		panel.appendChild(actions);
+		/* Its own row of the form's grid, under the DISCOM and its section. */
+		wrap.parentNode.insertBefore(panel, wrap.nextSibling);
+		var first = panel.querySelector(name ? '[data-add-field="section_code"]' : '[data-add-field="section_name"]');
+		if (first) first.focus();
+
+		function value(n) { return panel.querySelector('[data-add-field="' + n + '"]').value.trim(); }
+		cancel.addEventListener("click", function () { panel.remove(); panel = null; });
+		/* Enter adds it, never submits the form round it. */
+		panel.addEventListener("keydown", function (e) {
+			if (e.key === "Enter") { e.preventDefault(); add.click(); }
+			if (e.key === "Escape") { e.preventDefault(); cancel.click(); }
+		});
+		add.addEventListener("click", function () {
+			if (!discom || !discom.value) { status.textContent = "Choose the DISCOM first."; status.dataset.tone = "error"; return; }
+			add.disabled = true;
+			status.textContent = "Adding…"; status.dataset.tone = "";
+			fetch("/api/method/a3_sola.api.portal_fields.add_discom_section", {
+				method: "POST", credentials: "same-origin",
+				headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({ discom: discom.value, section_name: value("section_name"), section_code: value("section_code"),
+					district: value("district"), doctype: "{{ combo_doctype | e }}" })
+			}).then(function (r) {
+				return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, body: b }; });
+			}).then(function (res) {
+				if (!res.ok || !res.body.message) {
+					var text = "Could not add the section.";
+					try { text = JSON.parse(JSON.parse(res.body._server_messages)[0]).message.replace(/<[^>]*>/g, ""); } catch (e) { /* keep */ }
+					throw new Error(text);
+				}
+				var row = res.body.message;
+				var option = Array.prototype.filter.call(select.options, function (o) { return o.value === row.value; })[0];
+				if (!option) {
+					option = document.createElement("option");
+					option.value = row.value;
+					select.appendChild(option);
+				}
+				option.textContent = row.label;
+				select.value = row.value;
+				select.dispatchEvent(new Event("change", { bubbles: true }));
+				panel.remove(); panel = null;
+			}).catch(function (e) {
+				add.disabled = false;
+				status.textContent = e.message; status.dataset.tone = "error";
+			});
+		});
+	}
+
+	select.addEventListener("a3s:combo-add", function (e) { open((e.detail && e.detail.query) || ""); });
+})();
+</script>

@@ -86,6 +86,21 @@ e) otal Amt.(Bill#1234260903708) (a+b+c+d) 1015.00
 """
 
 
+# A ToD meter's bill with the "Average consumption(Monthly)" box, and readings that did not
+# move (a short bill after an interim one): its consumption is the three zones' average.
+TOD_AVERAGE_BILL = """
+Consumer#        1100000000004                              Reg. Mob# 900xxxx000
+Billing Period           10/2026[Bi-Monthly]                   Tariff/Phase             LT-1/Single      Pole#                     MA-1
+Meter#                   TEST000000001                                                        Average consumption(Monthly)
+Meter Digits             5.1                                     Power Unit/Zone               NORMAL                   OFF PEAK                    PEAK
+Meter Type/              TOD                                             KWH                    114                       85                        84
+        Power Unit              Zone             Trading       Initial Reading(IR)       Final Reading(FR)            OMF                      Units*
+           KWH                 Normal             Import                   8489.00                  8489.00                  1                                 0
+           KWH                 Off Peak           Import                   7748.00                  7748.00                  1                                 0
+           KWH                  Peak              Import                   4277.00                  4277.00                  1                                 0
+"""
+
+
 class TestKSEBBill(FrappeTestCase):
 	def test_an_ebill_is_read_by_its_labels(self):
 		p = kseb_bill.parse(EBILL)
@@ -109,6 +124,14 @@ class TestKSEBBill(FrappeTestCase):
 		self.assertEqual(p["bill_amount"], 1015)
 		self.assertEqual(kseb_bill.name_case(p["name"]), "KP Rajan")
 		self.assertEqual(kseb_bill.name_case("ANNA VARGHESE"), "Anna Varghese")
+
+	def test_a_tod_bill_is_read_by_its_monthly_average(self):
+		p = kseb_bill.parse(TOD_AVERAGE_BILL)
+		self.assertEqual(p["monthly_average_zones"], {"Normal": 114, "Off Peak": 85, "Peak": 84})
+		self.assertEqual(p["units"], 566)  # 283 a month, a bimonthly cycle
+		fields, warnings = kseb_bill.to_fields(p, "Solar Consumer")
+		self.assertEqual(fields["avg_consumption_units"], 566)
+		self.assertTrue(any("ToD meter" in w for w in warnings))
 
 	def test_a_photographed_ebill_reads_past_ocr_noise(self):
 		p = kseb_bill.parse(OCR_EBILL)

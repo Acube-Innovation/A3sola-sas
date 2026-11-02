@@ -92,3 +92,24 @@ def extension(model):
 def ordinal(n):
 	suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 	return "{0}{1}".format(n, suffix)
+
+
+#: Models offered in one dropdown. The default link search stops at ten, and HM-1000 alone
+#: comes in twenty sizes, so its 1 kW and 2 kW kits were never offered.
+SEARCH_LIMIT = 100
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def search(doctype, txt, searchfield, start, page_len, filters):
+	"""The Inverter Model dropdown of a package or estimate row: every active model matching
+	the text and the row's make and phase, by make, phase and size (1 kW first)."""
+	txt = "%{0}%".format(txt or "")
+	rows = frappe.get_list("Inverter Model", filters=filters or {},
+		or_filters=[["name", "like", txt], ["model_name", "like", txt]],
+		fields=["name", "model_name", "inverter_make", "inverter_phase", "capacity_kw"],
+		order_by="inverter_make, inverter_phase, capacity_kw", limit_start=start, limit_page_length=SEARCH_LIMIT)
+	makes = dict(frappe.get_all("Component Make", filters={"name": ["in", {r.inverter_make for r in rows}]},
+		fields=["name", "make_name"], as_list=True)) if rows else {}
+	return [(r.name, "{0}, {1}, {2}, {3:g} kW".format(r.model_name, makes.get(r.inverter_make) or r.inverter_make or "",
+		r.inverter_phase or "", flt(r.capacity_kw))) for r in rows]

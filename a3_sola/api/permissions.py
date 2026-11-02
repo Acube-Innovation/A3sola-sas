@@ -52,7 +52,11 @@ def query_conditions(user=None, doctype=None, **kwargs):
 	"""
 	if not doctype:
 		return ""
-	return build_query_conditions(user or frappe.session.user, doctype)
+	from a3_sola.api.partner_scope import conditions
+
+	user = user or frappe.session.user
+	# A partner - a dealer or contractor - is narrowed further, to his own records.
+	return " and ".join(c for c in (build_query_conditions(user, doctype), conditions(user, doctype)) if c)
 
 
 def has_company_permission(doc=None, ptype=None, user=None, **kwargs):
@@ -66,13 +70,13 @@ def has_company_permission(doc=None, ptype=None, user=None, **kwargs):
 	user = user or frappe.session.user
 	if user == "Administrator":
 		return True
+	from a3_sola.api.partner_scope import has_permission as partner_may
+
 	company = getattr(doc, "company", None)
-	if not company:
-		return True
-	companies = get_permitted_companies(user)
-	if companies is None:
-		return True
-	return company in companies
+	companies = get_permitted_companies(user) if company else None
+	if companies is not None and company not in companies:
+		return False
+	return partner_may(doc, ptype, user)
 
 
 def assert_same_company(doc, links):
