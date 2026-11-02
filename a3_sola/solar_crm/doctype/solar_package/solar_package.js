@@ -54,6 +54,15 @@ frappe.ui.form.on("Solar Package", {
 			frm.set_query(field, table, () => ({ filters: { item_group: group, disabled: 0 } }));
 		});
 		frm.set_query("roof_type", () => ({ filters: { company: frm.doc.company } }));
+		// The row's own make and phase narrow the models, so every kit of them is offered
+		// (Hoymiles Single Phase: HM-1000 1 kW to 6 kW) rather than the first ten of all.
+		frm.set_query("inverter_model", "inverters", (doc, cdt, cdn) => {
+			const row = locals[cdt][cdn];
+			const filters = { is_active: 1 };
+			if (row.inverter_make) filters.inverter_make = row.inverter_make;
+			if (row.inverter_phase) filters.inverter_phase = row.inverter_phase;
+			return { filters };
+		});
 		frm.set_query("battery_variant", "batteries", () => ({
 			filters: { component_type: "Battery", is_active: 1, company: frm.doc.company },
 		}));
