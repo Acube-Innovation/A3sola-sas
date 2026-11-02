@@ -531,7 +531,9 @@ def _load(name, permtype="write"):
 	if not name or not frappe.db.exists(DOCTYPE, name):
 		raise frappe.DoesNotExistError(_("That design estimate does not exist."))
 	doc = frappe.get_doc(DOCTYPE, name)
-	doc.check_permission(permtype)
+	# No `permtype`: the caller has already checked, as the customer's share link does.
+	if permtype:
+		doc.check_permission(permtype)
 	if permtype == "write" and cint(doc.docstatus) != 0:
 		frappe.throw(_("A submitted design estimate cannot be changed."), frappe.PermissionError)
 	return doc
@@ -1088,31 +1090,40 @@ def remove_linked_row(name, section, row, option=None, ops=None):
 def compare(name, pending=None):
 	"""Every option side by side - its kit and commercials - with each tab's unsaved
 	changes applied. An option that cannot be worked out says why instead."""
-	root = _load(name, "read")
 	pending = frappe.parse_json(pending) if pending else {}
-	pending = pending if isinstance(pending, dict) else {}
+	return comparison(_load(name, "read"), pending if isinstance(pending, dict) else {})
+
+
+def comparison(root, pending=None, permtype="read"):
+	"""The columns of Compare options for `root`, each option with its `pending` changes.
+
+	`permtype` None reads the saved options without a permission check: only for the
+	customer's share link, which portal_share.shared_pdf has already checked."""
+	pending = pending or {}
 	out = []
 	for tab in option_tabs(root):
 		entry = {"key": tab["key"], "number": tab["number"], "recommended": tab["recommended"],
 			"estimate": tab["estimate"], "package": tab["package"], "unsaved": bool(pending.get(tab["key"]))}
 		try:
-			doc, _editable = _tab_doc(root, tab["key"], _changes(pending.get(tab["key"])))
+			doc, _editable = _tab_doc(root, tab["key"], _changes(pending.get(tab["key"])), permtype)
 		except frappe.ValidationError as error:
 			entry["error"] = frappe.utils.strip_html(str(error)) or _("This option could not be worked out.")
 			out.append(entry)
 			continue
 		state = builder_state(doc, False)
-		priced = {}
+		priced, counts = {}, {}
 		for section in state["sections"]:
 			if section["key"] in ("panels", "inverters", "batteries"):
 				row = next((r for r in section["rows"] if not cint(r["values"].get("is_option"))), None)
 				priced[section["key"]] = row["title"] if row else ""
+				counts[section["key"]] = "{0:g}".format(flt(row["values"].get("nos"))) if row and row["values"].get("nos") else ""
 		entry.update({
 			"size": "{0:g} kW".format(flt(doc.final_capacity_kw)),
 			"panel_kwp": "{0:g} kWp".format(doc.panel_capacity_kwp()),
 			"inverter_kw": "{0:g} kW".format(doc.inverter_capacity_kw()),
 			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("System price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
+			"panel_nos": counts.get("panels", ""), "inverter_nos": counts.get("inverters", ""),
 			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],
 			"total": state["commercials"]["total"],
@@ -1120,6 +1131,69 @@ def compare(name, pending=None):
 		out.append(entry)
 	frappe.local.message_log = []
 	return out
+
+
+def lowest_keys(columns):
+	"""The options that cost least, to be marked: none while fewer than two can be priced or
+	when every one costs the same. Compare options on the page marks them the same way."""
+	totals = {c["key"]: flt(c["total"]) for c in columns if not c.get("error")}
+	if len(totals) < 2 or len(set(totals.values())) < 2:
+		return []
+	lowest = min(totals.values())
+	return [key for key, total in totals.items() if total == lowest]
+
+
+def _customer(doc):
+	"""Who the estimate is for, by name: the consumer, else the lead."""
+	subject = doc.solar_consumer or doc.lead
+	return link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else ""
+
+
+def comparison_file_name(root):
+	from a3_sola.api.documents import customer_file_name
+
+	return customer_file_name(_customer(root), "System Options {0}".format(root.name))
+
+
+def render_comparison(root, permtype="read"):
+	"""Compare options as a PDF on the company letterhead, for the customer to choose from:
+	the saved options only, no one's unsaved changes."""
+	from a3_sola.api.documents import letterhead_flow_pdf
+
+	columns = comparison(root, None, permtype)
+	# Lines in the order of the option with the most of them, as the page lists them - but
+	# only those that cost something in some option: a row of ₹ 0.00s tells the customer nothing.
+	lines = {}
+	for column in sorted(columns, key=lambda c: -len(c.get("lines") or [])):
+		for line in column.get("lines") or []:
+			lines.setdefault(line["key"], line["label"])
+	charged = {line["key"] for c in columns for line in c.get("lines") or [] if flt(line["amount"])}
+	lines = {key: label for key, label in lines.items() if key in charged}
+	html = frappe.render_template("a3_sola/templates/print/design_estimate_comparison.html", {
+		"doc": root,
+		"title": _customer(root) or root.name,
+		"columns": columns,
+		"lines": list(lines.items()),
+		"amounts": [{line["key"]: line["amount"] for line in c.get("lines") or []} for c in columns],
+		"lowest": lowest_keys(columns),
+		"profile": subject_profile(root.lead, root.solar_consumer),
+		"money": lambda value: frappe.utils.fmt_money(value, currency="INR"),
+		"_": _,
+	})
+	return letterhead_flow_pdf(html, root.company)
+
+
+def comparison_route(name):
+	return "/api/method/a3_sola.api.portal_estimate.comparison_pdf?name=" + frappe.utils.quote(name)
+
+
+@frappe.whitelist()
+def comparison_pdf(name, download=0):
+	"""Compare options of `name`'s root estimate as a PDF: to view, or with `download`, to save."""
+	root = root_of(_load(name, "read"))
+	frappe.local.response.filename = comparison_file_name(root)
+	frappe.local.response.filecontent = render_comparison(root)
+	frappe.local.response.type = "download" if cint(download) else "pdf"
 
 
 def page_json(doc):
@@ -1136,26 +1210,55 @@ def page_json(doc):
 
 
 @frappe.whitelist()
-def download_pdf(name):
-	"""The estimate as a PDF to save or send: who it is for, the system and the commercials."""
+def download_pdf(name, view=0):
+	"""The estimate as a PDF to save or send, laid out as the client's proposal document -
+	cover, letter, About Us, the system, its cost and the terms - on the company letterhead.
+	With `view`, opened in the browser instead of saved."""
 	from frappe.utils.pdf import get_pdf
 
-	doc = _load(name, "read")
-	html = frappe.render_template("a3_sola/templates/print/design_estimate.html", {
-		"doc": doc,
-		"state": builder_state(doc),
-		"profile": subject_profile(doc.lead, doc.solar_consumer),
-		"company": doc.company or "",
-		"money": lambda value: frappe.utils.fmt_money(value, currency="INR"),
-		"_": _,
-	})
 	from a3_sola.api.documents import customer_file_name
 
-	subject = doc.solar_consumer or doc.lead
-	customer = link_title("Solar Consumer" if doc.solar_consumer else "Lead", subject) if subject else ""
-	frappe.local.response.filename = customer_file_name(customer, "Design Estimate {0}".format(doc.name))
+	doc = _load(name, "read")
+	body = frappe.render_template("a3_sola/templates/print/design_estimate_document.html", {"doc": document_doc(doc)})
+	# Each page is a whole A4 sheet of its own (print_frame.html), so the PDF has no margins:
+	# as the Solar Proposal Document print format, whose margins are all 0.
+	html = ('<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+		".print-format { margin-top: 0mm; margin-bottom: 0mm; margin-left: 0mm; margin-right: 0mm; }"
+		"body { margin: 0; }</style></head><body>" + body + "</body></html>")
+	frappe.local.response.filename = customer_file_name(_customer(doc), "Design Estimate {0}".format(doc.name))
 	frappe.local.response.filecontent = get_pdf(html)
-	frappe.local.response.type = "download"
+	frappe.local.response.type = "pdf" if cint(view) else "download"
+
+
+def document_doc(doc):
+	"""The proposal-shaped record the proposal document's pages print from, for an estimate:
+	every option of its root estimate, in tab order - saved or worked out in memory, as the
+	Compare tab works them out - with the customer and site details of the proposal it is
+	in, if any, but the estimate's own number and date: it is the estimate that is printed,
+	not the proposal."""
+	from a3_sola.api.quotation_option import option_doc
+
+	root = root_of(doc)
+	proposal = frappe.db.get_value("Solar Proposal Estimate", {"solar_design_estimate": ["in", [doc.name, root.name]],
+		"parenttype": "Solar Proposal", "docstatus": ["<", 2]}, "parent")
+	options = []
+	for tab in option_tabs(root):
+		try:
+			option, _editable = _tab_doc(root, tab["key"], [])
+		except frappe.ValidationError:
+			continue  # an option that cannot be worked out is not offered
+		options.append(option)
+	frappe.local.message_log = []
+	options = options or [doc]
+	# The layout is the site's: an option worked out from the root, or saved before it, prints the root's.
+	if not options[0].get("tentative_layout"):
+		options[0].tentative_layout = root.get("tentative_layout")
+	out = option_doc(root.name, proposal)
+	out.update({"name": root.name, "proposal_sequence": None, "current_version": 0, "quotation": None,
+		"proposal_date": root.get("estimate_date") or out.get("proposal_date"),
+		"solar_design_estimate": options[0].name or root.name,
+		"design_estimates": [frappe._dict(solar_design_estimate=o.name, estimate_doc=o) for o in options]})
+	return out
 
 
 @frappe.whitelist()

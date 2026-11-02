@@ -3396,7 +3396,12 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-compare__table tr.is-line th { padding-left: 1.2rem; font-weight: 500; }
 .a3s-de-compare__table tr.is-sum td, .a3s-de-compare__table tr.is-sum th { font-weight: 700; color: var(--color-text); }
 .a3s-de-compare__table tr.is-grand td, .a3s-de-compare__table tr.is-grand th { border-top: 2px solid var(--color-text); font-weight: 800; color: var(--color-text); font-size: 1rem; }
-.a3s-de-compare__table tr.is-grand td.is-best { color: var(--color-accent-hover); }
+/* The option that costs least: its column tinted, tagged in its head, its total in the accent. */
+.a3s-de-compare__table .is-lowest { background: rgba(245, 165, 36, 0.10); }
+.a3s-de-compare__table tr.is-grand td.is-lowest { color: var(--color-accent-hover); }
+.a3s-de-compare__tag { display: block; width: max-content; margin: 0.25rem 0 0 auto; padding: 0.1rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; color: #fff; background: var(--color-accent-hover); }
+.a3s-de-compare__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.a3s-de-compare__send { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
 .a3s-de-compare__error { color: #b42318; font-weight: 600; font-size: 0.75rem; }
 
 /* A row the package price covers, and the package line in the commercials. */

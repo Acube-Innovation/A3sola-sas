@@ -67,14 +67,26 @@ class TestComponentPages(FrappeTestCase):
 		self.assertEqual(print_cover.component_pages(self.SUMMARY, {"rows": []}), {"under_summary": True, "pages": []})
 
 
-class TestPaymentPage(FrappeTestCase):
-	def rest(self, terms):
+class TestFlowPages(FrappeTestCase):
+	"""The terms to the way forward run on page after page, as many sections to a page as fit."""
+
+	def rest(self, terms, scope_rows=4):
+		row = {"category": "Engineering", "text": "System design including civil, structural and electrical components."}
 		return {"terms_html": "<ul>" + "".join("<li>{0}</li>".format(t) for t in terms) + "</ul>", "validity": "",
 			"payment_terms": list(print_cover.PAYMENT_TERMS), "bank": [("PAN", "X")] * 3,
-			"bank_credentials": [("Bank", "X")] * 4, "payment_qr": ""}
+			"bank_credentials": [("Bank", "X")] * 4, "payment_qr": "", "schedule_html": "<ul><li>Supply: 7 days.</li></ul>",
+			"warranty_items": [{"text": "System Warranty shall be for 5 years.", "sub": []}],
+			"scope": {"company": [row] * scope_rows, "customer": [row] * scope_rows}, "way_forward": list(print_cover.WAY_FORWARD)}
+
+	def test_every_section_is_laid_out_once_in_order(self):
+		pages = print_cover.flow_pages(self.rest(["The price is for a flat roof."] * 3))
+		self.assertEqual([key for page in pages for key in page], list(print_cover.FLOW))
 
 	def test_short_terms_share_the_page_with_the_payment_terms(self):
-		self.assertFalse(print_cover.payment_on_own_page(self.rest(["The price is for a flat roof."] * 3)))
+		pages = print_cover.flow_pages(self.rest(["The price is for a flat roof."] * 3))
+		self.assertEqual(pages[0][:2], ["terms", "payment"])
 
 	def test_long_terms_turn_the_payment_terms_to_the_next_page(self):
-		self.assertTrue(print_cover.payment_on_own_page(self.rest(["x " * 80] * 9)))
+		pages = print_cover.flow_pages(self.rest(["x " * 80] * 9))
+		self.assertEqual(pages[0], ["terms"])
+		self.assertEqual(pages[1][0], "payment")

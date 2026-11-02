@@ -4,7 +4,7 @@
 
 import frappe
 
-from a3_sola.api import portal_estimate
+from a3_sola.api import portal_estimate, portal_share
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import load_record, record_route
 
@@ -31,5 +31,8 @@ def get_context(context):
 	context.record_name = doc.name
 	# The tabs are the options of the estimate this one was saved from, if any.
 	context.builder_json = portal_estimate.page_json(doc)
+	# Compare options goes to the customer as a PDF, with the share buttons of a proposal.
+	root = portal_estimate.root_of(doc)
+	context.compare_share = portal_share.share_links(root, portal_estimate.comparison_route(root.name), portal_share.COMPARISON)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

@@ -12,6 +12,7 @@
   "solar_consumer",
   "site_survey",
   "estimate_date",
+  "tentative_layout",
   "cb_2",
   "electricity_tariff",
   "tariff_code",
@@ -158,6 +159,12 @@
    "label": "Estimate Date",
    "reqd": 1,
    "default": "Today"
+  },
+  {
+   "description": "A drawing or photo of the panels on the roof. Printed as 3.2 Tentative Layout in the proposal and the estimate PDF.",
+   "fieldname": "tentative_layout",
+   "fieldtype": "Attach Image",
+   "label": "Tentative Layout"
   },
   {
    "fieldname": "cb_2",
@@ -851,7 +858,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-26 12:00:00.000000",
+ "modified": "2026-11-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

@@ -364,6 +364,15 @@
 		$("de-pdf-link").href = state.pdf_route || "#";
 		$("de-pdf-link").hidden = !state.saved || dirty;
 		$("de-whatsapp").hidden = !state.saved || dirty;
+		/* The proposal this option is in, or the way to one - as at the foot of Commercials. */
+		var action = state.proposal_action;
+		var proposalLink = $("de-proposal-link");
+		proposalLink.hidden = !action || dirty;
+		if (action) {
+			proposalLink.href = action.href;
+			proposalLink.title = action.hint || "";
+			$("de-proposal-label").textContent = action.label;
+		}
 		$("de-discard").hidden = !dirty || busy;
 		var save = $("de-save");
 		var canSave = state.editable && (dirty || !state.saved);
@@ -619,14 +628,19 @@
 		body.innerHTML = "";
 		if (!comparison) return;
 		var cols = comparison;
-		var lowest = null;
-		cols.forEach(function (c) { if (!c.error && (lowest === null || c.total < lowest)) lowest = c.total; });
+		/* The options that cost least, tinted down the column - none while fewer than two
+		   can be priced or all cost the same (portal_estimate.lowest_keys, for the PDF). */
+		var priced = cols.filter(function (c) { return !c.error; });
+		var lowest = Math.min.apply(null, priced.map(function (c) { return c.total; }));
+		var marked = priced.length > 1 && priced.some(function (c) { return c.total !== lowest; });
+		function isLowest(c) { return marked && !c.error && c.total === lowest; }
 
 		var head = el("tr", {}, [el("th", { scope: "col", text: "" })].concat(cols.map(function (c) {
 			var open = el("button", { type: "button", class: "a3s-textlink", text: "Option " + c.number });
 			open.addEventListener("click", function () { selectTab(c.key); });
-			return el("th", { scope: "col", class: "a3s-de-money" }, [
+			return el("th", { scope: "col", class: "a3s-de-money" + (isLowest(c) ? " is-lowest" : "") }, [
 				open,
+				isLowest(c) ? el("span", { class: "a3s-de-compare__tag", text: "Lowest price" }) : null,
 				c.recommended ? el("small", { class: "a3s-de-sub", text: "Recommended" }) : null,
 				el("small", { class: "a3s-de-sub", text: (c.estimate ? (c.estimate === page.root ? "This estimate" : c.estimate) : "Not saved") + (c.unsaved ? " · unsaved changes" : "") })
 			]);
@@ -635,7 +649,7 @@
 		var rows = [];
 		function row(label, values, cls) {
 			rows.push(el("tr", { class: cls || "" }, [el("th", { scope: "row", text: label })].concat(values.map(function (v, i) {
-				return el("td", { class: "a3s-de-money" + (cols[i].error ? " is-error" : ""), text: v });
+				return el("td", { class: "a3s-de-money" + (cols[i].error ? " is-error" : "") + (isLowest(cols[i]) ? " is-lowest" : ""), text: v });
 			}))));
 		}
 		function pick(fn) { return cols.map(function (c) { return c.error ? "" : fn(c); }); }
@@ -646,7 +660,9 @@
 		row("Inverters", pick(function (c) { return c.inverter_kw; }));
 		row("System price", pick(function (c) { return c.package_cost; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
+		row("Panel qty", pick(function (c) { return c.panel_nos || "—"; }));
 		row("Inverter", pick(function (c) { return c.inverter; }));
+		row("Inverter qty", pick(function (c) { return c.inverter_nos || "—"; }));
 		if (cols.some(function (c) { return c.battery; })) row("Battery", pick(function (c) { return c.battery || "—"; }));
 		var keys = [];
 		/* Lines in the order of the option with the most of them, so a battery sits where it does there. */
@@ -662,7 +678,7 @@
 		row("Subtotal", pick(function (c) { return money.format(c.subtotal); }), "is-sum");
 		row("GST", pick(function (c) { return money.format(c.gst_amount); }));
 		rows.push(el("tr", { class: "is-grand" }, [el("th", { scope: "row", text: "Total" })].concat(cols.map(function (c) {
-			return el("td", { class: "a3s-de-money" + (!c.error && c.total === lowest && cols.length > 1 ? " is-best" : "") },
+			return el("td", { class: "a3s-de-money" + (isLowest(c) ? " is-lowest" : "") },
 				c.error ? [el("small", { class: "a3s-de-compare__error", text: c.error })] : [document.createTextNode(money.format(c.total))]);
 		}))));
 		body.appendChild(el("table", { class: "a3s-de-compare__table" }, [el("thead", {}, [head]), el("tbody", {}, rows)]));

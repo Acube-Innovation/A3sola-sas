@@ -248,3 +248,5 @@ a3_sola.patches.v1_2.staff_designations
 a3_sola.patches.v1_2.consumer_dob_gender
 # KSEB sections customers' bills name that the list lacked: Meloor (5650), Thuravoor (5577).
 a3_sola.patches.v1_2.discom_sections_from_bills
+# The proposal's terms, delivery schedule and scope of work as the client's revised proposal words them.
+a3_sola.patches.v1_2.proposal_wording_r1

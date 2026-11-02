@@ -68,6 +68,14 @@ frappe.ui.form.on("Solar Design Estimate", {
 				technology: locals[cdt][cdn].inverter_type || "",
 			},
 		}));
+		// As on the package: the row's make and phase narrow the models to their own kits.
+		frm.set_query("inverter_model", "inverters", (doc, cdt, cdn) => {
+			const row = locals[cdt][cdn];
+			const filters = { is_active: 1 };
+			if (row.inverter_make) filters.inverter_make = row.inverter_make;
+			if (row.inverter_phase) filters.inverter_phase = row.inverter_phase;
+			return { filters };
+		});
 		frm.set_query("make", "bos_items", (doc, cdt, cdn) => ({
 			filters: {
 				component_type: BOS_MAKE_TYPE[locals[cdt][cdn].item] || "",

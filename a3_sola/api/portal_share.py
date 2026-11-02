@@ -101,21 +101,36 @@ These are the items still to be supplied. Kindly confirm availability, price and
 
 """ + SIGNATURE
 
+#: A design estimate's Compare options: every option side by side, to the customer to choose.
+COMPARISON = "comparison"
+
+MESSAGES[COMPARISON] = """Hi {name},
+
+*Thank you for your interest in Renewcore Innovations LLP.* As discussed, please find the *solar system options* we have worked out for you {document}
+
+Each option shows the system, the panels and inverters with their quantities, and the full price. Every option includes KSEB documentation, installation, and commissioning.
+
+Please let us know the option that suits you best, and we will prepare the detailed proposal.
+
+""" + SIGNATURE
+
 SUBJECTS = {
 	"Installation Work Order": "Work Order {number} - {kind} - {project} - Renewcore Innovations LLP",
 	"Solar Proposal": "Solar Project Proposal {number} - Renewcore Innovations LLP",
 	"Quotation": "Quotation {number} - Renewcore Innovations LLP",
 	"Installation Task": "{list} Purchase List - {project} - Renewcore Innovations LLP",
 	PENDING: "{list} Pending Items - {project} - Renewcore Innovations LLP",
+	COMPARISON: "Solar System Options {number} - Renewcore Innovations LLP",
 }
 
 #: Procurement tasks whose purchase list can be sent (api/purchase_list).
 PURCHASE_TASKS = ("SPROC", "PROC")
 def _part(doc, part):
-	"""`part` checked against the document: "" (the document itself) or a purchase list's
-	pending items."""
+	"""`part` checked against the document: "" (the document itself), a purchase list's
+	pending items, or a design estimate's Compare options."""
 	part = (part or "").strip()
-	if part and not (part == PENDING and _is_purchase_list(doc)):
+	if part and not ((part == PENDING and _is_purchase_list(doc))
+			or (part == COMPARISON and doc.doctype == "Solar Design Estimate")):
 		raise frappe.PermissionError(_("This document has no such part."))
 	return part
 
@@ -141,11 +156,18 @@ def _pdf(doc, part=""):
 		from a3_sola.api import completion_print
 
 		return completion_print.render(doc)[1]
+	if part == COMPARISON:
+		from a3_sola.api import portal_estimate
+
+		# The customer's link (shared_pdf) is checked by its key, not by a login.
+		return portal_estimate.render_comparison(doc, None if frappe.flags.ignore_print_permissions else "read")
 	return get_pdf(frappe.get_print(doc.doctype, doc.name, print_format=_print_format(doc.doctype), doc=doc, no_letterhead=0))
 
 
 def _sendable(doctype):
-	return bool(_print_format(doctype)) or doctype in ("Installation Task", "Installation Work Order", "Solar Installation")
+	# A design estimate goes out only as its Compare options (COMPARISON).
+	return bool(_print_format(doctype)) or doctype in (
+		"Installation Task", "Installation Work Order", "Solar Installation", "Solar Design Estimate")
 
 
 # ------------------------------------------------------------------ the customer's link
@@ -207,6 +229,10 @@ def _file_name(doc, part=""):
 		from a3_sola.api import completion_print
 
 		return completion_print.file_name(doc)
+	if part == COMPARISON:
+		from a3_sola.api import portal_estimate
+
+		return portal_estimate.comparison_file_name(doc)
 	return "{0}.pdf".format(doc.get("proposal_file_name") or doc.name)
 
 
@@ -327,6 +353,15 @@ def _recipient(doc, part=""):
 		return row.get("supplier_name") or supplier, row.get("mobile_no") or "", row.get("email_id") or ""
 	if doc.doctype == "Solar Proposal":
 		return doc.get("customer_name") or "", doc.get("mobile_no") or "", doc.get("email_id") or ""
+	if doc.doctype == "Solar Design Estimate":
+		# The consumer, its blanks filled from the lead - as the estimate's own WhatsApp button.
+		name, mobile, email = "", "", ""
+		for doctype, docname, name_field in (("Solar Consumer", doc.get("solar_consumer"), "consumer_name"),
+				("Lead", doc.get("lead"), "lead_name")):
+			row = frappe.db.get_value(doctype, docname, [name_field, "mobile_no", "email_id"], as_dict=True) if docname else None
+			if row:
+				name, mobile, email = name or row.get(name_field) or "", mobile or row.mobile_no or "", email or row.email_id or ""
+		return name, mobile, email
 	# A quotation keeps its contact only when one was picked: else the proposal it came
 	# from, the consumer, and the customer or lead it is addressed to, in that order.
 	name, mobile, email = "", doc.get("contact_mobile") or "", doc.get("contact_email") or ""
@@ -378,13 +413,13 @@ def share_links(doc, pdf_route, part=""):
 		place = frappe.db.get_value("Solar Consumer", inst.solar_consumer, "site_city") if inst.solar_consumer else None
 		values.update(list=TITLES[doc.task_code], project=inst.name,
 			place=", ".join(filter(None, [inst.consumer_name, place])) or inst.name)
-	template = MESSAGES[PENDING if part == PENDING else doc.doctype]
+	template = MESSAGES[part or doc.doctype]
 	link = share_url(doc.doctype, doc.name, part)
 	attached = template.format(document="attached.", **values)
 	# Sent with the PDF dropped in beside it, and its link as well, for a phone that will
 	# not open the file.
 	linked = template.format(document="attached.\nYou can also open it here: " + link, **values)
-	subject = SUBJECTS[PENDING if part == PENDING else doc.doctype].format(**values)
+	subject = SUBJECTS[part or doc.doctype].format(**values)
 	whatsapp = whatsapp_link(mobile, linked) if mobile else "https://wa.me/?text=" + quote(linked)
 	return {
 		"doctype": doc.doctype,

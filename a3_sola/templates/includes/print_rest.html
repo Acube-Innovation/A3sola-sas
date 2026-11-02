@@ -1,56 +1,59 @@
-{#- Sections 3.3 to 6 of the Solar Proposal print, page by page as the client's document
-    lays them out: the project cost and KSEBL expenses; the terms, payment terms and bank
-    details; the schedule and warranty; the scope of work; the pictures of similar
-    installations; the way forward. `rest` is print_rest(doc), `letter` the frame's brand.
-    The terms, schedule and scope are edited in A3 Sola Settings; a long text there can
-    run a page into its footer, so keep them to the client's length. -#}
+{#- The rest of the Solar Proposal print, as the client's document lays it out: the solar
+    power plant cost - each option its own table - and the KSEBL expenses; then the terms,
+    payment terms and bank details, the schedule, the warranty, the scope of work and the way
+    forward, one after another, as many to a page as fit (print_cover.flow_pages). `rest` is
+    print_rest(doc), `letter` the frame's brand; section 3's numbers are rest.sections (3.2 is
+    the Tentative Layout when there is one). The terms, schedule and scope are edited in A3
+    Sola Settings; a long text there can run a page into its footer, so keep them to the
+    client's length. -#}
 {%- from "templates/includes/print_frame.html" import page -%}
+{%- set sec = rest.sections -%}
 {%- macro amount_rows(rows) -%}
 	{%- for r in rows %}
 	<tr{% if r.bold %} class="b"{% endif %}><td class="c">{{ loop.index }}</td><td{% if r.right %} class="r"{% endif %}>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
 	{%- endfor %}
 {%- endmacro -%}
 
-{#- 3.3 runs over as many pages as its options need: rest.cost_pages lays them out, since a
-    page is a fixed frame that would clip what overflows. Each option is its own table. -#}
+{#- The cost runs over as many pages as its options need: rest.cost_pages lays them out, since
+    a page is a fixed frame that would clip what overflows. Each option is its own table,
+    numbered under the cost's heading; the KSEBL expenses and add-ons are numbered after them. -#}
+{%- set n_options = rest.cost_options | selectattr("label") | list | length -%}
+{%- set numbered = namespace(i=0) -%}
 {%- for pg in rest.cost_pages %}
 {%- if not loop.first %}
 <div style="page-break-before: always;"></div>
 {%- endif %}
 {% call page(letter, "a3r") %}
 	{%- if loop.first %}
-	<h3>3.3.&nbsp; <u>Project Cost</u></h3>
+	<h3>{{ sec.cost }}.&nbsp; <u>Solar Power Plant Cost</u></h3>
 	{%- endif %}
-	{%- if pg.options %}
-	<h4>3.3.1.&nbsp; <u>Solar Power Plant</u>{% if not loop.first %} (continued){% endif %}</h4>
 	{%- for o in pg.options %}
-	{%- if o.label %}<h5 class="a3r-option">{{ o.label }}</h5>{% endif %}
+	{%- if o.label %}{% set numbered.i = numbered.i + 1 %}
+	<h4{% if not loop.first %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ numbered.i }}.&nbsp; <u>{{ o.label }}</u></h4>
+	{%- endif %}
 	<table class="a3r-table{% if not loop.last %} a3r-table--option{% endif %}">
-		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
-		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{{ amount_rows(o.rows) }}
 	</table>
 	{%- endfor %}
-	{%- endif %}
 	{%- if pg.kseb %}
-	<h4{% if pg.options %} class="a3r-gap"{% endif %}>3.3.2.&nbsp; <u>KSEBL Expenses</u></h4>
+	<h4{% if pg.options %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ n_options + 1 }}.&nbsp; <u>KSEBL Expenses</u></h4>
 	<table class="a3r-table">
-		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
-		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{%- for r in rest.kseb %}
 		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
 		{%- endfor %}
-		<tr class="b"><td class="c">{{ rest.kseb | length + 1 }}</td><td class="r">Total</td><td class="r n">{{ rest.kseb_total }}</td></tr>
-		{%- if rest.kseb_words %}<tr class="b"><td colspan="3" class="c">{{ rest.kseb_words }}</td></tr>{% endif %}
 	</table>
 	{%- if rest.kseb_note %}<p class="a3r-note">{{ rest.kseb_note }}</p>{% endif %}
 	{%- endif %}
 	{%- if pg.add_ons and rest.add_ons %}
 	{#- What the packages offer beside their price (Solar Package > Optional Add-ons); in no total. -#}
-	<h4{% if pg.options or pg.kseb %} class="a3r-gap"{% endif %}>3.3.3.&nbsp; <u>Optional Add-ons</u></h4>
+	<h4{% if pg.options or pg.kseb %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ n_options + 2 }}.&nbsp; <u>Optional Add-ons</u></h4>
 	<table class="a3r-table">
-		<colgroup><col style="width: 8%"><col><col style="width: 16%"></colgroup>
-		<tr><th>Sl.<br>No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
+		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
+		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{%- for r in rest.add_ons %}
 		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item_html }}</td><td class="r n">{{ r.amount_text }}</td></tr>
 		{%- endfor %}
@@ -59,16 +62,15 @@
 {% endcall %}
 {%- endfor %}
 
-{#- 3.4 and 3.5 share a page while both fit; with long terms, 3.5 starts the next
-    (print_cover.payment_on_own_page). -#}
+{#- The sections after the cost, each a macro, laid out by rest.flow. -#}
 {%- macro terms_section() %}
-	<h3>3.4.&nbsp; <u>General Terms &amp; Conditions</u></h3>
+	<h3>{{ sec.terms }}.&nbsp; <u>General Terms &amp; Conditions</u></h3>
 	<div class="a3r-rich">{{ rest.terms_html }}</div>
 	{%- if rest.validity %}<ul><li>{{ rest.validity }}</li></ul>{% endif %}
 {%- endmacro %}
-{%- macro payment_section(own_page) %}
-	<h3{% if not own_page %} class="a3r-gap"{% endif %}>3.5.&nbsp; <u>Payment Terms:</u></h3>
-	<ol>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ol>
+{%- macro payment_section() %}
+	<h3>{{ sec.payment }}.&nbsp; <u>Payment Terms:</u></h3>
+	<ul>{% for t in rest.payment_terms %}<li>{{ t }}</li>{% endfor %}</ul>
 	<ul class="a3r-bankhead"><li><b><u>Bank Account Details for Payment</u></b></li></ul>
 	{%- set qr = rest.payment_qr %}
 	<table class="a3r-bank{% if qr %} a3r-bank--qr{% endif %}">
@@ -86,73 +88,65 @@
 			{%- endif %}</tr>
 		{%- endfor %}
 		{%- for label, value in rest.bank_credentials %}
-		<tr>{% if loop.first %}<td class="c" rowspan="{{ rest.bank_credentials | length }}">Bank Credentials for Payment</td>{% endif %}<td class="r">{{ label }}</td><td>{{ value or "—" }}</td></tr>
+		<tr>{% if loop.first %}<td class="c" rowspan="{{ rest.bank_credentials | length }}">Bank Credentials for Payment</td>{% endif %}<td class="r">{{ label }}:</td><td>{{ value or "—" }}</td></tr>
 		{%- endfor %}
 	</table>
 {%- endmacro %}
-
-<div style="page-break-before: always;"></div>
-{%- if rest.payment_page %}
-{% call page(letter, "a3r") %}{{ terms_section() }}{% endcall %}
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}{{ payment_section(True) }}{% endcall %}
-{%- else %}
-{% call page(letter, "a3r") %}{{ terms_section() }}{{ payment_section(False) }}{% endcall %}
-{%- endif %}
-
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}
-	<h3>3.6.&nbsp; <u>Schedule of Delivery, Installation and Commissioning</u></h3>
+{%- macro schedule_section() %}
+	<h3>{{ sec.schedule }}.&nbsp; <u>Schedule of Delivery, Installation and Commissioning</u></h3>
 	<div class="a3r-rich">{{ rest.schedule_html }}</div>
-	<h3 class="a3r-gap">3.7.&nbsp; <u>Warranty: -</u></h3>
-	<ul>{% for w in rest.warranty %}<li>{{ w }}</li>{% endfor %}</ul>
-{% endcall %}
-
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}
+{%- endmacro %}
+{%- macro warranty_section() %}
+	<h3>{{ sec.warranty }}.&nbsp; <u>Warranty: -</u></h3>
+	<ol class="a3r-warranty">
+		{%- for w in rest.warranty_items %}
+		<li>{{ w.text }}
+			{%- if w.sub %}<ol>{% for s in w.sub %}<li>{{ s }}</li>{% endfor %}</ol>{% endif %}
+		</li>
+		{%- endfor %}
+	</ol>
+{%- endmacro %}
+{%- macro scope_company_section() %}
 	<h2>4.&nbsp; Scope of Work</h2>
 	<h4>4.1.&nbsp; {{ rest.company_scope_label }}</h4>
 	<ul>{% for s in rest.scope.company %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
-	<h4 class="a3r-gap">4.2.&nbsp; {{ rest.customer_scope_label }}</h4>
+{%- endmacro %}
+{%- macro scope_customer_section() %}
+	<h4>4.2.&nbsp; {{ rest.customer_scope_label }}</h4>
 	<ul>{% for s in rest.scope.customer %}<li>{% if s.category %}{{ s.category }}: {% endif %}{{ s.text }}</li>{% endfor %}</ul>
-{% endcall %}
-
-{%- set pictures = rest.pictures %}
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}
-	<h2>5.&nbsp; Pictures of Similar Installations</h2>
-	<div class="a3r-pics">{% for src in pictures[:2] %}<img src="{{ src }}" alt="">{% endfor %}</div>
-{% endcall %}
-
-<div style="page-break-before: always;"></div>
-{% call page(letter, "a3r") %}
-	{%- if pictures | length > 2 %}
-	<div class="a3r-pics">{% for src in pictures[2:3] %}<img src="{{ src }}" alt="">{% endfor %}</div>
-	{%- endif %}
-	<h2 class="a3r-gap">6.&nbsp; Way Forward</h2>
-	<div class="a3r-forward">
-		<p>We have offered a solution with high-quality components which will be executed using experienced manpower and hassle-free service for the lifetime of the solar plant.</p>
-		<p>Should you require any further details or clarifications, please do not hesitate to contact us.</p>
-		<p>In case you have received another offer and wants to have a comparison, we would be more than happy to give you a technical comparison of the components on offer. Further, we would be delighted to address any questions or provide additional information to support your decision-making process.</p>
-		<p>Please feel free to reach out to us:</p>
-	</div>
+{%- endmacro %}
+{%- macro way_forward_section() %}
+	<h2>5.&nbsp; Way Forward</h2>
+	<div class="a3r-forward">{% for p in rest.way_forward %}<p>{{ p }}</p>{% endfor %}</div>
 	<table class="a3r-contact">
-		{%- if letter.phone %}<tr><td>{{ letter.phone }}</td></tr>{% endif %}
-		<tr><td>{% if letter.email %}{{ letter.email }}{% endif %}{% if letter.email and letter.website %}<br>{% endif %}{% if letter.website %}{{ letter.website }}{% endif %}</td></tr>
+		<tr>{% for name, designation, phone in rest.contacts %}<td>{{ name }}<br>{{ designation }}<br>{{ phone }}</td>{% endfor %}</tr>
+		{%- if letter.email %}<tr><td colspan="{{ rest.contacts | length }}">{{ letter.email }}</td></tr>{% endif %}
 	</table>
+{%- endmacro %}
+{%- set sections = {"terms": terms_section, "payment": payment_section, "schedule": schedule_section,
+	"warranty": warranty_section, "scope_company": scope_company_section, "scope_customer": scope_customer_section,
+	"way_forward": way_forward_section} -%}
+
+{%- for keys in rest.flow %}
+<div style="page-break-before: always;"></div>
+{% call page(letter, "a3r") %}
+	{%- for key in keys %}
+	<div class="a3r-section{% if not loop.first %} a3r-gap{% endif %}">{{ sections[key]() }}</div>
+	{%- endfor %}
 {% endcall %}
+{%- endfor %}
 <style>
 	.a3r .a3l-body { left: 10.5%; right: 10.5%; top: 15%; font-size: 12.5pt; line-height: 1.35; }
 	.a3r h2 { margin: 0 0 8pt; font-family: inherit; font-size: 15.5pt; font-weight: 700; color: #1f1f1f; }
 	.a3r h3 { margin: 0 0 8pt; font-family: inherit; font-size: 14pt; font-weight: 700; color: #1f1f1f; }
 	.a3r h4 { margin: 0 0 6pt 14pt; font-family: inherit; font-size: 13pt; font-weight: 700; color: #1f1f1f; }
-	.a3r .a3r-gap { margin-top: 18pt; }
-	.a3r h5.a3r-option { margin: 10pt 0 4pt 14pt; font-family: inherit; font-size: 12pt; font-weight: 700; color: #1f1f1f; }
+	.a3r .a3r-gap { margin-top: 12pt; }
 	.a3r .a3r-table--option { margin-bottom: 6pt; }
 	.a3r p { margin: 0 0 7pt; }
 	.a3r ul, .a3r ol { margin: 0 0 6pt; padding-left: 40pt; }
 	.a3r li { margin-bottom: 4pt; text-align: justify; }
 	.a3r .a3r-rich ul, .a3r .a3r-rich ol { list-style: disc; }
+	.a3r ol.a3r-warranty ol { margin: 4pt 0 0; padding-left: 24pt; }
 	.a3r-table, .a3r-bank, .a3r-contact { border-collapse: collapse; width: 100%; table-layout: fixed; }
 	.a3r-table th, .a3r-table td, .a3r-bank td, .a3r-contact td { border: 1px solid #222; padding: 3pt 6pt; vertical-align: middle; }
 	.a3r-table th { text-align: center; font-weight: 700; }
@@ -167,10 +161,8 @@
 	.a3r-bank td.a3r-qr { text-align: center; vertical-align: middle; padding: 6pt; }
 	.a3r-qr img { display: block; width: 100%; max-width: 4.2cm; height: auto; margin: 0 auto 4pt; }
 	.a3r-qr span { font-size: 11pt; font-weight: 700; }
-	.a3r-pics { border: 1px solid #222; padding: 4pt; }
-	.a3r-pics img { display: block; width: 100%; height: auto; margin: 0 0 4pt; }
 	.a3r-forward { padding-left: 14pt; }
 	.a3r-forward p { text-align: justify; }
-	.a3r-contact { width: 92%; margin: 18pt auto 0; }
-	.a3r-contact td { text-align: center; font-weight: 700; padding: 6pt; line-height: 1.6; }
+	.a3r-contact { width: 92%; margin: 8pt auto 0; }
+	.a3r-contact td { text-align: center; font-weight: 700; padding: 3pt 6pt; line-height: 1.45; }
 </style>

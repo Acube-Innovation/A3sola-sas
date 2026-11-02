@@ -1,8 +1,9 @@
-{#- Section 3 of the Solar Proposal print: 3. Proposed Solar Energy Solution, 3.1 Executive
-    Summary (`summary`, print_summary(doc)) and 3.2 Specifications & Quantity of Major
-    Components (`components`, print_components(doc)), both from the base design estimate.
-    As in the client's document, 3.2 starts under 3.1 on page 7 and continues on the next
-    page(s) without repeating the header. A row with nothing on record prints a dash. In the shared frame (print_frame.html). -#}
+{#- Section 3 of the Solar Proposal print: 3. Proposed Clean Energy Solution, 3.1 Executive
+    Summary (`summary`, print_summary(doc)), 3.2 Tentative Layout when the estimate has one,
+    and the Specifications & Quantity of Major Components (`components`, print_components(doc)),
+    from the base design estimate. As in the client's document, the components start under
+    3.1 - or, with a layout, on the next page - and continue without repeating the header.
+    A row with nothing on record prints a dash. In the shared frame (print_frame.html). -#}
 {%- from "templates/includes/print_frame.html" import page -%}
 {#- 3.2's rows page by page, by their printed height (print_cover.component_pages): what
     fits under 3.1, then as many pages as the rest takes. -#}
@@ -35,7 +36,7 @@
 {%- endmacro -%}
 {%- macro components_table(pg, head, last) -%}
 	{%- if head %}
-	<h3 class="a3s3-next{% if not cp.under_summary %} a3s3-top{% endif %}">3.2.&nbsp; <u>Specifications &amp; Quantity of Major Components</u></h3>
+	<h3 class="a3s3-next{% if not cp.under_summary %} a3s3-top{% endif %}">{{ summary.sections.specs }}.&nbsp; <u>Specifications &amp; Quantity of Major Components</u></h3>
 	{%- endif %}
 	<table class="a3s3-table a3s3-components">
 		{{ component_cols() }}
@@ -48,7 +49,7 @@
 {%- endmacro -%}
 {%- set later = cp.pages[1:] if cp.under_summary else cp.pages -%}
 {% call page(letter, "a3s3") %}
-	<h2>3.&nbsp; Proposed Solar Energy Solution</h2>
+	<h2>3.&nbsp; Proposed Clean Energy Solution</h2>
 	<h3>3.1.&nbsp; <u>Executive Summary</u></h3>
 	<table class="a3s3-table">
 		<colgroup><col style="width: 13%"><col style="width: 47%"><col style="width: 40%"></colgroup>
@@ -57,6 +58,10 @@
 		<tr><td class="c">{{ loop.index }}</td><td>{{ particular }}</td><td>{{ description or "—" }}</td></tr>
 		{%- endfor %}
 	</table>
+	{%- if summary.layout %}
+	<h3 class="a3s3-next">3.2.&nbsp; <u>Tentative Layout</u></h3>
+	<img class="a3s3-layout" src="{{ summary.layout }}" alt="Tentative layout">
+	{%- endif %}
 	{%- if cp.under_summary and cp.pages %}{{ components_table(cp.pages[0], True, not later) }}{% endif %}
 {% endcall %}
 {%- for pg in later %}
@@ -78,4 +83,5 @@
 	.a3s3-components td.a3s3-item { font-size: 12pt; }
 	.a3s3-components td.a3s3-spec { text-align: justify; }
 	.a3s3-components td.a3s3-make { font-size: 13pt; }
+	.a3s3 .a3s3-layout { display: block; max-width: 100%; max-height: 330pt; margin: 0 auto; border: 1px solid #222; }
 </style>

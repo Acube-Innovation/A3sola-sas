@@ -214,7 +214,7 @@ class InstallationTask(Document):
 		if self.task_code == "FRM1" and not (self.generated or self.uploads):
 			missing.append(_("Form 1 (generated or uploaded)"))
 		if self.task_code == "DAL" and not approval_letters(self):
-			missing.append(_("the digital approval letter (upload it in Attachments)"))
+			missing.append(_("the digital approval letter (attach it under Digital Approval Letter)"))
 		if missing:
 			frappe.throw(
 				_("Task {0} cannot be completed without: {1}").format(self.task_code, ", ".join(missing)),
@@ -408,12 +408,14 @@ def pull_loan_tranche(task):
 
 
 def approval_letters(task):
-	"""The digital approval letter's files: attached to the task, or filed under its code on
-	the job's document register."""
-	files = frappe.get_all("File", filters={"attached_to_doctype": "Installation Task", "attached_to_name": task.name,
+	"""The digital approval letter's files: in the task's Digital Approval Letter field, attached
+	to the task, or filed under its code on the job's document register - each file once."""
+	files = [{"file_name": _("Digital Approval Letter"), "file_url": task.approval_letter}] if task.get("approval_letter") else []
+	files += frappe.get_all("File", filters={"attached_to_doctype": "Installation Task", "attached_to_name": task.name,
 		"is_folder": 0}, fields=["file_name", "file_url"], order_by="creation asc") if task.get("name") else []
 	files += [{"file_name": r.document_name, "file_url": r.attachment} for r in frappe.get_all(
 		"Installation Document", filters={"parent": task.solar_installation, "parenttype": "Solar Installation",
 		"stage_code": "DAL", "attachment": ["is", "set"]}, fields=["document_name", "attachment"])]
-	return files
+	seen = set()
+	return [f for f in files if not (f["file_url"] in seen or seen.add(f["file_url"]))]
 

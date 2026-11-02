@@ -37,8 +37,8 @@
 	var ORDER = ["discom", "discom_section", "permanent_address_same", "permanent_state", "permanent_district"];
 	/* What each button reads, and the hidden field that keeps it for a record not yet created. */
 	var KINDS = {
-		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill", kept: "KSEB Bill" },
-		aadhaar: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card", kept: "Aadhaar" }
+		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill" },
+		aadhaar: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card" }
 	};
 
 	var bar = document.createElement("div");
@@ -155,7 +155,7 @@
 	}
 
 	function fill(values) {
-		var filled = 0, offered = 0, missed = [];
+		var offered = 0, missed = [];
 		var names = Object.keys(values).sort(function (a, b) {
 			var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
 			return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
@@ -164,10 +164,9 @@
 		(function next() {
 			var name = queue.shift();
 			if (!name) {
-				var parts = [];
-				if (filled) parts.push(filled + " field" + (filled === 1 ? "" : "s") + " filled in (marked)");
-				if (offered) parts.push(offered + " already set - the bill's value is shown beside them");
-				say((parts.join("; ") || "Nothing new to fill in") + ". Check them and save.", "success");
+				/* The fields it filled are marked, so it says nothing more - only where a field
+				   already had a value and the bill's is shown beside it. */
+				say(offered ? offered + " field" + (offered === 1 ? "" : "s") + " already set - the bill's value is shown beside them." : "");
 				if (missed.length) warn(["Not offered on this form: " + missed.join(", ") + "."], true);
 				return;
 			}
@@ -178,8 +177,7 @@
 			var chosen = current && !(name in defaults && current === defaults[name]);
 			var go = function () {
 				if (chosen) { offer(el, value); offered++; }
-				else if (set(el, value)) filled++;
-				else missed.push(name.replace(/_/g, " "));
+				else if (!set(el, value)) missed.push(name.replace(/_/g, " "));
 				next();
 			};
 			/* A list still reloading for its parent (set just before) would drop a value set now. */
@@ -242,7 +240,6 @@
 				}
 				/* Both sides of a card, read one after the other, are both kept. */
 				keep.value = keep.value ? keep.value + "," + out.pending_file : out.pending_file;
-				warn(["The " + kind.what + " will be kept as the " + (doctype === "Lead" ? "lead" : "customer") + "'s " + kind.kept + " when you create it."], true);
 			}
 		}).catch(function (e) {
 			say(e.message || "The " + kind.what + " could not be read.", "error");

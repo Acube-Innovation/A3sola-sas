@@ -10,6 +10,10 @@
 		{%- if head_actions_template %}{% include head_actions_template %}{% endif %}
 		{%- include "templates/includes/portal_claim_button.html" %}
 		{%- if pdf_route %}
+		{#- The same PDF, opened in the browser to read rather than saved. -#}
+		<a class="a3s-square-btn" href="{{ pdf_route }}&view=1" target="_blank" rel="noopener" title="View PDF" aria-label="View PDF">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg>
+		</a>
 		<a class="a3s-btn a3s-btn--secondary" href="{{ pdf_route }}" download>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
 			<span>Export PDF</span>
