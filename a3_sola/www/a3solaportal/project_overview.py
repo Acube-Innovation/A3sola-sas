@@ -267,8 +267,12 @@ def _task_columns(doc):
 	]
 	index = {scope: i for i, (_label, scope, _icon) in enumerate(shown)}
 	people = {}
+	# Shown by name: a row saved without its fetched name takes the user's own.
+	unnamed = list({a.user for a in doc.get("task_assignees") or [] if a.user and not a.full_name})
+	names = dict(frappe.get_all("User", filters={"name": ["in", unnamed]}, fields=["name", "full_name"],
+		as_list=True)) if unnamed else {}
 	for a in doc.get("task_assignees") or []:
-		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
+		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or names.get(a.user) or a.user})
 	from a3_sola.api.tasks import may_complete
 
 	from a3_sola.api import stages

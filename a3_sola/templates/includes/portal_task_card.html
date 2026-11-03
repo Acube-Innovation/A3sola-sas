@@ -14,10 +14,11 @@
 		</span>
 		<span class="a3s-proj__task-status">{{ t.status | e }}</span>
 	</p>
-	{#- Who it is with: the first two people by name, then how many more; the contractor. -#}
+	{#- Who it is with: the first two people by name, then how many more; the contractor - after
+	    a round person badge in the card's status colours. -#}
 	<p class="a3s-proj__task-who" title="{{ t.assignees | map(attribute='name') | join(', ') | e }}">
 		{%- if t.assignees or t.contractor %}
-		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg>
+		<span class="a3s-proj__task-avatar" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-user"></use></svg></span>
 		<span>{{ (t.assignees[:2] | map(attribute='name') | join(", ")) | e }}{% if t.assignees | length > 2 %} +{{ t.assignees | length - 2 }}{% endif %}
 		{%- if t.contractor %}{% if t.assignees %} · {% endif %}{{ t.contractor | e }}{% endif %}</span>
 		{%- endif %}
