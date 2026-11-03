@@ -25,7 +25,9 @@ from a3_sola.api.package_items import CATEGORY
 from a3_sola.api.portal_users import require_admin
 
 DOCTYPE = "Solar Package"
-#: The form's tabs, in the desk's order: (key, label, parent fields, tables).
+#: The form's tabs, in the desk's order: (key, label, parent fields, tables). The Material BOM
+#: and Structure BOMs, Items with their pickers and Excel upload, are the desk's alone: a save
+#: here leaves them as they are.
 TABS = (
 	("package", "Package", ("specification_code", "package_name", "capacity_kw", "package_cost", "system_type",
 		"connection_type", "inverter_topology", "is_dcr_compliant", "area_required_sqft", "tier", "status",
@@ -35,7 +37,7 @@ TABS = (
 	("batteries", "Battery", (), ("batteries",)),
 	("balance", "Balance of system", (), ("system_items",)),
 	("kseb", "KSEB", (), ("kseb_expenses",)),
-	("mounting", "Mounting", ("roof_type",), ("mounting_expenses", "structure_boms")),
+	("mounting", "Mounting", ("roof_type",), ("mounting_expenses",)),
 	("installation", "Installation", (), ("installation_expenses",)),
 	("components", "Components", (), ("components",)),
 	("cost", "Cost", ("payment_terms", "financed_payment_terms"), ("prices",)),

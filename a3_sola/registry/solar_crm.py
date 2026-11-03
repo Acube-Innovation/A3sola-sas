@@ -29,6 +29,7 @@ DOCTYPES = [
 	"Solar Package Inverter",
 	"Solar Package System Item",
 	"Solar Package Price",
+	"Solar Package Material BOM",
 	"Customer KYC Document",
 	"Solar Consumer",
 	"Site Survey",

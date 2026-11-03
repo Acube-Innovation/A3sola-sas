@@ -120,6 +120,7 @@ frappe.ui.form.on("Solar Package", {
 		// The payment terms' milestones, shown under the two choices.
 		show_payment_terms(frm);
 		refresh_price_choices(frm);
+		setup_bom_tables(frm);
 		if (frm.doc.__islocal) return;
 		// The package is a finished good: its name and code are its Item, and its BOM is made
 		// by hand from that Item.
@@ -252,6 +253,207 @@ frappe.ui.form.on("Solar Package Inverter", {
 	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
 	inverter_specification: (frm) => refresh_price_choices(frm),
 	inverters_remove: (frm) => refresh_price_choices(frm),
+});
+
+// The Material BOM (Inverter tab) and the Structure BOMs (Mounting tab) come from Excel as often
+// as they are typed (api/package_bom_tables): the sheet is read on the server, which finds or
+// makes each Item, and its rows replace the table here, to be saved with the package.
+const BOM_TABLES_API = "a3_sola.api.package_bom_tables";
+const BOM_TABLES = ["material_bom", "structure_boms"];
+
+function setup_bom_tables(frm) {
+	BOM_TABLES.forEach((table) => {
+		const grid = frm.fields_dict[table] && frm.fields_dict[table].grid;
+		if (!grid) return;
+		grid.add_custom_button(__("Download Excel"), () =>
+			open_url_post(`/api/method/${BOM_TABLES_API}.download_sheet`, {
+				table,
+				rows: JSON.stringify(frm.doc[table] || []),
+				package: frm.doc.__islocal ? "" : frm.doc.name,
+			}));
+		grid.add_custom_button(__("Upload Excel"), () => {
+			const had = (frm.doc[table] || []).length;
+			if (had) {
+				frappe.confirm(__("The sheet's rows replace the {0} rows of the {1}. Go on?", [had, __(grid.df.label)]),
+					() => upload_bom_table(frm, table));
+			} else {
+				upload_bom_table(frm, table);
+			}
+		});
+	});
+	show_roof_names(frm);
+}
+
+function upload_bom_table(frm, table) {
+	new frappe.ui.FileUploader({
+		as_dataurl: true,
+		allow_multiple: false,
+		restrictions: { allowed_file_types: [".xlsx", ".csv"] },
+		on_success(file) {
+			frappe.call({
+				method: `${BOM_TABLES_API}.read_sheet`,
+				args: {
+					content: file.dataurl,
+					filename: file.name,
+					table,
+					company: frm.doc.company,
+					inverters: (frm.doc.inverters || []).map((r) => ({
+						inverter_item: r.inverter_item,
+						inverter_specification: r.inverter_specification,
+					})),
+				},
+				freeze: true,
+				freeze_message: __("Reading the sheet…"),
+			}).then(({ message }) => {
+				frm.clear_table(table);
+				message.rows.forEach((row) => frm.add_child(table, row));
+				frm.refresh_field(table);
+				frm.dirty();
+				let text = __("{0} rows read from the sheet. Save the package to keep them.", [message.rows.length]);
+				if (message.created.length) {
+					text += "<br><br>" + __("New Items made:") + "<ul>" +
+						message.created.map((i) => `<li>${frappe.utils.escape_html(i)}</li>`).join("") + "</ul>";
+				}
+				frappe.msgprint({ title: __(frm.fields_dict[table].df.label), indicator: "green", message: text });
+			});
+		},
+	});
+}
+
+// A Structure BOM row keeps its roof types by name (SOL-ROOF-001); the grid shows what they say.
+function show_roof_names(frm) {
+	frappe.db.get_list("Roof Type", { fields: ["name", "roof_type"], limit: 500 }).then((roofs) => {
+		const says = Object.fromEntries(roofs.map((r) => [r.name, r.roof_type || r.name]));
+		const df = frappe.meta.docfield_map["Solar Package Structure BOM"] &&
+			frappe.meta.docfield_map["Solar Package Structure BOM"].roof_types;
+		if (!df) return;
+		df.formatter = (value) => (value || "").split(",").map((v) => v.trim()).filter(Boolean)
+			.map((v) => frappe.utils.escape_html(says[v] || v)).join(", ");
+		frm.refresh_field("structure_boms");
+	});
+}
+
+// Depends on Roof Type and Panel Capacity: the company's roof types, and the capacities the
+// packages are made in with room for one that none is yet.
+function choose_structure_depends_on(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	const split = (value) => (value || "").split(",").map((v) => v.trim()).filter(Boolean);
+	const roofs_chosen = split(row.roof_types);
+	const kw_chosen = split(row.panel_capacities).map(flt);
+	Promise.all([
+		frappe.db.get_list("Roof Type", { filters: { company: frm.doc.company }, fields: ["name", "roof_type"], limit: 500 }),
+		frappe.xcall(`${BOM_TABLES_API}.capacities`),
+	]).then(([roofs, capacities]) => {
+		const kws = [...new Set(capacities.concat(kw_chosen))].sort((a, b) => a - b);
+		const dialog = new frappe.ui.Dialog({
+			title: __("Depends on Roof Type and Capacity"),
+			fields: [
+				{
+					fieldname: "roof_types",
+					fieldtype: "MultiCheck",
+					columns: 2,
+					label: __("Roof types"),
+					description: __("None ticked: every roof type."),
+					options: roofs.map((r) => ({
+						label: r.roof_type || r.name, value: r.name, checked: roofs_chosen.includes(r.name),
+					})),
+				},
+				{
+					fieldname: "capacities",
+					fieldtype: "MultiCheck",
+					columns: 4,
+					label: __("Panel capacity (kW)"),
+					description: __("None ticked: every capacity."),
+					options: kws.map((kw) => ({
+						label: `${kw} kW`, value: String(kw), checked: kw_chosen.includes(kw),
+					})),
+				},
+				{
+					fieldname: "other_capacities",
+					fieldtype: "Data",
+					label: __("Other capacities (kW)"),
+					description: __("Separated by commas, e.g. 6, 7.5"),
+				},
+			],
+			primary_action_label: __("Set"),
+			primary_action(values) {
+				const others = split(values.other_capacities).map(flt);
+				if (others.some((kw) => !(kw > 0))) {
+					frappe.msgprint(__("Other capacities are numbers of kW, such as 6 or 7.5."));
+					return;
+				}
+				const chosen = [...new Set((values.capacities || []).map(flt).concat(others))].sort((a, b) => a - b);
+				frappe.model.set_value(cdt, cdn, {
+					roof_types: (values.roof_types || []).join(", "),
+					panel_capacities: chosen.join(", "),
+				});
+				dialog.hide();
+			},
+		});
+		dialog.show();
+	});
+}
+
+// Depends on Inverter is chosen from the package's own inverter options, by their Items.
+function choose_inverters(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	const offered = [...new Set((frm.doc.inverters || []).map((r) => r.inverter_item).filter(Boolean))];
+	if (!offered.length) {
+		frappe.msgprint(__("Give the package's inverter options their Items first."));
+		return;
+	}
+	const chosen = (row.inverters || "").split("\n").map((s) => s.trim()).filter(Boolean);
+	const quoted = (frm.doc.inverters || []).find((r) => r.is_default);
+	const dialog = new frappe.ui.Dialog({
+		title: __("Depends on Inverter"),
+		fields: [{
+			fieldname: "inverters",
+			fieldtype: "MultiCheck",
+			columns: 1,
+			label: __("Needed with"),
+			description: __("None ticked: needed with every inverter."),
+			options: offered.map((item) => ({
+				label: item + (quoted && quoted.inverter_item === item ? ` (${__("default")})` : ""),
+				value: item,
+				checked: chosen.includes(item),
+			})),
+		}],
+		primary_action_label: __("Set"),
+		primary_action({ inverters }) {
+			frappe.model.set_value(cdt, cdn, "inverters", (inverters || []).join("\n"));
+			dialog.hide();
+		},
+	});
+	dialog.show();
+}
+
+// Both tables' rows: the UOM follows the Item chosen (it stays the user's to change after), and
+// the amount is the quantity at the rate.
+const BOM_ROW_EVENTS = {
+	item(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.item) return;
+		frappe.db.get_value("Item", row.item, "stock_uom").then(({ message }) => {
+			if (message && message.stock_uom) frappe.model.set_value(cdt, cdn, "uom", message.stock_uom);
+		});
+	},
+	qty: (frm, cdt, cdn) => bom_row_amount(cdt, cdn),
+	rate: (frm, cdt, cdn) => bom_row_amount(cdt, cdn),
+};
+
+function bom_row_amount(cdt, cdn) {
+	const row = locals[cdt][cdn];
+	frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(row.rate));
+}
+
+frappe.ui.form.on("Solar Package Material BOM", {
+	...BOM_ROW_EVENTS,
+	choose_inverters: (frm, cdt, cdn) => choose_inverters(frm, cdt, cdn),
+});
+
+frappe.ui.form.on("Solar Package Structure BOM", {
+	...BOM_ROW_EVENTS,
+	choose_depends_on: (frm, cdt, cdn) => choose_structure_depends_on(frm, cdt, cdn),
 });
 
 frappe.ui.form.on("Design Estimate Battery", {

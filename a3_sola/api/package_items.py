@@ -150,7 +150,11 @@ def _quoted(table, row):
 
 
 def bom_lines(package):
-	"""The package's raw materials, item -> quantity, in the order the package lists them."""
+	"""The package's raw materials, item -> quantity, in the order the package lists them: its
+	quoted rows, then the rows of its Material BOM and Structure BOMs for its default inverter,
+	roof type and capacity."""
+	from a3_sola.api import package_bom_tables
+
 	lines = {}
 	for table, qty_field in MATERIAL_ROWS.items():
 		item_field = ROWS[table][0]
@@ -159,6 +163,8 @@ def bom_lines(package):
 			if not item or not _quoted(table, row):
 				continue
 			lines[item] = lines.get(item, 0) + (frappe.utils.flt(row.get(qty_field)) or 1)
+	for item, qty in package_bom_tables.bom_lines(package).items():
+		lines[item] = lines.get(item, 0) + qty
 	return lines
 
 

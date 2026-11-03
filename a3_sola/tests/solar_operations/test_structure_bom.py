@@ -26,15 +26,16 @@ class TestStructureBOM(FrappeTestCase):
 	def test_the_project_takes_its_own_roof_types_bom(self):
 		inst = frappe.get_doc("Solar Installation", self.installation.name)
 		roofs = frappe.get_all("Roof Type", pluck="name", limit=2)
-		if len(roofs) < 2 or not inst.solar_package:
-			self.skipTest("needs two roof types and a package")
-		package = frappe.get_doc("Solar Package", inst.solar_package)
-		package.set("structure_boms", [
+		if len(roofs) < 2:
+			self.skipTest("needs two roof types")
+		settings = frappe.get_doc("A3 Sola Settings")
+		settings.set("structure_boms", [
 			{"roof_type": roofs[0], "panel_capacity_kw": 50, "bom": "BOM-MINE"},
 			{"roof_type": roofs[1], "panel_capacity_kw": 50, "bom": "BOM-OTHER"},
 		])
-		package.flags.ignore_links = True
-		package.save(ignore_permissions=True)
+		settings.flags.ignore_links = True
+		settings.flags.ignore_mandatory = True
+		settings.save(ignore_permissions=True)
 		frappe.db.set_value("Solar Installation", inst.name, "roof_type", roofs[0])
 		self.assertEqual(structure_bom.bom_for(inst.name), "BOM-MINE")
 		choices = structure_bom.choices_for(frappe._dict(solar_installation=inst.name))

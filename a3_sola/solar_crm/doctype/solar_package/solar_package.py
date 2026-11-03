@@ -37,6 +37,9 @@ class SolarPackage(Document):
 		self.fill_from_inverter_models()
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
+		from a3_sola.api import package_bom_tables
+
+		package_bom_tables.validate(self)
 		self.validate_one_default_per_type()
 		self.no_dcdb_for_microinverter()
 		self.name_extra_panel_add_ons()
