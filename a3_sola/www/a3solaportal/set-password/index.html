@@ -30,7 +30,7 @@
 			<h1 class="a3s-auth__title">Set your password</h1>
 			{%- if key %}
 			<p class="a3s-auth__sub">Choose the password you will sign in with.</p>
-			<form class="a3s-form a3s-auth__form" id="a3s-setpw-form" novalidate data-key="{{ key | e }}">
+			<form class="a3s-form a3s-auth__form" id="a3s-setpw-form" novalidate data-key="{{ key | e }}" data-csrf="{{ csrf_token | e }}">
 				<div class="a3s-field">
 					<label for="a3s-setpw-new">New password</label>
 					<input type="password" id="a3s-setpw-new" autocomplete="new-password" minlength="8" required autofocus>
@@ -80,7 +80,8 @@
 		var body = new URLSearchParams({ new_password: pw, key: form.dataset.key, logout_all_sessions: 1 });
 		fetch("/api/method/frappe.core.doctype.user.user.update_password", {
 			method: "POST", credentials: "same-origin",
-			headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded" }, body: body
+			headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded",
+				"X-Frappe-CSRF-Token": form.dataset.csrf || "" }, body: body
 		}).then(function (r) {
 			return r.json().catch(function () { return {}; }).then(function (data) {
 				if (r.status === 410) throw new Error(data.message || "This link has been used or has expired. Ask your admin for a new one.");

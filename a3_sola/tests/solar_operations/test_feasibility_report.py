@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Form 1 Generation records the section's feasibility report as a file - uploaded on the
-task's form like a picture is - and no longer asks for the AE acknowledgement number."""
+"""Form 1 Generation records the section's feasibility report as a file - on the task's
+Attachments card, as Feasibility Report, which fills its field - and no longer asks for the
+AE acknowledgement number."""
 
 import io
 from unittest.mock import patch
@@ -41,20 +42,29 @@ class TestFeasibilityReport(FrappeTestCase):
 	def test_the_form_asks_for_the_report_not_the_acknowledgement(self):
 		fields = self.form()
 		self.assertNotIn("ae_acknowledgement_no", fields)
-		self.assertEqual((fields["feasibility_report"]["type"], fields["feasibility_report"]["input"]), ("Attach", "file"))
+		self.assertNotIn("feasibility_report", fields)  # it is on the Attachments card
 		self.assertFalse(frappe.get_meta("Installation Task").has_field("ae_acknowledgement_no"))
 
 	def upload(self, fieldname, content, content_type, slug="installation-tasks"):
 		with patch.object(frappe, "request", frappe._dict(files={"file": Upload(content, content_type)})):
 			return portal_crud.upload_image(slug=slug, fieldname=fieldname)
 
-	def test_a_pdf_report_uploads_and_saves_with_the_task(self):
+	def test_the_card_files_the_report_into_its_field(self):
+		from a3_sola.api import portal_attachments
+
 		self.form()
-		url = self.upload("feasibility_report", self.pdf, "application/pdf")["file_url"]
-		self.assertTrue(url.startswith("/private/files/"))
 		made = portal_crud.create_record(slug="installation-tasks", source_dt="Solar Installation",
-			source=self.installation.name, source_task="FRM1", status="Pending", feasibility_report=url)
-		self.assertEqual(frappe.db.get_value("Installation Task", made["name"], "feasibility_report"), url)
+			source=self.installation.name, source_task="FRM1", status="Pending")
+		name = made["name"]
+		self.assertIn("Feasibility Report", portal_attachments.document_types("Installation Task", name))
+		with patch.object(frappe, "request", frappe._dict(files=frappe._dict(getlist=lambda _k: [Upload(self.pdf, "application/pdf")]))):
+			files = portal_attachments.upload("Installation Task", name, "Feasibility Report")["files"]
+		url = frappe.db.get_value("Installation Task", name, "feasibility_report")
+		self.assertEqual(url, files[0]["file_url"])
+		self.installation.reload()
+		self.assertTrue(any(r.stage_code == "FRM1" and r.attachment == url for r in self.installation.documents))
+		portal_attachments.remove("Installation Task", name, files[0]["name"])
+		self.assertFalse(frappe.db.get_value("Installation Task", name, "feasibility_report"))
 
 	def test_only_a_pdf_or_picture_is_taken(self):
 		with self.assertRaises(frappe.ValidationError):

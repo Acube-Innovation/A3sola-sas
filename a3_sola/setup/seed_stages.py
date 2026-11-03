@@ -119,7 +119,7 @@ TASKS = [
 	                 ("Pre-installation site photo", 1, None),
 	                 # The accepted quotation in the registered vendor's (RIM) format, as the
 	                 # bank also gets it (api/loan_print.quotation).
-	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
+	                 ("Bank Quotation", 1, "BANK-QUOTATION"),
 	                 ("Portal acknowledgement", 1, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
 	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
@@ -130,7 +130,7 @@ TASKS = [
 	_task("ACPT", "Accept Customer", "Internal", 2, "Installation Task", role=DOCS, task_type="ACPT",
 	      applicability="Financed Sales Only",
 	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT"),
-	                 ("Quotation (RIM format)", 1, "BANK-QUOTATION"),
+	                 ("Bank Quotation", 1, "BANK-QUOTATION"),
 	                 ("Consumer-vendor agreement", 1, "MNRE-CONSUMER-VENDOR-AGREEMENT")],
 	      description="The customer accepted on the PM Surya Ghar portal for the loan; the Net Metering "
 	                  "Agreement, the RIM quotation and the consumer-vendor agreement generated for them "

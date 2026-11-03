@@ -7,7 +7,7 @@
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var boot = JSON.parse(document.getElementById("a3s-users-data").textContent);
-	var state = { users: boot.users, counts: boot.counts, total: boot.total, type: "", q: "" };
+	var state = { users: boot.users, counts: boot.counts, total: boot.total, type: "", enabled: "active", q: "" };
 	var choices = boot.choices;
 	var rows = document.querySelector("[data-user-rows]");
 	var empty = document.querySelector("[data-user-empty]");
@@ -62,10 +62,15 @@
 	function icon(name) { return '<svg class="a3s-ic" aria-hidden="true"><use href="#ic-' + name + '"></use></svg>'; }
 	function render() {
 		var q = state.q.toLowerCase();
-		var list = state.users.filter(function (u) {
-			return (!state.type || u.type === state.type) &&
-				(!q || (u.full_name + " " + u.name + " " + u.mobile_no).toLowerCase().indexOf(q) !== -1);
-		});
+		/* Each filter's counts are of the users the other filters and the search leave. */
+		function matches(u, skip) {
+			return (skip === "type" || !state.type || u.type === state.type) &&
+				(skip === "enabled" || !state.enabled || (state.enabled === "active" ? u.enabled : !u.enabled)) &&
+				(!q || (u.full_name + " " + u.name + " " + (u.mobile_no || "")).toLowerCase().indexOf(q) !== -1);
+		}
+		var list = state.users.filter(function (u) { return matches(u); });
+		var byType = state.users.filter(function (u) { return matches(u, "type"); });
+		var byStatus = state.users.filter(function (u) { return matches(u, "enabled"); });
 		rows.innerHTML = list.map(function (u) {
 			var access = u.type === "Employee" ? (esc(u.profile) || '<span class="a3s-table__muted">Own roles (no profile)</span>') :
 				u.type === "Contractor" ? (u.contractor ? esc(u.contractor.contractor_name) + '<span class="a3s-table__meta">' + esc(u.contractor.contractor_type || "") + " contractor</span>" : '<span class="a3s-table__muted">No contractor record</span>') :
@@ -88,12 +93,13 @@
 				"</div></td></tr>";
 		}).join("");
 		empty.hidden = list.length > 0;
-		Object.keys(state.counts).forEach(function (t) {
-			var n = document.querySelector('[data-count="' + t + '"]');
-			if (n) n.textContent = state.counts[t];
+		document.querySelectorAll("[data-type-tabs] [data-count]").forEach(function (n) {
+			var t = n.dataset.count;
+			n.textContent = byType.filter(function (u) { return !t || u.type === t; }).length;
 		});
-		var all = document.querySelector('[data-count=""]');
-		if (all) all.textContent = state.total;
+		var enabledCount = { active: byStatus.filter(function (u) { return u.enabled; }).length,
+			disabled: byStatus.filter(function (u) { return !u.enabled; }).length, "": byStatus.length };
+		document.querySelectorAll("[data-enabled-count]").forEach(function (n) { n.textContent = enabledCount[n.dataset.enabledCount]; });
 	}
 	function reload() {
 		return call("users", {}).then(function (d) {
@@ -107,6 +113,13 @@
 		if (!b) return;
 		state.type = b.dataset.type;
 		document.querySelectorAll("[data-type-tabs] [data-type]").forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
+		render();
+	});
+	document.querySelector("[data-enabled-tabs]").addEventListener("click", function (e) {
+		var b = e.target.closest("[data-enabled]");
+		if (!b) return;
+		state.enabled = b.dataset.enabled;
+		document.querySelectorAll("[data-enabled-tabs] [data-enabled]").forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
 		render();
 	});
 	document.querySelector("[data-user-search]").addEventListener("input", function (e) { state.q = e.target.value.trim(); render(); });

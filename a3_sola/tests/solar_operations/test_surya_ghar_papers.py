@@ -20,7 +20,7 @@ class TestSuryaGharPapers(FrappeTestCase):
 			if r.stage_code == "NPA"}
 		self.assertIn("Pre-installation site photo", expected)
 		self.assertTrue(expected["Pre-installation site photo"].is_mandatory)
-		quotation = expected["Quotation (RIM format)"]
+		quotation = expected["Bank Quotation"]
 		self.assertEqual(frappe.db.get_value("Solar Document Template", quotation.solar_document_template, "template_code"),
 			loan_print.QUOTATION)
 

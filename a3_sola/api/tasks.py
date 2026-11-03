@@ -767,8 +767,7 @@ def missing_documents(inst, task_code):
 
 @frappe.whitelist(methods=["POST"])
 def complete_from_page(slug, name):
-	"""Complete a task from its document's own page, once the page has saved it: its required
-	documents filed, the document completed as its task reads it (its status Completed, its
+	"""Complete a task from its document's own page, once the page has saved it: the document completed as its task reads it (its status Completed, its
 	completion date, submitted where it is submittable) - and the task itself, where the
 	document alone does not complete it (a stamp paper's task). Returns where to go next."""
 	from a3_sola.www.a3solaportal.collections import get_collection, record_route
@@ -785,10 +784,9 @@ def complete_from_page(slug, name):
 		return {"route": record_route("projects", inst.name), "already": 1}
 	if not may_complete(inst, code):
 		frappe.throw(_("Only the task's assignee or a manager can complete it."), frappe.PermissionError)
+	# The checklist is what the register expects, not a gate: the task completes, and the page
+	# says which of its documents are still to be added.
 	missing = missing_documents(inst, code)
-	if missing:
-		frappe.throw(_("Add the task's required documents first: {0}.").format(", ".join(missing)),
-			title=_("Documents Missing"))
 	if cint(doc.docstatus) == 0:
 		status = doc.meta.get_field("status")
 		if status and "Completed" in (status.options or "").split("\n"):
@@ -812,7 +810,7 @@ def complete_from_page(slug, name):
 		_save(inst, _("Task {0} completed by {1} from {2}.").format(row.stage_name,
 			frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, doc.name))
 		notify_task_completed(inst, code)
-	return {"route": record_route("projects", inst.name)}
+	return {"route": record_route("projects", inst.name), "missing": missing}
 
 
 @frappe.whitelist()

@@ -426,8 +426,8 @@ def show_when(df):
 #: are the office's business, kept in ERPNext (a task's cost).
 PORTAL_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
-	# The approval letter goes on the task's Attachments card, as Digital Approval Letter.
-	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter"},
+	# The approval letter and the feasibility report go on the task's Attachments card.
+	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter", "feasibility_report"},
 	"Document Pack": {"task_cost"},
 }
 

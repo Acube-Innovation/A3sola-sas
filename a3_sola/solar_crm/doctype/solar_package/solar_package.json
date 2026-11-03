@@ -109,12 +109,12 @@
    "reqd": 1
   },
   {
+   "description": "What the package costs as offered: its default panel, inverter and battery. The other panels and inverters are options, priced at their own rates. Left blank, it is the default inverter's cost.",
    "fieldname": "package_cost",
    "fieldtype": "Currency",
-   "label": "Package Cost",
-   "options": "INR",
    "in_list_view": 1,
-   "description": "What the package costs as offered: its default panel, inverter and battery. The other panels and inverters are options, priced at their own rates. Left blank, it is the default inverter's cost."
+   "label": "Package Cost",
+   "options": "INR"
   },
   {
    "default": "On-Grid",
@@ -179,15 +179,15 @@
    "label": "Active"
   },
   {
+   "bold": 1,
+   "default": "Draft",
+   "description": "Draft until checked. Only an Active package is offered in design estimates.",
    "fieldname": "status",
    "fieldtype": "Select",
-   "options": "Draft\nActive",
-   "default": "Draft",
-   "label": "Status",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "bold": 1,
-   "description": "Draft until checked. Only an Active package is offered in design estimates."
+   "label": "Status",
+   "options": "Draft\nActive"
   },
   {
    "fieldname": "company",
@@ -257,15 +257,15 @@
    "options": "Solar Package Inverter"
   },
   {
+   "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type)",
    "fieldname": "tab_battery",
    "fieldtype": "Tab Break",
-   "label": "Battery",
-   "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type)"
+   "label": "Battery"
   },
   {
+   "description": "Only for Off-Grid and Hybrid packages. Energy is volts x Ah x nos.",
    "fieldname": "sb_battery",
-   "fieldtype": "Section Break",
-   "description": "Only for Off-Grid and Hybrid packages. Energy is volts x Ah x nos."
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "batteries",
@@ -295,9 +295,9 @@
    "label": "KSEB"
   },
   {
+   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the package's single or three phase connection, and follow it on every save. Registration is charged on the default inverter's capacity. Add rows for any other KSEB expense.",
    "fieldname": "sb_kseb",
-   "fieldtype": "Section Break",
-   "description": "Application, registration and net meter fees fill in from the Statutory Fee Schedule, by the package's single or three phase connection, and follow it on every save. Registration is charged on the default inverter's capacity. Add rows for any other KSEB expense."
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "kseb_expenses",
@@ -311,16 +311,16 @@
    "label": "Mounting"
   },
   {
+   "description": "The first row fills in from the Roof Type: panel capacity x its mounting structure rate, refreshed on every save. Add rows for any other structure work.",
    "fieldname": "sb_mounting",
-   "fieldtype": "Section Break",
-   "description": "The first row fills in from the Roof Type: panel capacity x its mounting structure rate, refreshed on every save. Add rows for any other structure work."
+   "fieldtype": "Section Break"
   },
   {
+   "description": "Mounting and installation are priced on it.",
    "fieldname": "roof_type",
    "fieldtype": "Link",
    "label": "Roof Type",
-   "options": "Roof Type",
-   "description": "Mounting and installation are priced on it."
+   "options": "Roof Type"
   },
   {
    "fieldname": "mounting_expenses",
@@ -329,10 +329,10 @@
    "options": "Design Estimate Mounting Expense"
   },
   {
+   "description": "The structure material a project is built with, by its roof type and panel capacity: one ERPNext BOM per row.",
    "fieldname": "sb_structure_boms",
    "fieldtype": "Section Break",
-   "label": "Structure BOMs",
-   "description": "The structure material a project is built with, by its roof type and panel capacity: one ERPNext BOM per row."
+   "label": "Structure BOMs"
   },
   {
    "fieldname": "structure_boms",
@@ -346,9 +346,9 @@
    "label": "Installation"
   },
   {
+   "description": "From the Roof Type on the Mounting tab: panel capacity x its installation rate. The specification is yours to edit.",
    "fieldname": "sb_installation",
-   "fieldtype": "Section Break",
-   "description": "From the Roof Type on the Mounting tab: panel capacity x its installation rate. The specification is yours to edit."
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "installation_expenses",
@@ -359,8 +359,8 @@
   {
    "fieldname": "tab_components",
    "fieldtype": "Tab Break",
-   "label": "Components",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Components"
   },
   {
    "fieldname": "sb_10",
@@ -370,9 +370,9 @@
   {
    "fieldname": "components",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Components",
-   "options": "Solar Package Component",
-   "hidden": 1
+   "options": "Solar Package Component"
   },
   {
    "fieldname": "tab_commercial",
@@ -397,22 +397,22 @@
    "label": "Payment Terms"
   },
   {
+   "description": "For a job the customer pays for.",
    "fieldname": "payment_terms",
    "fieldtype": "Link",
    "label": "Payment Terms",
-   "options": "Billing Milestone Template",
-   "description": "For a job the customer pays for."
+   "options": "Billing Milestone Template"
   },
   {
    "fieldname": "cb_payment_terms",
    "fieldtype": "Column Break"
   },
   {
+   "description": "For a job financed by a bank loan. Blank: the terms above.",
    "fieldname": "financed_payment_terms",
    "fieldtype": "Link",
    "label": "Payment Terms (Financed)",
-   "options": "Billing Milestone Template",
-   "description": "For a job financed by a bank loan. Blank: the terms above."
+   "options": "Billing Milestone Template"
   },
   {
    "fieldname": "payment_terms_preview",
@@ -425,9 +425,9 @@
    "label": "Optional Add-ons"
   },
   {
+   "description": "Extras a customer can take on top of this package - an extra panel later, an extended inverter warranty. Printed in the proposal as 3.3.3 Optional Add-ons; not part of the package price.",
    "fieldname": "sb_add_ons",
-   "fieldtype": "Section Break",
-   "description": "Extras a customer can take on top of this package - an extra panel later, an extended inverter warranty. Printed in the proposal as 3.3.3 Optional Add-ons; not part of the package price."
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "optional_add_ons",
@@ -438,7 +438,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 18:20:00.000000",
+ "modified": "2026-11-03 14:58:37.272943",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",
@@ -502,7 +502,6 @@
    "share": 1
   },
   {
-   "create": 1,
    "email": 1,
    "export": 1,
    "permlevel": 0,
@@ -510,8 +509,7 @@
    "read": 1,
    "report": 1,
    "role": "Solar Sales Manager",
-   "share": 1,
-   "write": 1
+   "share": 1
   }
  ],
  "search_fields": "specification_code,package_name,capacity_kw",

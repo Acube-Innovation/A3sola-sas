@@ -284,7 +284,8 @@
 			return response.json().catch(function () { return {}; }).then(function (data) {
 				if (!response.ok) throw new Error("Saved, but the task could not be completed: " +
 					(serverMessage(data) || "try again on the task's page."));
-				return (data.message && data.message.route) || saved.route || viewRoute;
+				var done = data.message || {};
+				return { route: done.route || saved.route || viewRoute, missing: done.missing || [] };
 			});
 		});
 	}
@@ -312,15 +313,28 @@
 	}
 
 	/* Pull the human-readable text out of Frappe's _server_messages envelope. */
+	// Errors the server raises without a message of its own, in words a person can act on.
+	var ERROR_REASONS = {
+		QueryDeadlockError: "The system was busy with another change to this project and could not save. Wait a moment and press Save again - nothing was lost.",
+		QueryTimeoutError: "The system was busy with another change to this project and could not save. Wait a moment and press Save again - nothing was lost.",
+		TimestampMismatchError: "Someone else changed this record while you were editing. Reload the page to see their change, then save again.",
+		LinkValidationError: "One of the chosen records no longer exists. Choose it again and save.",
+		MandatoryError: "A required field is empty. Fill it and save again.",
+		PermissionError: "You do not have permission to save this record.",
+		CSRFTokenError: "Your session expired. Reload the page and save again."
+	};
+
 	function serverMessage(data) {
 		try {
 			var msgs = JSON.parse((data && data._server_messages) || "[]");
-			if (!msgs.length) return "";
-			var first = JSON.parse(msgs[0]);
-			return (first && first.message) ? String(first.message).replace(/<[^>]*>/g, "") : "";
-		} catch (e) {
-			return "";
-		}
+			var first = msgs.length ? JSON.parse(msgs[0]) : null;
+			if (first && first.message) return String(first.message).replace(/<[^>]*>/g, "");
+		} catch (e) { /* fall through to the error's type */ }
+		if (!data) return "";
+		if (ERROR_REASONS[data.exc_type]) return ERROR_REASONS[data.exc_type];
+		// Any other error: its own last line, without the Python class name in front.
+		var reason = String(data.exception || "").split("\n").pop().replace(/^[\w.]+(Error|Exception):\s*/, "").trim();
+		return reason ? "Could not save: " + reason.replace(/<[^>]*>/g, "") : "";
 	}
 
 	form.addEventListener("submit", function (event) {
@@ -399,9 +413,15 @@
 					if (!completing) return saved.route || viewRoute;
 					setStatus("Saved. Completing the task…", "success");
 					return completeTask(saved);
-				}).then(function (route) {
-					if (completing) setStatus("Task completed. Taking you back to the project…", "success");
-					window.location.assign(route);
+				}).then(function (next) {
+					if (!completing) return window.location.assign(next);
+					if (next.missing.length) {
+						setStatus("Task completed. Still to add on the project: " + next.missing.join(", ") + ".", "success");
+						setTimeout(function () { window.location.assign(next.route); }, 2500);
+						return;
+					}
+					setStatus("Task completed. Taking you back to the project…", "success");
+					window.location.assign(next.route);
 				}, function (error) {
 					/* The task exists now: shown the problem, then taken to it to finish there. */
 					setStatus(error.message, "error");
