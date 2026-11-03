@@ -279,3 +279,7 @@ a3_sola.patches.v1_2.rim_proposal_cover
 a3_sola.patches.v1_2.renewcore_default_letter_head
 # A task's documents are one list: its record's Attachments and the project's register.
 a3_sola.patches.v1_2.task_documents_one_list
+# Form 1's feasibility report on the task's Attachments card, not its form.
+a3_sola.patches.v1_2.feasibility_report_attachment
+# "Quotation (RIM format)" is the Bank Quotation.
+a3_sola.patches.v1_2.bank_quotation_name

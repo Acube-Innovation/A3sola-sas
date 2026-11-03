@@ -99,12 +99,13 @@ NAV_GROUPS = [
 		# Shown to admins only (nav_groups).
 		"items": [
 			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
+			{"title": "Packages", "sub": "Systems, prices and BOMs", "ic": "package", "route": "/a3solaportal/packages"},
 		],
 	},
 ]
 
 #: Menu items for admins alone: the page refuses anyone else too.
-ADMIN_NAV = {"/a3solaportal/users"}
+ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages"}
 
 # The top bar names the signed-in user's company: their default Company, else the site's
 # default. Shown with the company's logo when one is set on the Company record. The

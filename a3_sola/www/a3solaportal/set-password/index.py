@@ -16,4 +16,7 @@ def get_context(context):
 	context.no_index = True
 	context.page_meta_title = "Set your password"
 	context.key = (frappe.form_dict.get("key") or "").strip()
+	# The browser may already be signed in (an admin opening the link he sent): its session
+	# then checks the CSRF token, and a post without it is refused as "Invalid Request".
+	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

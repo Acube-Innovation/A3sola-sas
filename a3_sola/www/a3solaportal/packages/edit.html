@@ -1,0 +1,31 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title" data-package-title>{{ page_name }}</h2>
+		<p class="a3s-main__sub" data-package-sub>{% if data.name %}{{ data.name }} &middot; {{ data["values"].specification_code }}{% else %}Fill in the details, then add its panel, inverter and the rest.{% endif %}</p>
+	</div>
+	<div class="a3s-pkg__headacts" data-head-actions></div>
+</div>
+
+<div class="a3s-ce-tabs a3s-pkg__tabs" role="tablist" aria-label="Package sections" data-pkg-tabs></div>
+
+<form class="a3s-card a3s-pkg__card" data-pkg-form novalidate>
+	<div data-pkg-panels></div>
+	<div class="a3s-form__actions a3s-pkg__foot">
+		<button type="submit" class="a3s-btn a3s-btn--primary" data-save>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg><span>Save package</span>
+		</button>
+		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/packages">Back to packages</a>
+		<p class="a3s-attach__status a3s-pkg__status" data-status role="status" aria-live="polite" hidden></p>
+	</div>
+</form>
+
+<script type="application/json" id="a3s-package-data">{{ data | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_combo.js?v={{ a3s_asset_version('js/portal_combo.js') }}"></script>
+<script src="/assets/a3_sola/js/portal_package_edit.js?v={{ a3s_asset_version('js/portal_package_edit.js') }}"></script>
+{% endblock %}

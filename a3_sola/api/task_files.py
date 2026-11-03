@@ -29,6 +29,8 @@ ALIASES = {
 	"Digital Approval Letter": ("approval letter", "digital approval", "sanction letter"),
 	"KSEB Bill": ("kseb bill", "electricity bill"),
 }
+#: Documents a task's record files on its Attachments card beside its checklist's, by task code.
+TASK_TYPES = {"FRM1": ("Feasibility Report",)}
 
 
 def _norm(text):
@@ -71,7 +73,10 @@ def names_for(doctype=None, name=None, installation=None, task=None):
 		inst, code = frappe.get_doc(INSTALLATION, installation), task
 	else:
 		inst, code = task_of(doctype, name)
-	return uploadable(inst, code) if inst else []
+	if not inst:
+		return []
+	own = uploadable(inst, code)
+	return own + [t for t in TASK_TYPES.get(code, ()) if t not in own]
 
 
 def register_name(inst, code, document_type):
@@ -164,6 +169,9 @@ def on_registered(inst, code, document_name, file_url):
 	frappe.get_doc({"doctype": "File", "file_url": file_url, "file_name": source.get("file_name") or document_name,
 		"is_private": source.get("is_private", 1), "attached_to_doctype": doctype, "attached_to_name": name,
 		"a3s_document_type": document_name}).insert(ignore_permissions=True)
+	from a3_sola.api.portal_attachments import _fill_field
+
+	_fill_field(doctype, name, document_name, file_url)
 
 
 def on_unregistered(inst, code, file_url):

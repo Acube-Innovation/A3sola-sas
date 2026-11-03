@@ -187,14 +187,16 @@
 
 		<div class="a3s-form__actions a3s-edit__actions">
 			{%- if complete_task %}
-			{#- A task is finished here: saved, its required fields and documents checked, and completed. -#}
+			{#- Save, Cancel, then Complete task last: a task is finished here - saved, its required
+			    fields checked, and completed. Save comes first, so Enter only saves. -#}
+			<button type="submit" class="a3s-btn a3s-btn--ghost" data-submit data-save-only>{{ "Save" if task_form else "Save changes" }}</button>
+			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit data-complete>
 				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg><span>Complete task</span></button>
-			<button type="submit" class="a3s-btn a3s-btn--ghost" data-submit data-save-only>{{ "Save" if task_form else "Save changes" }}</button>
 			{%- else %}
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>{{ "Save" if task_form else "Save changes" }}</button>
-			{%- endif %}
 			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>
+			{%- endif %}
 			<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>
 		</div>
 	</div>

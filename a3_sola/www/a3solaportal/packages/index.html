@@ -1,0 +1,47 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Packages</h2>
+		<p class="a3s-main__sub">The systems estimates and proposals are built from: their parts, prices and BOM.</p>
+	</div>
+	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/packages/edit">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-package"></use></svg>
+		<span>Add package</span>
+	</a>
+</div>
+
+<div class="a3s-users__bar">
+	<div class="a3s-ce-tabs" role="tablist" aria-label="Package status" data-status-tabs>
+		{%- for t in ["", "Active", "Draft"] %}
+		<button type="button" role="tab" data-status="{{ t }}" aria-selected="{{ 'true' if not t else 'false' }}">
+			<span>{{ t or "All" }}</span>
+			<span class="a3s-ce-tabs__n" data-count="{{ t }}">{{ data.counts.get(t, 0) if t else data.total }}</span>
+		</button>
+		{%- endfor %}
+	</div>
+	<input class="a3s-toolbar__search a3s-users__search" type="search" placeholder="Search name, code or kW"
+	       aria-label="Search packages" data-package-search>
+</div>
+
+<p class="a3s-attach__status" data-page-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table a3s-packages__table">
+		<thead><tr><th>Package</th><th>System</th><th class="a3s-table__num">Net rate</th><th>Status</th><th>Item &amp; BOM</th><th><span class="a3s-sr-only">Actions</span></th></tr></thead>
+		<tbody data-package-rows></tbody>
+	</table>
+	<div class="a3s-empty" data-package-empty hidden>
+		<span class="a3s-empty__icon"><svg class="a3s-ic a3s-ic--lg" aria-hidden="true"><use href="#ic-package"></use></svg></span>
+		<h3 class="a3s-empty__title">No packages here yet</h3>
+		<p class="a3s-empty__text">Add the first one and it will appear here.</p>
+	</div>
+</div>
+
+<script type="application/json" id="a3s-packages-data">{{ data | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_packages.js?v={{ a3s_asset_version('js/portal_packages.js') }}"></script>
+{% endblock %}

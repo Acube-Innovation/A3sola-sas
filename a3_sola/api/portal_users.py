@@ -56,7 +56,7 @@ def is_user_admin(user=None):
 
 def require_admin():
 	if not is_user_admin():
-		frappe.throw(_("Only an admin can manage users."), frappe.PermissionError, title=_("Not Permitted"))
+		frappe.throw(_("Only an administrator can do this."), frappe.PermissionError, title=_("Not Permitted"))
 
 
 # ------------------------------------------------------------------ reading

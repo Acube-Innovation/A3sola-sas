@@ -3714,3 +3714,35 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-attach__paper-name strong { font-size: 0.9375rem; font-weight: 600; overflow-wrap: anywhere; }
 .a3s-attach__paper-name small { font-size: 0.75rem; color: var(--color-text-muted); }
 .a3s-attach__paper-actions { display: flex; gap: 0.35rem; }
+
+/* Packages (admin): the list's Item/BOM chips and the package editor's tabs, tables and row form. */
+.a3s-pkg__chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.a3s-pkg__chip { display: inline-block; padding: 0.1rem 0.55rem; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600;
+	background: rgba(42, 51, 66, 0.06); color: var(--color-text-muted); }
+.a3s-pkg__chip.is-set { background: rgba(40, 200, 64, 0.12); color: #1a7f2e; }
+.a3s-pkg__headacts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.a3s-pkg__tabs { margin-bottom: 1rem; }
+.a3s-pkg__card { padding: 1.5rem; }
+.a3s-pkg__fields { margin-bottom: 1.5rem; }
+.a3s-pkg__fields, .a3s-pkg__modal .a3s-form__grid { align-items: start; }
+.a3s-pkg__table + .a3s-pkg__table { margin-top: 1.75rem; }
+.a3s-pkg__tablehead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.a3s-pkg__tabletitle { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.a3s-pkg__count { display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.75rem;
+	background: var(--color-accent-soft); color: var(--color-accent); vertical-align: middle; }
+.a3s-pkg__none { margin: 0; padding: 1rem; border: 1px dashed var(--color-border); border-radius: 0.85rem; text-align: center;
+	font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-pkg__rows td { vertical-align: top; overflow-wrap: anywhere; }
+.a3s-pkg__tick { color: #1a7f2e; }
+.a3s-pkg__rolabel { display: block; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.35rem; }
+.a3s-pkg__ro { margin: 0; padding: 0.6rem 0.8rem; border-radius: 0.75rem; background: var(--color-bg); font-size: 0.9375rem; overflow-wrap: anywhere; }
+.a3s-pkg__terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.a3s-pkg__termname { margin: 0 0 0.4rem; font-weight: 700; font-size: 0.9375rem; }
+.a3s-pkg__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border); }
+.a3s-pkg__status { flex: 1 1 100%; margin: 0; }
+.a3s-pkg__modal { width: min(48rem, 100%); max-height: calc(100vh - 2rem); overflow-y: auto; }
+.a3s-pkg__total { margin: 0.75rem 0 0; text-align: right; font-weight: 700; }
+@media (max-width: 640px) {
+	.a3s-pkg__card { padding: 1rem; }
+	.a3s-pkg__headacts .a3s-btn { flex: 1 1 auto; }
+}

@@ -21,6 +21,13 @@
 		</button>
 		{%- endfor %}
 	</div>
+	<div class="a3s-ce-tabs" role="tablist" aria-label="Status" data-enabled-tabs>
+		{%- for key, label in (("active", "Active"), ("disabled", "Disabled"), ("", "All")) %}
+		<button type="button" role="tab" data-enabled="{{ key }}" aria-selected="{{ 'true' if key == 'active' else 'false' }}">
+			<span>{{ label }}</span><span class="a3s-ce-tabs__n" data-enabled-count="{{ key }}"></span>
+		</button>
+		{%- endfor %}
+	</div>
 	<input class="a3s-toolbar__search a3s-users__search" type="search" placeholder="Search name, e-mail or mobile"
 	       aria-label="Search users" data-user-search>
 </div>

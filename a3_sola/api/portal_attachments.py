@@ -73,7 +73,23 @@ def _sync_kyc(consumer_name, file_url, document_type):
 
 
 #: Document types a record holds one of: a newer one replaces the one before.
-SINGLE_TYPES = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "Digital Approval Letter", "PM Surya Ghar Acknowledgement")
+SINGLE_TYPES = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "Digital Approval Letter", "PM Surya Ghar Acknowledgement",
+	"Feasibility Report")
+#: A file of one of these types on the record is also the value of its Attach field.
+FILE_FIELDS = {("Installation Task", "Feasibility Report"): "feasibility_report"}
+
+
+def _fill_field(doctype, name, document_type, file_url):
+	"""The record's Attach field for this type holds the file."""
+	field = FILE_FIELDS.get((doctype, document_type))
+	if field:
+		frappe.db.set_value(doctype, name, field, file_url)
+
+
+def _clear_field(doctype, name, file_url):
+	for (dt, _type), field in FILE_FIELDS.items():
+		if dt == doctype and frappe.db.get_value(doctype, name, field) == file_url:
+			frappe.db.set_value(doctype, name, field, None)
 
 
 def supersede(doctype, name, document_type, file_url):
@@ -182,6 +198,7 @@ def upload(doctype, name, document_type=None):
 		supersede(doctype, name, document_type, file.file_url)
 		# A project task's record: the file is the task's document on the board's panel too.
 		task_files.on_attached(doctype, name, document_type, file.file_url)
+		_fill_field(doctype, name, document_type, file.file_url)
 		if doctype == "Installation Task" and document_type == "Digital Approval Letter":
 			from a3_sola.api import approval_letter
 
@@ -212,6 +229,7 @@ def set_type(doctype, name, file, document_type=None):
 		_sync_kyc(name, file_url, document_type)
 	supersede(doctype, name, document_type, file_url)
 	task_files.on_attached(doctype, name, document_type, file_url)
+	_fill_field(doctype, name, document_type, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
@@ -233,5 +251,6 @@ def remove(doctype, name, file):
 		_sync_kyc(name, file_url, None)  # its KYC row goes with it
 	frappe.delete_doc("File", file, ignore_permissions=True)
 	task_files.on_removed(doctype, name, file_url)
+	_clear_field(doctype, name, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
