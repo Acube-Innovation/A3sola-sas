@@ -338,8 +338,10 @@ function show_roof_names(frm) {
 function choose_structure_depends_on(frm, cdt, cdn) {
 	const row = locals[cdt][cdn];
 	const split = (value) => (value || "").split(",").map((v) => v.trim()).filter(Boolean);
+	// Not .map(flt): map's index and array would go in as flt's precision and number format.
+	const to_kw = (value) => flt(value);
 	const roofs_chosen = split(row.roof_types);
-	const kw_chosen = split(row.panel_capacities).map(flt);
+	const kw_chosen = split(row.panel_capacities).map(to_kw);
 	Promise.all([
 		frappe.db.get_list("Roof Type", { filters: { company: frm.doc.company }, fields: ["name", "roof_type"], limit: 500 }),
 		frappe.xcall(`${BOM_TABLES_API}.capacities`),
@@ -377,12 +379,12 @@ function choose_structure_depends_on(frm, cdt, cdn) {
 			],
 			primary_action_label: __("Set"),
 			primary_action(values) {
-				const others = split(values.other_capacities).map(flt);
+				const others = split(values.other_capacities).map(to_kw);
 				if (others.some((kw) => !(kw > 0))) {
 					frappe.msgprint(__("Other capacities are numbers of kW, such as 6 or 7.5."));
 					return;
 				}
-				const chosen = [...new Set((values.capacities || []).map(flt).concat(others))].sort((a, b) => a - b);
+				const chosen = [...new Set((values.capacities || []).map(to_kw).concat(others))].sort((a, b) => a - b);
 				frappe.model.set_value(cdt, cdn, {
 					roof_types: (values.roof_types || []).join(", "),
 					panel_capacities: chosen.join(", "),
