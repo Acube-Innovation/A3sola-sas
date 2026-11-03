@@ -41,8 +41,8 @@ TABS = (
 	("mounting", "Mounting", ("roof_type",), ("mounting_expenses",)),
 	("installation", "Installation", (), ("installation_expenses",)),
 	("components", "Components", (), ("components",)),
-	("cost", "Cost", ("payment_terms", "financed_payment_terms"), ()),
 	("add_ons", "Add-ons", (), ("optional_add_ons",)),
+	("cost", "BOM", ("payment_terms", "financed_payment_terms"), ()),
 )
 #: Made by the page's buttons, never typed.
 SET_BY_BUTTONS = {"item", "bom"}

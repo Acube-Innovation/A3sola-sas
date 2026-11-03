@@ -35,8 +35,6 @@
   "tab_inverter",
   "sb_4",
   "inverters",
-  "sb_material_bom",
-  "material_bom",
   "tab_battery",
   "sb_battery",
   "batteries",
@@ -50,15 +48,20 @@
   "sb_mounting",
   "roof_type",
   "mounting_expenses",
-  "sb_structure_boms",
-  "structure_boms",
   "tab_installation",
   "sb_installation",
   "installation_expenses",
   "tab_components",
   "sb_10",
   "components",
+  "tab_add_ons",
+  "sb_add_ons",
+  "optional_add_ons",
   "tab_commercial",
+  "sb_material_bom",
+  "material_bom",
+  "sb_structure_boms",
+  "structure_boms",
   "sb_11",
   "expenses",
   "total_expenses",
@@ -66,10 +69,7 @@
   "payment_terms",
   "cb_payment_terms",
   "financed_payment_terms",
-  "payment_terms_preview",
-  "tab_add_ons",
-  "sb_add_ons",
-  "optional_add_ons"
+  "payment_terms_preview"
  ],
  "fields": [
   {
@@ -260,18 +260,6 @@
    "options": "Solar Package Inverter"
   },
   {
-   "fieldname": "sb_material_bom",
-   "fieldtype": "Section Break",
-   "label": "Material BOM"
-  },
-  {
-   "description": "The materials the system is built from besides its panel, inverter, batteries and balance of system. A row naming inverters is needed only with those; a blank one with every inverter. Create BOM / Update BOM adds the rows of the default inverter. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Inverter.",
-   "fieldname": "material_bom",
-   "fieldtype": "Table",
-   "label": "Material BOM",
-   "options": "Solar Package Material BOM"
-  },
-  {
    "depends_on": "eval:[\"Off-Grid\", \"Hybrid\"].includes(doc.system_type)",
    "fieldname": "tab_battery",
    "fieldtype": "Tab Break",
@@ -344,18 +332,6 @@
    "options": "Design Estimate Mounting Expense"
   },
   {
-   "fieldname": "sb_structure_boms",
-   "fieldtype": "Section Break",
-   "label": "Structure BOMs"
-  },
-  {
-   "description": "The materials the mounting structure is built from. A row naming roof types or capacities (kW) is needed only with those; a blank one with every one. Create BOM / Update BOM adds the rows of the package's own roof type and capacity. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Roof Type, Panel Capacity (kW).",
-   "fieldname": "structure_boms",
-   "fieldtype": "Table",
-   "label": "Structure BOMs",
-   "options": "Solar Package Structure BOM"
-  },
-  {
    "fieldname": "tab_installation",
    "fieldtype": "Tab Break",
    "label": "Installation"
@@ -390,13 +366,54 @@
    "options": "Solar Package Component"
   },
   {
+   "fieldname": "tab_add_ons",
+   "fieldtype": "Tab Break",
+   "label": "Optional Add-ons"
+  },
+  {
+   "description": "Extras a customer can take on top of this package - an extra panel later, an extended inverter warranty. Printed in the proposal as 3.3.3 Optional Add-ons; not part of the package price.",
+   "fieldname": "sb_add_ons",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "optional_add_ons",
+   "fieldtype": "Table",
+   "label": "Optional Add-ons",
+   "options": "Solar Package Add-on"
+  },
+  {
    "fieldname": "tab_commercial",
    "fieldtype": "Tab Break",
-   "label": "Cost"
+   "label": "BOM"
+  },
+  {
+   "fieldname": "sb_material_bom",
+   "fieldtype": "Section Break",
+   "label": "Material BOM"
+  },
+  {
+   "description": "The materials the system is built from besides its panel, inverter, batteries and balance of system. A row naming inverters is needed only with those; a blank one with every inverter. Create BOM / Update BOM adds the rows of the default inverter. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Inverter.",
+   "fieldname": "material_bom",
+   "fieldtype": "Table",
+   "label": "Material BOM",
+   "options": "Solar Package Material BOM"
+  },
+  {
+   "fieldname": "sb_structure_boms",
+   "fieldtype": "Section Break",
+   "label": "Structure BOMs"
+  },
+  {
+   "description": "The materials the mounting structure is built from. A row naming roof types or capacities (kW) is needed only with those; a blank one with every one. Create BOM / Update BOM adds the rows of the package's own roof type and capacity. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Roof Type, Panel Capacity (kW).",
+   "fieldname": "structure_boms",
+   "fieldtype": "Table",
+   "label": "Structure BOMs",
+   "options": "Solar Package Structure BOM"
   },
   {
    "fieldname": "sb_11",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Expenses"
   },
   {
    "description": "What the package costs to build, line by line: each an Item with its category, unit, quantity and rate. A costing record - the package's price comes from its inverter options' Cost. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount.",
@@ -440,27 +457,11 @@
    "fieldname": "payment_terms_preview",
    "fieldtype": "HTML",
    "label": "Milestones"
-  },
-  {
-   "fieldname": "tab_add_ons",
-   "fieldtype": "Tab Break",
-   "label": "Optional Add-ons"
-  },
-  {
-   "description": "Extras a customer can take on top of this package - an extra panel later, an extended inverter warranty. Printed in the proposal as 3.3.3 Optional Add-ons; not part of the package price.",
-   "fieldname": "sb_add_ons",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "optional_add_ons",
-   "fieldtype": "Table",
-   "label": "Optional Add-ons",
-   "options": "Solar Package Add-on"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-04 12:00:00.000000",
+ "modified": "2026-11-04 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

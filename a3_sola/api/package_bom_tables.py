@@ -1,9 +1,9 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A Solar Package's tables of Items beside its quoted rows: the Material BOM (Inverter tab)
-and the Structure BOMs (Mounting tab) - what the system and its mounting structure are built
-from, pipes, lugs, clamps, bolts, each an Item with its quantity and rate - and the Expenses
-(Cost tab), what the package costs to build, a costing record that goes into no BOM.
+"""A Solar Package's tables of Items beside its quoted rows, on its BOM tab: the Material BOM
+and the Structure BOMs - what the system and its mounting structure are built from, pipes,
+lugs, clamps, bolts, each an Item with its quantity and rate - and the Expenses, what the
+package costs to build, a costing record that goes into no BOM.
 
 A row says what it goes with, and saying nothing means everything:
 - a Material BOM row, the inverter options (their Items);

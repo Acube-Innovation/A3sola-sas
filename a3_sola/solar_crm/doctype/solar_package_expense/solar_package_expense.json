@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-11-04 12:00:00.000000",
- "description": "One expense of a package, on its Cost tab: an Item, how much of it and at what rate. A costing record; the package's price comes from its inverter options.",
+ "description": "One expense of a package, on its BOM tab: an Item, how much of it and at what rate. A costing record; the package's price comes from its inverter options.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",

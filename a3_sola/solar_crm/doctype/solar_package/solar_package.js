@@ -208,10 +208,9 @@ frappe.ui.form.on("Solar Package Inverter", {
 	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
 });
 
-// The Material BOM (Inverter tab), the Structure BOMs (Mounting tab) and the Expenses (Cost tab)
-// come from Excel as often as they are typed (api/package_bom_tables): the sheet is read on the
-// server, which finds or makes each Item, and its rows replace the table here, to be saved with
-// the package.
+// The BOM tab's Material BOM, Structure BOMs and Expenses come from Excel as often as they are
+// typed (api/package_bom_tables): the sheet is read on the server, which finds or makes each
+// Item, and its rows replace the table here, to be saved with the package.
 const BOM_TABLES_API = "a3_sola.api.package_bom_tables";
 const BOM_TABLES = ["material_bom", "structure_boms", "expenses"];
 
