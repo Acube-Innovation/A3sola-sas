@@ -60,9 +60,12 @@ class TestPortalPackages(FrappeTestCase):
 		self.assertTrue(saved["name"])
 		source = frappe.get_doc("Solar Package", self.source)
 		self.assertEqual(len(saved["tables"]["modules"]["rows"]), len(source.modules))
-		self.assertEqual(len(saved["tables"]["prices"]["rows"]), len(source.prices))
-		if source.prices:
-			self.assertTrue(saved["tables"]["prices"]["rows"][0]["net_rate"])
+		self.assertEqual(len(saved["tables"]["inverters"]["rows"]), len(source.inverters))
+		# Priced as the source is: its inverter options carry the price (solar_package.price_for).
+		from a3_sola.solar_crm.doctype.solar_package.solar_package import default_price
+
+		self.assertEqual(default_price(frappe.get_doc("Solar Package", saved["name"])).system_cost,
+			default_price(source).system_cost)
 
 	def test_saving_again_keeps_rows_in_place_and_adds_no_computed_rows(self):
 		saved = self.copy()

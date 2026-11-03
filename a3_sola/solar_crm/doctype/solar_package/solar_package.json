@@ -60,7 +60,8 @@
   "components",
   "tab_commercial",
   "sb_11",
-  "prices",
+  "expenses",
+  "total_expenses",
   "sb_payment_terms",
   "payment_terms",
   "cb_payment_terms",
@@ -398,11 +399,18 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "What the package costs with each of its inverter options: the price list's MRP, the subsidy resolved from the scheme, and the net cost to the customer. One row per inverter.",
-   "fieldname": "prices",
+   "description": "What the package costs to build, line by line: each an Item with its category, unit, quantity and rate. A costing record - the package's price comes from its inverter options' Cost. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount.",
+   "fieldname": "expenses",
    "fieldtype": "Table",
-   "label": "Package Cost by Inverter",
-   "options": "Solar Package Price"
+   "label": "Expenses",
+   "options": "Solar Package Expense"
+  },
+  {
+   "fieldname": "total_expenses",
+   "fieldtype": "Currency",
+   "label": "Total Expenses",
+   "options": "INR",
+   "read_only": 1
   },
   {
    "description": "How the customer pays for a job on this package - e.g. 70% advance, 20% after installation, 10% after commissioning. The job's billing plan is built from these, and the Advance Payment checks the advance received against them.",
@@ -452,7 +460,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-03 19:00:00.000000",
+ "modified": "2026-11-04 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

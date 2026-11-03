@@ -1,7 +1,7 @@
 /* One Solar Package, edited whole: its details and every table, in the desk form's tabs, and
    its Item and BOM (a3_sola.api.portal_packages). The page keeps the package as the server
    sent it, changes it here, and posts it whole on Save; the server's rules decide the rest
-   and its answer is painted back - computed prices, KSEB rows and the like. */
+   and its answer is painted back - computed KSEB rows, totals and the like. */
 (function () {
 	"use strict";
 
@@ -18,13 +18,10 @@
 	var dirty = false;
 	var LIST_COLUMNS = 6;
 
-	/* The five price choices are picked from the package's own rows (solar_package.js). */
-	var PRICE_SOURCES = {
-		module: ["modules", function (r) { return r.module_specification; }],
-		inverter: ["inverters", function (r) { return r.inverter_specification; }],
-		dcdb: ["system_items", function (r) { return r.system_type === "DCDB" ? r.specification : null; }],
-		acdb: ["system_items", function (r) { return r.system_type === "ACDB" ? r.specification : null; }],
-		energy_meter: ["system_items", function (r) { return r.system_type === "Solar Energy Meter" ? r.specification : null; }]
+	/* Choices picked from the package's own rows (solar_package.js): an inverter option's Built
+	   with Panel is one of the package's panels. */
+	var ROW_SOURCES = {
+		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }]
 	};
 	/* The Item field of each table (the expense tables' own, besides the spec rows'). */
 	var ITEM_FIELD = { kseb_expenses: "particulars", mounting_expenses: "item", installation_expenses: "item", components: "item" };
@@ -114,8 +111,8 @@
 		var hit = list.find(function (o) { return o.value === value; });
 		return hit ? hit.label : value;
 	}
-	function priceOptions(field) {
-		var src = PRICE_SOURCES[field], seen = [];
+	function rowOptions(src) {
+		var seen = [];
 		(pkg.tables[src[0]].rows || []).forEach(function (r) {
 			var v = src[1](r);
 			if (v && seen.indexOf(v) === -1) seen.push(v);
@@ -143,7 +140,7 @@
 			return '<div class="a3s-field a3s-field--wide">' + label + '<textarea rows="3"' + name + ">" + esc(value) + "</textarea>" + hint + "</div>";
 		}
 		if (col.type === "Select" || col.type === "Link") {
-			var options = opts.table === "prices" && PRICE_SOURCES[col.fieldname] ? priceOptions(col.fieldname) :
+			var options = ROW_SOURCES[opts.table + "." + col.fieldname] ? rowOptions(ROW_SOURCES[opts.table + "." + col.fieldname]) :
 				col.type === "Link" ? linkOptions(opts.table, col, opts.row || pkg.values) :
 				(col.options || []).filter(function (o) { return o !== ""; }).map(function (o) { return { value: o, label: o }; });
 			var found = !value || options.some(function (o) { return o.value === value; });
@@ -277,21 +274,11 @@
 		return { el: back, body: back.querySelector("[data-body]"), close: close,
 			status: function (t, tone) { setStatus(back.querySelector("[data-mstatus]"), t, tone); } };
 	}
-	/* A new price row starts on the configuration the package offers by default. */
-	function priceDefaults() {
-		function chosen(rows, field) { var r = rows.find(function (x) { return x.is_default; }) || rows[0]; return r ? r[field] : ""; }
-		function ofType(t) { return (pkg.tables.system_items.rows || []).filter(function (r) { return r.system_type === t; }); }
-		return { module: chosen(pkg.tables.modules.rows || [], "module_specification"),
-			inverter: chosen(pkg.tables.inverters.rows || [], "inverter_specification"),
-			dcdb: chosen(ofType("DCDB"), "specification"), acdb: chosen(ofType("ACDB"), "specification"),
-			energy_meter: chosen(ofType("Solar Energy Meter"), "specification") };
-	}
 	function rowForm(table, index) {
 		var spec = pkg.tables[table], rows = spec.rows, adding = index == null;
 		var draft = adding ? {} : Object.assign({}, rows[index]);
 		if (adding) {
 			spec.columns.forEach(function (c) { if (c.default != null && c.default !== "") draft[c.fieldname] = isNum(c.type) || c.type === "Check" ? Number(c.default) : c.default; });
-			if (table === "prices") Object.assign(draft, priceDefaults());
 		}
 		var m = modal((adding ? "Add " : "Edit ") + spec.label.toLowerCase() + " row", adding ? "" : "Row " + (index + 1));
 		function paintForm() {

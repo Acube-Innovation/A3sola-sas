@@ -45,8 +45,8 @@ class SolarPackage(Document):
 		self.name_extra_panel_add_ons()
 		self.warranty_extension_from_model()
 		self.fill_package_cost()
-		self.validate_prices()
-		self.price_the_configurations()
+		self.validate_inverter_panels()
+		self.total_the_expenses()
 		self.compute_batteries()
 		self.compute_expenses()
 		self.check_regulation()
@@ -65,7 +65,7 @@ class SolarPackage(Document):
 	def fill_from_inverter_models(self):
 		"""A row on a price-list model takes its make, size, phase and unit rate from it.
 
-		The specification is left as typed: the package's prices are keyed by it.
+		The specification is left as typed: the estimate and the proposal read it.
 		"""
 		for row in self.get("inverters") or []:
 			if row.get("inverter_model"):
@@ -182,86 +182,20 @@ class SolarPackage(Document):
 			if row.add_on_type == "Extra Panel" and not (row.item or "").strip():
 				row.item = extra_panel_item(self)
 
-	def validate_prices(self):
-		"""Every price row names a real configuration, and no two name the same one.
-
-		The five choices are what a price is a price *of*. A row that names a module the
-		package no longer offers is not a stale label - it is a figure attached to nothing,
-		and it would go on a quotation looking exactly as authoritative as the rest.
-		"""
-		available = self.available_choices()
-		seen = {}
-		for row in self.prices or []:
-			for fieldname, label, choices in available:
-				value = row.get(fieldname)
-				if value and value not in choices:
-					frappe.throw(
-						_("Price row {0} is for {1} {2}, which this package no longer offers. "
-						  "Choose one of: {3}").format(
-							row.idx, label, frappe.bold(value),
-							", ".join(sorted(choices)) or _("none - add one first"),
-						),
-						title=_("Configuration Not Offered"),
-					)
-			key = tuple(row.get(fieldname) for fieldname, _label, _choices in available)
-			if not all(key):
-				continue
-			if key in seen:
+	def validate_inverter_panels(self):
+		"""An inverter option built on panels other than the default names one of the package's
+		own panels - else it would be quoted on panels the package does not offer."""
+		offered = {r.module_specification for r in self.modules or [] if r.module_specification}
+		for row in self.inverters or []:
+			if row.get("panel_specification") and row.panel_specification not in offered:
 				frappe.throw(
-					_("Price rows {0} and {1} are for the same configuration. One combination "
-					  "has one price.").format(seen[key], row.idx),
-					title=_("Duplicate Configuration"),
+					_("Inverter row {0} is built with panel {1}, which this package does not offer. Choose one of: "
+					  "{2}").format(row.idx, frappe.bold(row.panel_specification), ", ".join(sorted(offered)) or _("none - add one first")),
+					title=_("Panel Not Offered"),
 				)
-			seen[key] = row.idx
 
-	def available_choices(self):
-		"""What each of the five selections may be, read off this package's own tables."""
-		system = {}
-		for row in self.system_items or []:
-			if row.system_type and row.specification:
-				system.setdefault(row.system_type, set()).add(row.specification)
-		return (
-			("module", _("module"),
-			 {r.module_specification for r in self.modules or [] if r.module_specification}),
-			("inverter", _("inverter"),
-			 {r.inverter_specification for r in self.inverters or [] if r.inverter_specification}),
-			("dcdb", _("DCDB"), system.get("DCDB", set())),
-			("acdb", _("ACDB"), system.get("ACDB", set())),
-			("energy_meter", _("energy meter"), system.get("Solar Energy Meter", set())),
-		)
-
-	def price_the_configurations(self):
-		"""Resolve the subsidy, the statutory fees and the generation band onto every row.
-
-		Resolved rather than typed, exactly as they were when they sat on the package, and
-		from the same inputs: the package's rated capacity and connection type. They live on
-		the row because the row is what gets quoted - not because they differ between rows.
-		"""
-		scheme = get_value("default_subsidy_scheme")
-		category = (
-			frappe.db.get_value("Subsidy Scheme", scheme, "consumer_category")
-			if scheme and frappe.db.exists("Subsidy Scheme", scheme)
-			else None
-		)
-		fees = self._statutory_fees()
-		capacity = flt(self.capacity_kw)
-		for row in self.prices or []:
-			# A DCR-compliant package is a subsidy package; any other is sold without subsidy.
-			row.indicative_subsidy = (
-				flt(calculations.get_subsidy_amount(scheme, capacity, category)["subsidy_amount"])
-				if category and self.is_dcr_compliant
-				else 0.0
-			)
-			if fees:
-				row.kseb_application_fee = fees["application_fee_gross"]
-				row.kseb_registration_fee = fees["registration_fee_gross"]
-				row.kseb_registration_refundable = fees["registration_refundable"]
-				row.net_meter_charge = fees["net_meter_charge"]
-				row.statutory_total = fees["statutory_total"]
-			band = calculations.estimate_daily_generation_band(capacity)
-			row.expected_daily_units_low = band["low_units_per_day"]
-			row.expected_daily_units_high = band["high_units_per_day"]
-			row.net_rate = self._net_rate(row)
+	def total_the_expenses(self):
+		self.total_expenses = flt(sum(flt(r.amount) for r in self.get("expenses") or []), self.precision("total_expenses"))
 
 	def compute_batteries(self):
 		"""Batteries belong to off-grid and hybrid packages only; the count is typed."""
@@ -316,23 +250,6 @@ class SolarPackage(Document):
 		except frappe.ValidationError:
 			# A package may be defined before the fee schedule exists on a fresh install.
 			return None
-
-	def _net_rate(self, row):
-		"""Net of subsidy, but only once a price is actually recorded.
-
-		Packages ship with their pricing blank - the client's workbook holds the live
-		figures. Subtracting the subsidy from a blank price would publish a negative net
-		rate onto every proposal, so an unpriced row stays at zero.
-		"""
-		cost = flt(row.system_cost)
-		if not cost:
-			return 0.0
-		return (
-			cost
-			- flt(row.indicative_subsidy)
-			- flt(row.standard_discount)
-			+ flt(row.additional_structure_and_cable_cost)
-		)
 
 	def validate_dcr_items(self):
 		"""A DCR package's module items must actually be flagged DCR on the Item master."""
@@ -447,13 +364,10 @@ def default_inverter(package):
 
 
 def default_package_cost(package):
-	"""What the package costs built its default way: the default inverter's cost, else the
-	default price row's. Zero when neither says."""
+	"""What the package costs built its default way: the default inverter's cost. Zero when
+	it has none."""
 	inverter = default_inverter(package)
-	if inverter and flt(inverter.cost):
-		return flt(inverter.cost)
-	price = default_price(package)
-	return flt(price.system_cost) if price else 0.0
+	return flt(inverter.cost) if inverter else 0.0
 
 
 def package_cost(package):
@@ -517,15 +431,15 @@ def package_components(package, phase=None):
 				"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else ""),
 		})
 
-	# The panels each inverter is priced with on the Cost tab, where they are not the
-	# package's default panels (a microinverter option on panels of its own).
-	module_make = {r.module_specification: r.module_make for r in doc.get("modules") or []}
+	# The panels each inverter is built with, where they are not the package's default panels
+	# (a microinverter option on panels of its own): its Built with Panel.
 	default_panel = module.module_make if module else None
 	panel_of = {}
-	for price in doc.get("prices") or []:
-		make = module_make.get(price.module)
+	for row in doc.get("inverters") or []:
+		panel = inverter_panel(doc, row)
+		make = panel.module_make if panel else None
 		if make and make != default_panel:
-			panel_of[price.inverter] = make
+			panel_of[row.inverter_specification] = make
 
 	inverters = []
 	matching = [r for r in inverters_for_phase(doc, phase) if r.inverter_make]
@@ -587,73 +501,77 @@ def system_cost(package):
 	return sum(flt(row.cost) for row in default_system_items(package).values())
 
 
-def default_price(package):
-	"""The price row for the package as it is offered by default.
+def inverter_panel(package, inverter):
+	"""The panel row an inverter option is built with: its Built with Panel, else the default."""
+	spec = inverter.get("panel_specification") if inverter else None
+	rows = package.get("modules") or []
+	return next((r for r in rows if spec and r.module_specification == spec), None) or default_module(package)
 
-	Derived, not flagged: it is the row whose five choices are the default module, the
-	default inverter and the default DCDB, ACDB and meter. There is deliberately no
-	"default price" tick, because that would be a sixth place to disagree with the five
-	that already say which configuration is standard.
 
-	Falls back to the first row, so a package whose defaults have moved since its prices
-	were entered still quotes something rather than nothing.
-	"""
-	doc = (
-		package
-		if hasattr(package, "get") and hasattr(package, "doctype")
-		else frappe.get_cached_doc("Solar Package", package)
-	)
-	rows = doc.get("prices") or []
-	if not rows:
-		return None
+def package_subsidy(package):
+	"""The subsidy the default scheme gives a package of this capacity - a DCR-compliant
+	package is a subsidy package; any other is sold without one."""
+	scheme = get_value("default_subsidy_scheme")
+	if not (scheme and package.get("is_dcr_compliant") and frappe.db.exists("Subsidy Scheme", scheme)):
+		return 0.0
+	category = frappe.db.get_value("Subsidy Scheme", scheme, "consumer_category")
+	if not category:
+		return 0.0
+	return flt(calculations.get_subsidy_amount(scheme, flt(package.get("capacity_kw")), category)["subsidy_amount"])
 
-	module = default_module(doc)
-	inverter = default_inverter(doc)
+
+def price_for(package, inverter=None):
+	"""What the package costs built with `inverter` (one of its inverter options; the default
+	when None), and what the quotation says around it - worked out, not typed:
+
+	- the MRP is the inverter option's Cost (the default's falls back to the Package Cost);
+	- the subsidy is the default scheme's for the package's capacity (DCR packages only);
+	- the net cost is the MRP less the subsidy, and 0 while there is no MRP - a blank price
+	  less the subsidy would publish a negative net cost;
+	- the statutory fees are the fee schedule's for its connection and capacity;
+	- the generation band follows the capacity.
+
+	The keys are those of the price table this replaced, so its readers read it as before."""
+	doc = package if hasattr(package, "get") and hasattr(package, "doctype") else frappe.get_cached_doc("Solar Package", package)
+	inverter = inverter or default_inverter(doc)
+	module = inverter_panel(doc, inverter)
 	system = default_system_items(doc)
-	wanted = (
-		module.module_specification if module else None,
-		inverter.inverter_specification if inverter else None,
-		(system.get("DCDB") or frappe._dict()).get("specification"),
-		(system.get("ACDB") or frappe._dict()).get("specification"),
-		(system.get("Solar Energy Meter") or frappe._dict()).get("specification"),
-	)
-	for row in rows:
-		if (row.module, row.inverter, row.dcdb, row.acdb, row.energy_meter) == wanted:
-			return row
-	return rows[0]
+	cost = flt(inverter.cost) if inverter else 0.0
+	if not cost and (not inverter or inverter.get("is_default")):
+		cost = flt(doc.get("package_cost"))
+	subsidy = package_subsidy(doc)
+	fees = (doc._statutory_fees() if hasattr(doc, "_statutory_fees") else None) or {}
+	band = calculations.estimate_daily_generation_band(flt(doc.get("capacity_kw")))
+	return frappe._dict({
+		"module": module.module_specification if module else None,
+		"inverter": inverter.inverter_specification if inverter else None,
+		"dcdb": (system.get("DCDB") or frappe._dict()).get("specification"),
+		"acdb": (system.get("ACDB") or frappe._dict()).get("specification"),
+		"energy_meter": (system.get("Solar Energy Meter") or frappe._dict()).get("specification"),
+		"system_cost": cost,
+		"standard_discount": 0.0,
+		"additional_structure_and_cable_cost": 0.0,
+		"indicative_subsidy": subsidy,
+		"net_rate": cost - subsidy if cost else 0.0,
+		"kseb_application_fee": flt(fees.get("application_fee_gross")),
+		"kseb_registration_fee": flt(fees.get("registration_fee_gross")),
+		"kseb_registration_refundable": flt(fees.get("registration_refundable")),
+		"net_meter_charge": flt(fees.get("net_meter_charge")),
+		"statutory_total": flt(fees.get("statutory_total")),
+		"expected_daily_units_low": band["low_units_per_day"],
+		"expected_daily_units_high": band["high_units_per_day"],
+	})
+
+
+def default_price(package):
+	"""The package as it is offered by default - its default inverter - priced (price_for)."""
+	return price_for(package)
 
 
 def default_prices(package_names):
-	"""The default price row of each package, in one query.
-
-	`default_price` matches the row against the package's default module, inverter and
-	boards; doing that per package would be a document load each. Here the whole catalogue
-	is being rendered, so the first row of each package is taken and then corrected by the
-	defaults where they are known - the same answer, one query.
-	"""
-	if not package_names:
-		return {}
-	modules = default_rows("modules", package_names)
-	inverters = default_rows("inverters", package_names)
-	found, first = {}, {}
-	for row in frappe.get_all(
-		"Solar Package Price",
-		filters={"parent": ["in", list(package_names)], "parenttype": "Solar Package"},
-		fields=["*"],
-		order_by="parent asc, idx asc",
-	):
-		first.setdefault(row.parent, row)
-		module = modules.get(row.parent)
-		inverter = inverters.get(row.parent)
-		matches = (
-			(not module or row.module == module.module_specification)
-			and (not inverter or row.inverter == inverter.inverter_specification)
-		)
-		if matches:
-			found.setdefault(row.parent, row)
-	for parent, row in first.items():
-		found.setdefault(parent, row)
-	return found
+	"""The default price of each package, for a whole catalogue (the cost estimator, the
+	package comparison, the portal's list): each package read once, from the cache."""
+	return {name: default_price(frappe.get_cached_doc("Solar Package", name)) for name in package_names or []}
 
 
 def default_rows(fieldname, package_names):

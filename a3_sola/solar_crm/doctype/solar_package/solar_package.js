@@ -1,21 +1,6 @@
 // Copyright (c) 2026, Acube Innovations and contributors
 // For license information, please see license.txt
 
-// The five price selections are chosen from this package's own option tables, so their
-// dropdowns are rebuilt from those tables rather than being a fixed list on the doctype.
-// A blank first entry is deliberate: a half-filled row must be able to say so.
-const PRICE_SOURCES = [
-	["module", "modules", (row) => row.module_specification],
-	["inverter", "inverters", (row) => row.inverter_specification],
-	["dcdb", "system_items", (row) => (row.system_type === "DCDB" ? row.specification : null)],
-	["acdb", "system_items", (row) => (row.system_type === "ACDB" ? row.specification : null)],
-	[
-		"energy_meter",
-		"system_items",
-		(row) => (row.system_type === "Solar Energy Meter" ? row.specification : null),
-	],
-];
-
 // Each specification row is an Item of its own category: the dropdown offers only that item
 // group's items, and choosing one writes its description into the row's specification.
 const ITEM_ROWS = [
@@ -40,17 +25,13 @@ function fill_from_item(frm, cdt, cdn, item_field, text_field) {
 	});
 }
 
-function refresh_price_choices(frm) {
-	const grid = frm.fields_dict.prices && frm.fields_dict.prices.grid;
+// An inverter option may be built on one of the package's other panels (Built with Panel):
+// its dropdown is the package's own panels, rebuilt as they change. Blank is the default panel.
+function refresh_panel_choices(frm) {
+	const grid = frm.fields_dict.inverters && frm.fields_dict.inverters.grid;
 	if (!grid) return;
-	PRICE_SOURCES.forEach(([fieldname, table, pick]) => {
-		const seen = [];
-		(frm.doc[table] || []).forEach((row) => {
-			const value = pick(row);
-			if (value && !seen.includes(value)) seen.push(value);
-		});
-		grid.update_docfield_property(fieldname, "options", [""].concat(seen).join("\n"));
-	});
+	const panels = [...new Set((frm.doc.modules || []).map((r) => r.module_specification).filter(Boolean))];
+	grid.update_docfield_property("panel_specification", "options", [""].concat(panels).join("\n"));
 	grid.refresh();
 }
 
@@ -119,7 +100,7 @@ frappe.ui.form.on("Solar Package", {
 	refresh(frm) {
 		// The payment terms' milestones, shown under the two choices.
 		show_payment_terms(frm);
-		refresh_price_choices(frm);
+		refresh_panel_choices(frm);
 		setup_bom_tables(frm);
 		if (frm.doc.__islocal) return;
 		// The package is a finished good: its name and code are its Item, and its BOM is made
@@ -189,8 +170,8 @@ frappe.ui.form.on("Solar Package Module", {
 	is_default: (frm, cdt, cdn) => keep_one_default(frm, "modules", cdt, cdn),
 	modules_add: (frm, cdt, cdn) => default_the_first(frm, "modules", cdt, cdn),
 	module_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "module_item", "module_specification"),
-	module_specification: (frm) => refresh_price_choices(frm),
-	modules_remove: (frm) => refresh_price_choices(frm),
+	module_specification: (frm) => refresh_panel_choices(frm),
+	modules_remove: (frm) => refresh_panel_choices(frm),
 });
 
 // Balance of system differs: the default is per type, so ticking a DCDB clears only the
@@ -210,7 +191,6 @@ frappe.ui.form.on("Solar Package System Item", {
 		// A row that has just been given its type is the only one of that type until
 		// another arrives, so it is the one quoted.
 		const row = locals[cdt][cdn];
-		refresh_price_choices(frm);
 		if (!row.system_type || row.is_default) return;
 		const others = (frm.doc.system_items || []).filter(
 			(other) => other.name !== cdn && other.system_type === row.system_type
@@ -219,31 +199,6 @@ frappe.ui.form.on("Solar Package System Item", {
 	},
 
 	item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "item", "specification"),
-	specification: (frm) => refresh_price_choices(frm),
-	system_items_remove: (frm) => refresh_price_choices(frm),
-});
-
-frappe.ui.form.on("Solar Package Price", {
-	// A new price row starts on the configuration the package is offered by default, which
-	// is the row somebody is most likely to be pricing first.
-	prices_add(frm, cdt, cdn) {
-		const of_type = (type) =>
-			(frm.doc.system_items || []).filter((r) => r.system_type === type);
-		const chosen = (rows, field) => {
-			const row = rows.find((r) => r.is_default) || rows[0];
-			return row ? row[field] : null;
-		};
-		const defaults = {
-			module: chosen(frm.doc.modules || [], "module_specification"),
-			inverter: chosen(frm.doc.inverters || [], "inverter_specification"),
-			dcdb: chosen(of_type("DCDB"), "specification"),
-			acdb: chosen(of_type("ACDB"), "specification"),
-			energy_meter: chosen(of_type("Solar Energy Meter"), "specification"),
-		};
-		Object.entries(defaults).forEach(([field, value]) => {
-			if (value) frappe.model.set_value(cdt, cdn, field, value);
-		});
-	},
 });
 
 frappe.ui.form.on("Solar Package Inverter", {
@@ -251,15 +206,14 @@ frappe.ui.form.on("Solar Package Inverter", {
 	inverters_add: (frm, cdt, cdn) => default_the_first(frm, "inverters", cdt, cdn),
 
 	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
-	inverter_specification: (frm) => refresh_price_choices(frm),
-	inverters_remove: (frm) => refresh_price_choices(frm),
 });
 
-// The Material BOM (Inverter tab) and the Structure BOMs (Mounting tab) come from Excel as often
-// as they are typed (api/package_bom_tables): the sheet is read on the server, which finds or
-// makes each Item, and its rows replace the table here, to be saved with the package.
+// The Material BOM (Inverter tab), the Structure BOMs (Mounting tab) and the Expenses (Cost tab)
+// come from Excel as often as they are typed (api/package_bom_tables): the sheet is read on the
+// server, which finds or makes each Item, and its rows replace the table here, to be saved with
+// the package.
 const BOM_TABLES_API = "a3_sola.api.package_bom_tables";
-const BOM_TABLES = ["material_bom", "structure_boms"];
+const BOM_TABLES = ["material_bom", "structure_boms", "expenses"];
 
 function setup_bom_tables(frm) {
 	BOM_TABLES.forEach((table) => {
@@ -308,6 +262,7 @@ function upload_bom_table(frm, table) {
 				frm.clear_table(table);
 				message.rows.forEach((row) => frm.add_child(table, row));
 				frm.refresh_field(table);
+				if (table === "expenses") total_expenses(frm);
 				frm.dirty();
 				let text = __("{0} rows read from the sheet. Save the package to keep them.", [message.rows.length]);
 				if (message.created.length) {
@@ -456,6 +411,17 @@ frappe.ui.form.on("Solar Package Material BOM", {
 frappe.ui.form.on("Solar Package Structure BOM", {
 	...BOM_ROW_EVENTS,
 	choose_depends_on: (frm, cdt, cdn) => choose_structure_depends_on(frm, cdt, cdn),
+});
+
+// The Expenses' total, as the rows change (the server totals it again on save).
+function total_expenses(frm) {
+	frm.set_value("total_expenses", (frm.doc.expenses || []).reduce((sum, r) => sum + flt(r.amount), 0));
+}
+
+frappe.ui.form.on("Solar Package Expense", {
+	...BOM_ROW_EVENTS,
+	amount: (frm) => total_expenses(frm),
+	expenses_remove: (frm) => total_expenses(frm),
 });
 
 frappe.ui.form.on("Design Estimate Battery", {
