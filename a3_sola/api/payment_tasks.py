@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, fmt_money, format_date, format_datetime, getdate, now_datetime, today
 
-from a3_sola.api import partner_scope, stages, task_assignees
+from a3_sola.api import partner_scope, payment_followup, stages, task_assignees
 from a3_sola.api.stages import _get_stage
 
 #: Payment tasks, and the one document each asks for (its register row).
@@ -190,6 +190,8 @@ def state(installation, task_code):
 		"can_mark": bool(inst.has_permission("write")) and row.status not in ("Completed", "Skipped"),
 		"can_confirm": can_confirm() and awaiting(row),
 		**_phase_payments(inst, task_code),
+		# Asking for it until it comes: the advance only (api/payment_followup).
+		"followup": payment_followup.state(inst, task_code),
 	}
 
 
@@ -317,6 +319,8 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None,
 	if due:
 		share = _(" (to collect {0}: this phase {1}% - {2}{3})").format(due["collect_text"], flt(due["percent"], 1),
 			due["amount_text"], _(" + arrears {0}").format(due["arrears_text"]) if due["arrears"] else "")
+	if task_code == payment_followup.TASK:
+		payment_followup.after_payment(inst)
 	stages._save(inst, _("{0}: {1} received in {2} by {3}{4}, marked by {5}; sent to Accounts to confirm.").format(
 		row.stage_name, fmt_money(amount, currency="INR"), bank, company, share, _full_name(frappe.session.user)))
 	if started:
@@ -386,6 +390,8 @@ def confirm(installation, task_code, payment=None):
 		# No schedule to keep it on: the payment on the task's row is the phase, done.
 		recorders, status, pending = [row.payment_received_by], "Paid", 0.0
 		amount = fmt_money(row.get("payment_amount"), currency="INR")
+	if task_code == payment_followup.TASK:
+		payment_followup.after_payment(inst)
 	if status == "Paid":
 		row.status = "Completed"
 		row.actual_completion_date = today()
@@ -435,6 +441,8 @@ def send_back(installation, task_code, reason=None, payment=None):
 	if not awaiting(row):
 		row.status = "In Progress" if plan and _payments(plan, task_code, "Confirmed") else "Pending"
 	row.remarks = _("Not confirmed by Accounts: {0}").format(reason)
+	if task_code == payment_followup.TASK:
+		payment_followup.after_send_back(inst)
 	if marked_by:
 		task_assignees.put(inst, task_code, [marked_by])
 	stages._save(inst, _("{0}: sent back by {1} - {2}").format(row.stage_name, _full_name(frappe.session.user), reason))

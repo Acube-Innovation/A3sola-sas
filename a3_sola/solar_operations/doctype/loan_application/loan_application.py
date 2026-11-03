@@ -136,6 +136,10 @@ class LoanApplication(Document):
 			},
 			update_modified=False,
 		)
+		# Sanctioned: the bank is asked for the advance some days on (api/payment_followup).
+		from a3_sola.api import payment_followup
+
+		payment_followup.on_loan_sanctioned(self)
 		if not was_financed:
 			# A loan on a job sold as self-funded: its loan tasks apply now, as when the
 			# project is edited to Financed (stages.reapply_applicability).

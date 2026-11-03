@@ -479,7 +479,27 @@ def _start_next(installation, task_code):
 		stages.notify_started(inst, started)
 
 
-AFTER_COMPLETE = {"F1PAY": _start_form2_window}
+def _start_form1_early(installation, task_code):
+	"""The order is in: on a job the customer pays, Form 1 starts now, ahead of the advance -
+	the customer is asked for the advance once it is submitted (api/payment_followup). A
+	bank-loan job's Form 1 waits for the advance, with the rest of its work."""
+	inst = frappe.get_doc("Solar Installation", installation) if isinstance(installation, str) else installation
+	if cint(inst.get("is_financed")):
+		return
+	started = stages.start_form1_early(inst)
+	if started:
+		stages._save(inst, _("Order received: started {0}, ahead of the advance.").format(
+			", ".join(r.stage_name for r in started)))
+		stages.notify_started(inst, started)
+
+
+def _ask_for_advance(installation, task_code):
+	from a3_sola.api import payment_followup
+
+	payment_followup.on_form1_completed(installation, task_code)
+
+
+AFTER_COMPLETE = {"F1PAY": _start_form2_window, "ORD": _start_form1_early, "FRM1": _ask_for_advance}
 
 
 # ------------------------------------------------------------------ the Task button

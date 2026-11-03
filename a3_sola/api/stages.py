@@ -13,7 +13,7 @@ task to the document that carries it out - live in `a3_sola.api.tasks`.
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, date_diff, flt, getdate, today
+from frappe.utils import add_days, cint, date_diff, flt, getdate, today
 
 from a3_sola.api.settings import get_value
 
@@ -260,7 +260,8 @@ def plan_dates(installation):
 
 	- the order and the advance, end to end from the job's start;
 	- the first payment's work (seed_stages.START_ON_ADVANCE) all from the day it came -
-	  until then, from the job's start;
+	  until then, from the job's start - but on a job the customer pays, Form 1
+	  (WITH_ORDER_IF_SELF_FUNDED) from the job's start, as it starts with the order;
 	- the half's work (START_AT_HALF) all from the day half was in - until then, from the
 	  day the first payment's work is planned to end;
 	- a task that follows another (NEXT_AT_HALF) from that task's planned end.
@@ -268,9 +269,10 @@ def plan_dates(installation):
 	A skipped task takes no time and carries no dates. Actual progress moves the plan only
 	through those two payment dates; the Due column follows the real start.
 	"""
-	from a3_sola.setup.seed_stages import NEXT_AT_HALF, START_AT_HALF, START_ON_ADVANCE
+	from a3_sola.setup.seed_stages import NEXT_AT_HALF, START_AT_HALF, START_ON_ADVANCE, WITH_ORDER_IF_SELF_FUNDED
 
 	start = getdate(installation.get("execution_start_date") or installation.order_date or today())
+	early = () if cint(installation.get("is_financed")) else WITH_ORDER_IF_SELF_FUNDED
 	rows = [r for r in installation.stages]
 	for row in rows:
 		if row.status == "Skipped":
@@ -287,7 +289,7 @@ def plan_dates(installation):
 		if row.stage_code not in START_ON_ADVANCE and row.stage_code not in START_AT_HALF and row.stage_code not in NEXT_AT_HALF:
 			cursor = lay(row, cursor)
 	advance = getdate(installation.get("advance_received_on")) if installation.get("advance_received_on") else start
-	ends = [lay(r, advance) for r in live if r.stage_code in START_ON_ADVANCE]
+	ends = [lay(r, start if r.stage_code in early else advance) for r in live if r.stage_code in START_ON_ADVANCE]
 	half = getdate(installation.get("half_paid_on")) if installation.get("half_paid_on") else max(ends + [advance])
 	for row in live:
 		if row.stage_code in START_AT_HALF:
@@ -443,6 +445,16 @@ def start_on_advance(installation):
 
 	installation.advance_received_on = installation.get("advance_received_on") or today()
 	return _start(installation, START_ON_ADVANCE)
+
+
+def start_form1_early(installation):
+	"""On a job the customer pays, Form 1 starts with the order, ahead of the advance
+	(seed_stages.WITH_ORDER_IF_SELF_FUNDED). Returns the rows started."""
+	from a3_sola.setup.seed_stages import WITH_ORDER_IF_SELF_FUNDED
+
+	if cint(installation.get("is_financed")):
+		return []
+	return _start(installation, WITH_ORDER_IF_SELF_FUNDED)
 
 
 def _start(installation, codes):
