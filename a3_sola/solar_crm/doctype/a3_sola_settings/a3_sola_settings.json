@@ -284,6 +284,8 @@
   "signup_reminder_after_hours",
   "personal_data_retention_days",
   "verification_token_retention_days",
+  "sb_portal_menu",
+  "hidden_portal_menu",
   "payments_tab",
   "sb_1402",
   "payment_gateway",
@@ -2049,6 +2051,19 @@
    "label": "Purge Verification Tokens After (days)"
   },
   {
+   "fieldname": "sb_portal_menu",
+   "fieldtype": "Section Break",
+   "label": "Portal Menu",
+   "description": "Set from the portal's Administration > Menu page."
+  },
+  {
+   "description": "The portal menu items hidden from everyone's menu, one route per line. Hidden from the menu only: the pages still open by their link, and the desk is unchanged.",
+   "fieldname": "hidden_portal_menu",
+   "fieldtype": "Small Text",
+   "label": "Hidden Menu Items",
+   "read_only": 1
+  },
+  {
    "fieldname": "payments_tab",
    "fieldtype": "Tab Break",
    "label": "Payments"
@@ -3009,7 +3024,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-04 10:00:00.000000",
+ "modified": "2026-11-04 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
