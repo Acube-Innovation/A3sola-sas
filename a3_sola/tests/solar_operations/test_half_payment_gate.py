@@ -97,17 +97,23 @@ class TestHalfPaymentGate(FrappeTestCase):
 		for code in ("SPROC", "PROC"):
 			self.assertEqual(self.status(code), "In Progress", code)
 
-	def test_each_step_starts_the_next(self):
+	def test_the_halfs_work_starts_together_and_two_follow_a_completion(self):
 		stages.exempt_half_payment(self.job, "Test")
 		inst = self.inst()
+		self.assertEqual(str(inst.half_paid_on), frappe.utils.today())
+		for code in ("SPROC", "PROC", "DISP", "IWOS", "IWOI", "SUPINV", "FRM2"):
+			self.assertEqual(self.status(code), "In Progress", code)
+		for code in ("SERIAL", "BAL"):
+			self.assertEqual(self.status(code), "Pending", code)
+		self.assertEqual(stages.start_next(inst, "PROC"), [], "nothing follows procurement now")
 		for row in inst.stages:
-			if row.stage_code == "SPROC":
+			if row.stage_code == "SUPINV":
 				row.status = "Completed"
-		self.assertEqual(stages.start_next(inst, "SPROC"), [], "dispatch waits for material too")
+		self.assertEqual([r.stage_code for r in stages.start_next(inst, "SUPINV")], ["SERIAL"])
 		for row in inst.stages:
-			if row.stage_code == "PROC":
+			if row.stage_code == "IWOI":
 				row.status = "Completed"
-		self.assertEqual([r.stage_code for r in stages.start_next(inst, "PROC")], ["DISP"])
+		self.assertEqual([r.stage_code for r in stages.start_next(inst, "IWOI")], ["BAL"])
 
 	def test_the_advance_no_longer_starts_structure_material(self):
 		self.assertNotIn("SPROC", START_ON_ADVANCE)

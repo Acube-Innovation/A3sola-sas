@@ -147,12 +147,13 @@ class TestDocumentsDriveTasks(FrappeTestCase):
 		self.assertGreater(row.cost, 0, "the resolved fee is the task's cost")
 		self.assertEqual(row.cost, fee.amount_gross)
 
-	def test_paying_the_form1_fee_opens_the_thirty_day_window_for_form2(self):
+	def test_paying_the_form1_fee_records_the_thirty_day_window_for_form2(self):
+		# KSEB's window is kept on the fee; the Form 2 task itself starts at 50% and is due its SLA.
 		fee = make_fee(self.installation, "Application Fee")
 		fee.submit()
 		form2, doc = task_row(self.installation, "FRM2")
 		self.assertEqual(str(doc.form2_due_on), add_days(today(), 30))
-		self.assertEqual(str(form2.due_date), add_days(today(), 30))
+		self.assertFalse(form2.due_anchor_task)
 
 	def test_the_registration_fee_is_the_form2_payment(self):
 		make_fee(self.installation, "Registration Fee").submit()

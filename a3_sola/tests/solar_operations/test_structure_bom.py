@@ -46,9 +46,9 @@ class TestStructureBOM(FrappeTestCase):
 		self.assertIn("SPROC", seed_stages.TASK_CODES)
 		# Solar, then Structural Design Freeze, then the structure's material.
 		self.assertEqual(codes[codes.index("DSGN") + 1: codes.index("DSGN") + 3], ["SDSGN", "SPROC"])
-		# The dispatch is followed by the supplier's bill and the serials read off it; the work
-		# orders follow: the material is on site before the crews are.
-		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 5], ["SUPINV", "SERIAL", "IWOS", "IWOI"])
+		# The dispatch is followed by the supplier's bill and the work orders; the serials are
+		# listed after the installation's work order.
+		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 5], ["SUPINV", "IWOS", "IWOI", "SERIAL"])
 
 	def test_the_engineer_completes_it_with_nothing_more_to_show(self):
 		from a3_sola.solar_operations.doctype.installation_task.installation_task import complete
@@ -113,16 +113,12 @@ class TestStructureBOM(FrappeTestCase):
 		self.assertIsNone(item_table("installation-tasks", frappe._dict(task_code="ADV")))
 		self.assertIsNone(item_table("installation-tasks"))
 
-	def test_it_is_due_when_the_advance_is(self):
+	def test_it_starts_at_half_and_is_due_its_sla_later(self):
+		self.assertIn("SPROC", seed_stages.START_AT_HALF)
 		inst = frappe.get_doc("Solar Installation", self.installation.name)
-		adv = next(r for r in inst.stages if r.stage_code == "ADV")
-		adv.status, adv.due_date = "In Progress", frappe.utils.add_days(frappe.utils.today(), 4)
-		inst.flags.ignore_validate_update_after_submit = True
-		inst.save(ignore_permissions=True)
-		inst.reload()
 		sproc = next(r for r in inst.stages if r.stage_code == "SPROC")
-		self.assertEqual(sproc.due_anchor_task, "ADV")
-		self.assertEqual(str(sproc.due_date), str(next(r for r in inst.stages if r.stage_code == "ADV").due_date))
+		self.assertFalse(sproc.due_anchor_task)
+		self.assertEqual(sproc.sla_days, 1)
 
 	def test_the_purchase_list_prints_the_package_bom_then_the_structure_material(self):
 		from io import BytesIO

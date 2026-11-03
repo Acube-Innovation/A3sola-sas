@@ -74,13 +74,19 @@ class TestTaskSet(FrappeTestCase):
 		for code in ("MTR", "MTRPAY"):
 			self.assertEqual(task(installation, code).status, "Skipped")
 
-	def test_planned_dates_accumulate_from_the_order_date(self):
+	def test_the_plan_starts_each_group_together(self):
 		installation = make_installation()
-		planned = [r for r in installation.stages if r.status != "Skipped"]
-		self.assertEqual(getdate(planned[0].planned_start_date), getdate(installation.order_date))
-		for before, after in zip(planned, planned[1:]):
-			self.assertEqual(getdate(after.planned_start_date), getdate(before.planned_date))
-		for row in planned:
+		planned = {r.stage_code: r for r in installation.stages if r.status != "Skipped"}
+		start = getdate(installation.execution_start_date or installation.order_date)
+		first = [r for c, r in planned.items() if c in seed_stages.START_ON_ADVANCE]
+		self.assertTrue(first)
+		self.assertEqual({getdate(r.planned_start_date) for r in first}, {start})
+		half = max(getdate(r.planned_date) for r in first)
+		rest = [r for c, r in planned.items() if c in seed_stages.START_AT_HALF]
+		self.assertEqual({getdate(r.planned_start_date) for r in rest}, {half})
+		if "SUPINV" in planned and "SERIAL" in planned:
+			self.assertEqual(getdate(planned["SERIAL"].planned_start_date), getdate(planned["SUPINV"].planned_date))
+		for row in planned.values():
 			self.assertEqual(getdate(row.planned_date), add_days(getdate(row.planned_start_date), row.sla_days or 0))
 
 	def test_skipped_tasks_take_no_time_in_the_plan(self):
@@ -107,11 +113,9 @@ class TestTaskSet(FrappeTestCase):
 		self.assertIn("LOAN", codes)
 		self.assertTrue(all(r.document_kind == "Expected" for r in installation.documents))
 
-	def test_the_form2_window_is_anchored_to_the_form1_fee(self):
+	def test_no_task_is_anchored_to_another(self):
 		installation = make_installation()
-		row = task(installation, "FRM2")
-		self.assertEqual(row.due_anchor_task, "F1PAY")
-		self.assertEqual(row.due_anchor_days, 30)
+		self.assertFalse([r.stage_code for r in installation.stages if r.due_anchor_task])
 
 
 class TestDerivedStatus(FrappeTestCase):
@@ -169,13 +173,10 @@ class TestDerivedStatus(FrappeTestCase):
 		installation.save(ignore_permissions=True)
 		self.assertEqual(installation.status, "Closed")
 
-	def test_an_anchored_task_is_due_a_window_after_its_anchor_completes(self):
+	def test_a_started_task_is_due_its_sla_after_its_start(self):
 		installation = make_installation()
-		anchor = task(installation, "F1PAY")
-		anchor.status = "Completed"
-		anchor.actual_completion_date = frappe.utils.today()
+		row = task(installation, "FRM2")
+		row.status, row.actual_start_date, row.due_date = "In Progress", frappe.utils.today(), None
 		installation.flags.ignore_validate_update_after_submit = True
 		installation.save(ignore_permissions=True)
-		self.assertEqual(
-			str(task(installation, "FRM2").due_date), frappe.utils.add_days(frappe.utils.today(), 30)
-		)
+		self.assertEqual(str(task(installation, "FRM2").due_date), frappe.utils.add_days(frappe.utils.today(), row.sla_days))
