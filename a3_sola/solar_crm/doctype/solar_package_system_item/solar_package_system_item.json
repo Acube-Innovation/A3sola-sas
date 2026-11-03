@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "system_type",
+  "item",
   "specification",
   "make",
   "capacity_kw",
@@ -26,7 +27,16 @@
    "reqd": 1
   },
   {
-   "columns": 4,
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The component, from its item group (Cables and BOS, Meters, Mounting Structures or Batteries). Choosing it fills the specification."
+  },
+  {
+   "columns": 2,
    "fieldname": "specification",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -36,7 +46,7 @@
    "columns": 2,
    "fieldname": "make",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Make",
    "options": "Component Make"
   },

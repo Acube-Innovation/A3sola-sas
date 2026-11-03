@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "add_on_type",
+  "item_code",
   "item",
   "amount"
  ],
@@ -21,12 +22,21 @@
    "columns": 2
   },
   {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Add-on Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The add-on, from the Optional Add-ons item group. Choosing it fills the description."
+  },
+  {
    "fieldname": "item",
    "fieldtype": "Small Text",
    "label": "Item",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 6,
+   "columns": 4,
    "description": "As printed in the proposal. An Extra Panel row left blank reads \"Supply and Installation of 1X…Wp Solar Panel\" with the package's panel."
   },
   {

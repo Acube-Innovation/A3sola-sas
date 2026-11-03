@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "module_item",
   "module_specification",
   "module_make",
   "module_wattage",
@@ -18,7 +19,16 @@
  ],
  "fields": [
   {
-   "columns": 3,
+   "fieldname": "module_item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Panel Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The panel, from the Modules item group. Choosing it fills the specification."
+  },
+  {
+   "columns": 2,
    "description": "e.g. 550 Wp Mono PERC Bifacial DCR",
    "fieldname": "module_specification",
    "fieldtype": "Data",

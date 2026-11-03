@@ -29,6 +29,9 @@ class SolarPackage(Document):
 
 	def validate(self):
 		assert_unique_in_company(self, ["specification_code"])
+		from a3_sola.api import package_items
+
+		package_items.validate(self)
 		self.validate_dcr_items()
 		self.validate_one_default("modules", _("module"))
 		self.fill_from_inverter_models()

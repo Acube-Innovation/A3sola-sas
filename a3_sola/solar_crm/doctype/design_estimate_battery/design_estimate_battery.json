@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "battery_item",
   "battery_voltage",
   "battery_phase",
   "battery_capacity_ah",
@@ -20,6 +21,15 @@
   "in_package"
  ],
  "fields": [
+  {
+   "fieldname": "battery_item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Battery Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The battery, from the Batteries item group. Choosing it fills the specification."
+  },
   {
    "fieldname": "battery_voltage",
    "fieldtype": "Float",
