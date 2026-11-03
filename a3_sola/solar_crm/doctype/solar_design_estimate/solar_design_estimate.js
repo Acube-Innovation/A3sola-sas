@@ -99,6 +99,7 @@ frappe.ui.form.on("Solar Design Estimate", {
 		const package_filters = (subsidy_option, system_type) => ({
 			filters: {
 				is_active: 1,
+				status: "Active",
 				company: frm.doc.company,
 				is_dcr_compliant: subsidy_option === "Without Subsidy" ? 0 : 1,
 				...(system_type ? { system_type } : {}),

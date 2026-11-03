@@ -679,6 +679,7 @@ def seed_packages(company):
 				],
 				"warranty_years": 5,
 				"is_active": 1,
+				"status": "Active",  # a new tenant's starter packages are ready to quote
 				"company": company,
 			}
 		)

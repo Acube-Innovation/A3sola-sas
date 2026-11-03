@@ -1748,6 +1748,7 @@ def compare_packages(design_estimate):
 		"Solar Package",
 		filters={
 			"is_active": 1,
+			"status": "Active",
 			"company": doc.company,
 			"capacity_kw": ["between", [target - 2, target + 2]],
 		},
@@ -1923,7 +1924,7 @@ def package_for_component(component_make, component_type, current_package, capac
 	if current_package and _package_has_make(current_package, component_make):
 		return current_package
 
-	filters = {"is_active": 1}
+	filters = {"is_active": 1, "status": "Active"}
 	if capacity_kw:
 		filters["capacity_kw"] = capacity_kw
 	if connection_type:

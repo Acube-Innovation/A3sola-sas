@@ -268,3 +268,6 @@ a3_sola.patches.v1_2.serial_entry_task
 a3_sola.patches.v1_2.neft_and_upi_payment_modes
 # An Employee Reimbursement account, for supplier bills an employee paid.
 a3_sola.patches.v1_2.employee_reimbursement_account
+# Solar Packages made of Items: each row linked to an Item of its category, every BOM cleared,
+# unused Items removed, every package Draft.
+a3_sola.patches.v1_2.solar_package_items

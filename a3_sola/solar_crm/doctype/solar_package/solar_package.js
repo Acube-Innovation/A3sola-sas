@@ -16,6 +16,30 @@ const PRICE_SOURCES = [
 	],
 ];
 
+// Each specification row is an Item of its own category: the dropdown offers only that item
+// group's items, and choosing one writes its description into the row's specification.
+const ITEM_ROWS = [
+	["modules", "module_item", "module_specification", () => "Modules"],
+	["inverters", "inverter_item", "inverter_specification", () => "Inverters"],
+	["batteries", "battery_item", "specification", () => "Batteries"],
+	["system_items", "item", "specification", (row) => system_item_group(row.system_type)],
+	["optional_add_ons", "item_code", "item", () => "Optional Add-ons"],
+];
+
+function system_item_group(system_type) {
+	return { "Solar Energy Meter": "Meters", "Mounting Structure": "Mounting Structures", Battery: "Batteries" }[system_type]
+		|| "Cables and BOS";
+}
+
+function fill_from_item(frm, cdt, cdn, item_field, text_field) {
+	const item = locals[cdt][cdn][item_field];
+	if (!item) return;
+	frappe.db.get_value("Item", item, ["item_name", "description"]).then(({ message }) => {
+		const text = $("<div>").html((message && message.description) || "").text().trim() || (message && message.item_name);
+		if (text) frappe.model.set_value(cdt, cdn, text_field, text);
+	});
+}
+
 function refresh_price_choices(frm) {
 	const grid = frm.fields_dict.prices && frm.fields_dict.prices.grid;
 	if (!grid) return;
@@ -31,10 +55,6 @@ function refresh_price_choices(frm) {
 }
 
 frappe.ui.form.on("Solar Package", {
-	// The payment terms' milestones, shown under the two choices.
-	refresh(frm) {
-		show_payment_terms(frm);
-	},
 	payment_terms(frm) {
 		show_payment_terms(frm);
 	},
@@ -52,6 +72,11 @@ frappe.ui.form.on("Solar Package", {
 			["installation_expenses", "item", "Installation Expenses"],
 		].forEach(([table, field, group]) => {
 			frm.set_query(field, table, () => ({ filters: { item_group: group, disabled: 0 } }));
+		});
+		ITEM_ROWS.forEach(([table, field, , group]) => {
+			frm.set_query(field, table, (doc, cdt, cdn) => ({
+				filters: { item_group: ["descendants of (inclusive)", group(locals[cdt][cdn])], disabled: 0 },
+			}));
 		});
 		frm.set_query("roof_type", () => ({ filters: { company: frm.doc.company } }));
 		// The row's own make and phase narrow the models, so every kit of them is offered
@@ -92,10 +117,14 @@ frappe.ui.form.on("Solar Package", {
 	},
 
 	refresh(frm) {
+		// The payment terms' milestones, shown under the two choices.
+		show_payment_terms(frm);
 		refresh_price_choices(frm);
 		if (frm.doc.__islocal) return;
-		if (!frm.doc.item || !frm.doc.bom) {
-			frm.add_custom_button(__("Create Item and BOM"), () => {
+		// The package is a finished good: its name and code are its Item, and its BOM is made
+		// by hand from that Item.
+		if (!frm.doc.item) {
+			frm.add_custom_button(__("Create Item"), () => {
 				frappe.call({
 					method: "a3_sola.solar_crm.doctype.solar_package.solar_package.create_item_and_bom",
 					args: { solar_package: frm.doc.name },
@@ -103,6 +132,35 @@ frappe.ui.form.on("Solar Package", {
 					callback: () => frm.reload_doc(),
 				});
 			});
+		} else {
+			// The BOM is the package: its Item the finished good, its quoted panel, inverter,
+			// batteries and balance of system the raw materials (api/package_items).
+			const bom_call = (method, done) => {
+				if (frm.is_dirty()) {
+					frappe.msgprint(__("Save the package first."));
+					return;
+				}
+				frappe.call({ method: `a3_sola.api.package_items.${method}`, args: { solar_package: frm.doc.name },
+					freeze: true, freeze_message: __("Making the BOM…") })
+					.then(({ message }) => { done(message); frm.reload_doc(); });
+			};
+			if (!frm.doc.bom) {
+				frm.add_custom_button(__("Create BOM"), () => bom_call("create_bom", (r) =>
+					frappe.show_alert({ message: __("BOM {0} created with {1} raw materials.", [r.bom, r.lines]), indicator: "green" })));
+			} else {
+				frm.add_custom_button(__("Update BOM"), () => bom_call("update_bom", (r) => {
+					if (r.unchanged) {
+						frappe.show_alert({ message: __("BOM {0} already matches the package.", [r.bom]), indicator: "blue" });
+					} else if (r.previous) {
+						frappe.msgprint({ title: __("BOM Updated"), indicator: "green", message:
+							__("{0} replaces {1}, which is now inactive:", [r.bom, r.previous]) +
+							"<ul>" + r.changes.map((c) => `<li>${frappe.utils.escape_html(c)}</li>`).join("") + "</ul>" });
+					} else {
+						frappe.show_alert({ message: __("BOM {0} created.", [r.bom]), indicator: "green" });
+					}
+				}));
+				frm.add_custom_button(__("View BOM"), () => frappe.set_route("Form", "BOM", frm.doc.bom));
+			}
 		}
 	},
 });
@@ -129,6 +187,7 @@ function default_the_first(frm, table, cdt, cdn) {
 frappe.ui.form.on("Solar Package Module", {
 	is_default: (frm, cdt, cdn) => keep_one_default(frm, "modules", cdt, cdn),
 	modules_add: (frm, cdt, cdn) => default_the_first(frm, "modules", cdt, cdn),
+	module_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "module_item", "module_specification"),
 	module_specification: (frm) => refresh_price_choices(frm),
 	modules_remove: (frm) => refresh_price_choices(frm),
 });
@@ -158,6 +217,7 @@ frappe.ui.form.on("Solar Package System Item", {
 		if (!others.length) frappe.model.set_value(cdt, cdn, "is_default", 1);
 	},
 
+	item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "item", "specification"),
 	specification: (frm) => refresh_price_choices(frm),
 	system_items_remove: (frm) => refresh_price_choices(frm),
 });
@@ -189,8 +249,17 @@ frappe.ui.form.on("Solar Package Inverter", {
 	is_default: (frm, cdt, cdn) => keep_one_default(frm, "inverters", cdt, cdn),
 	inverters_add: (frm, cdt, cdn) => default_the_first(frm, "inverters", cdt, cdn),
 
+	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
 	inverter_specification: (frm) => refresh_price_choices(frm),
 	inverters_remove: (frm) => refresh_price_choices(frm),
+});
+
+frappe.ui.form.on("Design Estimate Battery", {
+	battery_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "battery_item", "specification"),
+});
+
+frappe.ui.form.on("Solar Package Add-on", {
+	item_code: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "item_code", "item"),
 });
 
 function show_payment_terms(frm) {

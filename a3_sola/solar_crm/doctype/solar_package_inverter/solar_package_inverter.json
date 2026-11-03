@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "inverter_item",
   "inverter_specification",
   "inverter_model",
   "with_optimizer",
@@ -20,10 +21,19 @@
  ],
  "fields": [
   {
+   "fieldname": "inverter_item",
+   "fieldtype": "Link",
+   "options": "Item",
+   "label": "Inverter Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "The inverter, from the Inverters item group. Choosing it fills the specification."
+  },
+  {
    "columns": 2,
    "fieldname": "inverter_specification",
    "fieldtype": "Small Text",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Specification",
    "reqd": 1
   },

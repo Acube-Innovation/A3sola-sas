@@ -111,7 +111,7 @@ def catalogue():
 
 	packages = frappe.get_all(
 		"Solar Package",
-		filters={"company": company, "is_active": 1},
+		filters={"company": company, "is_active": 1, "status": "Active"},
 		fields=[
 			"name", "specification_code", "package_name", "capacity_kw", "system_type", "connection_type",
 			"inverter_topology", "is_dcr_compliant", "area_required_sqft", "tier", "item",

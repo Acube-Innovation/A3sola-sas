@@ -45,8 +45,9 @@ class TestStructureBOM(FrappeTestCase):
 		self.assertIn("SPROC", seed_stages.TASK_CODES)
 		# Solar, then Structural Design Freeze, then the structure's material.
 		self.assertEqual(codes[codes.index("DSGN") + 1: codes.index("DSGN") + 3], ["SDSGN", "SPROC"])
-		# The work orders follow the dispatch: the material is on site before the crews are.
-		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 3], ["IWOS", "IWOI"])
+		# The dispatch is followed by the supplier's bill and the serials read off it; the work
+		# orders follow: the material is on site before the crews are.
+		self.assertEqual(codes[codes.index("DISP") + 1: codes.index("DISP") + 5], ["SUPINV", "SERIAL", "IWOS", "IWOI"])
 
 	def test_the_engineer_completes_it_with_nothing_more_to_show(self):
 		from a3_sola.solar_operations.doctype.installation_task.installation_task import complete
