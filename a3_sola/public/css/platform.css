@@ -3485,23 +3485,32 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s .a3s-printmenu__list a { padding: 0.45rem 0.6rem; border-radius: 0.5rem; font-size: 0.875rem; color: var(--color-text); }
 .a3s .a3s-printmenu__list a:hover { background: var(--color-accent-soft); color: var(--color-accent-hover); }
 
-/* A task card's menu on the project board: the task, its documents, skip. Placed on the
-   page under the card (portal_project_board.js). */
 .a3s-btn--sm { padding: 0.4rem 0.85rem; font-size: 0.8125rem; }
-.a3s-taskmenu {
-	position: fixed; z-index: 90; min-width: 12rem; display: grid; padding: 0.35rem;
-	background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0.85rem;
-	box-shadow: var(--shadow-raised);
+
+/* A task card's actions on the project board: opened in its list under the card, four white
+   buttons in a row - open, documents, complete, skip - each an orange icon over its name in an
+   orange frame (portal_project_board.js). */
+.a3s-proj__task.is-open { border-color: var(--color-accent); box-shadow: var(--shadow-soft); }
+.a3s-taskacts {
+	display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem;
+	animation: a3s-taskacts-open 0.18s ease-out;
 }
-.a3s-taskmenu a, .a3s-taskmenu button, .a3s-taskmenu span {
-	display: block; width: 100%; padding: 0.5rem 0.7rem; border: 0; border-radius: 0.55rem; background: none;
-	font: inherit; font-size: 0.875rem; text-align: left; color: var(--color-text); cursor: pointer;
+@keyframes a3s-taskacts-open { from { opacity: 0; transform: translateY(-0.35rem); } to { opacity: 1; transform: none; } }
+.a3s .a3s-taskacts__btn {
+	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; min-width: 0;
+	padding: 0.6rem 0.1rem 0.5rem; border: 2px solid var(--color-accent); border-radius: 0.75rem; background: #fff;
+	font: inherit; font-size: 0.65rem; font-weight: 700; line-height: 1.15; text-align: center; text-decoration: none;
+	color: var(--color-text); cursor: pointer; transition: background var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
-.a3s .a3s-taskmenu a:hover, .a3s-taskmenu button:hover, .a3s-taskmenu a:focus-visible, .a3s-taskmenu button:focus-visible {
-	background: var(--color-accent-soft); color: var(--color-accent-hover); outline: none;
+.a3s .a3s-taskacts__btn:hover, .a3s .a3s-taskacts__btn:focus-visible {
+	background: var(--color-accent-soft); box-shadow: var(--shadow-soft); outline: none;
 }
-.a3s-taskmenu .is-disabled { color: var(--color-text-muted); cursor: default; }
-.a3s-taskmenu [data-act="skip"], .a3s-taskmenu [data-act="unskip"] { border-top: 1px solid var(--color-border); border-radius: 0 0 0.55rem 0.55rem; margin-top: 0.2rem; }
+.a3s-taskacts__icon { display: inline-flex; color: var(--color-accent); }
+.a3s-taskacts__icon .a3s-ic { width: 1.3rem; height: 1.3rem; }
+/* Words wrap whole ("Open / task"), never mid-word. */
+.a3s-taskacts__label { max-width: 100%; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.a3s .a3s-taskacts__btn.is-disabled { border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; box-shadow: none; background: #fff; }
+.a3s-taskacts__btn.is-disabled .a3s-taskacts__icon { color: var(--color-text-muted); }
 
 .a3s-modal__panel.a3s-taskpanel { width: min(40rem, 100%); }
 .a3s-taskpanel__sub { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
