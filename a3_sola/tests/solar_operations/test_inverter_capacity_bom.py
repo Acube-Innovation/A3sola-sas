@@ -91,8 +91,8 @@ class TestInverterCapacityBOM(FrappeTestCase):
 
 
 class TestPanelCapacityStructureBOM(FrappeTestCase):
-	"""The structure BOM follows the roof and the panel capacity: the package's own first, else the
-	one A3 Sola Settings lists."""
+	"""The structure BOM follows the roof and the panel capacity, as A3 Sola Settings lists it: a
+	package's Structure BOMs are Items for its own BOM, not a project's."""
 
 	def rows(self, package_rows):
 		settings = [{"panel_capacity_kw": 3, "bom": "BOM-FLAT-3"}, {"panel_capacity_kw": 5, "bom": "BOM-FLAT-5"}]
@@ -107,6 +107,6 @@ class TestPanelCapacityStructureBOM(FrappeTestCase):
 			self.assertEqual(structure_bom.bom_for(self.job(3.3)), "BOM-FLAT-5")
 			self.assertEqual(structure_bom.bom_for(self.job(9, package=None)), "BOM-FLAT-5")
 
-	def test_the_packages_own_comes_first(self):
+	def test_the_packages_rows_are_not_the_projects(self):
 		with patch.object(frappe, "get_all", side_effect=self.rows([{"panel_capacity_kw": 3, "bom": "BOM-PKG"}])):
-			self.assertEqual(structure_bom.bom_for(self.job(3)), "BOM-PKG")
+			self.assertEqual(structure_bom.bom_for(self.job(3)), "BOM-FLAT-3")

@@ -3,14 +3,14 @@
 """A project's structure bill of materials - the pipes, consumables, bolts and caps the
 mounting structure is built from.
 
-Each Solar Package lists its structure BOMs (ERPNext BOMs) by roof type and panel capacity.
-A project takes the one for its own roof type at its capacity, else the next larger one -
-a structure built for more panels carries fewer - else the largest there is. A BOM frozen
-for the project in its Design Freeze task (Solar Installation.structure_bom, .material_bom)
-comes before the package's, for the structure and for the system alike.
+A3 Sola Settings lists structure BOMs (ERPNext BOMs) by roof type and panel capacity (Panel
+Capacity Structure BOM). A project takes the one for its own roof type at its capacity, else the
+next larger one - a structure built for more panels carries fewer - else the largest there is.
+A BOM frozen for the project in its Design Freeze task (Solar Installation.structure_bom,
+.material_bom) comes first, for the structure and for the system alike.
 
-With none on the package, A3 Sola Settings lists structure BOMs by roof type and panel capacity
-(Panel Capacity Structure BOM), picked the same way.
+A Solar Package's own Structure BOMs table lists Items, not BOMs: they go into the package's BOM
+(api/package_bom_tables), not a project's.
 
 The system's material BOM follows the inverter, not the package: A3 Sola Settings lists one per
 inverter phase and capacity (Inverter Capacity BOM), picked as the structure's is, and the job's
@@ -31,13 +31,7 @@ def bom_for(installation):
 		return inst.structure_bom
 	if not inst.get("roof_type"):
 		return None
-	rows = frappe.get_all(
-		"Solar Package Structure BOM",
-		filters={"parent": inst.solar_package, "parenttype": "Solar Package", "roof_type": inst.roof_type},
-		fields=["panel_capacity_kw", "bom"], order_by="panel_capacity_kw asc",
-	) if inst.get("solar_package") else []
-	# The package's own first; else the one A3 Sola Settings lists for the roof and panel capacity.
-	return pick(rows, flt(inst.get("capacity_kw"))) or pick(frappe.get_all(
+	return pick(frappe.get_all(
 		"Panel Capacity Structure BOM", filters={"parenttype": SETTINGS, "roof_type": inst.roof_type},
 		fields=["panel_capacity_kw", "bom"]), flt(inst.get("capacity_kw")))
 
@@ -137,9 +131,8 @@ def panel_rate(make, wp, dcr=True, technology=None):
 
 
 def structure_boms():
-	"""Every BOM some package, or A3 Sola Settings by panel capacity, lists as a structure BOM."""
-	return set(frappe.get_all("Solar Package Structure BOM", filters={"parenttype": "Solar Package"}, pluck="bom")) | set(
-		frappe.get_all("Panel Capacity Structure BOM", filters={"parenttype": SETTINGS}, pluck="bom"))
+	"""Every BOM A3 Sola Settings lists by panel capacity as a structure BOM."""
+	return set(frappe.get_all("Panel Capacity Structure BOM", filters={"parenttype": SETTINGS}, pluck="bom"))
 
 
 def job_boms():
@@ -213,17 +206,10 @@ def bom_items(bom, installation=None):
 
 
 def choices_for(doc):
-	"""The structure BOMs a task can choose from: its project's package's, then those A3 Sola
-	Settings lists by panel capacity, labelled by roof type and capacity - whoever may read
-	ERPNext's BOMs."""
-	inst = (doc.get("solar_installation") if doc.doctype != "Solar Installation" else doc.name) if doc else None
-	package = frappe.db.get_value("Solar Installation", inst, "solar_package") if inst else None
-	fields, order = ["roof_type", "panel_capacity_kw", "bom"], "roof_type asc, panel_capacity_kw asc"
-	rows = frappe.get_all("Solar Package Structure BOM", filters={"parent": package, "parenttype": "Solar Package"},
-		fields=fields, order_by=order) if package else []
-	have = {r.bom for r in rows}
-	rows += [r for r in frappe.get_all("Panel Capacity Structure BOM", filters={"parenttype": SETTINGS},
-		fields=fields, order_by=order) if r.bom not in have]
+	"""The structure BOMs a task can choose from: those A3 Sola Settings lists by panel capacity,
+	labelled by roof type and capacity - whoever may read ERPNext's BOMs."""
+	rows = frappe.get_all("Panel Capacity Structure BOM", filters={"parenttype": SETTINGS},
+		fields=["roof_type", "panel_capacity_kw", "bom"], order_by="roof_type asc, panel_capacity_kw asc")
 	roofs = dict(frappe.get_all("Roof Type", fields=["name", "roof_type"], as_list=True))
 	return [{
 		"value": r.bom,
@@ -273,8 +259,8 @@ def material_choices_for(doc):
 
 
 def structure_choices_for(doc):
-	"""The structure BOMs the Design Freeze can choose: its package's by roof and capacity,
-	then every other package's structure BOM, with the project's own always offered."""
+	"""The structure BOMs the Design Freeze can choose: those A3 Sola Settings lists by roof and
+	capacity, with the project's own always offered."""
 	choices = choices_for(doc)
 	have = {c["value"] for c in choices}
 	choices += [{"value": b, "label": _label(b)} for b in sorted(structure_boms()) if b and b not in have]
