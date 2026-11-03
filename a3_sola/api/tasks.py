@@ -753,6 +753,68 @@ def complete_from_board(installation, task_code=None, remarks=None, confirmed=0)
 	return doc.current_stage
 
 
+#: Fields a task's document says it was finished on.
+COMPLETED_ON_FIELDS = ("completed_on", "actual_completion_date", "actual_end_date")
+
+
+def missing_documents(inst, task_code):
+	"""The task's required documents (marked * on its Documents panel) still without a file."""
+	from a3_sola.api.portal_tasks import _panel
+
+	return [d["name"] for d in _panel(inst, task_code)["documents"]
+		if d.get("mandatory") and not d.get("file_url") and d.get("kind") != "Generated"]
+
+
+@frappe.whitelist(methods=["POST"])
+def complete_from_page(slug, name):
+	"""Complete a task from its document's own page, once the page has saved it: its required
+	documents filed, the document completed as its task reads it (its status Completed, its
+	completion date, submitted where it is submittable) - and the task itself, where the
+	document alone does not complete it (a stamp paper's task). Returns where to go next."""
+	from a3_sola.www.a3solaportal.collections import get_collection, record_route
+
+	doctype = get_collection(slug)["doctype"]
+	doc = frappe.get_doc(doctype, name)
+	doc.check_permission("write")
+	installation, code = doc.get("solar_installation"), code_for(doc)
+	if not (installation and code):
+		frappe.throw(_("{0} is not a project task's document.").format(name))
+	inst = frappe.get_doc("Solar Installation", installation)
+	row = _get_stage(inst, code)
+	if row.status in DONE:
+		return {"route": record_route("projects", inst.name), "already": 1}
+	if not may_complete(inst, code):
+		frappe.throw(_("Only the task's assignee or a manager can complete it."), frappe.PermissionError)
+	missing = missing_documents(inst, code)
+	if missing:
+		frappe.throw(_("Add the task's required documents first: {0}.").format(", ".join(missing)),
+			title=_("Documents Missing"))
+	if cint(doc.docstatus) == 0:
+		status = doc.meta.get_field("status")
+		if status and "Completed" in (status.options or "").split("\n"):
+			doc.status = "Completed"
+		for field in COMPLETED_ON_FIELDS:
+			if doc.meta.has_field(field) and not doc.get(field):
+				doc.set(field, today())
+		doc.save()
+		if doc.meta.is_submittable:
+			doc.submit()
+	inst = frappe.get_doc("Solar Installation", installation, for_update=True)
+	row = _get_stage(inst, code)
+	if row.status not in DONE:
+		# The document is done but its task reads something more (a stamp paper's purchase):
+		# the person completing it says it is done.
+		row.status = "Completed"
+		row.actual_start_date = row.actual_start_date or today()
+		row.actual_completion_date = today()
+		row.completed_by = frappe.session.user
+		row.blocked_reason = row.skip_reason = None
+		_save(inst, _("Task {0} completed by {1} from {2}.").format(row.stage_name,
+			frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user, doc.name))
+		notify_task_completed(inst, code)
+	return {"route": record_route("projects", inst.name)}
+
+
 @frappe.whitelist()
 def unskip_task(installation, task_code=None, remarks=None):
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)

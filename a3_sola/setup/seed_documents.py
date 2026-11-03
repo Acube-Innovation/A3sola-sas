@@ -113,11 +113,8 @@ _BANK_PROJECT_PROPOSAL = """{% set bp = bank_proposal %}{% set cost = (loan.proj
 	.bp p { text-align: justify; }
 </style>
 <div class="bp">
-<p style="text-align:center;font-weight:bold;margin-bottom:0">For</p>
-<p style="text-align:center;font-weight:bold;font-size:13pt;margin-bottom:0">{{ (consumer.consumer_name or "") | upper }}</p>
-<p style="text-align:center;font-weight:bold">{{ ((section.district if section else "") or "") | upper }}</p>
-<h2>SOLAR PROJECT PROPOSAL</h2>
-<p style="text-align:center">No. {{ installation.solar_proposal or installation.name }} &nbsp;&nbsp; Date &ndash; {{ today }}</p>
+{#- The cover - title, the customer, number and date - is a page of its own (documents.rim_cover). -#}
+<p style="text-align:right">{{ today }}</p>
 <p>Dear Sir,</p>
 <p>We thank you for your interest evinced in renewable energy solution from us. We are pleased to submit our proposal for a solar power project aimed at delivering sustainable energy solutions tailored to your environmental goals.</p>
 <p>Our team at {{ company.epc_name or "Renewcore" }} specializes in end-to-end solar project development, including feasibility studies, permitting, engineering, procurement, construction, and grid integration.</p>

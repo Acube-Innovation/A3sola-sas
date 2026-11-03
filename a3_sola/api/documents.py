@@ -61,6 +61,12 @@ def resolve_template_set(installation):
 
 
 # ------------------------------------------------------------------- the context
+def _quotation_doc(inst):
+	from a3_sola.api.loan_print import quotation_doc
+
+	return quotation_doc(inst)
+
+
 def get_document_context(installation, template=None, source=None):
 	"""Assemble ONE context dict for every template.
 
@@ -188,8 +194,8 @@ def get_document_context(installation, template=None, source=None):
 			"address_text": _address_text(address),
 			"party_address": _party_address(address, inst),
 			"bank_proposal": bank_proposal(inst, survey, section) if wants("BANK-PROJECT-PROPOSAL") else None,
-			"quotation_doc": frappe.get_doc("Quotation", inst.quotation)
-			if wants("BANK-QUOTATION") and inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation) else None,
+			# The job's quotation, else one priced from its design estimate (loan_print.quotation_doc).
+			"quotation_doc": _quotation_doc(inst) if wants("BANK-QUOTATION") else None,
 			"serials": serial_rows(inst),
 			"module_serials": [r.serial_no for r in inst.serials if r.component_type == "Module"],
 			"inverter_serials": [r.serial_no for r in inst.serials if r.component_type == "Inverter"],
@@ -254,13 +260,61 @@ def image_src(file_url):
 	return f"data:{mime};base64,{base64.b64encode(content).decode()}"
 
 
-#: Documents printed on the company letterhead, each a single page as its Word original is.
-LETTERHEAD_TEMPLATES = ("BANK-COVERING-LOAN", "BANK-VENDOR-FEASIBILITY")
+#: Documents printed on the letterhead, each a single page as its Word original is.
+LETTERHEAD_TEMPLATES = ("BANK-COVERING-LOAN", "BANK-VENDOR-FEASIBILITY", "BANK-COVERING-COMPLETION")
 #: Documents on the letterhead that run on over pages - the band on every page.
-LETTERHEAD_FLOW_TEMPLATES = ("BANK-EHS-CHECKLIST", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION")
+LETTERHEAD_FLOW_TEMPLATES = ("BANK-EHS-CHECKLIST", "BANK-PROJECT-PROPOSAL", "BANK-QUOTATION", "BANK-COMPLETION-REPORT")
+#: All of them are the bank's and PM Surya Ghar's, in the registered vendor's (RIM) format, on
+#: RIM's letterhead. Everything else on a letterhead - the proposals, quotations and estimates
+#: to the customer - is on Renewcore's, the company's default.
+RIM_TEMPLATES = LETTERHEAD_TEMPLATES + LETTERHEAD_FLOW_TEMPLATES
+RIM_LETTER_HEAD = "RIM Projects Pvt. Ltd."
 
 
-def letterhead_flow_pdf(html, company, signed=True):
+def rim_letter_head():
+	"""The letterhead the RIM-format documents print on: A3 Sola Settings' RIM Documents Letter
+	Head, else RIM Projects' own; None (the company's default) when neither is set up."""
+	head = get_value("vendor_letter_head")
+	if head and frappe.db.exists("Letter Head", head):
+		return head
+	return RIM_LETTER_HEAD if frappe.db.exists("Letter Head", RIM_LETTER_HEAD) else None
+
+
+def bank_proposal_cover(inst, context):
+	"""The RIM project proposal's cover: for the customer, at his district, its number and date."""
+	consumer, section = context.get("consumer"), context.get("section")
+	return rim_cover("SOLAR PROJECT PROPOSAL", (consumer.get("consumer_name") if consumer else "") or inst.get("consumer_name"),
+		(section.get("district") if section else "") or "", inst.get("solar_proposal") or inst.name, context.get("today"))
+
+
+def app_image(path):
+	"""An image shipped with the app (under public/) as a data URI, for a PDF."""
+	import base64
+	import mimetypes
+
+	full = frappe.get_app_path("a3_sola", "public", *path.split("/"))
+	with open(full, "rb") as f:
+		content = f.read()
+	return f"data:{mimetypes.guess_type(full)[0] or 'image/png'};base64,{base64.b64encode(content).decode()}"
+
+
+def rim_cover(title, customer, place, number, date):
+	"""The cover page of a RIM-format document, as its Word original has it: the blue band
+	across the top, no letterhead, the title, who it is for, and its number and date."""
+	from frappe.utils import escape_html as e
+
+	return f"""<div style="font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #1f3864; text-align: center;">
+	<img src="{app_image('images/letterhead/rim-cover-band.png')}" style="display:block; width:210mm;">
+	<div style="margin-top: 22mm; font-size: 28pt; font-weight: bold; color: #1f3864;">{e(title)}</div>
+	<div style="margin-top: 38mm; font-size: 22pt; color: #1f3864;">For</div>
+	<div style="font-size: 22pt; font-weight: bold; color: #002060;">{e((customer or "").upper())}</div>
+	<div style="font-size: 22pt; color: #002060;">{e((place or "").upper())}</div>
+	<div style="margin-top: 14mm; font-size: 13pt; color: #002060;">No. {e(number or "")}</div>
+	<div style="font-size: 13pt; color: #002060;">Date &ndash; {e(date or "")}</div>
+</div>"""
+
+
+def letterhead_flow_pdf(html, company, signed=True, letter_head=None, cover=None):
 	"""`html` run on over as many A4 pages as it takes, each on the company letterhead.
 
 	The text is laid out with room left for the letterhead's bands, and each page is then
@@ -272,7 +326,7 @@ def letterhead_flow_pdf(html, company, signed=True):
 	from pypdf import PdfReader, PdfWriter
 
 	zoom = 1 if _patched_wkhtmltopdf() else 1.3046
-	top, bottom = letterhead_margins(company)
+	top, bottom = letterhead_margins(company, letter_head)
 	content = get_pdf(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 	.print-format {{ margin-top: {top}mm; margin-bottom: {bottom}mm; margin-left: 17.5mm; margin-right: 20mm; }}
 	body {{ margin: 0; zoom: {zoom}; font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
@@ -284,8 +338,12 @@ def letterhead_flow_pdf(html, company, signed=True):
 	.a3s-page-break {{ page-break-before: always; }}
 	{"" if signed else ".a3s-sign { visibility: hidden; }"}
 	</style></head><body>{html}</body></html>""")
-	sheet = letterhead_pdf([""], company)
+	sheet = letterhead_pdf([""], company, letter_head=letter_head)
 	out = PdfWriter()
+	# A cover of its own, edge to edge and off the letterhead (rim_cover), ahead of the pages.
+	if cover:
+		for page in PdfReader(BytesIO(letterhead_pdf([cover], company, letterhead=False, margins="0"))).pages:
+			out.add_page(page)
 	for page in PdfReader(BytesIO(content)).pages:
 		base = PdfReader(BytesIO(sheet)).pages[0]
 		base.merge_page(page)
@@ -634,7 +692,8 @@ def generate_document(installation, template_code, force=False, source_doctype=N
 		from a3_sola.api import kseb_netmeter_print
 
 		content = kseb_netmeter_print.render(inst)[1]
-	file_url = _attach(target_doctype, target_name, tpl, html, content=content, customer=job_customer(inst))
+	cover = bank_proposal_cover(inst, context) if tpl.template_code == "BANK-PROJECT-PROPOSAL" else None
+	file_url = _attach(target_doctype, target_name, tpl, html, content=content, customer=job_customer(inst), cover=cover)
 	_log_generation(inst, tpl, file_url, target_doctype, target_name)
 	# The task that generated the document is the truth about which task it belongs to;
 	# the template's own stage code is only the answer when nothing generated it.
@@ -663,7 +722,7 @@ def _task_code_of(doc):
 	return code_for(doc)
 
 
-def _attach(target_doctype, target_name, template, html, content=None, customer=None):
+def _attach(target_doctype, target_name, template, html, content=None, customer=None, cover=None):
 	"""The PDF, attached to the task document that produced it (or the installation) - made
 	from `html`, unless the PDF itself (`content`) is given - named for its `customer` first.
 
@@ -687,9 +746,9 @@ def _attach(target_doctype, target_name, template, html, content=None, customer=
 	if content is not None:
 		pass
 	elif template.get("template_code") in LETTERHEAD_TEMPLATES:
-		content = letterhead_pdf(html, template.get("company"))
+		content = letterhead_pdf(html, template.get("company"), letter_head=rim_letter_head())
 	elif template.get("template_code") in LETTERHEAD_FLOW_TEMPLATES:
-		content = letterhead_flow_pdf(html, template.get("company"))
+		content = letterhead_flow_pdf(html, template.get("company"), letter_head=rim_letter_head(), cover=cover)
 	else:
 		content = get_pdf(f"<div style='font-family:serif;font-size:12px'>{html}</div>")
 	file_doc = frappe.get_doc(
@@ -794,6 +853,8 @@ def register_document(installation, task_code, source_doctype, source_name, docu
 	row.document_date = document_date or row.document_date or frappe.utils.today()
 	if save:
 		inst.flags.ignore_validate_update_after_submit = True
+		# Filing a paper never fails on a field the job lacks (an old job's lead), as stages._save.
+		inst.flags.ignore_mandatory = True
 		inst.save(ignore_permissions=True)
 	return row
 

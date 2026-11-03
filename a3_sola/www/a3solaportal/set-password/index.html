@@ -1,0 +1,98 @@
+{%- set s = platform_settings -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Set your password &middot; {{ s.product_name or "a3 sola" }}</title>
+	<meta name="robots" content="noindex, nofollow">
+	{%- if s.brand_favicon %}
+	<link rel="icon" href="{{ s.brand_favicon }}">
+	{%- endif %}
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css?v={{ a3s_asset_version('css/platform.css') }}">
+</head>
+<body class="a3s">
+<main class="a3s-auth" id="main">
+	<div class="a3s-auth__inner">
+		<a class="a3s-logo a3s-auth__brand" href="/a3solaportal/login">
+			{%- if s.brand_logo %}
+			<img src="{{ s.brand_logo }}" alt="{{ s.product_name or 'a3 sola' }}">
+			{%- else %}
+			<span class="a3s-logo__mark" aria-hidden="true">&#9788;</span>
+			{%- endif %}
+			<span>{{ s.product_name or "a3 sola" }}</span>
+		</a>
+
+		<div class="a3s-card a3s-auth__card">
+			<h1 class="a3s-auth__title">Set your password</h1>
+			{%- if key %}
+			<p class="a3s-auth__sub">Choose the password you will sign in with.</p>
+			<form class="a3s-form a3s-auth__form" id="a3s-setpw-form" novalidate data-key="{{ key | e }}">
+				<div class="a3s-field">
+					<label for="a3s-setpw-new">New password</label>
+					<input type="password" id="a3s-setpw-new" autocomplete="new-password" minlength="8" required autofocus>
+					<p class="a3s-field__hint">At least 8 characters. A few unrelated words make a strong one.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="a3s-setpw-again">Type it again</label>
+					<input type="password" id="a3s-setpw-again" autocomplete="new-password" required>
+				</div>
+				<button type="submit" class="a3s-btn a3s-btn--primary a3s-auth__submit" id="a3s-setpw-submit">Set password and sign in</button>
+				<p class="a3s-form__status a3s-auth__status" id="a3s-setpw-status" role="status" aria-live="polite"></p>
+			</form>
+			{%- else %}
+			<p class="a3s-auth__sub">This link is incomplete. Ask your admin to send you a new one.</p>
+			{%- endif %}
+			<p class="a3s-auth__alt"><a href="/a3solaportal/login">Back to sign in</a></p>
+		</div>
+
+		<p class="a3s-auth__foot">{{ s.product_name or "a3 sola" }} &middot; An Acube Innovations product</p>
+	</div>
+</main>
+<script>
+(function () {
+	"use strict";
+	var form = document.getElementById("a3s-setpw-form");
+	if (!form) return;
+	var status = document.getElementById("a3s-setpw-status");
+	var btn = document.getElementById("a3s-setpw-submit");
+	function say(text, ok) {
+		status.textContent = text;
+		status.classList.toggle("is-error", !ok);
+		status.classList.toggle("is-success", !!ok);
+	}
+	function serverMessage(body) {
+		try {
+			var msgs = JSON.parse((body && body._server_messages) || "[]");
+			if (msgs.length) return String(JSON.parse(msgs[0]).message || "").replace(/<[^>]*>/g, "");
+		} catch (e) { /* fall through */ }
+		return (body && body.exception) ? String(body.exception).split(":").slice(1).join(":").trim() : "";
+	}
+	form.addEventListener("submit", function (e) {
+		e.preventDefault();
+		var pw = document.getElementById("a3s-setpw-new").value;
+		if (pw.length < 8) { say("Use at least 8 characters."); return; }
+		if (pw !== document.getElementById("a3s-setpw-again").value) { say("The two passwords do not match."); return; }
+		btn.disabled = true; btn.classList.add("is-busy"); say("");
+		var body = new URLSearchParams({ new_password: pw, key: form.dataset.key, logout_all_sessions: 1 });
+		fetch("/api/method/frappe.core.doctype.user.user.update_password", {
+			method: "POST", credentials: "same-origin",
+			headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded" }, body: body
+		}).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (data) {
+				if (r.status === 410) throw new Error(data.message || "This link has been used or has expired. Ask your admin for a new one.");
+				if (!r.ok) throw new Error(serverMessage(data) || "That did not go through. Try again.");
+				say("Password set. Signing you in…", true);
+				window.location.href = "/a3solaportal/dashboard";
+			});
+		}).catch(function (err) {
+			say(err.message); btn.disabled = false; btn.classList.remove("is-busy");
+		});
+	});
+})();
+</script>
+</body>
+</html>

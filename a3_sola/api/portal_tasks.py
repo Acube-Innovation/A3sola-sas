@@ -14,7 +14,7 @@ import frappe
 from frappe import _
 from frappe.utils.file_manager import get_max_file_size
 
-from a3_sola.api import documents
+from a3_sola.api import documents, task_files
 from a3_sola.api.reimbursements import claims_for
 from a3_sola.api.stages import _get_stage
 
@@ -53,6 +53,8 @@ def upload(installation, task_code, row=None, document_name=None):
 		inst, task_code, INSTALLATION, inst.name, name, file_url, kind="Uploaded",
 		template=expected.solar_document_template if expected else None,
 	)
+	# The same file on the task's own record, on its Attachments card (api/task_files).
+	task_files.on_registered(inst, task_code, name, file_url)
 	return _panel(frappe.get_doc(INSTALLATION, inst.name), task_code)
 
 
@@ -107,7 +109,9 @@ def remove(installation, task_code, row):
 	else:
 		inst.remove(d)
 	inst.flags.ignore_validate_update_after_submit = True
+	inst.flags.ignore_mandatory = True
 	inst.save(ignore_permissions=True)
+	task_files.on_unregistered(inst, task_code, file_url)
 	if not any(r.attachment == file_url for r in inst.documents):
 		for name in frappe.get_all("File", filters={"file_url": file_url, "attached_to_doctype": INSTALLATION,
 				"attached_to_name": inst.name}, pluck="name"):
@@ -253,11 +257,11 @@ def _prints(row, installation):
 
 
 def _rim_quotation(installation):
-	"""The quotation in the RIM format, as the bank gets it (api/loan_print.quotation), once
-	the job has a quotation."""
+	"""The quotation in the RIM format, as the bank gets it (api/loan_print.quotation): from
+	the job's quotation, else priced from its design estimate."""
 	from a3_sola.api import loan_print
 
-	if not frappe.db.get_value("Solar Installation", installation, "quotation"):
+	if not loan_print.has_quotation(frappe.get_doc("Solar Installation", installation)):
 		return {}
 	return {loan_print.QUOTATION: [{"label": _("Print"), "url": loan_print.quotation_url(installation),
 		"signable": True}]}

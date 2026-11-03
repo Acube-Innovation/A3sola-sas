@@ -23,7 +23,7 @@ import os
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, formatdate, today
+from frappe.utils import add_months, cint, flt, formatdate, today
 
 from a3_sola.api import documents
 
@@ -124,9 +124,8 @@ def context(inst):
 			premises.append("{0}. {1}".format(cint(p.preference_order) or len(premises) + 1, ", ".join(
 				x for x in (p.consumer_number, p.premises_address, p.electrical_section) if x)))
 
-	# Completed by: the plan's commissioning date, else its installation's.
-	planned = next((r.get("planned_date") for code in ("COMM", "IWOI") for r in inst.stages
-		if r.stage_code == code and r.get("planned_date")), None)
+	# Completed by: one month from the day the form is made, as the client fills it in.
+	planned = add_months(today(), 1)
 
 	place = consumer.get("site_city") or consumer.get("permanent_city") or ""
 	if not place and inst.get("discom_section"):

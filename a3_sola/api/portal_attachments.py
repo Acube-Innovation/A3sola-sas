@@ -20,6 +20,8 @@ from frappe import _
 from frappe.utils import format_datetime
 from frappe.utils.file_manager import get_max_file_size
 
+from a3_sola.api import task_files
+
 
 def _record(doctype, name, ptype):
 	if not (doctype and name) or not frappe.db.exists(doctype, name):
@@ -30,16 +32,23 @@ def _record(doctype, name, ptype):
 CONSUMER = "Solar Consumer"
 
 
-def document_types():
-	return [o for o in (frappe.get_meta("File").get_options("a3s_document_type") or "").split("\n") if o]
+def document_types(doctype=None, name=None, installation=None, task=None):
+	"""What a file may be filed as: on a project task's record, the task's own documents first
+	("Portal acknowledgement"), then the general types (api/task_files)."""
+	from a3_sola.api import task_files
+	from a3_sola.setup.custom_fields import DOCUMENT_TYPES
+
+	general = [o for o in DOCUMENT_TYPES.split("\n") if o]
+	own = task_files.names_for(doctype, name, installation, task) if (doctype or installation) else []
+	return own + [g for g in general if g not in own]
 
 
 def _kyc_types():
 	return set((frappe.get_meta("Customer KYC Document").get_options("kyc_type") or "").split("\n")) - {""}
 
 
-def _check_type(document_type):
-	if document_type and document_type not in document_types():
+def _check_type(document_type, doctype=None, name=None):
+	if document_type and document_type not in document_types(doctype, name):
 		frappe.throw(_("{0} is not a document type.").format(document_type), frappe.ValidationError)
 
 
@@ -64,7 +73,7 @@ def _sync_kyc(consumer_name, file_url, document_type):
 
 
 #: Document types a record holds one of: a newer one replaces the one before.
-SINGLE_TYPES = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "Digital Approval Letter")
+SINGLE_TYPES = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "Digital Approval Letter", "PM Surya Ghar Acknowledgement")
 
 
 def supersede(doctype, name, document_type, file_url):
@@ -130,15 +139,15 @@ def _files(doctype, name):
 def list_files(doctype, name):
 	_record(doctype, name, "read")
 	return {"files": _files(doctype, name), "can_upload": bool(frappe.has_permission(doctype, "write", name)),
-		"document_types": document_types(), "max_file_mb": get_max_file_size() // (1024 * 1024)}
+		"document_types": document_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024)}
 
 
 @frappe.whitelist()
-def held_card(doctype):
+def held_card(doctype, installation=None, task=None):
 	"""The card's choices for a record not yet created: the types, the size limit, and whether
 	the person may create one - its files are held on the card until it is."""
 	return {"files": [], "can_upload": bool(frappe.has_permission(doctype, "create")),
-		"document_types": document_types(), "max_file_mb": get_max_file_size() // (1024 * 1024)}
+		"document_types": document_types(doctype, None, installation, task), "max_file_mb": get_max_file_size() // (1024 * 1024)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -146,7 +155,7 @@ def upload(doctype, name, document_type=None):
 	"""Attach each file posted as `file` to the record, private, as `document_type`, and
 	return the new list."""
 	_record(doctype, name, "write")
-	_check_type(document_type)
+	_check_type(document_type, doctype, name)
 	uploads = frappe.request.files.getlist("file") if frappe.request and frappe.request.files else []
 	if not uploads:
 		frappe.throw(_("No file was sent."), frappe.ValidationError)
@@ -171,10 +180,16 @@ def upload(doctype, name, document_type=None):
 			_sync_kyc(name, file.file_url, document_type)
 		# Several of a one-only type sent together: the last one sent is kept.
 		supersede(doctype, name, document_type, file.file_url)
+		# A project task's record: the file is the task's document on the board's panel too.
+		task_files.on_attached(doctype, name, document_type, file.file_url)
 		if doctype == "Installation Task" and document_type == "Digital Approval Letter":
 			from a3_sola.api import approval_letter
 
 			approval_letter.fill_task(name, content, upload.filename)
+		if doctype == "Portal Application" and document_type == "PM Surya Ghar Acknowledgement":
+			from a3_sola.api import portal_ack
+
+			portal_ack.fill_document(name, content, upload.filename)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
@@ -184,7 +199,7 @@ def set_type(doctype, name, file, document_type=None):
 	"""Say what one of the record's files is - once. A file's type is fixed when it is set:
 	it is what the file was filed as, so a wrong one is removed and uploaded again."""
 	_record(doctype, name, "write")
-	_check_type(document_type)
+	_check_type(document_type, doctype, name)
 	if not document_type:
 		frappe.throw(_("Choose the document type."), frappe.ValidationError)
 	file_url = _attached_url(doctype, name, file)
@@ -196,6 +211,7 @@ def set_type(doctype, name, file, document_type=None):
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, document_type)
 	supersede(doctype, name, document_type, file_url)
+	task_files.on_attached(doctype, name, document_type, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
 
@@ -216,5 +232,6 @@ def remove(doctype, name, file):
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, None)  # its KYC row goes with it
 	frappe.delete_doc("File", file, ignore_permissions=True)
+	task_files.on_removed(doctype, name, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}

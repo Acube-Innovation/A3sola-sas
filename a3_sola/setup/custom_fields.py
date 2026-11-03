@@ -16,7 +16,8 @@ CADENCE = (
 #: Solar Consumer is also its KYC row (api/portal_attachments), then the rest.
 DOCUMENT_TYPES = (
 	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\n"
-	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nDigital Approval Letter\nOther"
+	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nDigital Approval Letter\n"
+	"PM Surya Ghar Acknowledgement\nOther"
 )
 LEAD_STATUS = (
 	"New\nContacted\nIn Discussion\nSite Visit Scheduled\nConverted / Won\n"
@@ -79,9 +80,10 @@ CUSTOM_FIELDS = {
 	"File": [
 		{
 			"fieldname": "a3s_document_type",
-			"fieldtype": "Select",
+			# Free text, checked by the portal (portal_attachments.document_types): a project task's
+			# own documents ("Portal acknowledgement") are types too, beside DOCUMENT_TYPES.
+			"fieldtype": "Data",
 			"label": "Document Type",
-			"options": DOCUMENT_TYPES,
 			"insert_after": "file_name",
 			"in_list_view": 1,
 			"in_standard_filter": 1,

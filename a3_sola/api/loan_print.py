@@ -50,10 +50,13 @@ def pdf(name, document=None, download=0, signed=1):
 	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
 		TITLES.get(document, "Loan Documents") + ("" if signed else " (unsigned)"))
 	codes = [DOCUMENTS[document]] if document else PRINTED
+	# The bank's documents are RIM's (the registered vendor's): on RIM's letterhead.
+	head = documents.rim_letter_head()
 	if len(codes) == 1 and codes[0] in documents.LETTERHEAD_FLOW_TEMPLATES:
-		content = documents.letterhead_flow_pdf(pages[0], inst.company, signed=bool(signed))
+		cover = documents.bank_proposal_cover(inst, context) if codes[0] == "BANK-PROJECT-PROPOSAL" else None
+		content = documents.letterhead_flow_pdf(pages[0], inst.company, signed=bool(signed), letter_head=head, cover=cover)
 	else:
-		content = documents.letterhead_pdf(pages, inst.company, signed=bool(signed))
+		content = documents.letterhead_pdf(pages, inst.company, signed=bool(signed), letter_head=head)
 	frappe.local.response.filecontent = content
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
 
@@ -72,16 +75,59 @@ def quotation(installation, download=0, signed=1):
 	registration asks for it too). Read with the caller's own permissions on the job."""
 	inst = frappe.get_doc("Solar Installation", installation)
 	inst.check_permission("read")
-	if not (inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation)):
-		frappe.throw(_("{0} has no quotation yet.").format(inst.name), frappe.ValidationError)
+	if not has_quotation(inst):
+		frappe.throw(_("{0} has no quotation or design estimate yet.").format(inst.name), frappe.ValidationError)
 	tpl = _template(QUOTATION, inst.company)
 	context = documents.get_document_context(inst, tpl, source=("Solar Installation", inst.name))
 	signed = frappe.utils.cint(signed)
 	page = frappe.render_template(tpl.body_template or "", context)
 	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
 		"Quotation" + ("" if signed else " (unsigned)"))
-	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed))
+	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed),
+		letter_head=documents.rim_letter_head())
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
+
+
+def has_quotation(inst):
+	"""Whether the RIM quotation can print: the job has its quotation, or a design estimate to
+	price one from."""
+	if inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation):
+		return True
+	est = inst.get("solar_design_estimate")
+	return bool(est and frappe.db.get_value("Solar Design Estimate", est, "solar_package"))
+
+
+def quotation_doc(inst):
+	"""What the RIM quotation prints: the job's Quotation, else one priced from its design
+	estimate as a quotation for that option would be (quotation_option.apply_option) - made
+	for the print only, never saved."""
+	if inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation):
+		return frappe.get_doc("Quotation", inst.quotation)
+	if not has_quotation(inst):
+		return None
+	from erpnext.controllers.accounts_controller import get_taxes_and_charges
+
+	from a3_sola.api.quotation_option import apply_option
+
+	currency = frappe.db.get_value("Company", inst.company, "default_currency") or "INR"
+	q = frappe.new_doc("Quotation")
+	q.update({"company": inst.company, "transaction_date": frappe.utils.today(), "quotation_to": "Customer",
+		"customer_name": inst.get("consumer_name") or "", "currency": currency, "conversion_rate": 1,
+		"price_list_currency": currency, "plc_conversion_rate": 1,
+		"selling_price_list": frappe.db.get_single_value("Selling Settings", "selling_price_list"),
+		"solar_design_estimate": inst.solar_design_estimate})
+	template = frappe.db.get_value("Sales Taxes and Charges Template", {"company": inst.company, "is_default": 1,
+		"disabled": 0}, "name")
+	if template:
+		q.taxes_and_charges = template
+		for tax in get_taxes_and_charges("Sales Taxes and Charges Template", template) or []:
+			q.append("taxes", tax)
+	apply_option(q)
+	if not q.get("items"):
+		return None
+	# Numbered by the estimate it is priced from, until the job has a quotation of its own.
+	q.name = inst.solar_design_estimate
+	return q
 
 
 def _template(code, company):

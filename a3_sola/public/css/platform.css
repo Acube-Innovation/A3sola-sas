@@ -3662,3 +3662,55 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-work__context, .a3s-work__people { font-size: 0.8125rem; color: var(--color-text-muted); }
 .a3s-work__people::before { content: "\2192  "; }
 .a3s-work__empty, .a3s-work__more { margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--color-text-muted); }
+
+/* =================================================================== portal: users */
+/* An admin's list of users: kind tabs and search above, a row of icon actions per user. */
+.a3s-users__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-bottom: 1.25rem; }
+.a3s-users__search { flex: 1 1 16rem; min-width: 0; }
+.a3s-users__actions { display: flex; gap: 0.35rem; justify-content: flex-end; flex-wrap: nowrap; }
+.a3s-table tbody tr.is-disabled td { opacity: 0.6; }
+.a3s-users__me { display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.45rem; border-radius: var(--radius-pill);
+	font-size: 0.6875rem; font-weight: 700; background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-users__badge--contractor { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; }
+/* The add / edit form and the welcome are wider than a plain dialog. */
+.a3s-users__panel { width: min(42rem, 100%); }
+.a3s-users__modalhead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.a3s-users__modalhead .a3s-icon-btn { font-size: 1.35rem; line-height: 1; }
+.a3s-users__sub { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-users__types { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.6rem; border: 0; padding: 0; margin: 0 0 1.25rem; }
+.a3s-users__legend { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.a3s-users__type, .a3s-users__option { position: relative; display: grid; gap: 0.2rem; padding: 0.75rem 0.85rem; text-align: left;
+	border: 1px solid var(--color-border-strong); border-radius: var(--radius-tile); background: var(--color-surface);
+	cursor: pointer; font: inherit; transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease); }
+.a3s-users__type input { position: absolute; opacity: 0; pointer-events: none; }
+.a3s-users__type:hover, .a3s-users__option:hover { border-color: var(--color-accent); }
+.a3s-users__type:has(input:checked) { border-color: var(--color-accent); background: var(--color-accent-soft); box-shadow: 0 0 0 2px var(--color-accent-tint); }
+.a3s-users__type:has(input:focus-visible) { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.a3s-users__type-name { font-size: 0.875rem; font-weight: 700; }
+.a3s-users__type-hint { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.35; }
+.a3s-users__choice { display: grid; gap: 0.6rem; margin-bottom: 0.5rem; }
+.a3s-users__welcome { display: grid; gap: 0.85rem; }
+.a3s-users__facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0; font-size: 0.875rem; }
+.a3s-users__facts dt { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); align-self: center; }
+.a3s-users__facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.a3s-users__link { width: 100%; font: inherit; font-size: 0.8125rem; padding: 0.45rem 0.65rem; border: 1px solid var(--color-border); border-radius: 0.6rem; background: var(--color-bg); }
+.a3s-users__msg { margin: 0; max-height: 11rem; overflow: auto; white-space: pre-wrap; font-family: inherit; font-size: 0.8125rem;
+	padding: 0.75rem 0.9rem; border-radius: 0.75rem; background: var(--color-bg); border: 1px solid var(--color-border); }
+.a3s .a3s-users__wa, .a3s .a3s-users__wa:hover { background-image: none; background: #25d366; color: #fff; }
+.a3s .a3s-users__wa:hover { background: #1da851; }
+.a3s-users__danger { border-top: 4px solid #d92d20; }
+.a3s-users__btn-danger { background: #d92d20; color: #fff; }
+.a3s-users__btn-danger:hover { background: #b42318; color: #fff; }
+@media (max-width: 640px) { .a3s-users__facts { grid-template-columns: 1fr; } .a3s-users__actions { flex-wrap: wrap; justify-content: flex-start; } }
+.a3s-users__table thead th, .a3s-users__table tbody td { padding-left: 0.85rem; padding-right: 0.85rem; }
+.a3s-users__table tbody td:nth-child(5) { white-space: nowrap; }
+.a3s-users__table .a3s-icon-btn { width: 1.85rem; height: 1.85rem; }
+
+/* A task's papers the system makes, on its Attachments card: one row each, to view or download. */
+.a3s-attach__papers { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+.a3s-attach__paper { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.85rem;
+	padding: 0.65rem 0.85rem; border: 1px solid var(--color-border); border-radius: 0.85rem; background: var(--color-surface); }
+.a3s-attach__paper-name { display: grid; min-width: 0; }
+.a3s-attach__paper-name strong { font-size: 0.9375rem; font-weight: 600; overflow-wrap: anywhere; }
+.a3s-attach__paper-name small { font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-attach__paper-actions { display: flex; gap: 0.35rem; }

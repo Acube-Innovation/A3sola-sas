@@ -82,8 +82,13 @@
 
 	/* Documents read as they are picked, filling the form's fields: {doctype: {type: method}}.
 	   The Jan Samarth letter gives the task its reference and approval date. */
-	var READERS = { "Installation Task": { "Digital Approval Letter": "a3_sola.api.approval_letter.read" } };
-	var LABELS = { approval_reference: "Jan Samarth Reference", approval_received_on: "Approval Received On" };
+	var READERS = {
+		"Installation Task": { "Digital Approval Letter": "a3_sola.api.approval_letter.read" },
+		"Portal Application": { "PM Surya Ghar Acknowledgement": "a3_sola.api.portal_ack.read" }
+	};
+	var LABELS = { approval_reference: "Jan Samarth Reference", approval_received_on: "Approval Received On",
+		application_number: "Application Number", application_date: "Application Date",
+		national_portal_application_id: "National Portal Application ID" };
 
 	/* A field is filled only while blank, or still as this reader last filled it. */
 	function fillFields(fields) {
@@ -255,11 +260,11 @@
 				var filled = fillFields(fields);
 				/* Said after what the upload said, whichever answered first. */
 				var before = status.dataset.tone === "ok" && !status.hidden ? status.textContent + " " : "";
-				var said = filled.length ? "Read from the " + what.toLowerCase() + ": " + filled.join(", ") + "." : "";
+				var said = filled.length ? "Read from the " + what + ": " + filled.join(", ") + "." : "";
 				/* A letter naming someone other than the job's customer: said, and shown as a warning. */
 				if (warned.length) setStatus([before + said].concat(warned).join(" ").trim(), "warn");
 				else if (filled.length) setStatus(before + said, "ok");
-				else if (!Object.keys(fields).length) setStatus("The " + what.toLowerCase() + " was kept, but its reference and date could not be read. Enter them above.", "error");
+				else if (!Object.keys(fields).length) setStatus("The " + what + " was kept, but its details could not be read. Enter them above.", "error");
 			}).catch(function () { /* the file is still attached; the fields are typed */ });
 		}
 
@@ -336,7 +341,13 @@
 		};
 		if (held) window.a3sAttachHeld.count = function () { return held.length; };
 
-		(held ? call("held_card", { doctype: doctype }, true) : call("list_files", { doctype: doctype, name: name }, true)).then(function (data) {
+		/* A new task's record, opened from the project board: the task's own documents are offered too. */
+		var from = new URLSearchParams(window.location.search);
+		var heldArgs = { doctype: doctype };
+		if (from.get("source_dt") === "Solar Installation" && from.get("source") && from.get("task")) {
+			heldArgs.installation = from.get("source"); heldArgs.task = from.get("task");
+		}
+		(held ? call("held_card", heldArgs, true) : call("list_files", { doctype: doctype, name: name }, true)).then(function (data) {
 			types = data.document_types || [];
 			fillTypes(typeSelect, types, "", "Document type…");
 			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each.";

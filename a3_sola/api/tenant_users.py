@@ -116,13 +116,9 @@ def password_reset_link(email):
 	"""A single-use link with the configured expiry. Delivered only to the verified address."""
 	hours = get_int("password_link_expiry_hours", 72) or 72
 	user = frappe.get_doc("User", email)
-	key = frappe.generate_hash()
-	user.db_set("reset_password_key", key, update_modified=False)
-	user.db_set("last_reset_password_key_generated_on", now_datetime(), update_modified=False)
-	return {
-		"url": frappe.utils.get_url(f"/update-password?key={key}"),
-		"expires_in_hours": hours,
-	}
+	# Frappe's own: it stores the key hashed, as /update-password looks it up. A key stored
+	# as it is sent is never found, and every link would fail as "used or invalid".
+	return {"url": user._reset_password(send_email=False), "expires_in_hours": hours}
 
 
 # ------------------------------------------------------------------- step 10
