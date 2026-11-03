@@ -9,12 +9,8 @@
 		<h2 class="a3s-main__title">{{ task_name | e }}</h2>
 		<p class="a3s-main__sub">{{ task_name | e }} for {{ source_title | e }}. Fill in what the task needs and create it.</p>
 		{%- include "templates/includes/portal_task_people.html" %}
-		{%- if task_downloads or claim %}
+		{%- if claim %}
 		<div class="a3s-detail__actions" style="margin-top:0.75rem">
-			{%- for d in task_downloads or [] %}
-			<a class="a3s-square-btn" href="{{ d.url | e }}" title="{{ d.label | e }}" aria-label="{{ d.label | e }}"{% if d.icon == "eye" %} target="_blank" rel="noopener"{% endif %}>
-				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ d.icon or 'download' }}"></use></svg></a>
-			{%- endfor %}
 			{%- include "templates/includes/portal_claim_button.html" %}
 		</div>
 		{%- endif %}
@@ -190,7 +186,14 @@
 		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		<div class="a3s-form__actions a3s-edit__actions">
+			{%- if complete_task %}
+			{#- A task is finished here: saved, its required fields and documents checked, and completed. -#}
+			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit data-complete>
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg><span>Complete task</span></button>
+			<button type="submit" class="a3s-btn a3s-btn--ghost" data-submit data-save-only>{{ "Save" if task_form else "Save changes" }}</button>
+			{%- else %}
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>{{ "Save" if task_form else "Save changes" }}</button>
+			{%- endif %}
 			<a class="a3s-btn a3s-btn--ghost" href="{{ view_route }}">Cancel</a>
 			<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>
 		</div>

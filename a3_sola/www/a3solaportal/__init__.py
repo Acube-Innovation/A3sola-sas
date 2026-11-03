@@ -93,7 +93,18 @@ NAV_GROUPS = [
 			{"title": "Journal Entry", "sub": "Accounting adjustments", "ic": "ledger", "route": "/a3solaportal/journal-entries"},
 		],
 	},
+	{
+		"key": "administration",
+		"label": "Administration",
+		# Shown to admins only (nav_groups).
+		"items": [
+			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
+		],
+	},
 ]
+
+#: Menu items for admins alone: the page refuses anyone else too.
+ADMIN_NAV = {"/a3solaportal/users"}
 
 # The top bar names the signed-in user's company: their default Company, else the site's
 # default. Shown with the company's logo when one is set on the Company record. The
@@ -135,9 +146,13 @@ def nav_groups(user=None):
 	"""The menu: all of it for staff; for a partner - a dealer, a contractor - only the items
 	he may read, and no empty group."""
 	from a3_sola.api.partner_scope import is_partner
+	from a3_sola.api.portal_users import is_user_admin
 
 	if not is_partner(user):
-		return NAV_GROUPS
+		if is_user_admin(user):
+			return NAV_GROUPS
+		return [g for g in ({**g, "items": [i for i in g["items"] if i["route"] not in ADMIN_NAV]} for g in NAV_GROUPS)
+			if g["items"]]
 	out = []
 	for group in NAV_GROUPS:
 		items = [i for i in group["items"] if i["route"] in PARTNER_NAV

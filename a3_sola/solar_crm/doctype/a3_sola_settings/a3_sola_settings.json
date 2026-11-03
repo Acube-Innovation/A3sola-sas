@@ -134,6 +134,7 @@
   "completion_data_email_subject",
   "completion_data_email_body",
   "completion_report_letter_head",
+  "vendor_letter_head",
   "sb_kseb_checklist",
   "kseb_over_voltage_trip_v",
   "kseb_under_voltage_trip_v",
@@ -1204,6 +1205,13 @@
    "fieldtype": "Link",
    "label": "Completion Report Letter Head",
    "options": "Letter Head"
+  },
+  {
+   "fieldname": "vendor_letter_head",
+   "fieldtype": "Link",
+   "label": "RIM Documents Letter Head",
+   "options": "Letter Head",
+   "description": "The letterhead the bank's RIM-format documents print on: covering letter, feasibility report, EHS checklist, project proposal and quotation. Blank: RIM Projects Pvt. Ltd."
   },
   {
    "fieldname": "sb_kseb_checklist",

@@ -25,7 +25,7 @@ class TestSuryaGharPapers(FrappeTestCase):
 			loan_print.QUOTATION)
 
 	def test_the_rim_quotation_prints_only_once_there_is_a_quotation(self):
-		frappe.db.set_value("Solar Installation", self.installation.name, "quotation", None)
+		frappe.db.set_value("Solar Installation", self.installation.name, {"quotation": None, "solar_design_estimate": None})
 		row = frappe._dict(stage_code="NPA")
 		self.assertEqual(portal_tasks._prints(row, self.installation.name), {})
 		with self.assertRaises(frappe.ValidationError):
@@ -37,3 +37,15 @@ class TestSuryaGharPapers(FrappeTestCase):
 		prints = portal_tasks._prints(row, self.installation.name)[loan_print.QUOTATION]
 		self.assertTrue(prints[0]["url"].endswith("installation=" + frappe.utils.quote(self.installation.name)))
 		self.assertTrue(prints[0]["signable"])
+
+	def test_with_no_quotation_it_is_priced_from_the_design_estimate(self):
+		estimate = frappe.db.get_value("Solar Design Estimate", {"solar_package": ["is", "set"], "docstatus": ["<", 2]}, "name")
+		if not estimate:
+			self.skipTest("no design estimate with a package on this site")
+		frappe.db.set_value("Solar Installation", self.installation.name, {"quotation": None, "solar_design_estimate": estimate})
+		inst = frappe.get_doc("Solar Installation", self.installation.name)
+		q = loan_print.quotation_doc(inst)
+		self.assertEqual(q.name, estimate)
+		self.assertTrue(q.items and q.grand_total > 0)
+		self.assertFalse(frappe.db.exists("Quotation", {"solar_design_estimate": estimate, "creation": [">", frappe.utils.add_to_date(None, minutes=-5)]}))
+		self.assertIn(loan_print.QUOTATION, portal_tasks._prints(frappe._dict(stage_code="NPA"), self.installation.name))

@@ -271,3 +271,11 @@ a3_sola.patches.v1_2.employee_reimbursement_account
 # Solar Packages made of Items: each row linked to an Item of its category, every BOM cleared,
 # unused Items removed, every package Draft.
 a3_sola.patches.v1_2.solar_package_items
+# PM Surya Ghar Acknowledgement as a document type, read into the Portal Application.
+a3_sola.patches.v1_2.portal_ack_document_type
+# The RIM project proposal: its cover a page of its own.
+a3_sola.patches.v1_2.rim_proposal_cover
+# Renewcore as the site default Letter Head; RIM only for the bank and PM Surya Ghar documents.
+a3_sola.patches.v1_2.renewcore_default_letter_head
+# A task's documents are one list: its record's Attachments and the project's register.
+a3_sola.patches.v1_2.task_documents_one_list

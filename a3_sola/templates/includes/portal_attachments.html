@@ -14,6 +14,23 @@
 		<span class="a3s-attach__count" data-attach-count hidden></span>
 	</div>
 
+	{#- The task's papers the system makes (collections.task_papers): each to view or download,
+	    the same on every task, above the files people add. -#}
+	{%- if task_papers %}
+	<div class="a3s-attach__papers" role="list" aria-label="Documents from the system">
+		{%- for p in task_papers %}
+		<div class="a3s-attach__paper" role="listitem">
+			<span class="a3s-attach__badge a3s-attach__badge--pdf" aria-hidden="true">PDF</span>
+			<span class="a3s-attach__paper-name"><strong>{{ p.name | e }}</strong><small>Made by the system</small></span>
+			<span class="a3s-attach__paper-actions">
+				{%- if p.view %}<a class="a3s-icon-btn a3s-icon-btn--framed" href="{{ p.view | e }}" target="_blank" rel="noopener" title="View {{ p.name | e }}" aria-label="View {{ p.name | e }}"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg></a>{% endif %}
+				{%- if p.download %}<a class="a3s-icon-btn a3s-icon-btn--framed" href="{{ p.download | e }}" title="Download {{ p.name | e }}" aria-label="Download {{ p.name | e }}"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg></a>{% endif %}
+			</span>
+		</div>
+		{%- endfor %}
+	</div>
+	{%- endif %}
+
 	{#- Choose what the files are, then pick them - or drop them on the panel. -#}
 	<div class="a3s-attach__drop" data-attach-new hidden>
 		<span class="a3s-attach__drop-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-upload"></use></svg></span>

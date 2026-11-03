@@ -73,3 +73,9 @@ class TestForm1Print(FrappeTestCase):
 		render.assert_called_once()
 		content = frappe.get_doc("File", {"file_url": result["file_url"]}).get_content()
 		self.assertEqual(content, pdf)
+
+	def test_it_is_to_be_completed_a_month_from_the_day_it_is_made(self):
+		from frappe.utils import add_months, formatdate, today
+
+		ctx = form1_print.context(frappe.get_doc("Solar Installation", self.installation.name))
+		self.assertEqual(ctx.complete_by, formatdate(add_months(today(), 1), "dd.MM.yyyy"))

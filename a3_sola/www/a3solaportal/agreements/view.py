@@ -1,12 +1,12 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
 """Detail page for one agreement: the shared record page, with the stamp paper data to
-download in its head (api/stamp_print.py)."""
+download on its Attachments card, as every task's papers are (api/stamp_print.py)."""
 
 import frappe
 
 from a3_sola.www.a3solaportal import require_login
-from a3_sola.www.a3solaportal.collections import detail_context, record_route, task_downloads
+from a3_sola.www.a3solaportal.collections import detail_context, record_route, task_papers
 
 no_cache = 1
 
@@ -16,6 +16,5 @@ def get_context(context):
 	require_login(record_route("agreements", name) if name else "/a3solaportal/agreements")
 	detail_context(context, "agreements", name)
 	doc = context.record
-	context.task_downloads = task_downloads(doc.solar_installation, "STMP", doc.name) if doc.solar_installation else []
-	context.head_actions_template = "templates/includes/portal_task_downloads.html"
+	context.task_papers = task_papers(doc.solar_installation, "STMP", doc.name) if doc.solar_installation else []
 	return context

@@ -1,0 +1,47 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Users</h2>
+		<p class="a3s-main__sub">Admins, employees, contractors and dealers who use the portal.</p>
+	</div>
+	<button type="button" class="a3s-btn a3s-btn--primary" data-add-user>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-user"></use></svg>
+		<span>Add user</span>
+	</button>
+</div>
+
+<div class="a3s-users__bar">
+	<div class="a3s-ce-tabs" role="tablist" aria-label="Kind of user" data-type-tabs>
+		{%- for t in [""] + data.counts.keys()|list %}
+		<button type="button" role="tab" data-type="{{ t }}" aria-selected="{{ 'true' if not t else 'false' }}">
+			<span>{{ t or "All" }}</span>
+			<span class="a3s-ce-tabs__n" data-count="{{ t }}">{{ data.counts[t] if t else data.total }}</span>
+		</button>
+		{%- endfor %}
+	</div>
+	<input class="a3s-toolbar__search a3s-users__search" type="search" placeholder="Search name, e-mail or mobile"
+	       aria-label="Search users" data-user-search>
+</div>
+
+<p class="a3s-attach__status" data-page-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table a3s-users__table">
+		<thead><tr><th>User</th><th>Kind</th><th>Access</th><th>Status</th><th>Last sign-in</th><th><span class="a3s-sr-only">Actions</span></th></tr></thead>
+		<tbody data-user-rows></tbody>
+	</table>
+	<div class="a3s-empty" data-user-empty hidden>
+		<span class="a3s-empty__icon"><svg class="a3s-ic a3s-ic--lg" aria-hidden="true"><use href="#ic-user"></use></svg></span>
+		<h3 class="a3s-empty__title">No users here yet</h3>
+		<p class="a3s-empty__text">Add the first one and it will appear here.</p>
+	</div>
+</div>
+
+<script type="application/json" id="a3s-users-data">{{ {"users": data.users, "counts": data.counts, "total": data.total, "choices": choices} | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_users.js?v={{ a3s_asset_version('js/portal_users.js') }}"></script>
+{% endblock %}

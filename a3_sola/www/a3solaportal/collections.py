@@ -552,7 +552,18 @@ def task_source(slug, installation, task_code):
 	target = tasks.open_task(installation, task_code, create_draft=0)
 	if target.get("name") or target.get("doctype") != get_collection(slug)["doctype"]:
 		return None
-	return {k: v for k, v in (target.get("route_options") or {}).items() if v not in (None, "")}
+	values = {k: v for k, v in (target.get("route_options") or {}).items() if v not in (None, "")}
+	# Who applied, registered or paid starts as the person the task is assigned to - else the
+	# one filling it in.
+	meta = frappe.get_meta(target["doctype"])
+	if meta.has_field("applied_by") and not values.get("applied_by"):
+		from a3_sola.api import task_assignees
+
+		inst = frappe.get_doc("Solar Installation", installation)
+		row = next((r for r in inst.stages if r.stage_code == task_code), None)
+		people = task_assignees.people(inst, task_code) or ([row.assigned_to] if row and row.get("assigned_to") else [])
+		values["applied_by"] = people[0] if people else frappe.session.user
+	return values
 
 
 #: What a task's document is opened with that makes it that task's: the job, the task code
@@ -735,7 +746,7 @@ def task_downloads(installation, task_code, document=None):
 			{"label": "Download Net Metering Agreement", "url": net_metering_print.url(installation, download=True)},
 			{"label": "View Vendor Agreement", "url": vendor_agreement_print.url(installation)},
 			{"label": "Download Vendor Agreement", "url": vendor_agreement_print.url(installation, download=True)}]
-		if frappe.db.get_value("Solar Installation", installation, "quotation"):
+		if loan_print.has_quotation(frappe.get_doc("Solar Installation", installation)):
 			links += [{"label": "View Quotation (RIM)", "url": loan_print.quotation_url(installation)},
 				{"label": "Download Quotation (RIM)", "url": loan_print.quotation_url(installation) + "&download=1"}]
 		return links
@@ -755,6 +766,57 @@ def task_downloads(installation, task_code, document=None):
 
 		return [{"label": "Download purchase list", "url": purchase_list.url(document, download=True)}]
 	return []
+
+
+def task_papers(installation, task_code, document=None):
+	"""The task's papers the system makes, one entry each - its name and its View and Download
+	links - for the task's Attachments card: the task's register documents printed live (named
+	as the board's Documents panel names them), and its other downloads (task_downloads), the
+	same paper once whichever way it is reached."""
+	from a3_sola.api import portal_tasks
+
+	papers = []
+
+	def paper_for(url):
+		base = _paper_url(url)
+		return next((p for p in papers if base in (_paper_url(p.get("view")), _paper_url(p.get("download")))), None)
+
+	try:
+		panel = portal_tasks._panel(frappe.get_doc("Solar Installation", installation), task_code)["documents"]
+	except Exception:
+		panel = []
+	for d in panel:
+		if d.get("kind") == "Generated" and d.get("prints"):
+			url = d["prints"][0]["url"]
+			papers.append({"name": d["name"], "view": url, "download": url + ("&" if "?" in url else "?") + "download=1"})
+	for link in task_downloads(installation, task_code, document):
+		label = link["label"]
+		for verb, key in (("View ", "view"), ("Download ", "download")):
+			if label.startswith(verb):
+				name = label[len(verb):]
+				break
+		else:
+			name, key = label, "download"
+		found = paper_for(link["url"])
+		if found:
+			found[key] = link["url"]
+			continue
+		name = name[:1].upper() + name[1:]
+		same = next((p for p in papers if p["name"] == name), None)
+		if same:
+			same[key] = link["url"]
+		else:
+			papers.append({"name": name, key: link["url"]})
+	return papers
+
+
+def _paper_url(url):
+	"""A paper's address without how it is asked for (download, signed): one paper, one URL."""
+	if not url:
+		return ""
+	path, _, query = url.partition("?")
+	keep = sorted(q for q in query.split("&") if q and q.split("=")[0] not in ("download", "signed"))
+	return path + "?" + "&".join(keep)
 
 
 #: Work-order tasks, by the kind of order each opens.
@@ -925,7 +987,8 @@ def new_context(context, slug):
 		context.endpoint = "a3_sola.api.portal_crud.create_record"
 		context.view_route = context.source_route
 		context.title = "New " + cfg["singular"]
-		context.task_downloads = task_downloads(source_doc.name, context.source_task)
+		context.task_papers = task_papers(source_doc.name, context.source_task)
+		context.complete_task = True
 		context.task_missing = task_missing(source_doc.name, context.source_task)
 		if context.source_task not in CLAIM_IN_FORM:
 			context.claim = task_claim(source_doc.name, context.source_task)
@@ -1354,7 +1417,7 @@ def detail_context(context, slug, name):
 		context.back_link = {"href": record_route("projects", doc.solar_installation), "label": "Back to project"}
 		context.claim = task_claim(doc.solar_installation, tasks_code_for(doc))
 		context.task_people = task_people(doc.solar_installation, tasks_code_for(doc))
-		context.task_downloads = task_downloads(doc.solar_installation, tasks_code_for(doc), doc.name)
+		context.task_papers = task_papers(doc.solar_installation, tasks_code_for(doc), doc.name)
 		context.task_missing = task_missing(doc.solar_installation, tasks_code_for(doc))
 		from a3_sola.api import portal_share
 
@@ -1379,8 +1442,7 @@ def detail_context(context, slug, name):
 					part=portal_share.PENDING)
 				context.share_pending["count"] = len(pending)
 			context.head_actions_template = "templates/includes/portal_purchase_share.html"
-		if context.task_downloads and not context.get("head_actions_template"):
-			context.head_actions_template = "templates/includes/portal_task_downloads.html"
+		# The task's papers are on its Attachments card (portal_attachments.html), not in the head.
 
 		# A task's people are its own (the strip in the head); the to-do card would be a second list.
 		context.hide_assignment = bool(context.task_people)
@@ -1547,6 +1609,11 @@ def edit_context(context, slug, name):
 	if doc.doctype == "Installation Task" and doc.get("task_code") in ("SPROC", "PROC"):
 		context.pending_card = pending_card(doc, can_tick=False)
 	context.update(_record_about(doc))
+	# A project task's document, not yet done: completed from here (tasks.complete_from_page).
+	if slug in TASK_SLUGS and doc.get("solar_installation") and tasks_code_for(doc):
+		row = frappe.db.get_value("Installation Stage Log", {"parent": doc.solar_installation,
+			"parenttype": "Solar Installation", "stage_code": tasks_code_for(doc)}, "status")
+		context.complete_task = row not in ("Completed", "Skipped")
 	# The POST is an unsafe method on an authenticated session, so it needs a CSRF token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

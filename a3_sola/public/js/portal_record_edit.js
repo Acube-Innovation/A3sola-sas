@@ -24,6 +24,7 @@
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var submitLabel = submits.length ? submits[0].textContent : "Save changes";
+	var submitHtml = submits.map(function (btn) { return btn.innerHTML; });
 
 	/* ---------------------------------------------------------------- steps */
 	var steps = Array.prototype.slice.call(form.querySelectorAll(".a3s-wizard__step"));
@@ -251,10 +252,40 @@
 		if (field) field.classList.toggle("a3s-field--error", invalid);
 	}
 
-	function busy(on) {
-		submits.forEach(function (btn) {
+	function busy(on, label) {
+		submits.forEach(function (btn, i) {
 			btn.disabled = on;
-			btn.textContent = on ? "Saving…" : submitLabel;
+			if (on) btn.textContent = label || "Saving…";
+			else btn.innerHTML = submitHtml[i];
+		});
+	}
+
+	/* Complete task asks every required field (marked *) that the form shows to be filled. */
+	function emptyRequired() {
+		var empty = [];
+		Array.prototype.forEach.call(form.querySelectorAll(".a3s-field"), function (field) {
+			if (!field.querySelector(".a3s-req") || !field.offsetParent) return;
+			var input = field.querySelector("input:not([type=hidden]):not([type=search]), select, textarea");
+			if (!input || input.disabled) return;
+			var filled = input.type === "checkbox" ? input.checked : String(input.value || "").trim() !== "";
+			field.classList.toggle("a3s-field--error", !filled);
+			if (!filled) empty.push({ label: (field.querySelector("label") || {}).textContent || "", input: input });
+		});
+		return empty;
+	}
+
+	/* The task completed from here, once its document is saved (tasks.complete_from_page). */
+	function completeTask(saved) {
+		return fetch("/api/method/a3_sola.api.tasks.complete_from_page", {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
+			body: JSON.stringify({ slug: slug, name: saved.name })
+		}).then(function (response) {
+			return response.json().catch(function () { return {}; }).then(function (data) {
+				if (!response.ok) throw new Error("Saved, but the task could not be completed: " +
+					(serverMessage(data) || "try again on the task's page."));
+				return (data.message && data.message.route) || saved.route || viewRoute;
+			});
 		});
 	}
 
@@ -294,6 +325,17 @@
 
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
+		var completing = !!(event.submitter && event.submitter.hasAttribute("data-complete"));
+		if (completing) {
+			var empty = emptyRequired();
+			if (empty.length) {
+				goTo(stepFor(empty[0].input.name), false);
+				empty[0].input.focus({ preventScroll: false });
+				setStatus("Fill the required fields to complete the task: " + empty.map(function (e) {
+					return e.label.replace("*", "").trim(); }).join(", ") + ".", "error");
+				return;
+			}
+		}
 		markInvalid("lead_name", false);
 		markInvalid("company_name", false);
 
@@ -307,8 +349,8 @@
 			return;
 		}
 
-		busy(true);
-		setStatus("Saving…");
+		busy(true, completing ? "Completing…" : "Saving…");
+		setStatus(completing ? "Saving and completing the task…" : "Saving…");
 
 		/* A new task with files held on its Attachments card: they can only go up once it
 		   exists, and a task is completed only with its evidence - so one asked to be created
@@ -354,7 +396,12 @@
 				(held ? window.a3sAttachHeld(saved.name).then(function () { return complete(saved); }, function (error) {
 					throw new Error("Saved, but the attachments did not upload: " + error.message + " Add them on the task's page.");
 				}) : Promise.resolve()).then(function () {
-					window.location.assign(saved.route || viewRoute);
+					if (!completing) return saved.route || viewRoute;
+					setStatus("Saved. Completing the task…", "success");
+					return completeTask(saved);
+				}).then(function (route) {
+					if (completing) setStatus("Task completed. Taking you back to the project…", "success");
+					window.location.assign(route);
 				}, function (error) {
 					/* The task exists now: shown the problem, then taken to it to finish there. */
 					setStatus(error.message, "error");
