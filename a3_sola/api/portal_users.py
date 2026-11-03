@@ -110,6 +110,7 @@ def users(type=None, search=None):
 	internal = _internal_users()
 	contractors = {c.user: c for c in frappe.get_all("Solar Contractor", filters={"user": ["is", "set"]},
 		fields=["name", "contractor_name", "contractor_type", "user"])}
+	employees = _employees()
 	out, counts = [], {t: 0 for t in TYPES}
 	needle = (search or "").strip().lower()
 	for row in rows:
@@ -125,6 +126,7 @@ def users(type=None, search=None):
 		if needle and needle not in " ".join(filter(None, [row.full_name, row.name, row.mobile_no])).lower():
 			continue
 		con = contractors.get(row.name)
+		emp = employees.get(row.name) or {}
 		out.append({
 			"name": row.name, "full_name": row.full_name or row.name, "first_name": row.first_name or "",
 			"last_name": row.last_name or "", "mobile_no": row.mobile_no or "", "enabled": cint(row.enabled),
@@ -133,8 +135,77 @@ def users(type=None, search=None):
 				if con else None,
 			"last_login": format_datetime(row.last_login, "d MMM yyyy") if row.last_login else "",
 			"is_me": row.name == frappe.session.user,
+			"employee": emp.get("name"), "designation": emp.get("designation") or "",
+			"department": emp.get("department") or "", "department_name": emp.get("department_name") or "",
 		})
 	return {"users": out, "counts": counts, "total": sum(counts.values())}
+
+
+# ------------------------------------------------------------------ designation and department
+#: The kinds of user who are the company's own staff: their job title and department are on
+#: their Employee record, which Assign To reads (api/assignments.designation_of).
+STAFF_TYPES = ("Admin", "Employee")
+
+
+def _employees():
+	"""{user: {name, designation, department, department_name}} of every Employee with a login."""
+	names = dict(frappe.get_all("Department", fields=["name", "department_name"], as_list=True))
+	return {e.user_id: {**e, "department_name": names.get(e.department) or e.department or ""} for e in frappe.get_all(
+		"Employee", filters={"user_id": ["is", "set"]}, fields=["name", "user_id", "designation", "department"],
+		order_by="status asc, creation desc")}
+
+
+def _departments(company):
+	return [{"value": d.name, "label": d.department_name or d.name} for d in frappe.get_all("Department",
+		filters={"is_group": 0, "disabled": 0}, fields=["name", "department_name", "company"], order_by="department_name asc")
+		if not company or not d.company or d.company == company]
+
+
+def _employee_of(user):
+	return frappe.db.get_value("Employee", {"user_id": user}, "name", order_by="status asc, creation desc") if user else None
+
+
+def _check_new_employee(data, user=None):
+	"""A designation or department for someone with no Employee record makes one, which needs
+	his gender and date of birth: asked for before anything is saved."""
+	if data.type not in STAFF_TYPES or not (data.get("designation") or data.get("department")) or _employee_of(user):
+		return
+	missing = [label for key, label in (("gender", _("gender")), ("date_of_birth", _("date of birth")))
+		if not data.get(key)]
+	if missing:
+		frappe.throw(_("{0} has no Employee record yet, so one is made for the designation and department: "
+			"enter the {1}.").format(" ".join(filter(None, [data.first_name, data.last_name])) or user,
+			_(" and ").join(missing)))
+
+
+def _save_employee(user, data, company):
+	"""The staff member's designation and department, on his Employee record: the one his login
+	is on, or - when either is chosen and he has none - a new one, which needs his gender, date
+	of birth and joining date."""
+	designation, department = (data.get("designation") or "").strip(), (data.get("department") or "").strip()
+	if designation and not frappe.db.exists("Designation", designation):
+		frappe.throw(_("{0} is not a designation. Add it under Designation first.").format(designation))
+	if department and not frappe.db.exists("Department", department):
+		frappe.throw(_("{0} is not a department.").format(department))
+	name = _employee_of(user.name)
+	if name:
+		emp = frappe.get_doc("Employee", name)
+		if (emp.designation or "", emp.department or "") == (designation, department):
+			return name
+		emp.designation, emp.department = designation or None, department or None
+		emp.flags.ignore_permissions = True
+		emp.save(ignore_permissions=True)
+		return name
+	if not (designation or department):
+		return None
+	_check_new_employee(data, user.name)
+	emp = frappe.get_doc({"doctype": "Employee", "first_name": user.first_name, "last_name": user.last_name,
+		"gender": data.gender, "date_of_birth": data.date_of_birth,
+		"date_of_joining": data.get("date_of_joining") or frappe.utils.today(), "company": company,
+		"status": "Active", "user_id": user.name, "cell_number": user.mobile_no, "designation": designation or None,
+		"department": department or None})
+	emp.insert(ignore_permissions=True)
+	return emp.name
 
 
 @frappe.whitelist()
@@ -145,9 +216,13 @@ def options():
 		fields=["name", "contractor_name", "contractor_type", "user", "mobile_no", "email_id"], order_by="contractor_name asc")
 	from a3_sola.api.portal_share import _outgoing_account
 
+	company = _company()
 	return {"types": list(TYPES), "profiles": profiles, "contractors": contractors,
 		"contractor_types": list(CONTRACTOR_TYPES), "can_email": bool(_outgoing_account("User")),
-		"login_url": get_url(LOGIN_PATH)}
+		"login_url": get_url(LOGIN_PATH), "staff_types": list(STAFF_TYPES),
+		"designations": frappe.get_all("Designation", pluck="name", order_by="name asc"),
+		"departments": _departments(company), "genders": frappe.get_all("Gender", pluck="name", order_by="name asc"),
+		"today": frappe.utils.today()}
 
 
 # ------------------------------------------------------------------ saving
@@ -161,7 +236,8 @@ def _company():
 
 def _clean(data):
 	data = frappe._dict(json.loads(data) if isinstance(data, str) else (data or {}))
-	for key in ("first_name", "last_name", "email", "mobile_no", "type", "profile"):
+	for key in ("first_name", "last_name", "email", "mobile_no", "type", "profile", "designation", "department",
+			"gender", "date_of_birth", "date_of_joining"):
 		data[key] = (data.get(key) or "").strip()
 	data.email = data.email.lower()
 	if data.type not in TYPES:
@@ -215,6 +291,7 @@ def save_user(data, name=None):
 		frappe.throw(_("Choose the employee's access (role profile)."))
 	if profile and not frappe.db.exists("Role Profile", profile):
 		frappe.throw(_("The {0} access is not set up on this site.").format(profile))
+	_check_new_employee(data, name)
 	company = _company()
 	if name:
 		if name in HIDDEN_USERS or not frappe.db.exists("User", name):
@@ -254,13 +331,14 @@ def save_user(data, name=None):
 	if company:
 		ensure_company_permission(user.name, company)
 		_set_default_company(user.name, company)
+	employee = _save_employee(user, data, company) if data.type in STAFF_TYPES else None
 	contractor = None
 	if data.type == "Contractor":
 		contractor = _link_contractor(user.name, data, company)
 	else:
 		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s", user.name)
 	frappe.clear_cache(user=user.name)
-	return {"name": user.name, "created": not name, "contractor": contractor,
+	return {"name": user.name, "created": not name, "contractor": contractor, "employee": employee,
 		"user": next((u for u in users()["users"] if u["name"] == user.name), None)}
 
 

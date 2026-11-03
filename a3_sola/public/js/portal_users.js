@@ -66,15 +66,17 @@
 		function matches(u, skip) {
 			return (skip === "type" || !state.type || u.type === state.type) &&
 				(skip === "enabled" || !state.enabled || (state.enabled === "active" ? u.enabled : !u.enabled)) &&
-				(!q || (u.full_name + " " + u.name + " " + (u.mobile_no || "")).toLowerCase().indexOf(q) !== -1);
+				(!q || [u.full_name, u.name, u.mobile_no, u.designation, u.department_name].join(" ").toLowerCase().indexOf(q) !== -1);
 		}
 		var list = state.users.filter(function (u) { return matches(u); });
 		var byType = state.users.filter(function (u) { return matches(u, "type"); });
 		var byStatus = state.users.filter(function (u) { return matches(u, "enabled"); });
 		rows.innerHTML = list.map(function (u) {
-			var access = u.type === "Employee" ? (esc(u.profile) || '<span class="a3s-table__muted">Own roles (no profile)</span>') :
+			var job = [u.designation, u.department_name].filter(Boolean).map(esc).join(" &middot; ");
+			var access = (job ? '<span class="a3s-users__job">' + job + "</span>" : "") +
+				(u.type === "Employee" ? (job ? '<span class="a3s-table__meta">' + (esc(u.profile) || "Own roles (no profile)") + "</span>" : (esc(u.profile) || '<span class="a3s-table__muted">Own roles (no profile)</span>')) :
 				u.type === "Contractor" ? (u.contractor ? esc(u.contractor.contractor_name) + '<span class="a3s-table__meta">' + esc(u.contractor.contractor_type || "") + " contractor</span>" : '<span class="a3s-table__muted">No contractor record</span>') :
-				u.type === "Admin" ? "Administration" : "Dealer";
+				u.type === "Admin" ? (job ? '<span class="a3s-table__meta">Administration</span>' : "Administration") : "Dealer");
 			return '<tr data-user="' + esc(u.name) + '"' + (u.enabled ? "" : ' class="is-disabled"') + ">" +
 				'<td><span class="a3s-table__record"><span class="a3s-avatar a3s-avatar--initials">' + esc(initials(u.full_name)) + "</span>" +
 				'<span><span class="a3s-table__link">' + esc(u.full_name) + (u.is_me ? ' <span class="a3s-users__me">You</span>' : "") + "</span>" +
@@ -173,6 +175,17 @@
 			'<div class="a3s-field" data-for="Contractor" data-new-con><label for="u-con-name">Contractor name</label><input id="u-con-name" name="contractor_name" placeholder="Firm or person"></div>' +
 			'<div class="a3s-field" data-for="Contractor" data-new-con><label for="u-con-type">Contractor type</label><select id="u-con-type" name="contractor_type">' +
 			choices.contractor_types.map(function (t) { return "<option>" + t + "</option>"; }).join("") + "</select></div>" +
+			'<div class="a3s-field" data-for="Admin Employee"><label for="u-desig">Designation</label><select id="u-desig" name="designation">' +
+			'<option value="">Not set</option>' + choices.designations.map(function (d) { return "<option" + (u.designation === d ? " selected" : "") + ">" + esc(d) + "</option>"; }).join("") +
+			'</select><p class="a3s-field__hint">Shown under the name in Assign To.</p></div>' +
+			'<div class="a3s-field" data-for="Admin Employee"><label for="u-dept">Department</label><select id="u-dept" name="department">' +
+			'<option value="">Not set</option>' + choices.departments.map(function (d) { return '<option value="' + esc(d.value) + '"' + (u.department === d.value ? " selected" : "") + ">" + esc(d.label) + "</option>"; }).join("") +
+			"</select></div>" +
+			'<p class="a3s-field__hint a3s-field--wide" data-new-emp>No Employee record yet: one is made for the designation and department, with these.</p>' +
+			'<div class="a3s-field" data-new-emp><label for="u-gender">Gender <span class="a3s-req">*</span></label><select id="u-gender" name="gender"><option value="">Choose…</option>' +
+			choices.genders.map(function (g) { return "<option>" + esc(g) + "</option>"; }).join("") + "</select></div>" +
+			'<div class="a3s-field" data-new-emp><label for="u-dob">Date of birth <span class="a3s-req">*</span></label><input id="u-dob" name="date_of_birth" type="date" max="' + esc(choices.today) + '"></div>' +
+			'<div class="a3s-field" data-new-emp><label for="u-doj">Date of joining</label><input id="u-doj" name="date_of_joining" type="date" value="' + esc(choices.today) + '"></div>' +
 			(editing ? '<label class="a3s-check a3s-field--wide"><input type="checkbox" name="enabled"' + (u.enabled ? " checked" : "") + (u.is_me ? " disabled" : "") + "><span>Active (can sign in)</span></label>" : "") +
 			"</div>" +
 			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary"><span>' + (editing ? "Save changes" : "Add user") + "</span></button>" +
@@ -180,7 +193,10 @@
 		var form = m.body.querySelector("form");
 		function sync() {
 			var type = form.querySelector('[name="type"]:checked').value;
-			form.querySelectorAll("[data-for]").forEach(function (el) { el.hidden = el.dataset.for !== type; });
+			form.querySelectorAll("[data-for]").forEach(function (el) { el.hidden = el.dataset.for.split(" ").indexOf(type) === -1; });
+			var staff = choices.staff_types.indexOf(type) !== -1;
+			var newEmp = staff && !u.employee && !!(form.designation.value || form.department.value);
+			form.querySelectorAll("[data-new-emp]").forEach(function (el) { el.hidden = !newEmp; });
 			var newCon = type === "Contractor" && !form.contractor.value;
 			form.querySelectorAll("[data-new-con]").forEach(function (el) { el.hidden = !newCon; });
 		}
@@ -192,7 +208,9 @@
 			var data = { type: type, first_name: form.first_name.value, last_name: form.last_name.value, email: form.email.value,
 				mobile_no: form.mobile_no.value, profile: form.profile.value, contractor: form.contractor.value,
 				new_contractor: { contractor_name: form.contractor_name.value, contractor_type: form.contractor_type.value },
-				enabled: editing ? (form.enabled.checked ? 1 : 0) : 1 };
+				enabled: editing ? (form.enabled.checked ? 1 : 0) : 1,
+				designation: form.designation.value, department: form.department.value, gender: form.gender.value,
+				date_of_birth: form.date_of_birth.value, date_of_joining: form.date_of_joining.value };
 			var btn = form.querySelector('[type="submit"]');
 			busy(btn, true); m.status("");
 			call("save_user", { data: data, name: editing ? u.name : null }).then(function (r) {

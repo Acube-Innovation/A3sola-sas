@@ -3746,3 +3746,5 @@ select.a3s-items__input { min-width: 9rem; }
 	.a3s-pkg__card { padding: 1rem; }
 	.a3s-pkg__headacts .a3s-btn { flex: 1 1 auto; }
 }
+.a3s-users__job { display: block; font-weight: 600; }
+.a3s-users__panel .a3s-form__grid { align-items: start; }

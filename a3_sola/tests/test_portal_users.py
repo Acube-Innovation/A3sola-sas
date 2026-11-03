@@ -108,3 +108,44 @@ class TestPortalUsers(FrappeTestCase):
 		pu.save_user({"type": "Admin", "first_name": "Renamed", "email": "pu-sm@example.com", "mobile_no": ""}, name="pu-sm@example.com")
 		self.assertIn("System Manager", frappe.get_roles("pu-sm@example.com"))
 		self.assertEqual(frappe.db.get_value("User", "pu-sm@example.com", "first_name"), "Renamed")
+
+
+class TestDesignationAndDepartment(FrappeTestCase):
+	"""A staff member's designation and department are on his Employee record."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.designation = frappe.db.get_value("Designation", {}, "name")
+		self.department = frappe.db.get_value("Department", {"is_group": 0}, "name")
+		if not (self.designation and self.department):
+			self.skipTest("No designation or department on this site.")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		frappe.db.rollback()
+
+	def employee(self, email):
+		return frappe.db.get_value("Employee", {"user_id": email}, ["designation", "department"], as_dict=True)
+
+	def test_a_new_employee_needs_his_details_and_gets_a_record(self):
+		with self.assertRaises(frappe.ValidationError):
+			_new("Employee", "pu-desig@example.com", profile="Solar Sales", designation=self.designation)
+		self.assertFalse(frappe.db.exists("User", "pu-desig@example.com"))
+		_new("Employee", "pu-desig@example.com", profile="Solar Sales", designation=self.designation,
+			department=self.department, gender="Female", date_of_birth="1995-04-01")
+		self.assertEqual(self.employee("pu-desig@example.com"), {"designation": self.designation, "department": self.department})
+		row = next(u for u in pu.users()["users"] if u["name"] == "pu-desig@example.com")
+		self.assertEqual((row["designation"], row["department"]), (self.designation, self.department))
+
+	def test_editing_changes_the_record_and_without_them_none_is_made(self):
+		_new("Admin", "pu-plain@example.com")
+		self.assertIsNone(self.employee("pu-plain@example.com"))
+		_new("Employee", "pu-edit@example.com", profile="Solar Sales", designation=self.designation,
+			gender="Male", date_of_birth="1990-01-01")
+		pu.save_user({"type": "Employee", "first_name": "Test", "last_name": "Employee", "email": "pu-edit@example.com",
+			"department": self.department, "designation": ""}, name="pu-edit@example.com")
+		self.assertEqual(self.employee("pu-edit@example.com"), {"designation": None, "department": self.department})
+
+	def test_a_partner_gets_no_employee_record(self):
+		_new("Dealer", "pu-dealer2@example.com", designation=self.designation, gender="Male", date_of_birth="1990-01-01")
+		self.assertIsNone(self.employee("pu-dealer2@example.com"))
