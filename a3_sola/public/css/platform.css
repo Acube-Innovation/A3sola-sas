@@ -3748,3 +3748,11 @@ select.a3s-items__input { min-width: 9rem; }
 }
 .a3s-users__job { display: block; font-weight: 600; }
 .a3s-users__panel .a3s-form__grid { align-items: start; }
+
+/* Sharing a task's document (portal_project_board.js shareDocument). */
+.a3s-taskshare { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; margin-bottom: 0.85rem; }
+.a3s-taskshare .a3s-btn { justify-content: center; }
+.a3s .a3s-taskshare__wa, .a3s .a3s-taskshare__wa:hover { background-image: none; background: #25d366; color: #fff; }
+.a3s .a3s-taskshare__wa:hover { background: #1da851; }
+.a3s-taskshare__link { width: 100%; font: inherit; font-size: 0.8125rem; padding: 0.45rem 0.65rem; border: 1px solid var(--color-border);
+	border-radius: 0.6rem; background: var(--color-bg); margin-bottom: 0.5rem; }

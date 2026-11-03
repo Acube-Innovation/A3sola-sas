@@ -79,7 +79,18 @@ class TestStartOnAdvance(FrappeTestCase):
 		self.assertNotIn("STMP", [r.stage_code for r in started])
 		self.assertEqual(row.status, "Skipped")
 
-	def test_form_1_payment_follows_form_1(self):
+	def test_the_first_payments_work_starts_together_each_due_its_sla_later(self):
 		inst = frappe.get_doc("Solar Installation", self.job)
-		f1pay = next(r for r in inst.stages if r.stage_code == "F1PAY")
-		self.assertEqual(f1pay.due_anchor_task, "FRM1")
+		started = stages.start_on_advance(inst)
+		self.assertTrue(started)
+		self.assertEqual(str(inst.advance_received_on), frappe.utils.today())
+		for row in started:
+			self.assertIn(row.stage_code, START_ON_ADVANCE)
+			self.assertEqual(str(row.actual_start_date), frappe.utils.today())
+			self.assertFalse(row.due_anchor_task)
+		inst.flags.ignore_validate_update_after_submit = True
+		inst.save(ignore_permissions=True)
+		for row in inst.stages:
+			if row.stage_code in START_ON_ADVANCE and row.status == "In Progress":
+				self.assertEqual(str(row.due_date), frappe.utils.add_days(frappe.utils.today(), row.sla_days))
+				self.assertEqual(str(row.planned_start_date), frappe.utils.today())

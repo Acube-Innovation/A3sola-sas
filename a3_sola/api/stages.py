@@ -225,34 +225,78 @@ def sync_from_template(installation):
 
 	Status, assignment, documents and dates belong to the job and are never touched.
 	"""
-	if not installation.stage_template or not frappe.db.exists(
-		"Installation Stage Template", installation.stage_template
-	):
-		return
-	template = frappe.get_cached_doc("Installation Stage Template", installation.stage_template)
-	by_code = {row.stage_code: row for row in template.stages}
+	if installation.stage_template and frappe.db.exists("Installation Stage Template", installation.stage_template):
+		template = frappe.get_cached_doc("Installation Stage Template", installation.stage_template)
+		by_code = {row.stage_code: row for row in template.stages}
+		for row in installation.stages:
+			source = by_code.get(row.stage_code)
+			if not source:
+				continue
+			for field in TEMPLATE_ROW_FIELDS:
+				if row.get(field) != source.get(field):
+					row.set(field, source.get(field))
 	for row in installation.stages:
-		source = by_code.get(row.stage_code)
-		if not source:
-			continue
-		for field in TEMPLATE_ROW_FIELDS:
-			if row.get(field) != source.get(field):
-				row.set(field, source.get(field))
+		sla = sla_for(installation, row)
+		if sla != int(row.sla_days or 0) and row.status not in DONE and row.actual_start_date:
+			# A started task whose SLA changes (Meter Source set to KSEB) is due by the new one.
+			row.due_date = add_days(getdate(row.actual_start_date), sla)
+		row.sla_days = sla
+
+
+def sla_for(installation, row):
+	"""The task's SLA on this job: the template's, but Meter Purchase takes longer when its
+	meter is bought from KSEB - its task's Meter Source (seed_stages.MTR_SLA)."""
+	from a3_sola.setup.seed_stages import MTR_SLA
+
+	if row.stage_code == "MTR" and row.task_doctype == "Installation Task" and row.task_document:
+		source = frappe.db.get_value("Installation Task", row.task_document, "meter_source")
+		if source in MTR_SLA:
+			return MTR_SLA[source]
+	return int(row.sla_days or 0)
 
 
 def plan_dates(installation):
-	"""Lay the tasks end to end from the job's start date, each taking its SLA days.
+	"""The plan: each task from the day its work starts, taking its SLA days.
 
-	The plan is a baseline: it follows the task order, a skipped task takes no time and
-	carries no dates, and actual progress does not move it - the Due column does that.
+	- the order and the advance, end to end from the job's start;
+	- the first payment's work (seed_stages.START_ON_ADVANCE) all from the day it came -
+	  until then, from the job's start;
+	- the half's work (START_AT_HALF) all from the day half was in - until then, from the
+	  day the first payment's work is planned to end;
+	- a task that follows another (NEXT_AT_HALF) from that task's planned end.
+
+	A skipped task takes no time and carries no dates. Actual progress moves the plan only
+	through those two payment dates; the Due column follows the real start.
 	"""
-	cursor = getdate(installation.get("execution_start_date") or installation.order_date or today())
-	for row in installation.stages:
+	from a3_sola.setup.seed_stages import NEXT_AT_HALF, START_AT_HALF, START_ON_ADVANCE
+
+	start = getdate(installation.get("execution_start_date") or installation.order_date or today())
+	rows = [r for r in installation.stages]
+	for row in rows:
 		if row.status == "Skipped":
 			row.planned_start_date = row.planned_date = None
-			continue
-		row.planned_start_date = cursor
-		row.planned_date = cursor = add_days(cursor, int(row.sla_days or 0))
+
+	def lay(row, begin):
+		row.planned_start_date = begin
+		row.planned_date = add_days(begin, int(row.sla_days or 0))
+		return row.planned_date
+
+	live = [r for r in rows if r.status != "Skipped"]
+	cursor = start
+	for row in live:
+		if row.stage_code not in START_ON_ADVANCE and row.stage_code not in START_AT_HALF and row.stage_code not in NEXT_AT_HALF:
+			cursor = lay(row, cursor)
+	advance = getdate(installation.get("advance_received_on")) if installation.get("advance_received_on") else start
+	ends = [lay(r, advance) for r in live if r.stage_code in START_ON_ADVANCE]
+	half = getdate(installation.get("half_paid_on")) if installation.get("half_paid_on") else max(ends + [advance])
+	for row in live:
+		if row.stage_code in START_AT_HALF:
+			lay(row, half)
+	by_code = {r.stage_code: r for r in live}
+	for code, (before,) in NEXT_AT_HALF.items():
+		row, prior = by_code.get(code), by_code.get(before)
+		if row:
+			lay(row, getdate(prior.planned_date) if prior and prior.planned_date else half)
 
 
 def _append_checklist(installation, stage_code, checklist_template):
@@ -393,10 +437,11 @@ def _get_stage(installation, stage_code):
 
 
 def start_on_advance(installation):
-	"""The customer's first advance - any amount - starts the work it pays for: Form 1, the
-	stamp paper and the design freeze (seed_stages.START_ON_ADVANCE). Returns the rows started."""
+	"""The customer's first payment - any amount - starts the work it pays for, all today
+	(seed_stages.START_ON_ADVANCE). Returns the rows started."""
 	from a3_sola.setup.seed_stages import START_ON_ADVANCE
 
+	installation.advance_received_on = installation.get("advance_received_on") or today()
 	return _start(installation, START_ON_ADVANCE)
 
 
@@ -469,18 +514,18 @@ def check_half_paid(installation, code):
 
 
 def start_at_half(installation):
-	"""Half paid, or exempt: structure and material procurement and the balance request start,
-	and Form 2 if Form 1 is paid. Returns the rows started."""
+	"""Half paid, or exempt: all the half's work starts today (seed_stages.START_AT_HALF).
+	Returns the rows started."""
 	from a3_sola.setup.seed_stages import START_AT_HALF
 
-	codes = [c for c in START_AT_HALF if c != "FRM2" or _done(installation, "F1PAY")]
-	return _start(installation, codes)
+	installation.half_paid_on = installation.get("half_paid_on") or today()
+	return _start(installation, START_AT_HALF)
 
 
 def start_next(installation, code):
-	"""Task `code` is done: each task that waits on it starts once all it waits on are done -
-	dispatch after both procurements, the work orders and serials after dispatch, Form 2
-	after Form 1's payment, Form 2's payment after Form 2 - if the half is in. Returns the rows started."""
+	"""Task `code` is done: each task that follows it starts today - the serials after the
+	supplier's invoice, the payment after installation after its work order - if the half is
+	in (seed_stages.NEXT_AT_HALF). Returns the rows started."""
 	from a3_sola.setup.seed_stages import NEXT_AT_HALF
 
 	if not half_paid_open(installation):

@@ -283,3 +283,7 @@ a3_sola.patches.v1_2.task_documents_one_list
 a3_sola.patches.v1_2.feasibility_report_attachment
 # "Quotation (RIM format)" is the Bank Quotation.
 a3_sola.patches.v1_2.bank_quotation_name
+# Enter Serial Numbers after Work Order - Installation.
+a3_sola.patches.v1_2.serials_after_work_orders
+# Tasks start together on the payment dates, with the new SLAs.
+a3_sola.patches.v1_2.payment_date_task_flow

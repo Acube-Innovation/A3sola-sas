@@ -58,23 +58,31 @@ DEFAULT_ASSIGNEES = {
 	"SPROC": PROJECT_MANAGER,
 }  # every other task: the Project Engineer
 
-#: The work the customer's first advance - any amount, 10% or 90% - starts at once, each to the
-#: person its template names (Assign to) else its position (api/stages.start_on_advance). Form 1
-#: Payment follows Form 1 (its due date is anchored to it).
-START_ON_ADVANCE = ("FRM1", "STMP", "DSGN", "SDSGN")
+#: The work the customer's first payment - any amount - starts on that day, each due its SLA
+#: later, to the person its template names (Assign to) else its position
+#: (api/stages.start_on_advance). Jan Samarth and the loan papers only on a bank-loan job.
+START_ON_ADVANCE = ("NPA", "ACPT", "DAL", "FRM1", "F1PAY", "STMP", "DSGN", "SDSGN", "LOAN")
 
-#: The work that waits for half the project value, confirmed by Accounts - structure and
-#: material, their dispatch and work orders, the serials, Forms 2 and 3 and the balance request -
-#: unless an Operations Manager exempts the job (api/stages.check_half_paid).
+#: Before the first payment: the order and the advance itself.
+BEFORE_ADVANCE = ("ORD", "ADV")
+
+#: The work that waits for half the project value, confirmed by Accounts - unless an
+#: Operations Manager exempts the job (api/stages.check_half_paid): every task after the
+#: first payment's.
 HALF_PAID_PERCENT = 50
-HALF_PAID_TASKS = ("SPROC", "PROC", "DISP", "IWOS", "IWOI", "MATL", "FRM2", "F2PAY", "BAL", "KFORMS")
-#: Started the moment the half is in (Form 2 only once Form 1 is paid).
-START_AT_HALF = ("SPROC", "PROC", "BAL", "FRM2")
-#: Each task started once every task before it is done: {task: its predecessors}.
-NEXT_AT_HALF = {
-	"DISP": ("SPROC", "PROC"), "IWOS": ("DISP",), "IWOI": ("DISP",), "MATL": ("DISP",), "SUPINV": ("DISP",), "SERIAL": ("SUPINV",),
-	"FRM2": ("F1PAY",), "F2PAY": ("FRM2",),
-}
+#: Each started once a task is completed, on that day: {task: the task it follows}.
+NEXT_AT_HALF = {"SERIAL": ("SUPINV",), "BAL": ("IWOI",)}
+#: Started the day the half is in - all of them together, each due its SLA later.
+START_AT_HALF = (
+	"SPROC", "PROC", "DISP", "IWOS", "IWOI", "SUPINV", "FRM2", "F2PAY", "MATL", "KFORMS", "MTR",
+	"PORTUPD", "CEIG", "COMM", "PCOM", "KTST", "MTRPAY", "BCOM", "CFILE", "REVIEW", "SUBREQ", "CORR", "DBT",
+)
+HALF_PAID_TASKS = START_AT_HALF + tuple(NEXT_AT_HALF)
+
+#: A task's SLA when nothing says otherwise.
+DEFAULT_SLA = 3
+#: Meter Purchase takes longer when the meter is bought from KSEB: {its Meter Source: days}.
+MTR_SLA = {"KSEB": 15}
 
 
 def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandatory=1,
@@ -101,19 +109,18 @@ def _task(code, name, owner_type, sla_days, task_doctype, *, role=OPS, is_mandat
 
 
 TASKS = [
-	_task("ORD", "Order Received", "Internal", 1, "Sales Order",
+	_task("ORD", "Order Received", "Internal", 3, "Sales Order",
 	      documents=[("Signed consumer-vendor agreement", 1, "MNRE-CONSUMER-VENDOR-AGREEMENT"),
 	                 ("Customer KYC documents", 1, None), ("Sales order", 0, None)],
 	      description="The sales order is submitted and the job opens. KYC documents are fetched "
 	                  "from the consumer record onto the order."),
-	_task("FRM1", "Form 1 Generation", "Internal", 2, "Installation Task", role=DOCS,
+	_task("FRM1", "Form 1 Generation", "Internal", 1, "Installation Task", role=DOCS,
 	      task_type="FRM1", documents=[("Annexure / Form 1", 1, "KSEB-FORM-1")],
 	      description="KSEBL Form 1 generated and submitted to the section office."),
 	_task("F1PAY", "Form 1 Payment", "Internal", 2, "Statutory Fee Payment",
 	      task_type="Application Fee", documents=[("Application fee receipt", 1, None)],
-	      due_anchor_task="FRM1", due_anchor_days=2,
 	      description="Application fee paid. Paying it starts the thirty-day window for Form 2."),
-	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 3, "Portal Application", role=DOCS,
+	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 1, "Portal Application", role=DOCS,
 	      applicability="Subsidised Only", task_type="National Portal",
 	      documents=[("National portal application data sheet", 1, "NP-APPLICATION"),
 	                 ("Pre-installation site photo", 1, None),
@@ -127,7 +134,7 @@ TASKS = [
 	# format (api/loan_print.quotation) and the consumer-vendor agreement word for word
 	# (api/vendor_agreement_print). Second in the PM Surya Ghar column, shown only on a job
 	# that takes a loan.
-	_task("ACPT", "Accept Customer", "Internal", 2, "Installation Task", role=DOCS, task_type="ACPT",
+	_task("ACPT", "Accept Customer", "Internal", 1, "Installation Task", role=DOCS, task_type="ACPT",
 	      applicability="Financed Sales Only",
 	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT"),
 	                 ("Bank Quotation", 1, "BANK-QUOTATION"),
@@ -137,10 +144,10 @@ TASKS = [
 	                  "to sign."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
-	_task("DAL", "Jan Samarth", "Bank", 3, "Installation Task", role=DOCS, task_type="DAL",
+	_task("DAL", "Jan Samarth", "Bank", 1, "Installation Task", role=DOCS, task_type="DAL",
 	      applicability="Financed Sales Only", documents=[("Jan Samarth approval letter", 1, None)],
 	      description="The digital approval letter for the loan, from the Jan Samarth portal."),
-	_task("LOAN", "Loan Documents", "Bank", 15, "Loan Application", role=DOCS,
+	_task("LOAN", "Loan Documents", "Bank", 3, "Loan Application", role=DOCS,
 	      applicability="Financed Sales Only",
 	      documents=[("Bank covering letter - loan application", 1, "BANK-COVERING-LOAN"),
 	                 ("Vendor feasibility report", 1, "BANK-VENDOR-FEASIBILITY"),
@@ -148,11 +155,11 @@ TASKS = [
 	                 ("Project proposal", 0, None), ("Sanction letter", 1, None)],
 	      description="Covering letter, feasibility report and proposal sent to the lender; "
 	                  "sanction recorded."),
-	_task("ADV", "Advance Payment", "Customer", 5, "Installation Task", task_type="ADV",
+	_task("ADV", "Advance Payment", "Customer", 3, "Installation Task", task_type="ADV",
 	      documents=[("Advance receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="Advance received - from the customer, or from the bank once the loan "
 	                  "is sanctioned."),
-	_task("STMP", "Stamp Paper Purchase", "Internal", 3, "Solar Agreement",
+	_task("STMP", "Stamp Paper Purchase", "Internal", 2, "Solar Agreement",
 	      documents=[("Stamp paper data sheet", 0, "STAMP-PAPER-DATA"), ("Stamp paper scan", 0, None)],
 	      description="Stamp paper bought for the net-metering agreement; serial and value recorded."),
 	# The design is frozen in two: the system (material BOM, single line diagram) and the
@@ -163,12 +170,11 @@ TASKS = [
 	_task("SDSGN", "Structural Design Freeze", "Internal", 3, "Installation Task", role=SITE, task_type="SDSGN",
 	      documents=[("Structure drawing", 0, None)],
 	      description="Structure BOM for the roof verified and frozen; structure drawing approved."),
-	_task("SPROC", "Structure Material Procurement", "Internal", 5, "Installation Task", role=SITE,
+	_task("SPROC", "Structure Material Procurement", "Internal", 1, "Installation Task", role=SITE,
 	      task_type="SPROC", documents=[("Structure material bill", 0, None)],
-	      due_anchor_task="ADV", due_anchor_days=0,
 	      description="The structure's material - pipes, consumables, bolts and caps - bought to the "
 	                  "package's structure BOM for the roof type and panel capacity."),
-	_task("PROC", "Material Procurement", "Internal", 7, "Installation Task", task_type="PROC",
+	_task("PROC", "Material Procurement", "Internal", 1, "Installation Task", task_type="PROC",
 	      documents=[("Material purchase list", 0, None)],
 	      description="The system's material - panels, inverter, cables, earthing, clamps, fasteners, "
 	                  "conduit - bought to the package's bill of materials, delivered to the site "
@@ -178,52 +184,50 @@ TASKS = [
 	      description="Materials dispatched to the customer site with serial numbers recorded."),
 	# The supplier's bill for the material, once it is on its way (api/supplier_bill): read
 	# from the bill's PDF into an ERPNext Purchase Invoice on the job.
-	_task("SUPINV", "Supplier Invoice", "Internal", 3, "Purchase Invoice",
-	      due_anchor_task="DISP", due_anchor_days=3, documents=[("Supplier tax invoice", 0, None)],
+	_task("SUPINV", "Supplier Invoice", "Internal", 2, "Purchase Invoice", documents=[("Supplier tax invoice", 0, None)],
 	      description="The supplier's bill for the job's material read from its PDF and entered as "
 	                  "a Purchase Invoice."),
-	# The job's serial numbers, once the bill is in (api/serial_entry): fetched from the
-	# supplier's bill where it lists them, read off a photo of the labels, or typed.
-	_task("SERIAL", "Enter Serial Numbers", "Internal", 2, "Installation Task",
-	      due_anchor_task="SUPINV", due_anchor_days=2, documents=[("Serial number labels", 0, None)],
-	      description="The modules', inverters' and other equipment's serial numbers entered on the job's "
-	                  "register - from the supplier's invoice, a photo of the labels, or typed."),
 	# The work orders follow the dispatch: the material is on site before the crews are.
-	_task("IWOS", "Work Order - Structure", "Internal", 5, "Installation Work Order", role=SITE,
+	_task("IWOS", "Work Order - Structure", "Internal", 4, "Installation Work Order", role=SITE,
 	      task_type="Structure", documents=[("Structure photographs", 0, None)],
 	      description="Structure erection ordered to employees or a contractor."),
 	_task("IWOI", "Work Order - Installation", "Internal", 5, "Installation Work Order", role=SITE,
 	      task_type="Installation", documents=[("Geo-tagged installation photographs", 1, None)],
 	      description="Installation ordered and executed; photographs carry GPS coordinates."),
+	# The job's serial numbers, listed after the work orders and once the bill is in (api/serial_entry): fetched from the
+	# supplier's bill where it lists them, read off a photo of the labels, or typed.
+	_task("SERIAL", "Enter Serial Numbers", "Internal", 1, "Installation Task", documents=[("Serial number labels", 0, None)],
+	      description="The modules', inverters' and other equipment's serial numbers entered on the job's "
+	                  "register - from the supplier's invoice, a photo of the labels, or typed."),
 	_task("MATL", "Serials to Electrical Contractor", "Internal", 1, "Material Dispatch Notice",
 	      is_mandatory=0, documents=[("Completion report data sheet", 1, "COMPLETION-REPORT-DATA")],
 	      description="Material and serial details mailed to the electrical contractor in the "
 	                  "completion-report format."),
 	# The customer pays in the phases of the package's payment terms (api/payment_tasks):
 	# the advance, after installation, after commissioning - each with what is still unpaid.
-	_task("BAL", "Payment after Installation", "Customer", 7, "Installation Task", task_type="BAL",
+	_task("BAL", "Payment after Installation", "Customer", 1, "Installation Task", task_type="BAL",
 	      documents=[("Balance receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="The payment due once the plant is installed, with anything unpaid from the advance."),
-	_task("PORTUPD", "Installation Update on Portal", "Internal", 2, "Installation Task", role=DOCS,
+	_task("PORTUPD", "Installation Update on Portal", "Internal", 3, "Installation Task", role=DOCS,
 	      applicability="Subsidised Only", task_type="PORTUPD",
 	      documents=[("DCR certificate", 1, None), ("Portal acknowledgement", 0, None)],
 	      description="Installation details updated on the national portal with the DCR document."),
-	_task("CEIG", "Inspectorate Approval", "Inspectorate", 15, "Portal Application", role=LIAISON,
+	_task("CEIG", "Inspectorate Approval", "Inspectorate", 3, "Portal Application", role=LIAISON,
 	      applicability="Above Capacity Threshold", threshold_kw=10,
 	      task_type="Electrical Inspectorate",
 	      documents=[("Electrical inspectorate certificate", 1, None)],
 	      description="Chief Electrical Inspectorate approval, where the capacity requires one."),
 	# Form 2 and Form 3 are two submissions: Form 2 within thirty days of the Form 1 fee, its
 	# registration fee, then Form 3 - the completion papers, with the executed agreement.
-	_task("FRM2", "Form 2 Submission", "Internal", 3, "Document Pack", role=DOCS,
-	      task_type="KSEB Form 2", due_anchor_task="F1PAY", due_anchor_days=30,
+	_task("FRM2", "Form 2 Submission", "Internal", 1, "Document Pack", role=DOCS,
+	      task_type="KSEB Form 2",
 	      documents=[("Annexure / Form 2", 1, "KSEB-FORM-2"), ("AE acknowledged Form 2", 0, None)],
 	      description="Form 2 generated and submitted to the section office within thirty days of "
 	                  "the Form 1 fee."),
 	_task("F2PAY", "Form 2 Payment", "Internal", 2, "Statutory Fee Payment",
 	      task_type="Registration Fee", documents=[("Registration fee receipt", 1, None)],
 	      description="Registration fee paid; eighty percent of the base is refundable later."),
-	_task("KFORMS", "Form 3 Submission", "Internal", 3, "Document Pack", role=DOCS,
+	_task("KFORMS", "Form 3 Submission", "Internal", 5, "Document Pack", role=DOCS,
 	      task_type="KSEB Form 3",
 	      documents=[("KSEB Solar Agreement", 1, "KSEB-NETMETER-AGREEMENT"),
 	                 ("Annexure / Form 3", 1, "KSEB-FORM-3"),
@@ -232,27 +236,26 @@ TASKS = [
 	                 ("Installation and inverter testing checklist", 1, "KSEB-TESTING-CHECKLIST")],
 	      description="Agreement, Form 3, covering letter, net meter request and checklist generated "
 	                  "and submitted to the section office."),
-	_task("COMM", "Commissioning", "DISCOM", 10, "Commissioning Report", role=SITE,
+	_task("COMM", "Commissioning", "DISCOM", 3, "Commissioning Report", role=SITE,
 	      documents=[("Commissioning certificate", 1, None),
 	                 ("Commissioning certificate (customer)", 0, "CUST-COMMISSIONING-CERTIFICATE"),
 	                 ("Customer handover pack", 0, "CUST-HANDOVER-PACK")],
 	      description="Plant commissioned; certificate, net meter serial and readings recorded."),
-	_task("PCOM", "Payment after Commissioning", "Customer", 7, "Installation Task",
-	      due_anchor_task="COMM", due_anchor_days=0,
+	_task("PCOM", "Payment after Commissioning", "Customer", 3, "Installation Task",
 	      documents=[("Commissioning payment receipt or bank advice", 0, None), ("Payment statement", 0, "PAYMENT-STATEMENT")],
 	      description="The last payment, once the plant is commissioned, with anything still unpaid."),
-	_task("KTST", "DISCOM Inspection & Pre-Energisation Test", "DISCOM", 10, "Installation Task",
+	_task("KTST", "DISCOM Inspection & Pre-Energisation Test", "DISCOM", 3, "Installation Task",
 	      role=LIAISON, task_type="KTST", documents=[("Signed testing checklist", 0, None)],
 	      description="Section office inspects the installation and witnesses the protection tests."),
-	_task("MTR", "Meter Purchase", "DISCOM", 7, "Installation Task", role=LIAISON,
+	_task("MTR", "Meter Purchase", "DISCOM", 3, "Installation Task", role=LIAISON,
 	      applicability="Net Meter Purchased Only", task_type="MTR",
 	      documents=[("Meter invoice or allocation record", 0, None), ("Meter test certificate", 0, None)],
 	      description="Net meter bought from KSEB or a vendor; make and serial recorded."),
-	_task("MTRPAY", "Meter Payment", "Internal", 2, "Statutory Fee Payment",
+	_task("MTRPAY", "Meter Payment", "Internal", 3, "Statutory Fee Payment",
 	      applicability="Net Meter Purchased Only", task_type="Net Meter Charge",
 	      documents=[("Meter payment receipt", 1, None)],
 	      description="Meter charge paid and the cost recorded against the job."),
-	_task("BCOM", "Bank Completion Documents", "Bank", 5, "Document Pack", role=DOCS,
+	_task("BCOM", "Bank Completion Documents", "Bank", 3, "Document Pack", role=DOCS,
 	      applicability="Financed Sales Only", task_type="Bank Completion Pack",
 	      documents=[("Project completion report (bank)", 1, "BANK-COMPLETION-REPORT"),
 	                 ("Bank covering letter - balance transfer", 1, "BANK-COVERING-COMPLETION"),
@@ -272,10 +275,10 @@ TASKS = [
 	                 ("Request for refund of registration fee", 0, "KSEB-REFUND-REQUEST")],
 	      description="Everything the customer keeps: quotation, work orders, statement, invoice, "
 	                  "warranties, contacts and the KSEB refund request."),
-	_task("REVIEW", "Customer Review", "Customer", 7, "Customer Review", is_mandatory=0,
+	_task("REVIEW", "Customer Review", "Customer", 3, "Customer Review", is_mandatory=0,
 	      documents=[("Review photographs and videos", 0, None)],
 	      description="The customer's review collected as text, photographs and video."),
-	_task("SUBREQ", "Subsidy Request", "Government", 30, "Subsidy Claim", role=DOCS,
+	_task("SUBREQ", "Subsidy Request", "Government", 3, "Subsidy Claim", role=DOCS,
 	      applicability="Subsidised Only",
 	      documents=[("Project completion report (national portal)", 1, "NP-COMPLETION-REPORT"),
 	                 ("Portal acknowledgement", 0, None), ("Customer bank confirmation", 0, None)],
@@ -284,7 +287,7 @@ TASKS = [
 	      is_mandatory=0, applicability="Subsidised Only",
 	      documents=[("Correction proof", 0, None)],
 	      description="A rejected or queried claim corrected and resubmitted."),
-	_task("DBT", "Subsidy Disbursement", "Government", 45, "Subsidy Claim", role=DOCS,
+	_task("DBT", "Subsidy Disbursement", "Government", 3, "Subsidy Claim", role=DOCS,
 	      applicability="Subsidised Only", documents=[("Subsidy credit confirmation", 1, None)],
 	      description="Direct benefit transfer confirmed to the consumer's account."),
 ]

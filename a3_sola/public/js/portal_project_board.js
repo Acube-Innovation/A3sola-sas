@@ -175,6 +175,58 @@
 		return iconLink(name, p.label, p.url + "&signed=1", ' data-print-base="' + esc(p.url) + '" target="_blank" rel="noopener"');
 	}
 
+	/* Share a document with someone who has no login - the bank, KSEB, the customer: a link
+	   that opens that one document (api/task_share), sent by WhatsApp, e-mail, the phone's
+	   share sheet, or copied. A paper the system prints is shared as the sign & seal box says. */
+	function shareButton(url, label, signable) {
+		return '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" title="Share ' + esc(label) +
+			'" aria-label="Share ' + esc(label) + '" data-share-url="' + esc(url) + '" data-share-name="' + esc(label) + '"' +
+			(signable ? " data-share-signable" : "") + ">" + svgIcon("share") + "</button>";
+	}
+	function shareDocument(m, task, button) {
+		var signed = m.body.querySelector("[data-print-signed]");
+		var url = button.dataset.shareUrl;
+		if (button.hasAttribute("data-share-signable")) url += "&signed=" + (!signed || signed.checked ? "1" : "0");
+		var s = modal("Share " + button.dataset.shareName, task.name);
+		s.body.innerHTML = '<p class="a3s-taskpanel__empty">Making the link…</p>';
+		call("a3_sola.api.task_share.share_link", { installation: installation, task_code: task.code, url: url }).then(function (r) {
+			var canShare = !!(navigator.share);
+			s.body.innerHTML =
+				'<p class="a3s-taskpanel__sub">Anyone with the link can open this document until ' + esc(r.expires.split("-").reverse().join("-")) + ", without signing in.</p>" +
+				'<div class="a3s-taskshare">' +
+				'<a class="a3s-btn a3s-taskshare__wa" href="https://wa.me/?text=' + encodeURIComponent(r.message) + '" target="_blank" rel="noopener">' + svgIcon("whatsapp") + "<span>WhatsApp</span></a>" +
+				'<a class="a3s-btn a3s-btn--secondary" href="mailto:?subject=' + encodeURIComponent(r.subject) + "&body=" + encodeURIComponent(r.message) + '">' + svgIcon("mail") + "<span>E-mail</span></a>" +
+				(canShare ? '<button type="button" class="a3s-btn a3s-btn--secondary" data-share-device>' + svgIcon("share") + "<span>Share file</span></button>" : "") +
+				'<button type="button" class="a3s-btn a3s-btn--ghost" data-share-copy>' + svgIcon("doc") + "<span>Copy link</span></button>" +
+				"</div>" +
+				'<input class="a3s-taskshare__link" type="text" readonly value="' + esc(r.link) + '" aria-label="Share link">' +
+				'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--ghost" data-close>Close</button></div>';
+			s.body.addEventListener("click", function (e) {
+				if (e.target.closest("[data-share-copy]")) {
+					var box = s.body.querySelector(".a3s-taskshare__link");
+					(navigator.clipboard ? navigator.clipboard.writeText(r.link) : Promise.reject()).catch(function () {
+						box.select(); document.execCommand("copy");
+					}).then(function () { s.status("Link copied.", "success"); });
+				}
+				if (e.target.closest("[data-share-device]")) {
+					/* The file itself where the phone can take it, else the link. */
+					fetch(r.link).then(function (res) { return res.blob(); }).then(function (blob) {
+						var file = new File([blob], r.file_name, { type: blob.type || "application/pdf" });
+						var withFile = navigator.canShare && navigator.canShare({ files: [file] });
+						return navigator.share(withFile ? { files: [file], title: r.subject, text: r.subject } :
+							{ title: r.subject, text: r.message, url: r.link });
+					}).catch(function (err) { if (err && err.name !== "AbortError") s.status("Could not share: " + err.message, "error"); });
+				}
+			});
+		}).catch(function (e) { s.body.innerHTML = ""; s.status(e.message, "error"); });
+	}
+
+	/* The print a row shares: the one to view, else the first - not its download twin. */
+	function sharePrint(d) {
+		var prints = d.prints || [];
+		return prints.find(function (p) { return !/download=1/.test(p.url); }) || prints[0] || null;
+	}
+
 	function renderDocuments(m, task, data) {
 		var rows = data.documents || [];
 		var html = "";
@@ -204,7 +256,8 @@
 						return '<li class="a3s-taskdocs__part"><span class="a3s-taskdocs__part-name">' + esc(label) + "</span>" +
 							'<span class="a3s-taskdocs__state is-uploaded">Uploaded</span>' +
 							parts[label].map(function (f, i) {
-								return iconLink("eye", "Open " + label + (i ? " " + (i + 1) : ""), f.url, ' target="_blank" rel="noopener"');
+								return iconLink("eye", "Open " + label + (i ? " " + (i + 1) : ""), f.url, ' target="_blank" rel="noopener"') +
+									shareButton(f.url, label);
 							}).join("") + "</li>";
 					}).join("") +
 					d.missing.map(function (mm) {
@@ -228,6 +281,8 @@
 						return iconLink("eye", "Open" + (f.label ? " " + f.label : ""), f.url, ' target="_blank" rel="noopener"');
 					}).join("") +
 					(d.prints || []).map(function (p) { return printLink(p, true); }).join("") +
+					((d.prints || []).length ? shareButton(d.prints[0].url, d.name, true) :
+						d.files.map(function (f) { return shareButton(f.url, f.label || d.name); }).join("")) +
 					(d.missing || []).map(function (mm) {
 						targets.push(mm.upload);
 						return uploadButton("Upload " + mm.label, 'data-upload-to="' + (targets.length - 1) + '"');
@@ -249,6 +304,8 @@
 				(d.file_url && !(d.prints || []).some(function (p) { return d.file_url.indexOf(p.url) === 0; })
 					? iconLink("eye", "Open " + (d.file_name || d.name), d.file_url, ' target="_blank" rel="noopener"') : "") +
 				(d.prints || []).map(function (p) { return printLink(p, p.signable); }).join("") +
+				(sharePrint(d) ? shareButton(sharePrint(d).url, d.name, sharePrint(d).signable) :
+					(d.file_url ? shareButton(d.file_url, d.file_name || d.name) : "")) +
 				(!d.file_url && data.can_upload ? uploadButton("Upload " + d.name, 'data-upload="' + esc(d.row) + '"') : "") +
 				(d.removable && data.can_upload ? '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed a3s-icon-btn--danger" title="Remove ' +
 					esc(d.file_name || d.name) + '" aria-label="Remove ' + esc(d.file_name || d.name) + '" data-remove="' + esc(d.row) +
@@ -294,6 +351,8 @@
 			var extra = event.target.closest("[data-upload-new]");
 			var to = event.target.closest("[data-upload-to]");
 			var drop = event.target.closest("[data-remove]");
+			var share = event.target.closest("[data-share-url]");
+			if (share) { shareDocument(m, task, share); return; }
 			if (drop) {
 				if (!window.confirm("Remove the uploaded " + drop.dataset.removeName + "?")) return;
 				m.status("Removing…");
