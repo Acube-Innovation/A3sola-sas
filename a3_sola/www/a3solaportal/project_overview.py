@@ -98,31 +98,31 @@ def _location(doc):
 
 	point = purchase_list.location(doc)
 	if not point:
-		return {"label": "Location", "value": ""}
-	return {"label": "Location", "value": "{0:.4f}, {1:.4f} ↗".format(*point), "route": documents.maps_link(*point),
+		return {"label": "Location", "ic": "pin", "value": ""}
+	return {"label": "Location", "ic": "pin", "value": "{0:.4f}, {1:.4f} ↗".format(*point), "route": documents.maps_link(*point),
 		"external": True}
 
 
 def _summary(consumer, electricity, solar, proposal):
 	"""The one card above the board: the facts a person working the job reaches for, taken
-	from the consumer, connection, system and offer - each said once."""
+	from the consumer, connection, system and offer - each said once, with its icon."""
 	facts = dict(consumer["facts"])
 	connection = dict(electricity["facts"])
 	system = " ".join(filter(None, [f"{solar['capacity']} kW" if solar["capacity"] else "", solar["system_type"]]))
 	loan = " · ".join(filter(None, [proposal["loan"], proposal["lender"]]))
 	return [
-		{"label": "Consumer No.", "value": facts.get("Consumer No.")},
-		{"label": "Mobile", "value": facts.get("Mobile")},
-		{"label": "DISCOM Section", "value": connection.get("Section")},
-		{"label": "Connection", "value": connection.get("Connection")},
-		{"label": "System", "value": system},
-		{"label": "Package", "value": solar["package"]},
-		{"label": "Modules", "value": solar["modules"]},
-		{"label": "Inverter", "value": solar["inverters"]},
-		{"label": "Subsidy Scheme", "value": connection.get("Subsidy Scheme")},
-		{"label": "Loan", "value": loan},
-		{"label": "Proposal", "value": proposal["name"], "route": proposal["route"], "badge": proposal["status"]},
-		{"label": "Net Cost", "value": proposal["net_cost"]},
+		{"label": "Consumer No.", "ic": "barcode", "value": facts.get("Consumer No.")},
+		{"label": "Mobile", "ic": "phone", "value": facts.get("Mobile")},
+		{"label": "DISCOM Section", "ic": "globe", "value": connection.get("Section")},
+		{"label": "Connection", "ic": "power", "value": connection.get("Connection")},
+		{"label": "System", "ic": "bolt", "value": system},
+		{"label": "Package", "ic": "package", "value": solar["package"]},
+		{"label": "Modules", "ic": "stack", "value": solar["modules"]},
+		{"label": "Inverter", "ic": "transfer", "value": solar["inverters"]},
+		{"label": "Subsidy Scheme", "ic": "shield", "value": connection.get("Subsidy Scheme")},
+		{"label": "Loan", "ic": "bank", "value": loan},
+		{"label": "Proposal", "ic": "doc", "value": proposal["name"], "route": proposal["route"], "badge": proposal["status"]},
+		{"label": "Net Cost", "ic": "wallet", "value": proposal["net_cost"]},
 	]
 
 
@@ -267,8 +267,12 @@ def _task_columns(doc):
 	]
 	index = {scope: i for i, (_label, scope, _icon) in enumerate(shown)}
 	people = {}
+	# Shown by name: a row saved without its fetched name takes the user's own.
+	unnamed = list({a.user for a in doc.get("task_assignees") or [] if a.user and not a.full_name})
+	names = dict(frappe.get_all("User", filters={"name": ["in", unnamed]}, fields=["name", "full_name"],
+		as_list=True)) if unnamed else {}
 	for a in doc.get("task_assignees") or []:
-		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or a.user})
+		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or names.get(a.user) or a.user})
 	from a3_sola.api.tasks import may_complete
 
 	from a3_sola.api import stages

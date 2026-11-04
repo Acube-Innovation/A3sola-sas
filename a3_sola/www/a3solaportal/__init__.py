@@ -100,12 +100,13 @@ NAV_GROUPS = [
 		"items": [
 			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
 			{"title": "Packages", "sub": "Systems, prices and BOMs", "ic": "package", "route": "/a3solaportal/packages"},
+			{"title": "Menu", "sub": "What the menu shows", "ic": "checklist", "route": "/a3solaportal/menu"},
 		],
 	},
 ]
 
 #: Menu items for admins alone: the page refuses anyone else too.
-ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages"}
+ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/menu"}
 
 # The top bar names the signed-in user's company: their default Company, else the site's
 # default. Shown with the company's logo when one is set on the Company record. The
@@ -145,19 +146,22 @@ PARTNER_NAV = {
 
 def nav_groups(user=None):
 	"""The menu: all of it for staff; for a partner - a dealer, a contractor - only the items
-	he may read, and no empty group."""
+	he may read. Less, for everyone, what an admin has hidden (Administration > Menu,
+	api/portal_menu), and no empty group."""
 	from a3_sola.api.partner_scope import is_partner
+	from a3_sola.api.portal_menu import hidden
 	from a3_sola.api.portal_users import is_user_admin
 
+	off = hidden()
 	if not is_partner(user):
-		if is_user_admin(user):
-			return NAV_GROUPS
-		return [g for g in ({**g, "items": [i for i in g["items"] if i["route"] not in ADMIN_NAV]} for g in NAV_GROUPS)
-			if g["items"]]
+		admin = is_user_admin(user)
+		shown = lambda i: i["route"] not in off and (admin or i["route"] not in ADMIN_NAV)  # noqa: E731
+	else:
+		shown = lambda i: i["route"] not in off and i["route"] in PARTNER_NAV and frappe.has_permission(  # noqa: E731
+			PARTNER_NAV[i["route"]], "read", user=user)
 	out = []
 	for group in NAV_GROUPS:
-		items = [i for i in group["items"] if i["route"] in PARTNER_NAV
-			and frappe.has_permission(PARTNER_NAV[i["route"]], "read", user=user)]
+		items = [i for i in group["items"] if shown(i)]
 		if items:
 			out.append({**group, "items": items})
 	return out

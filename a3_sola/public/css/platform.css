@@ -3041,11 +3041,16 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 }
 .a3s-proj__task-meta a { font-size: 0.6875rem; }
 .a3s-proj__task-who {
-	display: flex; align-items: center; gap: 0.25rem; margin: 0; min-height: 1rem;
-	font-size: 0.6875rem; color: var(--color-text-muted); min-width: 0;
+	display: flex; align-items: center; gap: 0.35rem; margin: 0; min-height: 1.1rem;
+	font-size: 0.6875rem; font-weight: 600; color: var(--color-text); min-width: 0;
 }
-.a3s-proj__task-who .a3s-ic { width: 0.8rem; height: 0.8rem; flex: none; }
-.a3s-proj__task-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The person badge: a circle in the card's status colours (--tk-tile behind, --tk-ink drawn). */
+.a3s-proj__task-avatar {
+	flex: none; display: grid; place-items: center; width: 1.1rem; height: 1.1rem; border-radius: 50%;
+	background: var(--tk-tile); color: var(--tk-ink);
+}
+.a3s-proj__task-avatar .a3s-ic { width: 0.7rem; height: 0.7rem; }
+.a3s-proj__task-who > span:not(.a3s-proj__task-avatar) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* A card that opens its task: the link covers it; the document link sits above that. */
 .a3s-proj__task.has-link { position: relative; transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease); }
 .a3s-proj__task.has-link:hover { border-color: var(--tk-ink); box-shadow: var(--shadow-soft); }
@@ -3485,23 +3490,31 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s .a3s-printmenu__list a { padding: 0.45rem 0.6rem; border-radius: 0.5rem; font-size: 0.875rem; color: var(--color-text); }
 .a3s .a3s-printmenu__list a:hover { background: var(--color-accent-soft); color: var(--color-accent-hover); }
 
-/* A task card's menu on the project board: the task, its documents, skip. Placed on the
-   page under the card (portal_project_board.js). */
 .a3s-btn--sm { padding: 0.4rem 0.85rem; font-size: 0.8125rem; }
-.a3s-taskmenu {
-	position: fixed; z-index: 90; min-width: 12rem; display: grid; padding: 0.35rem;
-	background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0.85rem;
-	box-shadow: var(--shadow-raised);
+
+/* A task card's actions on the project board: opened in its list under the card, four orange
+   buttons in a row - open, documents, complete, skip - each a white icon over its name
+   (portal_project_board.js). One it cannot take now is grey. */
+.a3s-proj__task.is-open { border-color: var(--color-accent); box-shadow: var(--shadow-soft); }
+.a3s-taskacts {
+	display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem;
+	animation: a3s-taskacts-open 0.18s ease-out;
 }
-.a3s-taskmenu a, .a3s-taskmenu button, .a3s-taskmenu span {
-	display: block; width: 100%; padding: 0.5rem 0.7rem; border: 0; border-radius: 0.55rem; background: none;
-	font: inherit; font-size: 0.875rem; text-align: left; color: var(--color-text); cursor: pointer;
+@keyframes a3s-taskacts-open { from { opacity: 0; transform: translateY(-0.35rem); } to { opacity: 1; transform: none; } }
+.a3s .a3s-taskacts__btn {
+	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; min-width: 0;
+	padding: 0.6rem 0.1rem 0.5rem; border: 2px solid var(--color-accent); border-radius: 0.75rem; background: var(--color-accent);
+	font: inherit; font-size: 0.65rem; font-weight: 700; line-height: 1.15; text-align: center; text-decoration: none;
+	color: #fff; cursor: pointer; transition: background var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
-.a3s .a3s-taskmenu a:hover, .a3s-taskmenu button:hover, .a3s-taskmenu a:focus-visible, .a3s-taskmenu button:focus-visible {
-	background: var(--color-accent-soft); color: var(--color-accent-hover); outline: none;
-}
-.a3s-taskmenu .is-disabled { color: var(--color-text-muted); cursor: default; }
-.a3s-taskmenu [data-act="skip"], .a3s-taskmenu [data-act="unskip"] { border-top: 1px solid var(--color-border); border-radius: 0 0 0.55rem 0.55rem; margin-top: 0.2rem; }
+.a3s .a3s-taskacts__btn:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); color: #fff; box-shadow: var(--shadow-soft); }
+.a3s .a3s-taskacts__btn:focus-visible { outline: 2px solid var(--color-accent-hover); outline-offset: 2px; }
+.a3s-taskacts__icon { display: inline-flex; color: #fff; }
+.a3s-taskacts__icon .a3s-ic { width: 1.3rem; height: 1.3rem; }
+/* Words wrap whole ("Open / task"), never mid-word. */
+.a3s-taskacts__label { max-width: 100%; overflow-wrap: normal; word-break: normal; hyphens: none; }
+.a3s .a3s-taskacts__btn.is-disabled { border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; box-shadow: none; background: var(--color-bg); }
+.a3s-taskacts__btn.is-disabled .a3s-taskacts__icon { color: var(--color-text-muted); }
 
 .a3s-modal__panel.a3s-taskpanel { width: min(40rem, 100%); }
 .a3s-taskpanel__sub { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
@@ -3551,13 +3564,24 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-proj .a3s-proj__summary { display: grid; gap: 0.9rem; padding: 1rem 1.25rem; }
 .a3s-proj__summary-facts {
 	display: grid; gap: 0.6rem 1.25rem; margin: 0;
-	grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
 }
-.a3s-proj__summary-facts div { min-width: 0; }
+/* Each fact: its icon on the left, a pale square as tall as the label and value together
+   (two rows, as a task card's tile), the label over the value beside it. */
+.a3s-proj__summary-facts div {
+	min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.6rem; align-items: start; align-content: start;
+}
 .a3s-proj__summary-facts dt {
+	grid-column: 2; grid-row: 1;
 	font-size: 0.625rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted);
 }
-.a3s-proj__summary-facts dd { margin: 0.1rem 0 0; font-size: 0.8125rem; line-height: 1.35; overflow-wrap: anywhere; }
+.a3s-proj__summary-facts dd { grid-column: 2; grid-row: 2; margin: 0.1rem 0 0; font-size: 0.8125rem; line-height: 1.35; overflow-wrap: anywhere; }
+.a3s-proj__summary-facts dd.a3s-proj__fact-icon {
+	grid-column: 1; grid-row: 1 / span 2; margin: 0; width: 2.15rem; height: 2.15rem;
+	display: grid; place-items: center; border-radius: 0.55rem;
+	background: var(--color-accent-soft); color: var(--color-accent);
+}
+.a3s-proj__fact-icon .a3s-ic { width: 1.05rem; height: 1.05rem; }
 .a3s-proj__summary-facts dd.is-empty { color: var(--color-text-muted); }
 .a3s-proj__summary-facts dd .a3s-badge { margin-left: 0.2rem; font-size: 0.625rem; vertical-align: middle; }
 .a3s-proj__summary-progress {

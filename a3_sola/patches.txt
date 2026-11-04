@@ -289,3 +289,5 @@ a3_sola.patches.v1_2.serials_after_work_orders
 a3_sola.patches.v1_2.payment_date_task_flow
 # Form 1 ahead of the advance on a job the customer pays; asking for the advance.
 a3_sola.patches.v1_2.form1_before_advance
+# Cost tab: Expenses replace Package Cost by Inverter; inverter options keep their panel.
+a3_sola.patches.v1_2.package_expenses

@@ -1,10 +1,10 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * The project page's task board: a card opens a small menu - the task where it is carried
- * out, its documents, and skipping it (or putting a skipped one back). Documents come from
- * the job's register (api/portal_tasks.py): each with its file, an upload while it is
- * missing, and a print for the ones the system writes. Skip asks for the reason the desk
+ * The project page's task board: a card opens its actions under itself - the task where it
+ * is carried out, its documents, completing it, and skipping it (or putting a skipped one
+ * back). Documents come from the job's register (api/portal_tasks.py): each with its file,
+ * an upload while it is missing, and a print for the ones the system writes. Skip asks for the reason the desk
  * asks for, and posts the same tasks.skip_task; the page then reloads with the board as
  * it now stands. The server decides what is allowed - a mandatory task is a manager's to
  * skip - and its message is shown as it is.
@@ -49,14 +49,29 @@
 		});
 	}
 
-	/* ---------------------------------------------------------------- menu */
+	/* -------------------------------------------------------- task actions */
+	/* A card opens its actions in its list, under itself, pushing the cards below down - four
+	   buttons in a row: open the task, its documents, complete it, skip it (or undo the skip).
+	   A second click closes them; one card's are open at a time. What a task cannot do now is
+	   shown greyed, with the reason in its tooltip. */
 	var menu = null;
 
 	function closeMenu() {
 		if (!menu) return;
 		menu.el.remove();
+		menu.card.classList.remove("is-open");
 		menu.button.setAttribute("aria-expanded", "false");
 		menu = null;
+	}
+
+	function action(act, icon, label, opts) {
+		opts = opts || {};
+		var inner = '<span class="a3s-taskacts__icon"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-' + icon + '"></use></svg></span>' +
+			'<span class="a3s-taskacts__label">' + esc(label) + "</span>";
+		var title = opts.title ? ' title="' + esc(opts.title) + '"' : "";
+		if (opts.disabled) return '<span class="a3s-taskacts__btn is-disabled" aria-disabled="true"' + title + ">" + inner + "</span>";
+		if (opts.href) return '<a class="a3s-taskacts__btn" href="' + esc(opts.href) + '"' + title + ">" + inner + "</a>";
+		return '<button type="button" class="a3s-taskacts__btn" data-act="' + act + '"' + title + ">" + inner + "</button>";
 	}
 
 	function openMenu(button) {
@@ -68,28 +83,30 @@
 			assigneeNames: button.dataset.assigneeNames || "", canComplete: button.dataset.canComplete === "1",
 			locked: button.dataset.locked === "1", lockReason: button.dataset.lockReason || "",
 		};
-		var el = document.createElement("div");
-		el.className = "a3s-taskmenu";
-		el.setAttribute("role", "menu");
-		var items = [];
-		/* Held for 50% payment (api/stages.check_half_paid): it opens once half is in, or on exemption. */
-		if (task.locked) items.push('<span role="menuitem" aria-disabled="true" class="is-disabled" title="' + esc(task.lockReason) +
-			'">Open task <small>(waits for 50% payment)</small></span>');
-		else if (task.url) items.push('<a role="menuitem" href="' + esc(task.url) + '">Open task</a>');
-		else items.push('<span role="menuitem" aria-disabled="true" class="is-disabled">Open task <small>(skipped)</small></span>');
-		items.push('<button type="button" role="menuitem" data-act="documents">Documents</button>');
-		if (task.canComplete) items.push('<button type="button" role="menuitem" data-act="complete">Complete task</button>');
-		if (task.status === "Skipped") items.push('<button type="button" role="menuitem" data-act="unskip">Undo skip</button>');
-		else if (task.status !== "Completed") items.push('<button type="button" role="menuitem" data-act="skip">Skip task</button>');
+		var items = [
+			/* Held for 50% payment (api/stages.check_half_paid): it opens once half is in, or on exemption. */
+			task.locked ? action("open", "open", "Open task", { disabled: true, title: "Waits for 50% payment" + (task.lockReason ? ": " + task.lockReason : "") })
+				: task.url ? action("open", "open", "Open task", { href: task.url })
+				: action("open", "open", "Open task", { disabled: true, title: "This task is skipped" }),
+			action("documents", "doc", "Documents"),
+			task.canComplete ? action("complete", "check", "Complete")
+				: action("complete", "check", "Complete", { disabled: true,
+					title: task.status === "Completed" ? "Already completed" : "Completed in its own page, or not yours to complete" }),
+			task.status === "Skipped" ? action("unskip", "undo", "Undo skip")
+				: task.status === "Completed" ? action("skip", "skip", "Skip", { disabled: true, title: "A completed task is not skipped" })
+				: action("skip", "skip", "Skip"),
+		];
+		var el = document.createElement("li");
+		el.className = "a3s-taskacts";
+		el.id = "a3s-taskacts-" + task.code;
+		el.setAttribute("role", "group");
+		el.setAttribute("aria-label", task.name + ": actions");
 		el.innerHTML = items.join("");
-		/* On the page, not in the card: the board clips what overflows it. */
-		document.body.appendChild(el);
-		var rect = card.getBoundingClientRect();
-		var width = el.offsetWidth;
-		el.style.top = Math.min(rect.bottom + 4, window.innerHeight - el.offsetHeight - 8) + "px";
-		el.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + "px";
+		card.after(el);
+		card.classList.add("is-open");
 		button.setAttribute("aria-expanded", "true");
-		menu = { el: el, button: button };
+		button.setAttribute("aria-controls", el.id);
+		menu = { el: el, button: button, card: card };
 		el.addEventListener("click", function (event) {
 			var act = event.target.closest("[data-act]");
 			if (!act) return;
@@ -100,7 +117,7 @@
 			else if (act.dataset.act === "unskip") askUnskip(task);
 		});
 		var first = el.querySelector("a, button");
-		if (first) first.focus();
+		if (first) first.focus({ preventScroll: true });
 	}
 
 	board.addEventListener("click", function (event) {
@@ -110,12 +127,13 @@
 		if (menu && menu.button === button) closeMenu();
 		else openMenu(button);
 	});
-	document.addEventListener("click", function (event) {
-		if (menu && !menu.el.contains(event.target) && event.target.closest(".a3s-proj__task-open") !== menu.button) closeMenu();
+	document.addEventListener("keydown", function (event) {
+		if (event.key === "Escape" && menu) {
+			var button = menu.button;
+			closeMenu();
+			button.focus();
+		}
 	});
-	document.addEventListener("keydown", function (event) { if (event.key === "Escape") closeMenu(); });
-	window.addEventListener("scroll", closeMenu, true);
-	window.addEventListener("resize", closeMenu);
 
 	/* --------------------------------------------------------------- modal */
 	function modal(title, sub) {

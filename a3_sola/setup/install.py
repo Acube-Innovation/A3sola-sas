@@ -655,27 +655,11 @@ def seed_packages(company):
 					 "specification": "PVC/XLPE aluminium"},
 					{"system_type": "Mounting Structure", "qty": 1, "is_default": 1,
 					 "specification": "Epoxy coated GI tubes for flat roof"},
-					# A specification, not just a count: the price rows select a meter by
-					# name, so a nameless one cannot be chosen.
+					# A specification, not just a count: the proposal names the meter.
 					{"system_type": "Solar Energy Meter", "qty": meters, "is_default": 1,
 					 "specification": "Watt-hour meter"},
 					{"system_type": "Earthing", "qty": earthing, "is_default": 1},
 					{"system_type": "Lightning Protection", "qty": la, "is_default": 1},
-				],
-				# One priced configuration: the default module, the default inverter and
-				# the standard boards. The price itself stays blank - the client's workbook
-				# holds the live figures, and a seeded number would look like a quote.
-				"prices": [
-					{
-						"module": mod_spec,
-						"inverter": i1_spec,
-						"dcdb": "With PV fuses at input, DC isolator and Type 2 DC SPD "
-						        "in IP65 rated enclosure",
-						"acdb": "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated "
-						        "enclosure",
-						"energy_meter": "Watt-hour meter",
-						"system_cost": 0,
-					}
 				],
 				"warranty_years": 5,
 				"is_active": 1,

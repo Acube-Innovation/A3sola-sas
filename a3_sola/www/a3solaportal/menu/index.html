@@ -1,0 +1,68 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+{#- Administration > Menu (api/portal_menu): a checkbox per menu item, a group's own box ticking
+    or clearing all of it. Unticked items are hidden from everyone's menu; their pages still
+    open by link. Saved by portal_menu_settings.js. -#}
+<style>
+	.a3s-menuset { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); align-items: start; }
+	.a3s-menuset__group { padding: 0; overflow: hidden; }
+	.a3s-menuset__head { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--color-border);
+		background: var(--color-bg); font-weight: 800; font-size: 0.8125rem; letter-spacing: 0.04em; text-transform: uppercase; }
+	.a3s-menuset__head .a3s-check { flex: 1; font-size: inherit; }
+	.a3s-menuset__count { flex: none; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); letter-spacing: 0; text-transform: none; white-space: nowrap; }
+	.a3s-menuset__items { list-style: none; margin: 0; padding: 0.35rem 0.5rem 0.5rem; }
+	.a3s-menuset__item { display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
+	.a3s-menuset__item:hover { background: var(--color-accent-soft); }
+	.a3s-menuset__item input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: var(--color-accent); }
+	.a3s-menuset__ic { flex: none; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 0.55rem;
+		background: var(--color-accent-soft); color: var(--color-accent); }
+	.a3s-menuset__ic .a3s-ic { width: 1rem; height: 1rem; }
+	.a3s-menuset__text { min-width: 0; display: grid; }
+	.a3s-menuset__title { font-size: 0.875rem; font-weight: 700; }
+	.a3s-menuset__sub { font-size: 0.75rem; color: var(--color-text-muted); }
+	.a3s-menuset__item.is-off .a3s-menuset__title, .a3s-menuset__item.is-off .a3s-menuset__sub { color: var(--color-text-muted); text-decoration: line-through; }
+	.a3s-menuset__item.is-off .a3s-menuset__ic { background: var(--color-bg); color: var(--color-text-muted); }
+	.a3s-menuset__item.is-locked { cursor: default; }
+</style>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Menu</h2>
+		<p class="a3s-main__sub">Tick what the portal's menu shows. An unticked item is hidden from everyone's menu - its page still opens by its link, and the desk is unchanged.</p>
+	</div>
+	<button type="button" class="a3s-btn a3s-btn--primary" data-menu-save disabled>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+		<span>Save</span>
+	</button>
+</div>
+
+<p class="a3s-attach__status" data-menu-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-menuset" data-menu-set>
+	{%- for g in groups %}
+	<section class="a3s-card a3s-menuset__group" data-group="{{ g.key | e }}" aria-label="{{ g.label | e }}">
+		<div class="a3s-menuset__head">
+			<label class="a3s-check"><input type="checkbox" data-group-toggle aria-label="Show all of {{ g.label | e }}"><span>{{ g.label | e }}</span></label>
+			<span class="a3s-menuset__count" data-group-count></span>
+		</div>
+		<ul class="a3s-menuset__items">
+			{%- for i in g["items"] %}
+			<li>
+				<label class="a3s-menuset__item{% if not i.shown %} is-off{% endif %}{% if i.locked %} is-locked{% endif %}"{% if i.locked %} title="Always shown: this page brings hidden items back"{% endif %}>
+					<input type="checkbox" data-route="{{ i.route | e }}"{% if i.shown %} checked{% endif %}{% if i.locked %} disabled data-locked{% endif %}>
+					<span class="a3s-menuset__ic" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ i.ic | e }}"></use></svg></span>
+					<span class="a3s-menuset__text"><span class="a3s-menuset__title">{{ i.title | e }}</span>
+						<span class="a3s-menuset__sub">{{ i.sub | e }}{% if i.locked %} &middot; always shown{% endif %}</span></span>
+				</label>
+			</li>
+			{%- endfor %}
+		</ul>
+	</section>
+	{%- endfor %}
+</div>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_menu_settings.js?v={{ a3s_asset_version('js/portal_menu_settings.js') }}"></script>
+{% endblock %}

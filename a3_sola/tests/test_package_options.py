@@ -20,6 +20,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_price,
 	default_prices,
 	default_system_items,
+	price_for,
 	system_cost,
 )
 from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import (
@@ -48,7 +49,7 @@ OPTIMISER = {
 }
 
 
-def make_package(modules=None, inverters=None, system_items=None, prices=None, **kwargs):
+def make_package(modules=None, inverters=None, system_items=None, **kwargs):
 	doc = frappe.get_doc(
 		{
 			"doctype": "Solar Package",
@@ -62,7 +63,6 @@ def make_package(modules=None, inverters=None, system_items=None, prices=None, *
 			"modules": modules if modules is not None else [dict(MODULE)],
 			"inverters": inverters if inverters is not None else [dict(INVERTER)],
 			"system_items": system_items or [],
-			"prices": prices or [],
 		}
 	)
 	doc.update(kwargs)
@@ -189,8 +189,8 @@ class TestInverterOptions(FrappeTestCase):
 class TestDownstreamReadsTheDefaultInverter(FrappeTestCase):
 	def setUp(self):
 		# DCR, because the estimate refuses a non-DCR package under PM Surya Ghar and the
-		# subject here is which inverter gets priced, not the subsidy rules. The prices are
-		# typed per configuration, so each inverter gets the row the assertions look for.
+		# subject here is which inverter gets priced, not the subsidy rules. Each inverter
+		# option's Cost is its price.
 		self.package = make_package(
 			is_dcr_compliant=1,
 			inverters=[
@@ -198,11 +198,6 @@ class TestDownstreamReadsTheDefaultInverter(FrappeTestCase):
 				dict(OPTIMISER, is_default=1),
 			],
 			system_items=PARTS["system_items"],
-			prices=[
-				dict(CONFIGURATION, inverter="NOT THE DEFAULT", system_cost=1),
-				dict(CONFIGURATION, inverter=OPTIMISER["inverter_specification"],
-				     system_cost=OPTIMISER["cost"]),
-			],
 		)
 
 	def test_the_estimator_offers_every_option_not_only_the_default(self):
@@ -354,7 +349,7 @@ class TestTheProposalReadsTheSystemTable(FrappeTestCase):
 		self.assertEqual(rows[-1]["item"], "Installation, Testing, Commissioning")
 
 
-#: A package that can actually be priced: one of each of the five things a price names.
+#: A package with one of each of the parts a quotation names.
 PARTS = {
 	"system_items": [
 		{"system_type": "DCDB", "specification": "PV fuses, DC isolator", "qty": 1},
@@ -363,149 +358,89 @@ PARTS = {
 	]
 }
 
-CONFIGURATION = {
-	"module": MODULE["module_specification"],
-	"inverter": INVERTER["inverter_specification"],
-	"dcdb": "PV fuses, DC isolator",
-	"acdb": "MCB and Type 2 AC SPD",
-	"energy_meter": "Watt-hour meter",
-}
-
-
 def priceable(**kwargs):
 	values = dict(PARTS)
 	values.update(kwargs)
 	return make_package(**values)
 
 
-class TestPricedConfigurations(FrappeTestCase):
-	def test_a_price_names_the_configuration_it_is_for(self):
-		package = priceable(prices=[dict(CONFIGURATION, system_cost=250000)])
-		row = package.prices[0]
-		self.assertEqual(row.module, MODULE["module_specification"])
-		self.assertEqual(row.inverter, INVERTER["inverter_specification"])
-		self.assertEqual(row.dcdb, "PV fuses, DC isolator")
-		self.assertEqual(row.acdb, "MCB and Type 2 AC SPD")
-		self.assertEqual(row.energy_meter, "Watt-hour meter")
+class TestPricesAreWorkedOut(FrappeTestCase):
+	"""The price, subsidy, net cost, fees and generation band are worked out from the package
+	(solar_package.price_for): the inverter option's Cost is its price."""
 
-	def test_all_five_selections_are_mandatory(self):
-		for missing in ("module", "inverter", "dcdb", "acdb", "energy_meter"):
-			configuration = dict(CONFIGURATION, system_cost=250000)
-			configuration.pop(missing)
-			with self.assertRaises(frappe.exceptions.MandatoryError, msg=missing):
-				priceable(prices=[configuration])
+	def test_each_inverter_option_is_priced_at_its_cost(self):
+		package = priceable(inverters=[dict(INVERTER), dict(OPTIMISER)])
+		self.assertEqual([price_for(package, r).system_cost for r in package.inverters],
+			[INVERTER["cost"], OPTIMISER["cost"]])
 
-	def test_the_same_combination_cannot_be_priced_twice(self):
-		with self.assertRaises(frappe.ValidationError):
-			priceable(
-				prices=[
-					dict(CONFIGURATION, system_cost=250000),
-					dict(CONFIGURATION, system_cost=260000),
-				]
-			)
+	def test_the_net_cost_is_the_price_less_the_subsidy(self):
+		price = default_price(priceable(is_dcr_compliant=1))
+		self.assertEqual(price.net_rate, INVERTER["cost"] - price.indicative_subsidy)
+		self.assertEqual(price.standard_discount, 0)
 
-	def test_a_different_combination_may_be_priced_separately(self):
-		"""The whole point: the same array with another inverter is another price."""
-		package = priceable(
-			inverters=[dict(INVERTER), dict(OPTIMISER)],
-			prices=[
-				dict(CONFIGURATION, system_cost=250000),
-				dict(CONFIGURATION, inverter=OPTIMISER["inverter_specification"],
-				     system_cost=290000),
-			],
-		)
-		self.assertEqual([r.system_cost for r in package.prices], [250000, 290000])
+	def test_a_package_without_dcr_has_no_subsidy(self):
+		self.assertEqual(default_price(priceable(is_dcr_compliant=0)).indicative_subsidy, 0)
 
-	def test_a_price_for_a_part_the_package_does_not_offer_is_refused(self):
-		"""A figure attached to nothing reads exactly as authoritative as a real one."""
-		with self.assertRaises(frappe.ValidationError):
-			priceable(prices=[dict(CONFIGURATION, module="A panel nobody stocks",
-			                       system_cost=250000)])
+	def test_the_generation_band_follows_the_capacity(self):
+		price = default_price(priceable())
+		self.assertGreater(price.expected_daily_units_high, 0)
+		self.assertGreaterEqual(price.expected_daily_units_high, price.expected_daily_units_low)
 
-	def test_removing_an_option_that_a_price_still_names_is_refused(self):
-		package = priceable(prices=[dict(CONFIGURATION, system_cost=250000)])
-		package.modules[0].module_specification = "Renamed panel"
-		with self.assertRaises(frappe.ValidationError):
-			package.save(ignore_permissions=True)
-
-
-class TestPricesAreResolvedNotTyped(FrappeTestCase):
-	def setUp(self):
-		self.package = priceable(
-			prices=[dict(CONFIGURATION, system_cost=250000, standard_discount=10000)]
-		)
-		self.row = self.package.prices[0]
-
-	def test_the_net_rate_is_computed_on_the_row(self):
-		self.assertEqual(
-			self.row.net_rate, 250000 - self.row.indicative_subsidy - 10000
-		)
-
-	def test_the_generation_band_is_resolved_on_the_row(self):
-		self.assertGreater(self.row.expected_daily_units_high, 0)
-		self.assertGreaterEqual(self.row.expected_daily_units_high,
-		                        self.row.expected_daily_units_low)
-
-	def test_the_generation_band_is_the_packages_not_the_modules(self):
-		"""6 x 550 Wp is a 3.3 kW array on a 3 kW package. The slab follows the 3."""
-		package = priceable(
-			modules=[
-				dict(MODULE, is_default=1),
-				dict(MODULE, module_specification="620 Wp TopCon", module_wattage=620),
-			],
-			prices=[
-				dict(CONFIGURATION, system_cost=250000),
-				dict(CONFIGURATION, module="620 Wp TopCon", system_cost=270000),
-			],
-		)
-		small, large = package.prices
-		self.assertEqual(small.expected_daily_units_high, large.expected_daily_units_high)
-		self.assertEqual(small.indicative_subsidy, large.indicative_subsidy)
-
-	def test_an_unpriced_row_stays_at_zero(self):
+	def test_an_unpriced_package_stays_at_zero(self):
 		"""Subtracting a subsidy from a blank price would publish a negative net rate."""
-		package = priceable(prices=[dict(CONFIGURATION, system_cost=0)])
-		self.assertEqual(package.prices[0].net_rate, 0.0)
+		price = default_price(priceable(is_dcr_compliant=1, inverters=[dict(INVERTER, cost=0)]))
+		self.assertEqual((price.system_cost, price.net_rate), (0, 0))
 
-
-class TestTheDefaultConfiguration(FrappeTestCase):
-	def test_the_default_price_is_the_one_for_the_default_parts(self):
-		package = priceable(
-			inverters=[dict(INVERTER), dict(OPTIMISER, is_default=1)],
-			prices=[
-				dict(CONFIGURATION, system_cost=250000),
-				dict(CONFIGURATION, inverter=OPTIMISER["inverter_specification"],
-				     system_cost=290000),
-			],
-		)
-		self.assertEqual(default_price(package).system_cost, 290000)
-
-	def test_moving_the_default_inverter_moves_the_quoted_price(self):
-		package = priceable(
-			inverters=[dict(INVERTER), dict(OPTIMISER)],
-			prices=[
-				dict(CONFIGURATION, system_cost=250000),
-				dict(CONFIGURATION, inverter=OPTIMISER["inverter_specification"],
-				     system_cost=290000),
-			],
-		)
-		self.assertEqual(default_price(package).system_cost, 250000)
+	def test_the_default_inverter_is_the_quoted_price_and_moves_with_it(self):
+		package = priceable(inverters=[dict(INVERTER), dict(OPTIMISER)])
+		self.assertEqual(default_price(package).system_cost, INVERTER["cost"])
 		package.inverters[0].is_default = 0
 		package.inverters[1].is_default = 1
 		package.save(ignore_permissions=True)
-		self.assertEqual(default_price(package).system_cost, 290000)
-
-	def test_a_package_with_no_prices_resolves_to_nothing(self):
-		self.assertIsNone(default_price(priceable(prices=[])))
+		self.assertEqual(default_price(package).system_cost, OPTIMISER["cost"])
 
 	def test_the_bulk_lookup_agrees_with_the_single_one(self):
-		package = priceable(
-			inverters=[dict(INVERTER), dict(OPTIMISER, is_default=1)],
-			prices=[
-				dict(CONFIGURATION, system_cost=250000),
-				dict(CONFIGURATION, inverter=OPTIMISER["inverter_specification"],
-				     system_cost=290000),
-			],
-		)
+		package = priceable(inverters=[dict(INVERTER), dict(OPTIMISER, is_default=1)])
 		bulk = default_prices([package.name])[package.name]
 		self.assertEqual(bulk.system_cost, default_price(package).system_cost)
+		self.assertEqual(bulk.net_rate, default_price(package).net_rate)
+
+	def test_the_default_parts_are_named(self):
+		price = default_price(priceable())
+		self.assertEqual((price.module, price.inverter, price.dcdb, price.acdb, price.energy_meter),
+			(MODULE["module_specification"], INVERTER["inverter_specification"], "PV fuses, DC isolator",
+			 "MCB and Type 2 AC SPD", "Watt-hour meter"))
+
+
+class TestBuiltWithPanel(FrappeTestCase):
+	"""An inverter option built on the package's other panel (a microinverter on panels of its
+	own) says so on its row; the estimate offers that panel with it."""
+
+	def package(self, panel):
+		return priceable(
+			modules=[dict(MODULE, is_default=1), dict(MODULE, module_specification="620 Wp TopCon", module_wattage=620)],
+			inverters=[dict(INVERTER), dict(OPTIMISER, panel_specification=panel)],
+		)
+
+	def test_the_option_is_priced_and_offered_on_its_own_panel(self):
+		from a3_sola.solar_crm.doctype.solar_package.solar_package import package_components
+
+		package = self.package("620 Wp TopCon")
+		self.assertEqual(price_for(package, package.inverters[1]).module, "620 Wp TopCon")
+		self.assertEqual(price_for(package, package.inverters[0]).module, MODULE["module_specification"])
+		self.assertIsInstance(package_components(package)["inverters"], list)
+
+	def test_a_panel_the_package_does_not_offer_is_refused(self):
+		with self.assertRaises(frappe.ValidationError):
+			self.package("A panel nobody stocks")
+
+
+class TestExpenses(FrappeTestCase):
+	def test_the_expenses_are_totalled(self):
+		item = frappe.db.get_value("Item", {"disabled": 0, "is_stock_item": 1})
+		if not item:
+			self.skipTest("No stock Item.")
+		package = priceable(expenses=[{"item": item, "qty": 4, "rate": 250}, {"item": item, "qty": 1, "rate": 99}])
+		self.assertEqual([r.amount for r in package.expenses], [1000, 99])
+		self.assertEqual(package.total_expenses, 1099)
+		self.assertEqual(default_price(package).system_cost, INVERTER["cost"])
