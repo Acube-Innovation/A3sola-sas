@@ -3564,13 +3564,24 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-proj .a3s-proj__summary { display: grid; gap: 0.9rem; padding: 1rem 1.25rem; }
 .a3s-proj__summary-facts {
 	display: grid; gap: 0.6rem 1.25rem; margin: 0;
-	grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
 }
-.a3s-proj__summary-facts div { min-width: 0; }
+/* Each fact: its icon on the left, a pale square as tall as the label and value together
+   (two rows, as a task card's tile), the label over the value beside it. */
+.a3s-proj__summary-facts div {
+	min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.6rem; align-items: start; align-content: start;
+}
 .a3s-proj__summary-facts dt {
+	grid-column: 2; grid-row: 1;
 	font-size: 0.625rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted);
 }
-.a3s-proj__summary-facts dd { margin: 0.1rem 0 0; font-size: 0.8125rem; line-height: 1.35; overflow-wrap: anywhere; }
+.a3s-proj__summary-facts dd { grid-column: 2; grid-row: 2; margin: 0.1rem 0 0; font-size: 0.8125rem; line-height: 1.35; overflow-wrap: anywhere; }
+.a3s-proj__summary-facts dd.a3s-proj__fact-icon {
+	grid-column: 1; grid-row: 1 / span 2; margin: 0; width: 2.15rem; height: 2.15rem;
+	display: grid; place-items: center; border-radius: 0.55rem;
+	background: var(--color-accent-soft); color: var(--color-accent);
+}
+.a3s-proj__fact-icon .a3s-ic { width: 1.05rem; height: 1.05rem; }
 .a3s-proj__summary-facts dd.is-empty { color: var(--color-text-muted); }
 .a3s-proj__summary-facts dd .a3s-badge { margin-left: 0.2rem; font-size: 0.625rem; vertical-align: middle; }
 .a3s-proj__summary-progress {

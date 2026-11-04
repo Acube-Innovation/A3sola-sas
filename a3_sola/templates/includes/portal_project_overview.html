@@ -5,8 +5,11 @@
 <div class="a3s-proj">
 	<section class="a3s-card a3s-proj__summary" aria-label="Project summary">
 		<dl class="a3s-proj__summary-facts">
+			{#- Each fact: a pale square icon as tall as its label and value together, beside them. -#}
 			{%- for f in overview.summary %}
-			<div><dt>{{ f.label }}</dt><dd{% if not f.value %} class="is-empty"{% endif %}>
+			<div><dt>{{ f.label }}</dt>
+				{%- if f.ic %}<dd class="a3s-proj__fact-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ f.ic }}"></use></svg></dd>{% endif %}
+				<dd class="a3s-proj__fact-value{% if not f.value %} is-empty{% endif %}">
 				{%- if f.route and f.value %}<a href="{{ f.route | e }}"{% if f.external %} target="_blank" rel="noopener" title="Open in Google Maps"{% endif %}>{{ f.value | e }}</a>{% else %}{{ (f.value or "—") | e }}{% endif %}
 				{%- if f.badge %} <span class="a3s-badge a3s-proj__status a3s-proj__status--{{ f.badge | lower | replace(' ', '-') }}">{{ f.badge | e }}</span>{% endif %}
 			</dd></div>
