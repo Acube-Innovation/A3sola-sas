@@ -65,6 +65,9 @@ START_ON_ADVANCE = ("NPA", "ACPT", "DAL", "FRM1", "F1PAY", "STMP", "DSGN", "SDSG
 
 #: Before the first payment: the order and the advance itself.
 BEFORE_ADVANCE = ("ORD", "ADV")
+#: On a job the customer pays (not financed), started with the order, ahead of the advance:
+#: Form 1 - the customer is asked for the advance once it is submitted (api/payment_followup).
+WITH_ORDER_IF_SELF_FUNDED = ("FRM1",)
 
 #: The work that waits for half the project value, confirmed by Accounts - unless an
 #: Operations Manager exempts the job (api/stages.check_half_paid): every task after the

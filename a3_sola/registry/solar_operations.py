@@ -18,6 +18,7 @@ DOCTYPES = [
 	"Generated Document Log",
 	"Solar Installation",
 	"Installation Stage Log",
+	"Payment Follow Up",
 	"Installation Document",
 	"Installation Serial Register",
 	"Portal Application",
@@ -127,7 +128,7 @@ DOC_EVENTS["Purchase Order"]["on_submit"] = DOC_EVENTS["Purchase Order"]["on_sub
 ]
 
 SCHEDULER_EVENTS = {
-	"daily": ["a3_sola.api.escalation.daily_escalation"],
+	"daily": ["a3_sola.api.escalation.daily_escalation", "a3_sola.api.payment_followup.daily_chase"],
 }
 
 FIXTURES = [

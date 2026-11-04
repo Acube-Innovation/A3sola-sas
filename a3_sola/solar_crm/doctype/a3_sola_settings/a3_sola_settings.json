@@ -157,6 +157,8 @@
   "cb_35",
   "loan_sanction_sla_days",
   "balance_disbursement_sla_days",
+  "bank_payment_followup_days",
+  "client_payment_followup_days",
   "sb_36",
   "company_carries_subsidy_gap",
   "tab_37",
@@ -1339,6 +1341,20 @@
    "fieldname": "balance_disbursement_sla_days",
    "fieldtype": "Int",
    "label": "Balance Disbursement SLA (days)"
+  },
+  {
+   "default": "5",
+   "description": "On a bank-loan job, the bank is asked for the advance this many days after the loan is sanctioned, and again this many days after each ask, until it comes.",
+   "fieldname": "bank_payment_followup_days",
+   "fieldtype": "Int",
+   "label": "Bank Payment Follow-up (days)"
+  },
+  {
+   "default": "3",
+   "description": "On a job the customer pays, the customer is asked for the advance once Form 1 is submitted, and again this many days after each ask, until it comes.",
+   "fieldname": "client_payment_followup_days",
+   "fieldtype": "Int",
+   "label": "Client Payment Follow-up (days)"
   },
   {
    "fieldname": "sb_36",
@@ -2993,7 +3009,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-30 16:00:00.000000",
+ "modified": "2026-11-04 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
