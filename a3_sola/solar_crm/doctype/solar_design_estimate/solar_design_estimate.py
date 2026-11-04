@@ -35,6 +35,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	package_components,
 	package_cost,
 	package_phases,
+	price_for,
 )
 
 #: The package and sizing fields a sizing option row carries, and the recommended row sets.
@@ -1249,7 +1250,7 @@ class SolarDesignEstimate(Document):
 				"solar_package": package.name,
 				"is_recommended": 1 if chosen == (package.name, row.inverter_make) and not kept_recommended else 0,
 				# The inverter row's cost is the package price built with that inverter; the
-				# default row's may be left blank, the price table then holds it.
+				# default row's may be left blank, the Package Cost then holds it.
 				"system_cost": flt(row.cost) or (flt(price.get("system_cost")) if row.is_default else 0.0),
 				"additional_structure_cost": flt(price.get("additional_structure_and_cable_cost")),
 				"module_make": module.module_make if module else None,
@@ -1816,22 +1817,6 @@ def _normalise_tariff(value):
 	return "".join(ch for ch in (value or "").upper() if ch.isalnum())
 
 
-def _price_for(package, module, inverter):
-	"""The price row for this module and inverter, whatever boards it names.
-
-	Boards are not part of what the estimate offers - the customer chooses an inverter, not
-	a DCDB - so a row matching on the two that are offered is the right answer. Falls back
-	to the package's default price, because an option with no price at all is worse than
-	one priced as the package normally is.
-	"""
-	wanted_module = module.module_specification if module else None
-	wanted_inverter = inverter.inverter_specification if inverter else None
-	for row in package.prices or []:
-		if row.module == wanted_module and row.inverter == wanted_inverter:
-			return row
-	return default_price(package)
-
-
 @frappe.whitelist()
 def add_option_from_package(design_estimate, solar_package, inverter_option="1", option_name=None):
 	"""Append a priced option from a package, using one of its inverter options.
@@ -1852,8 +1837,8 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	rows = pkg.inverters or []
 	chosen = rows[position - 1] if 0 < position <= len(rows) else default_inverter(pkg)
 	module = default_module(pkg)
-	# The price of the configuration this option names, not of the package.
-	price = _price_for(pkg, module, chosen) or frappe._dict()
+	# The price of the inverter option this option names, not of the package's default.
+	price = price_for(pkg, chosen)
 
 	doc.append(
 		"options",
@@ -1943,30 +1928,17 @@ def _package_has_make(package, component_make):
 	))
 
 
-#: Which column of a package's price row carries which component type's make.
-PRICE_COLUMN = {
-	"Module": "module", "Inverter": "inverter", "DCDB": "dcdb",
-	"ACDB": "acdb", "Energy Meter": "energy_meter",
-}
-
-
 def package_price_for_make(package, component_type, make_name):
-	"""The package's system cost for this make, or None when it does not price it.
-
-	A package's price rows are one per combination of makes, so the cost of choosing
-	Solinteg over SolarEdge is a different row rather than a different package. None
-	rather than zero when nothing matches: zero is a price, and a missing price is not.
-	"""
-	if not package or not make_name:
+	"""The package's price built with this make of inverter: the Cost of its inverter option of
+	that make, or None when it has none - zero is a price, and a missing price is not. Any
+	other component is priced with the package."""
+	if not package or not make_name or component_type != "Inverter":
 		return None
-	column = PRICE_COLUMN.get(component_type)
-	if not column:
-		return None
-	rows = frappe.get_all(
-		"Solar Package Price", filters={"parent": package, column: make_name},
-		fields=["system_cost"], order_by="idx", limit=1,
-	)
-	return flt(rows[0].system_cost) if rows else None
+	for row in frappe.get_cached_doc("Solar Package", package).get("inverters") or []:
+		if flt(row.cost) and make_name in (row.inverter_make, row.inverter_specification,
+				frappe.db.get_value("Component Make", row.inverter_make, "make_name") if row.inverter_make else None):
+			return flt(row.cost)
+	return None
 
 
 @frappe.whitelist()

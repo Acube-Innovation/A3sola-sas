@@ -1,8 +1,9 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A Solar Package's two tables of materials beside its quoted rows: the Material BOM (Inverter
-tab) and the Structure BOMs (Mounting tab) - what the system and its mounting structure are
-built from, pipes, lugs, clamps, bolts, each an Item with its quantity and rate.
+"""A Solar Package's tables of Items beside its quoted rows, on its BOM tab: the Material BOM
+and the Structure BOMs - what the system and its mounting structure are built from, pipes,
+lugs, clamps, bolts, each an Item with its quantity and rate - and the Expenses, what the
+package costs to build, a costing record that goes into no BOM.
 
 A row says what it goes with, and saying nothing means everything:
 - a Material BOM row, the inverter options (their Items);
@@ -10,7 +11,7 @@ A row says what it goes with, and saying nothing means everything:
 The package's BOM takes the rows of its own default inverter, roof type and capacity
 (package_items.bom_lines), in each Item's stock UOM.
 
-Both tables come from Excel as often as they are typed: Upload Excel reads a sheet with the
+Every table comes from Excel as often as it is typed: Upload Excel reads a sheet with the
 table's columns - Item Name, Category, UOM, Quantity, Rate, Amount and its own "depends on"
 columns - finding each Item by its code or name and making the missing ones in their Category.
 Download Excel gives the same sheet back, to fill or to edit.
@@ -47,7 +48,10 @@ DEPENDS = {
 		("panel_capacities", "Panel Capacity (kW)", ("panel capacity", "panel capacities", "panal capacity",
 			"panal capacity (kw)", "capacity", "capacity (kw)")),
 	),
+	"expenses": (),
 }
+#: The tables that go into the package's BOM (package_items.bom_lines); Expenses do not.
+BOM_TABLES = ("material_bom", "structure_boms")
 #: Inverter Items may hold commas, so their field keeps one per line; the others a list.
 STORED_SEPARATOR = {"inverters": "\n", "roof_types": ", ", "panel_capacities": ", "}
 #: What a "depends on" cell may say for "every one".
@@ -107,6 +111,8 @@ def validate(doc):
 						title=_("Wrong Inverter"))
 				row.inverters = _store("inverters", values_of(row, "inverters"))
 				continue
+			if table != "structure_boms":
+				continue
 			unknown = [r for r in values_of(row, "roof_types") if not frappe.db.exists("Roof Type", r)]
 			if unknown:
 				frappe.throw(_("Row {0} of {1}: there is no Roof Type {2}. Choose its roof types again.").format(
@@ -124,7 +130,7 @@ def bom_lines(package):
 	"""Both tables' rows for the package as quoted, item -> quantity in the Item's stock UOM."""
 	inverter = default_inverter(package)
 	lines = {}
-	for table in DEPENDS:
+	for table in BOM_TABLES:
 		for row in package.get(table) or []:
 			if row.item and applies(table, row, package, inverter):
 				lines[row.item] = lines.get(row.item, 0) + flt(row.qty) * _to_stock_uom(package, table, row)

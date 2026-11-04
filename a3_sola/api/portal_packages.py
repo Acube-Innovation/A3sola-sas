@@ -6,8 +6,9 @@ makes the package's Item and BOM, all without the ERPNext desk.
 
 Only an admin may use any of it (api/portal_users.is_user_admin); staff still read Active
 packages where an estimate offers them. The page posts the whole package and the server's own
-rules (solar_package.py validate) decide what is right: item categories, one default, prices,
-subsidy and net rate, the computed KSEB, mounting and installation rows.
+rules (solar_package.py validate) decide what is right: item categories, one default, the
+panels each inverter is built with, the computed KSEB, mounting and installation rows. The
+price, subsidy and net rate are worked out from the inverter options (solar_package.price_for).
 
 A package an estimate, project or quotation names cannot go: it is set to Draft instead, so
 it is no longer offered and the records made from it keep it.
@@ -25,9 +26,9 @@ from a3_sola.api.package_items import CATEGORY
 from a3_sola.api.portal_users import require_admin
 
 DOCTYPE = "Solar Package"
-#: The form's tabs, in the desk's order: (key, label, parent fields, tables). The Material BOM
-#: and Structure BOMs, Items with their pickers and Excel upload, are the desk's alone: a save
-#: here leaves them as they are.
+#: The form's tabs, in the desk's order: (key, label, parent fields, tables). The Material BOM,
+#: Structure BOMs and Expenses, Items with their pickers and Excel upload, are the desk's alone:
+#: a save here leaves them as they are.
 TABS = (
 	("package", "Package", ("specification_code", "package_name", "capacity_kw", "package_cost", "system_type",
 		"connection_type", "inverter_topology", "is_dcr_compliant", "area_required_sqft", "tier", "status",
@@ -40,8 +41,8 @@ TABS = (
 	("mounting", "Mounting", ("roof_type",), ("mounting_expenses",)),
 	("installation", "Installation", (), ("installation_expenses",)),
 	("components", "Components", (), ("components",)),
-	("cost", "Cost", ("payment_terms", "financed_payment_terms"), ("prices",)),
 	("add_ons", "Add-ons", (), ("optional_add_ons",)),
+	("cost", "BOM", ("payment_terms", "financed_payment_terms"), ()),
 )
 #: Made by the page's buttons, never typed.
 SET_BY_BUTTONS = {"item", "bom"}

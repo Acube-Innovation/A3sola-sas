@@ -30,6 +30,7 @@ DOCTYPES = [
 	"Solar Package System Item",
 	"Solar Package Price",
 	"Solar Package Material BOM",
+	"Solar Package Expense",
 	"Customer KYC Document",
 	"Solar Consumer",
 	"Site Survey",
