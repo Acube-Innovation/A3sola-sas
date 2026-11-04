@@ -138,9 +138,9 @@
 					<li class="a3s-proj__task is-{{ t.status_slug }}{% if t.overdue %} is-overdue{% endif %}{% if t.locked %} is-locked{% endif %}{% if t.menu %} has-link{% endif %}"
 					    title="{{ t.code | e }}{% if t.reason %} &middot; {{ t.reason | e }}{% endif %}">
 						{%- include "templates/includes/portal_task_card.html" %}
-						{#- The whole card opens its menu - the task, its documents, its people, skip: a
-						    button laid over it. -#}
-						{%- if t.menu %}<button type="button" class="a3s-proj__task-open" aria-haspopup="menu"
+						{#- The whole card opens its actions under itself - the task, its documents,
+						    complete, skip: a button laid over it (portal_project_board.js). -#}
+						{%- if t.menu %}<button type="button" class="a3s-proj__task-open" aria-expanded="false"
 						        data-code="{{ t.code | e }}" data-name="{{ t.name | e }}" data-status="{{ t.status | e }}"
 						        data-url="{{ t.url | e }}" data-assignees="{{ t.assignees | map(attribute='user') | join(',') | e }}"
 						        data-assignee-names="{{ t.assignees | map(attribute='name') | join(', ') | e }}" data-can-complete="{{ 1 if t.can_complete else 0 }}"

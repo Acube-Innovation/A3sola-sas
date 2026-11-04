@@ -95,7 +95,9 @@ def put(inst, code, users):
 			wanted.append(user)
 	inst.set("task_assignees", [r for r in inst.get("task_assignees") or [] if r.stage_code != code])
 	for user in wanted:
-		inst.append("task_assignees", {"stage_code": code, "user": user})
+		# The name too: the job is saved without fetching it (stages._save), and the board shows it.
+		inst.append("task_assignees", {"stage_code": code, "user": user,
+			"full_name": frappe.db.get_value("User", user, "full_name") or user})
 	row = next((r for r in inst.stages if r.stage_code == code), None)
 	if row:
 		row.assigned_to = wanted[0] if wanted else None
