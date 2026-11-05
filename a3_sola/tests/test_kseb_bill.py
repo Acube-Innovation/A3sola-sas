@@ -258,3 +258,25 @@ class TestDistrictFromAddress(FrappeTestCase):
 		fields, _warnings = to_fields({"consumer_number": "1155895007918", "name": "TEST",
 			"address": "VENGOOR P O, ERNAKULAM 683546"}, "Lead")
 		self.assertEqual((fields.get("state"), fields.get("district")), ("Kerala", "Ernakulam, Kerala"))
+
+
+class TestAddDiscomSection(FrappeTestCase):
+	"""A section the bill names is added by its name: a code another office already has (KSEB's
+	directory repeats codes) does not stand in for it (portal_fields.add_discom_section)."""
+
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def test_a_new_name_with_a_used_code_is_added_and_then_found(self):
+		from a3_sola.api.portal_fields import add_discom_section
+
+		row = frappe.db.get_value("DISCOM Section", {"section_code": ["is", "set"]}, ["discom", "section_code"], as_dict=True)
+		if not row:
+			self.skipTest("No DISCOM Section with a code on this site.")
+		made = add_discom_section(discom=row.discom, section_name="Vengoor Test Office", section_code=row.section_code,
+			district="Ernakulam", doctype="Lead")
+		self.assertEqual(frappe.db.get_value("DISCOM Section", made["value"], "section_name"), "Vengoor Test Office")
+		self.assertTrue(made["label"].startswith("Vengoor Test Office"))
+		again = add_discom_section(discom=row.discom, section_name="Vengoor Test Office", section_code=row.section_code,
+			doctype="Lead")
+		self.assertEqual(again["value"], made["value"])

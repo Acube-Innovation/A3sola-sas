@@ -435,7 +435,7 @@ def add_discom_section(discom=None, section_name=None, section_code=None, distri
 	DISCOM Section dropdown: under the DISCOM chosen beside it, with the code the list is
 	keyed by. Open to whoever may create or edit the form's record (`doctype`) - the
 	salesperson filling in the customer - as well as to those who keep the sections; a
-	section already on file under that DISCOM, by name or code, is the one returned.
+	section already on file under that DISCOM by that name is the one returned.
 	Returns the new option as {value, label}."""
 	section_name, section_code = (section_name or "").strip(), (section_code or "").strip()
 	district = (district or "").strip()
@@ -448,8 +448,10 @@ def add_discom_section(discom=None, section_name=None, section_code=None, distri
 	if not (frappe.has_permission("DISCOM Section", "create") or (doctype and (
 			frappe.has_permission(doctype, "create") or frappe.has_permission(doctype, "write")))):
 		frappe.throw(frappe._("You may not add a DISCOM Section."), frappe.PermissionError)
-	existing = frappe.db.get_value("DISCOM Section", {"discom": discom, "section_name": section_name}, "name") \
-		or frappe.db.get_value("DISCOM Section", {"discom": discom, "section_code": section_code}, "name")
+	# The same office is the same name under the DISCOM. Not the same code: KSEB's own directory
+	# gives one code to more than one office (5589 is Paravur and Cherthala South), so a code
+	# already on file must not stand in for the office the bill names.
+	existing = frappe.db.get_value("DISCOM Section", {"discom": discom, "section_name": section_name}, "name")
 	if existing:
 		if not frappe.db.get_value("DISCOM Section", existing, "section_code"):
 			frappe.db.set_value("DISCOM Section", existing, "section_code", section_code)

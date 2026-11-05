@@ -222,6 +222,14 @@
 		li.appendChild(btn);
 		warningsList.appendChild(li);
 		warningsList.hidden = false;
+		/* Once added, the warning about it and its button are done with. */
+		document.addEventListener("a3s:section-added", function () {
+			li.remove();
+			Array.prototype.forEach.call(warningsList.querySelectorAll("li"), function (w) {
+				if (w.textContent.indexOf("[" + missing.code + "]") !== -1 && /not among the DISCOM Sections/.test(w.textContent)) w.remove();
+			});
+			warningsList.hidden = !warningsList.children.length;
+		}, { once: true });
 	}
 
 	function read(password) {
