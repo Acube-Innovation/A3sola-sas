@@ -33,6 +33,11 @@
 		{#- The brand column is exactly as wide as the menu below it, and carries the
 		    button that collapses the menu to icons. -#}
 		<div class="a3s-topbar__brand">
+			{#- Phones and tablets: the menu is a drawer, opened from here. -#}
+			<button type="button" class="a3s-menu-btn" id="a3s-menu-btn" aria-controls="a3s-side" aria-expanded="false" aria-label="Open menu">
+				<svg class="a3s-ic a3s-menu-btn__open" aria-hidden="true"><use href="#ic-menu"></use></svg>
+				<svg class="a3s-ic a3s-menu-btn__close" aria-hidden="true"><use href="#ic-close"></use></svg>
+			</button>
 			<a class="a3s-logo" href="/a3solaportal/dashboard" aria-label="{{ s.product_name or 'A3 Sola' }} . AI home">
 				{%- if s.brand_logo %}
 				<img src="{{ s.brand_logo }}" alt="">
@@ -66,7 +71,7 @@
 <div class="a3s-shell">
 
 	{#- ---- left sidebar --------------------------------------------------- #}
-	<aside class="a3s-side" aria-label="Primary">
+	<aside class="a3s-side" id="a3s-side" aria-label="Primary">
 		<div class="a3s-side__scroll">
 			{%- for group in nav_groups %}
 			<div class="a3s-side__group" data-group="{{ group.key }}">
@@ -121,6 +126,9 @@
 		</div>
 	</aside>
 
+	{#- Behind the open drawer on narrow screens: dims the page, and a tap on it closes the menu. -#}
+	<div class="a3s-side-backdrop" aria-hidden="true"></div>
+
 	{#- ---- main content, filled by each page ------------------------------ #}
 	<main class="a3s-main{% if main_wide %} a3s-main--wide{% endif %}" id="main">
 		{#- The trail sits above the page title, in line with the content it describes,
@@ -160,6 +168,36 @@
 		sync();
 	});
 	sync();
+})();
+(function () {
+	/* Narrow screens: the menu is a drawer over the page. Closed by the button again, a tap
+	   on the dimmed page, Esc, choosing a page, or the screen widening past the breakpoint. */
+	var btn = document.getElementById("a3s-menu-btn");
+	var side = document.getElementById("a3s-side");
+	var back = document.querySelector(".a3s-side-backdrop");
+	if (!btn || !side) return;
+	var root = document.documentElement;
+	var narrow = window.matchMedia("(max-width: 899px)");
+	function isOpen() { return root.classList.contains("a3s-side-open"); }
+	function set(open) {
+		root.classList.toggle("a3s-side-open", open);
+		btn.setAttribute("aria-expanded", open ? "true" : "false");
+		btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+		if (open) {
+			/* Open on the page the user is on, not at the top of a long menu. */
+			var scroll = side.querySelector(".a3s-side__scroll");
+			var current = side.querySelector(".a3s-side__item.is-active");
+			if (scroll && current && current.offsetParent) scroll.scrollTop = Math.max(0, current.offsetTop - scroll.clientHeight / 2);
+		}
+	}
+	btn.addEventListener("click", function () { set(!isOpen()); });
+	if (back) back.addEventListener("click", function () { set(false); });
+	document.addEventListener("keydown", function (e) {
+		if (e.key === "Escape" && isOpen()) { set(false); btn.focus(); }
+	});
+	side.addEventListener("click", function (e) { if (e.target.closest("a.a3s-side__item")) set(false); });
+	function onWidth(e) { if (!e.matches && isOpen()) set(false); }
+	if (narrow.addEventListener) narrow.addEventListener("change", onWidth); else if (narrow.addListener) narrow.addListener(onWidth);
 })();
 (function () {
 	var groups = document.querySelectorAll(".a3s-side__group[data-group]");

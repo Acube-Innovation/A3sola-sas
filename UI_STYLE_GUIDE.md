@@ -289,7 +289,8 @@ These are the only status colours. Use the pair as it is; don't mix halves.
 |---|---|
 | ≤ 480px | Definition lists stack |
 | ≤ 640px | Form grids go to one column; record-header actions go full width |
-| ≤ 899px | The sidebar becomes a static horizontal scrolling strip; main has no left margin and padding `1.5rem 1.25rem`; the Sign out label and menu toggle are hidden |
+| ≤ 899px | The sidebar becomes a drawer: a menu button (`.a3s-menu-btn`, ☰ / ✕) at the left of the top bar slides it in from the left, `min(19rem, 86vw)` wide, over a dimmed backdrop (`.a3s-side-backdrop`); `a3s-side-open` on `<html>` marks it open and stops the page scrolling. Choosing a page, tapping the backdrop, Esc or widening past 900px closes it. Main has no left margin and padding `1.5rem 1.25rem`; the Sign out label and the collapse toggle are hidden |
+| ≤ 480px | The logo shows its mark only; the company pill takes the rest of the top bar |
 | ≥ 640px | Dashboard stats go to 3 columns |
 | ≥ 900px | Dashboard cards and "My work" columns go to 3 |
 | ≥ 1100px | Record detail goes to 2 columns; 4-up stats |

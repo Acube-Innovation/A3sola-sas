@@ -1501,18 +1501,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	.a3s-dash-cards { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* ---- narrow screens: sidebar becomes a top strip, main goes full width ---- */
+/* ---- narrow screens: main goes full width (the menu becomes a drawer, below) ---- */
 @media (max-width: 899px) {
 	.a3s-topbar__signout .a3s-ic + span { display: none; }
-	.a3s-side {
-		position: static;
-		width: auto;
-		border-right: 0;
-		border-bottom: 1px solid var(--color-border);
-	}
-	.a3s-side__scroll { display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem; }
-	.a3s-side__group + .a3s-side__group { margin-top: 0; }
-	.a3s-side__group { min-width: 15rem; }
 	.a3s-main { margin-left: 0; padding: 1.5rem 1.25rem; }
 }
 
@@ -2151,11 +2142,76 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	.a3s-side-collapsed .a3s-user__meta { display: none; }
 }
 
-/* On narrow screens the menu stacks above the content, so there is nothing to collapse. */
+/* ---- narrow screens: the menu is a drawer that slides in over the page ---- */
+/* Opened by the menu button at the left of the top bar; the page behind is dimmed and does
+   not scroll. The collapse toggle has nothing to do here, so it goes. */
+.a3s-menu-btn, .a3s-side-backdrop { display: none; }
 @media (max-width: 899px) {
-	.a3s-topbar { padding-left: 1rem; }
-	.a3s-topbar__brand { width: auto; height: auto; border-right: 0; padding: 0; }
+	.a3s-topbar { padding: 0 0.75rem; gap: 0.5rem; }
+	.a3s-topbar__left { flex: 1 1 auto; gap: 0.6rem; }
+	.a3s-topbar__brand { width: auto; height: auto; border-right: 0; padding: 0; gap: 0.6rem; }
 	.a3s-side-toggle { display: none; }
+
+	.a3s-menu-btn {
+		display: grid; place-items: center;
+		flex: none;
+		width: 2.5rem; height: 2.5rem;
+		padding: 0;
+		border: 1px solid var(--color-border);
+		border-radius: 0.75rem;
+		background: var(--color-surface);
+		color: var(--color-text);
+		cursor: pointer;
+		transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+	}
+	.a3s-menu-btn:hover, .a3s-menu-btn[aria-expanded="true"] { color: var(--color-accent-hover); border-color: var(--color-accent); background: var(--color-accent-soft); }
+	.a3s-menu-btn:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+	.a3s-menu-btn .a3s-ic { width: 1.3rem; height: 1.3rem; }
+	.a3s-menu-btn__close, .a3s-menu-btn[aria-expanded="true"] .a3s-menu-btn__open { display: none; }
+	.a3s-menu-btn[aria-expanded="true"] .a3s-menu-btn__close { display: block; }
+
+	/* The drawer: the desktop menu as it is, off-screen until opened. `visibility` keeps a
+	   closed drawer's links out of the tab order. */
+	.a3s-side {
+		position: fixed;
+		top: var(--a3s-topbar-h); bottom: 0; left: 0;
+		z-index: 45;
+		width: min(19rem, 86vw);
+		border-right: 1px solid var(--color-border);
+		transform: translateX(-100%);
+		visibility: hidden;
+		transition: transform 0.25s var(--ease), visibility 0s linear 0.25s;
+	}
+	.a3s-side-open .a3s-side {
+		transform: none;
+		visibility: visible;
+		box-shadow: 0 1.5rem 3rem rgba(16, 24, 40, 0.18);
+		transition: transform 0.25s var(--ease);
+	}
+	.a3s-side__scroll { overflow-y: auto; overscroll-behavior: contain; padding: 1rem 0.75rem; }
+	.a3s-side__group + .a3s-side__group { margin-top: 1.25rem; }
+	.a3s-side__item { padding: 0.7rem; }
+
+	.a3s-side-backdrop {
+		display: block;
+		position: fixed;
+		inset: var(--a3s-topbar-h) 0 0 0;
+		z-index: 40;
+		background: rgba(16, 24, 40, 0.4);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.25s var(--ease);
+	}
+	.a3s-side-open .a3s-side-backdrop { opacity: 1; pointer-events: auto; }
+	html.a3s-side-open, html.a3s-side-open body { overflow: hidden; }
+}
+/* Phones: the logo keeps its mark, and the company name takes the room that is left. */
+@media (max-width: 480px) {
+	.a3s-logo__text { display: none; }
+	.a3s .a3s-topbar .a3s-workspace { max-width: 100%; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.a3s-side, .a3s-side-open .a3s-side, .a3s-side-backdrop { transition: none; }
 }
 
 /* ---- leads list: place under the name, solar summary above the status ---- */
