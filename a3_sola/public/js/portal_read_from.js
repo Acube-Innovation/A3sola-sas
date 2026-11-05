@@ -78,10 +78,13 @@
 
 	window.a3sReadFrom = {
 		/* The field was just filled from this document. */
-		mark: function (el, documentName) {
+		mark: function (el, documentName, before) {
 			if (!el || !el.name || !documentName) return;
 			notes[el.name] = documentName;
-			fresh[el.name] = true;
+			/* What it held before this reading, said when saving is checked; the first reading's
+			   "before" is kept if another document is read into it too. */
+			var was = fresh[el.name] ? fresh[el.name].before : (before || "");
+			fresh[el.name] = { before: was };
 			save();
 			show(el, documentName);
 			watch(el);
@@ -129,11 +132,12 @@
 			modal.setAttribute("aria-labelledby", "a3s-readcheck-title");
 			var rows = names.map(function (name) {
 				var el = field(name);
-				return "<li><span>" + esc(labelOf(el)) + "</span><b>" + esc(shown(el) || "\u2014") + '</b><span class="a3s-readcheck__from">from ' + esc(notes[name]) + "</span></li>";
+				var was = fresh[name].before && fresh[name].before !== shown(el) ? '<span class="a3s-readcheck__was">was ' + esc(fresh[name].before) + "</span>" : "";
+				return "<li><span>" + esc(labelOf(el)) + "</span><b>" + esc(shown(el) || "\u2014") + '</b><span class="a3s-readcheck__from">from ' + esc(notes[name]) + "</span>" + was + "</li>";
 			}).join("");
 			modal.innerHTML = '<div class="a3s-modal__panel a3s-readcheck">' +
 				'<p class="a3s-modal__title" id="a3s-readcheck-title">Check the details read from documents</p>' +
-				"<p>These were read from the documents by OCR, which is not always right. Check each one against the document before saving.</p>" +
+				"<p>These were read from the documents by OCR, which is not always right. Check each one against the document before saving. Where a field held something else, it is said.</p>" +
 				'<ul class="a3s-readcheck__list">' + rows + "</ul>" +
 				'<div class="a3s-form__actions" style="margin-top:1rem"><button type="button" class="a3s-btn a3s-btn--primary" data-rc-save>I have checked them, save</button>' +
 				'<button type="button" class="a3s-btn a3s-btn--ghost" data-rc-back>Go back and check</button></div></div>';

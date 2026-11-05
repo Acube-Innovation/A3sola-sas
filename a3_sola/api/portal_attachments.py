@@ -43,6 +43,16 @@ def document_types(doctype=None, name=None, installation=None, task=None):
 	return own + [g for g in general if g not in own]
 
 
+#: The types the Attachments card offers, where a record keeps to a few: a customer's KYC papers.
+#: A file of another type - the KYC card's pre-installation photo - is still accepted.
+OFFERED = {CONSUMER: ("Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN")}
+
+
+def offered_types(doctype=None, name=None, installation=None, task=None):
+	"""The card's list of types: the record's few, or all it may be filed as."""
+	return list(OFFERED.get(doctype) or document_types(doctype, name, installation, task))
+
+
 def _kyc_types():
 	return set((frappe.get_meta("Customer KYC Document").get_options("kyc_type") or "").split("\n")) - {""}
 
@@ -156,7 +166,7 @@ def list_files(doctype, name):
 	_record(doctype, name, "read")
 	can_write = bool(frappe.has_permission(doctype, "write", name))
 	return {"files": _files(doctype, name), "can_upload": can_write,
-		"document_types": document_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024),
+		"document_types": offered_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024),
 		# The types a row's Read button reads again into the form - only for someone who can save it.
 		"readable": _readable(doctype) if can_write else []}
 
@@ -215,7 +225,7 @@ def _read_ack(doctype, name, content, filename, password):
 READERS = {
 	("Lead", "KSEB Bill"): _read_kseb, (CONSUMER, "KSEB Bill"): _read_kseb,
 	(CONSUMER, "Aadhaar Front"): _read_aadhaar_front, (CONSUMER, "Aadhaar Back"): _read_aadhaar_back,
-	(CONSUMER, "Bank Passbook"): _read_bank, (CONSUMER, "Cancelled Cheque"): _read_bank,
+	(CONSUMER, "Bank Proof"): _read_bank, (CONSUMER, "Bank Passbook"): _read_bank, (CONSUMER, "Cancelled Cheque"): _read_bank,
 	("Installation Task", "Digital Approval Letter"): _read_letter,
 	("Portal Application", "PM Surya Ghar Acknowledgement"): _read_ack,
 }
@@ -265,8 +275,8 @@ def held_card(doctype, installation=None, task=None):
 	the person may create one - its files are held on the card until it is."""
 	can_create = bool(frappe.has_permission(doctype, "create"))
 	return {"files": [], "can_upload": can_create,
-		"document_types": document_types(doctype, None, installation, task), "max_file_mb": get_max_file_size() // (1024 * 1024),
-		# Read as they are picked (read_upload), the form filled before it is saved.
+		"document_types": offered_types(doctype, None, installation, task), "max_file_mb": get_max_file_size() // (1024 * 1024),
+		# Read with Read (read_upload), the form filled before it is saved.
 		"readable": _readable(doctype) if can_create else []}
 
 
@@ -280,7 +290,6 @@ def upload(doctype, name, document_type=None):
 	if not uploads:
 		frappe.throw(_("No file was sent."), frappe.ValidationError)
 	limit = get_max_file_size()
-	read = None
 	for upload in uploads:
 		content = upload.stream.read()
 		if len(content) > limit:
@@ -312,30 +321,9 @@ def upload(doctype, name, document_type=None):
 			from a3_sola.api import portal_ack
 
 			portal_ack.fill_document(name, content, upload.filename)
-		if upload is uploads[-1]:
-			read = _read_on_upload(doctype, name, document_type, file, content, upload.filename)
 	_refresh_kyc(doctype, name)
-	return {"files": _files(doctype, name), "read": read}
+	return {"files": _files(doctype, name)}
 
-
-def _read_on_upload(doctype, name, document_type, file, content, filename):
-	"""A lead's or customer's document - a KSEB bill, an Aadhaar card, a passbook or cheque -
-	read as it is uploaded: the form's fields from it, and what it said kept on it. A document
-	that cannot be read is still uploaded; why is said."""
-	reader = READERS.get((doctype, document_type))
-	if not reader or doctype not in document_evidence.DOCTYPES:
-		return None
-	try:
-		out = reader(doctype, name, content, filename, None)
-	except Exception as e:
-		# Its title says why - a locked PDF asks for its password (Password Needed).
-		last = (frappe.local.message_log or [None])[-1]
-		title = (last.get("title") if isinstance(last, dict) else "") or ""
-		frappe.clear_last_message()
-		return {"error": frappe.utils.strip_html(str(e)) or _("{0} could not be read.").format(filename), "title": title,
-			"file": file.name}
-	document_evidence.store(file.name, out.get("fields"))
-	return dict(out, document_type=document_type, file=file.name)
 
 
 @frappe.whitelist(methods=["POST"])

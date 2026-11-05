@@ -1412,6 +1412,12 @@ def detail_context(context, slug, name):
 			{"label": "Download Site Survey Report", "url": survey_print.url(doc.name, download=True), "icon": "download"},
 		]
 		context.head_actions_template = context.get("head_actions_template") or "templates/includes/portal_print_buttons.html"
+	if doc.doctype == "Subsidy Eligibility Check" and not context.get("head_actions_template"):
+		# The customer's documents and where they differ, as a PDF to view and send to them.
+		from a3_sola.api import eligibility_print, portal_share
+
+		context.share = portal_share.share_links(doc, eligibility_print.url(doc.name))
+		context.head_actions_template = "templates/includes/portal_share.html"
 	# A task's document is reached from its project's board, and leads back there.
 	if slug in TASK_SLUGS and doc.get("solar_installation"):
 		context.back_link = {"href": record_route("projects", doc.solar_installation), "label": "Back to project"}

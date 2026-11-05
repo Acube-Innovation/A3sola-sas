@@ -1,0 +1,116 @@
+{#- The customer's documents, from the subsidy eligibility check: each detail with what every
+    document says, the differences first and said plainly, then the documents themselves.
+    Context: api/eligibility_print.context. -#}
+<style>
+	/* On the company's letterhead (documents.letterhead_flow_pdf), which carries its name. */
+	.dc { font-size: 10pt; line-height: 1.35; }
+	.dc h1 { text-align: center; font-size: 14pt; margin: 0 0 2pt; letter-spacing: 0.02em; }
+	.dc .sub { text-align: center; margin: 0 0 9pt; }
+	.dc table { width: 100%; border-collapse: collapse; margin: 0 0 9pt; }
+	.dc .kv td { border: 1px solid #000; padding: 3pt 6pt; }
+	.dc .kv td.k { width: 26%; background: #f5f5f5; }
+	.dc .note { border: 1.5pt solid #b42318; background: #fef3f2; padding: 6pt 8pt; margin: 0 0 9pt; }
+	.dc .note.ok { border-color: #1a7a2b; background: #f0faf2; }
+	.dc .note.confirmed { border-color: #b54708; background: #fffaeb; }
+	.dc .note h4 { margin: 0 0 3pt; font-size: 10.5pt; }
+	.dc .note p { margin: 2pt 0 0; }
+	.dc h3 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 0.04em; margin: 10pt 0 4pt; }
+	.dc .details th, .dc .details td { border: 1px solid #000; padding: 3pt 6pt; vertical-align: top; text-align: left; }
+	.dc .details th { background: #f0f0f0; }
+	.dc .details td.k { width: 26%; font-weight: bold; }
+	.dc .details td.s { width: 14%; text-align: center; }
+	.dc .details tr.differs td { background: #fef3f2; }
+	.dc .details tr.differs td.s { color: #b42318; font-weight: bold; }
+	.dc .from { color: #555; font-size: 9pt; }
+	.dc .rec { color: #b42318; margin-top: 2pt; }
+	.dc .docs th, .dc .docs td { border: 1px solid #000; padding: 3pt 6pt; text-align: left; }
+	.dc .docs th { background: #f0f0f0; }
+	.dc .foot { margin-top: 10pt; font-size: 8.5pt; color: #444; }
+</style>
+<div class="dc">
+<h1>CUSTOMER DOCUMENT CHECK</h1>
+<p class="sub">PM Surya Ghar subsidy · {{ doc.name }} · {{ date }}</p>
+
+<table class="kv">
+	<tr><td class="k">Customer</td><td>{{ customer | e }}</td></tr>
+	{%- if consumer_number %}<tr><td class="k">Consumer Number</td><td>{{ consumer_number | e }}</td></tr>{% endif %}
+	{%- if scheme %}<tr><td class="k">Subsidy Scheme</td><td>{{ scheme | e }}</td></tr>{% endif %}
+</table>
+
+{%- if conflicts %}
+<div class="note{% if confirmed %} confirmed{% endif %}">
+	<h4>The documents do not agree on: {{ conflicts | map(attribute="label") | join(", ") }}</h4>
+	<p>The subsidy is paid only when the customer&rsquo;s documents agree - the same name on the Aadhaar card, the KSEB bill and the bank account, the same details throughout. With these differences the customer <strong>may not be eligible for the subsidy</strong> until the documents are corrected to match.</p>
+	{%- if confirmed %}
+	<p>Checked against the documents and confirmed by {{ confirmed_by | e }} on {{ confirmed_on }}.</p>
+	{%- endif %}
+</div>
+{%- endif %}
+{%- if record_differs %}
+<div class="note">
+	<h4>The customer&rsquo;s record differs from the documents on: {{ record_differs | join(", ") }}</h4>
+	<p>The subsidy application is made from the customer&rsquo;s record, so it has to say what the documents say. Until it is corrected the application may be refused.</p>
+</div>
+{%- endif %}
+{%- if load and not load.ok %}
+<div class="note">
+	<h4>The proposed system is larger than the connected load</h4>
+	<p>The proposed system is <strong>{{ load.capacity_kw }} kW ({{ load.capacity_w }} W)</strong>, {{ load.capacity_from }}, but the connected load is <strong>{{ load.load_w }} W ({{ load.load_kw }} kW)</strong>, from the {{ load.load_from }} - {{ load.over_w }} W more. A rooftop system has to be no larger than the connected load. Until the connected load is enhanced with KSEB, or the system is made smaller, <strong>the commissioning of the system may be delayed</strong>.</p>
+</div>
+{%- endif %}
+{%- if not conflicts and not record_differs and details and not (load and not load.ok) %}
+<div class="note ok">
+	<h4>The documents agree</h4>
+	<p>Every detail read from the customer&rsquo;s documents is the same in each.</p>
+</div>
+{%- endif %}
+
+{%- if load %}
+<h3>Proposed system and connected load</h3>
+<table class="details">
+	<thead><tr><th>Detail</th><th>Value and where it is from</th><th>Status</th></tr></thead>
+	<tbody>
+	<tr{% if not load.ok %} class="differs"{% endif %}><td class="k">Proposed system</td><td>{{ load.capacity_kw }} kW ({{ load.capacity_w }} W) <span class="from">- {{ load.capacity_from }}</span></td>
+		<td class="s" rowspan="2">{{ "Within the load" if load.ok else "Over the load by " ~ load.over_w ~ " W" }}</td></tr>
+	<tr{% if not load.ok %} class="differs"{% endif %}><td class="k">Connected load</td><td>{{ load.load_w }} W ({{ load.load_kw }} kW) <span class="from">- {{ load.load_from }}</span></td></tr>
+	</tbody>
+</table>
+{%- endif %}
+
+{%- if details %}
+<h3>What the documents say</h3>
+<table class="details">
+	<thead><tr><th>Detail</th><th>Value and the document it is from</th><th>Status</th></tr></thead>
+	<tbody>
+	{%- for d in details %}
+	<tr{% if d.conflict or d.record_differs %} class="differs"{% endif %}>
+		<td class="k">{{ d.label | e }}</td>
+		<td>
+			{%- for v in d["values"] %}
+			<div>{{ v.value | e }} <span class="from">- {{ v.document | e }}{% if v["as"] %} ({{ v["as"] | e }}){% endif %}</span></div>
+			{%- endfor %}
+			{%- if d.record_differs %}<div class="rec">On the customer&rsquo;s record: <strong>{{ d.record | e }}</strong></div>{% endif %}
+		</td>
+		<td class="s">{{ "Differs" if d.conflict else "Record differs" if d.record_differs else "Matches" if d["values"] | length > 1 else "-" }}</td>
+	</tr>
+	{%- endfor %}
+	</tbody>
+</table>
+{%- else %}
+<p>No documents have been read yet.</p>
+{%- endif %}
+
+{%- if documents %}
+<h3>Documents</h3>
+<table class="docs">
+	<thead><tr><th>Document</th><th>File</th><th>Read on</th></tr></thead>
+	<tbody>
+	{%- for d in documents %}
+	<tr><td>{{ d.document | e }}</td><td>{{ d.file_name | e }}</td><td>{{ d.read_on or "Not read" }}</td></tr>
+	{%- endfor %}
+	</tbody>
+</table>
+{%- endif %}
+
+<p class="foot">The details were read from the customer&rsquo;s documents by OCR and may need checking against the originals. Please send corrected or clearer documents where they differ.</p>
+</div>

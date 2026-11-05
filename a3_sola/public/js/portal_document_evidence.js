@@ -61,21 +61,30 @@
 		}
 		if (s.conflicts.length && !s.confirmed) {
 			html += '<div class="a3s-attach__status a3s-evidence__alert" data-tone="warn"><span><b>The documents differ on ' +
-				esc(s.conflicts.map(function (c) { return c.label; }).join(", ")) + ".</b> Check them against the documents and confirm they are correct before this check is saved or submitted.</span>" +
+				esc(s.conflicts.map(function (c) { return c.label; }).join(", ")) + ".</b> The customer may not be eligible for the subsidy until the documents agree. Check them against the documents and confirm before this check is saved or submitted; send the customer the PDF to show what to correct.</span>" +
 				(s.can_confirm ? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-evidence-confirm>Review and confirm</button>' : "") + "</div>";
 		} else if (s.conflicts.length) {
 			html += '<p class="a3s-attach__status" data-tone="ok">Where the documents differ, ' + esc(s.confirmed_by) + " checked them and confirmed the details correct on " + esc(s.confirmed_on) + ".</p>";
 		} else {
 			html += '<p class="a3s-attach__status" data-tone="ok">The documents agree on every detail read from them.</p>';
 		}
+		if (s.load && !s.load.ok) {
+			html += '<p class="a3s-attach__status" data-tone="warn"><b>The proposed system (' + esc(s.load.capacity_kw) + " kW, " + esc(s.load.capacity_from) +
+				") is larger than the connected load (" + esc(s.load.load_w) + " W, from the " + esc(s.load.load_from) + ").</b> A rooftop system has to be no larger than the connected load: enhance the load with KSEB or make the system smaller, or commissioning may be delayed.</p>";
+		}
+		if (s.record_differs && s.record_differs.length) {
+			html += '<p class="a3s-attach__status" data-tone="warn"><b>The customer&rsquo;s record differs from the documents on ' + esc(s.record_differs.join(", ")) +
+				".</b> The subsidy application is made from the record: correct it on the customer (Read the document again there).</p>";
+		}
 		html += '<div class="a3s-evidence__table" role="table" aria-label="Details and the documents they came from">' +
 			'<div class="a3s-evidence__row a3s-evidence__row--head" role="row"><span role="columnheader">Detail</span><span role="columnheader">What the documents say</span></div>';
 		s.details.forEach(function (d) {
-			html += '<div class="a3s-evidence__row' + (d.conflict ? " is-conflict" : "") + '" role="row"><span class="a3s-evidence__label" role="cell">' + esc(d.label) +
-				(d.conflict ? ' <span class="a3s-evidence__pill">Differs</span>' : "") + '</span><span class="a3s-evidence__values" role="cell">';
+			html += '<div class="a3s-evidence__row' + (d.conflict || d.record_differs ? " is-conflict" : "") + '" role="row"><span class="a3s-evidence__label" role="cell">' + esc(d.label) +
+				(d.conflict ? ' <span class="a3s-evidence__pill">Differs</span>' : d.record_differs ? ' <span class="a3s-evidence__pill">Record differs</span>' : "") + '</span><span class="a3s-evidence__values" role="cell">';
 			d.values.forEach(function (v) {
 				html += '<span class="a3s-evidence__value"><span>' + esc(v.value) + "</span> " + source(v) + "</span>";
 			});
+			if (d.record_differs) html += '<span class="a3s-evidence__record">On the customer&rsquo;s record: <b>' + esc(d.record) + "</b></span>";
 			html += "</span></div>";
 		});
 		html += "</div>";

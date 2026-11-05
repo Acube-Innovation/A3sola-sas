@@ -94,12 +94,13 @@
 	/* The document a field is read from, as its note says - "From Aadhaar card" (portal_read_from.js) -
 	   and the offer beside a field already holding a value: "Aadhaar card says: …". */
 	var SOURCES = { "KSEB Bill": "KSEB bill", "Aadhaar Front": "Aadhaar card", "Aadhaar Back": "Aadhaar card",
-		"Bank Passbook": "Bank passbook", "Cancelled Cheque": "Cancelled cheque", "Digital Approval Letter": "Approval letter",
+		"Bank Proof": "Bank proof", "Bank Passbook": "Bank passbook", "Cancelled Cheque": "Cancelled cheque", "Digital Approval Letter": "Approval letter",
 		"PM Surya Ghar Acknowledgement": "Portal acknowledgement" };
 
 	function labelOf(input) {
 		var name = input.name || input.id.replace(/^fld-/, "");
-		var label = input.id && document.querySelector('label[for="' + input.id + '"]');
+		/* A searchable list's label names its search box (portal_combo.js). */
+		var label = input.id && (document.querySelector('label[for="' + input.id + '"]') || document.querySelector('label[for="' + input.id + '-search"]'));
 		return LABELS[name] || (label ? label.textContent.replace(/\*/g, "").trim() : name.replace(/_/g, " "));
 	}
 
@@ -117,7 +118,7 @@
 		if (window.a3sReadFill) {
 			return window.a3sReadFill(fields, SOURCES[documentType] || documentType, extras).then(function (r) {
 				reveal(r.filled[0] || (Object.keys(fields || {}).map(function (n) { return document.getElementById("fld-" + n); }).filter(Boolean)[0]));
-				return { filled: r.filled.map(labelOf), offered: r.offered };
+				return { filled: r.filled.map(labelOf), replaced: (r.replaced || []).map(labelOf), offered: r.offered };
 			});
 		}
 		return Promise.resolve({ filled: fillFields(fields, SOURCES[documentType] || documentType), offered: 0 });
@@ -158,6 +159,8 @@
 		var status = card.querySelector("[data-attach-status]");
 		var types = [];
 		var readable = [];
+		/* The page's form, which Read fills: none on a view page. */
+		var hasForm = !!document.querySelector("#a3s-record-edit-form, #a3s-record-form, #a3s-lead-edit-form, #a3s-lead-form");
 		var busy = false;
 		/* A record not yet created (data-held): the files picked wait here, as rows, and go up
 		   once the form has created it - window.a3sAttachHeld. */
@@ -218,15 +221,20 @@
 			tr.appendChild(typeCell);
 
 			var act = el("span", "a3s-attach__act"); act.setAttribute("role", "cell");
-			/* Read: the saved file read again, its details filled into the form. */
-			if (!f.held && f.document_type && readable.indexOf(f.document_type) !== -1) {
+			/* Read: the document read by OCR, its details filled into the form - where there is a
+			   form to fill: the record's edit or create page. A file waiting for a new record is
+			   read from the browser's copy. */
+			if (hasForm && f.document_type && readable.indexOf(f.document_type) !== -1) {
 				var readBtn = el("button", "a3s-attach__read");
 				readBtn.type = "button";
-				readBtn.title = "Read " + f.file_name + " again and fill the form from it";
+				readBtn.title = "Read " + f.file_name + " and fill the form from it";
 				readBtn.setAttribute("aria-label", "Read " + f.file_name);
 				readBtn.appendChild(icon("ic-scroll"));
 				readBtn.appendChild(el("span", "", "Read"));
-				readBtn.addEventListener("click", function () { readAgain(f, readBtn); });
+				readBtn.addEventListener("click", function () {
+					if (f.held) readPicked(f.file, f.document_type, readBtn);
+					else readAgain(f, readBtn);
+				});
 				act.appendChild(readBtn);
 			}
 			/* View opens the file in a new tab, as its name does - one not uploaded yet from
@@ -294,8 +302,8 @@
 		}
 
 		/* A file picked on a record not yet created: read from the browser's copy, nothing kept. */
-		function readPicked(file, what) {
-			return readDoc({ method: "read_upload", fileName: file.name, documentType: what,
+		function readPicked(file, what, btn) {
+			return readDoc({ method: "read_upload", fileName: file.name, documentType: what, btn: btn,
 				body: function (pw) {
 					var body = form(pw ? { document_type: what, password: pw } : { document_type: what });
 					body.append("file", file, file.name);
@@ -309,6 +317,9 @@
 			return applyFields(out.fields || {}, out.document_type || documentType, out).then(function (res) {
 				var parts = [];
 				if (res.filled.length) parts.push("Read " + fileName + ": filled " + res.filled.join(", ") + ".");
+				/* What the document says comes first: a value typed in before is replaced, and said. */
+				if (res.replaced && res.replaced.length) parts.push((res.filled.length ? "Replaced " : "Read " + fileName + ": replaced ") +
+					res.replaced.join(", ") + " with what the document says.");
 				if (res.offered) parts.push(offeredNote(res.offered));
 				if (!parts.length) parts.push("Read " + fileName + ": the form already holds what it says.");
 				setStatus(parts.concat(warned).join(" "), warned.length ? "warn" : "ok");
@@ -385,11 +396,11 @@
 		function upload(files) {
 			if (!files || !files.length || busy || needType()) return;
 			var what = typeSelect.value, last = files[files.length - 1];
-			/* A document the form is filled from - a KSEB bill, an Aadhaar card, a passbook or
-			   cheque - is read as it is uploaded, as Read does. A task's own readers read it
-			   from the browser's copy as before. */
-			var reads = readable.indexOf(what) !== -1 && !(READERS[doctype] || {})[what];
-			if (!reads) readInto(last, what);
+			/* Uploaded, not read: each document is read with its Read, one by one. A task's own
+			   documents (the approval letter) are still read as they are picked. */
+			readInto(last, what);
+			var reads = hasForm && readable.indexOf(what) !== -1;
+			var then = reads ? " Choose Read on it to fill the form from it." : "";
 			var body = form({ document_type: what });
 			Array.prototype.forEach.call(files, function (file) { body.append("file", file, file.name); });
 			var n = files.length;
@@ -399,30 +410,16 @@
 					held.push({ held: true, file: file, file_name: file.name, size: file.size, document_type: what, by: "Uploads when saved" });
 				});
 				paint(held);
-				setStatus(label + " added as " + what + ". They upload when you save.", "ok");
+				setStatus(label + " added as " + what + ". They upload when you save." + then, "ok");
 				typeSelect.value = ""; input.value = "";
-				if (reads) readPicked(last, what);
 				return;
 			}
 			busy = true; button.disabled = true; drop.classList.add("is-busy");
-			/* A document the form is filled from is read on the server as it is uploaded. */
-			setStatus((reads ? "Uploading and reading " : "Uploading ") + label + " as " + what + "…" +
-				(reads && !/\.pdf$/i.test(last.name) ? " A photo takes a few seconds." : ""));
+			setStatus("Uploading " + label + " as " + what + "…");
 			call("upload", body).then(function (data) {
 				paint(data.files || [], true);
-				setStatus("Uploaded " + label + " as " + what + ".", "ok");
+				setStatus("Uploaded " + label + " as " + what + "." + then, "ok");
 				typeSelect.value = "";
-				var read = data.read;
-				if (!read) return;
-				var saved = (data.files || []).filter(function (f) { return f.name === read.file; })[0] || { name: read.file, file_name: last.name };
-				if (!read.error) return applyRead(read, saved.file_name, what);
-				/* A locked PDF (an e-Aadhaar): its password asked for, and read again with it. */
-				if (read.title === "Password Needed") {
-					var pw = window.prompt(read.error + "\n\nAn e-Aadhaar's password is the first 4 letters of the name in CAPITALS and the year of birth, e.g. LIJO1985.");
-					if (pw) return readDoc({ method: "read_file", fileName: saved.file_name, documentType: what,
-						body: function (p) { return form(p ? { file: saved.name, password: p } : { file: saved.name }); } }, pw);
-				}
-				setStatus("Uploaded " + saved.file_name + ", but it could not be read: " + read.error + " Use Read to try again, or enter the details.", "error");
 			}).catch(function (e) { setStatus(e.message, "error"); }).then(function () {
 				busy = false; button.disabled = false; drop.classList.remove("is-busy"); input.value = "";
 			});
@@ -484,7 +481,8 @@
 			types = data.document_types || [];
 			readable = data.readable || [];
 			fillTypes(typeSelect, types, "", "Document type…");
-			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each.";
+			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each." +
+				(hasForm && readable.length ? " Then choose Read on each document to fill the form from it." : "");
 			paint(data.files || []);
 			drop.hidden = !data.can_upload;
 		}).catch(function (e) { setStatus(e.message, "error"); });

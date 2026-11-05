@@ -20,8 +20,6 @@ from frappe.utils.file_manager import get_max_file_size
 from a3_sola.api import kseb_bill
 
 CONSUMER = "Solar Consumer"
-PASSBOOK, CHEQUE = "Bank Passbook", "Cancelled Cheque"
-DOCUMENT_TYPES = (PASSBOOK, CHEQUE)
 
 #: An IFSC's first four letters and the bank they belong to (the Reserve Bank's bank codes).
 BANKS = {
@@ -132,7 +130,8 @@ def _name(lines):
 	"""The holder's name: after "Name:" (a passbook - on its line, or the next lines), else the
 	capitals line printed above "Please sign above" (a cheque)."""
 	for i, line in enumerate(lines):
-		match = re.match(r"^\W*(?:Account\s*Holder(?:'?s)?\s*)?Name\s*[:\-]?\s*(.*)$", line, re.IGNORECASE)
+		# "Name", "Account Holder Name", or a statement's "Customer Name" / "Account Name".
+		match = re.match(r"^\W*(?:(?:Account\s*Holder(?:'?s)?|Account|Customer)\s*)?Name\s*[:\-]?\s*(.*)$", line, re.IGNORECASE)
 		if not match:
 			continue
 		for candidate in [match.group(1)] + lines[i + 1:i + 4]:
@@ -208,8 +207,8 @@ def read_content(content, filename):
 		text = ocr_photo(content)
 	found = parse(text)
 	if not (found.get("ifsc") or found.get("account_no")):
-		frappe.throw(_("No IFSC or account number could be read. Upload the passbook's first page or the cheque, "
-			"clear, straight and in good light."), title=_("Bank Details Not Read"))
+		frappe.throw(_("No IFSC or account number could be read. Upload the passbook's first page, the cheque or the "
+			"statement's first page, clear, straight and in good light."), title=_("Bank Details Not Read"))
 	return to_fields(found)
 
 

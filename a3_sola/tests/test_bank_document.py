@@ -93,3 +93,18 @@ class TestBankDocument(FrappeTestCase):
 		self.addCleanup(frappe.delete_doc, "File", file.name, ignore_permissions=True, force=True)
 		with self.assertRaises(frappe.ValidationError):
 			portal_attachments.read_file("Solar Consumer", consumer[0], file.name)
+
+	def test_a_customer_is_offered_its_five_document_types(self):
+		self.assertEqual(portal_attachments.offered_types("Solar Consumer"),
+			["Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN"])
+		# The KYC card's other papers are still accepted on the customer.
+		self.assertIn("Pre-Installation Photo", portal_attachments.document_types("Solar Consumer"))
+		# Other records keep their full list.
+		self.assertIn("Other", portal_attachments.offered_types("Lead"))
+
+	def test_a_bank_proof_is_read_and_counts_for_kyc(self):
+		from a3_sola.api import kyc
+
+		self.assertIn(("Solar Consumer", "Bank Proof"), portal_attachments.READERS)
+		self.assertEqual(kyc.BANK_PROOF[0], "Bank Proof")
+		self.assertIn("Bank Proof", frappe.get_meta("Customer KYC Document").get_options("kyc_type").split("\n"))

@@ -1969,7 +1969,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 1.1rem 1.25rem 0.9rem;
 }
 .a3s-edit__nav .a3s-wizard { margin: 0; }
-/* A customer's title, document readers and step bar, held at the top as one block
+/* A customer's title and step bar, held at the top as one block
    (portal_record_edit.js). Its page-coloured background hides what scrolls under it. */
 .a3s-edit__sticky {
 	position: sticky; top: var(--a3s-topbar-h); z-index: 20; max-width: 64rem;
@@ -1978,16 +1978,13 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 }
 .a3s-edit__sticky.is-stuck { box-shadow: 0 14px 18px -16px rgba(42, 51, 66, 0.35); }
 .a3s-edit__sticky .a3s-page__head { margin-bottom: 0.9rem; }
-.a3s-edit__sticky .a3s-kseb { margin-bottom: 0.9rem !important; }
 .a3s-edit__sticky .a3s-edit__nav { position: static; }
 .a3s-edit__sticky .a3s-main__title { transition: font-size var(--duration) var(--ease); }
-/* Scrolled: the title alone, the readers' buttons, the steps - tighter. */
+/* Scrolled: the title alone and the steps - tighter. */
 .a3s-edit__sticky.is-compact .a3s-detail__eyebrow,
-.a3s-edit__sticky.is-compact .a3s-main__sub,
-.a3s-edit__sticky.is-compact .a3s-kseb__row > .a3s-field__hint { display: none; }
+.a3s-edit__sticky.is-compact .a3s-main__sub { display: none; }
 .a3s-edit__sticky.is-compact .a3s-main__title { margin: 0; font-size: 1.25rem; }
 .a3s-edit__sticky.is-compact .a3s-page__head { margin-bottom: 0.6rem; }
-.a3s-edit__sticky.is-compact .a3s-kseb { padding: 0.5rem 0.75rem; margin-bottom: 0.6rem !important; }
 .a3s-edit__sticky.is-compact .a3s-edit__nav { padding-top: 0.7rem; padding-bottom: 0.55rem; }
 /* A short screen (a phone held sideways) keeps its room for the form: the block scrolls away. */
 @media (max-height: 640px) {
@@ -4011,3 +4008,7 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-readcheck__list b { overflow-wrap: anywhere; }
 .a3s-readcheck__from { grid-column: 2; font-size: 0.75rem; color: var(--color-accent-hover); font-weight: 600; }
 @media (max-width: 480px) { .a3s-readcheck__list li { grid-template-columns: minmax(0, 1fr); } .a3s-readcheck__from { grid-column: 1; } }
+.a3s-readcheck__was { grid-column: 2; font-size: 0.75rem; color: var(--color-text-muted); }
+@media (max-width: 480px) { .a3s-readcheck__was { grid-column: 1; } }
+.a3s-evidence__record { font-size: 0.8125rem; color: #b42318; }
+.a3s-evidence__record { font-size: 0.8125rem; color: #b42318; }

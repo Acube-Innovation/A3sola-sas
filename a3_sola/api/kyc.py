@@ -19,7 +19,9 @@ from frappe.utils import flt
 from a3_sola.api.settings import get_float, get_value
 
 REQUIRED_ALWAYS = ("KSEB Bill", "PAN", "Aadhaar Front", "Aadhaar Back", "Pre-Installation Photo")
-BANK_PROOF = ("Bank Passbook", "Cancelled Cheque")
+#: A bank proof - a passbook, a cancelled cheque or a statement - uploaded as Bank Proof (the
+#: first: the one the KYC card uploads as); a passbook or cheque filed before it still counts.
+BANK_PROOF = ("Bank Proof", "Bank Passbook", "Cancelled Cheque")
 LOAN_PROOF = ("Income Tax Return", "Land Tax Receipt")
 REQUIRED_FIELDS = (
 	("email_id", "Email ID"),
@@ -36,7 +38,7 @@ LEAD = "Lead"
 def required_documents(loan_amount=0):
 	"""The KYC documents asked for, as (label, document types any one of which will do)."""
 	items = [(kind, (kind,)) for kind in REQUIRED_ALWAYS]
-	items.append((_("Bank passbook or cancelled cheque"), BANK_PROOF))
+	items.append((_("Bank proof (passbook, cancelled cheque or statement)"), BANK_PROOF))
 	threshold = get_float("kyc_itr_threshold_amount") or 200000
 	if flt(loan_amount) > threshold:
 		items.append((_("Income tax return or land tax receipt"), LOAN_PROOF))

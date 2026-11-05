@@ -31,7 +31,7 @@ DOCTYPES = ("Lead", CONSUMER)
 READ_VALUES, READ_ON = "a3s_read_values", "a3s_read_on"
 #: What the page calls each kind of document.
 DOCUMENT_NAMES = {"KSEB Bill": "KSEB bill", "Aadhaar Front": "Aadhaar card", "Aadhaar Back": "Aadhaar card",
-	"Bank Passbook": "Bank passbook", "Cancelled Cheque": "Cancelled cheque"}
+	"Bank Proof": "Bank proof", "Bank Passbook": "Bank passbook", "Cancelled Cheque": "Cancelled cheque"}
 #: A lead's field and the customer's that hold the same detail, under the customer's name. The
 #: account holder is the customer too: the subsidy is paid into the customer's own account.
 SAME_AS = {"lead_name": "consumer_name", "bank_account_holder_name": "consumer_name", "state": "site_state",
@@ -102,7 +102,17 @@ def _shown(value, fieldname, doctype):
 		title_field = frappe.get_meta(df.options).title_field
 		if title_field and title_field != "name":
 			return frappe.db.get_value(df.options, value, title_field) or value
+	# A whole number as one: 1945, not 1945.0.
+	if isinstance(value, float) and value.is_integer():
+		return str(int(value))
 	return str(value)
+
+
+def _record(check):
+	"""The customer's record (else the lead's) the documents are compared with: (doctype, doc)."""
+	for doctype, name in reversed(records(check)):
+		return doctype, frappe.get_doc(doctype, name)
+	return None, None
 
 
 def _same(fieldname, value):
@@ -124,19 +134,64 @@ def evidence(check):
 				"document": doc["document"], "file_name": doc["file_name"], "file_url": doc["file_url"],
 				# Said when it is another field's: the account holder's name, beside the customer's.
 				"as": _label(fieldname, doc["doctype"]) if fieldname != key else ""})
+	# What the customer's record holds, where it is none of what the documents say: the record
+	# is what the subsidy application is filled from, so it is said beside them.
+	record_doctype, record = _record(check)
+	lead_field = {v: k for k, v in SAME_AS.items() if k != "bank_account_holder_name"}
 	rows = []
 	for detail in details.values():
 		spellings = {v["compare"] for v in detail["values"]}
 		detail["conflict"] = len(spellings) > 1
+		detail["record"], detail["record_differs"] = "", False
+		if record is not None:
+			field = detail["field"] if record_doctype == CONSUMER else lead_field.get(detail["field"], detail["field"])
+			held = record.get(field) if record.meta.get_field(field) else None
+			if held not in (None, "") and _same(detail["field"], held) not in spellings:
+				detail["record"], detail["record_differs"] = _shown(held, field, record_doctype), True
 		rows.append(detail)
 	order = {"consumer_name": 0}
-	rows.sort(key=lambda d: (not d["conflict"], order.get(d["field"], 1), d["label"]))
+	rows.sort(key=lambda d: (not d["conflict"], not d["record_differs"], order.get(d["field"], 1), d["label"]))
 	conflicts = [{"field": d["field"], "label": d["label"],
 		"values": [{k: v[k] for k in ("value", "document", "as")} for v in d["values"]]} for d in rows if d["conflict"]]
 	for d in rows:
 		for v in d["values"]:
 			v.pop("compare", None)
-	return {"documents": documents, "details": rows, "conflicts": conflicts, "signature": signature(conflicts)}
+	return {"documents": documents, "details": rows, "conflicts": conflicts, "signature": signature(conflicts),
+		"record_differs": [d["label"] for d in rows if d["record_differs"]], "load": load_check(check, documents)}
+
+
+def load_check(check, documents=None):
+	"""The proposed system against the connected load: a rooftop system up to the connected
+	load on the KSEB bill goes ahead; a larger one waits on the load being enhanced first, so
+	its commissioning may be delayed. The capacity is the design estimate's final figure, else the
+	check's, else the size proposed on the lead; the load is what the KSEB bill says, else the
+	customer's record. None while either is unknown."""
+	from frappe.utils import flt
+
+	capacity, capacity_from = 0, ""
+	estimate = check.get("design_estimate")
+	if estimate:
+		capacity, capacity_from = flt(frappe.db.get_value("Solar Design Estimate", estimate, "final_capacity_kw")), _("design estimate")
+	if not capacity and flt(check.get("capacity_kw")):
+		capacity, capacity_from = flt(check.get("capacity_kw")), _("eligibility check")
+	lead = dict(records(check)).get("Lead")
+	if not capacity and lead:
+		capacity, capacity_from = flt(frappe.db.get_value("Lead", lead, "approx_capacity_kw")), _("proposed on the lead")
+	load, load_from = 0, ""
+	for doc in documents if documents is not None else _documents(check):
+		if doc["document_type"] == "KSEB Bill" and flt(doc["fields"].get("connected_load_watts")):
+			load, load_from = flt(doc["fields"]["connected_load_watts"]), _("KSEB bill")
+	consumer = dict(records(check)).get(CONSUMER)
+	if not load and consumer:
+		row = frappe.db.get_value(CONSUMER, consumer, ["connected_load_watts", "sanctioned_load_kw"], as_dict=True) or {}
+		load = flt(row.get("connected_load_watts")) or flt(row.get("sanctioned_load_kw")) * 1000
+		load_from = _("customer's record") if load else ""
+	if not (capacity and load):
+		return None
+	over = capacity * 1000 - load
+	return {"capacity_kw": "{0:g}".format(capacity), "capacity_w": "{0:g}".format(capacity * 1000), "capacity_from": capacity_from,
+		"load_w": "{0:g}".format(load), "load_kw": "{0:g}".format(round(load / 1000, 3)), "load_from": load_from,
+		"ok": over <= 0, "over_w": "{0:g}".format(max(over, 0))}
 
 
 def signature(conflicts):

@@ -57,6 +57,15 @@ At *Renewcore*, we pride ourselves on delivering sustainable, long-term value an
 Please review the attached document. I will follow up with you shortly to answer any technical questions and discuss the next steps for your installation.
 
 """ + SIGNATURE,
+	"Subsidy Eligibility Check": """Hi {name},
+
+Thank you for sharing your documents for the *PM Surya Ghar solar subsidy*.
+
+Please find the *Customer Document Check* {document}
+
+It shows what each of your documents says - the Aadhaar card, the KSEB bill and the bank proof. The subsidy is paid only when these documents agree, so *where the check shows a difference, the subsidy may not be approved until it is corrected.* Please look through it and send us the corrected or clearer documents where needed.
+
+""" + SIGNATURE,
 	"Quotation": """Hi {name},
 
 *Thank you for your interest in Renewcore Innovations LLP.* It was a pleasure discussing your solar requirements with you.
@@ -120,6 +129,7 @@ Please let us know the option that suits you best, and we will prepare the detai
 """ + SIGNATURE
 
 SUBJECTS = {
+	"Subsidy Eligibility Check": "Your documents for the solar subsidy - {number} - Renewcore Innovations LLP",
 	"Installation Work Order": "Work Order {number} - {kind} - {project} - Renewcore Innovations LLP",
 	"Solar Proposal": "Solar Project Proposal {number} - Renewcore Innovations LLP",
 	"Quotation": "Quotation {number} - Renewcore Innovations LLP",
@@ -161,6 +171,11 @@ def _pdf(doc, part=""):
 		from a3_sola.api import completion_print
 
 		return completion_print.render(doc)[1]
+	if doc.doctype == "Subsidy Eligibility Check":
+		# The customer's documents and where they differ (api/eligibility_print).
+		from a3_sola.api import eligibility_print
+
+		return eligibility_print.render(doc)[1]
 	if part == COMPARISON:
 		from a3_sola.api import portal_estimate
 
@@ -172,7 +187,7 @@ def _pdf(doc, part=""):
 def _sendable(doctype):
 	# A design estimate goes out only as its Compare options (COMPARISON).
 	return bool(_print_format(doctype)) or doctype in (
-		"Installation Task", "Installation Work Order", "Solar Installation", "Solar Design Estimate")
+		"Installation Task", "Installation Work Order", "Solar Installation", "Solar Design Estimate", "Subsidy Eligibility Check")
 
 
 # ------------------------------------------------------------------ the customer's link
@@ -234,6 +249,10 @@ def _file_name(doc, part=""):
 		from a3_sola.api import completion_print
 
 		return completion_print.file_name(doc)
+	if doc.doctype == "Subsidy Eligibility Check":
+		from a3_sola.api import eligibility_print
+
+		return eligibility_print.file_name(doc)
 	if part == COMPARISON:
 		from a3_sola.api import portal_estimate
 
@@ -358,6 +377,13 @@ def _recipient(doc, part=""):
 		return row.get("supplier_name") or supplier, row.get("mobile_no") or "", row.get("email_id") or ""
 	if doc.doctype == "Solar Proposal":
 		return doc.get("customer_name") or "", doc.get("mobile_no") or "", doc.get("email_id") or ""
+	if doc.doctype == "Subsidy Eligibility Check":
+		# The customer the check is for: its own copy of their contact, else the customer's.
+		row = frappe.db.get_value("Solar Consumer", doc.get("solar_consumer"), ["consumer_name", "mobile_no", "email_id"],
+			as_dict=True) if doc.get("solar_consumer") else None
+		row = row or {}
+		return (doc.get("consumer_name") or row.get("consumer_name") or "", doc.get("mobile_no") or row.get("mobile_no") or "",
+			doc.get("email_id") or row.get("email_id") or "")
 	if doc.doctype == "Solar Design Estimate":
 		# The consumer, its blanks filled from the lead - as the estimate's own WhatsApp button.
 		name, mobile, email = "", "", ""

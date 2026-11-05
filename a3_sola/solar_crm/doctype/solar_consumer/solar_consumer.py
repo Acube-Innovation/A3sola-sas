@@ -51,6 +51,38 @@ class SolarConsumer(Document):
 	def on_update(self):
 		self.ensure_address_record()
 		record_links.consumer_saved(self)
+		self.sync_lead()
+
+	def sync_lead(self):
+		"""The lead shows what the customer holds: the details its documents give - the name,
+		the consumer number, the DISCOM and section, the connection, the place - read from the
+		KSEB bill or the Aadhaar card, or corrected since, are copied to the customer's lead
+		when they differ, so both say the same."""
+		if not self.lead or not frappe.db.exists("Lead", self.lead):
+			return
+		meta = frappe.get_meta("Lead")
+		lead = frappe.get_doc("Lead", self.lead)
+		changed = False
+		for lead_field in LEAD_SYNCED:
+			value = self.get(LEAD_FROM_CUSTOMER[lead_field])
+			if not value or (lead_field != "lead_name" and not meta.get_field(lead_field)) or lead.get(lead_field) == value:
+				continue
+			if lead_field == "lead_name":
+				from a3_sola.api.leads import _set_full_name
+
+				_set_full_name(lead, value)
+			else:
+				lead.set(lead_field, value)
+			changed = True
+		if not changed:
+			return
+		try:
+			lead.flags.ignore_permissions = True
+			lead.save()
+		except Exception:
+			# The customer is saved all the same; why the lead was not is logged.
+			frappe.clear_last_message()
+			frappe.log_error(title=_("Lead {0} not updated from customer {1}").format(self.lead, self.name))
 
 	def after_insert(self):
 		# Every customer is an ERPNext Customer from the start - its name, its category's type
@@ -258,6 +290,11 @@ LEAD_FROM_CUSTOMER = {
 	"consumer_number": "consumer_number", "connection_type": "connection_type", "roof_type": "roof_type",
 	"city": "site_city", "state": "site_state", "district": "site_district",
 }
+
+
+#: The lead's fields kept the same as the customer's on every save (sync_lead): the details its
+#: documents give.
+LEAD_SYNCED = ("lead_name", "consumer_number", "discom", "discom_section", "connection_type", "state", "district")
 
 
 def make_lead_for(doc):

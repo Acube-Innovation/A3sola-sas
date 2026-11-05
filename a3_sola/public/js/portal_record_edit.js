@@ -444,10 +444,8 @@
 	});
 
 	/* ---------------------------------------------------- sticky head */
-	/* A customer's title, its document readers (portal_kseb_bill.js - which puts them into
-	   the block itself when it runs after this) and the step bar stay at the top as one
-	   block. Scrolled down, the block tightens to the title alone, the readers' buttons and
-	   the steps. */
+	/* A customer's title and the step bar stay at the top as one block. Scrolled down, the
+	   block tightens to the title alone and the steps. */
 	(function () {
 		var head = document.querySelector(".a3s-page__head[data-sticky-head]");
 		if (!head || !nav) return;
@@ -455,8 +453,6 @@
 		block.className = "a3s-edit__sticky";
 		head.parentNode.insertBefore(block, head);
 		block.appendChild(head);
-		var readers = form.querySelector(".a3s-kseb");
-		if (readers) block.appendChild(readers);
 		block.appendChild(nav);
 		var compact = false;
 		function onScroll() {
