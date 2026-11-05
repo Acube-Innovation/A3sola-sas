@@ -22,12 +22,10 @@
 </div>
 {% endif %}
 
-<div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}">
+<div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}{% if sections %} a3s-formcard--full{% endif %}">
 	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}" data-doctype="{{ collection.doctype | e }}"
 	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" data-source-task="{{ source_task | e }}" novalidate>
-		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
-		<div class="a3s-form__grid">
-		{%- for f in fields %}
+		{%- macro form_field(f) %}
 		{#- A link's list, or a long one, can be typed in to find its entry (portal_combo_fields.html). -#}
 		{%- set combo = (f.type == "Link" and f.choices) or (f.type == "Select" and f.options | length > 8) %}
 		<div class="a3s-field{% if f.type in ('Small Text', 'Text', 'Attach Image') %} a3s-field--wide{% endif %}{% if combo %} a3s-combo a3s-combo--field{% endif %}" id="f-{{ f.fieldname }}"
@@ -38,7 +36,7 @@
 				<span>{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
 			</label>
 			{%- else %}
-			<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% else %} <span class="a3s-field__opt">(optional)</span>{% endif %}</label>
+			<label for="fld-{{ f.fieldname }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% elif not sections %} <span class="a3s-field__opt">(optional)</span>{% endif %}</label>
 				{%- if f.type == "Select" %}
 				<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}">
 					{%- for opt in f.options %}
@@ -91,8 +89,23 @@
 				{%- if f.hint and f.type != "Link" %}<p class="a3s-field__hint">{{ f.hint }}</p>{% endif %}
 			{%- endif %}
 		</div>
+		{%- endmacro %}
+		{%- if sections %}
+		{#- Under the ERPNext form's own headings, four fields to a row. -#}
+		{%- for s in sections %}
+		<fieldset class="a3s-form__block">
+			{%- if s.label %}<legend class="a3s-form__block-title">{{ s.label | e }}</legend>{% endif %}
+			<div class="a3s-form__grid a3s-form__grid--{{ collection.form_columns }}">
+			{%- for f in s.fields %}{{ form_field(f) }}{% endfor %}
+			</div>
+		</fieldset>
 		{%- endfor %}
+		{%- else %}
+		{#- Two fields to a row, as on the Lead form; a long text or a picture takes the row. -#}
+		<div class="a3s-form__grid">
+		{%- for f in fields %}{{ form_field(f) }}{% endfor %}
 		</div>
+		{%- endif %}
 
 		{#- Items a mapper carries across (a sales order from its quotation): shown, not typed. -#}
 		{%- if source_items and source_items.rows %}

@@ -4012,3 +4012,82 @@ select.a3s-items__input { min-width: 9rem; }
 @media (max-width: 480px) { .a3s-readcheck__was { grid-column: 1; } }
 .a3s-evidence__record { font-size: 0.8125rem; color: #b42318; }
 .a3s-evidence__record { font-size: 0.8125rem; color: #b42318; }
+
+/* ---- New lead: four columns, one kind of question each ---- */
+.a3s-formcard--full { max-width: none; }
+.a3s-lead-cols {
+	display: grid;
+	gap: 1.25rem 1.5rem;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-items: start;
+}
+.a3s-lead-col {
+	display: grid;
+	gap: 1rem;
+	align-content: start;
+	min-width: 0;
+	margin: 0;
+	padding: 1rem 1.1rem 1.15rem;
+	border: 1px solid var(--color-border);
+	border-radius: 0.75rem;
+}
+.a3s-lead-col__title {
+	padding: 0 0.35rem;
+	margin-left: -0.35rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+}
+.a3s-lead-col .a3s-field__hint { margin: 0; }
+@media (max-width: 1100px) {
+	.a3s-lead-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.a3s-lead-cols { grid-template-columns: 1fr; }
+}
+
+/* ---- Create form in columns, under the ERPNext form's section headings ---- */
+.a3s-form__block {
+	min-width: 0;
+	margin: 0;
+	padding: 1rem 1.25rem 1.25rem;
+	border: 1px solid var(--color-border);
+	border-radius: 0.75rem;
+}
+.a3s-form__block-title {
+	padding: 0 0.35rem;
+	margin-left: -0.35rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+}
+.a3s-form__grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem 1.5rem; align-items: start; }
+.a3s-form__grid--4 .a3s-field--wide { grid-column: span 2; }
+@media (max-width: 1100px) {
+	.a3s-form__grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.a3s-form__grid--4 { grid-template-columns: 1fr; }
+	.a3s-form__grid--4 .a3s-field--wide { grid-column: auto; }
+}
+
+/* Step one: the package's inverter an option comes with, shown, not chosen. */
+.a3s-de-opt__value {
+	display: flex;
+	align-items: center;
+	min-height: 2.6rem;
+	padding: 0 0.85rem;
+	border: 1px dashed var(--color-accent-tint);
+	border-radius: 0.6rem;
+	background: rgba(247, 148, 30, 0.1);
+	font-weight: 600;
+	color: var(--color-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+@media (min-width: 600px) { .a3s-de-opt__parts .a3s-de-sizing__part { grid-column: span 2; } }
