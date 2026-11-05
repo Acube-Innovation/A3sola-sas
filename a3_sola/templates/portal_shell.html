@@ -74,10 +74,12 @@
 	<aside class="a3s-side" id="a3s-side" aria-label="Primary">
 		<div class="a3s-side__scroll">
 			{%- for group in nav_groups %}
-			<div class="a3s-side__group" data-group="{{ group.key }}">
-				{#- The head is the control: it opens and closes the group under it. -#}
+			{#- One section open at a time: the one holding this page; the rest start closed. -#}
+			{%- set is_open = group["items"] | selectattr("route", "equalto", active_route) | list | length > 0 %}
+			<div class="a3s-side__group{% if not is_open %} is-collapsed{% endif %}" data-group="{{ group.key }}">
+				{#- The head is the control: it opens its group and closes the one that was open. -#}
 				<button type="button" class="a3s-side__label" data-group-toggle
-				        aria-expanded="true" aria-controls="a3s-nav-{{ group.key }}">
+				        aria-expanded="{{ 'true' if is_open else 'false' }}" aria-controls="a3s-nav-{{ group.key }}">
 					<span class="a3s-side__label-text">{{ group.label }}</span>
 					<svg class="a3s-ic a3s-side__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
 				</button>
@@ -98,21 +100,6 @@
 			</div>
 			{%- endfor %}
 		</div>
-		<script>
-		/* Which groups are closed is a per-browser preference, like the menu's own
-		   collapsed state. Applied here, inline with the markup it acts on, so a closed
-		   group is never painted open first and then snapped shut. */
-		(function () {
-			var closed = {};
-			try { closed = JSON.parse(localStorage.getItem("a3s-nav-groups") || "{}") || {}; } catch (e) {}
-			var groups = document.querySelectorAll(".a3s-side__group[data-group]");
-			for (var i = 0; i < groups.length; i++) {
-				if (!closed[groups[i].getAttribute("data-group")]) continue;
-				groups[i].classList.add("is-collapsed");
-				groups[i].querySelector("[data-group-toggle]").setAttribute("aria-expanded", "false");
-			}
-		})();
-		</script>
 
 		{#- ---- user details, pinned to the bottom ------------------------- #}
 		<div class="a3s-side__user">
@@ -202,20 +189,20 @@
 (function () {
 	var groups = document.querySelectorAll(".a3s-side__group[data-group]");
 	if (!groups.length) return;
-	function remember() {
-		var closed = {};
-		for (var i = 0; i < groups.length; i++) {
-			if (groups[i].classList.contains("is-collapsed")) closed[groups[i].getAttribute("data-group")] = 1;
-		}
-		try { localStorage.setItem("a3s-nav-groups", JSON.stringify(closed)); } catch (e) {}
+	/* An accordion: opening a section closes the one that was open; the open one's head
+	   closes it. (Groups no longer remember being closed: forget the old preference.) */
+	try { localStorage.removeItem("a3s-nav-groups"); } catch (e) {}
+	function setOpen(group, open) {
+		group.classList.toggle("is-collapsed", !open);
+		var head = group.querySelector("[data-group-toggle]");
+		if (head) head.setAttribute("aria-expanded", open ? "true" : "false");
 	}
 	Array.prototype.forEach.call(groups, function (group) {
 		var head = group.querySelector("[data-group-toggle]");
 		if (!head) return;
 		head.addEventListener("click", function () {
-			var collapsed = group.classList.toggle("is-collapsed");
-			head.setAttribute("aria-expanded", collapsed ? "false" : "true");
-			remember();
+			var open = group.classList.contains("is-collapsed");
+			Array.prototype.forEach.call(groups, function (other) { setOpen(other, other === group && open); });
 		});
 	});
 })();

@@ -281,7 +281,7 @@ These are the only status colours. Use the pair as it is; don't mix halves.
 **The menu remembers its state** (per browser, in `localStorage`):
 - **Collapsed menu:** `"a3s-side" = "collapsed"` adds `a3s-side-collapsed` to `<html>`. It is applied in an inline `<script>` in `<head>`, before first paint, so the menu never flashes open.
 - **Collapsed menu, from 900px:** the sidebar becomes 4.75rem wide and shows icons only, and the toggle turns into a small round button on its edge.
-- **Closed groups:** stored as `"a3s-nav-groups"`, a JSON map of the group keys that are closed.
+- **Menu sections are an accordion:** only one is open at a time. On load, the section holding the current page is open (rendered server-side, so nothing flashes) and every other one is closed; on a page outside the menu, all are closed. Opening a section closes the one that was open. Sections do not remember their state between pages.
 
 ### 4.3 Breakpoints
 
