@@ -14,7 +14,7 @@ import json
 
 FIELD = "a3s_read_from"
 #: The documents a field can be read from, as the page names them.
-DOCUMENTS = ("KSEB bill", "Aadhaar card", "Bank passbook", "Cancelled cheque", "Approval letter",
+DOCUMENTS = ("KSEB bill", "Aadhaar card", "Bank proof", "Bank passbook", "Cancelled cheque", "Approval letter",
 	"Portal acknowledgement")
 
 

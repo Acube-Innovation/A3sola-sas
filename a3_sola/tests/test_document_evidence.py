@@ -75,3 +75,78 @@ class TestDocumentEvidence(FrappeTestCase):
 	def test_what_was_read_is_kept_on_the_file(self):
 		file = self.document("Solar Consumer", self.consumer.name, "Bank Passbook", {"bank_ifsc_code": "SBIN0001234"})
 		self.assertEqual(json.loads(frappe.db.get_value("File", file.name, "a3s_read_values")), {"bank_ifsc_code": "SBIN0001234"})
+
+
+class TestLeadFollowsCustomer(FrappeTestCase):
+	"""What a document gave the customer - or a correction since - shows on its lead too."""
+
+	def test_the_customers_details_are_copied_to_its_lead(self):
+		consumer = make_consumer(consumer_name="Typed Name")
+		if not consumer.lead:
+			self.skipTest("The customer has no lead.")
+		consumer.reload()
+		consumer.consumer_name = "C K Boban"
+		consumer.consumer_number = "1155895007918"
+		consumer.save(ignore_permissions=True)
+		lead = frappe.db.get_value("Lead", consumer.lead, ["lead_name", "consumer_number"], as_dict=True)
+		self.assertEqual(lead.lead_name, "C K Boban")
+		self.assertEqual(lead.consumer_number, "1155895007918")
+
+
+class TestDocumentCheckPaper(FrappeTestCase):
+	"""The customer's documents as a PDF from the eligibility check, to view and send them."""
+
+	def setUp(self):
+		self.number = "555" + str(frappe.utils.random_string(10).encode().hex())[:10]
+		self.consumer = make_consumer(consumer_name="Manoj Prabhakaran", consumer_number=self.number)
+		self.check = frappe._dict(doctype="Subsidy Eligibility Check", name="TEST-ELG", lead=None,
+			solar_consumer=self.consumer.name, consumer_name="Manoj Prabhakaran", company=self.consumer.company)
+		TestDocumentEvidence.document(self, "Solar Consumer", self.consumer.name, "Aadhaar Front", {"consumer_name": "Manoj Prabhakaran"})
+		TestDocumentEvidence.document(self, "Solar Consumer", self.consumer.name, "KSEB Bill",
+			{"consumer_name": "Manoj P", "consumer_number": "1155895007918"})
+
+	def test_the_paper_says_where_they_differ(self):
+		from a3_sola.api import eligibility_print
+
+		html = frappe.render_template("a3_sola/templates/print/eligibility_documents.html", eligibility_print.context(self.check))
+		self.assertIn("The documents do not agree on: Customer Name", html)
+		self.assertIn("may not be eligible for the subsidy", html)
+		# The record's own consumer number is not the bill's: said too.
+		self.assertIn("record differs from the documents on: Consumer Number", html)
+		self.assertIn("On the customer&rsquo;s record: <strong>" + self.number + "</strong>", html)
+
+	def test_it_can_be_sent_to_the_customer(self):
+		from a3_sola.api import portal_share
+
+		self.assertTrue(portal_share._sendable("Subsidy Eligibility Check"))
+		self.assertIn("Subsidy Eligibility Check", portal_share.MESSAGES)
+
+
+class TestProposedSystemAndLoad(FrappeTestCase):
+	"""A rooftop system no larger than the connected load goes ahead; a larger one is said."""
+
+	def setUp(self):
+		self.consumer = make_consumer(consumer_name="Load Test")
+		self.check = frappe._dict(doctype="Subsidy Eligibility Check", lead=None, solar_consumer=self.consumer.name,
+			design_estimate=None, capacity_kw=0)
+
+	def bill(self, watts):
+		TestDocumentEvidence.document(self, "Solar Consumer", self.consumer.name, "KSEB Bill", {"connected_load_watts": watts})
+
+	def test_a_system_over_the_connected_load_is_said(self):
+		self.bill(1240)
+		self.check.capacity_kw = 3
+		load = document_evidence.load_check(self.check)
+		self.assertFalse(load["ok"])
+		self.assertEqual((load["capacity_w"], load["load_w"], load["over_w"], load["load_from"]), ("3000", "1240", "1760", "KSEB bill"))
+
+	def test_a_system_within_the_load_is_fine(self):
+		self.bill(5000)
+		self.check.capacity_kw = 3
+		self.assertTrue(document_evidence.load_check(self.check)["ok"])
+
+	def test_nothing_is_said_without_a_capacity(self):
+		self.bill(1240)
+		if self.consumer.lead:
+			frappe.db.set_value("Lead", self.consumer.lead, "approx_capacity_kw", 0)
+		self.assertIsNone(document_evidence.load_check(self.check))

@@ -15,7 +15,7 @@ CADENCE = (
 #: What an attached file is. The consumer's KYC types first, so a file of one of those on a
 #: Solar Consumer is also its KYC row (api/portal_attachments), then the rest.
 DOCUMENT_TYPES = (
-	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Passbook\nCancelled Cheque\n"
+	"\nKSEB Bill\nPAN\nAadhaar Front\nAadhaar Back\nBank Proof\nBank Passbook\nCancelled Cheque\n"
 	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nDigital Approval Letter\n"
 	"PM Surya Ghar Acknowledgement\nOther"
 )

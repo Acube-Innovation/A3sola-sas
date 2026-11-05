@@ -2,7 +2,7 @@
     section headings inside each step, every control in one form. A task's new document is
     created on the same form (task_form, from collections.new_context): nothing saved yet,
     so no About card, its attachments held until it is, and the fields that make it the task's ride along. -#}
-{#- A customer's title, document readers and step bar stay at the top as one sticky block
+{#- A customer's title and step bar stay at the top as one sticky block
     (portal_record_edit.js). -#}
 {%- set sticky_head = collection.slug == "consumers" and not task_form %}
 <div class="a3s-page__head"{% if sticky_head %} data-sticky-head{% endif %}>
