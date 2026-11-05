@@ -86,6 +86,15 @@ def people(inst, code):
 	return [r.user for r in inst.get("task_assignees") or [] if r.stage_code == code]
 
 
+def holds(inst, code, user=None):
+	"""Whether `user` is one of the task's people - its assignees, or the row's assigned_to."""
+	user = user or frappe.session.user
+	if user in people(inst, code):
+		return True
+	row = next((r for r in inst.get("stages") or [] if r.stage_code == code), None)
+	return bool(row and row.get("assigned_to") == user)
+
+
 def put(inst, code, users):
 	"""Make `users` the task's assignees, in order; its row's `assigned_to` is the first."""
 	seen, wanted = set(), []

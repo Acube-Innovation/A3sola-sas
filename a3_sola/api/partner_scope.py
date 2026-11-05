@@ -121,16 +121,15 @@ DEALER_TASKS = ("DSGN", "SDSGN")
 
 
 def may_open_task(installation, code, user=None):
-	"""Whether a partner may open a project's task page: his own task pages, or - a contractor -
-	a task given to him. Staff always may."""
+	"""Whether a partner may open a project's task page: his own task pages, or a task given
+	to him - a contractor's work, or a dealer's as the lead's owner (Advance Payment, Customer
+	Review). Staff always may."""
 	user = user or frappe.session.user
 	kind = partner_kind(user)
 	if not kind:
 		return True
 	if code in (CONTRACTOR_TASKS if kind == "contractor" else DEALER_TASKS):
 		return True
-	if kind != "contractor":
-		return False
 	given = frappe.get_all("Installation Task Assignee", filters={"parent": installation, "stage_code": code}, pluck="user")
 	row = frappe.db.get_value("Installation Stage Log", {"parent": installation, "parenttype": "Solar Installation",
 		"stage_code": code}, "assigned_to")
