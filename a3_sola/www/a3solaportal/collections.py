@@ -29,7 +29,9 @@ COLLECTIONS = {
 	# The installation site and the permanent address - asked for only when it is not the
 	# installation site (its show-when rule) - are not mandatory, so would not be picked up
 	# on their own.
+	# Its create form is laid out in four columns under the desk form's sections (form_sections).
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
+	              "form_columns": 4,
 	              "form_extra": ["lead_mobile_no", "date_of_birth", "gender", "site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode",
@@ -951,6 +953,8 @@ def new_context(context, slug):
 	fields.sort(key=lambda f: first.index(f["fieldname"]) if f["fieldname"] in first else len(first))
 	context.collection = {**cfg, "slug": slug}
 	context.fields = fields
+	# A collection that asks for columns gets its fields under the desk form's headings.
+	context.sections = form_sections(meta, fields) if cfg.get("form_columns") else None
 	context.item_table = item_table(slug, editable=True)
 	context.unrenderable = [
 		label for label in unrenderable
@@ -1220,6 +1224,25 @@ def record_title(doc):
 		if df and doc.get(df.fieldname):
 			title = link_title(df.options, doc.get(df.fieldname))
 	return title or doc.name
+
+
+def form_sections(meta, fields):
+	"""The create form's fields as [{label, fields}], each under the heading it has on the
+	ERPNext form - its section, or its tab when the section has none - in the form's order.
+	A field the desk form does not place stays together with the others at the top, unheaded."""
+	where = {}
+	for g in form_groups(meta):
+		for s in g["sections"]:
+			for df in s["fields"]:
+				where[df.fieldname] = s["label"] or g["label"]
+	sections, by_label = [], {}
+	for f in fields:
+		label = where.get(f["fieldname"], "")
+		if label not in by_label:
+			by_label[label] = {"label": label, "fields": []}
+			sections.append(by_label[label])
+		by_label[label]["fields"].append(f)
+	return sections
 
 
 def form_groups(meta, first_label=None):

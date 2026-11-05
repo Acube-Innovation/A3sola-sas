@@ -9,100 +9,98 @@
 	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads">&larr; Back to leads</a>
 </div>
 
-<div class="a3s-card a3s-formcard">
+<div class="a3s-card a3s-formcard a3s-formcard--full">
 	<form class="a3s-form" id="a3s-lead-form" novalidate>
-		<div class="a3s-field-row">
-			<div class="a3s-field" id="f-lead_name">
-				<label for="lead_name">Lead name</label>
-				<input type="text" id="lead_name" name="lead_name" autocomplete="name"
-				       placeholder="Person's full name">
-			</div>
-			<div class="a3s-field" id="f-company_name">
-				<label for="company_name">Company</label>
-				<input type="text" id="company_name" name="company_name"
-				       autocomplete="organization" placeholder="Organisation, if any">
-			</div>
-		</div>
-		<p class="a3s-field__hint">Enter a person's name, a company, or both &mdash; at least one is required.</p>
+		{#- Four columns, each one kind of question read top to bottom, the one that matters most
+		    first: who the customer is, what they ask for, where the lead stands, and the follow-up. -#}
+		{%- macro pick(c) %}
+				<div class="a3s-field" id="f-{{ c.fieldname }}">
+					<label for="{{ c.fieldname }}">{{ c.label }}</label>
+					<select id="{{ c.fieldname }}" name="{{ c.fieldname }}">
+						<option value="">&mdash;</option>
+						{%- for opt in c.options %}
+						<option value="{{ opt }}"{% if opt == defaults[c.fieldname] %} selected{% endif %}>{{ opt }}</option>
+						{%- endfor %}
+					</select>
+				</div>
+		{%- endmacro %}
+		<div class="a3s-lead-cols">
+			<fieldset class="a3s-lead-col">
+				<legend class="a3s-lead-col__title">Customer</legend>
+				<div class="a3s-field" id="f-lead_name">
+					<label for="lead_name">Lead name</label>
+					<input type="text" id="lead_name" name="lead_name" autocomplete="name"
+					       placeholder="Person's full name">
+				</div>
+				<div class="a3s-field" id="f-company_name">
+					<label for="company_name">Company</label>
+					<input type="text" id="company_name" name="company_name"
+					       autocomplete="organization" placeholder="Organisation, if any">
+					<p class="a3s-field__hint">A person's name, a company, or both &mdash; at least one.</p>
+				</div>
+				<div class="a3s-field" id="f-mobile_no">
+					<label for="mobile_no">Mobile</label>
+					<input type="tel" id="mobile_no" name="mobile_no" autocomplete="tel"
+					       placeholder="+91 ">
+				</div>
+				<div class="a3s-field" id="f-email_id">
+					<label for="email_id">Email</label>
+					<input type="email" id="email_id" name="email_id" autocomplete="email"
+					       spellcheck="false" placeholder="name@example.com">
+				</div>
+			</fieldset>
 
-		<div class="a3s-field-row">
-			<div class="a3s-field" id="f-email_id">
-				<label for="email_id">Email</label>
-				<input type="email" id="email_id" name="email_id" autocomplete="email"
-				       spellcheck="false" placeholder="name@example.com">
-			</div>
-			<div class="a3s-field" id="f-mobile_no">
-				<label for="mobile_no">Mobile</label>
-				<input type="tel" id="mobile_no" name="mobile_no" autocomplete="tel"
-				       placeholder="+91 ">
-			</div>
-		</div>
+			{#- What they ask for. The loan is carried to the quotation and the project, where it
+			    decides the loan tasks. -#}
+			<fieldset class="a3s-lead-col">
+				<legend class="a3s-lead-col__title">Enquiry</legend>
+				<div class="a3s-field" id="f-loan_required">
+					<label for="loan_required">Loan required? <span class="a3s-req">*</span></label>
+					<select id="loan_required" name="loan_required" required>
+						<option value="">&mdash;</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+					<p class="a3s-field__hint">Will the customer finance the plant with a loan?</p>
+				</div>
+				{{- pick(choice.request_type) }}
+				{{- pick(choice.type) }}
+				<div class="a3s-field a3s-combo a3s-combo--field" id="f-source" data-combo>
+					<label for="source">Source <span class="a3s-field__opt">(optional)</span></label>
+					<select id="source" name="source">
+						<option value="">&mdash;</option>
+						{%- for src in sources %}
+						<option value="{{ src }}"{% if src == defaults.source %} selected{% endif %}>{{ src }}</option>
+						{%- endfor %}
+					</select>
+				</div>
+			</fieldset>
 
-		<div class="a3s-field-row">
-			<div class="a3s-field" id="f-status">
-				<label for="status">Status</label>
-				<select id="status" name="status">
-					{%- for opt in status_options %}
-					<option value="{{ opt }}"{% if opt == "Lead" %} selected{% endif %}>{{ opt }}</option>
-					{%- endfor %}
-				</select>
-			</div>
-			<div class="a3s-field a3s-combo a3s-combo--field" id="f-source" data-combo>
-				<label for="source">Source <span class="a3s-field__opt">(optional)</span></label>
-				<select id="source" name="source">
-					<option value="">&mdash;</option>
-					{%- for src in sources %}
-					<option value="{{ src }}"{% if src == defaults.source %} selected{% endif %}>{{ src }}</option>
-					{%- endfor %}
-				</select>
-			</div>
-		</div>
+			{#- Where the lead stands. -#}
+			<fieldset class="a3s-lead-col">
+				<legend class="a3s-lead-col__title">Qualification</legend>
+				<div class="a3s-field" id="f-status">
+					<label for="status">Status</label>
+					<select id="status" name="status">
+						{%- for opt in status_options %}
+						<option value="{{ opt }}"{% if opt == "Lead" %} selected{% endif %}>{{ opt }}</option>
+						{%- endfor %}
+					</select>
+				</div>
+				{{- pick(choice.qualification_status) }}
+				{{- pick(choice.solar_lead_status) }}
+			</fieldset>
 
-		{#- Each starts on the lead's default: a client, in process, a product enquiry. -#}
-		<div class="a3s-field-row">
-			{%- for c in choices %}
-			<div class="a3s-field" id="f-{{ c.fieldname }}">
-				<label for="{{ c.fieldname }}">{{ c.label }}</label>
-				<select id="{{ c.fieldname }}" name="{{ c.fieldname }}">
-					<option value="">&mdash;</option>
-					{%- for opt in c.options %}
-					<option value="{{ opt }}"{% if opt == defaults[c.fieldname] %} selected{% endif %}>{{ opt }}</option>
-					{%- endfor %}
-				</select>
-			</div>
-			{%- endfor %}
-		</div>
-
-		{#- Outreach: in discussion, the call connected, the last message today. -#}
-		<div class="a3s-field-row">
-			{%- for c in outreach_choices %}
-			<div class="a3s-field" id="f-{{ c.fieldname }}">
-				<label for="{{ c.fieldname }}">{{ c.label }}</label>
-				<select id="{{ c.fieldname }}" name="{{ c.fieldname }}">
-					<option value="">&mdash;</option>
-					{%- for opt in c.options %}
-					<option value="{{ opt }}"{% if opt == defaults[c.fieldname] %} selected{% endif %}>{{ opt }}</option>
-					{%- endfor %}
-				</select>
-			</div>
-			{%- endfor %}
-			<div class="a3s-field" id="f-last_message_date">
-				<label for="last_message_date">Last Message Date</label>
-				<input type="date" id="last_message_date" name="last_message_date" value="{{ defaults.last_message_date }}">
-			</div>
-		</div>
-
-		{#- Carried to the quotation and the project, where it decides the loan tasks. -#}
-		<div class="a3s-field-row">
-			<div class="a3s-field" id="f-loan_required">
-				<label for="loan_required">Loan required? <span class="a3s-req">*</span></label>
-				<select id="loan_required" name="loan_required" required>
-					<option value="">&mdash;</option>
-					<option value="Yes">Yes</option>
-					<option value="No">No</option>
-				</select>
-				<p class="a3s-field__hint">Will the customer finance the plant with a loan?</p>
-			</div>
+			{#- The outreach it starts on: step 1, the call connected, the last message today. -#}
+			<fieldset class="a3s-lead-col">
+				<legend class="a3s-lead-col__title">Follow-up</legend>
+				{{- pick(choice.outreach_stage) }}
+				{{- pick(choice.call_status) }}
+				<div class="a3s-field" id="f-last_message_date">
+					<label for="last_message_date">Last Message Date</label>
+					<input type="date" id="last_message_date" name="last_message_date" value="{{ defaults.last_message_date }}">
+				</div>
+			</fieldset>
 		</div>
 
 		<div class="a3s-form__actions">

@@ -52,4 +52,6 @@ def get_context(context):
 		{"fieldname": f, "label": label, "options": select_options(f)}
 		for f, label in (("outreach_stage", "Outreach Stage"), ("solar_lead_status", "Lead Status"), ("call_status", "Call Status"))
 	]
+	# By fieldname, for the form's columns to place each where its kind of question is.
+	context.choice = {c["fieldname"]: c for c in context.choices + context.outreach_choices}
 	return context

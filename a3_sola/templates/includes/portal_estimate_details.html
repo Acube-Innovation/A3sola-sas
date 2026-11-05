@@ -86,7 +86,7 @@
 		{%- if f.input == "select" %}
 		<select data-field="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if locked %} disabled{% endif %}>
 			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.capacity %} data-capacity="{{ o.capacity | e }}"{% endif %}{% if o.custom %} data-custom="1"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.capacity %} data-capacity="{{ o.capacity | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
 		</select>
 		{%- elif f.input == "number" %}
@@ -112,7 +112,7 @@
 				<button type="button" class="a3s-icon-btn a3s-icon-btn--danger a3s-de-opt__remove" data-remove-option aria-label="Remove this option" title="Remove this option">&times;</button>
 			</div>
 			{#- Two rows of four: connection, system, subsidy and its scheme; then capacity, the package
-			    and the panel and inverter chosen from it. -#}
+			    and the inverter it comes with. -#}
 			<div class="a3s-de-opt__grid">
 				{%- for f in package.fields %}
 				<div class="a3s-field a3s-de-opt__f-{{ f.fieldname }}">
@@ -129,14 +129,19 @@
 					{%- endif %}
 				</div>
 				{%- endfor %}
-			{#- One of each, from the option's package; filled by the script as the package changes. -#}
+			{#- The package's panel, inverter and battery: not chosen here (they are changed on the next
+			    step), but carried, the package's default or the inverter the option was added for.
+			    The inverter is shown, so options of one package tell apart. -#}
 			<div class="a3s-de-opt__parts">
 				{%- for c in package.components %}
-				<div class="a3s-field a3s-de-sizing__part"{% if c.only_for %} data-only-for="{{ c.only_for | e }}"{% endif %}>
-					<span class="a3s-de-sizing__part-label">{{ c.label }}</span>
-					<select data-field="{{ c.fieldname }}" data-component="{{ c.key }}" data-value="{{ row['values'][c.fieldname] | e }}" aria-label="{{ c.label | e }}"{% if locked %} disabled{% endif %}>
+				<div class="a3s-field a3s-de-sizing__part"{% if c.only_for %} data-only-for="{{ c.only_for | e }}"{% endif %}{% if c.key != "inverters" %} hidden{% endif %}>
+					<select data-field="{{ c.fieldname }}" data-component="{{ c.key }}" data-value="{{ row['values'][c.fieldname] | e }}" hidden aria-hidden="true" tabindex="-1"{% if locked %} disabled{% endif %}>
 						<option value="">—</option>
 					</select>
+					{%- if c.key == "inverters" %}
+					<span class="a3s-de-sizing__part-label">{{ c.label }}</span>
+					<span class="a3s-de-opt__value" data-component-text>—</span>
+					{%- endif %}
 				</div>
 				{%- endfor %}
 			</div>
@@ -154,7 +159,7 @@
 		<template id="a3s-de-option-template">{{ option_row(blank) }}</template>
 		<div class="a3s-items__foot">
 			<button type="button" class="a3s-btn a3s-btn--ghost" data-add-option>+ Add option</button>
-			<p class="a3s-field__hint">Choosing a package adds an option for each of its other inverters. Each ticked option is a tab on the next step, priced on its own; untick any you do not want. The first ticked option is the recommended one and is this estimate; the others are saved as their own estimates for the same lead, from their tabs. Custom is not a package: choose any panel and inverter for the option, then add the rest of its system on the next step.</p>
+			<p class="a3s-field__hint">Choosing a package adds an option for each of its other inverters. Each ticked option is a tab on the next step, priced on its own; untick any you do not want. The first ticked option is the recommended one and is this estimate; the others are saved as their own estimates for the same lead, from their tabs. Each option comes with its package's panel and inverter; change them on the next step.</p>
 		</div>
 		{%- if package.facts %}
 		<div class="a3s-de-fields a3s-de-sizing__facts">
