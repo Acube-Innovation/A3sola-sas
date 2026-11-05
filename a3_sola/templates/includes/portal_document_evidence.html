@@ -1,0 +1,12 @@
+{#- The customer's documents on a subsidy eligibility check: what OCR read from each one on
+    the lead and the customer, each detail with the document it came from, and - where two
+    documents differ - a warning to confirm (portal_document_evidence.js, api/document_evidence).
+    Context: record (the check, once it exists). -#}
+{%- if record and record.doctype == "Subsidy Eligibility Check" and record.name and not task_form %}
+<section class="a3s-card a3s-edit__card a3s-evidence" data-evidence data-name="{{ record.name | e }}">
+	<h3 class="a3s-edit__card-title">Customer&rsquo;s documents</h3>
+	<p class="a3s-edit__hint">What the documents on the lead and the customer say, read by OCR, and which document each detail came from.</p>
+	<div data-evidence-body><p class="a3s-attach__status">Loading the documents…</p></div>
+</section>
+<script src="/assets/a3_sola/js/portal_document_evidence.js?v={{ a3s_asset_version('js/portal_document_evidence.js') }}"></script>
+{%- endif %}

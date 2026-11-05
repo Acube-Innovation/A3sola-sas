@@ -124,6 +124,8 @@
 
 	{#- ================================================ right: the snapshot ===== #}
 	<aside class="a3s-edit__side">
+		{#- The lead's documents first, as on every page. -#}
+		{%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		<section class="a3s-card a3s-edit__card">
 			<h3 class="a3s-edit__card-title">Snapshot</h3>
@@ -179,7 +181,6 @@
 
 		{%- include "templates/includes/portal_chain_steps.html" %}
 		{%- include "templates/includes/portal_assignment.html" %}
-		{%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 	</aside>
 </div>
 {% endblock %}

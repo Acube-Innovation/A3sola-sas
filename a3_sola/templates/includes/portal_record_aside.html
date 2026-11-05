@@ -4,6 +4,8 @@
 
     Context: tiles, glance, chain_steps. `total` is optional - the builder has no field
     count to report, so it simply omits the filled-in progress. -#}
+{#- The record's documents first, as on every page. -#}
+{%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 {%- if tiles %}
 <section class="a3s-card a3s-edit__card">
 	<h3 class="a3s-edit__card-title">Snapshot</h3>
@@ -54,4 +56,3 @@
 
 {%- include "templates/includes/portal_chain_steps.html" %}
 {%- if not hide_assignment %}{% include "templates/includes/portal_assignment.html" %}{% endif %}
-{%- with att_doctype=record_doctype, att_name=record_name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}

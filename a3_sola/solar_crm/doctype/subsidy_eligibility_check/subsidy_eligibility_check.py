@@ -43,6 +43,13 @@ class SubsidyEligibilityCheck(Document):
 		self.recompute()
 		self.apply_override()
 
+	def before_submit(self):
+		"""Where the customer's documents disagree - a name spelt two ways - someone has checked
+		them and confirmed the details are correct (api/document_evidence)."""
+		from a3_sola.api import document_evidence
+
+		document_evidence.assert_confirmed(self)
+
 	def before_update_after_submit(self):
 		"""A submitted check is the normal case for an override, and `validate` does not
 		run on one - so the same rule is applied on this path too."""

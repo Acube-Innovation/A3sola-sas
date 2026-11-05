@@ -110,3 +110,31 @@ class TestAadhaarCard(FrappeTestCase):
 			self.assertEqual(kseb_bill.claim("F1", "Solar Consumer", "CUST-1"), "/private/files/back.jpg")
 		set_value.assert_called_once()
 		rows.assert_called_once_with("Solar Consumer", "CUST-1", "/private/files/back.jpg", "Aadhaar Back")
+
+
+class TestAadhaarSides(FrappeTestCase):
+	""""Read Aadhaar front" and "Read Aadhaar back": each side gives only its own details, and
+	the other side picked is said."""
+
+	def read(self, text, side):
+		with patch.object(aadhaar_card.kseb_bill, "extract_text", return_value=(text, "ocr")), \
+				patch.object(aadhaar_card, "english_column", return_value=None):
+			return aadhaar_card.read_content(b"photo", "card.jpg", side=side)
+
+	def test_the_front_gives_the_holder_only(self):
+		out = self.read(FRONT, "front")
+		self.assertEqual(out["side"], aadhaar_card.FRONT)
+		self.assertIn("consumer_name", out["fields"])
+		self.assertFalse([k for k in out["fields"] if k.startswith("permanent_")])
+
+	def test_the_back_gives_the_address_only(self):
+		out = self.read(BACK, "back")
+		self.assertEqual(out["side"], aadhaar_card.BACK)
+		self.assertIn("permanent_pincode", out["fields"])
+		self.assertNotIn("consumer_name", out["fields"])
+
+	def test_the_other_side_picked_is_said(self):
+		with self.assertRaises(frappe.ValidationError):
+			self.read(BACK, "front")
+		with self.assertRaises(frappe.ValidationError):
+			self.read(FRONT, "back")

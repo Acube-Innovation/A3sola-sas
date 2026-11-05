@@ -89,6 +89,13 @@ CUSTOM_FIELDS = {
 			"in_standard_filter": 1,
 			"description": "What the attachment is - the KSEB bill, an Aadhaar face, the PAN - as chosen on the portal.",
 		},
+		# What OCR read from the document, as the record's fields (api/document_evidence): the
+		# subsidy eligibility check shows each detail with the document it came from.
+		{"fieldname": "a3s_read_values", "fieldtype": "Long Text", "label": "Read by OCR", "read_only": 1,
+		 "insert_after": "a3s_document_type", "no_copy": 1,
+		 "description": "What OCR read from this document, as {fieldname: value} of the record it is attached to."},
+		{"fieldname": "a3s_read_on", "fieldtype": "Datetime", "label": "Read On", "read_only": 1,
+		 "insert_after": "a3s_read_values", "no_copy": 1},
 	],
 	# --------------------------------------------------------------------- Item
 	"Item": [
@@ -113,6 +120,10 @@ CUSTOM_FIELDS = {
 		# a lead to a dealer. A dealer sees only his own leads (api/partner_scope).
 		{"fieldname": "a3s_dealer", "fieldtype": "Link", "options": "User", "label": "Dealer",
 		 "insert_after": "lead_owner"},
+		# Which document each field was read from on the portal - "From KSEB bill" (api/read_from).
+		{"fieldname": "a3s_read_from", "fieldtype": "Small Text", "label": "Read From Documents", "hidden": 1,
+		 "no_copy": 1, "insert_after": "a3s_dealer",
+		 "description": "Which document each field was read from (OCR) on the portal, as {fieldname: document}."},
 		# Solar Details lives in its own "Solar" tab, placed right after the Details tab
 		# (its last field is `blog_subscriber`, just before ERPNext's `activities_tab`).
 		{"fieldname": "a3s_solar_tab", "fieldtype": "Tab Break", "label": "Solar", "insert_after": "blog_subscriber"},

@@ -174,8 +174,9 @@ def to_fields(parsed):
 
 # ------------------------------------------------------------------ the page's call
 @frappe.whitelist(methods=["POST"])
-def read(doctype=CONSUMER, name=None, password=None):
-	"""Read the Aadhaar card posted as `file` (with its password, if a locked PDF). Returns the
+def read(doctype=CONSUMER, name=None, password=None, side=None):
+	"""Read the Aadhaar card posted as `file` (with its password, if a locked PDF) - its front
+	or its back, as `side` says ("front", "back"; not said, whichever it reads as). Returns the
 	customer's fields to fill and warnings; the card is attached to the customer that exists, or
 	kept for the one being created. The Aadhaar number is never read."""
 	if doctype != CONSUMER:
@@ -192,9 +193,28 @@ def read(doctype=CONSUMER, name=None, password=None):
 	if len(content) > get_max_file_size():
 		frappe.throw(_("{0} is larger than {1} MB.").format(upload.filename, get_max_file_size() // (1024 * 1024)),
 			frappe.ValidationError)
-	text, source = kseb_bill.extract_text(content, upload.filename, password)
+	out = read_content(content, upload.filename, password, side)
+	kind = out["side"]
+	attached, pending = False, None
+	if name:
+		kseb_bill.attach(doctype, name, upload.filename, content, kind, read_values=out["fields"])
+		attached = True
+	else:
+		pending = kseb_bill.keep(upload.filename, content, kind, read_values=out["fields"])
+	return dict(out, attached=attached, pending_file=pending)
+
+
+def read_content(content, filename, password=None, side=None):
+	"""The customer's fields, warnings, how the card was read and which side it is - from the
+	card's bytes. Also how an attached card is read again.
+
+	`side` is the side the person says it is: the front gives the name, the date of birth and
+	the gender, the back the address - and only those, so a stray line OCR finds on the back
+	is never taken for a name. An e-Aadhaar PDF holds both, whichever is said."""
+	side = (side or "").lower() or None
+	text, source = kseb_bill.extract_text(content, filename, password)
 	parsed = parse(text)
-	if source == "ocr" and not upload.filename.lower().endswith(".pdf"):
+	if source == "ocr" and side != "front" and not (filename or "").lower().endswith(".pdf"):
 		# A photo of the back: its English address column, read on its own.
 		column = english_column(content)
 		address = parse(column).get("address") if column else None
@@ -203,14 +223,27 @@ def read(doctype=CONSUMER, name=None, password=None):
 	if not (parsed.get("address") or parsed.get("dob") or parsed.get("year_of_birth")):
 		frappe.throw(_("This does not read as an Aadhaar card. Upload the side with the address, clear and straight, "
 			"or the e-Aadhaar PDF."), title=_("Card Not Read"))
+	both = source == "pdf-text" or (filename or "").lower().endswith(".pdf")
+	front = bool(parsed.get("dob") or parsed.get("year_of_birth"))
+	if side and not both:
+		# The other side picked: said, rather than filled from what was not asked for.
+		if side == "front" and not front:
+			frappe.throw(_("This reads as the back of the Aadhaar card (the address). Use Read Aadhaar back for it, "
+				"or upload the front - the side with the photo, name and date of birth."), title=_("Wrong Side"))
+		if side == "back" and not parsed.get("address"):
+			frappe.throw(_("This reads as the front of the Aadhaar card. Use Read Aadhaar front for it, or upload the "
+				"back - the side with the address."), title=_("Wrong Side"))
+		if side == "front":
+			parsed.pop("address", None)
+		else:
+			for key in ("name", "dob", "year_of_birth", "gender"):
+				parsed.pop(key, None)
 	fields, warnings = to_fields(parsed)
-	# A PDF (e-Aadhaar) holds both sides; a photo is the side it shows.
-	kind = FRONT if (source == "pdf-text" or not parsed.get("address")) else BACK
-	attached, pending = False, None
-	if name:
-		kseb_bill.attach(doctype, name, upload.filename, content, kind)
-		attached = True
+	# A PDF (e-Aadhaar) holds both sides; a photo is the side it shows - or is said to.
+	if both:
+		kind = FRONT
+	elif side:
+		kind = FRONT if side == "front" else BACK
 	else:
-		pending = kseb_bill.keep(upload.filename, content, kind)
-	return {"fields": fields, "warnings": warnings, "source": source, "side": kind, "attached": attached,
-		"pending_file": pending}
+		kind = FRONT if not parsed.get("address") else BACK
+	return {"fields": fields, "warnings": warnings, "source": source, "side": kind}

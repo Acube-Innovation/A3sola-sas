@@ -143,7 +143,9 @@
 	/* The offset a section should stop at when scrolled to: below the fixed top bar
 	   and the sticky step bar. */
 	function topOffset() {
-		var bar = nav ? nav.getBoundingClientRect().height : 0;
+		/* The whole sticky block where the title and readers stick with the steps. */
+		var held = nav && (nav.closest(".a3s-edit__sticky") || nav);
+		var bar = held ? held.getBoundingClientRect().height : 0;
 		var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--a3s-topbar-h")) || 64;
 		return top + bar + 24;
 	}
@@ -440,4 +442,31 @@
 			setStatus("Could not reach the server. Check your connection and try again.", "error");
 		});
 	});
+
+	/* ---------------------------------------------------- sticky head */
+	/* A customer's title, its document readers (portal_kseb_bill.js - which puts them into
+	   the block itself when it runs after this) and the step bar stay at the top as one
+	   block. Scrolled down, the block tightens to the title alone, the readers' buttons and
+	   the steps. */
+	(function () {
+		var head = document.querySelector(".a3s-page__head[data-sticky-head]");
+		if (!head || !nav) return;
+		var block = document.createElement("div");
+		block.className = "a3s-edit__sticky";
+		head.parentNode.insertBefore(block, head);
+		block.appendChild(head);
+		var readers = form.querySelector(".a3s-kseb");
+		if (readers) block.appendChild(readers);
+		block.appendChild(nav);
+		var compact = false;
+		function onScroll() {
+			/* Apart enough to not flicker as the block's own height changes. */
+			var y = window.pageYOffset;
+			var want = compact ? y > 24 : y > 160;
+			if (want !== compact) { compact = want; block.classList.toggle("is-compact", compact); }
+			block.classList.toggle("is-stuck", y > 4);
+		}
+		window.addEventListener("scroll", onScroll, { passive: true });
+		onScroll();
+	})();
 })();

@@ -88,10 +88,43 @@
 	};
 	var LABELS = { approval_reference: "Jan Samarth Reference", approval_received_on: "Approval Received On",
 		application_number: "Application Number", application_date: "Application Date",
-		national_portal_application_id: "National Portal Application ID" };
+		national_portal_application_id: "National Portal Application ID",
+		bank_account_holder_name: "Account Holder Name", bank_account_no: "Account Number", bank_name: "Bank",
+		bank_branch: "Branch", bank_ifsc_code: "IFSC Code" };
+	/* The document a field is read from, as its note says - "From Aadhaar card" (portal_read_from.js) -
+	   and the offer beside a field already holding a value: "Aadhaar card says: …". */
+	var SOURCES = { "KSEB Bill": "KSEB bill", "Aadhaar Front": "Aadhaar card", "Aadhaar Back": "Aadhaar card",
+		"Bank Passbook": "Bank passbook", "Cancelled Cheque": "Cancelled cheque", "Digital Approval Letter": "Approval letter",
+		"PM Surya Ghar Acknowledgement": "Portal acknowledgement" };
+
+	function labelOf(input) {
+		var name = input.name || input.id.replace(/^fld-/, "");
+		var label = input.id && document.querySelector('label[for="' + input.id + '"]');
+		return LABELS[name] || (label ? label.textContent.replace(/\*/g, "").trim() : name.replace(/_/g, " "));
+	}
+
+	/* The section a filled field is in opens, so what was filled can be seen. */
+	function reveal(input) {
+		var panel = input && input.closest(".a3s-wizard__panel");
+		var toggle = panel && panel.classList.contains("is-collapsed") && panel.querySelector(".a3s-edit__toggle");
+		if (toggle) toggle.click();
+	}
+
+	/* A document's fields into the form: on a lead's or customer's form as its KSEB bill's are
+	   (portal_kseb_bill.js - a blank filled and marked, a value already there kept, the
+	   document's offered beside it); elsewhere, blanks only. Resolves {filled: [labels], offered}. */
+	function applyFields(fields, documentType, extras) {
+		if (window.a3sReadFill) {
+			return window.a3sReadFill(fields, SOURCES[documentType] || documentType, extras).then(function (r) {
+				reveal(r.filled[0] || (Object.keys(fields || {}).map(function (n) { return document.getElementById("fld-" + n); }).filter(Boolean)[0]));
+				return { filled: r.filled.map(labelOf), offered: r.offered };
+			});
+		}
+		return Promise.resolve({ filled: fillFields(fields, SOURCES[documentType] || documentType), offered: 0 });
+	}
 
 	/* A field is filled only while blank, or still as this reader last filled it. */
-	function fillFields(fields) {
+	function fillFields(fields, documentName) {
 		var filled = [];
 		Object.keys(fields || {}).forEach(function (name) {
 			var input = document.getElementById("fld-" + name);
@@ -100,9 +133,15 @@
 			input.dataset.readFilled = fields[name];
 			input.dispatchEvent(new Event("input", { bubbles: true }));
 			input.dispatchEvent(new Event("change", { bubbles: true }));
+			if (window.a3sReadFrom && documentName) window.a3sReadFrom.mark(input, documentName);
 			filled.push((LABELS[name] || name) + " " + fields[name]);
 		});
 		return filled;
+	}
+
+	function offeredNote(n) {
+		return n + " field" + (n === 1 ? " already had a value" : "s already had values") +
+			": what the document says is shown beside " + (n === 1 ? "it" : "them") + ". Choose Use to take it.";
 	}
 
 	Array.prototype.forEach.call(document.querySelectorAll("[data-attach]"), function (card) {
@@ -118,6 +157,7 @@
 		var button = card.querySelector("[data-attach-upload]");
 		var status = card.querySelector("[data-attach-status]");
 		var types = [];
+		var readable = [];
 		var busy = false;
 		/* A record not yet created (data-held): the files picked wait here, as rows, and go up
 		   once the form has created it - window.a3sAttachHeld. */
@@ -178,6 +218,17 @@
 			tr.appendChild(typeCell);
 
 			var act = el("span", "a3s-attach__act"); act.setAttribute("role", "cell");
+			/* Read: the saved file read again, its details filled into the form. */
+			if (!f.held && f.document_type && readable.indexOf(f.document_type) !== -1) {
+				var readBtn = el("button", "a3s-attach__read");
+				readBtn.type = "button";
+				readBtn.title = "Read " + f.file_name + " again and fill the form from it";
+				readBtn.setAttribute("aria-label", "Read " + f.file_name);
+				readBtn.appendChild(icon("ic-scroll"));
+				readBtn.appendChild(el("span", "", "Read"));
+				readBtn.addEventListener("click", function () { readAgain(f, readBtn); });
+				act.appendChild(readBtn);
+			}
 			/* View opens the file in a new tab, as its name does - one not uploaded yet from
 			   the browser's own copy of it. */
 			var viewUrl = f.file_url || (f.file && window.URL ? (f.blobUrl = f.blobUrl || URL.createObjectURL(f.file)) : "");
@@ -232,6 +283,65 @@
 			if (changed) document.dispatchEvent(new CustomEvent("a3s:attachments-changed", { detail: { doctype: doctype, name: name } }));
 		}
 
+		function serverTitle(data) {
+			try { return JSON.parse(JSON.parse((data && data._server_messages) || "[]")[0]).title || ""; } catch (e) { return ""; }
+		}
+
+		/* A file on the record read again: its fields into the form, to check and save. */
+		function readAgain(f, btn, password) {
+			return readDoc({ method: "read_file", fileName: f.file_name, documentType: f.document_type, btn: btn,
+				body: function (pw) { return form(pw ? { file: f.name, password: pw } : { file: f.name }); } }, password);
+		}
+
+		/* A file picked on a record not yet created: read from the browser's copy, nothing kept. */
+		function readPicked(file, what) {
+			return readDoc({ method: "read_upload", fileName: file.name, documentType: what,
+				body: function (pw) {
+					var body = form(pw ? { document_type: what, password: pw } : { document_type: what });
+					body.append("file", file, file.name);
+					return body;
+				} });
+		}
+
+		/* What a document was read as, into the form, and said. */
+		function applyRead(out, fileName, documentType) {
+			var warned = out.warnings || [];
+			return applyFields(out.fields || {}, out.document_type || documentType, out).then(function (res) {
+				var parts = [];
+				if (res.filled.length) parts.push("Read " + fileName + ": filled " + res.filled.join(", ") + ".");
+				if (res.offered) parts.push(offeredNote(res.offered));
+				if (!parts.length) parts.push("Read " + fileName + ": the form already holds what it says.");
+				setStatus(parts.concat(warned).join(" "), warned.length ? "warn" : "ok");
+			});
+		}
+
+		/* Read a document into the form (api/portal_attachments.read_file / read_upload). */
+		function readDoc(job, password) {
+			var btn = job.btn;
+			if (btn) { btn.disabled = true; btn.classList.add("is-busy"); }
+			setStatus("Reading " + job.fileName + "…" + (/\.pdf$/i.test(job.fileName) ? "" : " A photo takes a few seconds."));
+			return fetch(API + job.method, {
+				method: "POST", credentials: "same-origin",
+				headers: { "X-Frappe-CSRF-Token": csrf, Accept: "application/json" },
+				body: job.body(password)
+			}).then(function (r) {
+				return r.json().catch(function () { return {}; }).then(function (data) {
+					if (r.ok) return data.message || {};
+					/* A locked PDF (an e-Aadhaar): asked for its password, and read again with it. */
+					var title = serverTitle(data);
+					if (title === "Password Needed" || title === "Wrong Password") {
+						var pw = window.prompt(message(data, "This PDF is locked.") + "\n\nAn e-Aadhaar's password is the first 4 letters of the name in CAPITALS and the year of birth, e.g. LIJO1985.");
+						if (pw) return readDoc(job, pw).then(function () { return null; });
+					}
+					throw new Error(message(data, "That did not go through. Try again."));
+				});
+			}).then(function (out) {
+				if (out) return applyRead(out, job.fileName, job.documentType);
+			}).catch(function (e) { setStatus(e.message, "error"); }).then(function () {
+				if (btn && btn.isConnected) { btn.disabled = false; btn.classList.remove("is-busy"); }
+			});
+		}
+
 		function needType() {
 			if (typeSelect.value) return false;
 			setStatus("Choose the document type first.", "error");
@@ -251,29 +361,38 @@
 			var source = document.querySelector('#a3s-record-edit-form [name="source"]');
 			if (source && source.value) body.append("installation", source.value);
 			if (name) body.append("task", name);
+			body.append("doctype", doctype);
+			if (name) body.append("name", name);
 			fetch("/api/method/" + method, {
 				method: "POST", credentials: "same-origin",
 				headers: { "X-Frappe-CSRF-Token": csrf, Accept: "application/json" }, body: body
 			}).then(function (r) { return r.json().catch(function () { return {}; }); }).then(function (data) {
 				var fields = (data && data.message && data.message.fields) || {};
 				var warned = (data && data.message && data.message.warnings) || [];
-				var filled = fillFields(fields);
-				/* Said after what the upload said, whichever answered first. */
-				var before = status.dataset.tone === "ok" && !status.hidden ? status.textContent + " " : "";
-				var said = filled.length ? "Read from the " + what + ": " + filled.join(", ") + "." : "";
-				/* A letter naming someone other than the job's customer: said, and shown as a warning. */
-				if (warned.length) setStatus([before + said].concat(warned).join(" ").trim(), "warn");
-				else if (filled.length) setStatus(before + said, "ok");
-				else if (!Object.keys(fields).length) setStatus("The " + what + " was kept, but its details could not be read. Enter them above.", "error");
+				return applyFields(fields, what).then(function (res) {
+					/* Said after what the upload said, whichever answered first. */
+					var before = status.dataset.tone === "ok" && !status.hidden ? status.textContent + " " : "";
+					var said = (res.filled.length ? "Read from the " + what + ": " + res.filled.join(", ") + "." : "") +
+						(res.offered ? " " + offeredNote(res.offered) : "");
+					/* A letter naming someone other than the job's customer: said, and shown as a warning. */
+					if (warned.length) setStatus([(before + said).trim()].concat(warned).join(" ").trim(), "warn");
+					else if (said) setStatus((before + said).trim(), "ok");
+					else if (!Object.keys(fields).length) setStatus("The " + what + " was kept, but its details could not be read. Use Read to try again, or enter them in the form.", "error");
+				});
 			}).catch(function () { /* the file is still attached; the fields are typed */ });
 		}
 
 		function upload(files) {
 			if (!files || !files.length || busy || needType()) return;
-			readInto(files[files.length - 1], typeSelect.value);
-			var body = form({ document_type: typeSelect.value });
+			var what = typeSelect.value, last = files[files.length - 1];
+			/* A document the form is filled from - a KSEB bill, an Aadhaar card, a passbook or
+			   cheque - is read as it is uploaded, as Read does. A task's own readers read it
+			   from the browser's copy as before. */
+			var reads = readable.indexOf(what) !== -1 && !(READERS[doctype] || {})[what];
+			if (!reads) readInto(last, what);
+			var body = form({ document_type: what });
 			Array.prototype.forEach.call(files, function (file) { body.append("file", file, file.name); });
-			var n = files.length, what = typeSelect.value;
+			var n = files.length;
 			var label = n + " file" + (n === 1 ? "" : "s");
 			if (held) {
 				Array.prototype.forEach.call(files, function (file) {
@@ -282,14 +401,28 @@
 				paint(held);
 				setStatus(label + " added as " + what + ". They upload when you save.", "ok");
 				typeSelect.value = ""; input.value = "";
+				if (reads) readPicked(last, what);
 				return;
 			}
 			busy = true; button.disabled = true; drop.classList.add("is-busy");
-			setStatus("Uploading " + label + " as " + what + "…");
+			/* A document the form is filled from is read on the server as it is uploaded. */
+			setStatus((reads ? "Uploading and reading " : "Uploading ") + label + " as " + what + "…" +
+				(reads && !/\.pdf$/i.test(last.name) ? " A photo takes a few seconds." : ""));
 			call("upload", body).then(function (data) {
 				paint(data.files || [], true);
 				setStatus("Uploaded " + label + " as " + what + ".", "ok");
 				typeSelect.value = "";
+				var read = data.read;
+				if (!read) return;
+				var saved = (data.files || []).filter(function (f) { return f.name === read.file; })[0] || { name: read.file, file_name: last.name };
+				if (!read.error) return applyRead(read, saved.file_name, what);
+				/* A locked PDF (an e-Aadhaar): its password asked for, and read again with it. */
+				if (read.title === "Password Needed") {
+					var pw = window.prompt(read.error + "\n\nAn e-Aadhaar's password is the first 4 letters of the name in CAPITALS and the year of birth, e.g. LIJO1985.");
+					if (pw) return readDoc({ method: "read_file", fileName: saved.file_name, documentType: what,
+						body: function (p) { return form(p ? { file: saved.name, password: p } : { file: saved.name }); } }, pw);
+				}
+				setStatus("Uploaded " + saved.file_name + ", but it could not be read: " + read.error + " Use Read to try again, or enter the details.", "error");
 			}).catch(function (e) { setStatus(e.message, "error"); }).then(function () {
 				busy = false; button.disabled = false; drop.classList.remove("is-busy"); input.value = "";
 			});
@@ -349,6 +482,7 @@
 		}
 		(held ? call("held_card", heldArgs, true) : call("list_files", { doctype: doctype, name: name }, true)).then(function (data) {
 			types = data.document_types || [];
+			readable = data.readable || [];
 			fillTypes(typeSelect, types, "", "Document type…");
 			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each.";
 			paint(data.files || []);

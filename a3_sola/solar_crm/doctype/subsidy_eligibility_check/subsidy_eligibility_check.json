@@ -38,7 +38,10 @@
   "sb_3",
   "rule_results",
   "sb_4",
-  "summary_remarks"
+  "summary_remarks",
+  "documents_confirmed",
+  "documents_confirmed_by",
+  "documents_confirmed_on"
  ],
  "fields": [
   {
@@ -270,11 +273,37 @@
    "fieldtype": "Currency",
    "label": "Avg Bill",
    "read_only": 1
+  },
+  {
+   "fieldname": "documents_confirmed",
+   "fieldtype": "Small Text",
+   "label": "Documents Confirmed",
+   "hidden": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1,
+   "description": "The differences between the customer's documents that were checked and confirmed correct (api/document_evidence)."
+  },
+  {
+   "fieldname": "documents_confirmed_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Documents Confirmed By",
+   "hidden": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "documents_confirmed_on",
+   "fieldtype": "Datetime",
+   "label": "Documents Confirmed On",
+   "hidden": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-11-05 16:25:44.065628",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Subsidy Eligibility Check",
