@@ -1,6 +1,13 @@
 {#- Lead-first create form. Context from collections.lead_first_context: the lead on its
     own, then every tab of the desk form, hidden until a lead is chosen and filled from it.
     Read-only controls carry no name, so they are shown but never posted. -#}
+{#- A link's list, or a long one, can be typed in to find its entry (portal_combo_fields.html). -#}
+{%- macro combo_attrs(f) -%}
+	{%- if not f.readonly and ((f.type == "Link" and not f.many) or (f.type == "Select" and f.options | length > 8)) %} data-combo{% endif -%}
+{%- endmacro -%}
+{%- macro combo_class(f) -%}
+	{%- if not f.readonly and ((f.type == "Link" and not f.many) or (f.type == "Select" and f.options | length > 8)) %} a3s-combo a3s-combo--field{% endif -%}
+{%- endmacro -%}
 {%- macro control(f) -%}
 	{%- if f.type == "Check" %}
 	<label class="a3s-check">
@@ -50,7 +57,7 @@
 				{%- if s.fields %}
 				<div class="a3s-form__grid a3s-form__grid--3">
 					{%- for f in s.fields %}
-					<div class="a3s-field{% if f.type in ('Small Text', 'Text') %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"
+					<div class="a3s-field{% if f.type in ('Small Text', 'Text') %} a3s-field--wide{% endif %}{{ combo_class(f) }}" id="f-{{ f.fieldname }}"{{ combo_attrs(f) }}
 					     {% if f.readonly %}data-readonly{% endif %}{% if f.show_when %} data-show-when="{{ f.show_when | e }}"{% endif %}>{{ control(f) }}</div>
 					{%- endfor %}
 				</div>
@@ -88,9 +95,9 @@
 		<section class="a3s-card a3s-edit__card">
 			<h3 class="a3s-edit__card-title">Lead</h3>
 			<div class="a3s-form__grid a3s-form__grid--3">
-				<div class="a3s-field" id="f-{{ lead_field.fieldname }}">{{ control(lead_field) }}</div>
+				<div class="a3s-field{{ combo_class(lead_field) }}" id="f-{{ lead_field.fieldname }}"{{ combo_attrs(lead_field) }}>{{ control(lead_field) }}</div>
 				{%- for f in lead_field.companions %}
-				<div class="a3s-field" id="f-{{ f.fieldname }}"{% if f.readonly %} data-readonly{% endif %} data-companion hidden>{{ control(f) }}</div>
+				<div class="a3s-field{{ combo_class(f) }}" id="f-{{ f.fieldname }}"{{ combo_attrs(f) }}{% if f.readonly %} data-readonly{% endif %} data-companion hidden>{{ control(f) }}</div>
 				{%- endfor %}
 			</div>
 			<p class="a3s-form__status" id="a3s-lf-lead-status" role="status" aria-live="polite"></p>

@@ -67,6 +67,8 @@
 		".a3s-kseb__row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}.a3s-kseb__password{margin-top:.6rem}.a3s-kseb__password input{max-width:12rem}" +
 		".a3s-kseb__status{margin:.5rem 0 0;font-size:.9rem}.a3s-kseb__status.is-error{color:#b42318}.a3s-kseb__status.is-success{color:#067647}" +
 		".a3s-kseb__warnings{margin:.35rem 0 0 1.1rem;font-size:.85rem;color:#b54708}" +
+		".a3s-kseb__warnings li:has(.a3s-kseb__add){list-style:none;margin:.5rem 0 0 -1.1rem}" +
+		".a3s-kseb__add{padding:.45rem 1rem;font-size:.8125rem}" +
 		".a3s-kseb-filled{outline:2px solid #f79009;outline-offset:1px;background:#fffaeb}" +
 		".a3s-kseb-offer{display:block;font-size:.8rem;color:#b54708;margin-top:.2rem}.a3s-kseb-offer button{border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0 0 0 .3rem}";
 	document.head.appendChild(style);
@@ -197,6 +199,27 @@
 		warningsList.hidden = !warningsList.children.length;
 	}
 
+	/* A section the bill names that the list lacks: a button to add it, the add form filled in
+	   with the bill's code and name (portal_combo_fields.html), where the form offers adding. */
+	function offerSection(missing) {
+		var select = document.getElementById("fld-discom_section");
+		var wrap = select && select.closest("[data-combo-add]");
+		if (!missing || !wrap) return;
+		var li = document.createElement("li");
+		var btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "a3s-btn a3s-btn--secondary a3s-kseb__add";
+		btn.textContent = "+ Add this section: [" + missing.code + "] " + (missing.name || "");
+		btn.addEventListener("click", function () {
+			wrap.scrollIntoView({ block: "center", behavior: "smooth" });
+			select.dispatchEvent(new CustomEvent("a3s:combo-add", { bubbles: true,
+				detail: { query: (missing.code + " " + (missing.name || "")).trim() } }));
+		});
+		li.appendChild(btn);
+		warningsList.appendChild(li);
+		warningsList.hidden = false;
+	}
+
 	function read(password) {
 		var kind = KINDS[current];
 		var body = new FormData();
@@ -227,6 +250,7 @@
 			var out = res.body.message || {};
 			warn(out.warnings);
 			fill(out.fields || {});
+			offerSection(out.missing_section);
 			if (out.attached) {
 				document.dispatchEvent(new CustomEvent("a3s:attachments-reload", { detail: { doctype: doctype, name: recordName } }));
 			}
