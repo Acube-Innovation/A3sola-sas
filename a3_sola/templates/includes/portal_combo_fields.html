@@ -114,5 +114,20 @@
 	}
 
 	select.addEventListener("a3s:combo-add", function (e) { open((e.detail && e.detail.query) || ""); });
+
+	/* The same, in plain sight: a button under the field, for a section the list lacks. */
+	if (wrap && wrap.hasAttribute("data-combo-add")) {
+		var addBtn = document.createElement("button");
+		addBtn.type = "button";
+		addBtn.className = "a3s-section-add__open";
+		addBtn.innerHTML = '<span aria-hidden="true">+</span> Add section';
+		addBtn.title = "A section the list does not have: add it under the DISCOM chosen";
+		addBtn.addEventListener("click", function () {
+			var box = wrap.querySelector('input[type="search"]');
+			var typed = box && box.value && box.value !== (select.options[select.selectedIndex] || {}).textContent ? box.value : "";
+			open(typed);
+		});
+		wrap.appendChild(addBtn);
+	}
 })();
 </script>
