@@ -234,3 +234,27 @@ class TestKSEBBill(FrappeTestCase):
 	def test_only_a_lead_or_customer(self):
 		with self.assertRaises(frappe.ValidationError):
 			kseb_bill.read("Quotation")
+
+
+class TestDistrictFromAddress(FrappeTestCase):
+	"""The district a bill's address names fills the record's District and the add-a-section form."""
+
+	def setUp(self):
+		if not frappe.db.exists("Indian District", "Ernakulam, Kerala"):
+			self.skipTest("Kerala's districts are not on this site.")
+
+	def test_by_name_and_by_old_name(self):
+		from a3_sola.api.kseb_bill import district_from_address
+
+		self.assertEqual(district_from_address("PUTHENPURA HOUSE, VENGOOR P O, ERNAKULAM 683546").name, "Ernakulam, Kerala")
+		self.assertEqual(district_from_address("TC 12/345, PATTOM, TRIVANDRUM 695004").name, "Thiruvananthapuram, Kerala")
+		# The last named is the district: a road named after another town comes first.
+		self.assertEqual(district_from_address("NEAR CALICUT ROAD, MALAPPURAM 676505").name, "Malappuram, Kerala")
+		self.assertIsNone(district_from_address("NO DISTRICT NAMED 686001"))
+
+	def test_a_lead_gets_the_district_and_its_state(self):
+		from a3_sola.api.kseb_bill import to_fields
+
+		fields, _warnings = to_fields({"consumer_number": "1155895007918", "name": "TEST",
+			"address": "VENGOOR P O, ERNAKULAM 683546"}, "Lead")
+		self.assertEqual((fields.get("state"), fields.get("district")), ("Kerala", "Ernakulam, Kerala"))

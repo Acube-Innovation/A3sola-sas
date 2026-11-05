@@ -37,8 +37,15 @@
 		return (o ? o.textContent : d.value).trim();
 	}
 
+	/* The section a KSEB bill read on this page names, when the list lacks it (portal_kseb_bill.js). */
+	function fromBill() {
+		try { return JSON.parse(wrap.dataset.billSection || "null"); } catch (e) { return null; }
+	}
+
 	function open(typed) {
 		if (panel) panel.remove();
+		var bill = fromBill();
+		if (!typed && bill) typed = (bill.code + " " + (bill.name || "")).trim();
 		var discom = document.getElementById("fld-discom");
 		panel = document.createElement("div");
 		panel.className = "a3s-section-add";
@@ -54,7 +61,7 @@
 		grid.className = "a3s-section-add__grid";
 		grid.appendChild(field("Section name", "section_name", name, "Koovappady"));
 		grid.appendChild(field("Section code", "section_code", code, "5590"));
-		grid.appendChild(field("District (optional)", "district", district(), "Ernakulam"));
+		grid.appendChild(field("District (optional)", "district", district() || (bill && bill.district) || "", "Ernakulam"));
 		panel.appendChild(grid);
 		var actions = document.createElement("div");
 		actions.className = "a3s-section-add__actions";

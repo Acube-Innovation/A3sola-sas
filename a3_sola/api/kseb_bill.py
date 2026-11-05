@@ -256,6 +256,35 @@ def _average_zones(text):
 	return {}
 
 
+#: Older and English names a bill's address may give a Kerala district by.
+DISTRICT_ALIASES = {
+	"trivandrum": "Thiruvananthapuram", "tvm": "Thiruvananthapuram", "quilon": "Kollam", "alleppey": "Alappuzha",
+	"alappey": "Alappuzha", "cochin": "Ernakulam", "kochi": "Ernakulam", "trichur": "Thrissur", "palghat": "Palakkad",
+	"calicut": "Kozhikode", "cannanore": "Kannur", "kasargod": "Kasaragod", "kasargode": "Kasaragod",
+	"pathanamthitta": "Pathanamthitta", "malapuram": "Malappuram",
+}
+
+
+def district_from_address(address, state=None):
+	"""The Indian District a bill's address names - "…, ERNAKULAM 683544" is Ernakulam - by its
+	name or an older one (Trivandrum, Calicut), or None. The last named wins: an address runs
+	from the house to the district."""
+	text = (address or "").lower()
+	if not text:
+		return None
+	filters = {"state": state} if state else {}
+	rows = frappe.get_all("Indian District", filters=filters, fields=["name", "district_name", "state"])
+	by_name = {(r.district_name or "").lower(): r for r in rows if r.district_name}
+	found, at = None, -1
+	for word, row in list(by_name.items()) + [(k, by_name.get(v.lower())) for k, v in DISTRICT_ALIASES.items()]:
+		if not row:
+			continue
+		for m in re.finditer(r"\b" + re.escape(word) + r"\b", text):
+			if m.start() > at:
+				found, at = row, m.start()
+	return found
+
+
 # ------------------------------------------------------------------ into the record's fields
 def to_fields(parsed, doctype):
 	"""The record's fields from a read bill, its DISCOM, section and tariff found among their
@@ -293,6 +322,15 @@ def to_fields(parsed, doctype):
 			"avg_bill_amount": parsed.get("bill_amount"), "billing_frequency": parsed.get("billing_frequency"),
 			"site_address_line1": line1, "site_address_line2": line2, "site_pincode": parsed.get("pincode"),
 		})
+	# The district the address names - the lead's, or the customer's site's - and its state.
+	district = district_from_address(parsed.get("address"))
+	if district:
+		place = {"Lead": ("state", "district"), "Solar Consumer": ("site_state", "site_district")}.get(doctype)
+		meta = frappe.get_meta(doctype)
+		if place and meta.has_field(place[1]):
+			fields[place[1]] = district.name
+			if meta.has_field(place[0]) and frappe.db.exists("Indian State", district.state):
+				fields[place[0]] = district.state
 	return {k: v for k, v in fields.items() if v not in (None, "")}, warnings
 
 
@@ -374,7 +412,9 @@ def read(doctype, name=None):
 	# A section the bill names that the list lacks: the form offers to add it, filled in.
 	missing_section = None
 	if parsed.get("section_code") and not fields.get("discom_section"):
-		missing_section = {"code": parsed["section_code"], "name": parsed.get("section_name") or ""}
+		district = district_from_address(parsed.get("address"))
+		missing_section = {"code": parsed["section_code"], "name": parsed.get("section_name") or "",
+			"district": district.district_name if district else ""}
 	attached, pending = False, None
 	if name:
 		attach(doctype, name, upload.filename, content)

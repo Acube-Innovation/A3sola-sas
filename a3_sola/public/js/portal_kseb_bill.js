@@ -34,7 +34,8 @@
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	/* Parents before the fields that depend on them. */
-	var ORDER = ["discom", "discom_section", "permanent_address_same", "permanent_state", "permanent_district"];
+	var ORDER = ["discom", "discom_section", "state", "district", "site_state", "site_district",
+		"permanent_address_same", "permanent_state", "permanent_district"];
 	/* What each button reads, and the hidden field that keeps it for a record not yet created. */
 	var KINDS = {
 		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill" },
@@ -204,7 +205,10 @@
 	function offerSection(missing) {
 		var select = document.getElementById("fld-discom_section");
 		var wrap = select && select.closest("[data-combo-add]");
-		if (!missing || !wrap) return;
+		if (!wrap) return;
+		/* Kept on the field: its "+ Add section" opens the add form filled in from this bill. */
+		if (!missing) { delete wrap.dataset.billSection; return; }
+		wrap.dataset.billSection = JSON.stringify(missing);
 		var li = document.createElement("li");
 		var btn = document.createElement("button");
 		btn.type = "button";
