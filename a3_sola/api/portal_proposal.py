@@ -15,6 +15,7 @@ from frappe import _
 from frappe.utils import cint, flt, format_date, today
 
 from a3_sola.api.portal_fields import link_choices, link_title
+from a3_sola.api.portal_estimate import is_custom
 from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import (
 	SITE_FIELDS, lead_estimates, proposal_defaults_for,
 )
@@ -250,7 +251,8 @@ def estimate_rows(names):
 		rows.append({
 			"name": est.name,
 			"date": format_date(est.estimate_date) if est.estimate_date else "",
-			"package": link_title("Solar Package", est.solar_package) if est.solar_package else "",
+			"package": link_title("Solar Package", est.solar_package) if est.solar_package else
+				_("Custom") if is_custom(est) else "",
 			"panel": _quoted_part(est, "panels"),
 			"inverter": _quoted_part(est, "inverters"),
 			"capacity_kw": flt(est.final_capacity_kw),

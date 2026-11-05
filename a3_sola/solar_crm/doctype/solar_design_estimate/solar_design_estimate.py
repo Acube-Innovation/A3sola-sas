@@ -7,8 +7,10 @@ particular no statutory fee, warranty term, regulatory threshold or yield figure
 appear as a literal here — they each have exactly one home and this document reads them.
 """
 
+import html
 import json
 import math
+import re
 
 import frappe
 from frappe import _
@@ -81,6 +83,7 @@ class SolarDesignEstimate(Document):
 		self.seed_option_from_package()
 		if not self.sync_kit_from_options():
 			self.fill_from_package()
+		self.fill_custom_kit()
 		self.fill_add_ons_from_package()
 		self.compute_add_ons()
 		self.apply_component_choices()
@@ -156,6 +159,8 @@ class SolarDesignEstimate(Document):
 				if phases and row.connection_type not in phases:
 					problems.append(_("Row {0}: package {1} has no {2} inverter; it is for {3}.").format(
 						row.idx, row.solar_package, row.connection_type, " / ".join(sorted(phases))))
+			if row.is_custom and not row.solar_package:
+				problems.extend(custom_row_problems(row))
 		saved_elsewhere = recommended[0].get("design_estimate")
 		if saved_elsewhere and saved_elsewhere != self.name:
 			problems.append(_("Row {0} is saved as its own estimate {1}, so it cannot be this estimate's recommended option. Open {1} instead.").format(
@@ -173,10 +178,13 @@ class SolarDesignEstimate(Document):
 		battery, each from its own package; the package's default where none is chosen, or
 		where the one chosen is not the package's (its package changed under it)."""
 		if not row.solar_package:
+			# A Custom option keeps the makes it chose, from every make; no package, no makes.
 			for _table, field in COMPONENT_CHOICES:
-				row.set(field, None)
+				if not row.is_custom or (field == "battery_make" and row.system_type not in ("Off-Grid", "Hybrid")):
+					row.set(field, None)
 			row.package_cost = 0
 			return
+		row.is_custom = 0
 		choices = package_components(row.solar_package, row.connection_type or self.connection_type)
 		for table, field in COMPONENT_CHOICES:
 			offered = choices[table]
@@ -562,6 +570,50 @@ class SolarDesignEstimate(Document):
 		# The balance of system follows the inverter it is filled for, below.
 		self.bos_basis = None
 		self.equipment_package = self.solar_package
+
+	def fill_custom_kit(self):
+		"""A Custom option - no package - starts the System & Options tables from the panel,
+		inverter and battery its row chooses; the rest of the system is added by hand.
+
+		Turning Custom drops the kit a package filled, as choosing another package replaces it.
+		A chosen make the table lacks is added as a row of that make: the panel at the Wp it is
+		used at (custom_panel_wp), the inverter on its price-list model nearest the option's
+		size (custom_inverter_model), both to be changed there as wanted. A make with no size
+		to go on is left to be added by hand; a row of it already there stands as left.
+		"""
+		row = self.recommended_sizing_row()
+		if not row or not row.is_custom or row.solar_package:
+			return
+		if self.equipment_package:
+			for table in ("panels", "inverters", "batteries"):
+				self.set(table, [r for r in self.get(table) or [] if not r.get("in_package") and not r.get("option_key")])
+			self.bos_basis = None
+			self.equipment_package = None
+
+		def make_of(name):
+			return frappe.db.get_value("Component Make", name, ["technology", "is_dcr"], as_dict=True) if name else None
+
+		panel = make_of(row.panel_make)
+		wp = custom_panel_wp(row.panel_make) if panel else 0
+		if wp and not any(r.panel_make == row.panel_make for r in self.get("panels") or []):
+			from a3_sola.api.structure_bom import panel_item
+
+			make_name = frappe.db.get_value("Component Make", row.panel_make, "make_name")
+			item = panel_item(make_name, wp, bool(panel.is_dcr), panel.technology)
+			self.append("panels", {"panel_make": row.panel_make, "panel_variant": panel.technology,
+				"panel_type": "DCR" if panel.is_dcr else "Non-DCR", "panel_capacity_wp": wp, "panel_item": item,
+				"specification": panel_item_text(item) if item else None})
+		inverter = make_of(row.inverter_make)
+		model = custom_inverter_model(row.inverter_make, row.connection_type or self.connection_type,
+			row.system_type or self.system_type, flt(self.final_capacity_kw) or flt(row.override_capacity_kw)) if inverter else None
+		if model and not any(r.inverter_make == row.inverter_make for r in self.get("inverters") or []):
+			values = frappe._dict(inverter_type=inverter.technology, inverter_model=model)
+			inverter_model.fill_row(values, model, None)
+			self.append("inverters", values)
+		battery = make_of(row.battery_make)
+		if battery and self.system_type in ("Off-Grid", "Hybrid") \
+				and not any(r.battery_make == row.battery_make for r in self.get("batteries") or []):
+			self.append("batteries", {"battery_make": row.battery_make, "battery_variant": battery.technology})
 
 	def compute_panels(self):
 		"""Panels needed to reach the proposed size, always rounded up (18.15 is 19), unless
@@ -968,14 +1020,18 @@ class SolarDesignEstimate(Document):
 
 	def price_panels_from_list(self):
 		"""A panel row the package rates leave at 0 - and no package covers - is priced at its
-		panel's selling price: Wp x rate per watt, from the panel list (api/structure_bom)."""
+		panel's selling price: its own Panel Item's, else Wp x rate per watt from the panel list
+		(api/structure_bom)."""
 		from a3_sola.api.structure_bom import panel_rate
 
 		for row in self.get("panels"):
 			if flt(row.rate) or self.included(row) or not (row.panel_make and flt(row.panel_capacity_wp)):
 				continue
+			# The row's own Item's selling price, else the panel list's for its make and Wp.
+			own = flt(frappe.db.get_value("Item Price", {"item_code": row.panel_item, "price_list": "Standard Selling"},
+				"price_list_rate")) if row.get("panel_item") else 0
 			make = frappe.db.get_value("Component Make", row.panel_make, "make_name")
-			row.rate = panel_rate(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR", row.panel_variant)
+			row.rate = own or panel_rate(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR", row.panel_variant)
 
 	def commercials(self):
 		"""Each System & Options table's total, the tax on them and the grand total.
@@ -1190,6 +1246,11 @@ class SolarDesignEstimate(Document):
 		# Each option row is an estimate of its own (saved from its tab), so the priced options
 		# are the recommended row's package only, the inverter that row chooses recommended.
 		if not self.solar_package:
+			row = self.recommended_sizing_row()
+			if row and row.is_custom:
+				# Custom has no package: the options a package offered go with it, or its kit
+				# would be built back from them (sync_kit_from_options).
+				self.set("options", [r for r in self.options if not r.from_package])
 			return
 		packages = [(self.solar_package, self.connection_type)]
 		header = self.solar_package
@@ -1794,6 +1855,102 @@ def compare_packages(design_estimate):
 	return rows
 
 
+def custom_components(company=None):
+	"""What a Custom option (no package) may choose, from every active make of the company.
+
+	Panels carry `dcr`: with subsidy only DCR panels are offered. Inverters are the makes the
+	inverter price list has models of, once per connection type, with the systems those
+	models are for (`systems`, On-Grid / Hybrid); a make with no models yet is offered for
+	every connection and system. Batteries are every battery make.
+	"""
+	def makes(component_type):
+		filters = {"component_type": component_type, "is_active": 1}
+		if company:
+			filters["company"] = company
+		return frappe.get_all("Component Make", filters=filters, fields=["name", "make_name", "is_dcr"], order_by="make_name")
+
+	panels = [{"value": m.name, "label": "{0} ({1})".format(m.make_name, _("DCR") if m.is_dcr else _("Non-DCR")),
+		"dcr": cint(m.is_dcr)} for m in makes("Module")]
+	models = {}
+	for m in frappe.get_all("Inverter Model", filters={"is_active": 1}, fields=["inverter_make", "inverter_phase", "category"]):
+		models.setdefault(m.inverter_make, {}).setdefault(m.inverter_phase or "", set()).add(m.category or "")
+	inverters = []
+	for m in makes("Inverter"):
+		by_phase = models.get(m.name) or {"": set()}
+		for phase, systems in sorted(by_phase.items()):
+			inverters.append({"value": m.name, "label": m.make_name, "phase": phase, "systems": sorted(s for s in systems if s)})
+	batteries = [{"value": m.name, "label": m.make_name} for m in makes("Battery")]
+	return {"panels": panels, "inverters": inverters, "batteries": batteries}
+
+
+def panel_item_text(item):
+	"""A module Item's specification: its description as text, else its name."""
+	name, description = frappe.db.get_value("Item", item, ["item_name", "description"]) or (None, None)
+	text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", description or ""))).strip()
+	return text or name
+
+
+def panel_item_values(item_name, is_dcr=None):
+	"""What a module Item's name says of the panel: its Wp ("550 Wp ...") and DCR type (its
+	name's "Non-DCR" or "DCR", else the Item's DCR flag)."""
+	found = re.search(r"(\d+(?:\.\d+)?)\s*Wp", item_name or "", re.IGNORECASE)
+	upper = (item_name or "").upper()
+	panel_type = "Non-DCR" if "NON-DCR" in upper or "NON DCR" in upper else "DCR" if "DCR" in upper else \
+		("DCR" if is_dcr else "Non-DCR") if is_dcr is not None else ""
+	return {"wp": flt(found.group(1)) if found else 0, "type": panel_type}
+
+
+def custom_panel_wp(make):
+	"""The Wp a module make is quoted at: the wattage the packages use it at most, else the Wp
+	its module Item's name carries (550 Wp Rayzon Mono Bifacial DCR); 0 when neither says."""
+	used = frappe.get_all("Solar Package Module", filters={"module_make": make, "parenttype": "Solar Package"},
+		pluck="module_wattage")
+	used = [flt(w) for w in used if flt(w)]
+	if used:
+		return max(set(used), key=used.count)
+	from a3_sola.api.structure_bom import make_brand
+
+	brand = make_brand(frappe.db.get_value("Component Make", make, "make_name"))
+	if not brand:
+		return 0
+	for name in frappe.get_all("Item", filters={"item_name": ["like", "%{0}%".format(brand)], "disabled": 0},
+			pluck="item_name", order_by="item_name"):
+		found = re.search(r"(\d+(?:\.\d+)?)\s*Wp", name or "")
+		if found:
+			return flt(found.group(1))
+	return 0
+
+
+def custom_inverter_model(make, phase, system_type, kw):
+	"""The make's active price-list model for the connection and system nearest `kw` - the
+	larger of two as near - else its smallest; None when the price list has none of it."""
+	filters = {"inverter_make": make, "is_active": 1}
+	if phase:
+		filters["inverter_phase"] = phase
+	if system_type in ("On-Grid", "Hybrid"):
+		filters["category"] = system_type
+	models = frappe.get_all("Inverter Model", filters=filters, fields=["name", "capacity_kw"], order_by="capacity_kw")
+	if not models:
+		return None
+	if not flt(kw):
+		return models[0].name
+	return min(models, key=lambda m: (abs(flt(m.capacity_kw) - flt(kw)), -flt(m.capacity_kw))).name
+
+
+def custom_row_problems(row):
+	"""What is wrong with a Custom option row's makes: each of its own kind, and with subsidy
+	a DCR panel, as the subsidy needs."""
+	problems = []
+	for field, kind, noun in (("panel_make", "Module", _("solar panel")), ("inverter_make", "Inverter", _("inverter")),
+			("battery_make", "Battery", _("battery"))):
+		make = row.get(field) and frappe.db.get_value("Component Make", row.get(field), ["component_type", "is_dcr", "make_name"], as_dict=True)
+		if row.get(field) and (not make or make.component_type != kind):
+			problems.append(_("Row {0}: {1} is not a {2} make.").format(row.idx, row.get(field), noun))
+		elif make and field == "panel_make" and row.subsidy_option == "With Subsidy" and not make.is_dcr:
+			problems.append(_("Row {0}: {1} panels are not DCR; with subsidy, choose a DCR panel.").format(row.idx, make.make_name))
+	return problems
+
+
 def make_mismatch(make, technology):
 	"""Why `make` does not belong under `technology`, or None when it does or either is unset."""
 	if not (make and technology):
@@ -1877,6 +2034,10 @@ def package_panel_rows(package):
 			continue
 		is_default = module is default
 		rows.append(({
+			# The package's own Item and text for it, as its Solar Panel row has them.
+			"panel_item": module.module_item or None,
+			"specification": module.module_specification or None,
+			"alternate_makes": module.get("module_alternate_makes") or None,
 			"panel_type": "DCR" if make.is_dcr or package.is_dcr_compliant else "Non-DCR",
 			"panel_capacity_wp": module.module_wattage,
 			"panel_count": cint(module.module_count) or None,

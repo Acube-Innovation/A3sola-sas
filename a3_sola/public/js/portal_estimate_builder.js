@@ -616,6 +616,32 @@
 			var source = $("de-fld-" + f.filter_by);
 			if (source) source.addEventListener("change", function () { fillSelect($("de-fld-" + f.fieldname), f, currentValues()); });
 		});
+
+		/* A choice that fills others (a panel's Item: its specification, Wp and DCR type) sets
+		   them as it is chosen; each stays the user's to change after. */
+		s.fields.forEach(function (f) {
+			if (!f.fills) return;
+			var source = $("de-fld-" + f.fieldname);
+			if (!source) return;
+			source.addEventListener("change", function () {
+				var chosen = (state.choices[f.choices] || []).find(function (o) { return o.value === source.value; });
+				if (!chosen) return;
+				Object.keys(f.fills).forEach(function (target) {
+					var input = $("de-fld-" + target), value = chosen[f.fills[target]];
+					if (!input || value === undefined || value === null || value === "") return;
+					input.value = String(value);
+					input.dispatchEvent(new Event("change"));
+				});
+			});
+		});
+	}
+
+	/* The fields the popup requires, still empty. */
+	function missingRequired() {
+		return section().fields.filter(function (f) {
+			var input = $("de-fld-" + f.fieldname);
+			return f.reqd && input && !String(input.value || "").trim();
+		});
 	}
 
 	/* -------------------------------------------------- right: commercials */
@@ -852,6 +878,12 @@
 
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
+		var missing = missingRequired();
+		if (missing.length) {
+			setStatus("Fill in " + missing.map(function (f) { return f.label; }).join(", ") + " to save this row.", "error");
+			$("de-fld-" + missing[0].fieldname).focus();
+			return;
+		}
 		submit.disabled = true;
 		setStatus("Working it out…");
 		var values = currentValues();

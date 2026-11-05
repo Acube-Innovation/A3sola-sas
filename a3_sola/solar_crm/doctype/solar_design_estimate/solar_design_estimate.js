@@ -106,6 +106,10 @@ frappe.ui.form.on("Solar Design Estimate", {
 				...(system_type ? { system_type } : {}),
 			},
 		});
+		// A panel row's Item is a module: the Modules group's Items, as the package's panels.
+		frm.set_query("panel_item", "panels", () => ({
+			filters: { item_group: ["descendants of (inclusive)", "Modules"], disabled: 0 },
+		}));
 		frm.set_query("solar_package", () =>
 			package_filters(frm.doc.subsidy_option, frm.doc.system_type)
 		);
@@ -145,6 +149,23 @@ frappe.ui.form.on("Solar Design Estimate", {
 });
 
 frappe.ui.form.on("Design Estimate Panel", {
+	// The Item's description is the row's specification, and its name says the Wp and DCR type
+	// ("550 Wp Rayzon Mono Bifacial DCR"), as on the portal's Change solar panel popup.
+	panel_item(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.panel_item) return;
+		frappe.db.get_value("Item", row.panel_item, ["item_name", "description"]).then(({ message }) => {
+			const name = (message && message.item_name) || "";
+			const text = $("<div>").html((message && message.description) || "").text().trim() || name;
+			if (text) frappe.model.set_value(cdt, cdn, "specification", text);
+			const wp = /(\d+(?:\.\d+)?)\s*Wp/i.exec(name);
+			if (wp) frappe.model.set_value(cdt, cdn, "panel_capacity_wp", flt(wp[1]));
+			const upper = name.toUpperCase();
+			const type = /NON[- ]DCR/.test(upper) ? "Non-DCR" : upper.includes("DCR") ? "DCR" : "";
+			if (type) frappe.model.set_value(cdt, cdn, "panel_type", type);
+		});
+	},
+
 	panel_capacity_wp(frm, cdt, cdn) {
 		set_panel_count(frm, locals[cdt][cdn]);
 	},

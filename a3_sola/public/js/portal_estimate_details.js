@@ -297,13 +297,17 @@
 
 	/* Each choice list is the package's own: inverters of the row's connection type, and a
 	   battery only for Off-Grid and Hybrid. A choice still offered is kept; otherwise the
-	   package's default is taken. */
+	   package's default is taken. Custom offers every make instead - DCR panels only with
+	   subsidy, inverters with models for the row's connection and system - and takes none
+	   until one is chosen. */
 	function fillComponents(tr) {
 		function field(name) { return tr.querySelector('[data-field="' + name + '"]'); }
 		var pkg = field("solar_package");
 		var info = packages[pkg ? pkg.value : ""] || null;
 		var phase = field("connection_type") ? field("connection_type").value : "";
 		var system = field("system_type") ? field("system_type").value : "";
+		var subsidy = field("subsidy_option") ? field("subsidy_option").value : "";
+		var custom = !!(info && info.custom);
 		Array.prototype.forEach.call(tr.querySelectorAll("[data-component]"), function (select) {
 			var wrap = select.closest(".a3s-de-sizing__part");
 			var onlyFor = wrap && wrap.dataset.onlyFor ? wrap.dataset.onlyFor.split("|") : null;
@@ -312,15 +316,22 @@
 			if (select.dataset.component === "inverters" && phase) {
 				list = list.filter(function (o) { return !o.phase || o.phase === phase; });
 			}
+			if (custom) {
+				list = list.filter(function (o) {
+					if (o.dcr !== undefined && subsidy === "With Subsidy" && !o.dcr) return false;
+					return !(o.systems && o.systems.length && (system === "On-Grid" || system === "Hybrid") && o.systems.indexOf(system) === -1);
+				}).filter(function (o, i, all) { return all.findIndex(function (x) { return x.value === o.value; }) === i; });
+			}
 			var keep = select.value || select.dataset.value || "";
 			select.innerHTML = "";
-			if (!list.length) select.appendChild(new Option(info ? "None in this package" : "Choose a package", ""));
+			if (!list.length) select.appendChild(new Option(custom ? "None for these choices" : info ? "None in this package" : "Choose a package", ""));
+			else if (custom) select.appendChild(new Option("Choose\u2026", ""));
 			list.forEach(function (o) {
 				var price = o.cost ? " — " + money.format(o.cost) : "";
 				select.appendChild(new Option(o.label + price + (o["default"] ? " (default)" : ""), o.value));
 			});
 			var offered = list.some(function (o) { return o.value === keep; });
-			var fallback = list.filter(function (o) { return o["default"]; })[0] || list[0];
+			var fallback = custom ? null : list.filter(function (o) { return o["default"]; })[0] || list[0];
 			select.value = offered ? keep : (fallback ? fallback.value : "");
 			select.dataset.value = select.value;
 			if (wrap) wrap.hidden = !applies;
@@ -367,7 +378,8 @@
 		if (pkg) {
 			var phaseValue = phase ? phase.value : "";
 			var why = "";
-			var options = Array.prototype.filter.call(pkg.options, function (o) { return !!o.value; });
+			/* Custom is not a package: always offered, never narrowed or picked for the row. */
+			var options = Array.prototype.filter.call(pkg.options, function (o) { return !!o.value && !o.dataset.custom; });
 			var reason = {};
 			var fitting = options.filter(function (o) {
 				reason[o.value] = packageFits(o, phaseValue, subsidy ? subsidy.value : "", system ? system.value : "");
@@ -517,7 +529,8 @@
 		var pkg = tr.querySelector('[data-field="solar_package"]').value;
 		var phase = (tr.querySelector('[data-field="connection_type"]') || {}).value || "";
 		var info = packages[pkg];
-		var inverters = info ? (info.inverters || []).filter(function (o) { return !phase || !o.phase || o.phase === phase; }) : [];
+		/* Custom adds no options: its inverter is the one chosen on the row. */
+		var inverters = info && !info.custom ? (info.inverters || []).filter(function (o) { return !phase || !o.phase || o.phase === phase; }) : [];
 		if (inverters.length) {
 			inverters = inverters.filter(function (o) { return o["default"]; }).concat(inverters.filter(function (o) { return !o["default"]; }));
 			var own = tr.querySelector('[data-component="inverters"]');
