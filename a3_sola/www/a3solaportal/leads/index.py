@@ -21,6 +21,16 @@ LIMIT = 100
 SCOPES = {"ours": {"a3s_dealer": ["is", "not set"]}, "dealers": {"a3s_dealer": ["is", "set"]}}
 
 
+def _dealer_options():
+	"""The dealers with leads the user may see, by name, each with its number of leads."""
+	rows = frappe.get_list("Lead", fields=["a3s_dealer", "count(name) as n"], filters={"a3s_dealer": ["is", "set"]},
+		group_by="a3s_dealer", limit_page_length=0)
+	names = dict(frappe.get_all("User", filters={"name": ["in", [r.a3s_dealer for r in rows]]},
+		fields=["name", "full_name"], as_list=True)) if rows else {}
+	return sorted(({"value": r.a3s_dealer, "label": names.get(r.a3s_dealer) or r.a3s_dealer, "count": r.n} for r in rows),
+		key=lambda d: d["label"].lower())
+
+
 def _count(filters, or_filters):
 	"""How many leads the user may see under these filters."""
 	rows = frappe.get_list("Lead", fields=["count(name) as n"], filters=filters, or_filters=or_filters,
@@ -72,6 +82,14 @@ def get_context(context):
 		context.scope_counts = {key: _count({**filters, **cond}, or_filters) for key, cond in SCOPES.items()}
 		context.scope_counts[""] = _count(filters, or_filters)
 		filters.update(SCOPES.get(scope, {}))
+	# Dealer leads, narrowed to one dealer: those with leads the user may see, by name, with how many.
+	context.dealer_options, context.dealer_filter = [], ""
+	if scope == "dealers":
+		context.dealer_options = _dealer_options()
+		dealer = (frappe.form_dict.get("dealer") or "").strip()
+		if any(d["value"] == dealer for d in context.dealer_options):
+			context.dealer_filter = dealer
+			filters["a3s_dealer"] = dealer
 
 	leads = lead_rows(filters, or_filters)
 
