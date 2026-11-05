@@ -94,12 +94,34 @@ class TestPortalPackages(FrappeTestCase):
 			with self.assertRaises(frappe.ValidationError):
 				pp.save_package(json.dumps(posted, default=str))
 
+	def test_the_page_follows_the_desk_form_and_saves_its_bom_tables(self):
+		saved = self.copy()
+		tabs = {t["key"]: t for t in saved["tabs"]}
+		# The desk's tabs, without its hidden Components tab.
+		self.assertNotIn("tab_components", tabs)
+		self.assertIn("is_active", [f["fieldname"] for f in tabs["package"]["fields"]])
+		self.assertEqual(tabs["cost"]["tables"], ["material_bom", "structure_boms", "expenses"])
+		self.assertEqual([s["label"] for s in tabs["package"]["sections"]], ["", "ERPNext"])
+		self.assertEqual(len(tabs["package"]["sections"][0]["columns"]), 2)
+		inverter = next((r["inverter_item"] for r in saved["tables"]["inverters"]["rows"] if r.get("inverter_item")), None)
+		item = saved["choices"]["Item"][0]
+		posted = _posted(saved)
+		posted["tables"]["material_bom"] = [{"item": item["value"], "qty": 2, "rate": 10, "inverters": inverter or ""}]
+		posted["tables"]["structure_boms"] = [{"item": item["value"], "qty": 1, "rate": 5, "panel_capacities": "5, 3"}]
+		posted["tables"]["expenses"] = [{"item": item["value"], "qty": 4, "rate": 25}]
+		again = pp.save_package(json.dumps(posted, default=str))
+		material = again["tables"]["material_bom"]["rows"][0]
+		self.assertEqual((material["inverters"] or "", material["amount"], material["uom"]), (inverter or "", 20, item["uom"]))
+		self.assertEqual(again["tables"]["structure_boms"]["rows"][0]["panel_capacities"], "3, 5")
+		self.assertEqual(again["values"]["total_expenses"], 100)
+
 	def test_status_and_delete(self):
 		saved = self.copy()
 		pp.set_status(saved["name"], "Active")
 		self.assertEqual(frappe.db.get_value("Solar Package", saved["name"], ["status", "is_active"]), ("Active", 1))
+		# Draft is not retired: estimates still offer it.
 		pp.set_status(saved["name"], "Draft")
-		self.assertEqual(frappe.db.get_value("Solar Package", saved["name"], ["status", "is_active"]), ("Draft", 0))
+		self.assertEqual(frappe.db.get_value("Solar Package", saved["name"], ["status", "is_active"]), ("Draft", 1))
 		self.assertEqual(pp.delete_package(saved["name"])["deleted"], 1)
 		self.assertFalse(frappe.db.exists("Solar Package", saved["name"]))
 

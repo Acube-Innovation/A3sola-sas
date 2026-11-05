@@ -111,22 +111,24 @@
 				<span class="a3s-de-sizing__cost" data-package-cost>{{ row.package_cost_label | e }}</span>
 				<button type="button" class="a3s-icon-btn a3s-icon-btn--danger a3s-de-opt__remove" data-remove-option aria-label="Remove this option" title="Remove this option">&times;</button>
 			</div>
+			{#- Two rows of four: connection, system, subsidy and its scheme; then capacity, the package
+			    and the panel and inverter chosen from it. -#}
 			<div class="a3s-de-opt__grid">
-				{#- The subsidy scheme only applies with subsidy, so it sits under Subsidy. -#}
-				{%- for f in package.fields if f.fieldname != "subsidy_scheme" %}
+				{%- for f in package.fields %}
 				<div class="a3s-field a3s-de-opt__f-{{ f.fieldname }}">
+					{%- if f.fieldname == "subsidy_scheme" %}
+					{#- The scheme only applies with subsidy; without it the cell stays, empty, so the
+					    rows keep their columns. -#}
+					<div class="a3s-de-sizing__scheme" data-row-show-when="{{ f.show_when | e }}">
+						<span class="a3s-de-sizing__part-label" title="{{ f.label | e }}">{{ f.label }}</span>
+						{{ option_control(f, row["values"][f.fieldname], locked) }}
+					</div>
+					{%- else %}
 					<span class="a3s-de-sizing__part-label" title="{{ f.label | e }}">{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
 					{{ option_control(f, row["values"][f.fieldname], locked) }}
-					{%- if f.fieldname == "subsidy_option" %}
-					{%- for g in package.fields if g.fieldname == "subsidy_scheme" %}
-					<div class="a3s-de-sizing__scheme" data-row-show-when="{{ g.show_when | e }}">
-						{{ option_control(g, row["values"][g.fieldname], locked) }}
-					</div>
-					{%- endfor %}
 					{%- endif %}
 				</div>
 				{%- endfor %}
-			</div>
 			{#- One of each, from the option's package; filled by the script as the package changes. -#}
 			<div class="a3s-de-opt__parts">
 				{%- for c in package.components %}
@@ -137,6 +139,7 @@
 					</select>
 				</div>
 				{%- endfor %}
+			</div>
 			</div>
 		</div>
 	{%- endmacro %}

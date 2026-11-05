@@ -304,8 +304,10 @@ def detail_columns(doc=None, prefill=None):
 					spec["label"] = _("Electricity Tariff")
 					spec["hint"] = ""
 				elif df.options == "Solar Package":
-					# Retired packages are not offered; one already on the estimate still shows below.
-					choices = link_choices(df.options, filters=[["is_active", "=", 1], ["status", "=", "Active"]])
+					# Draft packages are offered as well as Active ones, so an estimate can be made on
+					# a package still being checked; retired (inactive) ones are not. One already on
+					# the estimate still shows below.
+					choices = link_choices(df.options, filters=[["is_active", "=", 1]])
 				else:
 					choices = link_choices(df.options)
 				if value and not any(c["value"] == value for c in choices):

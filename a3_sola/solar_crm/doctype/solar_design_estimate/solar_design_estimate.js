@@ -97,9 +97,10 @@ frappe.ui.form.on("Solar Design Estimate", {
 		// A DCR-compliant package is a subsidy package: each subsidy choice lists its own. And
 		// an On-Grid estimate lists On-Grid packages, a Hybrid one Hybrid packages.
 		const package_filters = (subsidy_option, system_type) => ({
+			// Draft packages too, as on the portal's estimate form (api/portal_estimate); not
+			// retired (inactive) ones.
 			filters: {
 				is_active: 1,
-				status: "Active",
 				company: frm.doc.company,
 				is_dcr_compliant: subsidy_option === "Without Subsidy" ? 0 : 1,
 				...(system_type ? { system_type } : {}),

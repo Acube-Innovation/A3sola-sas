@@ -175,6 +175,7 @@
   },
   {
    "default": "1",
+   "description": "Untick to retire the package: design estimates no longer offer it.",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -184,7 +185,7 @@
   {
    "bold": 1,
    "default": "Draft",
-   "description": "Draft until checked. Only an Active package is offered in design estimates.",
+   "description": "Draft until checked. Design estimates offer Draft and Active packages alike.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -461,7 +462,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-04 15:00:00.000000",
+ "modified": "2026-11-05 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

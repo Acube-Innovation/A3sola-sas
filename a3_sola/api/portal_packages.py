@@ -26,26 +26,14 @@ from a3_sola.api.package_items import CATEGORY
 from a3_sola.api.portal_users import require_admin
 
 DOCTYPE = "Solar Package"
-#: The form's tabs, in the desk's order: (key, label, parent fields, tables). The Material BOM,
-#: Structure BOMs and Expenses, Items with their pickers and Excel upload, are the desk's alone:
-#: a save here leaves them as they are.
-TABS = (
-	("package", "Package", ("specification_code", "package_name", "capacity_kw", "package_cost", "system_type",
-		"connection_type", "inverter_topology", "is_dcr_compliant", "area_required_sqft", "tier", "status",
-		"company", "warranty_years", "item", "bom"), ()),
-	("modules", "Solar panel", (), ("modules",)),
-	("inverters", "Inverter", (), ("inverters",)),
-	("batteries", "Battery", (), ("batteries",)),
-	("balance", "Balance of system", (), ("system_items",)),
-	("kseb", "KSEB", (), ("kseb_expenses",)),
-	("mounting", "Mounting", ("roof_type",), ("mounting_expenses",)),
-	("installation", "Installation", (), ("installation_expenses",)),
-	("components", "Components", (), ("components",)),
-	("add_ons", "Add-ons", (), ("optional_add_ons",)),
-	("cost", "BOM", ("payment_terms", "financed_payment_terms"), ()),
-)
+#: The desk form's tab key the page knows each tab by (its Battery tab shows for Off-Grid and
+#: Hybrid only, its BOM tab carries the payment terms); any other tab goes by its fieldname.
+TAB_KEYS = {"tab_package": "package", "tab_battery": "batteries", "tab_commercial": "cost"}
 #: Made by the page's buttons, never typed.
 SET_BY_BUTTONS = {"item", "bom"}
+#: The BOM tab's "depends on" fields: read-only on the desk, where a dialog sets them; the page's
+#: row form sets them the same way, so a save takes them (package_bom_tables.validate checks).
+PICKED = {"material_bom": ("inverters",), "structure_boms": ("roof_types", "panel_capacities")}
 #: The item a row names, and the text its choice fills in (solar_package.js ITEM_ROWS).
 ITEM_TEXT = {
 	"modules": ("module_item", "module_specification"),
@@ -99,6 +87,59 @@ def _table(fieldname):
 	return {"fieldname": fieldname, "label": _(df.label), "doctype": df.options, "columns": columns}
 
 
+def _layout():
+	"""The desk form's tabs as the page shows them: each tab's sections, each section's columns,
+	each column its fields, tables and HTML in the desk's order. Hidden tabs, sections and
+	fields are left out, as the desk leaves them out."""
+	meta = frappe.get_meta(DOCTYPE)
+	tabs, tab, section, hidden_tab, hidden_section = [], None, None, False, False
+
+	def new_section(label=""):
+		tab["sections"].append({"label": _(label) if label else "", "columns": [[]]})
+		return tab["sections"][-1]
+
+	for df in meta.fields:
+		if df.fieldtype == "Tab Break":
+			hidden_tab = cint(df.hidden)
+			if hidden_tab:
+				continue
+			tab = {"key": TAB_KEYS.get(df.fieldname, df.fieldname), "label": _(df.label), "fields": [], "tables": [],
+				"sections": []}
+			tabs.append(tab)
+			section, hidden_section = None, False
+			continue
+		if hidden_tab or tab is None:
+			continue
+		if df.fieldtype == "Section Break":
+			hidden_section = cint(df.hidden)
+			section = None if hidden_section else new_section(df.label)
+			continue
+		if hidden_section or cint(df.hidden):
+			continue
+		if df.fieldtype == "Column Break":
+			if section:
+				section["columns"].append([])
+			continue
+		section = section or new_section()
+		if df.fieldtype == "Table":
+			tab["tables"].append(df.fieldname)
+			section["columns"][-1].append({"table": df.fieldname})
+		elif df.fieldtype == "HTML":
+			section["columns"][-1].append({"html": df.fieldname})
+		elif df.fieldtype in FIELD_TYPES:
+			tab["fields"].append(df.fieldname)
+			section["columns"][-1].append({"field": df.fieldname})
+	for tab in tabs:
+		tab["sections"] = [s for s in tab["sections"] if any(s["columns"])]
+		for s in tab["sections"]:
+			s["columns"] = [c for c in s["columns"] if c]
+	return tabs
+
+
+def _table_fields():
+	return [t for tab in _layout() for t in tab["tables"]]
+
+
 def _rows(doc, fieldname, columns):
 	keep = ["name"] + [c["fieldname"] for c in columns]
 	return [{k: row.get(k) for k in keep} for row in doc.get(fieldname) or []]
@@ -144,9 +185,10 @@ def _milestones():
 
 def _choices():
 	"""Every dropdown the form has, loaded once; the page narrows them as the desk's queries do."""
+	from a3_sola.api.package_bom_tables import capacities
 	from a3_sola.api.permissions import get_permitted_companies
 
-	makes = frappe.get_all("Component Make", fields=["name", "make_name", "component_type", "technology", "company",
+	makes =frappe.get_all("Component Make", fields=["name", "make_name", "component_type", "technology", "company",
 		"is_active"], order_by="make_name asc")
 	models = frappe.get_all("Inverter Model", filters={"is_active": 1}, fields=["name", "model_name", "inverter_make",
 		"inverter_phase", "capacity_kw"], order_by="inverter_make, inverter_phase, capacity_kw")
@@ -172,7 +214,12 @@ def _choices():
 			filters={"docstatus": 1, "is_active": 1}, fields=["name", "item"], order_by="name desc", limit_page_length=2000)],
 		"UOM": [{"value": u, "label": u} for u in frappe.get_all("UOM", filters={"enabled": 1}, pluck="name", order_by="name")],
 		"Company": [{"value": c, "label": c} for c in companies],
-		"Item": [],
+		# The BOM tab's tables take any Item; choosing one fills its Category and UOM.
+		"Item": [{"value": i.name, "label": i.item_name if i.item_name == i.name else "{0} ({1})".format(i.item_name, i.name),
+			"group": i.item_group, "uom": i.stock_uom} for i in frappe.get_all("Item", filters={"disabled": 0},
+				fields=["name", "item_name", "item_group", "stock_uom"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)],
+		# Structure BOM rows' Panel Capacity choices: the capacities packages are made in.
+		"capacities": capacities(),
 	}
 
 
@@ -185,20 +232,19 @@ def package(name=None, copy_from=None):
 		doc = frappe.get_doc(DOCTYPE, name)
 	elif copy_from:
 		doc = frappe.copy_doc(frappe.get_doc(DOCTYPE, copy_from))
-		doc.update({"item": None, "bom": None, "status": "Draft", "is_active": 0,
+		doc.update({"item": None, "bom": None, "status": "Draft", "is_active": 1,
 			"package_name": _("{0} (copy)").format(doc.package_name), "specification_code": ""})
-		for fieldname in [t for tab in TABS for t in tab[3]]:
+		for fieldname in _table_fields():
 			for row in doc.get(fieldname) or []:
 				row.name = None
 	else:
 		doc = frappe.new_doc(DOCTYPE)
 		doc.company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
 	meta = frappe.get_meta(DOCTYPE)
-	tabs, tables = [], {}
-	for key, label, fields, table_fields in TABS:
-		tabs.append({"key": key, "label": _(label), "fields": [_spec(meta.get_field(f), parent=True) for f in fields
-			if meta.get_field(f)], "tables": list(table_fields)})
-		for t in table_fields:
+	tabs, tables = _layout(), {}
+	for tab in tabs:
+		tab["fields"] = [_spec(meta.get_field(f), parent=True) for f in tab["fields"]]
+		for t in tab["tables"]:
 			spec = _table(t)
 			spec["rows"] = _rows(doc, t, spec["columns"])
 			tables[t] = spec
@@ -213,7 +259,8 @@ def package(name=None, copy_from=None):
 
 # ------------------------------------------------------------------ saving
 def _editable(spec):
-	return [c["fieldname"] for c in spec["columns"] if not c["read_only"]]
+	picked = PICKED.get(spec["fieldname"], ())
+	return [c["fieldname"] for c in spec["columns"] if not c["read_only"] or c["fieldname"] in picked]
 
 
 def _merge_rows(doc, fieldname, posted):
@@ -251,7 +298,6 @@ def save_package(data):
 		df = meta.get_field(fieldname)
 		if df and fieldname not in SET_BY_BUTTONS and not cint(df.read_only):
 			doc.set(fieldname, value)
-	doc.is_active = 1 if doc.status == "Active" else 0
 	for fieldname, rows in (data.get("tables") or {}).items():
 		if meta.get_field(fieldname) and meta.get_field(fieldname).fieldtype == "Table":
 			_merge_rows(doc, fieldname, rows)
@@ -307,7 +353,9 @@ def set_status(name, status):
 		frappe.throw(_("A package is Draft or Active."))
 	doc = frappe.get_doc(DOCTYPE, name)
 	doc.status = status
-	doc.is_active = 1 if status == "Active" else 0
+	# Draft and Active packages are both offered in estimates; Active brings back a retired one.
+	if status == "Active":
+		doc.is_active = 1
 	doc.save()
 	return {"name": name, "status": status}
 
@@ -326,6 +374,7 @@ def delete_package(name):
 		frappe.db.rollback(save_point="portal_package_delete")
 		frappe.clear_messages()
 		doc = frappe.get_doc(DOCTYPE, name)
+		# Retired: Draft and inactive, so estimates no longer offer it.
 		doc.status, doc.is_active = "Draft", 0
 		doc.save()
 		return {"deleted": 0, "draft": 1, "message": _("{0} is used in estimates, projects or quotations, so it was set "

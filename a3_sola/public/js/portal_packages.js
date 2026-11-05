@@ -136,7 +136,7 @@
 			btn.disabled = true;
 			call("set_status", { name: p.name, status: to }).then(function () {
 				return reload().then(function () {
-					setStatus(pageStatus, p.package_name + (to === "Active" ? " is active: estimates can offer it now." : " is Draft: it is no longer offered."), "ok");
+					setStatus(pageStatus, p.package_name + (to === "Active" ? " is Active." : " is Draft. Estimates still offer it."), "ok");
 				});
 			}).catch(function (err) { btn.disabled = false; setStatus(pageStatus, err.message, "error"); });
 		}

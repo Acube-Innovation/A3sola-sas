@@ -12,7 +12,7 @@ works out the rest: the base estimate, the row totals, the offer and the registe
 
 import frappe
 from frappe import _
-from frappe.utils import flt, format_date, today
+from frappe.utils import cint, flt, format_date, today
 
 from a3_sola.api.portal_fields import link_choices, link_title
 from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import (
@@ -219,6 +219,26 @@ def _site(source):
 	return out
 
 
+def _quoted_part(est, table):
+	"""The panel or inverter the estimate is quoted with - not one of its options - as its make,
+	size and count: "Rayzon · 550 Wp × 6", "Solinteg · 3.3 kW"."""
+	rows = est.get(table) or []
+	row = next((r for r in rows if not r.get("is_option")), rows[0] if rows else None)
+	if not row:
+		return ""
+	if table == "panels":
+		make, size, count = row.panel_make, flt(row.panel_capacity_wp), cint(row.panel_count or row.nos)
+		size = "{0:g} Wp".format(size) if size else ""
+	else:
+		make, size, count = row.inverter_make, flt(row.inverter_capacity_kw), cint(row.inverter_count or row.nos)
+		size = "{0:g} kW".format(size) if size else ""
+	if size and count > 1:
+		size += " × {0}".format(count)
+	make = (frappe.db.get_value("Component Make", make, "make_name") or make) if make else ""
+	# The size and count keep together when the cell wraps; the line breaks after the make.
+	return " · ".join(p for p in (make, size.replace(" ", " ")) if p)
+
+
 def estimate_rows(names):
 	"""Each estimate as the Design Estimates table shows it, readable ones only, in order."""
 	rows = []
@@ -231,6 +251,8 @@ def estimate_rows(names):
 			"name": est.name,
 			"date": format_date(est.estimate_date) if est.estimate_date else "",
 			"package": link_title("Solar Package", est.solar_package) if est.solar_package else "",
+			"panel": _quoted_part(est, "panels"),
+			"inverter": _quoted_part(est, "inverters"),
 			"capacity_kw": flt(est.final_capacity_kw),
 			"total": total,
 			"total_label": frappe.utils.fmt_money(total, currency="INR"),
