@@ -17,6 +17,7 @@ from a3_sola.setup import (
 	dashboard_platform,
 	install_lifecycle,
 	install_partners,
+	install_staff_lookups,
 	install_platform,
 	install_provisioning,
 	install_projects,
@@ -85,6 +86,7 @@ def setup(packages=True):
 	install_provisioning.setup()
 	install_lifecycle.setup()
 	install_partners.setup()
+	install_staff_lookups.setup()
 	frappe.db.commit()
 	dashboard.install()
 	dashboard_ops.install()
