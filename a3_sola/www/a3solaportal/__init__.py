@@ -144,10 +144,20 @@ PARTNER_NAV = {
 }
 
 
+def route_doctype(route):
+	"""The doctype a menu item lists, or None for a page of its own (Users, Menu)."""
+	if route in PARTNER_NAV:
+		return PARTNER_NAV[route]
+	from a3_sola.www.a3solaportal.collections import COLLECTIONS
+
+	return (COLLECTIONS.get(route.rsplit("/", 1)[-1]) or {}).get("doctype")
+
+
 def nav_groups(user=None):
 	"""The menu: all of it for staff; for a partner - a dealer, a contractor - only the items
 	he may read. Less, for everyone, what an admin has hidden (Administration > Menu,
 	api/portal_menu), and no empty group."""
+	from a3_sola.api import partner_scope
 	from a3_sola.api.partner_scope import is_partner
 	from a3_sola.api.portal_menu import hidden
 	from a3_sola.api.portal_users import is_user_admin
@@ -156,6 +166,10 @@ def nav_groups(user=None):
 	if not is_partner(user):
 		admin = is_user_admin(user)
 		shown = lambda i: i["route"] not in off and (admin or i["route"] not in ADMIN_NAV)  # noqa: E731
+	elif partner_scope.has_jobs(user):
+		# A partner with staff jobs: every page his roles read - his own records on each.
+		shown = lambda i: i["route"] not in off and i["route"] not in ADMIN_NAV and bool(  # noqa: E731
+			route_doctype(i["route"]) and frappe.has_permission(route_doctype(i["route"]), "read", user=user))
 	else:
 		shown = lambda i: i["route"] not in off and i["route"] in PARTNER_NAV and frappe.has_permission(  # noqa: E731
 			PARTNER_NAV[i["route"]], "read", user=user)

@@ -81,3 +81,70 @@ class TestDealerWhoInstalls(FrappeTestCase):
 			frappe.set_user(email)
 			self.assertEqual(hides_money(doc), hidden, profile)
 			frappe.set_user("Administrator")
+
+
+class TestPartnerWithJobs(FrappeTestCase):
+	"""A dealer or contractor may also be given staff jobs: they add pages and actions, and every
+	record on them stays his own (api/partner_scope._linked_condition)."""
+
+	CON = "test-con-jobs@example.com"
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		frappe.db.rollback()
+
+	def _make(self, roles):
+		return pu.save_user({"type": "Contractor", "first_name": "Con", "last_name": "Jobs", "email": self.CON, "mobile_no": "",
+			"roles": roles, "new_contractor": {"contractor_name": "Con Jobs Installs", "contractor_type": "Electrical"}})
+
+	def test_saved_with_the_jobs_and_still_a_partner(self):
+		self._make(["Solar Survey Engineer", "Solar Operations Executive"])
+		self.assertFalse(frappe.db.get_value("User", self.CON, "role_profile_name"))
+		roles = set(frappe.get_roles(self.CON))
+		self.assertTrue({partner_scope.CONTRACTOR, "Solar Survey Engineer", "Solar Operations Executive"} <= roles)
+		self.assertNotIn("Employee", roles)
+		self.assertEqual(partner_scope.partner_kinds(self.CON), {"contractor"})
+		self.assertTrue(partner_scope.has_jobs(self.CON))
+		row = next(u for u in pu.users()["users"] if u["name"] == self.CON)
+		self.assertEqual(row["type"], "Contractor")
+		self.assertIn("Solar Survey Engineer", row["roles"])
+
+	def test_the_admin_job_is_refused(self):
+		with self.assertRaises(frappe.ValidationError):
+			self._make(["Solar CRM Manager"])
+
+	def test_his_records_on_a_job_page_are_his_own(self):
+		made = self._make(["Solar Survey Engineer", "Solar Operations Executive"])
+		jobs = frappe.get_all("Solar Installation", filters={"docstatus": ["<", 2]}, pluck="name", limit=2)
+		if len(jobs) < 2:
+			self.skipTest("Two projects are needed.")
+		mine, other = jobs
+		frappe.db.set_value("Solar Installation", mine, "electrical_contractor", made["contractor"])
+		frappe.db.set_value("Solar Installation", other, {"electrical_contractor": None, "structure_contractor": None})
+		frappe.set_user(self.CON)
+		for doctype in ("Statutory Fee Payment", "Site Survey"):
+			if not frappe.db.exists("DocType", doctype) or not frappe.has_permission(doctype, "read"):
+				continue
+			where = partner_scope.conditions(self.CON, doctype)
+			self.assertTrue(where, doctype)
+			field = next((df.fieldname for df in frappe.get_meta(doctype).fields
+				if df.fieldtype == "Link" and df.options == "Solar Installation"), None)
+			if field:
+				for name in frappe.get_list(doctype, pluck="name", limit_page_length=0):
+					self.assertNotEqual(frappe.db.get_value(doctype, name, field), other, f"{doctype} {name}")
+		# The menu: his jobs' pages, never the admin's.
+		from a3_sola.www.a3solaportal import nav_groups
+
+		routes = {i["route"] for g in nav_groups(self.CON) for i in g["items"]}
+		self.assertIn("/a3solaportal/site-surveys", routes)
+		self.assertNotIn("/a3solaportal/users", routes)
+
+	def test_staff_who_also_hold_a_partner_role_stay_staff(self):
+		email = "test-staff-dealer@example.com"
+		frappe.get_doc({"doctype": "User", "email": email, "first_name": "Staff", "send_welcome_email": 0,
+			"roles": [{"role": "Solar CRM Manager"}, {"role": partner_scope.DEALER}, {"role": "Solar Sales Coordinator"}]}
+			).insert(ignore_permissions=True)
+		self.assertEqual(partner_scope.partner_kinds(email), set())

@@ -721,7 +721,7 @@ def may_complete(inst, code, user=None):
 		return True
 	row = _get_stage(inst, code)
 	people = set(task_assignees.people(inst, code)) | ({row.assigned_to} if row.get("assigned_to") else set())
-	if partner_scope.is_partner(user):
+	if partner_scope.is_partner(user) and not partner_scope.has_jobs(user):
 		return user in people  # a partner completes only what is given to him
 	return user in people if people else bool(inst.has_permission("write", user=user))
 
