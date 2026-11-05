@@ -176,6 +176,12 @@ def fill_shell(context, *, active_route, page_title, crumbs):
 	"""
 	context.no_cache = 1
 	context.no_index = True
+	# Every page carries the CSRF token (the shell's <meta>): Sign out posts to /api/method/logout,
+	# which Frappe refuses without it.
+	if not context.get("csrf_token"):
+		import frappe.sessions
+
+		context.csrf_token = frappe.sessions.get_csrf_token()
 	context.page_meta_title = page_title
 
 	full_name, email = frappe.db.get_value(

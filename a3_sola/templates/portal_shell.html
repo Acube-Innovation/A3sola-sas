@@ -188,9 +188,15 @@
 		btn.disabled = true;
 		var label = btn.querySelector("span");
 		if (label) label.textContent = "Signing out…";
-		fetch("/api/method/logout", { method: "POST", credentials: "same-origin" })
-			.then(function () { window.location.assign("/a3solaportal/login"); })
-			.catch(function () { window.location.assign("/a3solaportal/login"); });
+		var meta = document.querySelector('meta[name="csrf-token"]');
+		var token = meta ? meta.getAttribute("content") : "";
+		/* Frappe refuses a POST without the CSRF token; should it still refuse, its own
+		   sign-out page (a GET) ends the session instead. */
+		function fallback() { window.location.assign("/api/method/web_logout"); }
+		fetch("/api/method/logout", { method: "POST", credentials: "same-origin",
+			headers: { "X-Frappe-CSRF-Token": token, "Accept": "application/json" } })
+			.then(function (r) { if (r.ok) window.location.assign("/a3solaportal/login"); else fallback(); })
+			.catch(fallback);
 	});
 })();
 </script>
