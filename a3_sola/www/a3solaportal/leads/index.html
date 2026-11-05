@@ -21,6 +21,21 @@
 	</a>
 </div>
 
+{#- ---- whose leads: all, ours, or the dealers' (staff only) -------------------- #}
+{%- if show_scope %}
+{%- set keep = ("&q=" ~ (q | urlencode) if q else "") ~ ("&status=" ~ (status_filter | urlencode) if status_filter else "") ~ ("&followup=1" if followup_view else "") %}
+<nav class="a3s-ce-tabs a3s-leads__scope" aria-label="Whose leads">
+	{%- for key, label in (("", "All"), ("ours", "Our leads"), ("dealers", "Dealer leads")) %}
+	<a href="/a3solaportal/leads?scope={{ key }}{{ keep }}"{% if key == scope %} aria-current="page"{% endif %}>
+		<span>{{ label }}</span><span class="a3s-ce-tabs__n">{{ scope_counts[key] }}</span>
+	</a>
+	{%- endfor %}
+</nav>
+{%- if scope == "dealers" %}
+<p class="a3s-leads__scope-note">Leads brought in by dealers. The dealer runs each one; help where they ask.</p>
+{%- endif %}
+{%- endif %}
+
 {#- ---- filters (GET, so a search is a shareable URL) ---------------------- #}
 <form class="a3s-toolbar" method="get" action="/a3solaportal/leads" role="search">
 	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
@@ -32,6 +47,7 @@
 		{%- endfor %}
 	</select>
 	{%- if followup_view %}<input type="hidden" name="followup" value="1">{% endif %}
+	{%- if scope %}<input type="hidden" name="scope" value="{{ scope }}">{% endif %}
 	<button type="submit" class="a3s-btn a3s-btn--ghost">Filter</button>
 	{%- if q or status_filter %}
 	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads{% if followup_view %}?followup=1{% endif %}">Clear</a>

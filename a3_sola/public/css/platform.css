@@ -2433,6 +2433,18 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-ce-tabs .a3s-ic { width: 1rem; height: 1rem; }
 .a3s-ce-tabs__n { font-size: 0.7rem; font-weight: 800; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); background: rgba(42, 51, 66, 0.08); }
 .a3s-ce-tabs button[aria-selected="true"] .a3s-ce-tabs__n { background: rgba(255, 255, 255, 0.28); }
+/* The same tabs as links (a page per tab): the Leads list's All / Our leads / Dealer leads. */
+.a3s-ce-tabs a {
+	display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.1rem; border-radius: var(--radius-pill);
+	color: var(--color-text-muted); font-weight: 600; font-size: 0.9rem; white-space: nowrap; text-decoration: none;
+	transition: background var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+.a3s-ce-tabs a:hover { color: var(--color-text); background: var(--color-accent-soft); }
+.a3s-ce-tabs a[aria-current="page"] { background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 8px 20px -10px rgba(247, 148, 30, 0.9); }
+.a3s-ce-tabs a[aria-current="page"] .a3s-ce-tabs__n { background: rgba(255, 255, 255, 0.28); }
+.a3s-leads__scope { margin-bottom: 1rem; }
+.a3s-leads__scope-note { margin: -0.4rem 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-badge--dealer { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; margin-top: 0.3rem; }
 
 /* catalogue */
 .a3s-ce-cat-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
@@ -2564,6 +2576,17 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-section-add__grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 .a3s-section-add__grid .a3s-field span { font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); }
 .a3s-section-add__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+/* "+ Add section" under the DISCOM Section field. */
+.a3s-section-add__open {
+	justify-self: start; display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.1rem;
+	padding: 0.35rem 0.8rem; border: 1px dashed var(--color-accent); border-radius: var(--radius-pill);
+	background: var(--color-accent-soft); color: var(--color-accent-hover); font: inherit; font-size: 0.8125rem; font-weight: 700;
+	cursor: pointer; transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+.a3s-section-add__open:hover { background: var(--color-accent-tint); border-style: solid; }
+.a3s-section-add__open:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+/* The button makes its row taller: the fields beside it keep their own height. */
+.a3s-form__grid:has(.a3s-section-add__open) > .a3s-field { align-content: start; }
 .a3s-combo__add { margin-top: 0.25rem; border-top: 1px solid var(--color-border); border-radius: 0 0 0.6rem 0.6rem; color: var(--color-accent-hover); }
 .a3s-de-money { white-space: nowrap; text-align: right; }
 .a3s-de-option__name { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }

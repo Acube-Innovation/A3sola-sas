@@ -48,9 +48,22 @@ def can_confirm():
 	return bool(CONFIRMER_ROLES & set(frappe.get_roles()))
 
 
-def _job(installation, ptype):
-	partner_scope.refuse_partners(_("Payments"))
+#: The one payment task a partner may work: the advance, asked for by the lead's owner - a
+#: dealer, when the lead is his (api/payment_followup). Recording money stays with staff.
+PARTNER_PAYMENT_TASKS = ("ADV",)
+
+
+def _job(installation, ptype, task_code=None):
+	"""The job, for `ptype`. A partner is refused payments, except the advance when the task is
+	his: he may see where it stands and ask for it, though he may not edit the job."""
+	from a3_sola.api import task_assignees
+
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
+	if partner_scope.is_partner():
+		if task_code not in PARTNER_PAYMENT_TASKS or not task_assignees.holds(doc, task_code):
+			partner_scope.refuse_partners(_("Payments"))
+		doc.check_permission("read")
+		return doc
 	doc.check_permission(ptype)
 	return doc
 
@@ -170,7 +183,7 @@ def apply_phases(inst):
 @frappe.whitelist()
 def state(installation, task_code):
 	"""What the payment page shows: where the task stands, its receipt, and what this user may do."""
-	inst = _job(installation, "read")
+	inst = _job(installation, "read", task_code)
 	row = _row(inst, task_code)
 	return {
 		"task": {"code": row.stage_code, "name": row.stage_name, "status": AWAITING if awaiting(row) else row.status},

@@ -19,7 +19,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cint, flt, format_date, format_datetime, getdate, now_datetime, today
 
-from a3_sola.api import stages
+from a3_sola.api import stages, task_assignees
 from a3_sola.api.settings import get_int
 
 TASK = "ADV"
@@ -179,7 +179,8 @@ def state(inst, task_code):
 		"interval": interval(inst),
 		"next_default": str(add_days(today(), interval(inst))),
 		"asks": asks,
-		"can_ask": open_ and bool(inst.has_permission("write")),
+		# Staff who may edit the job, or the task's own people - a dealer owning the lead.
+		"can_ask": open_ and bool(inst.has_permission("write") or task_assignees.holds(inst, task_code)),
 	}
 
 
@@ -223,7 +224,7 @@ def ask_message(installation, task_code=TASK):
 	from a3_sola.api import outreach, payment_tasks
 	from a3_sola.api.portal_share import SIGNATURE, _sender
 
-	inst = payment_tasks._job(installation, "read")
+	inst = payment_tasks._job(installation, "read", task_code)
 	payer = _payer(inst)
 	left = outstanding(inst)
 	amount = frappe.utils.fmt_money(left, currency="INR") if left else _("the advance")
@@ -253,7 +254,9 @@ def log_ask(installation, via, note=None, next_on=None, contact=None, task_code=
 
 	if via not in VIA:
 		frappe.throw(_("Say how the payment was asked for: {0}.").format(", ".join(VIA)))
-	inst = payment_tasks._job(installation, "write")
+	inst = payment_tasks._job(installation, "write", task_code)
+	if not (inst.has_permission("write") or task_assignees.holds(inst, task_code)):
+		frappe.throw(_("Only the task's people or those who keep the project can log an ask."), frappe.PermissionError)
 	if not is_open(inst):
 		frappe.throw(_("There is nothing left to ask for on the advance."), title=_("Advance Covered"))
 	next_on = getdate(next_on) if next_on else getdate(add_days(today(), interval(inst)))

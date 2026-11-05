@@ -16,6 +16,9 @@
 							{%- if lead.company_name and lead.company_name != lead.display %}
 							<span class="a3s-table__sub">{{ lead.company_name | e }}</span>
 							{%- endif %}
+							{%- if lead.dealer_name %}
+							<span class="a3s-table__meta"><span class="a3s-badge a3s-badge--dealer">Dealer · {{ lead.dealer_name | e }}</span></span>
+							{%- endif %}
 							{#- The place under the name and company, on the same left edge. -#}
 							{%- if lead.place %}
 							<span class="a3s-table__meta a3s-table__place">

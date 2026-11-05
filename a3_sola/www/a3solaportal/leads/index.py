@@ -17,6 +17,15 @@ from a3_sola.api.leads import LEAD_STATUSES, lead_route
 no_cache = 1
 
 LIMIT = 100
+#: The list's tabs, by whose the lead is: the company's own, or a dealer's (Lead's Dealer).
+SCOPES = {"ours": {"a3s_dealer": ["is", "not set"]}, "dealers": {"a3s_dealer": ["is", "set"]}}
+
+
+def _count(filters, or_filters):
+	"""How many leads the user may see under these filters."""
+	rows = frappe.get_list("Lead", fields=["count(name) as n"], filters=filters, or_filters=or_filters,
+		limit_page_length=0)
+	return rows[0].n if rows else 0
 
 
 def get_context(context):
@@ -50,6 +59,20 @@ def get_context(context):
 			["name", "like", like],
 		]
 
+	# Whose leads: all, the company's own, or the dealers' - so staff can see and help with a
+	# dealer's leads, whose work is the dealer's first. A dealer sees only his own, so no tabs.
+	from a3_sola.api.partner_scope import is_partner
+
+	has_dealer = frappe.get_meta("Lead").has_field("a3s_dealer")
+	context.show_scope = bool(has_dealer and not is_partner())
+	scope = (frappe.form_dict.get("scope") or "").strip()
+	scope = scope if context.show_scope and scope in SCOPES else ""
+	context.scope = scope
+	if context.show_scope:
+		context.scope_counts = {key: _count({**filters, **cond}, or_filters) for key, cond in SCOPES.items()}
+		context.scope_counts[""] = _count(filters, or_filters)
+		filters.update(SCOPES.get(scope, {}))
+
 	leads = lead_rows(filters, or_filters)
 
 	context.leads = leads
@@ -77,7 +100,7 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 	# so the list still renders on a site where the fixtures have not run yet.
 	meta = frappe.get_meta("Lead")
 	extra = [f for f in ("city", "state", "subsidy_scheme", "approx_capacity_kw", "outreach_stage", "next_followup_date",
-		"followup_status") if meta.has_field(f)]
+		"followup_status", "a3s_dealer") if meta.has_field(f)]
 
 	leads = frappe.get_list(
 		"Lead",
@@ -118,6 +141,12 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 		lead["followup_due"] = lead.get("followup_status") == "FOLLOW UP DUE"
 
 	_add_assignment(leads)
+	# A dealer's lead names its dealer, so staff see whose it is first.
+	dealers = {l.get("a3s_dealer") for l in leads if l.get("a3s_dealer")}
+	dealer_names = dict(frappe.get_all("User", filters={"name": ["in", list(dealers)]}, fields=["name", "full_name"],
+		as_list=True)) if dealers else {}
+	for lead in leads:
+		lead["dealer_name"] = dealer_names.get(lead.get("a3s_dealer")) or lead.get("a3s_dealer") or ""
 	return leads
 
 

@@ -742,7 +742,9 @@ def complete_from_board(installation, task_code=None, remarks=None, confirmed=0)
 	if not cint(confirmed):
 		frappe.throw(_("Confirm that the task is done."), title=_("Confirmation Needed"))
 	doc = frappe.get_doc("Solar Installation", installation, for_update=True)
-	doc.check_permission("write")
+	# The task's own people complete it - a partner among them (a contractor, a dealer owning
+	# the lead), who may not edit the job itself; anyone else needs the job's write.
+	doc.check_permission("read" if task_assignees.holds(doc, task_code) else "write")
 	row = _get_stage(doc, task_code)
 	_half_paid(doc, task_code)
 	if row.status in DONE:
