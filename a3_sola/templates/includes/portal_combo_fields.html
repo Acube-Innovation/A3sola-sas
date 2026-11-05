@@ -113,6 +113,11 @@
 				select.value = row.value;
 				select.dispatchEvent(new Event("change", { bubbles: true }));
 				panel.remove(); panel = null;
+				/* The bill's section is on file now: its warning and "Add this section" go. */
+				if (fromBill()) {
+					delete wrap.dataset.billSection;
+					document.dispatchEvent(new CustomEvent("a3s:section-added", { detail: row }));
+				}
 			}).catch(function (e) {
 				add.disabled = false;
 				status.textContent = e.message; status.dataset.tone = "error";
