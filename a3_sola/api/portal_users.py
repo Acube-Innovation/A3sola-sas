@@ -34,6 +34,8 @@ STAFF_PROFILES = (
 	"Solar CRM Administration", "Solar Operations", "Solar Documentation", "Solar Field Crew",
 	"Solar Operations Management", "Solar Projects Management", "Solar Service", "Solar Service Management",
 )
+#: Every staff member holds this; it is added for them and never ticked by hand.
+BASE_ROLE = "Employee"
 TYPES = ("Admin", "Employee", "Contractor", "Dealer")
 PROFILE_OF = {"Admin": ADMIN_PROFILE, "Dealer": DEALER_PROFILE, "Contractor": CONTRACTOR_PROFILE}
 CONTRACTOR_TYPES = ("Electrical", "Structural", "EPC", "Other")
@@ -93,6 +95,42 @@ def _roles(name):
 	return frappe.get_all("Has Role", filters={"parent": name, "parenttype": "User"}, pluck="role")
 
 
+# ------------------------------------------------------------------ an employee's roles
+# An employee may do several jobs - survey and operations, say - with one login. Frappe gives a
+# user the access of every role he holds at once, so he is given the roles of each job: one
+# staff profile's when that is all he does, else the roles ticked one by one, with no profile.
+def staff_profile_roles():
+	"""{profile: [its roles, less Employee]} for the staff profiles set up on this site, in order."""
+	rows = frappe.get_all("Has Role", filters={"parenttype": "Role Profile", "parent": ["in", list(STAFF_PROFILES)]},
+		fields=["parent", "role"], order_by="idx asc")
+	out = {p: [] for p in STAFF_PROFILES if frappe.db.exists("Role Profile", p)}
+	for row in rows:
+		if row.parent in out and row.role != BASE_ROLE and row.role not in out[row.parent]:
+			out[row.parent].append(row.role)
+	return out
+
+
+def staff_roles(profiles=None):
+	"""The roles an admin may tick for an employee: those of the staff profiles, in their order."""
+	out = []
+	for roles in (profiles or staff_profile_roles()).values():
+		out.extend(r for r in roles if r not in out)
+	return out
+
+
+def _profile_for(roles, profiles):
+	"""The staff profile whose roles are exactly these, if there is one."""
+	return next((p for p, held in profiles.items() if set(held) == set(roles)), None)
+
+
+def _user_roles():
+	"""{user: [roles]} for every user, in one read."""
+	out = {}
+	for row in frappe.get_all("Has Role", filters={"parenttype": "User"}, fields=["parent", "role"], order_by="idx asc"):
+		out.setdefault(row.parent, []).append(row.role)
+	return out
+
+
 def _scope_filters():
 	"""Only the admin's own company's users: those of his tenant, where tenants are used."""
 	field = _tenant_field()
@@ -111,6 +149,8 @@ def users(type=None, search=None):
 	contractors = {c.user: c for c in frappe.get_all("Solar Contractor", filters={"user": ["is", "set"]},
 		fields=["name", "contractor_name", "contractor_type", "user"])}
 	employees = _employees()
+	held_roles = _user_roles()
+	tickable = set(staff_roles())
 	out, counts = [], {t: 0 for t in TYPES}
 	needle = (search or "").strip().lower()
 	for row in rows:
@@ -131,6 +171,9 @@ def users(type=None, search=None):
 			"name": row.name, "full_name": row.full_name or row.name, "first_name": row.first_name or "",
 			"last_name": row.last_name or "", "mobile_no": row.mobile_no or "", "enabled": cint(row.enabled),
 			"type": kind, "profile": row.role_profile_name or "",
+			"roles": [r for r in held_roles.get(row.name, []) if r in tickable],
+			"other_roles": [r for r in held_roles.get(row.name, []) if r not in tickable and r != BASE_ROLE
+				and r not in partner_scope.AUTOMATIC_ROLES],
 			"contractor": {"name": con.name, "contractor_name": con.contractor_name, "contractor_type": con.contractor_type}
 				if con else None,
 			"last_login": format_datetime(row.last_login, "d MMM yyyy") if row.last_login else "",
@@ -211,13 +254,15 @@ def _save_employee(user, data, company):
 @frappe.whitelist()
 def options():
 	require_admin()
-	profiles = [p for p in STAFF_PROFILES if frappe.db.exists("Role Profile", p)]
+	profile_roles = staff_profile_roles()
+	profiles = list(profile_roles)
 	contractors = frappe.get_all("Solar Contractor", filters={"is_active": 1},
 		fields=["name", "contractor_name", "contractor_type", "user", "mobile_no", "email_id"], order_by="contractor_name asc")
 	from a3_sola.api.portal_share import _outgoing_account
 
 	company = _company()
-	return {"types": list(TYPES), "profiles": profiles, "contractors": contractors,
+	return {"types": list(TYPES), "profiles": profiles, "profile_roles": profile_roles,
+		"roles": staff_roles(profile_roles), "contractors": contractors,
 		"contractor_types": list(CONTRACTOR_TYPES), "can_email": bool(_outgoing_account("User")),
 		"login_url": get_url(LOGIN_PATH), "staff_types": list(STAFF_TYPES),
 		"designations": frappe.get_all("Designation", pluck="name", order_by="name asc"),
@@ -246,7 +291,44 @@ def _clean(data):
 		frappe.throw(_("Enter the user's first name."))
 	if data.type == "Employee" and data.profile and data.profile not in STAFF_PROFILES:
 		frappe.throw(_("Choose the employee's access (role profile)."))
+	# Roles ticked one by one (the form sends them); None when the caller sent only a profile.
+	roles = data.get("roles")
+	if isinstance(roles, str):
+		roles = json.loads(roles) if roles.strip().startswith("[") else [r for r in roles.split(",")]
+	data.roles = None if roles is None else list(dict.fromkeys((r or "").strip() for r in roles if (r or "").strip()))
 	return data
+
+
+def _employee_access(data):
+	"""(profile, roles) for an employee from the roles ticked: the staff profile when they are
+	exactly one profile's, else no profile and the roles themselves. (None, None) when no roles
+	were sent, so the profile picked - or the access he has - stands."""
+	if data.roles is None:
+		return data.profile or None, None
+	profiles = staff_profile_roles()
+	allowed = staff_roles(profiles)
+	unknown = [r for r in data.roles if r not in allowed]
+	if unknown:
+		frappe.throw(_("{0} cannot be given here.").format(", ".join(unknown)))
+	if not data.roles:
+		return None, []  # none of these: only the roles he was given in the desk, if any, stay
+	ordered = [r for r in allowed if r in data.roles]
+	profile = _profile_for(ordered, profiles)
+	if profile and not _desk_roles(data.get("name")):
+		return profile, None
+	return None, ordered
+
+
+def _desk_roles(user):
+	"""The roles an employee was given outside this page (in the desk): kept when his access
+	changes, so he is then given roles rather than a profile, which would replace them."""
+	if not user or not frappe.db.exists("User", user):
+		return []
+	current = frappe.db.get_value("User", user, ["name", "role_profile_name", "enabled"], as_dict=True)
+	if current.role_profile_name or type_of(current) != "Employee":
+		return []
+	tickable = set(staff_roles())
+	return [r for r in _roles(user) if r not in tickable and r != BASE_ROLE and r not in partner_scope.AUTOMATIC_ROLES]
 
 
 def _link_contractor(email, data, company):
@@ -278,8 +360,14 @@ def save_user(data, name=None):
 	from a3_sola.api.tenant_users import _set_default_company, ensure_company_permission
 
 	data = _clean(data)
-	profile = data.profile if data.type == "Employee" else PROFILE_OF[data.type]
-	if name:
+	roles = None  # an employee's own roles, when they are no one profile's
+	if data.type == "Employee":
+		data.name = name
+		profile, roles = _employee_access(data)
+		data.profile = profile or ""
+	else:
+		profile = PROFILE_OF[data.type]
+	if name and roles is None:
 		# Kept as they are: an admin by role (no profile), or an employee whose access was not
 		# changed - setting a profile replaces every role the user holds.
 		current = frappe.db.get_value("User", name, ["name", "role_profile_name", "enabled"], as_dict=True) or {}
@@ -287,8 +375,8 @@ def save_user(data, name=None):
 		if (data.type == "Admin" and was == "Admin" and current.get("role_profile_name") != ADMIN_PROFILE) or \
 				(data.type == "Employee" and was == "Employee" and not data.profile):
 			profile = None
-	elif data.type == "Employee" and not profile:
-		frappe.throw(_("Choose the employee's access (role profile)."))
+	elif not name and data.type == "Employee" and not profile and not roles:
+		frappe.throw(_("Tick at least one role for the employee."))
 	if profile and not frappe.db.exists("Role Profile", profile):
 		frappe.throw(_("The {0} access is not set up on this site.").format(profile))
 	_check_new_employee(data, name)
@@ -317,6 +405,18 @@ def save_user(data, name=None):
 	user.enabled = cint(data.get("enabled", 1))
 	if profile:
 		user.role_profile_name = profile
+	elif roles is not None:
+		# Several jobs: no profile (it would replace the roles on save), and the ticked roles.
+		# Roles given outside this page - in the desk - stay, while he was an employee already.
+		tickable = set(staff_roles())
+		was_employee = bool(name) and type_of(frappe._dict(name=name, role_profile_name=user.role_profile_name,
+			enabled=1)) == "Employee"
+		kept = [r.role for r in user.get("roles") if r.role not in tickable] if was_employee else []
+		if not roles and not set(kept) - {BASE_ROLE} - partner_scope.AUTOMATIC_ROLES:
+			frappe.throw(_("Tick at least one role for the employee."))
+		user.role_profile_name = None
+		user.set("roles", [])
+		user.append_roles(*dict.fromkeys(kept + [BASE_ROLE] + roles))
 	user.flags.ignore_permissions = True
 	frappe.db.savepoint("portal_user")
 	try:

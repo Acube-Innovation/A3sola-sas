@@ -149,3 +149,45 @@ class TestDesignationAndDepartment(FrappeTestCase):
 	def test_a_partner_gets_no_employee_record(self):
 		_new("Dealer", "pu-dealer2@example.com", designation=self.designation, gender="Male", date_of_birth="1990-01-01")
 		self.assertIsNone(self.employee("pu-dealer2@example.com"))
+
+
+class TestSeveralJobs(FrappeTestCase):
+	"""An employee who does several jobs gets each job's roles, and with one login the access
+	of all of them."""
+
+	EMAIL = "pu-multi@example.com"
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		frappe.db.rollback()
+
+	def test_roles_of_several_jobs_are_held_together(self):
+		_new("Employee", self.EMAIL, roles=["Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"])
+		self.assertFalse(frappe.db.get_value("User", self.EMAIL, "role_profile_name"))
+		held = set(frappe.get_roles(self.EMAIL))
+		self.assertTrue({"Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"} <= held)
+		row = next(u for u in pu.users()["users"] if u["name"] == self.EMAIL)
+		self.assertEqual((row["type"], set(row["roles"])),
+			("Employee", {"Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"}))
+
+	def test_one_jobs_roles_are_that_profile(self):
+		_new("Employee", self.EMAIL, roles=["Solar Survey Engineer"])
+		self.assertEqual(frappe.db.get_value("User", self.EMAIL, "role_profile_name"), "Solar Survey")
+
+	def test_roles_given_in_the_desk_stay(self):
+		_new("Employee", self.EMAIL, roles=["Solar Sales Executive", "Solar Survey Engineer"])
+		frappe.get_doc("User", self.EMAIL).add_roles("Accounts User")
+		pu.save_user({"type": "Employee", "first_name": "Test", "email": self.EMAIL,
+			"roles": ["Solar Design Engineer"]}, name=self.EMAIL)
+		held = set(frappe.get_roles(self.EMAIL))
+		self.assertIn("Accounts User", held)
+		self.assertIn("Solar Design Engineer", held)
+		self.assertNotIn("Solar Sales Executive", held)
+
+	def test_no_role_or_a_partner_role_is_refused(self):
+		for roles in ([], ["Solar Dealer"]):
+			with self.assertRaises(frappe.ValidationError):
+				_new("Employee", self.EMAIL, roles=roles)
