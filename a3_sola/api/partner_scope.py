@@ -27,15 +27,24 @@ PARTNER_ROLES = (DEALER, CONTRACTOR)
 AUTOMATIC_ROLES = {"All", "Guest", "Desk User"}
 
 
-def partner_kind(user=None):
-	"""'dealer', 'contractor', or None for staff and guests."""
+def partner_kinds(user=None):
+	"""The partner's kinds - {'dealer'}, {'contractor'}, or both for one who sells and installs -
+	or an empty set for staff and guests. Anyone holding a role besides the partner roles is
+	staff, and is never narrowed here."""
 	user = user or frappe.session.user
 	if user in ("Administrator", "Guest"):
-		return None
+		return set()
 	roles = set(frappe.get_roles(user)) - AUTOMATIC_ROLES
 	if not roles or not roles <= set(PARTNER_ROLES):
-		return None
-	return "dealer" if DEALER in roles else "contractor"
+		return set()
+	return {kind for kind, role in (("dealer", DEALER), ("contractor", CONTRACTOR)) if role in roles}
+
+
+def partner_kind(user=None):
+	"""'dealer' (a dealer, or a dealer who also installs), 'contractor', or None for staff and
+	guests. A check for one kind of work asks partner_kinds."""
+	kinds = partner_kinds(user)
+	return "dealer" if "dealer" in kinds else ("contractor" if kinds else None)
 
 
 def is_partner(user=None):
@@ -59,10 +68,21 @@ def _contractor_sets(u):
 
 
 def conditions(user, doctype):
-	"""The SQL a partner's reads of `doctype` are narrowed by; "" when not narrowed."""
-	kind = partner_kind(user)
-	if not kind:
+	"""The SQL a partner's reads of `doctype` are narrowed by; "" when not narrowed. A partner who
+	is both a dealer and a contractor reaches what either gives him."""
+	kinds = partner_kinds(user)
+	if not kinds:
 		return ""
+	wheres = [w for w in (_kind_condition(kind, user, doctype) for kind in sorted(kinds)) if w]
+	if not wheres:
+		return ""
+	u, t = frappe.db.escape(user), f"`tab{doctype}`"
+	# What he made himself is his too - a record saved before its links were filled.
+	return "({0} or {1}.`owner` = {2})".format(" or ".join(f"({w})" for w in wheres), t, u)
+
+
+def _kind_condition(kind, user, doctype):
+	"""One kind's narrowing of `doctype`, without the owner clause; None when it has none."""
 	u = frappe.db.escape(user)
 	t = f"`tab{doctype}`"
 	if kind == "dealer":
@@ -90,10 +110,7 @@ def conditions(user, doctype):
 			"Solar Consumer": f"{t}.`name` in (select `solar_consumer` from `tabSolar Installation` where `name` in ({projects}))",
 			"Solar Contractor": f"{t}.`user` = {u}",
 		}.get(doctype)
-	if not where:
-		return ""
-	# What he made himself is his too - a record saved before its links were filled.
-	return f"({where} or {t}.`owner` = {u})"
+	return where or None
 
 
 def query_conditions(user=None, doctype=None, **kwargs):
@@ -125,10 +142,10 @@ def may_open_task(installation, code, user=None):
 	to him - a contractor's work, or a dealer's as the lead's owner (Advance Payment, Customer
 	Review). Staff always may."""
 	user = user or frappe.session.user
-	kind = partner_kind(user)
-	if not kind:
+	kinds = partner_kinds(user)
+	if not kinds:
 		return True
-	if code in (CONTRACTOR_TASKS if kind == "contractor" else DEALER_TASKS):
+	if code in set(CONTRACTOR_TASKS if "contractor" in kinds else ()) | set(DEALER_TASKS if "dealer" in kinds else ()):
 		return True
 	given = frappe.get_all("Installation Task Assignee", filters={"parent": installation, "stage_code": code}, pluck="user")
 	row = frappe.db.get_value("Installation Stage Log", {"parent": installation, "parenttype": "Solar Installation",
@@ -155,7 +172,7 @@ def stamp_dealer(doc, method=None):
 		if dealer:
 			doc.set(field, dealer)
 			return
-	if partner_kind() == "dealer":
+	if "dealer" in partner_kinds():
 		doc.set(field, frappe.session.user)
 
 

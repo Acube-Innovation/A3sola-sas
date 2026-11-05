@@ -82,8 +82,9 @@
 			var held = u.profile ? esc(u.profile) : (u.roles || []).concat(u.other_roles || []).map(function (r) { return esc(roleLabel(r)); }).join(" + ");
 			var access = (job ? '<span class="a3s-users__job">' + job + "</span>" : "") +
 				(u.type === "Employee" ? (job ? '<span class="a3s-table__meta">' + (held || "No roles") + "</span>" : (held || '<span class="a3s-table__muted">No roles</span>')) :
-				u.type === "Contractor" ? (u.contractor ? esc(u.contractor.contractor_name) + '<span class="a3s-table__meta">' + esc(u.contractor.contractor_type || "") + " contractor</span>" : '<span class="a3s-table__muted">No contractor record</span>') :
-				u.type === "Admin" ? (job ? '<span class="a3s-table__meta">Administration</span>' : "Administration") : "Dealer");
+				u.type === "Contractor" ? (u.contractor ? esc(u.contractor.contractor_name) + '<span class="a3s-table__meta">' + esc(u.contractor.contractor_type || "") + " contractor" + (u.also ? " + Dealer" : "") + "</span>" : '<span class="a3s-table__muted">No contractor record</span>') :
+				u.type === "Admin" ? (job ? '<span class="a3s-table__meta">Administration</span>' : "Administration") :
+				(u.also ? "Dealer + Contractor" + (u.contractor ? '<span class="a3s-table__meta">' + esc(u.contractor.contractor_name) + " · " + esc(u.contractor.contractor_type || "") + " contractor</span>" : "") : "Dealer"));
 			return '<tr data-user="' + esc(u.name) + '"' + (u.enabled ? "" : ' class="is-disabled"') + ">" +
 				'<td><span class="a3s-table__record"><span class="a3s-avatar a3s-avatar--initials">' + esc(initials(u.full_name)) + "</span>" +
 				'<span><span class="a3s-table__link">' + esc(u.full_name) + (u.is_me ? ' <span class="a3s-users__me">You</span>' : "") + "</span>" +
@@ -167,6 +168,8 @@
 					'<span class="a3s-users__type-name">' + t + '</span><span class="a3s-users__type-hint">' + esc(TYPE_HINT[t]) + "</span></label>";
 			}).join("") + "</fieldset>" +
 			'<div class="a3s-form__grid">' +
+			/* A partner may be both: a dealer who also installs, or a contractor who also sells. */
+			'<label class="a3s-check a3s-field--wide a3s-users__also" data-for="Dealer Contractor"><input type="checkbox" name="also"' + (u.also ? " checked" : "") + '><span data-also-text></span></label>' +
 			'<div class="a3s-field"><label for="u-first">First name <span class="a3s-req">*</span></label><input id="u-first" name="first_name" value="' + esc(u.first_name) + '" required></div>' +
 			'<div class="a3s-field"><label for="u-last">Last name</label><input id="u-last" name="last_name" value="' + esc(u.last_name) + '"></div>' +
 			'<div class="a3s-field"><label for="u-email">E-mail (login) <span class="a3s-req">*</span></label><input id="u-email" name="email" type="email" value="' + esc(editing ? u.name : "") + '"' + (editing ? " disabled" : "") + ' required>' +
@@ -241,13 +244,24 @@
 		});
 		form.addEventListener("change", function (e) { if (e.target.name === "roles") syncAccess(); });
 		syncAccess();
+		var ALSO = { Dealer: "Contractor", Contractor: "Dealer" };
+		var ALSO_TEXT = { Dealer: "Also a contractor \u2013 installs projects, sees the ones they install",
+			Contractor: "Also a dealer \u2013 brings in customers, sees the leads they bring" };
 		function sync() {
 			var type = form.querySelector('[name="type"]:checked').value;
-			form.querySelectorAll("[data-for]").forEach(function (el) { el.hidden = el.dataset.for.split(" ").indexOf(type) === -1; });
+			/* The kinds this user is: one, or a partner's two. */
+			var kinds = [type];
+			if (ALSO[type] && form.also.checked) kinds.push(ALSO[type]);
+			form.querySelector("[data-also-text]").textContent = ALSO_TEXT[type] || "";
+			form.querySelectorAll("[data-for]").forEach(function (el) {
+				var forKinds = el.dataset.for.split(" ");
+				el.hidden = el.classList.contains("a3s-users__also") ? forKinds.indexOf(type) === -1
+					: !kinds.some(function (k) { return forKinds.indexOf(k) !== -1; });
+			});
 			var staff = choices.staff_types.indexOf(type) !== -1;
 			var newEmp = staff && !u.employee && !!(form.designation.value || form.department.value);
 			form.querySelectorAll("[data-new-emp]").forEach(function (el) { el.hidden = !newEmp; });
-			var newCon = type === "Contractor" && !form.contractor.value;
+			var newCon = kinds.indexOf("Contractor") !== -1 && !form.contractor.value;
 			form.querySelectorAll("[data-new-con]").forEach(function (el) { el.hidden = !newCon; });
 		}
 		form.addEventListener("change", sync);
@@ -257,6 +271,7 @@
 			var type = form.querySelector('[name="type"]:checked').value;
 			var data = { type: type, first_name: form.first_name.value, last_name: form.last_name.value, email: form.email.value,
 				mobile_no: form.mobile_no.value, roles: type === "Employee" ? ticked() : null, contractor: form.contractor.value,
+				also: ALSO[type] && form.also.checked ? 1 : 0,
 				new_contractor: { contractor_name: form.contractor_name.value, contractor_type: form.contractor_type.value },
 				enabled: editing ? (form.enabled.checked ? 1 : 0) : 1,
 				designation: form.designation.value, department: form.department.value, gender: form.gender.value,
