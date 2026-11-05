@@ -124,6 +124,68 @@ def link_title(doctype, name):
 	return cache[key]
 
 
+#: Records that are never a reference list, whatever their shape: people, parties and the
+#: system's own setup.
+NOT_REFERENCE = {
+	"User", "Role", "Role Profile", "DocType", "Module Def", "Company", "Customer", "Supplier", "Contact",
+	"Address", "Employee", "Lead", "Opportunity", "Solar Consumer", "Sales Partner", "Bank Account",
+	"Payment Terms Template", "Letter Head", "Print Format", "Coupon Code", "Auto Repeat",
+}
+#: Reference lists a company keeps for itself - its DISCOMs and their sections, tariffs, roof
+#: types, subsidy schemes, makes and the packages it sells. Offered like the shared ones, but
+#: only its own company's (api/permissions), never another tenant's.
+COMPANY_REFERENCE = {
+	"DISCOM", "DISCOM Section", "Electricity Tariff", "KSEB Tariff Category", "Roof Type", "Subsidy Scheme",
+	"Component Make", "Solar Package", "Balance of System Package",
+}
+
+
+def is_open_reference(doctype, user=None):
+	"""Whether a staff member may be offered the records of `doctype` in a dropdown without a
+	role that reads it: a plain reference list - places, the board's sections and tariffs,
+	sources, segments - shared across the site.
+
+	Not for a partner (a dealer, a contractor), who sees his own records only. Not a
+	document with a lifecycle (submittable), a child or single table, anything a company owns
+	(it has a company field), anything narrowed per user by a permission query, or the
+	people and setup records in NOT_REFERENCE.
+	"""
+	from a3_sola.api.partner_scope import is_partner
+
+	user = user or frappe.session.user
+	if user == "Guest" or is_partner(user) or doctype in NOT_REFERENCE:
+		return False
+	if doctype in COMPANY_REFERENCE:
+		return True
+	try:
+		meta = frappe.get_meta(doctype)
+	except frappe.DoesNotExistError:
+		return False
+	if meta.istable or meta.issingle or meta.is_submittable or meta.has_field("company"):
+		return False
+	return not frappe.get_hooks("permission_query_conditions", {}).get(doctype)
+
+
+def _own_company_lister(doctype):
+	"""frappe.get_all, held to the user's own companies where the doctype has a company -
+	what permission_query_conditions would have done (api/permissions) - or None when he
+	is permitted on no company at all."""
+	from a3_sola.api.permissions import get_permitted_companies
+
+	if not frappe.get_meta(doctype).has_field("company"):
+		return frappe.get_all
+	companies = get_permitted_companies()
+	if companies is None:
+		return frappe.get_all
+	if not companies:
+		return None
+
+	def lister(dt, **kwargs):
+		return frappe.get_all(dt, or_filters=[["company", "in", companies], ["company", "is", "not set"]], **kwargs)
+
+	return lister
+
+
 def link_choices(doctype, filters=None, limit=None):
 	"""Options for a Link field as {value, label}, permission-checked, capped.
 
@@ -140,13 +202,22 @@ def link_choices(doctype, filters=None, limit=None):
 		]
 	# Checked first rather than left to get_list: its PermissionError is caught below, but
 	# the message it queues is not, and the form then reports it in place of the real error.
-	if not frappe.has_permission(doctype, "read"):
+	# A reference list - districts, sources, DISCOMs - is offered to everyone on staff who has
+	# the form open, whatever their role may read of it: what a form shows should not depend
+	# on a role having been given read on each list it picks from.
+	if frappe.has_permission(doctype, "read"):
+		lister = frappe.get_list
+	elif is_open_reference(doctype):
+		lister = _own_company_lister(doctype)
+		if lister is None:
+			return []
+	else:
 		return []
 	if doctype == "DISCOM Section":
 		# Only the sections in KSEB's directory - those with a code - read as
 		# "Changanassery – 4638 (Kottayam)": the code, and the district that tells apart two
 		# offices the directory gives one code or one name.
-		rows = frappe.get_list(
+		rows = lister(
 			"DISCOM Section", fields=["name", "section_name", "section_code", "district"],
 			filters=(filters or []) + [["section_code", "is", "set"]],
 			order_by="section_name asc, district asc", limit_page_length=SECTION_CHOICE_LIMIT,
@@ -166,7 +237,7 @@ def link_choices(doctype, filters=None, limit=None):
 		meta = frappe.get_meta(doctype)
 		title_field = meta.title_field if meta.title_field and meta.title_field != "name" else None
 		fields = ["name"] + ([title_field] if title_field else [])
-		rows = frappe.get_list(
+		rows = lister(
 			doctype, fields=fields, filters=filters, order_by=title_field or "name",
 			limit_page_length=limit or LINK_CHOICE_LIMIT,
 		)
