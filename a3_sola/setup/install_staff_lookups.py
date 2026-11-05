@@ -22,7 +22,15 @@ LOOKUPS = (
 	"Indian State", "Indian District", "DISCOM", "DISCOM Section", "KSEB Tariff Category",
 	"Electricity Tariff", "Roof Type", "Subsidy Scheme", "Lead Source", "Territory", "Campaign",
 	"Industry Type", "Market Segment",
+	# The product catalogue: a quotation made from a proposal reads each item's details
+	# (ERPNext's get_item_details checks read on Item), and Desk User only selects it.
+	"Item",
 )
+
+
+#: Picked, not read: a quotation names its customer's receivable account (ERPNext checks select
+#: on Account), but the ledgers are no business of a sales role's.
+SELECT_ONLY = ("Account",)
 
 
 def staff_roles():
@@ -49,4 +57,17 @@ def setup():
 				frappe.get_doc({"doctype": "Custom DocPerm", "parent": doctype, "parenttype": "DocType",
 					"parentfield": "permissions", "role": role, "permlevel": 0, "read": 1, "select": 1}
 				).insert(ignore_permissions=True)
+		frappe.clear_cache(doctype=doctype)
+	for doctype in SELECT_ONLY:
+		if not frappe.db.exists("DocType", doctype):
+			continue
+		setup_custom_perms(doctype)
+		for role in roles:
+			name = frappe.db.get_value("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": 0, "if_owner": 0})
+			if name:
+				frappe.db.set_value("Custom DocPerm", name, "select", 1, update_modified=False)
+			else:
+				# A permission row reads by default: this one only picks.
+				frappe.get_doc({"doctype": "Custom DocPerm", "parent": doctype, "parenttype": "DocType",
+					"parentfield": "permissions", "role": role, "permlevel": 0, "select": 1, "read": 0}).insert(ignore_permissions=True)
 		frappe.clear_cache(doctype=doctype)

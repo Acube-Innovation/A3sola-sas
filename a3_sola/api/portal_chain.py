@@ -33,6 +33,9 @@ from a3_sola.api.settings import get_value
 #   make           a dotted path to a function that creates the target from the source's
 #                  name and returns its name - for a target with more to it than a mapper
 #                  (the project, opened by the handoff). Posted, like `via`.
+#   open           "edit": the record `make` created opens in its edit form, not its page.
+#   requires_submitted  the step `requires` names must have produced a submitted record,
+#                  not just a record.
 #   needs_submit   the source must be submitted before the step is offered.
 #   map            target fieldname -> source fieldname, or a tuple of source fieldnames
 #                  meaning "the first of these that has a value"
@@ -50,6 +53,9 @@ CHAIN = {
 			"label": "Create customer",
 			"icon": "user",
 			"link_field": "solar_consumer",
+			# Made at once from the lead and opened to edit: no create form in between.
+			"make": "a3_sola.api.portal_chain.make_customer_from_lead",
+			"open": "edit",
 			"card_title": "consumer_name",
 			"card_subtitle": "consumer_number",
 			"card_subtitle_label": "Consumer no.",
@@ -104,24 +110,6 @@ CHAIN = {
 		# Everywhere else the chain stays linear; here a person picks up wherever the job
 		# actually is, which is not always the next step in the sequence.
 		{
-			"key": "estimate",
-			"slug": "design-estimates",
-			"doctype": "Solar Design Estimate",
-			"label": "Create solar design estimate",
-			"icon": "pen",
-			"card_title": "name",
-			"card_subtitle": "binding_constraint",
-			"card_subtitle_label": "Sized by",
-			"map": {
-				"solar_consumer": "name",
-				"lead": "lead",
-				"site_survey": "site_survey",
-				"connection_type": "connection_type",
-				"roof_type": "roof_type",
-				"company": "company",
-			},
-		},
-		{
 			"key": "eligibility",
 			"slug": "subsidy-eligibility",
 			"doctype": "Subsidy Eligibility Check",
@@ -143,6 +131,24 @@ CHAIN = {
 				"consumer_number": "consumer_number",
 				"roof_type": "roof_type",
 				"avg_bill_amount": "avg_bill_amount",
+				"company": "company",
+			},
+		},
+		{
+			"key": "estimate",
+			"slug": "design-estimates",
+			"doctype": "Solar Design Estimate",
+			"label": "Create solar design estimate",
+			"icon": "pen",
+			"card_title": "name",
+			"card_subtitle": "binding_constraint",
+			"card_subtitle_label": "Sized by",
+			"map": {
+				"solar_consumer": "name",
+				"lead": "lead",
+				"site_survey": "site_survey",
+				"connection_type": "connection_type",
+				"roof_type": "roof_type",
 				"company": "company",
 			},
 		},
@@ -397,6 +403,29 @@ def mapped_values(step, doc):
 	return out
 
 
+def make_customer_from_lead(lead):
+	"""The customer, made from the lead as the step maps it, and its name - to be opened in
+	its edit form and finished there. What the lead does not have yet (the consumer number,
+	read later from the KSEB bill) is asked for when that form is saved, so it is not asked
+	for here; a lead without a DISCOM is taken to be KSEB's. A lead that already has its
+	customer gets that one back."""
+	from a3_sola.api.kseb_bill import kseb_discom
+
+	if lead.get("solar_consumer") and frappe.db.exists("Solar Consumer", lead.solar_consumer):
+		return lead.solar_consumer
+	step = find_step("Lead", "consumers")
+	doc = frappe.new_doc("Solar Consumer")
+	doc.update(mapped_values(step, lead))
+	if not doc.get("discom"):
+		doc.discom = kseb_discom()
+	if not doc.get("company"):
+		doc.company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	doc.flags.ignore_mandatory = True
+	doc.insert()
+	link_back(step, lead, doc.name)
+	return doc.name
+
+
 def _card(step, target_name):
 	"""The card shown in place of the button once the step is done."""
 	doctype = step["doctype"]
@@ -431,7 +460,7 @@ def steps_for(doc):
 	offered but disabled, so a person can see what comes next before it is reachable.
 	"""
 	out = []
-	done_keys = set()
+	done_keys, submitted_keys = set(), set()
 	for step in steps_of(doc.doctype):
 		if not frappe.db.exists("DocType", step["doctype"]):
 			continue
@@ -440,9 +469,11 @@ def steps_for(doc):
 		target = find_target(step, doc)
 		if target:
 			done_keys.add(step["key"])
+			if frappe.utils.cint(frappe.db.get_value(step["doctype"], target, "docstatus")) == 1:
+				submitted_keys.add(step["key"])
 
 		blocked_by = step.get("requires")
-		blocked = bool(blocked_by) and blocked_by not in done_keys
+		blocked = bool(blocked_by) and blocked_by not in (submitted_keys if step.get("requires_submitted") else done_keys)
 		note = step.get("requires_note", "") if blocked else ""
 		# A mapper reads a submitted document. Offering the step on a draft would only
 		# produce an error on the other side, so it is shown disabled with the reason.

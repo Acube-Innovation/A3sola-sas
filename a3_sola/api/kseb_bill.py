@@ -108,17 +108,21 @@ def prepared_image(content):
 
 def ocr_pdf(content, password=None):
 	"""A scanned PDF: its first pages as images, read with OCR."""
+	return "\n".join(ocr_image(page) for page in pdf_pages(content, password))
+
+
+def pdf_pages(content, password=None, last=2):
+	"""A scanned PDF's first pages as PNG images (300 dpi), for OCR."""
 	if not (tesseract() and shutil.which("pdftoppm")):
 		frappe.throw(NO_OCR, title=_("Scan Not Read"))
 	with tempfile.TemporaryDirectory() as tmp:
 		path = f"{tmp}/bill.pdf"
 		with open(path, "wb") as f:
 			f.write(content)
-		subprocess.run(["pdftoppm", "-r", "300", "-png", "-f", "1", "-l", "2"] + (["-upw", password] if password else [])
+		subprocess.run(["pdftoppm", "-r", "300", "-png", "-f", "1", "-l", str(last)] + (["-upw", password] if password else [])
 			+ [path, f"{tmp}/page"],
 			check=True, timeout=60, capture_output=True)
-		pages = sorted(p for p in os.listdir(tmp) if p.startswith("page"))
-		return "\n".join(ocr_image(open(f"{tmp}/{p}", "rb").read()) for p in pages)
+		return [open(f"{tmp}/{p}", "rb").read() for p in sorted(p for p in os.listdir(tmp) if p.startswith("page"))]
 
 
 # ------------------------------------------------------------------ reading the bill
@@ -322,6 +326,11 @@ def to_fields(parsed, doctype):
 			"avg_bill_amount": parsed.get("bill_amount"), "billing_frequency": parsed.get("billing_frequency"),
 			"site_address_line1": line1, "site_address_line2": line2, "site_pincode": parsed.get("pincode"),
 		})
+		# The permanent address too, until an Aadhaar card gives the customer's own: the form
+		# keeps the card's over the bill's (portal_kseb_bill.js).
+		if line1 or parsed.get("pincode"):
+			fields.update({"permanent_address_same": "No", "permanent_address_line1": line1,
+				"permanent_address_line2": line2, "permanent_pincode": parsed.get("pincode")})
 	# The district the address names - the lead's, or the customer's site's - and its state.
 	district = district_from_address(parsed.get("address"))
 	if district:
@@ -331,6 +340,10 @@ def to_fields(parsed, doctype):
 			fields[place[1]] = district.name
 			if meta.has_field(place[0]) and frappe.db.exists("Indian State", district.state):
 				fields[place[0]] = district.state
+			if "permanent_address_line1" in fields or "permanent_pincode" in fields:
+				fields["permanent_district"] = district.name
+				if fields.get(place[0]):
+					fields["permanent_state"] = fields[place[0]]
 	return {k: v for k, v in fields.items() if v not in (None, "")}, warnings
 
 
@@ -460,6 +473,9 @@ def kyc_rows(doctype, name, file_url, document_type):
 			consumer = frappe.get_doc(CONSUMER, name)
 			if not any(r.kyc_type == "Aadhaar Back" for r in consumer.get("kyc_documents") or []):
 				consumer.append("kyc_documents", {"kyc_type": "Aadhaar Back", "attachment": file_url})
+				# A KYC row recorded, not the customer finished: its required fields are asked for when
+				# its form is saved (a customer made from its lead has no consumer number yet).
+				consumer.flags.ignore_mandatory = True
 				consumer.save(ignore_permissions=True)
 	portal_attachments._refresh_kyc(doctype, name)
 

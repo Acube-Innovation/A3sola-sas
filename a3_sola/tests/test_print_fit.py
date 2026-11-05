@@ -19,7 +19,15 @@ def letter(points, place="Kochi"):
 
 class TestLetterFit(FrappeTestCase):
 	def test_a_short_letter_keeps_the_full_size(self):
-		self.assertEqual(print_cover._letter_pt(letter([OPTION])), print_cover.LETTER_MAX_PT)
+		# A revised proposal's short letter: no address block, introduction or opening.
+		short = dict(letter([OPTION]), short=True, opening=[], closing=list(print_cover.REVISED_CLOSING))
+		self.assertEqual(print_cover._letter_pt(short), print_cover.LETTER_MAX_PT)
+
+	def test_a_full_one_option_letter_is_set_to_clear_the_footer(self):
+		# At the full size its signature ran into the footer (RENC-PROP-26-27-RIL-0002): a size down.
+		pt = print_cover._letter_pt(letter([OPTION]))
+		self.assertLess(pt, print_cover.LETTER_MAX_PT)
+		self.assertGreaterEqual(pt, 11.5)
 
 	def test_more_options_set_the_letter_smaller_but_never_below_the_minimum(self):
 		one = print_cover._letter_pt(letter([OPTION]))

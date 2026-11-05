@@ -118,7 +118,8 @@ class TestAadhaarSides(FrappeTestCase):
 
 	def read(self, text, side):
 		with patch.object(aadhaar_card.kseb_bill, "extract_text", return_value=(text, "ocr")), \
-				patch.object(aadhaar_card, "english_column", return_value=None):
+				patch.object(aadhaar_card, "english_column", return_value=None), \
+				patch.object(aadhaar_card, "_layout_text", return_value=""):
 			return aadhaar_card.read_content(b"photo", "card.jpg", side=side)
 
 	def test_the_front_gives_the_holder_only(self):
@@ -138,3 +139,49 @@ class TestAadhaarSides(FrappeTestCase):
 			self.read(BACK, "front")
 		with self.assertRaises(frappe.ValidationError):
 			self.read(FRONT, "back")
+
+
+# An e-Aadhaar letter as OCR reads it with its layout kept: the "To" block, the small print
+# beside the card, both sides on one page. Made-up details.
+LETTER = """Unique Identification Authority of India
+Enrolment No.: 0000/00111/22222
+To
+Anna Varghese
+C/O Joseph Varghese,
+Kunne! House,
+Kalady,
+VTC: Kalady,
+PO; Kalady,
+District; Ernakulam,
+State: Kerala,
+PIN Code: 683574,
+Mobile: 9000000001
+Entities seeking Aadhaar are obligated to seek consent.
+Date of Birth/DOB: 01/01/1990
+Female/ FEMALE
+Address:
+C/O Joseph Varghese, Kunnel House, Kalady, PO: Kalady, DIST: Ernakulam,
+Kerala - 683574"""
+
+
+class TestAadhaarLetter(FrappeTestCase):
+	def test_the_letter_gives_its_holder_and_address(self):
+		got = aadhaar_card.parse(LETTER)
+		# The "To" block's name - not the small print OCR read above the date of birth.
+		self.assertEqual(got["name"], "Anna Varghese")
+		self.assertEqual(got["dob"], "01/01/1990")
+		self.assertEqual(got["address"]["pincode"], "683574")
+		self.assertEqual(got["address"]["line1"], "Kunnel House")
+		self.assertEqual(got["address"]["district"], "Ernakulam")
+
+	def test_a_sentence_is_not_a_name(self):
+		self.assertIsNone(aadhaar_card._as_name("Entities seeking Aadhaar are obligated to seek consent."))
+		self.assertEqual(aadhaar_card._as_name("C K Boban"), "C K Boban")
+
+	def test_a_photo_with_both_sides_counts_for_both(self):
+		with patch.object(aadhaar_card.kseb_bill, "extract_text", return_value=(LETTER, "ocr")), \
+				patch.object(aadhaar_card, "english_column", return_value=None), \
+				patch.object(aadhaar_card, "_layout_text", return_value=""):
+			out = aadhaar_card.read_content(b"photo", "letter.jpg", side="front")
+		self.assertEqual(out["sides"], ["front", "back"])
+		self.assertIn("permanent_pincode", out["fields"])

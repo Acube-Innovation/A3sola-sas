@@ -281,8 +281,10 @@ def _short_option_line(est):
 #: whole letter scales with it. Past the minimum, the remarks are too long for one page.
 LETTER_MAX_PT, LETTER_MIN_PT = 12.5, 9.5
 #: The text column of the A4 frame (print_frame.html), in pt: its width, and the height
-#: from its top to just above the footer's address.
-LETTER_WIDTH_PT, LETTER_ROOM_PT = 458, 610
+#: from its top to just above the footer's address - less a margin, since justified lines
+#: wrap a little more than the average character width counts: at 610 a full letter
+#: (RENC-PROP-26-27-RIL-0002) was reckoned to fit and ran its signature into the footer.
+LETTER_WIDTH_PT, LETTER_ROOM_PT = 458, 575
 #: P052's average character width, in em, with a margin for words that wrap early.
 CHAR_EM = 0.46
 LINE_HEIGHT = 1.38  # .a3lt .a3l-body
@@ -639,6 +641,9 @@ def dcdb_count(options, micro):
 PLANT_LINES = ("package", "panels", "inverters", "batteries", "bos_items", "mounting_expenses", "installation_expenses")
 #: Charges raised against the estimate in records of their own: (doctype, sign).
 CHARGES = (("Additional Structure", 1), ("Additional Cable", 1), ("Special Discount", -1))
+#: How a charge line is named on the proposal and the quotation, where its type is not what the
+#: customer is told: an elevated structure is charged as the additional cost for the structure.
+PRINTED_AS = {"Elevated Structure": "Additional Cost for Structure"}
 #: The client's payment terms. Nothing on file holds them yet, so they are printed as standing.
 PAYMENT_TERMS = (
 	"70% as advance with PO.",
@@ -833,8 +838,8 @@ def plant_cost_rows(est):
 				if sign < 0:
 					discount += flt(item.amount)
 				else:
-					rows.append({"item": item.description or item.get("structure_type") or item.get("cable_type") or doctype,
-						"amount": flt(item.amount), "right": True})
+					label = item.description or item.get("structure_type") or item.get("cable_type") or doctype
+					rows.append({"item": PRINTED_AS.get(label.strip(), label), "amount": flt(item.amount), "right": True})
 	if flt(commercials.get("gst_amount")):
 		rows.append({"item": "GST @ {0:g}%".format(flt(commercials["gst_percent"])), "amount": flt(commercials["gst_amount"]), "right": True})
 	total = sum(r["amount"] for r in rows)

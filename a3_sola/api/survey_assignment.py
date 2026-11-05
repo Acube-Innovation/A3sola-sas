@@ -41,11 +41,13 @@ def _full_name(user):
 	return (frappe.db.get_value("User", user, "full_name") or user) if user else ""
 
 
+#: Who carries out a site survey: it takes a survey engineer, not anyone who may create one.
+SURVEYOR_ROLE = "Solar Survey Engineer"
+
+
 def surveyors():
-	"""Who a site survey can be assigned to: the enabled users who may create one."""
-	roles = set(frappe.get_all("DocPerm", filters={"parent": "Site Survey", "create": 1}, pluck="role")) | set(
-		frappe.get_all("Custom DocPerm", filters={"parent": "Site Survey", "create": 1}, pluck="role"))
-	users = set(frappe.get_all("Has Role", filters={"parenttype": "User", "role": ["in", list(roles) or [""]]}, pluck="parent"))
+	"""Who a site survey can be assigned to: the enabled survey engineers."""
+	users = set(frappe.get_all("Has Role", filters={"parenttype": "User", "role": SURVEYOR_ROLE}, pluck="parent"))
 	rows = frappe.get_all("User", filters={"name": ["in", list(users - {"Administrator", "Guest"}) or [""]], "enabled": 1,
 		"user_type": "System User"}, fields=["name", "full_name"], order_by="full_name asc")
 	return [{"value": r.name, "label": r.full_name or r.name} for r in rows]

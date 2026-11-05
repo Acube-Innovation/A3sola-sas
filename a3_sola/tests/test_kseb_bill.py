@@ -168,6 +168,10 @@ class TestKSEBBill(FrappeTestCase):
 		self.assertEqual((consumer["avg_consumption_units"], consumer["avg_bill_amount"]), (538, 4210))
 		self.assertEqual(consumer["site_address_line1"], "HOUSE NO.1")
 		self.assertEqual(consumer["site_pincode"], "682030")
+		# The permanent address too - the Aadhaar card's replaces it once read (portal_kseb_bill.js).
+		self.assertEqual((consumer["permanent_address_same"], consumer["permanent_address_line1"], consumer["permanent_pincode"]),
+			("No", "HOUSE NO.1", "682030"))
+		self.assertNotIn("permanent_address_line1", lead)
 		# A lead's bill is monthly: a two-month bill is halved; it has no address lines.
 		self.assertEqual(lead["avg_monthly_bill"], 2105)
 		self.assertEqual(lead["lead_name"], "Anna Varghese")

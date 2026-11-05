@@ -103,3 +103,21 @@ class TestSurveyAssignment(FrappeTestCase):
 
 		record_links.fill_survey(doc)
 		self.assertEqual(doc.surveyor, self.one)
+
+
+class TestOnlySurveyEngineers(FrappeTestCase):
+	"""A site survey takes a survey engineer: no one else is offered, or taken."""
+
+	def test_only_survey_engineers_are_offered(self):
+		frappe.set_user("Administrator")
+		engineer = surveyor("survey.only@a3sola.test")
+		sales = "sales.not.surveyor@a3sola.test"
+		if not frappe.db.exists("User", sales):
+			frappe.get_doc({"doctype": "User", "email": sales, "first_name": "Sales", "send_welcome_email": 0,
+				"user_type": "System User", "roles": [{"role": "Solar Sales Executive"}]}).insert(ignore_permissions=True)
+		offered = {u["value"] for u in sa.surveyors()}
+		self.assertIn(engineer, offered)
+		self.assertNotIn(sales, offered)
+		consumer = make_consumer()
+		with self.assertRaises(frappe.ValidationError):
+			sa.assign(consumer=consumer.name, user=sales)

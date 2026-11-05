@@ -487,6 +487,11 @@ def form_fields(meta, prefill=None, extra=()):
 		}
 		seed = (prefill or {}).get(f.fieldname)
 		spec["value"] = "" if seed is None else seed
+		# A date the doctype starts at today ("Today", "now") starts there on the form too: the
+		# eligibility check's date, the day it is made.
+		if seed in (None, "") and f.fieldtype in ("Date", "Datetime") and (f.default or "").lower() in ("today", "now"):
+			now = frappe.utils.now_datetime()
+			spec["value"] = now.strftime("%Y-%m-%d") if f.fieldtype == "Date" else now.strftime("%Y-%m-%dT%H:%M")
 		if f.fieldtype == "Attach Image":
 			spec["input"] = "image"
 		if f.fieldtype == "Select":
@@ -1059,10 +1064,11 @@ TASK_DOCTYPES_WITH_PEOPLE = {COLLECTIONS[s]["doctype"] for s in TASK_SLUGS}
 #: Not the agreement: its task is done when the stamp paper is bought, and submitting it is
 #: executing the agreement, which needs its text generated first - a desk step. The CRM
 #: steps before the order are submitted on the desk, as they always have been.
-SUBMIT_SLUGS = {"sales-orders"} | (TASK_SLUGS - {"agreements"})
+#: The subsidy eligibility check is completed here too: completed, it opens the design estimate.
+SUBMIT_SLUGS = {"sales-orders", "subsidy-eligibility"} | (TASK_SLUGS - {"agreements"})
 
 #: The submit button's words, by slug; "Submit" otherwise.
-SUBMIT_LABELS = {"sales-orders": "Submit order", "installation-tasks": "Complete task"}
+SUBMIT_LABELS = {"sales-orders": "Submit order", "installation-tasks": "Complete task", "subsidy-eligibility": "Complete check"}
 
 #: Slugs whose detail and create pages are bespoke rather than metadata-driven, so the
 #: generic `detail_context` is not what renders them. Quotations open in the pricing

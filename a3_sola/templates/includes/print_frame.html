@@ -58,6 +58,10 @@
 {%- endmacro -%}
 {%- macro frame_style() -%}
 <style>
+	/* Frappe's print style sets every table cell top-aligned, !important: on the proposal's and
+	   the quotation's pages each cell sits at its row's middle - the components, the costs,
+	   the bank details, every table. */
+	.print-format .a3l-page th, .print-format .a3l-page td { vertical-align: middle !important; }
 	.a3l-page { position: relative; width: 100%; height: 0; padding-bottom: 141.42%; overflow: hidden; background: #fff; }
 	.a3l-art { position: absolute; left: 0; top: 0; width: 100%; height: 15%; }
 	.a3l-art--bottom { top: auto; bottom: 0; height: 12%; -webkit-transform: scale(-1, -1); transform: scale(-1, -1); }

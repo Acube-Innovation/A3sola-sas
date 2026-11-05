@@ -11,6 +11,8 @@
  *   before - the person can still change it, and saving asks them to check it, with what it was;
  * - the customer's name is the Aadhaar card's: read, it replaces any other, and a different one
  *   is said in a Name mismatch pop-up; once read from the card, no other document offers a name;
+ * - the permanent address likewise: the KSEB bill gives it until the Aadhaar card is read, and
+ *   the card's then stands;
  * - "From Aadhaar card" goes under each field filled (portal_read_from.js).
  *
  * Nothing is saved until the form is.
@@ -38,6 +40,10 @@
 	   KSEB bill's, or one typed in - and a different one is shown in a pop-up. Until then
 	   the bill's or the typed name stands. */
 	var AADHAAR = "Aadhaar card", NAME = "consumer_name";
+	/* The permanent address, likewise: the Aadhaar card's, else the KSEB bill's until a card is read. */
+	var PERMANENT = ["permanent_address_same", "permanent_address_line1", "permanent_address_line2", "permanent_city",
+		"permanent_state", "permanent_district", "permanent_pincode"];
+	function permanentFromAadhaar() { return PERMANENT.some(function (n) { return readFrom(n) === AADHAAR; }); }
 
 	var style = document.createElement("style");
 	style.textContent =
@@ -144,6 +150,8 @@
 				/* Read from the Aadhaar card already: no other document offers a name. */
 				if (readFrom(name) === AADHAAR) return next();
 			}
+			/* The card's permanent address stands: no other document replaces it. */
+			if (source !== AADHAAR && PERMANENT.indexOf(name) !== -1 && permanentFromAadhaar()) return next();
 			if (current === value) {
 				/* The same value: this document is its source too, if it had none. */
 				if (source && !readFrom(name) && window.a3sReadFrom) window.a3sReadFrom.mark(el, source);

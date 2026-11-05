@@ -19,6 +19,10 @@ DEALER_GRANTS = {
 	"Lead": {"read": 1, "write": 1, "create": 1, "print": 1},
 	"Customer": {"read": 1, "write": 1, "create": 1, "print": 1},
 	"Quotation": {"read": 1, "write": 1, "create": 1, "submit": 1, "print": 1},
+	# Read only: the quotation reads its items' details from the catalogue.
+	"Item": {"read": 1, "select": 1},
+	# Picked only: the quotation names its customer's receivable account.
+	"Account": {"select": 1, "read": 0},
 }
 
 

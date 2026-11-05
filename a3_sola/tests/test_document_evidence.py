@@ -150,3 +150,17 @@ class TestProposedSystemAndLoad(FrappeTestCase):
 		if self.consumer.lead:
 			frappe.db.set_value("Lead", self.consumer.lead, "approx_capacity_kw", 0)
 		self.assertIsNone(document_evidence.load_check(self.check))
+
+
+class TestAddressPriority(FrappeTestCase):
+	def test_the_bills_permanent_address_is_not_compared_with_the_cards(self):
+		consumer = make_consumer(consumer_name="Address Test")
+		check = frappe._dict(doctype="Subsidy Eligibility Check", lead=None, solar_consumer=consumer.name)
+		TestDocumentEvidence.document(self, "Solar Consumer", consumer.name, "KSEB Bill",
+			{"site_address_line1": "DEVIPRIYA", "permanent_address_line1": "DEVIPRIYA"})
+		TestDocumentEvidence.document(self, "Solar Consumer", consumer.name, "Aadhaar Back",
+			{"permanent_address_line1": "Muttathukunnel House"})
+		found = document_evidence.evidence(check)
+		self.assertEqual(found["conflicts"], [])
+		line1 = next(d for d in found["details"] if d["field"] == "permanent_address_line1")
+		self.assertEqual([v["document"] for v in line1["values"]], ["Aadhaar card"])

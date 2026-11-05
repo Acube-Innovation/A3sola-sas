@@ -61,6 +61,14 @@ def parse(text):
 	return {k: v for k, v in out.items() if v}
 
 
+def codes_read(text):
+	"""How cleanly a reading read its digits: a valid IFSC of a known bank, and a MICR code of
+	nine digits after its label - what a photo of a screen, all moire, gets wrong first."""
+	ifsc = _ifsc(text or "")
+	micr = re.search(r"MICR\s*(?:Code)?\s*[:\-]?\s*(\d{9})(?!\d)", text or "", re.IGNORECASE)
+	return bool(ifsc and ifsc[:4] in BANKS) + bool(micr)
+
+
 def score(found):
 	"""How fully a reading found the details: a labelled account number counts most."""
 	return (3 * bool(found.get("ifsc")) + 2 * bool(found.get("account_no")) + 2 * bool(found.get("account_labelled"))
@@ -138,6 +146,13 @@ def _name(lines):
 			name = _as_name(candidate)
 			if name:
 				return name
+	# A statement prints the holder on a line of their own, after their title: "MR LIJO KURIAN".
+	for line in lines:
+		titled = re.match(r"^\W*(?:MR|MRS|MS|MISS|SMT|SHRI|SRI|KUM|DR)\.?\s+((?:[A-Z][A-Za-z.']*\s+){0,4}[A-Z][A-Za-z.']*)", line.strip())
+		if titled:
+			name = _as_name(titled.group(1))
+			if name:
+				return name
 	sign_at = next((i for i, l in enumerate(lines) if re.search(r"sign\s*above|authori[sz]ed\s*signator", l, re.IGNORECASE)), None)
 	if sign_at is not None:
 		for line in reversed(lines[max(0, sign_at - 4):sign_at]):
@@ -166,8 +181,10 @@ def _clean(value):
 
 
 def ocr_photo(content):
-	"""A photo's text, turned upright: the way Tesseract says it faces first, then each other
-	way, until the IFSC and the account number read."""
+	"""A photo's readings, turned upright: the way Tesseract says it faces first, then each
+	other way, until the IFSC and the account number read. Where something is still missing,
+	the upright photo is read again cleaned - blurred and made black and white, which takes
+	out the moire of a photographed screen - and those readings are given too."""
 	ocr = kseb_bill.tesseract()
 	if not ocr:
 		frappe.throw(kseb_bill.NO_OCR, title=_("Photo Not Read"))
@@ -192,24 +209,87 @@ def ocr_photo(content):
 			best, best_score, best_image, best_found = text, score(found), upright, found
 		if found.get("ifsc") and found.get("account_labelled"):
 			break
+	readings, name_only = [best], []
+	if not (best_found.get("ifsc") and best_found.get("account_labelled") and best_found.get("name")):
+		from PIL import Image, ImageFilter
+
+		big = best_image if best_image.width >= 3200 else best_image.resize(
+			(3200, int(best_image.height * 3200 / best_image.width)), Image.LANCZOS)
+		for blur, threshold, psm in ((1.5, 150, 4), (2, 120, 6)):
+			clean = big.filter(ImageFilter.GaussianBlur(blur)).point(lambda x, t=threshold: 255 if x > t else 0)
+			readings.append(ocr.image_to_string(clean, lang="eng", config=f"--psm {psm}"))
 	if best_found.get("ifsc") and not best_found.get("name"):
-		# The name sits apart from the rest (a passbook's top line): read the words one by one.
-		best += "\n" + ocr.image_to_string(best_image, lang="eng", config="--psm 11")
-	return best
+		# The name sits apart from the rest (a passbook's top line): read the words one by one -
+		# for the name only: a number read that way is as often a stray as an account.
+		name_only.append(best + "\n" + ocr.image_to_string(best_image, lang="eng", config="--psm 11"))
+	return readings, name_only
 
 
-def read_content(content, filename):
-	"""The customer's bank fields and warnings from a passbook or a cheque's bytes."""
+def merged(readings, name_only=()):
+	"""What the readings say together: each detail from the reading that read the codes most
+	cleanly (codes_read), then found the most - so a digit misread in one is not taken over
+	the same number read right in another. A MICR code is never the account number."""
+	# A MICR code: nine digits after its label, or on the IFSC's line - printed beside it, the
+	# label lost to a blurred photo.
+	micr = {m for t in readings for line in (t or "").split("\n") for m in re.findall(r"(?<!\d)(\d{9})(?!\d)", line)
+		if re.search(r"MICR[^\n]{0,25}" + m, line, re.IGNORECASE) or IFSC.search(line.upper()) or re.search(r"IFS\s*C", line, re.IGNORECASE)}
+	# Read cleanly elsewhere, a MICR code read without its label is known for what it is too.
+	micr |= {m for t in readings for m in re.findall(r"(?<!\d)(\d{9})(?!\d)", t or "") if m in micr}
+	ranked = sorted(((codes_read(t), score(parse(t)), -i, parse(t)) for i, t in enumerate(readings)), reverse=True)
+	out = {}
+	for _codes, _score, _i, found in ranked:
+		if found.get("account_no") in micr:
+			found.pop("account_no")
+			found.pop("account_labelled", None)
+		for key, value in found.items():
+			out.setdefault(key, value)
+	if not out.get("name"):
+		for text in name_only:
+			name = parse(text).get("name")
+			if name:
+				out["name"] = name
+				break
+	return out
+
+
+def _letters(value):
+	return re.sub(r"[^a-z]", "", (value or "").lower())
+
+
+def snap_name(name, known):
+	"""The holder's name as the customer's own spelling (their Aadhaar's), where OCR read it a
+	letter or two off ("LIJO KURIZN" for Lijo Kurian) - else as read. Returns (name, note)."""
+	from difflib import SequenceMatcher
+
+	if not (name and known):
+		return name, None
+	if _letters(name) == _letters(known):
+		# The same letters spaced or cased otherwise ("CK Boban"): the customer's way.
+		return known, None
+	a, b = _letters(name), _letters(known)
+	if len(a) >= 6 and SequenceMatcher(None, a, b).ratio() >= 0.85:
+		return known, _("The account holder's name was read as {0}; taken as {1}, the customer's name - check it on the document.").format(name, known)
+	return name, None
+
+
+def read_content(content, filename, known_name=None):
+	"""The customer's bank fields and warnings from a passbook or a cheque's bytes - the holder's
+	name in the customer's own spelling (`known_name`) where OCR read it a letter or two off."""
 	name = (filename or "").lower()
 	if name.endswith(".pdf") or content[:5] == b"%PDF-":
 		text, _source = kseb_bill.extract_text(content, filename)
+		found = parse(text)
 	else:
-		text = ocr_photo(content)
-	found = parse(text)
+		found = merged(*ocr_photo(content))
 	if not (found.get("ifsc") or found.get("account_no")):
 		frappe.throw(_("No IFSC or account number could be read. Upload the passbook's first page, the cheque or the "
 			"statement's first page, clear, straight and in good light."), title=_("Bank Details Not Read"))
-	return to_fields(found)
+	fields, warnings = to_fields(found)
+	if fields.get("bank_account_holder_name") and known_name:
+		fields["bank_account_holder_name"], note = snap_name(fields["bank_account_holder_name"], known_name)
+		if note:
+			warnings.append(note)
+	return fields, warnings
 
 
 def to_fields(found):

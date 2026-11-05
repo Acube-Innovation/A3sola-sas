@@ -128,6 +128,10 @@ def evidence(check):
 		for fieldname, value in doc["fields"].items():
 			if fieldname in SKIP or value in (None, ""):
 				continue
+			# The KSEB bill's permanent address is its site address again, given until an
+			# Aadhaar card is read: shown once, as the site's, not compared with the card's.
+			if doc["document_type"] == "KSEB Bill" and fieldname.startswith("permanent_"):
+				continue
 			key = SAME_AS.get(fieldname, fieldname)
 			detail = details.setdefault(key, {"field": key, "label": _label(key, doc["doctype"]), "values": []})
 			detail["values"].append({"value": _shown(value, fieldname, doc["doctype"]), "compare": _same(key, value),
