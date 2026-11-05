@@ -80,11 +80,15 @@
 		rows.innerHTML = list.map(function (u) {
 			var job = [u.designation, u.department_name].filter(Boolean).map(esc).join(" &middot; ");
 			var held = u.profile ? esc(u.profile) : (u.roles || []).concat(u.other_roles || []).map(function (r) { return esc(roleLabel(r)); }).join(" + ");
+			/* A partner's jobs, under his kind. */
+			var jobs = (u.type === "Dealer" || u.type === "Contractor") && (u.roles || []).length
+				? '<span class="a3s-table__meta">+ ' + (u.roles || []).map(function (r) { return esc(roleLabel(r)); }).join(" + ") + "</span>" : "";
 			var access = (job ? '<span class="a3s-users__job">' + job + "</span>" : "") +
 				(u.type === "Employee" ? (job ? '<span class="a3s-table__meta">' + (held || "No roles") + "</span>" : (held || '<span class="a3s-table__muted">No roles</span>')) :
 				u.type === "Contractor" ? (u.contractor ? esc(u.contractor.contractor_name) + '<span class="a3s-table__meta">' + esc(u.contractor.contractor_type || "") + " contractor" + (u.also ? " + Dealer" : "") + "</span>" : '<span class="a3s-table__muted">No contractor record</span>') :
 				u.type === "Admin" ? (job ? '<span class="a3s-table__meta">Administration</span>' : "Administration") :
 				(u.also ? "Dealer + Contractor" + (u.contractor ? '<span class="a3s-table__meta">' + esc(u.contractor.contractor_name) + " · " + esc(u.contractor.contractor_type || "") + " contractor</span>" : "") : "Dealer"));
+			access += jobs;
 			return '<tr data-user="' + esc(u.name) + '"' + (u.enabled ? "" : ' class="is-disabled"') + ">" +
 				'<td><span class="a3s-table__record"><span class="a3s-avatar a3s-avatar--initials">' + esc(initials(u.full_name)) + "</span>" +
 				'<span><span class="a3s-table__link">' + esc(u.full_name) + (u.is_me ? ' <span class="a3s-users__me">You</span>' : "") + "</span>" +
@@ -159,7 +163,7 @@
 		u = u || { type: "Employee", enabled: 1 };
 		var m = modal(editing ? "Edit user" : "Add user", editing ? esc(u.name) : "They will get a link to set their own password.", true);
 		var con = u.contractor || null;
-		var roles = (u.type === "Employee" && u.roles) || [];
+		var roles = u.roles || [];
 		m.body.innerHTML =
 			'<form class="a3s-modal__form" novalidate>' +
 			'<fieldset class="a3s-users__types"><legend class="a3s-users__legend">Kind of user</legend>' +
@@ -175,8 +179,8 @@
 			'<div class="a3s-field"><label for="u-email">E-mail (login) <span class="a3s-req">*</span></label><input id="u-email" name="email" type="email" value="' + esc(editing ? u.name : "") + '"' + (editing ? " disabled" : "") + ' required>' +
 			(editing ? '<p class="a3s-field__hint">The login stays as it is.</p>' : "") + "</div>" +
 			'<div class="a3s-field"><label for="u-mobile">Mobile</label><input id="u-mobile" name="mobile_no" inputmode="tel" value="' + esc(u.mobile_no) + '"><p class="a3s-field__hint">For the WhatsApp welcome.</p></div>' +
-			'<fieldset class="a3s-field a3s-field--wide a3s-users__access" data-for="Employee"><legend class="a3s-users__legend">Access <span class="a3s-req">*</span></legend>' +
-			'<p class="a3s-field__hint">Tick every job they do. With one login they get the access of all of them.</p>' +
+			'<fieldset class="a3s-field a3s-field--wide a3s-users__access" data-for="Employee Dealer Contractor"><legend class="a3s-users__legend">Access <span class="a3s-req" data-access-req>*</span></legend>' +
+			'<p class="a3s-field__hint" data-access-hint></p>' +
 			'<div class="a3s-users__jobs" role="group" aria-label="Add the roles of a job">' + choices.profiles.map(function (p) {
 				return '<button type="button" class="a3s-users__job-btn" data-profile="' + esc(p) + '" aria-pressed="false">' + esc(p) + "</button>";
 			}).join("") + "</div>" +
@@ -253,6 +257,21 @@
 			var kinds = [type];
 			if (ALSO[type] && form.also.checked) kinds.push(ALSO[type]);
 			form.querySelector("[data-also-text]").textContent = ALSO_TEXT[type] || "";
+			/* A partner's jobs are optional, and never the admin's (they would make him staff). */
+			var partner = !!ALSO[type];
+			form.querySelector("[data-access-req]").hidden = partner;
+			form.querySelector("[data-access-hint]").textContent = partner
+				? "Optional: tick any jobs they also do. They get those pages, but still see only their own customers and projects."
+				: "Tick every job they do. With one login they get the access of all of them.";
+			form.querySelectorAll("[data-profile]").forEach(function (b) {
+				b.hidden = partner && (choices.partner_excluded_profiles || []).indexOf(b.dataset.profile) !== -1;
+			});
+			roleBoxes.forEach(function (box) {
+				var off = partner && (choices.partner_excluded_roles || []).indexOf(box.value) !== -1;
+				box.closest("label").hidden = off;
+				if (off) box.checked = false;
+			});
+			syncAccess();
 			form.querySelectorAll("[data-for]").forEach(function (el) {
 				var forKinds = el.dataset.for.split(" ");
 				el.hidden = el.classList.contains("a3s-users__also") ? forKinds.indexOf(type) === -1
@@ -270,7 +289,7 @@
 			e.preventDefault();
 			var type = form.querySelector('[name="type"]:checked').value;
 			var data = { type: type, first_name: form.first_name.value, last_name: form.last_name.value, email: form.email.value,
-				mobile_no: form.mobile_no.value, roles: type === "Employee" ? ticked() : null, contractor: form.contractor.value,
+				mobile_no: form.mobile_no.value, roles: type === "Employee" || ALSO[type] ? ticked() : null, contractor: form.contractor.value,
 				also: ALSO[type] && form.also.checked ? 1 : 0,
 				new_contractor: { contractor_name: form.contractor_name.value, contractor_type: form.contractor_type.value },
 				enabled: editing ? (form.enabled.checked ? 1 : 0) : 1,

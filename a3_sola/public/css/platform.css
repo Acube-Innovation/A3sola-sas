@@ -3794,6 +3794,7 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-users__choice { display: grid; gap: 0.6rem; margin-bottom: 0.5rem; }
 /* An employee's access: job shortcuts (pills) over the roles, ticked one by one. */
 .a3s-users__access { border: 0; padding: 0; margin: 0; min-width: 0; gap: 0.6rem; }
+.a3s-users__also[hidden], .a3s-users__role[hidden], .a3s-users__job-btn[hidden], .a3s-req[hidden] { display: none; }
 .a3s-users__access > .a3s-users__legend { padding: 0; }
 .a3s-users__jobs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .a3s-users__job-btn { font: inherit; font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: var(--radius-pill);

@@ -27,17 +27,30 @@ PARTNER_ROLES = (DEALER, CONTRACTOR)
 AUTOMATIC_ROLES = {"All", "Guest", "Desk User"}
 
 
+#: Roles that make a user the company's own, whatever else he holds: an employee with an
+#: Employee record has Employee (HRMS takes it from a user without one), and an admin holds
+#: one of the others. A partner is never given them.
+STAFF_ROLES = {"Employee", "System Manager", "Solar CRM Manager"}
+
+
 def partner_kinds(user=None):
 	"""The partner's kinds - {'dealer'}, {'contractor'}, or both for one who sells and installs -
-	or an empty set for staff and guests. Anyone holding a role besides the partner roles is
-	staff, and is never narrowed here."""
+	or an empty set for staff and guests. A partner may also hold staff jobs' roles (a contractor
+	who surveys, say): they add pages, but his records stay his own. Staff - anyone with a role
+	in STAFF_ROLES - are never narrowed here."""
 	user = user or frappe.session.user
 	if user in ("Administrator", "Guest"):
 		return set()
 	roles = set(frappe.get_roles(user)) - AUTOMATIC_ROLES
-	if not roles or not roles <= set(PARTNER_ROLES):
+	if roles & STAFF_ROLES:
 		return set()
 	return {kind for kind, role in (("dealer", DEALER), ("contractor", CONTRACTOR)) if role in roles}
+
+
+def has_jobs(user=None):
+	"""Whether a partner also holds staff jobs' roles - beyond his partner roles."""
+	user = user or frappe.session.user
+	return bool(partner_kinds(user)) and bool(set(frappe.get_roles(user)) - AUTOMATIC_ROLES - set(PARTNER_ROLES))
 
 
 def partner_kind(user=None):
@@ -75,10 +88,44 @@ def conditions(user, doctype):
 		return ""
 	wheres = [w for w in (_kind_condition(kind, user, doctype) for kind in sorted(kinds)) if w]
 	if not wheres:
-		return ""
+		# Any other record of a lead, a customer or a project - a page a staff job of his opens
+		# (a fee payment, a commissioning report) - is his only when it is of his own.
+		linked = _linked_condition(kinds, user, doctype)
+		if linked is None:
+			return ""
+		wheres = [linked]
 	u, t = frappe.db.escape(user), f"`tab{doctype}`"
 	# What he made himself is his too - a record saved before its links were filled.
 	return "({0} or {1}.`owner` = {2})".format(" or ".join(f"({w})" for w in wheres), t, u)
+
+
+#: What a record may be tied to that a partner can own.
+OWNED_LINKS = ("Solar Installation", "Lead", "Solar Consumer")
+
+
+def _linked_condition(kinds, user, doctype):
+	"""The partner's own records of a doctype no kind narrows by name: those whose project,
+	lead or customer is his. None for a doctype tied to none of them (a reference list)."""
+	links = {}
+	for df in frappe.get_meta(doctype).fields:
+		if df.fieldtype == "Link" and df.options in OWNED_LINKS and df.options not in links:
+			links[df.options] = df.fieldname
+	if not links:
+		return None
+	u, t = frappe.db.escape(user), f"`tab{doctype}`"
+	sets = {}
+	if "dealer" in kinds:
+		leads, consumers, _customers, projects = _dealer_sets(u)
+		sets.setdefault("Lead", []).append(leads)
+		sets.setdefault("Solar Consumer", []).append(consumers)
+		sets.setdefault("Solar Installation", []).append(projects)
+	if "contractor" in kinds:
+		_mine, projects = _contractor_sets(u)
+		sets.setdefault("Solar Installation", []).append(projects)
+		sets.setdefault("Solar Consumer", []).append(
+			f"select `solar_consumer` from `tabSolar Installation` where `name` in ({projects})")
+	clauses = [f"{t}.`{field}` in ({sub})" for target, field in links.items() for sub in sets.get(target, [])]
+	return " or ".join(clauses) or "1=0"
 
 
 def _kind_condition(kind, user, doctype):
@@ -145,6 +192,10 @@ def may_open_task(installation, code, user=None):
 	kinds = partner_kinds(user)
 	if not kinds:
 		return True
+	if has_jobs(user):
+		# A partner with staff jobs works the tasks of his own projects, as their staff would.
+		return frappe.db.exists("Solar Installation", installation) and bool(
+			frappe.get_doc("Solar Installation", installation).has_permission("read", user=user))
 	if code in set(CONTRACTOR_TASKS if "contractor" in kinds else ()) | set(DEALER_TASKS if "dealer" in kinds else ()):
 		return True
 	given = frappe.get_all("Installation Task Assignee", filters={"parent": installation, "stage_code": code}, pluck="user")

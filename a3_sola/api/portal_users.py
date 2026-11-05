@@ -102,6 +102,23 @@ def both_kinds(name):
 BOTH_PARTNER_ROLES = (partner_scope.DEALER, partner_scope.CONTRACTOR)
 #: The other kind a partner may also be.
 OTHER_KIND = {"Dealer": "Contractor", "Contractor": "Dealer"}
+#: Each partner kind's own role.
+PARTNER_ROLE_OF = {"Dealer": partner_scope.DEALER, "Contractor": partner_scope.CONTRACTOR}
+#: Jobs and roles a partner is never given: they would make him an admin (partner_scope.STAFF_ROLES).
+PARTNER_EXCLUDED_PROFILES = ("Solar CRM Administration",)
+PARTNER_EXCLUDED_ROLES = ("Solar CRM Manager",)
+
+
+def _partner_jobs(data):
+	"""The staff jobs' roles ticked for a dealer or contractor: they add pages, his records
+	staying his own (partner_scope)."""
+	if data.type not in OTHER_KIND or not data.roles:
+		return []
+	allowed = [r for r in staff_roles() if r not in PARTNER_EXCLUDED_ROLES]
+	unknown = [r for r in data.roles if r not in allowed]
+	if unknown:
+		frappe.throw(_("{0} cannot be given to a dealer or contractor.").format(", ".join(unknown)))
+	return [r for r in allowed if r in data.roles]
 
 
 def _roles(name):
@@ -277,6 +294,7 @@ def options():
 
 	company = _company()
 	return {"types": list(TYPES), "profiles": profiles, "profile_roles": profile_roles,
+		"partner_excluded_profiles": list(PARTNER_EXCLUDED_PROFILES), "partner_excluded_roles": list(PARTNER_EXCLUDED_ROLES),
 		"roles": staff_roles(profile_roles), "contractors": contractors,
 		"contractor_types": list(CONTRACTOR_TYPES), "can_email": bool(_outgoing_account("User")),
 		"login_url": get_url(LOGIN_PATH), "staff_types": list(STAFF_TYPES),
@@ -384,9 +402,12 @@ def save_user(data, name=None):
 		profile = PROFILE_OF[data.type]
 	# A partner who is both a dealer and a contractor: his two roles, no profile.
 	partner_both = data.type in OTHER_KIND and cint(data.get("also"))
-	if partner_both:
+	partner_jobs = _partner_jobs(data)
+	# A partner who is both kinds, or has jobs too: his roles, no profile.
+	partner_custom = partner_both or bool(partner_jobs)
+	if partner_custom:
 		profile = None
-	if name and roles is None and not partner_both:
+	if name and roles is None and not partner_custom:
 		# Kept as they are: an admin by role (no profile), or an employee whose access was not
 		# changed - setting a profile replaces every role the user holds.
 		current = frappe.db.get_value("User", name, ["name", "role_profile_name", "enabled"], as_dict=True) or {}
@@ -424,10 +445,11 @@ def save_user(data, name=None):
 	user.enabled = cint(data.get("enabled", 1))
 	if profile:
 		user.role_profile_name = profile
-	elif partner_both:
+	elif partner_custom:
+		kinds = [data.type] + ([OTHER_KIND[data.type]] if partner_both else [])
 		user.role_profile_name = None
 		user.set("roles", [])
-		user.append_roles(*BOTH_PARTNER_ROLES)
+		user.append_roles(*dict.fromkeys([PARTNER_ROLE_OF[k] for k in kinds] + partner_jobs))
 	elif roles is not None:
 		# Several jobs: no profile (it would replace the roles on save), and the ticked roles.
 		# Roles given outside this page - in the desk - stay, while he was an employee already.
