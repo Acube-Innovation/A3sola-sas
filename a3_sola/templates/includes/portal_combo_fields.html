@@ -139,7 +139,12 @@
 			var typed = box && box.value && box.value !== (select.options[select.selectedIndex] || {}).textContent ? box.value : "";
 			open(typed);
 		});
-		wrap.appendChild(addBtn);
+		/* A row under the field: "+ Add section", and beside it the bill's section when a KSEB
+		   bill read on this page names one the list lacks (portal_kseb_bill.js puts it there). */
+		var addRow = document.createElement("div");
+		addRow.className = "a3s-section-add__row";
+		addRow.appendChild(addBtn);
+		wrap.appendChild(addRow);
 	}
 })();
 </script>
