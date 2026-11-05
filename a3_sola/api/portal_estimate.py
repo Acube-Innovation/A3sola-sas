@@ -45,6 +45,10 @@ COMPONENT_FIELDS = (
 	{"fieldname": "battery_make", "label": "Battery", "key": "batteries", "only_for": ("Off-Grid", "Hybrid")},
 )
 
+# The Solar Package list's own last choice: no package, the panel and inverter chosen from
+# every make (solar_design_estimate.custom_components) and the rest added on the estimate.
+CUSTOM = "__custom__"
+
 # A package name's trailing subsidy scheme, which the package list on an option leaves off.
 SCHEME_SUFFIX = re.compile(r"\s*\((?:PM Surya Ghar|Non-Subsidy)\)\s*$", re.IGNORECASE)
 
@@ -76,6 +80,11 @@ PROFILE_FIELDS = {
 # a make list to the variant, type or item chosen beside it.
 SECTIONS = (
 	{"key": "panels", "label": "Solar Panel", "icon": "bolt", "fields": (
+		# As the package's Solar Panel row: its Item first - required here, so a panel added or
+		# changed names the module bought - which fills the specification, Wp and DCR type.
+		{"fieldname": "panel_item", "choices": "panel_item", "column": False, "required": True,
+			"fills": {"specification": "text", "panel_capacity_wp": "wp", "panel_type": "type"}},
+		{"fieldname": "specification", "column": False},
 		{"fieldname": "panel_type", "choices": "panel_type"},
 		{"fieldname": "panel_capacity_wp"},
 		# Asked in the popup, not shown as a column: the Nos column shows the count in force,
@@ -83,6 +92,7 @@ SECTIONS = (
 		{"fieldname": "panel_count", "column": False, "hint": True},
 		{"fieldname": "panel_variant", "choices": "module_technology"},
 		{"fieldname": "panel_make", "choices": "module_make", "filter_by": "panel_variant"},
+		{"fieldname": "alternate_makes", "column": False, "hint": True},
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
 	), "computed": ("nos", "amount"),
@@ -105,6 +115,9 @@ SECTIONS = (
 		"compact": {"title": (("inverter_make", ""), ("inverter_type", ""), ("inverter_capacity_kw", " kW")),
 			"sub": (("inverter_phase", ""),)}},
 	{"key": "batteries", "label": "Battery", "icon": "stack", "only_for": ("Off-Grid", "Hybrid"), "fields": (
+		# As the package's Battery row: its Item, required here, fills the specification.
+		{"fieldname": "battery_item", "choices": "battery_item", "column": False, "required": True,
+			"fills": {"specification": "text"}},
 		{"fieldname": "battery_voltage"},
 		{"fieldname": "battery_phase", "choices": "phase"},
 		{"fieldname": "battery_capacity_ah"},
@@ -331,6 +344,8 @@ def detail_columns(doc=None, prefill=None):
 						# The list already follows the option's Subsidy, so the scheme in brackets
 						# at the end of the name ("(PM Surya Ghar)", "(Non-Subsidy)") is not repeated.
 						c["label"] = SCHEME_SUFFIX.sub("", c["label"]) or c["label"]
+					# Custom is always offered, whatever the row's choices: it is not a package.
+					choices.append({"value": CUSTOM, "label": _("Custom"), "custom": 1})
 				if df.options == "Solar Consumer":
 					# The lead each consumer came from, either way round the link is kept, so
 					# choosing a lead lists only its consumers.
@@ -401,6 +416,8 @@ def option_rows(doc, fields):
 				value = row.get(fieldname)
 				if fieldname == "override_capacity_kw":
 					value = "{0:g}".format(flt(value)) if flt(value) else ""
+				if fieldname == "solar_package" and row.is_custom and not value:
+					value = CUSTOM
 				values[fieldname] = "" if value is None else str(value)
 			saved = row.design_estimate if row.design_estimate and row.design_estimate != doc.name else ""
 			rows.append({"name": row.name, "recommended": bool(row.is_recommended), "values": values,
@@ -418,17 +435,28 @@ def package_cost_label(amount):
 	return _("System price {0}").format(frappe.utils.fmt_money(amount, currency="INR")) if flt(amount) else ""
 
 
-def package_choices_json(columns):
+def package_choices_json(columns, company=None):
 	"""Each package on offer's cost and its panels, inverters and batteries, for step one to
-	fill a row's choices from when its package is picked."""
+	fill a row's choices from when its package is picked; Custom's are every make of the
+	company's (solar_design_estimate.custom_components)."""
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import custom_components
 	from a3_sola.solar_crm.doctype.solar_package.solar_package import package_components
 
 	field = next((f for f in columns[1]["fields"] if f["fieldname"] == "solar_package"), None)
 	out = {}
 	for option in (field or {}).get("options") or []:
-		if option.get("value"):
+		if option.get("value") == CUSTOM:
+			company = company or frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+			out[CUSTOM] = {"custom": 1, "package_cost": 0, **custom_components(company)}
+		elif option.get("value"):
 			out[option["value"]] = package_components(option["value"])
 	return json.dumps(out, default=str).replace("</", "<\\/")
+
+
+def is_custom(doc):
+	"""Whether the estimate is built on a Custom option: no package, its makes chosen freely."""
+	row = next((r for r in doc.get("sizing_options") or [] if r.is_recommended), None)
+	return bool(row and row.is_custom and not doc.solar_package)
 
 
 def subject_profile(lead=None, solar_consumer=None):
@@ -507,6 +535,9 @@ def save_details(values, name=None, sizing_options=None):
 			entry = {fieldname: (row.get(fieldname) or None) for fieldname in sizing_fields}
 			entry.update({c["fieldname"]: row.get(c["fieldname"]) or None for c in COMPONENT_FIELDS})
 			entry["override_capacity_kw"] = flt(row.get("override_capacity_kw")) or None
+			entry["is_custom"] = 1 if entry.get("solar_package") == CUSTOM else 0
+			if entry["is_custom"]:
+				entry["solar_package"] = None
 			entry["is_recommended"] = 1 if row.get("is_recommended") else 0
 			if old:
 				entry["name"] = old.name  # the same option: its tab and saved estimate follow it
@@ -576,6 +607,9 @@ def _choices(doc):
 		"yes_no": [{"value": "0", "label": "No"}, {"value": "1", "label": "Yes"}],
 		"phase": [{"value": v, "label": v} for v in ("Single Phase", "Three Phase")
 			if not doc.get("connection_type") or v == doc.get("connection_type")],
+		# The Modules group's Items, each with what its choice fills in (SECTIONS panels "fills").
+		"panel_item": panel_item_choices(),
+		"battery_item": group_item_choices("Batteries"),
 		"module_technology": technologies("Module"),
 		"module_make": makes("Module"),
 		"inverter_technology": technologies("Inverter"),
@@ -609,6 +643,32 @@ def _choices(doc):
 			for r in frappe.get_all("Item", filters={"item_group": group, "disabled": 0},
 				fields=["name", "item_name"], order_by="item_name")
 		]
+	return out
+
+
+def group_item_choices(group):
+	"""Every enabled Item of an item group (and under it), with its description as the text
+	choosing it fills in."""
+	if not frappe.db.exists("Item Group", group):
+		return []
+	lft, rgt = frappe.db.get_value("Item Group", group, ["lft", "rgt"])
+	groups = frappe.get_all("Item Group", filters={"lft": [">=", lft], "rgt": ["<=", rgt]}, pluck="name")
+	return [{"value": item.name, "label": item.item_name if item.item_name == item.name else
+		"{0} ({1})".format(item.item_name, item.name),
+		"text": re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", item.description or "")).strip() or item.item_name}
+		for item in frappe.get_all("Item", filters={"item_group": ["in", groups], "disabled": 0},
+			fields=["name", "item_name", "description"], order_by="item_name")]
+
+
+def panel_item_choices():
+	"""The Modules group's Items, each with the Wp and DCR type its name says (the Items' own
+	DCR flag is not kept up), filled in with the specification when one is chosen."""
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import panel_item_values
+
+	out = []
+	for choice in group_item_choices("Modules"):
+		values = panel_item_values(choice["label"])
+		out.append({**choice, "wp": "{0:g}".format(values["wp"]) if values["wp"] else "", "type": values["type"]})
 	return out
 
 
@@ -654,9 +714,9 @@ def _section(doc, section, child, rows):
 		if hint is True:
 			hint = df.description or ""
 		fields.append({
-			"fieldname": df.fieldname, "label": _(df.label), "reqd": bool(df.reqd),
+			"fieldname": df.fieldname, "label": _(df.label), "reqd": bool(df.reqd or spec.get("required")),
 			"input": "select" if spec.get("choices") else INPUT.get(df.fieldtype, "text"),
-			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"),
+			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"), "fills": spec.get("fills"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
 	rows = [{
@@ -792,7 +852,8 @@ def builder_state(doc, editable=None):
 			{"label": _("Connection"), "value": doc.connection_type or ""},
 			{"label": _("System type"), "value": doc.system_type or ""},
 			{"label": _("Subsidy"), "value": doc.subsidy_option or ""},
-			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else "—"},
+			{"label": _("Package"), "value": link_title("Solar Package", doc.solar_package) if doc.solar_package else
+				_("Custom") if is_custom(doc) else "—"},
 			{"label": _("System price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
@@ -871,7 +932,8 @@ def option_tabs(root):
 		tabs.append({
 			"key": row.name, "number": n, "recommended": bool(row.is_recommended),
 			"estimate": estimate or "", "docstatus": docstatus,
-			"package": link_title("Solar Package", source.solar_package) if source.solar_package else _("No package"),
+			"package": link_title("Solar Package", source.solar_package) if source.solar_package else
+				_("Custom") if source.get("is_custom") else _("No package"),
 			"capacity": "{0:g} kW".format(flt(source.override_capacity_kw)) if flt(source.override_capacity_kw) else "",
 			"parts": [p for p in (make_name(source.panel_make), make_name(source.inverter_make), make_name(source.battery_make)) if p],
 			"package_cost": flt(source.package_cost),
@@ -894,7 +956,8 @@ def _new_option_estimate(root, row):
 	values = {field: row.get(field) for field in SIZING_FIELDS}
 	values.update({c["fieldname"]: row.get(c["fieldname"]) for c in COMPONENT_FIELDS})
 	doc.set("sizing_options", [])
-	doc.append("sizing_options", {**values, "is_recommended": 1, "option_notes": row.option_notes})
+	doc.append("sizing_options", {**values, "is_recommended": 1, "is_custom": row.get("is_custom"),
+		"option_notes": row.option_notes})
 	for field in SIZING_FIELDS:
 		doc.set(field, row.get(field))
 	for table in KIT_TABLES:
@@ -937,6 +1000,15 @@ def _apply_change(doc, change):
 	if not target:
 		target = doc.append(section, {})
 	values = change.get("values") or {}
+	# A row added or changed in the popup (which posts every field) needs what the popup
+	# requires - its Item, and every field the row itself makes mandatory; a tick of Option
+	# alone posts only that, and is not held up.
+	child = frappe.get_meta(doc.meta.get_field(section).options)
+	missing = [f["fieldname"] for f in spec["fields"] if f["fieldname"] in values and not values.get(f["fieldname"])
+		and (f.get("required") or (child.get_field(f["fieldname"]) and child.get_field(f["fieldname"]).reqd))]
+	if missing:
+		frappe.throw(_("Fill in {0} to save this row.").format(", ".join(_(child.get_field(f).label) for f in missing)),
+			title=_("Required"))
 	for fieldname in {f["fieldname"] for f in spec["fields"]}:
 		if fieldname in values:
 			target.set(fieldname, _typed(target, fieldname, values.get(fieldname)))

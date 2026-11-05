@@ -90,7 +90,10 @@ class TestEstimateAddOns(FrappeTestCase):
 		section = portal_estimate._sections(est)[-1]
 		self.assertEqual(section["key"], "optional_add_ons")
 		fields = {f["fieldname"] for f in section["fields"]}
-		panel = {f["fieldname"] for f in portal_estimate.SECTION_BY_KEY["panels"]["fields"]}
+		# The panel's sizing fields; its module Item, specification and alternate makes are the
+		# system panel's own - an add-on names itself in its Item text.
+		panel = {f["fieldname"] for f in portal_estimate.SECTION_BY_KEY["panels"]["fields"]} - {
+			"panel_item", "specification", "alternate_makes"}
 		self.assertLessEqual(panel, fields)
 		self.assertTrue({"add_on_type", "item"} <= fields)
 

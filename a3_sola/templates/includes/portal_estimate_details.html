@@ -86,7 +86,7 @@
 		{%- if f.input == "select" %}
 		<select data-field="{{ f.fieldname }}" aria-label="{{ f.label | e }}"{% if f.default_value %} data-default="{{ f.default_value | e }}"{% endif %}{% if locked %} disabled{% endif %}>
 			{%- for o in f.options %}
-			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.capacity %} data-capacity="{{ o.capacity | e }}"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
+			<option value="{{ o.value | e }}"{% if o.phases %} data-phases="{{ o.phases | e }}"{% endif %}{% if o.dcr is defined %} data-dcr="{{ o.dcr }}"{% endif %}{% if o.system_type %} data-system-type="{{ o.system_type | e }}"{% endif %}{% if o.capacity %} data-capacity="{{ o.capacity | e }}"{% endif %}{% if o.custom %} data-custom="1"{% endif %}{% if o.value == value %} selected{% endif %}>{{ o.label | e }}</option>
 			{%- endfor %}
 		</select>
 		{%- elif f.input == "number" %}
@@ -154,7 +154,7 @@
 		<template id="a3s-de-option-template">{{ option_row(blank) }}</template>
 		<div class="a3s-items__foot">
 			<button type="button" class="a3s-btn a3s-btn--ghost" data-add-option>+ Add option</button>
-			<p class="a3s-field__hint">Choosing a package adds an option for each of its other inverters. Each ticked option is a tab on the next step, priced on its own; untick any you do not want. The first ticked option is the recommended one and is this estimate; the others are saved as their own estimates for the same lead, from their tabs.</p>
+			<p class="a3s-field__hint">Choosing a package adds an option for each of its other inverters. Each ticked option is a tab on the next step, priced on its own; untick any you do not want. The first ticked option is the recommended one and is this estimate; the others are saved as their own estimates for the same lead, from their tabs. Custom is not a package: choose any panel and inverter for the option, then add the rest of its system on the next step.</p>
 		</div>
 		{%- if package.facts %}
 		<div class="a3s-de-fields a3s-de-sizing__facts">
