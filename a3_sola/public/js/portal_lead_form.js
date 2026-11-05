@@ -77,7 +77,8 @@
 			call_status: value("call_status"),
 			last_message_date: value("last_message_date"),
 			loan_required: value("loan_required"),
-			kseb_bill_file: value("kseb_bill_file")
+			kseb_bill_file: value("kseb_bill_file"),
+			a3s_read_from: value("a3s_read_from")
 		};
 
 		fetch("/api/method/a3_sola.api.leads.create_lead", {

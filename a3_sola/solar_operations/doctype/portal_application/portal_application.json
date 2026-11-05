@@ -43,7 +43,8 @@
   "approval_attachment",
   "cb_11",
   "rejection_reason",
-  "remarks"
+  "remarks",
+  "a3s_read_from"
  ],
  "fields": [
   {
@@ -281,11 +282,19 @@
    "fieldname": "remarks",
    "fieldtype": "Text",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "a3s_read_from",
+   "fieldtype": "Small Text",
+   "label": "Read From Documents",
+   "hidden": 1,
+   "no_copy": 1,
+   "description": "Which document each field was read from (OCR) on the portal, as {fieldname: document}: the proof of a name or a number. Kept by the portal (api/read_from)."
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-11-05 16:17:51.505692",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Portal Application",

@@ -403,7 +403,21 @@ def read(doctype, name=None):
 	if len(content) > get_max_file_size():
 		frappe.throw(_("{0} is larger than {1} MB.").format(upload.filename, get_max_file_size() // (1024 * 1024)),
 			frappe.ValidationError)
-	text, source = extract_text(content, upload.filename)
+	out = read_content(content, upload.filename, doctype)
+	attached, pending = False, None
+	if name:
+		attach(doctype, name, upload.filename, content, read_values=out["fields"])
+		attached = True
+	else:
+		# No record yet: the bill waits, private and the reader's own, for the one created.
+		pending = keep(upload.filename, content, read_values=out["fields"])
+	return dict(out, attached=attached, pending_file=pending)
+
+
+def read_content(content, filename, doctype):
+	"""The record's fields, warnings, how the bill was read, and a section it names that the
+	list lacks - from the bill's bytes. Also how an attached bill is read again."""
+	text, source = extract_text(content, filename)
 	parsed = parse(text)
 	if not parsed.get("consumer_number") and not parsed.get("name"):
 		frappe.throw(_("This does not read as a KSEB bill. Upload the bill's first page, clear and straight."),
@@ -415,15 +429,7 @@ def read(doctype, name=None):
 		district = district_from_address(parsed.get("address"))
 		missing_section = {"code": parsed["section_code"], "name": parsed.get("section_name") or "",
 			"district": district.district_name if district else ""}
-	attached, pending = False, None
-	if name:
-		attach(doctype, name, upload.filename, content)
-		attached = True
-	else:
-		# No record yet: the bill waits, private and the reader's own, for the one created.
-		pending = keep(upload.filename, content)
-	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached, "pending_file": pending,
-		"missing_section": missing_section}
+	return {"fields": fields, "warnings": warnings, "source": source, "missing_section": missing_section}
 
 
 def claim(file_name, doctype, name):
@@ -458,17 +464,26 @@ def kyc_rows(doctype, name, file_url, document_type):
 	portal_attachments._refresh_kyc(doctype, name)
 
 
-def attach(doctype, name, filename, content, document_type=KSEB_BILL):
+def attach(doctype, name, filename, content, document_type=KSEB_BILL, read_values=None):
 	"""The document on the record as what it is (its KSEB Bill unless said) - and, on a
-	customer, its KYC row."""
+	customer, its KYC row. What it was read as is kept on it (api/document_evidence)."""
 	file = frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
 		"attached_to_doctype": doctype, "attached_to_name": name, "a3s_document_type": document_type}).insert(ignore_permissions=True)
+	_store(file.name, read_values)
 	kyc_rows(doctype, name, file.file_url, document_type)
 	return file.file_url
 
 
-def keep(filename, content, document_type=KSEB_BILL):
+def keep(filename, content, document_type=KSEB_BILL, read_values=None):
 	"""A document read on a create form, kept private and the reader's own until the record it
 	is for is created and claims it."""
-	return frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
-		"a3s_document_type": document_type}).insert(ignore_permissions=True).name
+	file = frappe.get_doc({"doctype": "File", "file_name": filename, "content": content, "is_private": 1,
+		"a3s_document_type": document_type}).insert(ignore_permissions=True)
+	_store(file.name, read_values)
+	return file.name
+
+
+def _store(file_name, read_values):
+	from a3_sola.api import document_evidence
+
+	document_evidence.store(file_name, read_values)

@@ -16,7 +16,7 @@ from frappe import _
 
 from frappe.utils import cint, flt
 
-from a3_sola.api import portal_chain
+from a3_sola.api import portal_chain, read_from
 from a3_sola.api.portal_fields import NUMERIC_TYPES, is_portal_file
 from a3_sola.www.a3solaportal.collections import (
 	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
@@ -79,6 +79,8 @@ def create_record(slug=None, source_dt=None, source=None, source_task=None, **va
 			doc.company = company
 
 	_set_item_rows(doc, slug, values)
+	# Which document each field was read from (api/read_from).
+	read_from.set_posted(doc, values)
 	doc.insert()
 	# A KSEB bill or an Aadhaar card read on the form (api/kseb_bill.py, api/aadhaar_card.py)
 	# becomes this record's.
@@ -389,6 +391,7 @@ def update_record(slug=None, name=None, **values):
 	doc = load_record(slug, name, "write")
 	_set_posted(doc, edit_allowlist(doc), values)
 	_set_item_rows(doc, slug, values)
+	read_from.set_posted(doc, values)
 	doc.save()
 	return {"name": doc.name, "route": record_route(slug, doc.name)}
 

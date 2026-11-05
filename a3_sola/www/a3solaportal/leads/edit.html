@@ -10,6 +10,8 @@
 </div>
 
 <form class="a3s-edit a3s-edit--single" id="a3s-lead-edit-form" data-endpoint="a3_sola.api.leads.update_lead" data-name="{{ lead.name | e }}" data-view="{{ view_route }}" novalidate>
+	{#- Which document each field was read from - "From KSEB bill" under it (portal_read_from.js). -#}
+	<input type="hidden" name="a3s_read_from" value="{{ (lead.a3s_read_from or '') | e }}">
 
 	{#- ================================================= left: the sections ===== #}
 	<div class="a3s-edit__main">
@@ -34,6 +36,9 @@
 				</ol>
 			</div>
 		</div>
+
+		{#- The lead's documents first, as on every form. -#}
+		{%- with att_doctype="Lead", att_name=lead.name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		{#- ---- about --------------------------------------------------------- #}
 		<section class="a3s-card a3s-edit__card">
@@ -104,7 +109,6 @@
 		</section>
 		{%- endfor %}
 
-		{%- with att_doctype="Lead", att_name=lead.name %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		<div class="a3s-form__actions a3s-edit__actions">
 			<button type="submit" class="a3s-btn a3s-btn--primary" data-submit>Save changes</button>

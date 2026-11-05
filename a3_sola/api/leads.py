@@ -14,6 +14,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, date_diff, flt, fmt_money, format_date, format_datetime, quote, today
 
+from a3_sola.api import read_from
 from a3_sola.api.portal_fields import INPUT_TYPES, NUMERIC_TYPES, TRUE, detail_row, edit_spec
 
 # The Lead workflow states, mirrored from the doctype. Kept here so the endpoints can
@@ -321,6 +322,7 @@ def create_lead(
 	outreach_stage=None,
 	last_message_date=None,
 	kseb_bill_file=None,
+	a3s_read_from=None,
 ):
 	"""Create a Lead from the portal form and return its name and portal route.
 
@@ -366,6 +368,8 @@ def create_lead(
 	except Exception:
 		doc.last_message_date = defaults["last_message_date"] or None
 
+	# Which document the name or the details were read from (api/read_from).
+	read_from.set_posted(doc, {"a3s_read_from": a3s_read_from} if a3s_read_from is not None else {})
 	# Permission-checked insert: a user without create rights on Lead is refused here,
 	# which is why this endpoint does no role-checking of its own.
 	doc.insert()
@@ -417,6 +421,7 @@ def update_lead(name=None, **values):
 
 	if not (doc.lead_name or doc.company_name):
 		frappe.throw(_("Enter a lead name or a company name."), frappe.MandatoryError)
+	read_from.set_posted(doc, values)
 
 	doc.save()
 

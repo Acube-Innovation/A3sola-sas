@@ -20,7 +20,7 @@ from frappe import _
 from frappe.utils import format_datetime
 from frappe.utils.file_manager import get_max_file_size
 
-from a3_sola.api import task_files
+from a3_sola.api import document_evidence, task_files
 
 
 def _record(doctype, name, ptype):
@@ -154,16 +154,120 @@ def _files(doctype, name):
 @frappe.whitelist()
 def list_files(doctype, name):
 	_record(doctype, name, "read")
-	return {"files": _files(doctype, name), "can_upload": bool(frappe.has_permission(doctype, "write", name)),
-		"document_types": document_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024)}
+	can_write = bool(frappe.has_permission(doctype, "write", name))
+	return {"files": _files(doctype, name), "can_upload": can_write,
+		"document_types": document_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024),
+		# The types a row's Read button reads again into the form - only for someone who can save it.
+		"readable": _readable(doctype) if can_write else []}
+
+
+def _readable(doctype):
+	return sorted(t for (dt, t) in READERS if dt == doctype)
+
+
+# ------------------------------------------------------------------ reading a file again
+def _read_kseb(doctype, name, content, filename, password):
+	from a3_sola.api import kseb_bill
+
+	return kseb_bill.read_content(content, filename, doctype)
+
+
+def _read_aadhaar_front(doctype, name, content, filename, password):
+	from a3_sola.api import aadhaar_card
+
+	return aadhaar_card.read_content(content, filename, password, "front")
+
+
+def _read_aadhaar_back(doctype, name, content, filename, password):
+	from a3_sola.api import aadhaar_card
+
+	return aadhaar_card.read_content(content, filename, password, "back")
+
+
+def _read_bank(doctype, name, content, filename, password):
+	from a3_sola.api import bank_document
+
+	fields, warnings = bank_document.read_content(content, filename)
+	return {"fields": fields, "warnings": warnings}
+
+
+def _read_letter(doctype, name, content, filename, password):
+	from a3_sola.api import approval_letter
+
+	found, source = approval_letter.read_content(content, filename)
+	return {"fields": approval_letter.task_values(found), "warnings": approval_letter.warnings(found, task=name),
+		"source": source}
+
+
+def _read_ack(doctype, name, content, filename, password):
+	from a3_sola.api import portal_ack
+	from a3_sola.api.kseb_bill import extract_text
+
+	text, source = extract_text(content, filename)
+	if not portal_ack.is_acknowledgement(text):
+		frappe.throw(_("This does not look like the National Portal's acknowledgement."), title=_("Not Read"))
+	found = portal_ack.parse(text)
+	installation = frappe.db.get_value(doctype, name, "solar_installation") if name else None
+	return {"fields": portal_ack.fields_of(found), "warnings": portal_ack.warnings(found, installation), "source": source}
+
+
+#: (doctype, document type): how a file of that type on that record is read into its form.
+READERS = {
+	("Lead", "KSEB Bill"): _read_kseb, (CONSUMER, "KSEB Bill"): _read_kseb,
+	(CONSUMER, "Aadhaar Front"): _read_aadhaar_front, (CONSUMER, "Aadhaar Back"): _read_aadhaar_back,
+	(CONSUMER, "Bank Passbook"): _read_bank, (CONSUMER, "Cancelled Cheque"): _read_bank,
+	("Installation Task", "Digital Approval Letter"): _read_letter,
+	("Portal Application", "PM Surya Ghar Acknowledgement"): _read_ack,
+}
+
+
+@frappe.whitelist(methods=["POST"])
+def read_file(doctype, name, file, password=None):
+	"""Read one of the record's attached files again - its KSEB bill, Aadhaar card, passbook or
+	cheque - and return the form's fields from it. Nothing is saved: the page fills its form,
+	and the person checks it and saves."""
+	_record(doctype, name, "write")
+	_attached_url(doctype, name, file)
+	document_type = next((f["document_type"] for f in _files(doctype, name) if f["name"] == file), None)
+	reader = READERS.get((doctype, document_type))
+	if not reader:
+		frappe.throw(_("A {0} cannot be read into this form.").format(document_type or _("file of no type")),
+			frappe.ValidationError)
+	doc = frappe.get_doc("File", file)
+	out = reader(doctype, name, doc.get_content(), doc.file_name or file, password)
+	# What it was read as, kept on it: the eligibility check's evidence (api/document_evidence).
+	document_evidence.store(file, out.get("fields"))
+	return dict(out, document_type=document_type)
+
+
+@frappe.whitelist(methods=["POST"])
+def read_upload(doctype, document_type, password=None, name=None):
+	"""Read the document posted as `file` into a form whose record is not created yet: its
+	fields, nothing kept - the card holds the file and uploads it once the record is saved."""
+	if not frappe.has_permission(doctype, "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	reader = READERS.get((doctype, document_type))
+	if not reader:
+		frappe.throw(_("A {0} cannot be read into this form.").format(document_type), frappe.ValidationError)
+	upload = (frappe.request.files.getlist("file") or [None])[0] if frappe.request and frappe.request.files else None
+	if not upload:
+		frappe.throw(_("No file was sent."), frappe.ValidationError)
+	content = upload.stream.read()
+	if len(content) > get_max_file_size():
+		frappe.throw(_("{0} is larger than {1} MB.").format(upload.filename, get_max_file_size() // (1024 * 1024)),
+			frappe.ValidationError)
+	return dict(reader(doctype, None, content, upload.filename, password), document_type=document_type)
 
 
 @frappe.whitelist()
 def held_card(doctype, installation=None, task=None):
 	"""The card's choices for a record not yet created: the types, the size limit, and whether
 	the person may create one - its files are held on the card until it is."""
-	return {"files": [], "can_upload": bool(frappe.has_permission(doctype, "create")),
-		"document_types": document_types(doctype, None, installation, task), "max_file_mb": get_max_file_size() // (1024 * 1024)}
+	can_create = bool(frappe.has_permission(doctype, "create"))
+	return {"files": [], "can_upload": can_create,
+		"document_types": document_types(doctype, None, installation, task), "max_file_mb": get_max_file_size() // (1024 * 1024),
+		# Read as they are picked (read_upload), the form filled before it is saved.
+		"readable": _readable(doctype) if can_create else []}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -176,6 +280,7 @@ def upload(doctype, name, document_type=None):
 	if not uploads:
 		frappe.throw(_("No file was sent."), frappe.ValidationError)
 	limit = get_max_file_size()
+	read = None
 	for upload in uploads:
 		content = upload.stream.read()
 		if len(content) > limit:
@@ -207,8 +312,30 @@ def upload(doctype, name, document_type=None):
 			from a3_sola.api import portal_ack
 
 			portal_ack.fill_document(name, content, upload.filename)
+		if upload is uploads[-1]:
+			read = _read_on_upload(doctype, name, document_type, file, content, upload.filename)
 	_refresh_kyc(doctype, name)
-	return {"files": _files(doctype, name)}
+	return {"files": _files(doctype, name), "read": read}
+
+
+def _read_on_upload(doctype, name, document_type, file, content, filename):
+	"""A lead's or customer's document - a KSEB bill, an Aadhaar card, a passbook or cheque -
+	read as it is uploaded: the form's fields from it, and what it said kept on it. A document
+	that cannot be read is still uploaded; why is said."""
+	reader = READERS.get((doctype, document_type))
+	if not reader or doctype not in document_evidence.DOCTYPES:
+		return None
+	try:
+		out = reader(doctype, name, content, filename, None)
+	except Exception as e:
+		# Its title says why - a locked PDF asks for its password (Password Needed).
+		last = (frappe.local.message_log or [None])[-1]
+		title = (last.get("title") if isinstance(last, dict) else "") or ""
+		frappe.clear_last_message()
+		return {"error": frappe.utils.strip_html(str(e)) or _("{0} could not be read.").format(filename), "title": title,
+			"file": file.name}
+	document_evidence.store(file.name, out.get("fields"))
+	return dict(out, document_type=document_type, file=file.name)
 
 
 @frappe.whitelist(methods=["POST"])

@@ -2,7 +2,10 @@
     section headings inside each step, every control in one form. A task's new document is
     created on the same form (task_form, from collections.new_context): nothing saved yet,
     so no About card, its attachments held until it is, and the fields that make it the task's ride along. -#}
-<div class="a3s-page__head">
+{#- A customer's title, document readers and step bar stay at the top as one sticky block
+    (portal_record_edit.js). -#}
+{%- set sticky_head = collection.slug == "consumers" and not task_form %}
+<div class="a3s-page__head"{% if sticky_head %} data-sticky-head{% endif %}>
 	<div>
 		{%- if task_form %}
 		<p class="a3s-detail__eyebrow">{{ source_title | e }}</p>
@@ -28,6 +31,8 @@
 
 <form class="a3s-edit a3s-edit--single" id="a3s-record-edit-form" data-endpoint="{{ endpoint }}" data-slug="{{ collection.slug }}"
       data-name="{{ '' if task_form else record.name | e }}" data-view="{{ view_route }}" novalidate>
+	{#- Which document each field was read from - "From Aadhaar card" under it (portal_read_from.js). -#}
+	<input type="hidden" name="a3s_read_from" value="{{ ('' if task_form else (record.a3s_read_from or '')) | e }}">
 	{%- if task_form %}
 	{#- Re-derived from the job on the server; posted only so the form's own rules can read them. -#}
 	<input type="hidden" name="source_dt" value="{{ source_dt | e }}">
@@ -56,6 +61,14 @@
 				</ol>
 			</div>
 		</div>
+
+		{#- The record's documents come first, on every form: a KSEB bill, an Aadhaar card, a
+		    passbook or cheque, an approval letter fill the form below when read. A task not yet
+		    created holds its files on the card and uploads them once it is. -#}
+		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+
+		{#- An eligibility check: the customer's documents and what each says. -#}
+		{%- include "templates/includes/portal_document_evidence.html" %}
 
 		{%- if not task_form %}
 		<section class="a3s-card a3s-edit__card">
@@ -183,7 +196,7 @@
 		{%- if item_table %}{% include "templates/includes/portal_item_table.html" %}{% endif %}
 
 		{#- A task not yet created holds its files on the card and uploads them once it is. -#}
-		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+
 
 		<div class="a3s-form__actions a3s-edit__actions">
 			{%- if complete_task %}

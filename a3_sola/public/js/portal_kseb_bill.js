@@ -1,8 +1,9 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * "Read KSEB bill" on the lead and customer forms (api/kseb_bill.py), and "Read Aadhaar" on the
- * customer's (api/aadhaar_card.py: the permanent address, name, date of birth, gender - never the
+ * "Read KSEB bill" on the lead and customer forms (api/kseb_bill.py), and on the customer's
+ * "Read Aadhaar front" and "Read Aadhaar back" (api/aadhaar_card.py: the front's
+ * name, date of birth and gender, the back's permanent address - never the
  * Aadhaar number). The document - a PDF or a photo; an e-Aadhaar asks for its password - is read
  * on the server and its details come back as the record's fields. A blank
  * field - or, on a new record, one still at the page's default - is filled and marked; a
@@ -38,17 +39,24 @@
 		"permanent_address_same", "permanent_state", "permanent_district"];
 	/* What each button reads, and the hidden field that keeps it for a record not yet created. */
 	var KINDS = {
-		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill" },
-		aadhaar: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card" }
+		bill: { method: "a3_sola.api.kseb_bill.read", keep: "kseb_bill_file", what: "bill", source: "KSEB bill" },
+		/* The card's two sides: the front gives the name, date of birth and gender, the back the address. */
+		aadhaarFront: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card front", source: "Aadhaar card", side: "front" },
+		aadhaarBack: { method: "a3_sola.api.aadhaar_card.read", keep: "aadhaar_file", what: "Aadhaar card back", source: "Aadhaar card", side: "back" }
 	};
+	/* The customer's name is the one on the Aadhaar card: read, it replaces any other - the
+	   KSEB bill's, or one typed in - and a different one is shown in a pop-up. Until then
+	   the bill's or the typed name stands. */
+	var AADHAAR = "Aadhaar card", NAME = "consumer_name";
 
 	var bar = document.createElement("div");
 	bar.className = "a3s-kseb";
 	bar.innerHTML =
 		'<div class="a3s-kseb__row">' +
 		'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="bill">Read KSEB bill</button>' +
-		(doctype === "Solar Consumer" ? '<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="aadhaar">Read Aadhaar</button>' : "") +
-		'<span class="a3s-field__hint">Upload the bill' + (doctype === "Solar Consumer" ? " or the Aadhaar card" : "") +
+		(doctype === "Solar Consumer" ? '<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="aadhaarFront">Read Aadhaar front</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-kseb-pick="aadhaarBack">Read Aadhaar back</button>' : "") +
+		'<span class="a3s-field__hint">Upload the bill' + (doctype === "Solar Consumer" ? " or a side of the Aadhaar card (front: name, birth date, gender; back: address)" : "") +
 		' (PDF or a clear photo) and its details fill in below' + (recordName ? "; it is also kept with the KYC documents." : ".") + "</span>" +
 		'<input type="file" accept="application/pdf,image/*" hidden data-kseb-file>' +
 		"</div>" +
@@ -59,7 +67,11 @@
 		"</div>" +
 		'<p class="a3s-kseb__status" data-kseb-status hidden></p>' +
 		'<ul class="a3s-kseb__warnings" data-kseb-warnings hidden></ul>';
-	form.insertBefore(bar, form.firstElementChild);
+	/* Into the edit page's sticky block, above the steps, when it is there (portal_record_edit.js). */
+	var stuck = document.querySelector(".a3s-edit__sticky");
+	var steps = stuck && stuck.querySelector(".a3s-edit__nav");
+	if (steps) stuck.insertBefore(bar, steps);
+	else form.insertBefore(bar, form.firstElementChild);
 	var style = document.createElement("style");
 	style.textContent =
 		".a3s-kseb{border:1px dashed var(--color-border,#d9dee5);border-radius:10px;padding:.75rem 1rem;margin:0 0 1rem;background:var(--color-surface-muted,#fafbfc)}" +
@@ -129,17 +141,51 @@
 		el.addEventListener("change", function () { el.classList.remove("a3s-kseb-filled"); }, { once: true });
 	}
 
-	function set(el, value) {
+	function set(el, value, source) {
 		if (el.tagName === "SELECT") {
 			if (!hasOption(el, value)) return false;
 		}
 		el.value = value;
 		el.dispatchEvent(new Event("change", { bubbles: true }));
 		mark(el);
+		/* "From Aadhaar card" under it (portal_read_from.js). */
+		if (source && window.a3sReadFrom) window.a3sReadFrom.mark(el, source);
 		return true;
 	}
 
-	function offer(el, value) {
+	function readFrom(name) { return window.a3sReadFrom ? window.a3sReadFrom.of(name) : ""; }
+
+	/* Two spellings of one name: the same letters, whatever the case, spaces and dots. */
+	function sameName(a, b) {
+		var letters = function (v) { return String(v || "").toLowerCase().replace(/[^a-z]/g, ""); };
+		return letters(a) === letters(b);
+	}
+
+	function esc(v) {
+		return String(v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+	}
+
+	/* The name the customer had, replaced by the Aadhaar card's: said in a pop-up. */
+	function nameMismatch(before, after) {
+		var modal = document.createElement("div");
+		modal.className = "a3s-modal";
+		modal.setAttribute("role", "dialog");
+		modal.setAttribute("aria-modal", "true");
+		modal.setAttribute("aria-labelledby", "a3s-name-mismatch-title");
+		modal.innerHTML = '<div class="a3s-modal__panel a3s-modal__panel--mismatch">' +
+			'<p class="a3s-modal__title" id="a3s-name-mismatch-title">&#9888; Name mismatch</p>' +
+			"<p>The Aadhaar card is in the name of <b>" + esc(after) + "</b>, but this customer was <b>" + esc(before) + "</b>.</p>" +
+			"<p>The customer&rsquo;s name is now <b>" + esc(after) + "</b>, as on the Aadhaar card. Save changes to keep it.</p>" +
+			'<div class="a3s-form__actions" style="margin-top:1rem"><button type="button" class="a3s-btn a3s-btn--primary" data-close>OK</button></div></div>';
+		document.body.appendChild(modal);
+		function close() { modal.remove(); document.removeEventListener("keydown", onKey); }
+		function onKey(e) { if (e.key === "Escape") close(); }
+		modal.addEventListener("click", function (e) { if (e.target === modal || e.target.closest("[data-close]")) close(); });
+		document.addEventListener("keydown", onKey);
+		modal.querySelector("[data-close]").focus();
+	}
+
+	function offer(el, value, source) {
 		var holder = el.closest(".a3s-field, .a3s-form__field, label, div") || el.parentNode;
 		var old = holder.querySelector(".a3s-kseb-offer");
 		if (old) old.remove();
@@ -148,17 +194,18 @@
 			: value;
 		var note = document.createElement("span");
 		note.className = "a3s-kseb-offer";
-		note.textContent = "Bill says: " + label;
+		note.textContent = (source || "Bill") + " says: " + label;
 		var use = document.createElement("button");
 		use.type = "button";
 		use.textContent = "Use";
-		use.addEventListener("click", function () { set(el, value); note.remove(); });
+		use.addEventListener("click", function () { set(el, value, source); note.remove(); });
 		note.appendChild(use);
 		holder.appendChild(note);
 	}
 
-	function fill(values) {
-		var offered = 0, missed = [];
+	/* done, when given, is told what happened ({filled, offered, missed}) instead of the bar. */
+	function fill(values, source, done) {
+		var offered = 0, missed = [], filled = [], mismatch = null;
 		var names = Object.keys(values).sort(function (a, b) {
 			var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
 			return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
@@ -167,20 +214,38 @@
 		(function next() {
 			var name = queue.shift();
 			if (!name) {
+				if (mismatch) nameMismatch(mismatch.before, mismatch.after);
+				if (done) return done({ filled: filled, offered: offered, missed: missed });
 				/* The fields it filled are marked, so it says nothing more - only where a field
 				   already had a value and the bill's is shown beside it. */
-				say(offered ? offered + " field" + (offered === 1 ? "" : "s") + " already set - the bill's value is shown beside them." : "");
+				say(offered ? offered + " field" + (offered === 1 ? "" : "s") + " already set - the " + (source === AADHAAR ? "card" : "bill") + "'s value is shown beside them." : "");
 				if (missed.length) warn(["Not offered on this form: " + missed.join(", ") + "."], true);
 				return;
 			}
 			var el = field(name), value = values[name] === null || values[name] === undefined ? "" : String(values[name]);
 			if (!el) return next();
 			var current = el.value;
-			if (current === value) return next();
+			if (doctype === "Solar Consumer" && name === NAME) {
+				if (source === AADHAAR) {
+					/* The Aadhaar card's name is the customer's, whatever was there. */
+					if (current && !sameName(current, value)) mismatch = { before: current, after: value };
+					if (current !== value) { set(el, value, source); filled.push(el); }
+					else window.a3sReadFrom && window.a3sReadFrom.mark(el, source);
+					return next();
+				}
+				/* Read from the Aadhaar card already: no other document offers a name. */
+				if (readFrom(name) === AADHAAR) return next();
+			}
+			if (current === value) {
+				/* The same value: this document is its source too, if it had none. */
+				if (source && !readFrom(name) && window.a3sReadFrom) window.a3sReadFrom.mark(el, source);
+				return next();
+			}
 			var chosen = current && !(name in defaults && current === defaults[name]);
 			var go = function () {
-				if (chosen) { offer(el, value); offered++; }
-				else if (!set(el, value)) missed.push(name.replace(/_/g, " "));
+				if (chosen) { offer(el, value, source); offered++; }
+				else if (!set(el, value, source)) missed.push(name.replace(/_/g, " "));
+				else filled.push(el);
 				next();
 			};
 			/* A list still reloading for its parent (set just before) would drop a value set now. */
@@ -251,6 +316,7 @@
 		var kind = KINDS[current];
 		var body = new FormData();
 		body.append("doctype", doctype);
+		if (kind.side) body.append("side", kind.side);
 		if (recordName) body.append("name", recordName);
 		if (password) body.append("password", password);
 		body.append("file", chosen, chosen.name);
@@ -276,7 +342,7 @@
 			pwRow.hidden = true;
 			var out = res.body.message || {};
 			warn(out.warnings);
-			fill(out.fields || {});
+			fill(out.fields || {}, kind.source);
 			offerSection(out.missing_section);
 			if (out.attached) {
 				document.dispatchEvent(new CustomEvent("a3s:attachments-reload", { detail: { doctype: doctype, name: recordName } }));
@@ -298,6 +364,15 @@
 			busy(false);
 		});
 	}
+
+	/* The Attachments card reads a file already on the record again (portal_attachments.js):
+	   its fields go in as these do - blanks filled and marked, a field holding something else
+	   left alone with the document's value offered beside it. */
+	window.a3sReadFill = function (values, source, extras) {
+		/* Its warnings are the card's to show; a section the bill names that the list lacks is offered here. */
+		if (extras && extras.missing_section) { warn([]); offerSection(extras.missing_section); }
+		return new Promise(function (resolve) { fill(values || {}, source, resolve); });
+	};
 
 	Array.prototype.forEach.call(picks, function (b) {
 		b.addEventListener("click", function () { current = b.dataset.ksebPick; pwRow.hidden = true; file.click(); });

@@ -1969,6 +1969,30 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	padding: 1.1rem 1.25rem 0.9rem;
 }
 .a3s-edit__nav .a3s-wizard { margin: 0; }
+/* A customer's title, document readers and step bar, held at the top as one block
+   (portal_record_edit.js). Its page-coloured background hides what scrolls under it. */
+.a3s-edit__sticky {
+	position: sticky; top: var(--a3s-topbar-h); z-index: 20; max-width: 64rem;
+	margin: -0.75rem 0 1.25rem; padding: 0.75rem 0 0.85rem; background: var(--color-bg);
+	transition: box-shadow var(--duration) var(--ease);
+}
+.a3s-edit__sticky.is-stuck { box-shadow: 0 14px 18px -16px rgba(42, 51, 66, 0.35); }
+.a3s-edit__sticky .a3s-page__head { margin-bottom: 0.9rem; }
+.a3s-edit__sticky .a3s-kseb { margin-bottom: 0.9rem !important; }
+.a3s-edit__sticky .a3s-edit__nav { position: static; }
+.a3s-edit__sticky .a3s-main__title { transition: font-size var(--duration) var(--ease); }
+/* Scrolled: the title alone, the readers' buttons, the steps - tighter. */
+.a3s-edit__sticky.is-compact .a3s-detail__eyebrow,
+.a3s-edit__sticky.is-compact .a3s-main__sub,
+.a3s-edit__sticky.is-compact .a3s-kseb__row > .a3s-field__hint { display: none; }
+.a3s-edit__sticky.is-compact .a3s-main__title { margin: 0; font-size: 1.25rem; }
+.a3s-edit__sticky.is-compact .a3s-page__head { margin-bottom: 0.6rem; }
+.a3s-edit__sticky.is-compact .a3s-kseb { padding: 0.5rem 0.75rem; margin-bottom: 0.6rem !important; }
+.a3s-edit__sticky.is-compact .a3s-edit__nav { padding-top: 0.7rem; padding-bottom: 0.55rem; }
+/* A short screen (a phone held sideways) keeps its room for the form: the block scrolls away. */
+@media (max-height: 640px) {
+	.a3s-edit__sticky { position: static; box-shadow: none; }
+}
 .a3s-wizard__panel { scroll-margin-top: calc(var(--a3s-topbar-h) + 8rem); }
 .a3s-edit__actions { padding-top: 0.25rem; }
 .a3s-edit__side-actions { display: grid; gap: 0.6rem; }
@@ -3394,7 +3418,7 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-attach__table { margin-top: 1.1rem; display: grid; gap: 0.5rem; }
 .a3s-attach__rows { display: grid; gap: 0.5rem; }
 .a3s-attach__row {
-	display: grid; grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) 4.75rem; gap: 0.9rem; align-items: center;
+	display: grid; grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) minmax(4.75rem, auto); gap: 0.9rem; align-items: center;
 	padding: 0.65rem 0.75rem; border: 1px solid var(--color-border); border-radius: 0.85rem; background: var(--color-surface);
 	transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
@@ -3425,6 +3449,18 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-attach__act { display: flex; justify-content: flex-end; gap: 0.25rem; }
 .a3s-attach__view:hover, .a3s-attach__view:focus-visible { color: var(--color-accent-hover); background: var(--color-accent-soft); border-color: var(--color-accent); }
 .a3s-attach__remove:hover, .a3s-attach__remove:focus-visible { color: #c0392b; background: rgba(255, 95, 87, 0.1); border-color: rgba(255, 95, 87, 0.25); }
+/* Read: the file read again (OCR), its details filled into the form */
+.a3s-attach__read {
+	display: inline-flex; align-items: center; gap: 0.35rem; height: 2.25rem; padding: 0 0.75rem; border-radius: 0.6rem;
+	border: 1px solid var(--color-accent-tint); background: var(--color-accent-soft); color: var(--color-accent-hover);
+	font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all var(--duration) var(--ease);
+}
+.a3s-attach__read .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-attach__read:hover, .a3s-attach__read:focus-visible { border-color: var(--color-accent); color: var(--color-accent-hover); background: var(--color-surface); }
+.a3s-attach__read[disabled] { opacity: 0.7; cursor: progress; }
+.a3s-attach__read.is-busy .a3s-ic { display: none; }
+.a3s-attach__read.is-busy::before { content: ""; width: 0.9rem; height: 0.9rem; border: 2px solid currentColor;
+	border-right-color: transparent; border-radius: 50%; animation: a3s-spin 0.7s linear infinite; }
 
 /* nothing yet */
 .a3s-attach__empty {
@@ -3449,7 +3485,7 @@ select.a3s-items__input { min-width: 9rem; }
 	.a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
 	.a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
 	.a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
-	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) 4.75rem; gap: 0.5rem; }
+	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) minmax(4.75rem, auto); gap: 0.5rem; }
 	.a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
 	.a3s-attach__row--head { display: none; }
 }
@@ -3458,7 +3494,7 @@ select.a3s-items__input { min-width: 9rem; }
 	.a3s-attach__drop-controls { grid-column: 1 / -1; flex-wrap: wrap; }
 	.a3s-attach__drop-controls .a3s-attach__select { flex: 1 1 100%; min-width: 0; }
 	.a3s-attach__pick { flex: 1 1 100%; justify-content: center; }
-	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) 4.75rem; gap: 0.5rem; }
+	.a3s-attach__row { grid-template-columns: minmax(0, 1fr) minmax(4.75rem, auto); gap: 0.5rem; }
 	.a3s-attach__type { grid-column: 1 / -1; grid-row: 2; }
 	.a3s-attach__row--head { display: none; }
 }
@@ -3914,3 +3950,64 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s .a3s-taskshare__wa:hover { background: #1da851; }
 .a3s-taskshare__link { width: 100%; font: inherit; font-size: 0.8125rem; padding: 0.45rem 0.65rem; border: 1px solid var(--color-border);
 	border-radius: 0.6rem; background: var(--color-bg); margin-bottom: 0.5rem; }
+
+/* "From Aadhaar card" under a field read from a document (portal_read_from.js). */
+.a3s-readfrom {
+	display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; justify-self: start;
+	font-size: 0.75rem; font-weight: 600; color: var(--color-accent-hover);
+}
+.a3s-readfrom::before {
+	content: ""; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--color-accent);
+}
+/* A name mismatch: the red pop-up (UI style guide 5.11). */
+.a3s-modal__panel--mismatch { border-top: 4px solid #d92d20; }
+.a3s-modal__panel--mismatch .a3s-modal__title { color: #b42318; }
+.a3s-modal__panel--mismatch p { margin: 0 0 0.6rem; }
+
+/* The customer's documents on an eligibility check (portal_document_evidence.js). */
+.a3s-evidence .a3s-edit__hint { margin: -0.25rem 0 0.85rem; }
+.a3s-evidence__alert { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.a3s-evidence__table { margin-top: 1rem; display: grid; gap: 0.4rem; }
+.a3s-evidence__row {
+	display: grid; grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr); gap: 0.9rem; align-items: start;
+	padding: 0.6rem 0.75rem; border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-surface);
+}
+.a3s-evidence__row--head {
+	padding: 0 0.75rem; border: 0; background: none;
+	font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted);
+}
+.a3s-evidence__row.is-conflict { border-color: #f79009; background: rgba(247, 144, 9, 0.07); }
+.a3s-evidence__label { font-weight: 700; font-size: 0.875rem; }
+.a3s-evidence__pill {
+	display: inline-block; margin-left: 0.35rem; padding: 0.1rem 0.5rem; border-radius: 999px;
+	background: #fef0c7; color: #93370d; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.03em; vertical-align: middle;
+}
+.a3s-evidence__values { display: grid; gap: 0.25rem; min-width: 0; }
+.a3s-evidence__value { overflow-wrap: anywhere; }
+.a3s-evidence__value > span:first-child { font-weight: 600; }
+.a3s-evidence__from { font-size: 0.8rem; color: var(--color-text-muted); }
+.a3s-evidence__from b { color: var(--color-accent-hover); font-weight: 700; }
+.a3s-evidence__docs-title { margin-top: 1.25rem; }
+.a3s-evidence__docs { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.a3s-evidence__docs li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+.a3s-evidence__docs a { font-weight: 600; color: var(--color-text); overflow-wrap: anywhere; }
+.a3s-evidence__modal { width: min(36rem, 100%); }
+.a3s-evidence__conflicts { margin: 0.5rem 0 0.75rem; padding-left: 1.1rem; display: grid; gap: 0.5rem; }
+.a3s-evidence__conflicts ul { margin: 0.25rem 0 0; padding-left: 1rem; }
+@media (max-width: 720px) {
+	.a3s-evidence__row { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+	.a3s-evidence__row--head { display: none; }
+}
+
+/* Saving with fields read from documents: checked first (portal_read_from.js). */
+.a3s-readcheck { width: min(34rem, 100%); }
+.a3s-readcheck p { margin: 0 0 0.6rem; }
+.a3s-readcheck__list { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.4rem; max-height: 50vh; overflow-y: auto; }
+.a3s-readcheck__list li {
+	display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr); column-gap: 0.75rem; row-gap: 0.1rem;
+	padding: 0.5rem 0.7rem; border: 1px solid var(--color-border); border-radius: 0.65rem; font-size: 0.875rem;
+}
+.a3s-readcheck__list li > span:first-child { color: var(--color-text-muted); font-weight: 600; }
+.a3s-readcheck__list b { overflow-wrap: anywhere; }
+.a3s-readcheck__from { grid-column: 2; font-size: 0.75rem; color: var(--color-accent-hover); font-weight: 600; }
+@media (max-width: 480px) { .a3s-readcheck__list li { grid-template-columns: minmax(0, 1fr); } .a3s-readcheck__from { grid-column: 1; } }
