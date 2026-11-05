@@ -270,6 +270,8 @@ CHOICE_SOURCES = {
 	# A customer's own contacts and addresses - not every one on the site - each address in full.
 	# The dealer a lead is handed to: the dealer logins, which are not the company's people.
 	("Lead", "a3s_dealer"): "a3_sola.api.leads.dealer_choices",
+	# The lead's owner: the company's people, and the dealers too (for staff).
+	("Lead", "lead_owner"): "a3_sola.api.leads.owner_choices",
 	("Solar Consumer", "contact_person"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.contact_choices",
 	("Solar Consumer", "installation_address"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
 	("Solar Consumer", "permanent_address_record"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",

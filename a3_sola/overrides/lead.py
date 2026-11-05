@@ -12,6 +12,22 @@ def validate(doc, method=None):
 	outreach.apply_outreach_state(doc)
 	check_district_in_state(doc)
 	pull_consumer_number(doc)
+	dealer_from_owner(doc)
+
+
+def dealer_from_owner(doc):
+	"""A dealer chosen as the lead's owner is its dealer too: the Dealer field is what lets a
+	dealer see a lead (api/partner_scope), so an owner who could not see his own lead would
+	make no sense. Staff set it; a dealer cannot hand his lead to another dealer this way."""
+	from a3_sola.api.partner_scope import is_partner, partner_kind
+
+	owner = doc.get("lead_owner")
+	if not owner or not doc.meta.get_field("a3s_dealer") or is_partner():
+		return
+	# A dealer login - holding the dealer role and nothing of staff's. Not a role check alone:
+	# Administrator holds every role, the dealer's among them.
+	if doc.get("a3s_dealer") != owner and partner_kind(owner) == "dealer":
+		doc.a3s_dealer = owner
 
 
 def check_district_in_state(doc):
