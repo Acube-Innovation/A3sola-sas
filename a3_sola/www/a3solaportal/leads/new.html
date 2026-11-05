@@ -47,7 +47,7 @@
 					{%- endfor %}
 				</select>
 			</div>
-			<div class="a3s-field" id="f-source">
+			<div class="a3s-field a3s-combo a3s-combo--field" id="f-source" data-combo>
 				<label for="source">Source <span class="a3s-field__opt">(optional)</span></label>
 				<select id="source" name="source">
 					<option value="">&mdash;</option>
@@ -117,4 +117,5 @@
 {% block portal_scripts %}
 <script src="/assets/a3_sola/js/portal_lead_form.js?v={{ a3s_asset_version('js/portal_lead_form.js') }}"></script>
 <script src="/assets/a3_sola/js/portal_kseb_bill.js?v={{ a3s_asset_version('js/portal_kseb_bill.js') }}"></script>
+{%- with combo_doctype="Lead" %}{% include "templates/includes/portal_combo_fields.html" %}{% endwith %}
 {% endblock %}

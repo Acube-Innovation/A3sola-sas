@@ -1,3 +1,4 @@
 {% extends "templates/portal_shell.html" %}
 {% block portal_content %}{% include "templates/includes/portal_lead_first_form.html" %}{% endblock %}
-{% block portal_scripts %}<script src="/assets/a3_sola/js/portal_lead_first_form.js?v={{ script_version }}"></script>{% endblock %}
+{% block portal_scripts %}<script src="/assets/a3_sola/js/portal_lead_first_form.js?v={{ script_version }}"></script>
+{%- with combo_doctype="Solar Installation" %}{% include "templates/includes/portal_combo_fields.html" %}{% endwith %}{% endblock %}

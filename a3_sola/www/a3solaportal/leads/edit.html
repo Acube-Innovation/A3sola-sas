@@ -52,7 +52,9 @@
 			<h3 class="a3s-edit__card-title">{{ section.label }}</h3>
 			<div class="a3s-form__grid">
 				{%- for f in section.fields %}
-				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}">
+				{#- A link's list, or a long one, can be typed in to find its entry (portal_combo_fields.html). -#}
+				{%- set combo = (f.type == "Link" and not f.many) or (f.type == "Select" and f.options | length > 8) %}
+				<div class="a3s-field{% if f.type in ("Small Text", "Text") %} a3s-field--wide{% endif %}{% if combo %} a3s-combo a3s-combo--field{% endif %}" id="f-{{ f.fieldname }}"{% if combo %} data-combo{% if f.fieldname == "discom_section" %} data-combo-add="section"{% endif %}{% endif %}>
 					{%- if f.type == "Check" %}
 					<label class="a3s-check">
 						<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
@@ -117,6 +119,7 @@
 {% block portal_scripts %}
 <script src="/assets/a3_sola/js/portal_record_edit.js?v={{ a3s_asset_version('js/portal_record_edit.js') }}"></script>
 <script src="/assets/a3_sola/js/portal_kseb_bill.js?v={{ a3s_asset_version('js/portal_kseb_bill.js') }}"></script>
+{%- with combo_doctype="Lead" %}{% include "templates/includes/portal_combo_fields.html" %}{% endwith %}
 {#- Keeps a dependent dropdown honest: choose a state and the district list becomes that
     state's districts, without a reload and without offering a district from elsewhere. -#}
 <script>
