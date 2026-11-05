@@ -222,9 +222,24 @@
 		li.appendChild(btn);
 		warningsList.appendChild(li);
 		warningsList.hidden = false;
+		/* The same, beside the field's own "+ Add section". */
+		var row = wrap.querySelector(".a3s-section-add__row");
+		var near = null;
+		if (row) {
+			var old = row.querySelector(".a3s-section-add__bill");
+			if (old) old.remove();
+			near = document.createElement("button");
+			near.type = "button";
+			near.className = "a3s-section-add__open a3s-section-add__bill";
+			near.textContent = "+ Add [" + missing.code + "] " + (missing.name || "");
+			near.title = "The section the KSEB bill names: add it, filled in from the bill";
+			near.addEventListener("click", function () { btn.click(); });
+			row.appendChild(near);
+		}
 		/* Once added, the warning about it and its button are done with. */
 		document.addEventListener("a3s:section-added", function () {
 			li.remove();
+			if (near) near.remove();
 			Array.prototype.forEach.call(warningsList.querySelectorAll("li"), function (w) {
 				if (w.textContent.indexOf("[" + missing.code + "]") !== -1 && /not among the DISCOM Sections/.test(w.textContent)) w.remove();
 			});
