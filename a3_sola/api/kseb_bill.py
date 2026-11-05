@@ -371,6 +371,10 @@ def read(doctype, name=None):
 		frappe.throw(_("This does not read as a KSEB bill. Upload the bill's first page, clear and straight."),
 			title=_("Bill Not Read"))
 	fields, warnings = to_fields(parsed, doctype)
+	# A section the bill names that the list lacks: the form offers to add it, filled in.
+	missing_section = None
+	if parsed.get("section_code") and not fields.get("discom_section"):
+		missing_section = {"code": parsed["section_code"], "name": parsed.get("section_name") or ""}
 	attached, pending = False, None
 	if name:
 		attach(doctype, name, upload.filename, content)
@@ -378,7 +382,8 @@ def read(doctype, name=None):
 	else:
 		# No record yet: the bill waits, private and the reader's own, for the one created.
 		pending = keep(upload.filename, content)
-	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached, "pending_file": pending}
+	return {"fields": fields, "warnings": warnings, "source": source, "attached": attached, "pending_file": pending,
+		"missing_section": missing_section}
 
 
 def claim(file_name, doctype, name):
