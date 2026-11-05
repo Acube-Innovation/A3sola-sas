@@ -53,6 +53,22 @@ GENERIC_TASK_ICONS = {
 }
 
 
+def hides_money(doc):
+	"""Whether the customer's price and payments are kept from this user: a contractor's, who
+	is paid by the company - unless the job is also his own sale, as a dealer who installs."""
+	from a3_sola.api.partner_scope import partner_kinds
+
+	kinds = partner_kinds()
+	if "contractor" not in kinds:
+		return False
+	if "dealer" not in kinds:
+		return True
+	from a3_sola.api.partner_scope import _kind_condition
+
+	sold = _kind_condition("dealer", frappe.session.user, "Solar Installation")
+	return not (sold and frappe.db.sql(f"select 1 from `tabSolar Installation` where `name` = %s and ({sold})", doc.name))
+
+
 def project_overview(doc):
 	from a3_sola.api import billing
 	from a3_sola.api.partner_scope import partner_kind
@@ -65,7 +81,7 @@ def project_overview(doc):
 		"summary": _summary(consumer, electricity, solar, proposal) + [_location(doc)],
 		# The payment schedule: milestones, payments received, what is pending (api/billing).
 		# Not the contractor's to see - he is paid by the company, not by the customer.
-		"payments": None if partner_kind() == "contractor" else billing.schedule(doc),
+		"payments": None if hides_money(doc) else billing.schedule(doc),
 		"half_paid": _half_paid(doc),
 		"columns": _task_columns(doc),
 	}
@@ -235,7 +251,7 @@ def _proposal_box(doc):
 	from a3_sola.api.partner_scope import partner_kind
 
 	# The customer's price is no business of the installation contractor's.
-	money = (lambda value: "") if partner_kind() == "contractor" else _money
+	money = (lambda value: "") if hides_money(doc) else _money
 	return {
 		"name": doc.solar_proposal or "",
 		"route": _route("Solar Proposal", doc.solar_proposal),
