@@ -35,7 +35,7 @@ LEAD_SECTIONS = [
 	{
 		"key": "lead",
 		"label": "Lead",
-		"fields": ["status", "source", "type", "request_type", "qualification_status", "lead_owner", "territory", "industry", "market_segment", "campaign_name"],
+		"fields": ["status", "source", "type", "request_type", "qualification_status", "lead_owner", "a3s_dealer", "territory", "industry", "market_segment", "campaign_name"],
 	},
 	{
 		"key": "address",
@@ -224,19 +224,43 @@ def lead_snapshot(doc):
 
 
 # -------------------------------------------------------------------------- edit page
+#: Fields only staff set. The dealer a lead is handed to decides which dealer sees it, so a
+#: dealer may not move his own lead to another (and it is stamped his when he makes one).
+STAFF_ONLY = {"a3s_dealer"}
+
+
+def dealer_choices(doc=None):
+	"""The Dealer field's choices: the enabled dealers - partner logins, which the User list
+	of a Link field leaves out, it being people of the company - by name."""
+	from a3_sola.api.partner_scope import DEALER
+	from a3_sola.api.portal_users import _scope_filters
+
+	users = frappe.get_all("Has Role", filters={"parenttype": "User", "role": DEALER}, pluck="parent")
+	if not users:
+		return []
+	rows = frappe.get_all("User", filters={"name": ["in", users], "enabled": 1, **_scope_filters()},
+		fields=["name", "full_name"], order_by="full_name asc")
+	return [{"value": r.name, "label": r.full_name or r.name} for r in rows]
+
+
 def edit_fields(doc):
 	"""The fields the edit form renders, with their current values.
 
 	Reused verbatim by `update_lead` as its allow-list, so the two never drift: a field
 	the form does not render is a field the endpoint refuses to set.
 	"""
+	from a3_sola.api.partner_scope import is_partner
+
 	meta = doc.meta
 	defaults = lead_defaults()
+	partner = is_partner()
 	sections = []
 	for section in LEAD_SECTIONS:
 		specs = []
 		for df in _visible_fields(meta, section):
 			if df.fieldtype not in INPUT_TYPES:
+				continue
+			if df.fieldname in STAFF_ONLY and partner:
 				continue
 			if df.read_only and df.fieldname not in EDITABLE_READ_ONLY:
 				continue
