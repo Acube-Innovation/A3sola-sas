@@ -158,8 +158,9 @@
 		/* Save all (every option saved in turn), with the way back to the details beside it. */
 		var actions = el("div", { class: "a3s-de-tabs__actions" });
 		if (page.tabs.some(function (t) { return t.docstatus !== 1; })) {
-			var saveAll = el("button", { type: "button", class: "a3s-square-btn a3s-de-saveall-btn", title: "Save all options",
-				"aria-label": "Save all options", disabled: busy ? "disabled" : null }, [icon("save")]);
+			var saveAll = el("button", { type: "button", class: "a3s-square-btn a3s-square-btn--primary a3s-square-btn--labelled a3s-de-saveall-btn",
+				title: "Save all options", "aria-label": "Save all options", disabled: busy ? "disabled" : null },
+				[icon("save"), el("span", { text: "Save all", "aria-hidden": "true" })]);
 			saveAll.addEventListener("click", saveAllOptions);
 			actions.appendChild(saveAll);
 		}
@@ -258,9 +259,35 @@
 			.catch(function (error) { fail(error, tabStatus); });
 	}
 
+	/* A message with only OK: closed by OK, Escape or a click outside it. */
+	function notice(title, text) {
+		var box = $("de-notice"), okButton = $("de-notice-ok"), back = document.activeElement;
+		$("de-notice-title").textContent = title;
+		$("de-notice-text").textContent = text;
+		box.hidden = false;
+		okButton.focus();
+		function close() {
+			box.hidden = true;
+			okButton.onclick = box.onclick = null;
+			document.removeEventListener("keydown", onKey);
+			if (back && back.focus) back.focus();
+		}
+		function onKey(event) { if (event.key === "Escape") close(); }
+		okButton.onclick = close;
+		box.onclick = function (event) { if (event.target === box) close(); };
+		document.addEventListener("keydown", onKey);
+	}
+
 	/* --------------------------------------------------- save all options */
 	function saveAllOptions() {
 		if (busy) return;
+		/* An option needs saving if it has changes held, or has never been saved as an estimate;
+		   a submitted one is not saved again. With none, Save all says so and does nothing. */
+		var needed = page.tabs.filter(function (t) { return t.docstatus !== 1 && (!t.estimate || changes(t.key).length); });
+		if (!needed.length) {
+			notice("Nothing to save", "All options are already saved, and there are no changes since the last save.");
+			return;
+		}
 		var tabs = page.tabs.slice();
 		var box = $("de-saveall"), list = $("de-saveall-list"), close = $("de-saveall-close");
 		var saved = 0, failed = 0;

@@ -1,11 +1,15 @@
-/* One Solar Package, edited whole: its details and every table, in the desk form's tabs, and
-   its Item and BOM (a3_sola.api.portal_packages). The page keeps the package as the server
-   sent it, changes it here, and posts it whole on Save; the server's rules decide the rest
-   and its answer is painted back - computed KSEB rows, totals and the like. */
+/* One Solar Package, edited whole: its details and every table, laid out as the desk form lays
+   them out - its tabs, sections and columns - and its Item and BOM (a3_sola.api.portal_packages).
+   The page keeps the package as the server sent it, changes it here, and posts it whole on Save;
+   the server's rules decide the rest and its answer is painted back - computed KSEB rows,
+   totals and the like. */
 (function () {
 	"use strict";
 
 	var API = "a3_sola.api.portal_packages.";
+	/* The BOM tab's tables, which come from Excel as often as they are typed (solar_package.js). */
+	var SHEETS = "a3_sola.api.package_bom_tables.";
+	var SHEET_TABLES = { material_bom: 1, structure_boms: 1, expenses: 1 };
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var pkg = JSON.parse(document.getElementById("a3s-package-data").textContent);
@@ -16,7 +20,6 @@
 	var statusEl = form.querySelector("[data-status]");
 	var active = "package";
 	var dirty = false;
-	var LIST_COLUMNS = 6;
 
 	/* Choices picked from the package's own rows (solar_package.js): an inverter option's Built
 	   with Panel is one of the package's panels. */
@@ -42,8 +45,9 @@
 		} catch (e) { /* fall through */ }
 		return (body && body.exception) ? String(body.exception).split("\n").pop().replace(/^[\w.]+(Error|Exception):\s*/, "").trim() : "";
 	}
-	function call(method, args) {
-		return fetch("/api/method/" + API + method, {
+	function call(method, args) { return callPath(API + method, args); }
+	function callPath(path, args) {
+		return fetch("/api/method/" + path, {
 			method: "POST", credentials: "same-origin",
 			headers: { "X-Frappe-CSRF-Token": csrf, "Accept": "application/json", "Content-Type": "application/json" },
 			body: JSON.stringify(args || {})
@@ -68,6 +72,15 @@
 	function company() { return pkg.values.company || ""; }
 	function hasBatteries() { return ["Off-Grid", "Hybrid"].indexOf(pkg.values.system_type) !== -1; }
 	function touch() { dirty = true; paintHead(); }
+	/* "Depends on" lists: the inverters one per line, roof types and capacities by commas. */
+	function split(value, byLine) {
+		return String(value || "").split(byLine ? "\n" : /[,\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+	}
+	/* The Expenses' total, as the rows change (the server totals it again on save). */
+	function totalExpenses() {
+		if (!pkg.tables.expenses) return;
+		pkg.values.total_expenses = pkg.tables.expenses.rows.reduce(function (sum, r) { return sum + (Number(r.amount) || 0); }, 0);
+	}
 
 	/* ------------------------------------------------------------------ choices */
 	function allItems() {
@@ -107,7 +120,8 @@
 	}
 	function labelOf(doctype, value, table, field) {
 		if (!value) return "";
-		var list = (table && ITEM_FIELD[table] === field) ? allItems() : (pkg.choices[doctype] || []);
+		var list = (table && ITEM_FIELD[table] === field) ? allItems() : doctype === "Item" ? pkg.choices.Item.concat(allItems()) :
+			(pkg.choices[doctype] || []);
 		var hit = list.find(function (o) { return o.value === value; });
 		return hit ? hit.label : value;
 	}
@@ -129,8 +143,8 @@
 		var hint = col.description ? '<p class="a3s-field__hint">' + esc(col.description) + "</p>" : "";
 		if (col.read_only) {
 			var shown = col.type === "Link" ? labelOf(col.options, value, opts.table, col.fieldname) :
-				col.type === "Currency" ? (value ? money(value) : "") : col.type === "Check" ? (value ? "Yes" : "No") : value;
-			return '<div class="a3s-field"><span class="a3s-pkg__rolabel">' + esc(col.label) + '</span><p class="a3s-pkg__ro">' +
+				col.type === "Currency" ? (value != null && value !== "" ? money(value) : "") : col.type === "Check" ? (value ? "Yes" : "No") : value;
+			return '<div class="a3s-field"><span class="a3s-pkg__rolabel">' + esc(col.label) + '</span><p class="a3s-pkg__ro" data-ro="' + esc(col.fieldname) + '">' +
 				(shown === "" || shown == null ? '<span class="a3s-table__muted">Not set</span>' : esc(shown)) + "</p>" + hint + "</div>";
 		}
 		if (col.type === "Check") {
@@ -174,27 +188,57 @@
 		if (!visibleTabs().some(function (t) { return t.key === active; })) active = "package";
 		paintTabs();
 		var tab = pkg.tabs.find(function (t) { return t.key === active; });
-		var html = "";
-		if (tab.fields.length) {
-			html += '<div class="a3s-form__grid a3s-pkg__fields">' + tab.fields.map(function (col) {
-				if (col.fieldname === "item" || col.fieldname === "bom") col = Object.assign({}, col, { read_only: 1 });
-				return input(col, pkg.values[col.fieldname]);
-			}).join("") + "</div>";
-		}
-		if (tab.key === "cost") html += '<div class="a3s-pkg__terms" data-terms></div>';
-		tab.tables.forEach(function (f) { html += tableHtml(f); });
-		if (tab.key === "batteries" && !hasBatteries()) html += '<p class="a3s-field__hint">Batteries are for Off-Grid and Hybrid systems.</p>';
-		panels.innerHTML = html;
-		if (tab.key === "cost") paintTerms();
+		panels.innerHTML = tab.sections.map(function (s) { return sectionHtml(tab, s); }).join("");
+		paintTerms();
 		if (window.a3sCombo) window.a3sCombo.wireAll(panels);
 	}
+	/* A section of the desk form: its title, then its columns side by side, each column's fields,
+	   tables and HTML in the desk's order. A section that opens with a table of its own name
+	   needs no title of its own. */
+	function sectionHtml(tab, s) {
+		var first = s.columns[0][0];
+		var titled = s.label && !(first.table && pkg.tables[first.table].label === s.label);
+		var body = s.columns.length > 1
+			? '<div class="a3s-pkg__cols">' + s.columns.map(function (c) { return '<div class="a3s-pkg__stack">' + entriesHtml(tab, c, false) + "</div>"; }).join("") + "</div>"
+			: entriesHtml(tab, s.columns[0], true);
+		return '<section class="a3s-pkg__section">' + (titled ? '<h3 class="a3s-pkg__sectiontitle">' + esc(s.label) + "</h3>" : "") + body + "</section>";
+	}
+	/* A column's entries; in a one-column section its fields sit two to a row, as the rest of
+	   the portal's forms have them. */
+	function entriesHtml(tab, entries, grid) {
+		var html = "", fields = [];
+		function flush() {
+			if (fields.length) html += '<div class="' + (grid ? "a3s-form__grid" : "a3s-pkg__stack") + '">' + fields.join("") + "</div>";
+			fields = [];
+		}
+		entries.forEach(function (e) {
+			if (e.field) {
+				var col = tab.fields.find(function (c) { return c.fieldname === e.field; });
+				if (col.fieldname === "item" || col.fieldname === "bom") col = Object.assign({}, col, { read_only: 1 });
+				fields.push(input(col, pkg.values[col.fieldname]));
+				return;
+			}
+			flush();
+			if (e.table) {
+				html += tableHtml(e.table);
+				if (e.table === "batteries" && !hasBatteries()) html += '<p class="a3s-field__hint">Batteries are for Off-Grid and Hybrid systems.</p>';
+			} else if (e.html === "payment_terms_preview") {
+				html += '<div class="a3s-pkg__terms" data-terms></div>';
+			}
+		});
+		flush();
+		return html;
+	}
+	/* The grid's columns are the desk grid's: every column in its list view. */
 	function listColumns(spec) {
 		var cols = spec.columns.filter(function (c) { return c.in_list; });
-		if (!cols.length) cols = spec.columns.slice();
-		return cols.slice(0, LIST_COLUMNS);
+		return cols.length ? cols : spec.columns.slice(0, 6);
 	}
 	function cell(spec, col, row) {
 		var v = row[col.fieldname];
+		if (col.fieldname === "inverters" && spec.fieldname === "material_bom") return dependsCell(split(v, true).map(function (i) { return labelOf("Item", i); }));
+		if (col.fieldname === "roof_types") return dependsCell(split(v).map(function (r) { return labelOf("Roof Type", r); }));
+		if (col.fieldname === "panel_capacities") return dependsCell(split(v).map(function (kw) { return kw + " kW"; }));
 		if (col.type === "Check") return v ? '<span class="a3s-pkg__tick" aria-label="Yes">' + icon("check") + "</span>" : "";
 		if (v === "" || v == null) return '<span class="a3s-table__muted">—</span>';
 		if (col.type === "Link") return esc(labelOf(col.options, v, spec.fieldname, col.fieldname));
@@ -202,11 +246,19 @@
 		if (isNum(col.type)) return esc(Number(v).toLocaleString("en-IN", { maximumFractionDigits: 3 }));
 		return esc(v);
 	}
+	/* Saying nothing means every one (package_bom_tables.applies). */
+	function dependsCell(names) {
+		return names.length ? esc(names.join(", ")) : '<span class="a3s-table__muted">All</span>';
+	}
 	function tableHtml(f) {
 		var spec = pkg.tables[f], cols = listColumns(spec), rows = spec.rows || [];
+		var sheet = SHEET_TABLES[f] ?
+			'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-sheet="download">' + icon("download") + "<span>Download Excel</span></button>" +
+			'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-sheet="upload">' + icon("upload") + "<span>Upload Excel</span></button>" : "";
 		return '<section class="a3s-pkg__table" data-table="' + f + '">' +
 			'<div class="a3s-pkg__tablehead"><h3 class="a3s-pkg__tabletitle">' + esc(spec.label) + ' <span class="a3s-pkg__count">' + rows.length + "</span></h3>" +
-			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-add-row><span>+ Add row</span></button></div>' +
+			'<div class="a3s-pkg__tableacts">' + sheet +
+			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-add-row><span>+ Add row</span></button></div></div>' +
 			(rows.length ? '<div class="a3s-tablewrap"><table class="a3s-table a3s-pkg__rows"><thead><tr>' +
 				cols.map(function (c) { return "<th" + (isNum(c.type) ? ' class="a3s-table__num"' : "") + ">" + esc(c.label) + "</th>"; }).join("") +
 				'<th><span class="a3s-sr-only">Actions</span></th></tr></thead><tbody>' +
@@ -283,7 +335,9 @@
 		var m = modal((adding ? "Add " : "Edit ") + spec.label.toLowerCase() + " row", adding ? "" : "Row " + (index + 1));
 		function paintForm() {
 			m.body.innerHTML = '<form class="a3s-modal__form" novalidate><div class="a3s-form__grid">' +
-				spec.columns.map(function (c) { return input(c, draft[c.fieldname], { table: table, row: draft, prefix: "r-" }); }).join("") +
+				spec.columns.filter(function (c) { return !PICKED[table + "." + c.fieldname]; })
+					.map(function (c) { return input(c, draft[c.fieldname], { table: table, row: draft, prefix: "r-" }); }).join("") +
+				pickerHtml(table, draft) +
 				'</div><div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary"><span>' + (adding ? "Add row" : "Done") + "</span></button>" +
 				'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
 			if (window.a3sCombo) window.a3sCombo.wireAll(m.body);
@@ -301,7 +355,23 @@
 				var item = allItems().find(function (i) { return i.value === draft[fill[0]]; });
 				if (item && item.text) { draft[fill[1]] = item.text; var t = m.body.querySelector('[name="' + fill[1] + '"]'); if (t) t.value = item.text; }
 			}
-			if (REPAINT[col.fieldname]) paintForm();
+			if (SHEET_TABLES[table]) {
+				/* The UOM and Category follow the Item chosen (the UOM stays the user's to change
+				   after), and the amount is the quantity at the rate. */
+				if (col.fieldname === "item") {
+					var chosen = pkg.choices.Item.find(function (i) { return i.value === draft.item; });
+					if (chosen) { draft.uom = chosen.uom || draft.uom; draft.category = chosen.group; }
+					readPickers(table, draft, m.body);
+					paintForm();
+					return;
+				}
+				if (col.fieldname === "qty" || col.fieldname === "rate") {
+					draft.amount = (Number(draft.qty) || 0) * (Number(draft.rate) || 0);
+					var ro = m.body.querySelector('[data-ro="amount"]');
+					if (ro) ro.textContent = money(draft.amount);
+				}
+			}
+			if (REPAINT[col.fieldname]) { readPickers(table, draft, m.body); paintForm(); }
 		});
 		m.body.addEventListener("submit", function (e) {
 			e.preventDefault();
@@ -309,14 +379,75 @@
 				var el = m.body.querySelector('[name="' + c.fieldname + '"]');
 				if (el && !c.read_only) draft[c.fieldname] = readValue(el, c);
 			});
+			var wrong = readPickers(table, draft, m.body);
+			if (wrong) { m.status(wrong, "error"); return; }
+			if (SHEET_TABLES[table]) draft.amount = (Number(draft.qty) || 0) * (Number(draft.rate) || 0);
 			var missing = spec.columns.filter(function (c) { return c.reqd && !c.read_only && (draft[c.fieldname] === "" || draft[c.fieldname] == null); });
 			if (missing.length) { m.status("Fill " + missing.map(function (c) { return c.label; }).join(", ") + ".", "error"); return; }
 			if (adding) rows.push(draft); else rows[index] = draft;
 			keepDefaults(table, draft, adding);
+			if (table === "expenses") totalExpenses();
 			m.close();
 			touch();
 			paint();
 		});
+	}
+
+	/* ------------------------------------------------------------------ "depends on" pickers */
+	/* The desk's Select Inverters and Select Roof / kW dialogs, here inside the row's form: a
+	   Material BOM row is needed with the inverter options ticked, a Structure BOM row with the
+	   roof types and system capacities ticked; nothing ticked is every one. */
+	var PICKED = { "material_bom.inverters": 1, "structure_boms.roof_types": 1, "structure_boms.panel_capacities": 1 };
+	function checks(name, options) {
+		return '<div class="a3s-pkg__checks">' + options.map(function (o) {
+			return '<label class="a3s-check"><input type="checkbox" name="' + name + '" value="' + esc(o.value) + '"' + (o.checked ? " checked" : "") + "><span>" + esc(o.label) + "</span></label>";
+		}).join("") + "</div>";
+	}
+	function pickerHtml(table, draft) {
+		if (table === "material_bom") {
+			var inverters = pkg.tables.inverters.rows, chosen = split(draft.inverters, true);
+			var quoted = inverters.find(function (r) { return r.is_default; });
+			var offered = inverters.map(function (r) { return r.inverter_item; }).filter(function (v, i, all) { return v && all.indexOf(v) === i; });
+			var options = offered.concat(chosen.filter(function (c) { return offered.indexOf(c) === -1; })).map(function (item) {
+				return { value: item, checked: chosen.indexOf(item) !== -1, label: labelOf("Item", item) +
+					(offered.indexOf(item) === -1 ? " (no longer an option)" : quoted && quoted.inverter_item === item ? " (default)" : "") };
+			});
+			return '<fieldset class="a3s-pkg__picker"><legend>Depends on Inverter</legend>' +
+				(options.length ? '<p class="a3s-field__hint">None ticked: needed with every inverter.</p>' + checks("pick-inverters", options) :
+					'<p class="a3s-field__hint">Give the package\'s inverter options their Items first; until then the row is needed with every inverter.</p>') +
+				"</fieldset>";
+		}
+		if (table === "structure_boms") {
+			var roofs = split(draft.roof_types), kws = split(draft.panel_capacities).map(Number);
+			var all = pkg.choices.capacities.map(Number).concat(kws).filter(function (v, i, a) { return v > 0 && a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+			return '<fieldset class="a3s-pkg__picker"><legend>Depends on Roof Type</legend><p class="a3s-field__hint">None ticked: every roof type.</p>' +
+				checks("pick-roof_types", linkOptions(null, { fieldname: "roof_type", options: "Roof Type" }, pkg.values).map(function (r) {
+					return { value: r.value, label: r.label, checked: roofs.indexOf(r.value) !== -1 };
+				})) + "</fieldset>" +
+				'<fieldset class="a3s-pkg__picker"><legend>Panel Capacity (kW)</legend><p class="a3s-field__hint">The system\'s capacity. None ticked: every capacity.</p>' +
+				checks("pick-panel_capacities", all.map(function (kw) { return { value: String(kw), label: kw + " kW", checked: kws.indexOf(kw) !== -1 }; })) +
+				'<div class="a3s-field a3s-pkg__other"><label for="r-other-kw">Other capacities (kW)</label><input id="r-other-kw" name="pick-other_kw" inputmode="decimal" placeholder="Separated by commas, e.g. 6, 7.5"></div>' +
+				"</fieldset>";
+		}
+		return "";
+	}
+	/* The ticks into the row's fields, as the server keeps them; what is wrong, if anything. */
+	function readPickers(table, draft, body) {
+		if (table !== "material_bom" && table !== "structure_boms") return "";
+		function ticked(name) {
+			return Array.prototype.filter.call(body.querySelectorAll('[name="' + name + '"]'), function (el) { return el.checked; }).map(function (el) { return el.value; });
+		}
+		if (table === "material_bom") {
+			if (body.querySelector('[name="pick-inverters"]')) draft.inverters = ticked("pick-inverters").join("\n");
+			return "";
+		}
+		draft.roof_types = ticked("pick-roof_types").join(", ");
+		var other = body.querySelector('[name="pick-other_kw"]');
+		var others = split(other && other.value);
+		if (others.some(function (kw) { return !(Number(kw) > 0); })) return "Other capacities are numbers of kW, such as 6 or 7.5.";
+		draft.panel_capacities = ticked("pick-panel_capacities").concat(others).map(Number)
+			.filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; }).join(", ");
+		return "";
 	}
 	/* One default among the panels and the inverters, one per type among the rest: ticking
 	   one clears the others, and the first of its kind is the default (solar_package.js). */
@@ -337,16 +468,77 @@
 		if (!section) return;
 		var table = section.dataset.table;
 		if (e.target.closest("[data-add-row]")) return rowForm(table, null);
+		var sheet = e.target.closest("[data-sheet]");
+		if (sheet) return sheet.dataset.sheet === "download" ? downloadSheet(table) : uploadSheet(table);
 		var tr = e.target.closest("tr[data-row]");
 		if (!tr) return;
 		var i = Number(tr.dataset.row);
 		if (e.target.closest("[data-edit-row]")) return rowForm(table, i);
 		if (e.target.closest("[data-remove-row]")) {
 			pkg.tables[table].rows.splice(i, 1);
+			if (table === "expenses") totalExpenses();
 			touch();
 			paint();
 		}
 	});
+
+	/* ------------------------------------------------------------------ Excel */
+	/* Download Excel: the table as it stands here, saved or not, in the columns Upload Excel
+	   reads; headings alone for an empty table, as a template (package_bom_tables.download_sheet). */
+	function downloadSheet(table) {
+		var body = new URLSearchParams({ table: table, rows: JSON.stringify(pkg.tables[table].rows), package: pkg.name || "" });
+		fetch("/api/method/" + SHEETS + "download_sheet", {
+			method: "POST", credentials: "same-origin", headers: { "X-Frappe-CSRF-Token": csrf }, body: body
+		}).then(function (r) {
+			if (!r.ok) {
+				return r.json().catch(function () { return {}; }).then(function (b) { throw new Error(serverMessage(b) || "The sheet could not be made. Try again."); });
+			}
+			var named = /filename="?([^";]+)"?/.exec(r.headers.get("Content-Disposition") || "");
+			return r.blob().then(function (blob) { return { blob: blob, name: named ? decodeURIComponent(named[1]) : table + ".xlsx" }; });
+		}).then(function (file) {
+			var a = document.createElement("a");
+			a.href = URL.createObjectURL(file.blob);
+			a.download = file.name;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+		}).catch(function (err) { setStatus(statusEl, err.message, "error"); });
+	}
+	/* Upload Excel: the sheet is read on the server, which finds or makes each Item, and its rows
+	   replace the table here, to be saved with the package (package_bom_tables.read_sheet). */
+	function uploadSheet(table) {
+		var spec = pkg.tables[table];
+		if (spec.rows.length && !window.confirm("The sheet's rows replace the " + spec.rows.length + " rows of the " + spec.label + ". Go on?")) return;
+		var picker = document.createElement("input");
+		picker.type = "file";
+		picker.accept = ".xlsx,.csv";
+		picker.addEventListener("change", function () {
+			var file = picker.files[0];
+			if (!file) return;
+			var reader = new FileReader();
+			reader.onload = function () {
+				setStatus(statusEl, "Reading the sheet…");
+				callPath(SHEETS + "read_sheet", {
+					content: reader.result, filename: file.name, table: table, company: company(),
+					inverters: pkg.tables.inverters.rows.map(function (r) { return { inverter_item: r.inverter_item, inverter_specification: r.inverter_specification }; })
+				}).then(function (res) {
+					/* Items the sheet made are choices from now on. */
+					res.rows.forEach(function (r) {
+						if (!pkg.choices.Item.some(function (i) { return i.value === r.item; })) pkg.choices.Item.push({ value: r.item, label: r.item, group: r.category, uom: r.uom });
+					});
+					spec.rows = res.rows;
+					if (table === "expenses") totalExpenses();
+					touch();
+					paint();
+					setStatus(statusEl, res.rows.length + " rows read from the sheet. Save the package to keep them." +
+						(res.created.length ? " New Items made: " + res.created.join(", ") + "." : ""), "ok");
+				}).catch(function (err) { setStatus(statusEl, err.message, "error"); });
+			};
+			reader.readAsDataURL(file);
+		});
+		picker.click();
+	}
 
 	/* ------------------------------------------------------------------ save */
 	function load(data, message) {

@@ -13,8 +13,9 @@
 	{#- The way back moves into the option tabs' row, beside Save all (paintTabs) - and the two
 	    come back up here, level with the title, when the options are too many to fit the row. -#}
 	<div class="a3s-de-head__actions">
-		<a class="a3s-square-btn" id="de-details-link" href="#" title="Back to details and options" aria-label="Back to details and options" hidden>
+		<a class="a3s-square-btn a3s-square-btn--soft a3s-square-btn--labelled" id="de-details-link" href="#" title="Back to details and options" aria-label="Back to details and options" hidden>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-back"></use></svg>
+			<span aria-hidden="true">Back</span>
 		</a>
 	</div>
 </div>
@@ -118,6 +119,17 @@
 		<div class="a3s-de-actions">
 			<button type="button" class="a3s-btn a3s-btn--ghost" id="de-confirm-cancel">Cancel</button>
 			<button type="button" class="a3s-btn a3s-btn--primary a3s-de-confirm__ok" id="de-confirm-ok">Remove</button>
+		</div>
+	</div>
+</div>
+
+{#- Save all with nothing to save: says so, and that every option is saved already. -#}
+<div class="a3s-modal" id="de-notice" hidden role="alertdialog" aria-modal="true" aria-labelledby="de-notice-title" aria-describedby="de-notice-text">
+	<div class="a3s-modal__panel a3s-de-confirm">
+		<h3 class="a3s-de-confirm__title" id="de-notice-title"></h3>
+		<p class="a3s-de-confirm__text" id="de-notice-text"></p>
+		<div class="a3s-de-actions">
+			<button type="button" class="a3s-btn a3s-btn--primary" id="de-notice-ok">OK</button>
 		</div>
 	</div>
 </div>

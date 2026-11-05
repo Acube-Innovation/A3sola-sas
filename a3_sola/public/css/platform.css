@@ -2628,6 +2628,13 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s a.a3s-square-btn--primary, .a3s a.a3s-square-btn--primary:hover { color: #fff; }
 .a3s a.a3s-square-btn:not(.a3s-square-btn--primary):not(.a3s-square-btn--whatsapp):hover { color: var(--color-accent-hover); }
 .a3s-square-btn--whatsapp .a3s-ic { width: 1.4rem; height: 1.4rem; }
+/* Light orange, for the way back beside an orange main action. */
+.a3s-square-btn--soft, .a3s a.a3s-square-btn--soft { background: rgba(247, 148, 30, 0.16); border-color: transparent; color: var(--color-accent-hover); }
+.a3s-square-btn--soft:hover, .a3s-square-btn--soft:focus-visible,
+.a3s a.a3s-square-btn--soft:hover, .a3s a.a3s-square-btn--soft:focus-visible { border-color: var(--color-accent); color: var(--color-accent-hover); }
+/* The icon with a word under it (Save all, Back). */
+.a3s-square-btn--labelled { width: auto; min-width: 4.25rem; height: auto; min-height: 3.6rem; padding: 0.5rem 0.7rem; gap: 0.25rem;
+	align-content: center; font: inherit; font-size: 0.75rem; font-weight: 700; line-height: 1; white-space: nowrap; }
 
 /* row actions shown as icons: edit and remove */
 .a3s-icon-btn {
@@ -2840,21 +2847,17 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-opt[data-locked] { background: var(--color-bg); }
 .a3s-de-opt__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
 .a3s-de-opt__remove { margin-left: auto; font-size: 1.1rem; line-height: 1; }
-.a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+/* Two rows of four: connection, system, subsidy and its scheme; then capacity, the package and
+   the panel and inverter from it (the parts sit in the same grid). A battery, for Off-Grid and
+   Hybrid, starts a third row. Two across on mid widths, one on phones. */
+.a3s-de-opt__grid { display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr); }
+.a3s-de-opt__parts { display: contents; }
+@media (min-width: 600px) { .a3s-de-opt__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .a3s-de-opt__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 /* Labels stay on one line, so every box in the row lines up; the full label is its title. */
 .a3s-de-opt__grid .a3s-de-sizing__part-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Mid widths: connection, system and subsidy across, then capacity and the package. */
-@media (min-width: 700px) {
-	.a3s-de-opt__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-	.a3s-de-opt__f-solar_package { grid-column: span 2; }
-}
-/* Wide: all five in one row; capacity is wide enough for its label. */
-@media (min-width: 1440px) {
-	.a3s-de-opt__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(11.5rem, 1.15fr) minmax(0, 2.2fr); }
-	.a3s-de-opt__f-solar_package { grid-column: auto; }
-}
-.a3s-de-opt__parts { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--color-border);
-	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.a3s-de-sizing__scheme { display: grid; gap: 0.25rem; }
+.a3s-de-sizing__scheme[hidden] { display: none; }
 .a3s-de-opt .a3s-field { margin: 0; display: grid; gap: 0.25rem; align-content: start; min-width: 0; }
 .a3s-de-opt select, .a3s-de-opt input { width: 100%; min-width: 0; height: 2.8125rem; box-sizing: border-box; }
 .a3s-de-sizing__radio { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
@@ -2870,7 +2873,6 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-sizing__saved { font-size: 0.75rem; font-weight: 700; color: var(--color-sky-ink); }
 .a3s-de-opt[data-locked] select, .a3s-de-opt[data-locked] input { opacity: 0.75; }
 .a3s-de-sizing__facts { margin-top: 1rem; }
-.a3s-de-sizing__scheme { margin-top: 0.4rem; }
 .a3s-de-sizing__notes { margin: 0.85rem 0 0; padding-left: 1.1rem; font-size: 0.75rem; color: var(--color-text-muted); display: grid; gap: 0.25rem; }
 .a3s-de-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.75rem; margin-top: 1.1rem; }
 .a3s-de-actions .a3s-form__status { margin-right: auto; }
@@ -3269,7 +3271,23 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-pp__add select { min-width: 0; flex: 1 1 18rem; max-width: 34rem; }
 .a3s-pp__existing { margin: 0; padding: 0.8rem 1rem; border-radius: 0.8rem; background: #fff4e5; border: 1px solid #f7c97e; font-size: 0.9rem; }
 #a3s-pp-comparison.is-loading { opacity: 0.55; }
-.a3s-pp__rows td:nth-child(2), .a3s-pp__rows td:nth-child(4) { white-space: nowrap; }
+/* Package: its name in bold with Base beside it on the first row; the estimate and its state under it. */
+.a3s-pp__pkgtop { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+.a3s-pp__pkgtop strong { font-weight: 700; }
+.a3s-pp__pkgsub { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.35rem; margin-top: 0.25rem; font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-pp__pkgsub a { white-space: nowrap; }
+.a3s-pp__pkgsub .a3s-pp__draft { margin-left: 0; font-size: 0.65rem; }
+/* Move up and down: round, orange, white arrows (the back arrow, turned); remove: the bin. */
+.a3s-pp__moves, .a3s-pp__remove { width: 1%; white-space: nowrap; vertical-align: middle; }
+.a3s-pp__moves { padding-right: 0.25rem; }
+.a3s-pp__move { display: inline-grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 50%;
+	background-image: var(--color-accent-gradient); color: #fff; cursor: pointer; transition: transform var(--duration) var(--ease), box-shadow var(--duration) var(--ease); }
+.a3s-pp__move + .a3s-pp__move { margin-left: 0.4rem; }
+.a3s-pp__move .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-pp__move--up .a3s-ic { transform: rotate(90deg); }
+.a3s-pp__move--down .a3s-ic { transform: rotate(-90deg); }
+.a3s-pp__move:hover:not(:disabled), .a3s-pp__move:focus-visible { transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+.a3s-pp__move:disabled { opacity: 0.35; cursor: default; }
 .a3s-pp__existing a { font-weight: 700; }
 .a3s-pp__issued { margin: 0; padding: 0.8rem 1rem; border-radius: 0.8rem; background: var(--color-accent-soft); border: 1px solid #f7c97e; font-size: 0.9rem; }
 
@@ -3845,12 +3863,29 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-pkg__chip.is-set { background: rgba(40, 200, 64, 0.12); color: #1a7f2e; }
 .a3s-pkg__headacts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .a3s-pkg__tabs { margin-bottom: 1rem; }
+/* The desk form's ten tabs, all in sight: they wrap rather than scroll. */
+.a3s-ce-tabs.a3s-pkg__tabs { flex-wrap: wrap; width: auto; border-radius: 1.4rem; }
 .a3s-pkg__card { padding: 1.5rem; }
 .a3s-pkg__fields { margin-bottom: 1.5rem; }
 .a3s-pkg__fields, .a3s-pkg__modal .a3s-form__grid { align-items: start; }
 .a3s-pkg__table + .a3s-pkg__table { margin-top: 1.75rem; }
 .a3s-pkg__tablehead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .a3s-pkg__tabletitle { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.a3s-pkg__tableacts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* The desk form's sections and columns. */
+.a3s-pkg__section + .a3s-pkg__section { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
+.a3s .a3s-pkg__sectiontitle { margin: 0 0 1rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+	color: var(--color-text-muted); }
+.a3s-pkg__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem 1.5rem; align-items: start; }
+.a3s-pkg__stack { display: grid; gap: 1rem; align-content: start; }
+.a3s-pkg__section > :not(.a3s-pkg__sectiontitle) ~ * { margin-top: 1.25rem; }
+.a3s-pkg__stack > .a3s-pkg__terms { margin-bottom: 0; }
+/* A BOM row's "depends on" ticks, in its row form. */
+.a3s-pkg__picker { grid-column: 1 / -1; min-width: 0; margin: 0; padding: 0.85rem 1rem 1rem; border: 1px solid var(--color-border); border-radius: 0.85rem; }
+.a3s-pkg__picker legend { padding: 0 0.3rem; font-size: 0.875rem; font-weight: 700; }
+.a3s-pkg__picker .a3s-field__hint { margin: 0 0 0.6rem; }
+.a3s-pkg__checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem 1rem; }
+.a3s-pkg__other { margin-top: 0.85rem; }
 .a3s-pkg__count { display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.75rem;
 	background: var(--color-accent-soft); color: var(--color-accent); vertical-align: middle; }
 .a3s-pkg__none { margin: 0; padding: 1rem; border: 1px dashed var(--color-border); border-radius: 0.85rem; text-align: center;

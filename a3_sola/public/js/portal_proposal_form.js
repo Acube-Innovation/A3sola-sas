@@ -169,9 +169,11 @@
 			dl.appendChild(row);
 		});
 	}
-	function rowButton(label, title, onClick, disabled) {
-		var b = node("button", "a3s-btn a3s-btn--ghost a3s-btn--sm", label);
+	/* A round or plain icon button for a row: move up, move down, remove. */
+	function rowButton(cls, iconName, title, onClick, disabled) {
+		var b = node("button", cls);
 		b.type = "button"; b.title = title; b.setAttribute("aria-label", title);
+		b.innerHTML = '<svg class="a3s-ic" aria-hidden="true"><use href="#ic-' + iconName + '"></use></svg>';
 		b.disabled = !!disabled;
 		b.addEventListener("click", onClick);
 		return b;
@@ -188,25 +190,29 @@
 			var tr = node("tr");
 			if (i === 0) tr.className = "is-base";
 			tr.appendChild(node("td", "", String(i + 1)));
-			var td = node("td");
+			/* The package in bold (and Base on the first row); under it the estimate and its state. */
+			var pkg = node("td", "a3s-pp__pkg");
+			var top = node("div", "a3s-pp__pkgtop");
+			top.appendChild(node("strong", "", r.package || "No package"));
+			if (i === 0) top.appendChild(node("span", "a3s-pp__base", "Base"));
+			pkg.appendChild(top);
+			var sub = node("div", "a3s-pp__pkgsub");
 			var a = node("a", "", r.name); a.href = r.route;
-			td.appendChild(a);
-			if (r.draft) td.appendChild(node("span", "a3s-pp__draft", "Draft"));
-			tr.appendChild(td);
-			var base = node("td");
-			if (i === 0) base.appendChild(node("span", "a3s-pp__base", "Base"));
-			tr.appendChild(base);
-			tr.appendChild(node("td", "", r.date));
-			tr.appendChild(node("td", "", r.package || "—"));
+			sub.appendChild(a);
+			if (r.draft) sub.appendChild(node("span", "a3s-pp__draft", "Draft"));
+			pkg.appendChild(sub);
+			tr.appendChild(pkg);
+			tr.appendChild(node("td", "", r.panel || "—"));
+			tr.appendChild(node("td", "", r.inverter || "—"));
 			tr.appendChild(node("td", "a3s-num", String(r.capacity_kw)));
 			tr.appendChild(node("td", "a3s-num", r.total_label));
-			var act = node("td", "a3s-lf__row-actions");
-			act.appendChild(rowButton("↑", "Move up" + (i === 1 ? " (make it the base)" : ""), function () { move(i, -1); }, i === 0));
-			act.appendChild(rowButton("↓", "Move down", function () { move(i, 1); }, i === state.rows.length - 1));
-			var rm = rowButton("Remove", "Remove " + r.name, function () { state.rows.splice(i, 1); paint(); });
-			rm.classList.add("a3s-lf__remove");
-			act.appendChild(rm);
-			tr.appendChild(act);
+			var moves = node("td", "a3s-pp__moves");
+			moves.appendChild(rowButton("a3s-pp__move a3s-pp__move--up", "back", "Move up" + (i === 1 ? " (make it the base)" : ""), function () { move(i, -1); }, i === 0));
+			moves.appendChild(rowButton("a3s-pp__move a3s-pp__move--down", "back", "Move down", function () { move(i, 1); }, i === state.rows.length - 1));
+			tr.appendChild(moves);
+			var rm = node("td", "a3s-pp__remove");
+			rm.appendChild(rowButton("a3s-icon-btn a3s-icon-btn--danger", "trash", "Remove " + r.name, function () { state.rows.splice(i, 1); paint(); }));
+			tr.appendChild(rm);
 			body.appendChild(tr);
 		});
 		document.getElementById("a3s-pp-empty").hidden = !!state.rows.length;
