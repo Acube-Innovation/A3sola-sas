@@ -283,7 +283,9 @@ def create_mapped(slug=None, source_dt=None, source=None):
 		if not name:
 			frappe.throw(_("{0} cannot open a {1}: it was not raised from a solar quotation.").format(
 				source, _(step.get("kind_label") or step["doctype"]).lower()), frappe.ValidationError)
-		return {"name": name, "route": record_route(slug, name), "desk": desk_route(step["doctype"], name)}
+		# A record made to be finished (the customer, from its lead) opens in its edit form.
+		route = record_route(slug, name) + ("/edit" if step.get("open") == "edit" else "")
+		return {"name": name, "route": route, "desk": desk_route(step["doctype"], name)}
 
 	doc = frappe.get_attr(step["via"])(source)
 	doc.insert()

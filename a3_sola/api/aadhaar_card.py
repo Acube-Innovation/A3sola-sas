@@ -39,6 +39,9 @@ def scrub(text):
 def parse(text):
 	"""What the card says: name, date of birth, gender (front), address parts (back)."""
 	text = scrub(text).replace("\r", "").replace("|", " ")
+	# OCR reads a label's colon as a semicolon ("PO; Thuravoor"), and an l as "!" ("Muttathukunne! House").
+	text = re.sub(r"\b(VTC|PO|Sub\s*District|District|State|PIN\s*Code)\s*;", r"\1:", text, flags=re.IGNORECASE)
+	text = re.sub(r"(?<=[a-z])!(?=[a-z\s,])", "l", text)
 	out = {}
 	dob = re.search(r"(?:DOB|Date\s*of\s*Birth|D\.O\.B\.?)\s*[:/]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})", text, re.IGNORECASE)
 	yob = re.search(r"Year\s*of\s*Birth\s*[:/]?\s*(\d{4})", text, re.IGNORECASE)
@@ -49,23 +52,60 @@ def parse(text):
 	gender = re.search(r"\b(MALE|FEMALE|TRANSGENDER)\b", text, re.IGNORECASE)
 	if gender:
 		out["gender"] = gender.group(1).capitalize()
-	if dob or yob:
+	# An e-Aadhaar letter is addressed to the holder: "To", their name, their address down to
+	# its PIN code - the surest name and address on it.
+	letter_name, letter_address = _letter(text)
+	if letter_name:
+		out["name"] = letter_name
+	elif dob or yob:
 		out["name"] = _name_above(text, (dob or yob).start())
-	address = _address(text)
+	address = (_address(letter_address) if letter_address else None) or _address(text)
 	if address:
 		out["address"] = address
 	return {k: v for k, v in out.items() if v}
+
+
+def _letter(text):
+	"""(name, "Address: ...") from an e-Aadhaar letter's "To" block, or (None, None)."""
+	lines = [l.strip() for l in text.split("\n")]
+	start = next((i for i, l in enumerate(lines) if re.fullmatch(r"To\s*:?", l)), None)
+	if start is None:
+		return None, None
+	rest = [l for l in lines[start + 1:start + 20] if l]
+	if not rest or not _as_name(rest[0]):
+		return None, None
+	name, block = _as_name(rest[0]), []
+	for line in rest[1:]:
+		block.append(line.rstrip(" ,"))
+		if re.search(r"\b[1-9]\d{5}\b", line):
+			return name, "Address: " + ", ".join(block)
+	return name, None
 
 
 def _name_above(text, at):
 	"""The holder's name: the nearest English line above the date of birth's line - not the
 	Malayalam label before "/ Year of Birth" on that line itself."""
 	for line in reversed(text[:at].split("\n")[:-1]):
-		line = re.sub(r"[^A-Za-z .']", " ", line)
-		line = " ".join(w for w in line.split() if len(w) > 1 or w.isupper())
-		if len(line) >= 3 and not NOT_A_NAME.search(line) and sum(c.isalpha() for c in line) >= 3:
-			return line.strip()
+		name = _as_name(line)
+		if name:
+			return name
 	return None
+
+
+def _as_name(line):
+	"""The line as a name, or None: English words, each begun with a capital, five at most -
+	not a sentence of the card's small print that OCR read beside it ("Entities seeking
+	Aadhaar are obligated to seek consent.")."""
+	if re.search(r"[a-z]\.\s*$", line or ""):
+		return None
+	line = re.sub(r"[^A-Za-z .']", " ", line or "")
+	words = [w for w in line.split() if len(w) > 1 or w.isupper()]
+	line = " ".join(words)
+	if len(line) < 3 or NOT_A_NAME.search(line) or sum(c.isalpha() for c in line) < 3:
+		return None
+	if len(words) > 5 or any(w[0].islower() for w in words if len(w.strip(".")) > 1):
+		return None
+	return line.strip()
 
 
 def _address(text):
@@ -88,6 +128,15 @@ def _address(text):
 	city = rest.pop() if len(rest) > 2 else None
 	return {"line1": rest[0] if rest else None, "line2": ", ".join(rest[1:]) or None, "city": city,
 		"district": district, "state": state, "pincode": pin}
+
+
+def _layout_text(images):
+	"""The images' text, read with OCR keeping the page's columns apart (Tesseract's automatic
+	page layout)."""
+	ocr = kseb_bill.tesseract()
+	if not ocr:
+		return ""
+	return "\n".join(ocr.image_to_string(kseb_bill.prepared_image(image), lang="eng", config="--psm 3") for image in images)
 
 
 def english_column(content):
@@ -210,29 +259,41 @@ def read_content(content, filename, password=None, side=None):
 
 	`side` is the side the person says it is: the front gives the name, the date of birth and
 	the gender, the back the address - and only those, so a stray line OCR finds on the back
-	is never taken for a name. An e-Aadhaar PDF holds both, whichever is said."""
+	is never taken for a name. A PDF - an e-Aadhaar, or a scan with both sides - is read for
+	both, whichever is said: `sides` says which it gave."""
 	side = (side or "").lower() or None
+	is_pdf = (filename or "").lower().endswith(".pdf") or content[:5] == b"%PDF-"
 	text, source = kseb_bill.extract_text(content, filename, password)
 	parsed = parse(text)
-	if source == "ocr" and side != "front" and not (filename or "").lower().endswith(".pdf"):
-		# A photo of the back: its English address column, read on its own.
-		column = english_column(content)
-		address = parse(column).get("address") if column else None
-		if address:
-			parsed["address"] = address
+	if source == "ocr":
+		# Read again with the page's layout kept: a card beside the letter's small print, or
+		# both sides on one page, are columns that a plain reading runs together. What that
+		# finds comes first; the plain reading fills what it missed.
+		laid_out = parse(_layout_text(kseb_bill.pdf_pages(content, password) if is_pdf else [content]))
+		parsed = dict(parsed, **laid_out)
+	if source == "ocr" and not parsed.get("address") and (is_pdf or side != "front"):
+		# The back's English address column, read on its own: a photo of the back, or each
+		# page of a scanned PDF - the back on its own page, or beside the front on one.
+		for image in (kseb_bill.pdf_pages(content, password) if is_pdf else [content]):
+			column = english_column(image)
+			address = parse(column).get("address") if column else None
+			if address:
+				parsed["address"] = address
+				break
 	if not (parsed.get("address") or parsed.get("dob") or parsed.get("year_of_birth")):
 		frappe.throw(_("This does not read as an Aadhaar card. Upload the side with the address, clear and straight, "
 			"or the e-Aadhaar PDF."), title=_("Card Not Read"))
-	both = source == "pdf-text" or (filename or "").lower().endswith(".pdf")
 	front = bool(parsed.get("dob") or parsed.get("year_of_birth"))
+	# A PDF, or a photo of a whole e-Aadhaar letter, gives both sides, whichever is said.
+	both = source == "pdf-text" or is_pdf or bool(front and parsed.get("address"))
 	if side and not both:
 		# The other side picked: said, rather than filled from what was not asked for.
 		if side == "front" and not front:
-			frappe.throw(_("This reads as the back of the Aadhaar card (the address). Use Read Aadhaar back for it, "
-				"or upload the front - the side with the photo, name and date of birth."), title=_("Wrong Side"))
+			frappe.throw(_("This reads as the back of the Aadhaar card (the address). Upload it as Aadhaar Back, "
+				"or upload the front here - the side with the photo, name and date of birth."), title=_("Wrong Side"))
 		if side == "back" and not parsed.get("address"):
-			frappe.throw(_("This reads as the front of the Aadhaar card. Use Read Aadhaar front for it, or upload the "
-				"back - the side with the address."), title=_("Wrong Side"))
+			frappe.throw(_("This reads as the front of the Aadhaar card. Upload it as Aadhaar Front, or upload the "
+				"back here - the side with the address."), title=_("Wrong Side"))
 		if side == "front":
 			parsed.pop("address", None)
 		else:
@@ -246,4 +307,9 @@ def read_content(content, filename, password=None, side=None):
 		kind = FRONT if side == "front" else BACK
 	else:
 		kind = FRONT if not parsed.get("address") else BACK
-	return {"fields": fields, "warnings": warnings, "source": source, "side": kind}
+	# The sides it gave: both, from a PDF with the front and the back, counts for both.
+	sides = [s for s, found in (("front", parsed.get("dob") or parsed.get("year_of_birth")), ("back", parsed.get("address"))) if found]
+	if both and len(sides) == 1:
+		warnings.append(_("Only the {0} of the card was read from this PDF. Upload the {1} too.").format(
+			_(sides[0]), _("back") if sides[0] == "front" else _("front")))
+	return {"fields": fields, "warnings": warnings, "source": source, "side": kind, "sides": sides}

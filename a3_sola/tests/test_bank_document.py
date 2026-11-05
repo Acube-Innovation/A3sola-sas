@@ -108,3 +108,61 @@ class TestBankDocument(FrappeTestCase):
 		self.assertIn(("Solar Consumer", "Bank Proof"), portal_attachments.READERS)
 		self.assertEqual(kyc.BANK_PROOF[0], "Bank Proof")
 		self.assertIn("Bank Proof", frappe.get_meta("Customer KYC Document").get_options("kyc_type").split("\n"))
+
+
+# A bank statement photographed on a screen, as two readings of it come out: one with the
+# account right and the MICR beside the IFSC, one with the holder's line. Made-up details.
+STATEMENT_CLEAN = """SAVINGS FUND GENERAL
+683024999 IFsc Code: PUNB0425499
+CIF Id: R70000001 M/O Oper.:
+4254990102054999
+Account Open Date : 06-10-2026"""
+STATEMENT_NOISY = """A/C Ne: 4254990102094999 INp Aadhaar:Xx1234
+MR ANNA VARGHESE ee
+Account Open Late : 06-10-2026"""
+
+
+class TestBankStatement(FrappeTestCase):
+	def test_the_holder_after_a_title(self):
+		self.assertEqual(bank_document.parse(STATEMENT_NOISY)["name"], "ANNA VARGHESE")
+
+	def test_readings_combined_and_the_micr_is_not_the_account(self):
+		found = bank_document.merged([STATEMENT_CLEAN, STATEMENT_NOISY])
+		# The account from the reading that read its codes cleanly - not the noisy one's, nor the MICR.
+		self.assertEqual(found["account_no"], "4254990102054999")
+		self.assertEqual(found["ifsc"], "PUNB0425499")
+		self.assertEqual(found["name"], "ANNA VARGHESE")
+		self.assertNotEqual(bank_document.merged(["683024999 IFSC Code: PUNB0425499"]).get("account_no"), "683024999")
+
+	def test_a_name_a_letter_off_is_the_customers(self):
+		name, note = bank_document.snap_name("Anna Varghsse", "Anna Varghese")
+		self.assertEqual(name, "Anna Varghese")
+		self.assertTrue(note)
+		self.assertEqual(bank_document.snap_name("ANNA VARGHESE", "Anna Varghese"), ("Anna Varghese", None))
+		# Another person is not snapped: that difference is for the eligibility check to show.
+		self.assertEqual(bank_document.snap_name("Kala Vijayakumar", "C K Boban"), ("Kala Vijayakumar", None))
+
+
+class TestBankDetailsSaved(FrappeTestCase):
+	"""The bank fields sit at permission level 1: whoever edits a customer can save them too -
+	not only the Administrator, which silently dropped them for everyone else."""
+
+	def test_a_sales_executive_saves_the_bank_details(self):
+		from a3_sola.tests.fixtures import make_consumer
+
+		email = "bank.saver@a3sola.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": "Bank", "send_welcome_email": 0,
+				"user_type": "System User", "roles": [{"role": "Solar Sales Executive"}]}).insert(ignore_permissions=True)
+		consumer = make_consumer().name
+		frappe.set_user(email)
+		try:
+			doc = frappe.get_doc("Solar Consumer", consumer)
+			self.assertIn(1, doc.get_permlevel_access("write"))
+			doc.bank_account_no = "4254000102054560"
+			doc.bank_ifsc_code = "PUNB0425400"
+			doc.save()
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, ["bank_account_no", "bank_ifsc_code"]),
+			("4254000102054560", "PUNB0425400"))

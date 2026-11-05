@@ -1,5 +1,6 @@
 {#- The rest of the Solar Proposal print, as the client's document lays it out: the solar
-    power plant cost - each option its own table - and the KSEBL expenses; then the terms,
+    power plant cost - each option its own table - and the KSEBL expenses (the item at the left, its number and
+    amount centred, every cell at its row's middle); then the terms,
     payment terms and bank details, the schedule, the warranty, the scope of work and the way
     forward, one after another, as many to a page as fit (print_cover.flow_pages). `rest` is
     print_rest(doc), `letter` the frame's brand; section 3's numbers are rest.sections (3.2 is
@@ -10,7 +11,8 @@
 {%- set sec = rest.sections -%}
 {%- macro amount_rows(rows) -%}
 	{%- for r in rows %}
-	<tr{% if r.bold %} class="b"{% endif %}><td class="c">{{ loop.index }}</td><td{% if r.right %} class="r"{% endif %}>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+	{#- The item starts at the left on every row - the charges and the total too - its amount at the right. -#}
+	<tr{% if r.bold %} class="b"{% endif %}><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td class="c n">{{ r.amount_text }}</td></tr>
 	{%- endfor %}
 {%- endmacro -%}
 
@@ -31,7 +33,7 @@
 	{%- if o.label %}{% set numbered.i = numbered.i + 1 %}
 	<h4{% if not loop.first %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ numbered.i }}.&nbsp; <u>{{ o.label }}</u></h4>
 	{%- endif %}
-	<table class="a3r-table{% if not loop.last %} a3r-table--option{% endif %}">
+	<table class="a3r-table a3r-table--plant{% if not loop.last %} a3r-table--option{% endif %}">
 		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
 		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{{ amount_rows(o.rows) }}
@@ -39,11 +41,11 @@
 	{%- endfor %}
 	{%- if pg.kseb %}
 	<h4{% if pg.options %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ n_options + 1 }}.&nbsp; <u>KSEBL Expenses</u></h4>
-	<table class="a3r-table">
+	<table class="a3r-table a3r-table--kseb">
 		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
 		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{%- for r in rest.kseb %}
-		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item }}</td><td class="c n">{{ r.amount_text }}</td></tr>
 		{%- endfor %}
 	</table>
 	{%- if rest.kseb_note %}<p class="a3r-note">{{ rest.kseb_note }}</p>{% endif %}
@@ -51,11 +53,11 @@
 	{%- if pg.add_ons and rest.add_ons %}
 	{#- What the packages offer beside their price (Solar Package > Optional Add-ons); in no total. -#}
 	<h4{% if pg.options or pg.kseb %} class="a3r-gap"{% endif %}>{{ sec.cost }}.{{ n_options + 2 }}.&nbsp; <u>Optional Add-ons</u></h4>
-	<table class="a3r-table">
+	<table class="a3r-table a3r-table--kseb">
 		<colgroup><col style="width: 10%"><col><col style="width: 16%"></colgroup>
 		<tr><th>Sl. No.</th><th>Item</th><th>Amount<br>(Rs.)</th></tr>
 		{%- for r in rest.add_ons %}
-		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item_html }}</td><td class="r n">{{ r.amount_text }}</td></tr>
+		<tr><td class="c">{{ loop.index }}</td><td>{{ r.item_html }}</td><td class="c n">{{ r.amount_text }}</td></tr>
 		{%- endfor %}
 	</table>
 	{%- endif %}
@@ -82,8 +84,8 @@
 		<tr><td class="r">{{ label }}</td><td class="c" colspan="2">{{ value or "—" }}</td>
 			{%- if qr and loop.first %}
 			<td class="a3r-qr" rowspan="{{ (rest.bank | length) + (rest.bank_credentials | length) }}">
-				<img src="{{ qr }}" alt="Payment QR code">
-				<span>Scan to pay</span>
+				<span class="a3r-qr__head">QR Code for payment</span>
+				<img src="{{ qr }}" alt="QR code for payment">
 			</td>
 			{%- endif %}</tr>
 		{%- endfor %}
@@ -150,6 +152,11 @@
 	.a3r-table, .a3r-bank, .a3r-contact { border-collapse: collapse; width: 100%; table-layout: fixed; }
 	.a3r-table th, .a3r-table td, .a3r-bank td, .a3r-contact td { border: 1px solid #222; padding: 3pt 6pt; vertical-align: middle; }
 	.a3r-table th { text-align: center; font-weight: 700; }
+	/* Shaded as the client's own proposal is: the plant's cost in sky blue, the KSEBL expenses
+	   and the add-ons in pale blue - every cell, its head and total too. Frappe's print style
+	   shades a head grey, so these name .print-format to come after it. */
+	.print-format .a3r-table--plant th, .print-format .a3r-table--plant td, .a3r-table--plant th, .a3r-table--plant td { background: #81ccff !important; }
+	.print-format .a3r-table--kseb th, .print-format .a3r-table--kseb td, .a3r-table--kseb th, .a3r-table--kseb td { background: #d0e6f6 !important; }
 	.a3r .c { text-align: center; }
 	.a3r .r { text-align: right; }
 	.a3r .n { white-space: nowrap; }
@@ -161,6 +168,7 @@
 	.a3r-bank td.a3r-qr { text-align: center; vertical-align: middle; padding: 6pt; }
 	.a3r-qr img { display: block; width: 100%; max-width: 4.2cm; height: auto; margin: 0 auto 4pt; }
 	.a3r-qr span { font-size: 11pt; font-weight: 700; }
+	.a3r-qr .a3r-qr__head { display: block; margin: 0 0 5pt; }
 	.a3r-forward { padding-left: 14pt; }
 	.a3r-forward p { text-align: justify; }
 	.a3r-contact { width: 92%; margin: 8pt auto 0; }

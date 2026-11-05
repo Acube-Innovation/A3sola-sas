@@ -795,7 +795,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 16:17:51.505692",
+ "modified": "2026-11-05 19:46:12.789904",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",
@@ -913,6 +913,56 @@
    "report": 0,
    "export": 0,
    "permlevel": 0
+  },
+  {
+   "role": "System Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Design Engineer",
+   "permlevel": 1,
+   "read": 1
+  },
+  {
+   "role": "Solar Survey Engineer",
+   "permlevel": 1,
+   "read": 1
+  },
+  {
+   "role": "Solar Sales Coordinator",
+   "permlevel": 1,
+   "read": 1
+  },
+  {
+   "role": "Solar Dealer",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Solar Contractor Partner",
+   "permlevel": 1,
+   "read": 1
   }
  ],
  "search_fields": "consumer_name,consumer_number,mobile_no",

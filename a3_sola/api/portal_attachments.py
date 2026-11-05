@@ -79,6 +79,9 @@ def _sync_kyc(consumer_name, file_url, document_type):
 		changed = bool(rows)
 		consumer.set("kyc_documents", [r for r in consumer.get("kyc_documents") or [] if r.attachment != file_url])
 	if changed:
+		# A KYC row recorded, not the customer finished: its required fields are asked for when
+		# its form is saved (a customer made from its lead has no consumer number yet).
+		consumer.flags.ignore_mandatory = True
 		consumer.save(ignore_permissions=True)
 
 
@@ -130,6 +133,9 @@ def supersede(doctype, name, document_type, file_url):
 			kept.append(r)
 		if len(kept) != len(rows):
 			consumer.set("kyc_documents", kept)
+			# A KYC row recorded, not the customer finished: its required fields are asked for when
+			# its form is saved (a customer made from its lead has no consumer number yet).
+			consumer.flags.ignore_mandatory = True
 			consumer.save(ignore_permissions=True)
 	for f in older:
 		frappe.delete_doc("File", f.name, ignore_permissions=True)
@@ -197,7 +203,8 @@ def _read_aadhaar_back(doctype, name, content, filename, password):
 def _read_bank(doctype, name, content, filename, password):
 	from a3_sola.api import bank_document
 
-	fields, warnings = bank_document.read_content(content, filename)
+	known = frappe.db.get_value(CONSUMER, name, "consumer_name") if name else None
+	fields, warnings = bank_document.read_content(content, filename, known)
 	return {"fields": fields, "warnings": warnings}
 
 
@@ -247,7 +254,25 @@ def read_file(doctype, name, file, password=None):
 	out = reader(doctype, name, doc.get_content(), doc.file_name or file, password)
 	# What it was read as, kept on it: the eligibility check's evidence (api/document_evidence).
 	document_evidence.store(file, out.get("fields"))
+	if doctype == CONSUMER and len(out.get("sides") or []) == 2:
+		_both_sides(name, doc.file_url)
 	return dict(out, document_type=document_type)
+
+
+def _both_sides(consumer_name, file_url):
+	"""One Aadhaar file with both sides - a PDF of the front and the back - is the customer's
+	Aadhaar Front and Aadhaar Back: a KYC row for each, so neither is asked for again."""
+	consumer = frappe.get_doc(CONSUMER, consumer_name)
+	rows = consumer.get("kyc_documents") or []
+	added = False
+	for kind in ("Aadhaar Front", "Aadhaar Back"):
+		if not any(r.kyc_type == kind and r.attachment == file_url for r in rows):
+			consumer.append("kyc_documents", {"kyc_type": kind, "attachment": file_url})
+			added = True
+	if added:
+		consumer.flags.ignore_mandatory = True
+		consumer.save(ignore_permissions=True)
+		_refresh_kyc(CONSUMER, consumer_name)
 
 
 @frappe.whitelist(methods=["POST"])
