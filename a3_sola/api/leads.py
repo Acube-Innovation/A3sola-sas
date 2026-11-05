@@ -243,6 +243,20 @@ def dealer_choices(doc=None):
 	return [{"value": r.name, "label": r.full_name or r.name} for r in rows]
 
 
+def owner_choices(doc=None):
+	"""Lead Owner's choices: the company's people, then - for staff - the dealers, marked as
+	such. A dealer chosen here is made the lead's dealer as well (overrides/lead)."""
+	from a3_sola.api.partner_scope import is_partner
+	from a3_sola.api.portal_fields import link_choices
+
+	choices = link_choices("User")
+	if is_partner():
+		return choices
+	staff = {c["value"] for c in choices}
+	return choices + [{"value": d["value"], "label": _("{0} (Dealer)").format(d["label"])}
+		for d in dealer_choices(doc) if d["value"] not in staff]
+
+
 def edit_fields(doc):
 	"""The fields the edit form renders, with their current values.
 
