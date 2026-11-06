@@ -69,8 +69,8 @@ function log_outreach(frm) {
 	d.show();
 }
 
-// The customer's installation site, and the permanent address when it is somewhere else -
-// neither required, filled in when known. The site starts where the lead is.
+// The customer's permanent address, and the installation site when it is somewhere else -
+// neither required, filled in when known. The address starts where the lead is.
 function consumer_address_dialog(frm) {
 	const different = 'eval:doc.permanent_address_same=="No"';
 	const parts = (prefix, when) => {
@@ -91,13 +91,13 @@ function consumer_address_dialog(frm) {
 		title: __("Customer Address"),
 		size: "large",
 		fields: [
-			{ fieldtype: "Section Break", label: __("Installation Site Address") },
-			...parts("site"),
 			{ fieldtype: "Section Break", label: __("Permanent Address") },
-			{ fieldname: "permanent_address_same", fieldtype: "Select", label: __("Permanent Address Same as Installation Site?"),
+			...parts("permanent"),
+			{ fieldtype: "Section Break", label: __("Installation Site Address") },
+			{ fieldname: "permanent_address_same", fieldtype: "Select", label: __("Installation Site Same as Permanent Address?"),
 				options: "Yes\nNo", default: "Yes", reqd: 1 },
 			{ fieldtype: "Section Break", depends_on: different },
-			...parts("permanent", different),
+			...parts("site", different),
 		],
 		primary_action_label: __("Create"),
 		primary_action(values) {
@@ -112,8 +112,8 @@ function consumer_address_dialog(frm) {
 			});
 		},
 	});
-	dialog.set_values({ site_city: frm.doc.city, site_state: frm.doc.state || "Kerala" }).then(() => {
-		if (frm.doc.district) dialog.set_value("site_district", frm.doc.district);
+	dialog.set_values({ permanent_city: frm.doc.city, permanent_state: frm.doc.state || "Kerala" }).then(() => {
+		if (frm.doc.district) dialog.set_value("permanent_district", frm.doc.district);
 	});
 	dialog.show();
 }

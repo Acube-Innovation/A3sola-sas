@@ -38,6 +38,7 @@ class SolarConsumer(Document):
 
 	def validate(self):
 		self.ensure_lead()
+		self.kyc_rows_from_lead()
 		record_links.fill_consumer(self)
 		self.set_addresses()
 		kyc.stamp(self)
@@ -88,6 +89,23 @@ class SolarConsumer(Document):
 		# Every customer is an ERPNext Customer from the start - its name, its category's type
 		# and group, its mobile and email, its installation address - not only once quoted.
 		ensure_customer(self)
+		self.copy_lead_files()
+
+	def kyc_rows_from_lead(self):
+		"""A customer made from its lead holds the lead's KYC papers as its own rows."""
+		from a3_sola.api import portal_attachments
+
+		portal_attachments.kyc_rows_from_lead(self)
+
+	def copy_lead_files(self):
+		"""Whatever is attached to the lead - the KSEB bill, the Aadhaar, the PAN, any other file -
+		is attached to the customer made from it, with the type it was filed as."""
+		if not self.lead:
+			return
+		from a3_sola.api import portal_attachments
+
+		if portal_attachments.copy_lead_files(self.name, self.lead):
+			kyc.refresh(self.name)
 
 	def ensure_lead(self):
 		"""Every customer hangs off a lead - its installation is opened from it - but the lead
@@ -99,14 +117,15 @@ class SolarConsumer(Document):
 		self.lead = open_lead_of(self) or make_lead_for(self)
 
 	def set_addresses(self):
-		"""The installation site is typed on the consumer, part by part. The permanent
-		address is the same place unless the consumer says it is not - it is what the
-		agreement recites as where the consumer resides. Neither is required: a customer is
-		saved without them, and they are filled in when known.
+		"""The permanent address - where the customer lives, read from the Aadhaar card - is
+		typed on the consumer part by part, and the installation site is the same place unless
+		the consumer says it is not; then the site is typed too. Neither is required: a
+		customer is saved without them, and they are filled in when known.
 
 		Each is also kept whole (`installation_site_address`, `permanent_address`), one part
 		to a line, which is what documents print.
 		"""
+		record_chosen = False
 		if self.installation_address and not self.site_address_line1:
 			# Given an Address record instead (the desk, the starter data): its parts.
 			for part, value in address_parts(self.installation_address).items():
@@ -116,19 +135,37 @@ class SolarConsumer(Document):
 			# Another of the customer's addresses chosen as the installation address: its parts.
 			for part, value in address_parts(self.installation_address).items():
 				self.set(f"site_{part}", value)
-		for prefix in ADDRESS_PREFIXES:
-			if prefix == "permanent" and self.permanent_address_same != "No":
-				continue
-			self.validate_address_parts(prefix)
-		self.installation_site_address = self.compose_address("site")
+			record_chosen = True
 		if self.permanent_address_same != "No":
 			self.permanent_address_same = "Yes"
-			# The installation address, unless another of the customer's addresses is chosen.
-			self.permanent_address_record = self.get("permanent_address_record") or self.installation_address
-			chosen = self.permanent_address_record != self.installation_address and address_parts(self.permanent_address_record)
+			# The site is the permanent address. Only where the customer has no permanent address
+			# yet (a customer just made from its lead, or from an Address record), or another
+			# Address record was just chosen as the site, is it the other way round.
+			from_site = record_chosen or not self.has_permanent_address()
+			source, target = ("site", "permanent") if from_site else ("permanent", "site")
+			self.validate_address_parts(source)
 			for part in ADDRESS_PARTS:
-				self.set(f"permanent_{part}", chosen.get(part) if chosen else self.get(f"site_{part}"))
+				self.set(f"{target}_{part}", self.get(f"{source}_{part}"))
+			if not from_site and self.installation_address and not self.record_matches_site():
+				# The site moved with the permanent address: its Address record is made again from
+				# it (ensure_address_record), not left saying the old one.
+				self.installation_address = None
+				self.permanent_address_record = None
+			self.permanent_address_record = self.installation_address or self.get("permanent_address_record")
+		else:
+			for prefix in ADDRESS_PREFIXES:
+				self.validate_address_parts(prefix)
+		self.installation_site_address = self.compose_address("site")
 		self.permanent_address = self.compose_address("permanent")
+
+	def has_permanent_address(self):
+		# Not the state alone: it is Kerala by default.
+		return any(self.get(f"permanent_{part}") for part in ADDRESS_PARTS if part != "state")
+
+	def record_matches_site(self):
+		"""Whether the installation Address record says what the site's parts say."""
+		parts = address_parts(self.installation_address)
+		return all((parts.get(part) or "") == (self.get(f"site_{part}") or "") for part in ("address_line1", "city", "pincode"))
 
 	def ensure_address_record(self):
 		"""The installation site as one of the customer's Address records, made from the parts

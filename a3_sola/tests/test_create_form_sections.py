@@ -18,10 +18,14 @@ class TestCreateFormSections(FrappeTestCase):
 		sections = form_sections(meta, fields)
 		where = {f["fieldname"]: s["label"] for s in sections for f in s["fields"]}
 		self.assertEqual(where["consumer_name"], meta.get_field("sb_1").label)
-		self.assertEqual(where["site_city"], meta.get_field("sb_address").label)
-		# The address asked for when it is not the site's sits under Permanent Address, whose
-		# second Section Break has no heading of its own.
-		self.assertEqual(where["permanent_city"], where["permanent_address_same"])
+		# The permanent address (the Aadhaar card's) comes first; then whether the site is the same
+		# place, and the site's own fields - under the site's heading, their Section Break having
+		# none of its own.
+		self.assertEqual(where["permanent_city"], meta.get_field("sb_permanent_address").label)
+		self.assertEqual(where["permanent_address_same"], meta.get_field("sb_address").label)
+		self.assertEqual(where["site_city"], where["permanent_address_same"])
+		labels = [s["label"] for s in sections]
+		self.assertLess(labels.index(where["permanent_city"]), labels.index(where["site_city"]))
 		self.assertEqual(where["consumer_number"], meta.get_field("sb_3").label)
 		# Every field is placed once, none lost.
 		self.assertEqual(sorted(where), sorted(f["fieldname"] for f in fields))

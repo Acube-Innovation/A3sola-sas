@@ -40,8 +40,10 @@
 	   KSEB bill's, or one typed in - and a different one is shown in a pop-up. Until then
 	   the bill's or the typed name stands. */
 	var AADHAAR = "Aadhaar card", NAME = "consumer_name";
-	/* The permanent address, likewise: the Aadhaar card's, else the KSEB bill's until a card is read. */
-	var PERMANENT = ["permanent_address_same", "permanent_address_line1", "permanent_address_line2", "permanent_city",
+	/* The permanent address, likewise: the Aadhaar card's, else the KSEB bill's until a card is read.
+	   Not the "site the same?" answer: a bill gives the site, so it answers No and shows it beside
+	   the card's address, for the person to say Yes if they are one place. */
+	var PERMANENT = ["permanent_address_line1", "permanent_address_line2", "permanent_city",
 		"permanent_state", "permanent_district", "permanent_pincode"];
 	function permanentFromAadhaar() { return PERMANENT.some(function (n) { return readFrom(n) === AADHAAR; }); }
 

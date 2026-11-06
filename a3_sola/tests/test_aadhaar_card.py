@@ -74,8 +74,9 @@ class TestAadhaarCard(FrappeTestCase):
 				patch.object(frappe.db, "exists", return_value=True):
 			fields, warnings = aadhaar_card.to_fields({**aadhaar_card.parse(FRONT), **aadhaar_card.parse(BACK)})
 		self.assertEqual(warnings, [])
-		# The card's address is where the person lives: the permanent address, not the site.
-		self.assertEqual(fields["permanent_address_same"], "No")
+		# The card's address is where the person lives: the permanent address, not the site. Whether
+		# the site is the same place is the person's answer, not the card's.
+		self.assertNotIn("permanent_address_same", fields)
 		self.assertEqual((fields["permanent_district"], fields["permanent_pincode"]), ("Ernakulam, Kerala", "682030"))
 		self.assertEqual((fields["consumer_name"], fields["date_of_birth"], fields["gender"]), ("Anna Varghese", "1990-08-15", "Female"))
 		self.assertFalse(any(k.startswith("site_") for k in fields))
