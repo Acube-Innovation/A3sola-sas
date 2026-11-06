@@ -2,7 +2,7 @@
  * For license information, please see license.txt
  *
  * A payment task's page (www/a3solaportal/projects/task.html, api/payment_tasks): has the
- * payment been received - Yes files the receipt and sends the task to Accounts; Accounts then
+ * payment been received - Yes sends the task to Accounts, with the receipt if there is one; Accounts then
  * confirms it, completing the task, or sends it back with a reason. Every step redraws the
  * page from the state the server returns.
  */
@@ -59,9 +59,10 @@
 
 	function receipt(s) {
 		var d = s.document;
-		var state = d.file_url ? "Uploaded" : "Missing";
+		/* Optional: a payment is sent to Accounts with or without it. */
+		var state = d.file_url ? "Uploaded" : "Optional";
 		return '<ul class="a3s-taskdocs"><li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
-			'<p class="a3s-taskdocs__name">' + esc(d.name) + ' <span class="a3s-req" title="Required">*</span></p>' +
+			'<p class="a3s-taskdocs__name">' + esc(d.name) + "</p>" +
 			'<p class="a3s-taskdocs__meta"><span class="a3s-taskdocs__state is-' + state.toLowerCase() + '">' + state + "</span></p></div>" +
 			'<div class="a3s-taskdocs__actions">' +
 			(d.file_url ? '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + esc(d.file_url) + '" target="_blank" rel="noopener">Open</a>' : "") +
@@ -274,9 +275,8 @@
 					'<button type="button" class="a3s-btn a3s-btn--secondary" data-answer="no" aria-pressed="' + (answer === "no") + '">Not yet</button></div>';
 				if (answer === "yes") {
 					html += form(s) + '<p class="a3s-paytask__label">Receipt or bank advice</p>' + receipt(s) +
-						'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="send"' +
-						(s.document.file_url ? "" : " disabled") + ">Send to Accounts</button>" +
-						(s.document.file_url ? "" : '<span class="a3s-field__hint">Upload the receipt or bank advice first.</span>') + "</div>";
+						'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="send">' +
+						"Send to Accounts</button></div>";
 				} else if (answer === "no") {
 					html += '<p class="a3s-field__hint" style="margin-top:0.75rem">' + (s.followup && s.followup.open
 						? "Ask for it below and log each ask: you are reminded on the next follow-up day. Choose <b>Yes, received</b> when the payment comes in."

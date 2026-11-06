@@ -57,11 +57,17 @@ class TestAdvancePayment(FrappeTestCase):
 		self.assertIsNone(target["doctype"])
 		self.assertTrue(target["url"].endswith("/tasks/ADV"))
 
-	def test_received_needs_the_receipt(self):
+	def test_received_without_a_receipt_goes_to_accounts(self):
+		"""The receipt or bank advice is not required: the payment goes to Accounts without one."""
 		if payment_tasks.state(self.job, ADV)["document"]["file_url"]:
 			self.skipTest("the job already has a receipt")
-		with self.assertRaises(frappe.ValidationError):
-			payment_tasks.mark_received(self.job, ADV, **PAID)
+		state = payment_tasks.mark_received(self.job, ADV, **PAID)
+		self.assertEqual(state["task"]["status"], payment_tasks.AWAITING)
+		self.assertTrue(state["payments"])
+		self.assertFalse(state["payments"][-1]["receipt"])
+		# Accounts confirms it all the same.
+		state = payment_tasks.confirm(self.job, ADV)
+		self.assertNotEqual(state["task"]["status"], payment_tasks.AWAITING)
 
 	def test_received_goes_to_accounts_who_complete_it(self):
 		file_receipt(self.job)
