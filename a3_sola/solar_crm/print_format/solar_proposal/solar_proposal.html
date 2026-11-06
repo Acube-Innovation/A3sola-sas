@@ -142,7 +142,7 @@
     <tr><th>IFS Code</th><td>{{ company.payee_bank_ifsc or "" }}</td></tr>
   </tbody>
 </table>
-{% if company.payment_qr_code %}<img src="{{ company.payment_qr_code }}" style="height:110px">{% endif %}
+{% if ctx.payment_qr %}<img src="{{ ctx.payment_qr }}" style="height:110px">{% endif %}
 
 {# --- j. Schedule -------------------------------------------------------- #}
 <h2>Schedule of Delivery, Installation and Commissioning</h2>

@@ -753,8 +753,10 @@ def print_rest(doc):
 	out["bank_credentials"] = [("Bank", company.get("payee_bank_name") or ""), ("A/c No.", company.get("payee_bank_account_no") or ""),
 		("Branch", company.get("payee_bank_branch") or ""), ("IFS Code", company.get("payee_bank_ifsc") or "")]
 	# The company's payment QR (Company > Payee Bank > Payment QR Code): a column of its own
-	# beside the bank details, for the customer to scan and pay.
-	out["payment_qr"] = company.get("payment_qr_code") or ""
+	# beside the bank details, for the customer to scan and pay. Carried in the page, as the
+	# logo and layout are, so the PDF shows it even when the file was uploaded private.
+	qr = company.get("payment_qr_code") or ""
+	out["payment_qr"] = (image_src_of(qr) or qr) if qr else ""
 
 	# Warranty, as the client numbers it: the package's system warranty, the modules' performance
 	# warranty, then each option's inverter (and battery) by make and size.
