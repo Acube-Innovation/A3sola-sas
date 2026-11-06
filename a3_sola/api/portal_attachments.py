@@ -43,9 +43,13 @@ def document_types(doctype=None, name=None, installation=None, task=None):
 	return own + [g for g in general if g not in own]
 
 
-#: The types the Attachments card offers, where a record keeps to a few: a customer's KYC papers.
+#: The types the Attachments card offers, where a record keeps to a few: a customer's KYC papers;
+#: a portal application's acknowledgement, feasibility, e-token and net meter agreement.
 #: A file of another type - the KYC card's pre-installation photo - is still accepted.
-OFFERED = {CONSUMER: ("Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN")}
+OFFERED = {
+	CONSUMER: ("Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN"),
+	"Portal Application": ("PM Surya Ghar Acknowledgement", "Feasibility Report", "E-Token", "Net Meter Agreement"),
+}
 
 
 def offered_types(doctype=None, name=None, installation=None, task=None):
@@ -58,7 +62,7 @@ def _kyc_types():
 
 
 def _check_type(document_type, doctype=None, name=None):
-	if document_type and document_type not in document_types(doctype, name):
+	if document_type and document_type not in document_types(doctype, name) and document_type not in OFFERED.get(doctype, ()):
 		frappe.throw(_("{0} is not a document type.").format(document_type), frappe.ValidationError)
 
 

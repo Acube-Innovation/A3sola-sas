@@ -102,6 +102,15 @@ class TestBankDocument(FrappeTestCase):
 		# Other records keep their full list.
 		self.assertIn("Other", portal_attachments.offered_types("Lead"))
 
+	def test_a_portal_application_is_offered_its_four_document_types(self):
+		self.assertEqual(portal_attachments.offered_types("Portal Application"),
+			["PM Surya Ghar Acknowledgement", "Feasibility Report", "E-Token", "Net Meter Agreement"])
+		# Each may be uploaded there, the two new ones included.
+		for kind in ("E-Token", "Net Meter Agreement"):
+			portal_attachments._check_type(kind, "Portal Application")
+		with self.assertRaises(frappe.ValidationError):
+			portal_attachments._check_type("E-Token", "Lead")
+
 	def test_a_bank_proof_is_read_and_counts_for_kyc(self):
 		from a3_sola.api import kyc
 
