@@ -132,19 +132,19 @@
       title: __("Customer Address"),
       size: "large",
       fields: [
-        { fieldtype: "Section Break", label: __("Installation Site Address") },
-        ...parts("site"),
         { fieldtype: "Section Break", label: __("Permanent Address") },
+        ...parts("permanent"),
+        { fieldtype: "Section Break", label: __("Installation Site Address") },
         {
           fieldname: "permanent_address_same",
           fieldtype: "Select",
-          label: __("Permanent Address Same as Installation Site?"),
+          label: __("Installation Site Same as Permanent Address?"),
           options: "Yes\nNo",
           default: "Yes",
           reqd: 1
         },
         { fieldtype: "Section Break", depends_on: different },
-        ...parts("permanent", different)
+        ...parts("site", different)
       ],
       primary_action_label: __("Create"),
       primary_action(values) {
@@ -160,9 +160,9 @@
         });
       }
     });
-    dialog.set_values({ site_city: frm.doc.city, site_state: frm.doc.state || "Kerala" }).then(() => {
+    dialog.set_values({ permanent_city: frm.doc.city, permanent_state: frm.doc.state || "Kerala" }).then(() => {
       if (frm.doc.district)
-        dialog.set_value("site_district", frm.doc.district);
+        dialog.set_value("permanent_district", frm.doc.district);
     });
     dialog.show();
   }
@@ -209,4 +209,4 @@
     frm.add_custom_button(__("Audit Trail"), () => a3_sola.audit.show_trail(frm), group);
   };
 })();
-//# sourceMappingURL=a3_sola.bundle.5Q35BBAB.js.map
+//# sourceMappingURL=a3_sola.bundle.473CLD7O.js.map

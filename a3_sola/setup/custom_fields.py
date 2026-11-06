@@ -116,10 +116,11 @@ CUSTOM_FIELDS = {
 		{"fieldname": "district", "fieldtype": "Link", "options": "Indian District",
 		 "label": "District", "insert_after": "city",
 		 "description": "Districts are offered for the chosen state."},
-		# The dealer who brought the lead in: set when a dealer creates it, or by staff to hand
-		# a lead to a dealer. A dealer sees only his own leads (api/partner_scope).
+		# The dealer who brought the lead in: set when a dealer creates it, or when staff choose a
+		# dealer as its Lead Owner (overrides/lead). A dealer sees only his own leads
+		# (api/partner_scope). Not on the form - Lead Owner offers the dealers.
 		{"fieldname": "a3s_dealer", "fieldtype": "Link", "options": "User", "label": "Dealer",
-		 "insert_after": "lead_owner"},
+		 "insert_after": "lead_owner", "hidden": 1},
 		# Which document each field was read from on the portal - "From KSEB bill" (api/read_from).
 		{"fieldname": "a3s_read_from", "fieldtype": "Small Text", "label": "Read From Documents", "hidden": 1,
 		 "no_copy": 1, "insert_after": "a3s_dealer",

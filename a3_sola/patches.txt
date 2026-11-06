@@ -291,3 +291,5 @@ a3_sola.patches.v1_2.payment_date_task_flow
 a3_sola.patches.v1_2.form1_before_advance
 # Cost tab: Expenses replace Package Cost by Inverter; inverter options keep their panel.
 a3_sola.patches.v1_2.package_expenses
+# A customer made from its lead holds the lead's files and gender.
+a3_sola.patches.v1_2.lead_files_on_customer

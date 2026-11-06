@@ -335,6 +335,8 @@ def upload(doctype, name, document_type=None):
 			_sync_kyc(name, file.file_url, document_type)
 		# Several of a one-only type sent together: the last one sent is kept.
 		supersede(doctype, name, document_type, file.file_url)
+		if doctype == LEAD:
+			mirror_to_customer(name, file.file_url, document_type)
 		# A project task's record: the file is the task's document on the board's panel too.
 		task_files.on_attached(doctype, name, document_type, file.file_url)
 		_fill_field(doctype, name, document_type, file.file_url)
@@ -368,10 +370,96 @@ def set_type(doctype, name, file, document_type=None):
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, document_type)
 	supersede(doctype, name, document_type, file_url)
+	if doctype == LEAD:
+		mirror_to_customer(name, file_url, document_type)
 	task_files.on_attached(doctype, name, document_type, file_url)
 	_fill_field(doctype, name, document_type, file_url)
 	_refresh_kyc(doctype, name)
 	return {"files": _files(doctype, name)}
+
+
+# ------------------------------------------------------------------ the lead's files on its customer
+LEAD = "Lead"
+_FILE_FIELDS = ["file_url", "file_name", "is_private", "a3s_document_type"]
+
+
+def lead_files(lead):
+	return frappe.get_all("File", filters={"attached_to_doctype": LEAD, "attached_to_name": lead, "is_folder": 0},
+		fields=_FILE_FIELDS, order_by="creation asc") if lead else []
+
+
+def kyc_rows_from_lead(consumer):
+	"""A new customer's validate: a KYC row for each of its lead's KYC papers, as an upload on the
+	customer would make one, so the customer is made with them and is not saved again for them."""
+	if not consumer.is_new() or not consumer.get("lead"):
+		return
+	kinds = _kyc_types()
+	have = {(r.kyc_type, r.attachment) for r in consumer.get("kyc_documents") or []}
+	for f in lead_files(consumer.lead):
+		if f.a3s_document_type in kinds and (f.a3s_document_type, f.file_url) not in have:
+			consumer.append("kyc_documents", {"kyc_type": f.a3s_document_type, "attachment": f.file_url})
+			have.add((f.a3s_document_type, f.file_url))
+
+
+def _attach_copy(consumer, f):
+	"""The lead's file attached to the customer too: a File of its own at the same stored file, so
+	it is listed, opened and removed on the customer like one uploaded there."""
+	return frappe.get_doc({
+		"doctype": "File", "file_url": f.file_url, "file_name": f.file_name, "is_private": f.is_private,
+		"attached_to_doctype": CONSUMER, "attached_to_name": consumer, "a3s_document_type": f.a3s_document_type or None,
+	}).insert(ignore_permissions=True)
+
+
+def copy_lead_files(consumer, lead):
+	"""Every file of the lead that the customer does not hold yet, attached to it: when the customer
+	is made from the lead, and for customers made before. The KYC rows are the caller's."""
+	have = set(frappe.get_all("File", filters={"attached_to_doctype": CONSUMER, "attached_to_name": consumer,
+		"is_folder": 0}, pluck="file_url"))
+	copied = []
+	for f in lead_files(lead):
+		if f.file_url and f.file_url not in have:
+			_attach_copy(consumer, f)
+			have.add(f.file_url)
+			copied.append(f)
+	return copied
+
+
+def _customer_of(lead):
+	name = frappe.db.get_value(LEAD, lead, "solar_consumer")
+	return name if name and frappe.db.exists(CONSUMER, name) else None
+
+
+def mirror_to_customer(lead, file_url, document_type=None):
+	"""A file added to, or filed as a type on, a lead that has its customer is the customer's too."""
+	consumer = _customer_of(lead)
+	if not consumer:
+		return
+	copy = frappe.db.get_value("File", {"attached_to_doctype": CONSUMER, "attached_to_name": consumer,
+		"file_url": file_url}, ["name", "a3s_document_type"], as_dict=True)
+	if not copy:
+		f = frappe.db.get_value("File", {"attached_to_doctype": LEAD, "attached_to_name": lead, "file_url": file_url},
+			_FILE_FIELDS, as_dict=True)
+		if not f:
+			return
+		_attach_copy(consumer, f)
+	elif document_type and not copy.a3s_document_type:
+		frappe.db.set_value("File", copy.name, "a3s_document_type", document_type)
+	if document_type:
+		_sync_kyc(consumer, file_url, document_type)
+		supersede(CONSUMER, consumer, document_type, file_url)
+
+
+def unmirror_from_customer(lead, file_url):
+	"""A file removed from the lead goes from its customer too."""
+	consumer = _customer_of(lead)
+	if not consumer:
+		return
+	copies = frappe.get_all("File", filters={"attached_to_doctype": CONSUMER, "attached_to_name": consumer,
+		"file_url": file_url}, pluck="name")
+	if copies:
+		_sync_kyc(consumer, file_url, None)
+	for name in copies:
+		frappe.delete_doc("File", name, ignore_permissions=True)
 
 
 def _attached_url(doctype, name, file):
@@ -390,6 +478,8 @@ def remove(doctype, name, file):
 	if doctype == CONSUMER:
 		_sync_kyc(name, file_url, None)  # its KYC row goes with it
 	frappe.delete_doc("File", file, ignore_permissions=True)
+	if doctype == LEAD:
+		unmirror_from_customer(name, file_url)
 	task_files.on_removed(doctype, name, file_url)
 	_clear_field(doctype, name, file_url)
 	_refresh_kyc(doctype, name)

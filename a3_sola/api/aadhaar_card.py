@@ -203,7 +203,7 @@ def to_fields(parsed):
 			warnings.append(_("District {0} is not among the districts: choose it.").format(address["district"]))
 		fields.update({
 			# The card's address is where the person lives: the permanent address, apart from the site.
-			"permanent_address_same": "No", "permanent_address_line1": address.get("line1"),
+			"permanent_address_line1": address.get("line1"),
 			"permanent_address_line2": address.get("line2"), "permanent_city": address.get("city"),
 			"permanent_state": state, "permanent_district": district, "permanent_pincode": address.get("pincode"),
 		})

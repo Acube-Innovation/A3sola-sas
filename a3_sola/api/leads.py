@@ -36,7 +36,7 @@ LEAD_SECTIONS = [
 	{
 		"key": "lead",
 		"label": "Lead",
-		"fields": ["status", "source", "type", "request_type", "qualification_status", "lead_owner", "a3s_dealer", "territory", "industry", "market_segment", "campaign_name"],
+		"fields": ["status", "source", "type", "request_type", "qualification_status", "lead_owner", "territory", "industry", "market_segment", "campaign_name"],
 	},
 	{
 		"key": "address",
@@ -227,6 +227,8 @@ def lead_snapshot(doc):
 # -------------------------------------------------------------------------- edit page
 #: Fields only staff set. The dealer a lead is handed to decides which dealer sees it, so a
 #: dealer may not move his own lead to another (and it is stamped his when he makes one).
+#: The Dealer field is not on the form: a dealer chosen as Lead Owner is the lead's dealer
+#: (overrides/lead.dealer_from_owner).
 STAFF_ONLY = {"a3s_dealer"}
 
 
