@@ -293,3 +293,5 @@ a3_sola.patches.v1_2.form1_before_advance
 a3_sola.patches.v1_2.package_expenses
 # A customer made from its lead holds the lead's files and gender.
 a3_sola.patches.v1_2.lead_files_on_customer
+# Empty table fields of uninstalled apps (India Compliance, HRMS) no longer stop saves.
+a3_sola.patches.v1_2.drop_orphan_table_fields
