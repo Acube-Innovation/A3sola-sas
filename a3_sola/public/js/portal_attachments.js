@@ -160,7 +160,8 @@
 		var types = [];
 		var readable = [];
 		/* The page's form, which Read fills: none on a view page. */
-		var hasForm = !!document.querySelector("#a3s-record-edit-form, #a3s-record-form, #a3s-lead-edit-form, #a3s-lead-form");
+		/* Asked each time, not once: on a create page the card comes before the form it fills. */
+		function hasForm() { return !!document.querySelector("#a3s-record-edit-form, #a3s-record-form, #a3s-lead-edit-form, #a3s-lead-form"); }
 		var busy = false;
 		/* A record not yet created (data-held): the files picked wait here, as rows, and go up
 		   once the form has created it - window.a3sAttachHeld. */
@@ -224,7 +225,7 @@
 			/* Read: the document read by OCR, its details filled into the form - where there is a
 			   form to fill: the record's edit or create page. A file waiting for a new record is
 			   read from the browser's copy. */
-			if (hasForm && f.document_type && readable.indexOf(f.document_type) !== -1) {
+			if (hasForm() && f.document_type && readable.indexOf(f.document_type) !== -1) {
 				var readBtn = el("button", "a3s-attach__read");
 				readBtn.type = "button";
 				readBtn.title = "Read " + f.file_name + " and fill the form from it";
@@ -399,7 +400,7 @@
 			/* Uploaded, not read: each document is read with its Read, one by one. A task's own
 			   documents (the approval letter) are still read as they are picked. */
 			readInto(last, what);
-			var reads = hasForm && readable.indexOf(what) !== -1;
+			var reads = hasForm() && readable.indexOf(what) !== -1;
 			var then = reads ? " Choose Read on it to fill the form from it." : "";
 			var body = form({ document_type: what });
 			Array.prototype.forEach.call(files, function (file) { body.append("file", file, file.name); });
@@ -482,7 +483,7 @@
 			readable = data.readable || [];
 			fillTypes(typeSelect, types, "", "Document type…");
 			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each." +
-				(hasForm && readable.length ? " Then choose Read on each document to fill the form from it." : "");
+				(hasForm() && readable.length ? " Then choose Read on each document to fill the form from it." : "");
 			paint(data.files || []);
 			drop.hidden = !data.can_upload;
 		}).catch(function (e) { setStatus(e.message, "error"); });
