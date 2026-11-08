@@ -204,13 +204,8 @@
 			html += card("Design Images", imgs, s.images.length ? String(s.images.length) : "");
 		}
 
-		if (s.procurement.length) {
-			html += card("Procurement", '<ul class="a3s-taskdocs">' + s.procurement.map(function (p) {
-				var note = p.locked ? "Submitted - keeps the list it was bought with." : (p.document ? "Draft - follows the BOMs above." : "Not started - will start from the BOMs above.");
-				return '<li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info"><p class="a3s-taskdocs__name">' + esc(p.name) + "</p>" +
-					'<p class="a3s-taskdocs__meta">' + esc(p.status) + " · " + esc(note) + "</p></div></li>";
-			}).join("") + "</ul>");
-		}
+		/* No Procurement card: the procurement tasks are on the project's board, and the draft ones
+		   still follow the BOMs above (api/design_freeze.refresh_procurement). */
 		body.innerHTML = html;
 	}
 

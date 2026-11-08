@@ -51,6 +51,8 @@ def proposal_context(proposal):
 		"consumer": consumer,
 		"survey": survey,
 		"company": company,
+		# The payment QR carried in the page, so the PDF shows it whatever the file's privacy.
+		"payment_qr": _payment_qr(company),
 		"options": options,
 		"packages": packages,
 		"primary_package": primary,
@@ -276,3 +278,10 @@ def _warranty_sentence(make):
 
 def _make_name(make):
 	return frappe.db.get_value("Component Make", make, "make_name") if make else None
+
+
+def _payment_qr(company):
+	from a3_sola.api.documents import image_src
+
+	url = company.get("payment_qr_code") if company else None
+	return (image_src(url) or url) if url else ""

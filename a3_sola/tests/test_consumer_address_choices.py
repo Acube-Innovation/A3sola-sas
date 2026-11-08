@@ -54,13 +54,12 @@ class TestConsumerAddressChoices(FrappeTestCase):
 			"address_line1": "Lake View", "city": "Aluva", "pincode": "683101", "country": "India",
 			"gst_category": "Unregistered", "links": [{"link_doctype": "Solar Consumer", "link_name": doc.name}]}
 			).insert(ignore_permissions=True)
-		doc.permanent_address_record = other.name
-		doc.save(ignore_permissions=True)
-		self.assertEqual((doc.permanent_address_line1, doc.permanent_city), ("Lake View", "Aluva"))
-		self.assertEqual(doc.site_address_line1, "Rose Villa")
 		doc.installation_address = other.name
 		doc.save(ignore_permissions=True)
 		self.assertEqual((doc.site_address_line1, doc.site_city), ("Lake View", "Aluva"))
+		# The site the same as the permanent address: the permanent follows the record chosen.
+		self.assertEqual((doc.permanent_address_line1, doc.permanent_city), ("Lake View", "Aluva"))
+		self.assertEqual(doc.permanent_address_record, other.name)
 
 	def test_the_patch_gives_an_older_customer_its_record(self):
 		from a3_sola.patches.v1_2 import consumer_address_records

@@ -4,7 +4,8 @@
 
 Nothing is filled in for the advance but the payment itself. Whoever takes it says whether it
 has come - how much, into which bank, received by which firm (Renewcore or RIM Projects) - and
-files the receipt or bank advice; the task then goes to Accounts - assigned to them, and they are told -
+files the receipt or bank advice if there is one (it is optional); the task then goes to Accounts - assigned
+to them, and they are told -
 and is done when an accounts person confirms the money is in. Sent back, it waits for the
 payment again, with the reason, and goes back to the person who marked it.
 """
@@ -256,7 +257,8 @@ def _payments(plan, code, status=None, row=None):
 def _new_receipt(inst, code, plan):
 	"""The receipt for a payment being recorded: one posted with it, filed in the job's
 	register (the task's receipt row while it is empty, else a numbered one beside it) - or the
-	receipt already uploaded to the task that no payment has used yet."""
+	receipt already uploaded to the task that no payment has used yet. None without one: the
+	receipt is not required, and can be uploaded later."""
 	from a3_sola.api import documents, portal_tasks
 
 	used = {p.receipt for p in plan.get("payments") or [] if p.receipt}
@@ -268,18 +270,15 @@ def _new_receipt(inst, code, plan):
 			name = "{0} ({1})".format(name, taken + 1)
 		documents.register_document(inst, code, "Solar Installation", inst.name, name, file_url, kind="Uploaded", save=False)
 		return file_url
-	free = _next_receipt(inst, code)
-	if free["file_url"]:
-		return free["file_url"]
-	frappe.throw(_("Upload the {0} for this payment.").format(PAYMENT_TASKS[code].lower()), title=_("Receipt Needed"))
+	return _next_receipt(inst, code)["file_url"] or None
 
 
 @frappe.whitelist(methods=["POST"])
 def mark_received(installation, task_code, amount=None, bank=None, company=None, payment_date=None, mode=None,
 		reference=None):
 	"""A payment has come - `amount` on `payment_date`, by `mode` (with its `reference`), into
-	`bank`, received by `company` (one of the firms) - with its receipt (posted with it, or
-	already uploaded to the task). It goes on the job's payment schedule awaiting Accounts, and
+	`bank`, received by `company` (one of the firms) - with its receipt where there is one (posted
+	with it, or already uploaded to the task); it is not required. It goes on the job's payment schedule awaiting Accounts, and
 	the task to Accounts to confirm. A phase can be paid in parts: each is recorded the same way."""
 	amount, bank, company = flt(amount), (bank or "").strip(), (company or "").strip()
 	payment_date = getdate(payment_date) if payment_date else getdate(today())
@@ -313,8 +312,6 @@ def mark_received(installation, task_code, amount=None, bank=None, company=None,
 			"recorded_by": frappe.session.user, "recorded_on": now_datetime(),
 		})
 		_save_plan(plan)
-	elif not ((_receipt(inst, task_code) or frappe._dict()).attachment):
-		frappe.throw(_("Upload the {0} first.").format(PAYMENT_TASKS[task_code].lower()), title=_("Receipt Needed"))
 	# The task's row shows the latest payment (and so that it awaits Accounts).
 	row.payment_received_by = frappe.session.user
 	row.payment_received_on = now_datetime()

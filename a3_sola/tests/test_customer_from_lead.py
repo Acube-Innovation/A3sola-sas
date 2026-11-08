@@ -86,3 +86,60 @@ class TestEligibilityBeforeDesign(FrappeTestCase):
 		from a3_sola.tests.fixtures import make_consumer
 
 		self.assertFalse(self.estimate_step(make_consumer().name)["blocked"])
+
+
+class TestLeadFilesOnTheCustomer(FrappeTestCase):
+	"""Whatever is attached to the lead is attached to the customer made from it, and a file
+	added to or removed from the lead later goes on or off the customer too."""
+
+	def setUp(self):
+		self.lead = make_lead(lead_name="Files Carried")
+		frappe.db.set_value("Lead", self.lead, {"consumer_number": None, "gender": "Male"})
+
+	def lead_file(self, kind=None, name="bill.txt", content=b"bill"):
+		return frappe.get_doc({"doctype": "File", "file_name": name, "content": content, "is_private": 1,
+			"attached_to_doctype": "Lead", "attached_to_name": self.lead, "a3s_document_type": kind}).insert(
+			ignore_permissions=True)
+
+	def customer_files(self, consumer):
+		return {f.file_url: f.a3s_document_type for f in frappe.get_all("File", filters={
+			"attached_to_doctype": "Solar Consumer", "attached_to_name": consumer}, fields=["file_url", "a3s_document_type"])}
+
+	def make(self):
+		return portal_crud.create_mapped(slug="consumers", source_dt="Lead", source=self.lead)["name"]
+
+	def test_the_leads_files_and_gender_come_across(self):
+		bill = self.lead_file("KSEB Bill")
+		pan = self.lead_file("PAN", "pan.txt", b"pan")
+		other = self.lead_file(None, "note.txt", b"note")
+		consumer = self.make()
+		files = self.customer_files(consumer)
+		self.assertEqual(files.get(bill.file_url), "KSEB Bill")
+		self.assertEqual(files.get(pan.file_url), "PAN")
+		self.assertIn(other.file_url, files)
+		kinds = frappe.get_all("Customer KYC Document", filters={"parent": consumer}, pluck="kyc_type")
+		self.assertIn("PAN", kinds)
+		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, "gender"), "Male")
+
+	def test_a_file_added_to_the_lead_later_goes_on_the_customer(self):
+		from a3_sola.api import portal_attachments
+
+		consumer = self.make()
+		f = self.lead_file("PAN", "pan.txt", b"later")
+		portal_attachments.mirror_to_customer(self.lead, f.file_url, "PAN")
+		self.assertEqual(self.customer_files(consumer).get(f.file_url), "PAN")
+		self.assertIn("PAN", frappe.get_all("Customer KYC Document", filters={"parent": consumer}, pluck="kyc_type"))
+
+		portal_attachments.unmirror_from_customer(self.lead, f.file_url)
+		self.assertNotIn(f.file_url, self.customer_files(consumer))
+		self.assertNotIn("PAN", frappe.get_all("Customer KYC Document", filters={"parent": consumer}, pluck="kyc_type"))
+
+	def test_the_patch_fills_a_customer_made_before(self):
+		from a3_sola.patches.v1_2 import lead_files_on_customer
+
+		consumer = self.make()
+		f = self.lead_file("KSEB Bill", "old.txt", b"before")  # as if it were on the lead, not carried
+		frappe.db.set_value("Solar Consumer", consumer, "gender", None)
+		lead_files_on_customer.execute()
+		self.assertEqual(self.customer_files(consumer).get(f.file_url), "KSEB Bill")
+		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, "gender"), "Male")

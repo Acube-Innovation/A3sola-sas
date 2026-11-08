@@ -65,6 +65,7 @@ CHAIN = {
 				# The lead's number is kept as it was given, whoever's it is.
 				"lead_mobile_no": ("mobile_no", "phone"),
 				"email_id": "email_id",
+				"gender": "gender",
 				"consumer_category": "consumer_category",
 				"discom": "discom",
 				"discom_section": "discom_section",
