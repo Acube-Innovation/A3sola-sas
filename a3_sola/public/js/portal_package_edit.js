@@ -23,13 +23,23 @@
 
 	/* Choices picked from the package's own rows (solar_package.js): an inverter option's Built
 	   with Panel is one of the package's panels. */
+	/* A Pricing Option names the package's own panels, inverters and batteries, as the server
+	   names them (solar_package panel_name, inverter_name, battery_name). */
+	function oneLine(t) { return String(t || "").split(/\s+/).filter(Boolean).join(" "); }
+	function batteryName(r) {
+		return oneLine(r.specification) || [Number(r.battery_voltage) ? Number(r.battery_voltage) + " V" : "",
+			Number(r.battery_capacity_ah) ? Number(r.battery_capacity_ah) + " Ah" : ""].filter(Boolean).join(" x ");
+	}
 	var ROW_SOURCES = {
-		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }]
+		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }],
+		"pricing_options.panel": ["modules", function (r) { return oneLine(r.module_specification); }],
+		"pricing_options.inverter": ["inverters", function (r) { return oneLine(r.inverter_specification); }],
+		"pricing_options.battery": ["batteries", batteryName]
 	};
 	/* The Item field of each table (the expense tables' own, besides the spec rows'). */
 	var ITEM_FIELD = { kseb_expenses: "particulars", mounting_expenses: "item", installation_expenses: "item", components: "item" };
 	Object.keys(pkg.item_text).forEach(function (t) { ITEM_FIELD[t] = pkg.item_text[t][0]; });
-	var ONE_DEFAULT = { modules: 1, inverters: 1 };
+	var ONE_DEFAULT = { modules: 1, inverters: 1, pricing_options: 1 };
 	/* A row's amount is its rate times its count, as the server works it out on save. */
 	var ROW_AMOUNT = { modules: ["rate", "module_count"], batteries: ["rate", "nos"] };
 	/* A grid's first column that shows the row's Item in bold with its text under it. */
@@ -84,6 +94,14 @@
 	function totalExpenses() {
 		if (!pkg.tables.expenses) return;
 		pkg.values.total_expenses = pkg.tables.expenses.rows.reduce(function (sum, r) { return sum + (Number(r.amount) || 0); }, 0);
+	}
+	/* The Package Cost is the default pricing option's, as the rows change (again on save). */
+	function packageCostFromPricing() {
+		var rows = (pkg.tables.pricing_options && pkg.tables.pricing_options.rows) || [];
+		var row = rows.find(function (r) { return r.is_default; }) || rows[0];
+		pkg.values.package_cost = row ? Number(row.cost) || 0 : 0;
+		var shown = panels.querySelector('[data-ro="package_cost"]');
+		if (shown) shown.textContent = money(pkg.values.package_cost);
 	}
 	/* The Total Package Cost as the rows change: the default panel's Total Panel Rate, the default
 	   inverter's rate x nos, the batteries, the default Balance of System rows and the KSEB,
@@ -438,6 +456,7 @@
 			if (adding) rows.push(draft); else rows[index] = draft;
 			keepDefaults(table, draft, adding);
 			if (table === "expenses") totalExpenses();
+			if (table === "pricing_options") packageCostFromPricing();
 			totalPackageCost();
 			m.close();
 			touch();
@@ -529,6 +548,7 @@
 		if (e.target.closest("[data-remove-row]")) {
 			pkg.tables[table].rows.splice(i, 1);
 			if (table === "expenses") totalExpenses();
+			if (table === "pricing_options") packageCostFromPricing();
 			totalPackageCost();
 			touch();
 			paint();

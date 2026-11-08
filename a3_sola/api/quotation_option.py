@@ -113,6 +113,16 @@ def option_doc(estimate, proposal=None, quotation=None):
 
 def render(estimate, proposal=None, quotation=None):
 	"""The three tabs' HTML for one option: details, bill of materials (with the price), terms."""
+	ctx = option_context(estimate, proposal, quotation)
+	out = {}
+	for part in ("details", "bom", "terms", "preview"):
+		out[part] = frappe.render_template("a3_sola/templates/includes/quotation_option.html", dict(ctx, part=part))
+	return out
+
+
+def option_context(estimate, proposal=None, quotation=None):
+	"""What quotation_option.html is rendered with for one option - also the sales order's
+	tabs (api/sales_order_option), which show the quotation's option the same way."""
 	doc = option_doc(estimate, proposal, quotation)
 	# The lead's loan answer, as the quotation carries it (Loan Required, read-only).
 	if quotation:
@@ -120,16 +130,16 @@ def render(estimate, proposal=None, quotation=None):
 	else:
 		lead = frappe.db.get_value("Solar Design Estimate", estimate, "lead")
 		loan = (frappe.db.get_value("Lead", lead, "loan_required") if lead else None) or "Not stated"
-	ctx = {
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import bom_tables
+
+	return {
 		"opt": _option(estimate, 0), "proposal": proposal, "summary": print_summary(doc), "loan": loan,
 		"components": print_components(doc), "rest": print_rest(doc),
+		# The estimate's Material BOM, Structure BOM and Expenses, for the BOM tab.
+		"boms": bom_tables(estimate),
 		"quote": quotation_price(quotation) if quotation else None,
 		"money": lambda v: frappe.utils.fmt_money(flt(v), currency="INR"),
 	}
-	out = {}
-	for part in ("details", "bom", "terms", "preview"):
-		out[part] = frappe.render_template("a3_sola/templates/includes/quotation_option.html", dict(ctx, part=part))
-	return out
 
 
 @frappe.whitelist()

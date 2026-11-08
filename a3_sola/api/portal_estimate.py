@@ -50,9 +50,10 @@ SCHEME_SUFFIX = re.compile(r"\s*\((?:PM Surya Ghar|Non-Subsidy)\)\s*$", re.IGNOR
 
 # Rebuilt from the package when an option is first worked out as an estimate of its own.
 KIT_TABLES = ("panels", "inverters", "batteries", "bos_items", "options", "quoted_options",
-	"kseb_expenses", "mounting_expenses", "installation_expenses", "optional_add_ons", "cashflow")
+	"kseb_expenses", "mounting_expenses", "installation_expenses", "optional_add_ons", "cashflow",
+	"material_bom", "structure_bom", "bom_expenses")
 KIT_FIELDS = ("equipment_package", "bos_package", "bos_basis", "included_inverter_options",
-	"excluded_inverter_makes", "recommended_option")
+	"excluded_inverter_makes", "recommended_option", "bom_basis")
 # Rows worked out in memory, before a save, are named with this so a change can point at them.
 TEMP_ROW = "tmp-"
 
@@ -182,6 +183,20 @@ LINKED_SECTIONS = (
 )
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
 
+# A BOM table's row, as the package's: an Item, its UOM, how many and at what rate.
+BOM_FIELDS = (
+	{"fieldname": "item", "choices": "bom_item", "required": True},
+	{"fieldname": "uom", "choices": "uom", "hint": "Left blank, the Item's own unit."},
+	{"fieldname": "qty"},
+	{"fieldname": "rate"},
+)
+BOM_SECTION = {
+	"fields": BOM_FIELDS, "computed": ("category", "amount"),
+	# Not a line of the commercials: the tab's total is its own rows'.
+	"record": True,
+	"compact": {"title": (("item", ""),), "sub": (("category", ""), ("uom", "")), "count": "qty"},
+}
+
 # After the charges: the estimate's own table of extras offered beside the system, copied
 # from the package. An Option is shown and printed in the proposal; one that is not is priced.
 TRAILING_SECTIONS = (
@@ -200,6 +215,12 @@ TRAILING_SECTIONS = (
 	), "computed": ("nos", "amount"),
 		"compact": {"title": (("add_on_type", ""), ("panel_make", ""), ("panel_capacity_wp", " Wp")),
 			"sub": (("item", ""),)}},
+	# Last, the job's bill of materials and what it costs to build, copied from the package for
+	# the estimate's inverter and roof (Solar Design Estimate.fill_boms_from_package) and changed
+	# here when this job needs otherwise. A record: the commercials are not built from them.
+	{"key": "material_bom", "label": "Material BOM", "icon": "stack", **BOM_SECTION},
+	{"key": "structure_bom", "label": "Structure BOM", "icon": "wrench", **BOM_SECTION},
+	{"key": "bom_expenses", "label": "Expenses", "icon": "receipt", **BOM_SECTION},
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
 
@@ -250,9 +271,10 @@ def estimate_prefill(values):
 	"""A new estimate's details from the records it is raised from, so none is asked again.
 
 	`values` names any of the lead, consumer and survey. The survey brings its consumer, the
-	consumer its lead; then the consumer (else the lead) gives the connection type and KSEB
-	tariff code, and a survey with batteries in scope makes the system Hybrid. Each record
-	is read only if the person may read it.
+	consumer its lead, and its own answers for the options - the system (Hybrid with batteries
+	in scope), the phase found on site, the subsidy and the size (site_survey.estimate_answers);
+	then the consumer (else the lead) gives the connection type the survey did not, and the
+	KSEB tariff code. Each record is read only if the person may read it.
 	"""
 	from a3_sola.solar_crm.doctype.kseb_tariff_category.kseb_tariff_category import kseb_code
 
@@ -261,29 +283,41 @@ def estimate_prefill(values):
 	def readable(doctype, name):
 		return bool(name) and frappe.db.exists(doctype, name) and frappe.has_permission(doctype, "read", name)
 
-	survey = frappe.get_doc("Site Survey", out["site_survey"]) if readable("Site Survey", out.get("site_survey")) else None
-	if survey:
-		out.setdefault("solar_consumer", survey.solar_consumer)
-		out.setdefault("lead", survey.lead)
-		if cint(survey.get("batteries_in_scope")):
-			out.setdefault("system_type", "Hybrid")
-	consumer = (frappe.db.get_value("Solar Consumer", out["solar_consumer"],
-		["lead", "connection_type", "tariff_category"], as_dict=True)
+	def fill(key, value):
+		"""Into an empty key only: what was asked for, or found first, stands."""
+		if value and not out.get(key):
+			out[key] = value
+
+	from a3_sola.solar_crm.doctype.site_survey.site_survey import estimate_answers
+
+	# Who it is for, each record found from the others: the survey names its consumer and lead,
+	# the consumer its lead, the lead its consumer.
+	if readable("Site Survey", out.get("site_survey")):
+		survey_of = frappe.db.get_value("Site Survey", out["site_survey"], ["solar_consumer", "lead"], as_dict=True)
+		fill("solar_consumer", survey_of.solar_consumer)
+		fill("lead", survey_of.lead)
+	if readable("Solar Consumer", out.get("solar_consumer")):
+		fill("lead", frappe.db.get_value("Solar Consumer", out["solar_consumer"], "lead"))
+	if readable("Lead", out.get("lead")) and not out.get("solar_consumer"):
+		out["solar_consumer"] = frappe.db.get_value("Lead", out["lead"], "solar_consumer")
+	if not out.get("site_survey") and out.get("solar_consumer"):
+		# The consumer's survey, the submitted one first, as the estimate itself picks it.
+		out["site_survey"] = (frappe.get_all("Site Survey", filters={"solar_consumer": out["solar_consumer"],
+			"docstatus": ("<", 2)}, pluck="name", order_by="docstatus desc, creation desc", limit=1) or [None])[0]
+
+	# The survey's answers first: the phase found on site over the one on record.
+	if readable("Site Survey", out.get("site_survey")):
+		for fieldname, value in estimate_answers(frappe.get_doc("Site Survey", out["site_survey"])).items():
+			fill(fieldname, "{0:g}".format(value) if fieldname == "override_capacity_kw" else value)
+	consumer = (frappe.db.get_value("Solar Consumer", out["solar_consumer"], ["connection_type", "tariff_category"], as_dict=True)
 		if readable("Solar Consumer", out.get("solar_consumer")) else None)
 	if consumer:
-		out.setdefault("lead", consumer.lead)
-		out.setdefault("connection_type", consumer.connection_type)
+		fill("connection_type", consumer.connection_type)
 		code = kseb_code(consumer.tariff_category) if consumer.tariff_category else None
 		if code:
-			out.setdefault("tariff_code", code)
+			fill("tariff_code", code)
 	if readable("Lead", out.get("lead")):
-		if not out.get("solar_consumer"):
-			out["solar_consumer"] = frappe.db.get_value("Lead", out["lead"], "solar_consumer")
-		out.setdefault("connection_type", frappe.db.get_value("Lead", out["lead"], "connection_type"))
-		if not out.get("site_survey") and out.get("solar_consumer"):
-			# The consumer's survey, the submitted one first, as the estimate itself picks it.
-			out["site_survey"] = (frappe.get_all("Site Survey", filters={"solar_consumer": out["solar_consumer"],
-				"docstatus": ("<", 2)}, pluck="name", order_by="docstatus desc, creation desc", limit=1) or [None])[0]
+		fill("connection_type", frappe.db.get_value("Lead", out["lead"], "connection_type"))
 	return {k: v for k, v in out.items() if v}
 
 
@@ -326,7 +360,7 @@ def detail_columns(doc=None, prefill=None):
 					# the packages for its connection type.
 					from a3_sola.solar_crm.doctype.solar_package.solar_package import package_phases
 
-					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type", "capacity_kw"],
+					info = {r.name: r for r in frappe.get_all("Solar Package", fields=["name", "is_dcr_compliant", "system_type", "capacity_kw", "status"],
 						filters={"name": ["in", [c["value"] for c in choices]]})}
 					for c in choices:
 						c["phases"] = "|".join(sorted(package_phases(c["value"])))
@@ -337,6 +371,8 @@ def detail_columns(doc=None, prefill=None):
 						c["system_type"] = pkg.system_type or ""
 						# The capacity typed on the option narrows the list to packages of that size.
 						c["capacity"] = "{0:g}".format(flt(pkg.capacity_kw)) if pkg.capacity_kw else ""
+						# Of the packages that fit, an Active one is picked before a Draft one.
+						c["status"] = pkg.status or ""
 						# The list already follows the option's Subsidy, so the scheme in brackets
 						# at the end of the name ("(PM Surya Ghar)", "(Non-Subsidy)") is not repeated.
 						c["label"] = SCHEME_SUFFIX.sub("", c["label"]) or c["label"]
@@ -357,11 +393,20 @@ def detail_columns(doc=None, prefill=None):
 					# The consumer each survey is of, so surveys follow the lead and consumer
 					# chosen. A survey has no name of its own, so it reads as its consumer's,
 					# with its id under it.
-					surveys = {r.name: r for r in frappe.get_all("Site Survey", fields=["name", "solar_consumer", "customer_name"],
-						filters={"name": ["in", [c["value"] for c in choices]]})}
+					from a3_sola.solar_crm.doctype.site_survey.site_survey import estimate_answers
+
+					surveys = {r.name: r for r in frappe.get_all("Site Survey", fields=["name", "solar_consumer", "customer_name",
+						"system_type", "connection_type", "subsidy_option", "recommended_capacity_kw", "capacity_applied_kw",
+						"batteries_in_scope"], filters={"name": ["in", [c["value"] for c in choices]]})}
 					for c in choices:
 						row = surveys.get(c["value"])
 						c["consumer"] = row.solar_consumer if row else ""
+						# Its answers, which a survey chosen here gives the options (site_survey.estimate_answers).
+						answers = estimate_answers(row) if row else {}
+						c["system_type"] = answers.get("system_type") or ""
+						c["phase"] = answers.get("connection_type") or ""
+						c["subsidy"] = answers.get("subsidy_option") or ""
+						c["capacity"] = "{0:g}".format(answers["override_capacity_kw"]) if answers.get("override_capacity_kw") else ""
 						if row and row.customer_name:
 							c["label"] = row.customer_name
 							c["show_id"] = True
@@ -605,6 +650,11 @@ def _choices(doc):
 		"battery_technology": technologies("Battery"),
 		"battery_make": makes("Battery"),
 		"bos_item": [{"value": v, "label": v} for v in bos_items],
+		# A BOM row's Item: any but the packages themselves, and its unit.
+		"bom_item": [{"value": r.name, "label": r.item_name if r.item_name == r.name else "{0} ({1})".format(r.item_name, r.name)}
+			for r in frappe.get_all("Item", filters={"disabled": 0, "item_group": ["!=", "Solar Packages"]},
+				fields=["name", "item_name"], order_by="item_name")],
+		"uom": [{"value": u, "label": u} for u in frappe.get_all("UOM", filters={"enabled": 1}, pluck="name", order_by="name")],
 		"bos_make": bos_make,
 		"mounting_make": makes("Mounting Structure"),
 	}
@@ -722,6 +772,9 @@ def _section(doc, section, child, rows):
 		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
 		"columns": columns, "fields": fields,
 		"rows": rows,
+		# A table kept for the record (the BOM tabs) totals its own rows; the others show
+		# their line of the commercials.
+		"total": flt(sum(flt(r["values"].get("amount")) for r in rows), 2) if section.get("record") else None,
 	}
 
 
@@ -950,9 +1003,25 @@ def _compute(doc, tag):
 	doc._set_defaults()
 	doc.run_method("before_validate")
 	doc.run_method("validate")
+	_name_new_rows(doc, tag)
+
+
+def _name_new_rows(doc, tag):
 	for child in doc.get_all_children():
 		if not child.name:
 			child.name = "{0}{1}-{2}-{3}".format(TEMP_ROW, tag, child.parentfield, child.idx)
+
+
+def _boms_from_package(doc):
+	"""An estimate saved before it had BOM tables, and not saved since, shows its package's
+	rows as its next save will copy them - named, so a draft's can be changed before that save."""
+	if doc.is_new() or cint(doc.docstatus) == 2 or doc.get("bom_basis") or not doc.get("solar_package"):
+		return
+	if any(doc.get(field) for field in ("material_bom", "structure_bom", "bom_expenses")):
+		return
+	doc.fill_boms_from_package()
+	doc.compute_boms()
+	_name_new_rows(doc, "0")
 
 
 def _apply_change(doc, change):
@@ -1010,6 +1079,8 @@ def _work(doc, changes):
 	row just changed by (an Option just unticked is the one priced)."""
 	if doc.is_new():
 		_compute(doc, "0")
+	else:
+		_boms_from_package(doc)
 	for n, change in enumerate(changes or [], start=1):
 		doc._doc_before_save = frappe.get_doc(doc.as_dict())
 		_apply_change(doc, change)

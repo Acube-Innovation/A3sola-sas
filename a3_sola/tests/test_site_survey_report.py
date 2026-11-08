@@ -18,7 +18,7 @@ class TestSiteSurveyReport(FrappeTestCase):
 		self.survey = make_survey(self.consumer, segments=((240, True),), submit=False)
 
 	def fill(self, **values):
-		self.survey.update({"site_visit_for": "KSEB", "system_type": "On-grid", "parapet_available": 1,
+		self.survey.update({"site_visit_for": "KSEB", "system_type": "On-Grid", "parapet_available": 1,
 			"parapet_height_cm": 90, "total_dc_length_m": 30, "dc_earthing_ground": "Soil", "supply_type": "LT",
 			"incomer": "63A MCB", **values})
 		self.survey.save(ignore_permissions=True)

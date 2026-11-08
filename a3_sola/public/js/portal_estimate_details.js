@@ -405,11 +405,14 @@
 				if (off && o.value === pkg.value) why = off;
 			});
 			var dropped = pkg.selectedOptions[0];
+			var said = "";
 			if (dropped && dropped.disabled) {
 				pkg.value = "";
-				setStatus(droppedNote(dropped, why, phaseValue, system ? system.value : ""));
+				said = droppedNote(dropped, why, phaseValue, system ? system.value : "");
+				setStatus(said);
 			} else if (capNote) {
-				setStatus(capNote);
+				said = capNote;
+				setStatus(said);
 			} else if (options.length && !fitting.length) {
 				/* Nothing fits: say which choice empties the list rather than show it blank. */
 				var subsidyValue = subsidy ? subsidy.value : "";
@@ -418,10 +421,17 @@
 						? "Every package that fits is a subsidy (DCR) package - add a non-subsidy package, or choose With Subsidy."
 						: "Add a package for these choices, or change them."));
 			}
-			/* One package left for these choices: it is the one. */
+			/* One package left for these choices: it is the one. With a size to go by, several
+			   left: the best of them - an Active package before a Draft one, else the first - and
+			   the page says which. A package cleared by hand is left clear. */
 			if (!pkg.value && fitting.length === 1) {
 				pkg.value = fitting[0].value;
 				pkg.dispatchEvent(new Event("a3s:sync"));
+			} else if (!pkg.value && fitting.length > 1 && cap > 0 && tr.dataset.autoPick !== "off") {
+				var best = fitting.filter(function (o) { return o.dataset.packageStatus === "Active"; })[0] || fitting[0];
+				pkg.value = best.value;
+				pkg.dispatchEvent(new Event("a3s:sync"));
+				setStatus((said ? said + " " : "") + "\u201c" + best.textContent.trim() + "\u201d was chosen for this option as the nearest fit; choose another if it suits better.");
 			}
 		}
 	}
@@ -454,6 +464,7 @@
 		expandInverters(tr);
 		tr.addEventListener("change", function (event) {
 			if (event.target.matches("[data-include]")) return;
+			if (event.target.matches('[data-field="solar_package"]')) tr.dataset.autoPick = event.target.value ? "" : "off";
 			setStatus("");  // what the last change said no longer applies
 			applyRowConditions(tr);
 			expandInverters(tr);
@@ -555,6 +566,30 @@
 
 	optionRows().forEach(wireRow);
 	renumber();
+	/* A survey chosen here gives its answers to the options not yet given a package: the
+	   system, the phase found on site, the subsidy and the size (site_survey.estimate_answers);
+	   the package then follows them. */
+	if (surveyField) {
+		surveyField.addEventListener("change", function () {
+			var picked = surveyField.value && optionOf(surveyField, surveyField.value);
+			if (!picked) return;
+			var answers = { system_type: picked.dataset.systemType, connection_type: picked.dataset.phase,
+				subsidy_option: picked.dataset.subsidy, override_capacity_kw: picked.dataset.capacity };
+			optionRows().forEach(function (tr) {
+				var pkg = tr.querySelector('[data-field="solar_package"]');
+				if (tr.dataset.locked || (pkg && pkg.value)) return;
+				var changed = false;
+				Object.keys(answers).forEach(function (name) {
+					var el = tr.querySelector('[data-field="' + name + '"]');
+					if (!el || !answers[name] || el.value === answers[name]) return;
+					el.value = answers[name];
+					el.dispatchEvent(new Event("a3s:sync"));
+					changed = true;
+				});
+				if (changed) { applyRowConditions(tr); expandInverters(tr); }
+			});
+		});
+	}
 	/* The tariff decides whether any option may take subsidy. */
 	var tariffForRows = document.getElementById("fld-tariff_code");
 	if (tariffForRows) tariffForRows.addEventListener("change", function () { optionRows().forEach(applyRowConditions); });
@@ -572,13 +607,15 @@
 		});
 	}
 
-	/* Only the ticked options are saved; the first of them is the recommended one. */
+	/* Only the ticked options are saved; the first of them is the recommended one. The panel,
+	   inverter and battery go too though their lists are hidden: they are what makes one
+	   option of a package differ from the next (fillComponents blanks one that does not apply). */
 	function collectOptions() {
 		var recommended = recommendedRow();
 		return optionRows().filter(function (tr) { return tr.querySelector("[data-include]").checked; }).map(function (tr) {
 			var row = { name: tr.dataset.name || null, is_recommended: tr === recommended ? 1 : 0 };
 			Array.prototype.forEach.call(tr.querySelectorAll("[data-field]"), function (el) {
-				if (!el.closest("[hidden]")) row[el.dataset.field] = el.value;
+				if (el.dataset.component || !el.closest("[hidden]")) row[el.dataset.field] = el.value;
 			});
 			return row;
 		});

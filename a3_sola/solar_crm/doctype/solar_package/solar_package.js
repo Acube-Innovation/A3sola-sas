@@ -33,7 +33,45 @@ function refresh_panel_choices(frm) {
 	const panels = [...new Set((frm.doc.modules || []).map((r) => r.module_specification).filter(Boolean))];
 	grid.update_docfield_property("panel_specification", "options", [""].concat(panels).join("\n"));
 	grid.refresh();
+	refresh_pricing_choices(frm);
 }
+
+// A Pricing Option names the package's own panels, inverters and batteries, as solar_package.py
+// names them (panel_name, inverter_name, battery_name): each dropdown is rebuilt from those rows.
+const one_line = (text) => (text || "").split(/\s+/).filter(Boolean).join(" ");
+const battery_name = (row) => one_line(row.specification) || [
+	flt(row.battery_voltage) ? `${flt(row.battery_voltage)} V` : "",
+	flt(row.battery_capacity_ah) ? `${flt(row.battery_capacity_ah)} Ah` : "",
+].filter(Boolean).join(" x ");
+
+function refresh_pricing_choices(frm) {
+	const grid = frm.fields_dict.pricing_options && frm.fields_dict.pricing_options.grid;
+	if (!grid) return;
+	const names = (rows, name) => [...new Set((rows || []).map(name).filter(Boolean))];
+	grid.update_docfield_property("panel", "options",
+		[""].concat(names(frm.doc.modules, (r) => one_line(r.module_specification))).join("\n"));
+	grid.update_docfield_property("inverter", "options",
+		[""].concat(names(frm.doc.inverters, (r) => one_line(r.inverter_specification))).join("\n"));
+	grid.update_docfield_property("battery", "options", [""].concat(names(frm.doc.batteries, battery_name)).join("\n"));
+	grid.refresh();
+}
+
+// The Package Cost is the default pricing option's (solar_package.py does it again on save).
+function package_cost_from_pricing(frm) {
+	const rows = frm.doc.pricing_options || [];
+	const row = rows.find((r) => r.is_default) || rows[0];
+	frm.set_value("package_cost", row ? flt(row.cost) : 0);
+}
+
+frappe.ui.form.on("Solar Package Pricing Option", {
+	is_default(frm, cdt, cdn) {
+		keep_one_default(frm, "pricing_options", cdt, cdn);
+		package_cost_from_pricing(frm);
+	},
+	pricing_options_add: (frm, cdt, cdn) => default_the_first(frm, "pricing_options", cdt, cdn),
+	cost: (frm) => package_cost_from_pricing(frm),
+	pricing_options_remove: (frm) => package_cost_from_pricing(frm),
+});
 
 frappe.ui.form.on("Solar Package", {
 	// Batteries count towards the Total Package Cost on an Off-Grid or Hybrid package only.
@@ -291,9 +329,13 @@ frappe.ui.form.on("Solar Package Inverter", {
 	inverters_add: (frm, cdt, cdn) => default_the_first(frm, "inverters", cdt, cdn),
 
 	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
+	inverter_specification: (frm) => refresh_pricing_choices(frm),
 	unit_rate: (frm) => total_the_package(frm),
 	inverter_count: (frm) => total_the_package(frm),
-	inverters_remove: (frm) => total_the_package(frm),
+	inverters_remove(frm) {
+		total_the_package(frm);
+		refresh_pricing_choices(frm);
+	},
 });
 
 // The batteries and the KSEB, Mounting and Installation rows are the estimate's doctypes too:
@@ -302,7 +344,13 @@ frappe.ui.form.on("Design Estimate Battery", {
 	rate: battery_amount,
 	nos: battery_amount,
 	is_option: (frm) => total_the_package(frm),
-	batteries_remove: (frm) => total_the_package(frm),
+	batteries_remove(frm) {
+		total_the_package(frm);
+		if (frm.doctype === "Solar Package") refresh_pricing_choices(frm);
+	},
+	specification: (frm) => frm.doctype === "Solar Package" && refresh_pricing_choices(frm),
+	battery_voltage: (frm) => frm.doctype === "Solar Package" && refresh_pricing_choices(frm),
+	battery_capacity_ah: (frm) => frm.doctype === "Solar Package" && refresh_pricing_choices(frm),
 });
 
 function battery_amount(frm, cdt, cdn) {

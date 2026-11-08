@@ -464,7 +464,7 @@
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
-		$("de-saved-total").textContent = money.format(lineAmount(s.key));
+		$("de-saved-total").textContent = money.format(s.total != null ? s.total : lineAmount(s.key));
 		$("de-add").hidden = !state.editable;
 		$("de-add").disabled = busy;
 		var body = $("de-saved");

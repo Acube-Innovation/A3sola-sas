@@ -64,6 +64,13 @@
   "installation_expenses",
   "sb_add_ons",
   "optional_add_ons",
+  "sb_material_bom",
+  "material_bom",
+  "sb_structure_bom",
+  "structure_bom",
+  "sb_bom_expenses",
+  "bom_expenses",
+  "bom_basis",
   "sb_7",
   "options",
   "excluded_inverter_makes",
@@ -513,6 +520,54 @@
    "options": "Design Estimate Add-on"
   },
   {
+   "fieldname": "sb_material_bom",
+   "fieldtype": "Section Break",
+   "label": "Material BOM",
+   "collapsible": 1,
+   "description": "What the system is built from, copied from the package for this estimate's inverter; change it if this job needs otherwise. A record: the price is not built from it."
+  },
+  {
+   "fieldname": "material_bom",
+   "fieldtype": "Table",
+   "label": "Material BOM",
+   "options": "Design Estimate BOM Item"
+  },
+  {
+   "fieldname": "sb_structure_bom",
+   "fieldtype": "Section Break",
+   "label": "Structure BOM",
+   "collapsible": 1,
+   "description": "The mounting structure's materials, copied from the package for this estimate's roof type and capacity."
+  },
+  {
+   "fieldname": "structure_bom",
+   "fieldtype": "Table",
+   "label": "Structure BOM",
+   "options": "Design Estimate BOM Item"
+  },
+  {
+   "fieldname": "sb_bom_expenses",
+   "fieldtype": "Section Break",
+   "label": "Expenses",
+   "collapsible": 1,
+   "description": "What the job costs to build, copied from the package."
+  },
+  {
+   "fieldname": "bom_expenses",
+   "fieldtype": "Table",
+   "label": "Expenses",
+   "options": "Design Estimate BOM Item"
+  },
+  {
+   "fieldname": "bom_basis",
+   "fieldtype": "Data",
+   "label": "BOM Basis",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The package, inverter and roof the three tables were copied for: they are copied again when any of them changes."
+  },
+  {
    "fieldname": "sb_7",
    "fieldtype": "Section Break",
    "label": "Options",
@@ -858,7 +913,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-02 12:00:00.000000",
+ "modified": "2026-11-08 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

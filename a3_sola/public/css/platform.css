@@ -3351,6 +3351,13 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt-text small { color: var(--color-text-muted); }
 .a3s-qf__price { font-weight: 700; white-space: nowrap; }
 .a3s-qf [data-html].is-loading { opacity: 0.55; }
+/* The sales order page (portal_sales_order_form.html) is the quotation page's layout: a
+   quotation that cannot be ordered is shown faded, with why, and cannot be picked. */
+.a3s-qf__opt.is-off { opacity: 0.62; }
+.a3s-qf__opt.is-off:hover, .a3s-qf__opt.is-off:focus-visible { opacity: 0.85; }
+.a3s-qf__opt-text .a3s-sf__why { color: var(--color-danger); font-weight: 600; }
+.a3s-sf__dates { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); }
+.a3s-sf__dates .a3s-field { align-content: start; }  /* a hint under one date leaves the other's box as it is */
 
 /* list: the Edit column - a small link to where the record is edited */
 .a3s-table__edit {

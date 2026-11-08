@@ -72,7 +72,9 @@
   "tab_pricing",
   "package_cost",
   "cb_pricing",
-  "total_package_cost"
+  "total_package_cost",
+  "sb_pricing_options",
+  "pricing_options"
  ],
  "fields": [
   {
@@ -115,12 +117,13 @@
    "reqd": 1
   },
   {
-   "description": "What the package costs as offered: its default panel, inverter and battery. The other panels and inverters are options, priced at their own rates. Left blank, it is the default inverter's cost.",
+   "description": "The default pricing option's cost: what the package costs as it is offered.",
    "fieldname": "package_cost",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Package Cost",
-   "options": "INR"
+   "options": "INR",
+   "read_only": 1
   },
   {
    "description": "The default panel, inverter, battery and Balance of System, with the KSEB, Mounting and Installation amounts. Worked out on save; prices do not use it.",
@@ -480,11 +483,22 @@
   {
    "fieldname": "cb_pricing",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_pricing_options",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Each way the package is priced: a panel, an inverter and a battery of its own at a package cost. More rows, more options. An estimate is priced at the row for the panel and inverter it is built with; tick one row as the default - its cost is the Package Cost.",
+   "fieldname": "pricing_options",
+   "fieldtype": "Table",
+   "label": "Pricing Options",
+   "options": "Solar Package Pricing Option"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 11:00:00.000000",
+ "modified": "2026-11-08 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

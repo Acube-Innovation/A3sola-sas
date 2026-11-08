@@ -146,6 +146,20 @@ frappe.ui.form.on("Solar Design Estimate", {
 			filters: { solar_consumer: frm.doc.solar_consumer, docstatus: 1 },
 		}));
 	},
+
+	// A survey chosen gives the estimate its answers - the system, the phase found on site, the
+	// subsidy and the size (site_survey.estimate_answers) - while no package is chosen yet.
+	site_survey(frm) {
+		if (!frm.doc.site_survey || frm.doc.solar_package) return;
+		frappe.call({
+			method: "a3_sola.solar_crm.doctype.site_survey.site_survey.answers_for_estimate",
+			args: { site_survey: frm.doc.site_survey },
+		}).then(({ message }) => {
+			Object.entries(message || {}).forEach(([fieldname, value]) => {
+				if (frm.fields_dict[fieldname] && value && frm.doc[fieldname] !== value) frm.set_value(fieldname, value);
+			});
+		});
+	},
 });
 
 frappe.ui.form.on("Design Estimate Panel", {

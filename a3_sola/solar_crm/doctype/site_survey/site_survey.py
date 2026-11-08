@@ -197,3 +197,33 @@ class SiteSurvey(Document):
 		consumer.set_status("Surveyed")
 		if not flt(consumer.approx_roof_area_sqft) and flt(self.total_roof_area_sqft):
 			consumer.db_set("approx_roof_area_sqft", flt(self.total_roof_area_sqft), update_modified=False)
+
+
+#: The survey answers a design estimate's options start from, by estimate field.
+ESTIMATE_FIELDS = ("system_type", "connection_type", "subsidy_option", "override_capacity_kw")
+
+
+def estimate_answers(survey):
+	"""What the survey says a design estimate's options should be, by estimate field: the
+	system (Hybrid when batteries are in scope and no system was put down), the phase found on
+	site, the subsidy, and the size - the surveyor's Recommended Capacity, else the Capacity
+	Applied. What the survey does not say is left out, so the estimate keeps its own."""
+	if isinstance(survey, str):
+		survey = frappe.db.get_value("Site Survey", survey, ["system_type", "connection_type", "subsidy_option",
+			"recommended_capacity_kw", "capacity_applied_kw", "batteries_in_scope"], as_dict=True)
+	if not survey:
+		return {}
+	answers = {
+		"system_type": survey.get("system_type") or ("Hybrid" if survey.get("batteries_in_scope") else None),
+		"connection_type": survey.get("connection_type"),
+		"subsidy_option": survey.get("subsidy_option"),
+		"override_capacity_kw": flt(survey.get("recommended_capacity_kw")) or flt(survey.get("capacity_applied_kw")) or None,
+	}
+	return {key: value for key, value in answers.items() if value}
+
+
+@frappe.whitelist()
+def answers_for_estimate(site_survey):
+	"""estimate_answers for the desk's design estimate, to anyone who may read the survey."""
+	frappe.has_permission("Site Survey", "read", site_survey, throw=True)
+	return estimate_answers(site_survey)
