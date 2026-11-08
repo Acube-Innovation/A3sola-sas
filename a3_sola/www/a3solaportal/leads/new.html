@@ -9,6 +9,11 @@
 	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads">&larr; Back to leads</a>
 </div>
 
+{#- The lead's documents first, as on its edit form; held until Create has made the lead. -#}
+<div class="a3s-formattach a3s-formattach--full">
+{%- with att_doctype="Lead", att_name="", att_held=True %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+</div>
+
 <div class="a3s-card a3s-formcard a3s-formcard--full">
 	<form class="a3s-form" id="a3s-lead-form" novalidate>
 		{#- Four columns, each one kind of question read top to bottom, the one that matters most

@@ -155,8 +155,22 @@
 				.then(function (data) { return { ok: response.ok, code: response.status, data: data }; });
 		}).then(function (result) {
 			if (result.ok && result.data && result.data.message) {
+				var created = result.data.message;
+				var route = created.route || ("/a3solaportal/" + slug);
+				/* Files held on the Attachments card go up to the record just created. */
+				if (window.a3sAttachHeld && window.a3sAttachHeld.count() > 0 && created.name) {
+					setStatus("Created. Uploading the attachments…", "success");
+					window.a3sAttachHeld(created.name).then(function () {
+						setStatus("Created. Opening it…", "success");
+						window.location.assign(route);
+					}, function (error) {
+						setStatus("Created, but the attachments did not upload: " + error.message + " Add them on its page. Opening it…", "error");
+						window.setTimeout(function () { window.location.assign(route); }, 5000);
+					});
+					return;
+				}
 				setStatus("Created. Opening it…", "success");
-				window.location.assign(result.data.message.route || ("/a3solaportal/" + slug));
+				window.location.assign(route);
 				return;
 			}
 			busy(false);
