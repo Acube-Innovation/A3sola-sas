@@ -1,0 +1,20 @@
+{#- A design estimate's Material BOM, Structure BOM and Expenses (solar_design_estimate.bom_tables),
+    inside an .a3q block (quotation_option_style.html). Shown beside the quotation, the sales
+    order and the proposal as the estimate has them now - read, never kept on those records.
+    Context: boms, money. -#}
+{%- for t in boms %}
+<h4>{{ t.label }}</h4>
+{%- if t.rows %}
+<table>
+	<colgroup><col style="width: 5%"><col><col style="width: 15%"><col style="width: 7%"><col style="width: 6%"><col style="width: 15%"><col style="width: 16%"></colgroup>
+	<tr><th>#</th><th>Item</th><th>Category</th><th>UOM</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr>
+	{%- for r in t.rows %}
+	<tr><td>{{ loop.index }}</td><td>{{ r.item_name }}</td><td>{{ r.category or "—" }}</td><td>{{ r.uom or "—" }}</td>
+		<td class="num">{{ "%g" | format(r.qty) }}</td><td class="num">{{ money(r.rate) }}</td><td class="num">{{ money(r.amount) }}</td></tr>
+	{%- endfor %}
+	<tr class="total"><td></td><td colspan="5">Total</td><td class="num">{{ money(t.total) }}</td></tr>
+</table>
+{%- else %}
+<p class="muted">None on this design estimate.</p>
+{%- endif %}
+{%- endfor %}

@@ -23,13 +23,27 @@
 
 	/* Choices picked from the package's own rows (solar_package.js): an inverter option's Built
 	   with Panel is one of the package's panels. */
+	/* A Pricing Option names the package's own panels, inverters and batteries, as the server
+	   names them (solar_package panel_name, inverter_name, battery_name). */
+	function oneLine(t) { return String(t || "").split(/\s+/).filter(Boolean).join(" "); }
+	function batteryName(r) {
+		return oneLine(r.specification) || [Number(r.battery_voltage) ? Number(r.battery_voltage) + " V" : "",
+			Number(r.battery_capacity_ah) ? Number(r.battery_capacity_ah) + " Ah" : ""].filter(Boolean).join(" x ");
+	}
 	var ROW_SOURCES = {
-		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }]
+		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }],
+		"pricing_options.panel": ["modules", function (r) { return oneLine(r.module_specification); }],
+		"pricing_options.inverter": ["inverters", function (r) { return oneLine(r.inverter_specification); }],
+		"pricing_options.battery": ["batteries", batteryName]
 	};
 	/* The Item field of each table (the expense tables' own, besides the spec rows'). */
 	var ITEM_FIELD = { kseb_expenses: "particulars", mounting_expenses: "item", installation_expenses: "item", components: "item" };
 	Object.keys(pkg.item_text).forEach(function (t) { ITEM_FIELD[t] = pkg.item_text[t][0]; });
-	var ONE_DEFAULT = { modules: 1, inverters: 1 };
+	var ONE_DEFAULT = { modules: 1, inverters: 1, pricing_options: 1 };
+	/* A row's amount is its rate times its count, as the server works it out on save. */
+	var ROW_AMOUNT = { modules: ["rate", "module_count"], batteries: ["rate", "nos"] };
+	/* A grid's first column that shows the row's Item in bold with its text under it. */
+	var STACKED = { modules: ["module_item", "module_specification"] };
 
 	/* ------------------------------------------------------------------ helpers */
 	function esc(s) {
@@ -80,6 +94,31 @@
 	function totalExpenses() {
 		if (!pkg.tables.expenses) return;
 		pkg.values.total_expenses = pkg.tables.expenses.rows.reduce(function (sum, r) { return sum + (Number(r.amount) || 0); }, 0);
+	}
+	/* The Package Cost is the default pricing option's, as the rows change (again on save). */
+	function packageCostFromPricing() {
+		var rows = (pkg.tables.pricing_options && pkg.tables.pricing_options.rows) || [];
+		var row = rows.find(function (r) { return r.is_default; }) || rows[0];
+		pkg.values.package_cost = row ? Number(row.cost) || 0 : 0;
+		var shown = panels.querySelector('[data-ro="package_cost"]');
+		if (shown) shown.textContent = money(pkg.values.package_cost);
+	}
+	/* The Total Package Cost as the rows change: the default panel's Total Panel Rate, the default
+	   inverter's rate x nos, the batteries, the default Balance of System rows and the KSEB,
+	   Mounting and Installation amounts (solar_package.package_build_up, again on save). */
+	function totalPackageCost() {
+		function rows(f) { return (pkg.tables[f] && pkg.tables[f].rows) || []; }
+		function first(f) { var r = rows(f); return r.find(function (x) { return x.is_default; }) || r[0]; }
+		function n(x) { return Number(x) || 0; }
+		var panel = first("modules"), inverter = first("inverters"), system = {};
+		rows("system_items").forEach(function (r) { if (r.system_type && (r.is_default || !(r.system_type in system))) system[r.system_type] = r; });
+		var total = (panel ? n(panel.rate) * n(panel.module_count) : 0) + (inverter ? n(inverter.unit_rate) * (n(inverter.inverter_count) || 1) : 0);
+		if (hasBatteries()) rows("batteries").forEach(function (r) { if (!r.is_option) total += n(r.rate) * n(r.nos); });
+		Object.keys(system).forEach(function (k) { total += n(system[k].cost); });
+		["kseb_expenses", "mounting_expenses", "installation_expenses"].forEach(function (f) { rows(f).forEach(function (r) { total += n(r.amount); }); });
+		pkg.values.total_package_cost = Math.round(total * 100) / 100;
+		var shown = panels.querySelector('[data-ro="total_package_cost"]');
+		if (shown) shown.textContent = money(pkg.values.total_package_cost);
 	}
 
 	/* ------------------------------------------------------------------ choices */
@@ -193,15 +232,34 @@
 		if (window.a3sCombo) window.a3sCombo.wireAll(panels);
 	}
 	/* A section of the desk form: its title, then its columns side by side, each column's fields,
-	   tables and HTML in the desk's order. A section that opens with a table of its own name
-	   needs no title of its own. */
+	   tables and HTML in the desk's order. A section of fields only reads across, so its rows
+	   line up. A section that opens with a table of its own name needs no title of its own. */
 	function sectionHtml(tab, s) {
 		var first = s.columns[0][0];
 		var titled = s.label && !(first.table && pkg.tables[first.table].label === s.label);
-		var body = s.columns.length > 1
+		var fieldsOnly = s.columns.every(function (c) { return c.every(function (e) { return e.field; }); });
+		var body = s.columns.length > 1 && fieldsOnly ? acrossHtml(tab, s.columns)
+			: s.columns.length > 1
 			? '<div class="a3s-pkg__cols">' + s.columns.map(function (c) { return '<div class="a3s-pkg__stack">' + entriesHtml(tab, c, false) + "</div>"; }).join("") + "</div>"
 			: entriesHtml(tab, s.columns[0], true);
 		return '<section class="a3s-pkg__section">' + (titled ? '<h3 class="a3s-pkg__sectiontitle">' + esc(s.label) + "</h3>" : "") + body + "</section>";
+	}
+	/* The desk's columns row by row: each column's first field makes the first row, its second
+	   the second, and so on - the Package tab's System Type, Connection Type, Specification Code
+	   and Package Name across the top. A shorter column leaves its place in a row empty. */
+	function acrossHtml(tab, columns) {
+		var n = Math.min(columns.length, 4), depth = Math.max.apply(null, columns.map(function (c) { return c.length; })), cells = [];
+		for (var i = 0; i < depth; i++) {
+			columns.forEach(function (c) {
+				cells.push(c[i] ? fieldHtml(tab, c[i].field) : '<div class="a3s-pkg__gap" aria-hidden="true"></div>');
+			});
+		}
+		return '<div class="a3s-form__grid a3s-pkg__across' + (n > 2 ? " a3s-form__grid--" + n : "") + '">' + cells.join("") + "</div>";
+	}
+	function fieldHtml(tab, fieldname) {
+		var col = tab.fields.find(function (c) { return c.fieldname === fieldname; });
+		if (col.fieldname === "item" || col.fieldname === "bom") col = Object.assign({}, col, { read_only: 1 });
+		return input(col, pkg.values[col.fieldname]);
 	}
 	/* A column's entries; in a one-column section its fields sit two to a row, as the rest of
 	   the portal's forms have them. */
@@ -213,9 +271,7 @@
 		}
 		entries.forEach(function (e) {
 			if (e.field) {
-				var col = tab.fields.find(function (c) { return c.fieldname === e.field; });
-				if (col.fieldname === "item" || col.fieldname === "bom") col = Object.assign({}, col, { read_only: 1 });
-				fields.push(input(col, pkg.values[col.fieldname]));
+				fields.push(fieldHtml(tab, e.field));
 				return;
 			}
 			flush();
@@ -235,7 +291,13 @@
 		return cols.length ? cols : spec.columns.slice(0, 6);
 	}
 	function cell(spec, col, row) {
-		var v = row[col.fieldname];
+		var v = row[col.fieldname], stack = STACKED[spec.fieldname];
+		if (stack && col.fieldname === stack[0]) {
+			var name = v ? labelOf(col.options, v, spec.fieldname, col.fieldname) : "", text = row[stack[1]] || "";
+			if (!name && !text) return '<span class="a3s-table__muted">—</span>';
+			return (name ? '<strong class="a3s-pkg__cellname">' + esc(name) + "</strong>" : "") + (name && text ? "<br>" : "") +
+				(text ? '<span class="a3s-pkg__celltext">' + esc(text) + "</span>" : "");
+		}
 		if (col.fieldname === "inverters" && spec.fieldname === "material_bom") return dependsCell(split(v, true).map(function (i) { return labelOf("Item", i); }));
 		if (col.fieldname === "roof_types") return dependsCell(split(v).map(function (r) { return labelOf("Roof Type", r); }));
 		if (col.fieldname === "panel_capacities") return dependsCell(split(v).map(function (kw) { return kw + " kW"; }));
@@ -298,7 +360,7 @@
 		if (!col) return;
 		pkg.values[col.fieldname] = readValue(el, col);
 		touch();
-		if (col.fieldname === "system_type") paintTabs();
+		if (col.fieldname === "system_type") { paintTabs(); totalPackageCost(); }
 		if (col.fieldname === "payment_terms" || col.fieldname === "financed_payment_terms") paintTerms();
 		if (col.fieldname === "company") paint();
 	});
@@ -371,6 +433,12 @@
 					if (ro) ro.textContent = money(draft.amount);
 				}
 			}
+			var by = ROW_AMOUNT[table];
+			if (by && by.indexOf(col.fieldname) !== -1) {
+				draft.amount = (Number(draft[by[0]]) || 0) * (Number(draft[by[1]]) || 0);
+				var shown = m.body.querySelector('[data-ro="amount"]');
+				if (shown) shown.textContent = money(draft.amount);
+			}
 			if (REPAINT[col.fieldname]) { readPickers(table, draft, m.body); paintForm(); }
 		});
 		m.body.addEventListener("submit", function (e) {
@@ -382,11 +450,14 @@
 			var wrong = readPickers(table, draft, m.body);
 			if (wrong) { m.status(wrong, "error"); return; }
 			if (SHEET_TABLES[table]) draft.amount = (Number(draft.qty) || 0) * (Number(draft.rate) || 0);
+			if (ROW_AMOUNT[table]) draft.amount = (Number(draft[ROW_AMOUNT[table][0]]) || 0) * (Number(draft[ROW_AMOUNT[table][1]]) || 0);
 			var missing = spec.columns.filter(function (c) { return c.reqd && !c.read_only && (draft[c.fieldname] === "" || draft[c.fieldname] == null); });
 			if (missing.length) { m.status("Fill " + missing.map(function (c) { return c.label; }).join(", ") + ".", "error"); return; }
 			if (adding) rows.push(draft); else rows[index] = draft;
 			keepDefaults(table, draft, adding);
 			if (table === "expenses") totalExpenses();
+			if (table === "pricing_options") packageCostFromPricing();
+			totalPackageCost();
 			m.close();
 			touch();
 			paint();
@@ -477,6 +548,8 @@
 		if (e.target.closest("[data-remove-row]")) {
 			pkg.tables[table].rows.splice(i, 1);
 			if (table === "expenses") totalExpenses();
+			if (table === "pricing_options") packageCostFromPricing();
+			totalPackageCost();
 			touch();
 			paint();
 		}

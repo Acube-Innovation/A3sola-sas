@@ -31,6 +31,7 @@
   "sb_report_visit",
   "site_visit_for",
   "system_type",
+  "subsidy_option",
   "cb_report_visit",
   "capacity_applied_kw",
   "tab_structure",
@@ -295,10 +296,12 @@
   },
   {
    "fieldname": "connection_type",
-   "fieldtype": "Data",
-   "label": "Consumer Connection Type",
+   "fieldtype": "Select",
+   "label": "Connection Type",
    "fetch_from": "solar_consumer.connection_type",
-   "read_only": 1
+   "options": "\nSingle Phase\nThree Phase",
+   "fetch_if_empty": 1,
+   "description": "Single or three phase, as found on site; starts as the customer's. The estimate lists the packages for this phase."
   },
   {
    "fieldname": "sb_report_visit",
@@ -315,7 +318,15 @@
    "fieldname": "system_type",
    "fieldtype": "Select",
    "label": "Type of System",
-   "options": "\nOn-grid\nOff-grid\nHybrid"
+   "options": "\nOn-Grid\nOff-Grid\nHybrid",
+   "description": "The system the customer wants. The design estimate's options start as this system."
+  },
+  {
+   "fieldname": "subsidy_option",
+   "fieldtype": "Select",
+   "label": "Subsidy",
+   "options": "\nWith Subsidy\nWithout Subsidy",
+   "description": "Whether the customer takes the subsidy (PM Surya Ghar). A subsidy job is quoted on a DCR package, any other on a non-DCR one."
   },
   {
    "fieldname": "cb_report_visit",
@@ -872,7 +883,8 @@
    "fieldtype": "Float",
    "label": "Recommended Capacity (kW)",
    "precision": 3,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "The size the design estimate's options start at, and the packages they are offered."
   },
   {
    "fieldname": "surveyor_remarks",
@@ -948,7 +960,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-26 12:00:00.000000",
+ "modified": "2026-11-08 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

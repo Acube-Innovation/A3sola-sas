@@ -73,6 +73,7 @@
 			document.getElementById("panel-" + t.dataset.tab).hidden = !on;
 		});
 		if (key === "comparison") renderComparison();
+		if (key === "boms") renderBoms();
 	}
 	tabs.forEach(function (t, i) {
 		t.addEventListener("click", function () { showTab(t.dataset.tab); });
@@ -270,12 +271,35 @@
 		  .then(function () { box.classList.remove("is-loading"); });
 	}
 
+	/* The BOM tab follows the table as the comparison does: each estimate's Material BOM,
+	   Structure BOM and Expenses, read from the estimates - nothing of it is saved here. */
+	var bommed = null, bomTimer = null;
+	function renderBoms() {
+		var names = state.rows.map(function (r) { return r.name; });
+		var key = names.join("|");
+		var box = document.getElementById("a3s-pp-boms");
+		if (key === bommed) return;
+		bommed = key;
+		if (!names.length) {
+			box.innerHTML = "";
+			box.appendChild(node("p", "a3s-field__hint", "Add design estimates on the Proposal Details tab to see their bills of materials here."));
+			return;
+		}
+		box.classList.add("is-loading");
+		call("estimate_boms", { estimates: JSON.stringify(names) })
+			.then(function (html) { if (bommed === key) box.innerHTML = html || ""; })
+			.catch(function (e) { bommed = null; box.innerHTML = ""; box.appendChild(node("p", "a3s-form__status is-error", e.message)); })
+			.then(function () { box.classList.remove("is-loading"); });
+	}
+
 	function paint() {
 		paintSite();
 		paintRows();
 		paintExisting();
 		clearTimeout(compareTimer);
 		if (!document.getElementById("panel-comparison").hidden) compareTimer = setTimeout(renderComparison, 250);
+		clearTimeout(bomTimer);
+		if (!document.getElementById("panel-boms").hidden) bomTimer = setTimeout(renderBoms, 250);
 	}
 
 	/* ------------------------------------------------------------ save */

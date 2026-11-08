@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-08 15:00:00.000000",
+ "description": "One way the package is priced: a panel, an inverter and a battery of its own, at a package cost.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "panel",
+  "inverter",
+  "battery",
+  "cost",
+  "is_default"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "description": "One of the package's Solar Panels.",
+   "fieldname": "panel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Panel",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "description": "One of the package's Inverter Options.",
+   "fieldname": "inverter",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Inverter",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "description": "One of the package's Batteries - Off-Grid and Hybrid packages only.",
+   "fieldname": "battery",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Battery"
+  },
+  {
+   "columns": 2,
+   "description": "What the package costs built this way - the price list's MRP. The estimate is priced at it.",
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Package Cost",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "description": "The way the package is offered: its cost is the Package Cost. Exactly one row carries it.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-08 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Package Pricing Option",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

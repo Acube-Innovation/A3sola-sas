@@ -1,0 +1,17 @@
+{#- The look of a quotation option's tables and facts (.a3q), shared by the quotation's tabs
+    (quotation_option.html) and the sales order's (sales_order_option.html). -#}
+<style>
+	.a3q table { width: 100%; border-collapse: collapse; margin: 0 0 12px; table-layout: fixed; }
+	.a3q th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #5b6575; border-bottom: 1px solid #c9ced6; padding: 6px 8px; }
+	.a3q td { padding: 6px 8px; border-bottom: 1px solid #eceef1; vertical-align: top; }
+	.a3q .num { text-align: right; white-space: nowrap; }
+	.a3q .b td { font-weight: 700; }
+	.a3q .total td { font-weight: 700; border-top: 2px solid #2a3342; border-bottom: 0; }
+	.a3q h4 { font-size: 14px; margin: 16px 0 6px; }
+	.a3q h4:first-child { margin-top: 0; }
+	.a3q .muted { color: #5b6575; }
+	.a3q .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 16px; margin: 0 0 12px; }
+	.a3q .facts dt { font-size: 11px; color: #5b6575; text-transform: uppercase; letter-spacing: .04em; }
+	.a3q .facts dd { margin: 2px 0 0; font-weight: 600; }
+	.a3q ul, .a3q ol { margin: 0 0 10px; padding-left: 20px; }
+</style>

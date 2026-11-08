@@ -3351,6 +3351,13 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt-text small { color: var(--color-text-muted); }
 .a3s-qf__price { font-weight: 700; white-space: nowrap; }
 .a3s-qf [data-html].is-loading { opacity: 0.55; }
+/* The sales order page (portal_sales_order_form.html) is the quotation page's layout: a
+   quotation that cannot be ordered is shown faded, with why, and cannot be picked. */
+.a3s-qf__opt.is-off { opacity: 0.62; }
+.a3s-qf__opt.is-off:hover, .a3s-qf__opt.is-off:focus-visible { opacity: 0.85; }
+.a3s-qf__opt-text .a3s-sf__why { color: var(--color-danger); font-weight: 600; }
+.a3s-sf__dates { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); }
+.a3s-sf__dates .a3s-field { align-content: start; }  /* a hint under one date leaves the other's box as it is */
 
 /* list: the Edit column - a small link to where the record is edited */
 .a3s-table__edit {
@@ -3924,9 +3931,18 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-pkg__none { margin: 0; padding: 1rem; border: 1px dashed var(--color-border); border-radius: 0.85rem; text-align: center;
 	font-size: 0.875rem; color: var(--color-text-muted); }
 .a3s-pkg__rows td { vertical-align: top; overflow-wrap: anywhere; }
+/* The Solar Panels grid: a make or a number keeps its word whole; the first column, the panel's Item
+   over its specification, wraps between words. */
+.a3s-pkg__table[data-table="modules"] .a3s-pkg__rows td { overflow-wrap: break-word; }
 .a3s-pkg__tick { color: #1a7f2e; }
 .a3s-pkg__rolabel { display: block; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.35rem; }
 .a3s-pkg__ro { margin: 0; padding: 0.6rem 0.8rem; border-radius: 0.75rem; background: var(--color-bg); font-size: 0.9375rem; overflow-wrap: anywhere; }
+/* A section of fields read across (the Package tab), row by row: a read-only field's label reads
+   like the others in its row, and a tick sits level with the boxes beside it. */
+.a3s-pkg__across { gap: 1.1rem 1.5rem; align-items: start; }
+.a3s-pkg__across .a3s-pkg__rolabel { margin-bottom: 0; font-size: 0.8125rem; font-weight: 600; letter-spacing: normal; text-transform: none; }
+@media (min-width: 1101px) { .a3s-pkg__across.a3s-form__grid--4 > .a3s-check { margin-top: 1.7rem; min-height: 2.7rem; } }
+@media (max-width: 640px) { .a3s-pkg__gap { display: none; } }
 .a3s-pkg__terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .a3s-pkg__termname { margin: 0 0 0.4rem; font-weight: 700; font-size: 0.9375rem; }
 .a3s-pkg__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border); }

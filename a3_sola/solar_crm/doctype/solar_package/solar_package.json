@@ -10,25 +10,24 @@
  "field_order": [
   "tab_package",
   "naming_series",
-  "specification_code",
-  "package_name",
-  "capacity_kw",
-  "package_cost",
   "system_type",
-  "connection_type",
-  "cb_1",
-  "inverter_topology",
-  "is_dcr_compliant",
-  "area_required_sqft",
-  "tier",
-  "is_active",
-  "status",
-  "company",
-  "sb_17",
-  "item",
-  "bom",
-  "cb_18",
+  "capacity_kw",
   "warranty_years",
+  "cb_1",
+  "connection_type",
+  "tier",
+  "status",
+  "cb_pkg_2",
+  "specification_code",
+  "is_dcr_compliant",
+  "item",
+  "area_required_sqft",
+  "cb_pkg_3",
+  "package_name",
+  "is_active",
+  "bom",
+  "company",
+  "inverter_topology",
   "tab_modules",
   "sb_2",
   "modules",
@@ -69,7 +68,13 @@
   "payment_terms",
   "cb_payment_terms",
   "financed_payment_terms",
-  "payment_terms_preview"
+  "payment_terms_preview",
+  "tab_pricing",
+  "package_cost",
+  "cb_pricing",
+  "total_package_cost",
+  "sb_pricing_options",
+  "pricing_options"
  ],
  "fields": [
   {
@@ -112,12 +117,20 @@
    "reqd": 1
   },
   {
-   "description": "What the package costs as offered: its default panel, inverter and battery. The other panels and inverters are options, priced at their own rates. Left blank, it is the default inverter's cost.",
+   "description": "The default pricing option's cost: what the package costs as it is offered.",
    "fieldname": "package_cost",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Package Cost",
-   "options": "INR"
+   "options": "INR",
+   "read_only": 1
+  },
+  {
+   "description": "The default panel, inverter, battery and Balance of System, with the KSEB, Mounting and Installation amounts. Worked out on save; prices do not use it.",
+   "fieldname": "total_package_cost",
+   "fieldtype": "Currency",
+   "label": "Total Package Cost",
+   "read_only": 1
   },
   {
    "default": "On-Grid",
@@ -144,14 +157,24 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "cb_pkg_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cb_pkg_3",
+   "fieldtype": "Column Break"
+  },
+  {
    "default": "String",
+   "description": "The default inverter option's topology, set on save. Each inverter option has its own on the Inverter tab.",
    "fieldname": "inverter_topology",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Inverter Topology",
    "options": "String\nString with Optimiser\nMicroinverter\nHybrid",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "is_dcr_compliant",
@@ -163,6 +186,7 @@
   {
    "fieldname": "area_required_sqft",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Area Required (sq ft)",
    "precision": 2
   },
@@ -194,17 +218,13 @@
    "options": "Draft\nActive"
   },
   {
+   "description": "The user's default company, set on save when blank.",
    "fieldname": "company",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
-   "fieldname": "sb_17",
-   "fieldtype": "Section Break",
-   "label": "ERPNext"
+   "options": "Company"
   },
   {
    "fieldname": "item",
@@ -217,10 +237,6 @@
    "fieldtype": "Link",
    "label": "BOM",
    "options": "BOM"
-  },
-  {
-   "fieldname": "cb_18",
-   "fieldtype": "Column Break"
   },
   {
    "default": "5",
@@ -458,11 +474,31 @@
    "fieldname": "payment_terms_preview",
    "fieldtype": "HTML",
    "label": "Milestones"
+  },
+  {
+   "fieldname": "tab_pricing",
+   "fieldtype": "Tab Break",
+   "label": "Pricing Options"
+  },
+  {
+   "fieldname": "cb_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_pricing_options",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Each way the package is priced: a panel, an inverter and a battery of its own at a package cost. More rows, more options. An estimate is priced at the row for the panel and inverter it is built with; tick one row as the default - its cost is the Package Cost.",
+   "fieldname": "pricing_options",
+   "fieldtype": "Table",
+   "label": "Pricing Options",
+   "options": "Solar Package Pricing Option"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 16:00:00.000000",
+ "modified": "2026-11-08 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

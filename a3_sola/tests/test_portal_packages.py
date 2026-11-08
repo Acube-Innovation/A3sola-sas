@@ -101,8 +101,20 @@ class TestPortalPackages(FrappeTestCase):
 		self.assertNotIn("tab_components", tabs)
 		self.assertIn("is_active", [f["fieldname"] for f in tabs["package"]["fields"]])
 		self.assertEqual(tabs["cost"]["tables"], ["material_bom", "structure_boms", "expenses"])
-		self.assertEqual([s["label"] for s in tabs["package"]["sections"]], ["", "ERPNext"])
-		self.assertEqual(len(tabs["package"]["sections"][0]["columns"]), 2)
+		self.assertEqual([s["label"] for s in tabs["package"]["sections"]], [""])
+		# Four desk columns, which the page reads across as rows.
+		columns = tabs["package"]["sections"][0]["columns"]
+		self.assertEqual(len(columns), 4)
+		rows = [[c[i]["field"] for c in columns if i < len(c)] for i in range(max(map(len, columns)))]
+		self.assertEqual(rows, [["system_type", "connection_type", "specification_code", "package_name"],
+			["capacity_kw", "tier", "is_dcr_compliant", "is_active"], ["warranty_years", "status", "item", "bom"]])
+		# The two costs have a tab of their own, the last, after the BOM tab.
+		keys = [t["key"] for t in saved["tabs"]]
+		self.assertEqual(keys[-2:], ["cost", "tab_pricing"])
+		self.assertEqual([f["fieldname"] for f in tabs["tab_pricing"]["fields"]], ["package_cost", "total_package_cost"])
+		# Company is set, not asked: still in the values, which narrow every choice.
+		self.assertNotIn("company", [f["fieldname"] for f in tabs["package"]["fields"]])
+		self.assertEqual(saved["values"]["company"], frappe.db.get_value("Solar Package", saved["name"], "company"))
 		inverter = next((r["inverter_item"] for r in saved["tables"]["inverters"]["rows"] if r.get("inverter_item")), None)
 		item = saved["choices"]["Item"][0]
 		posted = _posted(saved)

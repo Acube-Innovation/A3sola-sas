@@ -28,15 +28,18 @@ class SolarPackage(Document):
 			self.set("optional_add_ons", default_add_ons(self))
 
 	def validate(self):
+		self.fill_company()
 		assert_unique_in_company(self, ["specification_code"])
 		from a3_sola.api import package_items
 
 		package_items.validate(self)
 		self.validate_dcr_items()
 		self.validate_one_default("modules", _("module"))
+		self.total_the_panels()
 		self.fill_from_inverter_models()
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
+		self.topology_from_inverters()
 		from a3_sola.api import package_bom_tables
 
 		package_bom_tables.validate(self)
@@ -44,11 +47,12 @@ class SolarPackage(Document):
 		self.no_dcdb_for_microinverter()
 		self.name_extra_panel_add_ons()
 		self.warranty_extension_from_model()
-		self.fill_package_cost()
 		self.validate_inverter_panels()
 		self.total_the_expenses()
 		self.compute_batteries()
+		self.price_from_pricing_options()
 		self.compute_expenses()
+		self.total_the_package()
 		self.check_regulation()
 		self.validate_payment_terms()
 
@@ -88,20 +92,80 @@ class SolarPackage(Document):
 		row = rows[0] if rows else self.append("optional_add_ons", {"add_on_type": "Warranty Extension"})
 		row.item, row.amount = offer
 
+	def fill_company(self):
+		"""The company is not asked on the form: a new package is the user's default company's."""
+		self.company = self.company or frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+		if not self.company:
+			frappe.throw(_("Set a default Company before adding a package."), title=_("No Company"))
+
+	def topology_from_inverters(self):
+		"""Each inverter option is built its own way - string, with optimisers, micro, hybrid -
+		and the package's topology is its default option's. A row left blank is built the way
+		the package was."""
+		for row in self.get("inverters") or []:
+			if not row.get("inverter_topology"):
+				row.inverter_topology = self.inverter_topology or "String"
+		inverter = default_inverter(self)
+		self.inverter_topology = (inverter.inverter_topology if inverter else None) or self.inverter_topology or "String"
+
 	def fill_inverter_phases(self):
 		"""An inverter row without a phase is for the package's own connection type."""
 		for row in self.get("inverters") or []:
 			if not row.inverter_phase:
 				row.inverter_phase = self.connection_type
 
-	def fill_package_cost(self):
-		"""The package's cost, for its default kit, is the default inverter's cost unless typed.
+	def price_from_pricing_options(self):
+		"""The Pricing Options are the package's price list: each row a panel, inverter and battery
+		of its own at a package cost. From them each inverter option's Cost (its row on its own
+		panel and the default battery - what the estimate and proposal read) and the Package Cost
+		(the default row's) are worked out. A package saved with typed inverter Costs and no rows
+		yet - made before the table, imported, loaded - gets its rows from those Costs."""
+		self.seed_pricing_options()
+		self.validate_pricing_options()
+		self.validate_one_default("pricing_options", _("pricing"))
+		for row in self.get("inverters") or []:
+			option = pricing_option(self, row)
+			row.cost = flt(option.cost) if option else 0.0
+		default = _default_row(self, "pricing_options")
+		self.package_cost = flt(default.cost) if default else 0.0
 
-		The default panel, inverter and battery are what the package is; its other panels and
-		inverters are options, each priced at its own rate on an estimate.
-		"""
-		if not flt(self.package_cost):
-			self.package_cost = default_package_cost(self)
+	def seed_pricing_options(self):
+		"""A row for each inverter option priced the old way: on its panel, with the default
+		battery, at its Cost (the default inverter's at the Package Cost when it had none)."""
+		if self.get("pricing_options"):
+			return
+		battery = default_battery(self)
+		for row in self.get("inverters") or []:
+			cost = flt(row.cost) or (flt(self.package_cost) if row.is_default else 0.0)
+			panel = inverter_panel(self, row)
+			if not (cost and panel and inverter_name(row)):
+				continue
+			self.append("pricing_options", {"panel": panel_name(panel), "inverter": inverter_name(row),
+				"battery": battery_name(battery) if battery else None, "cost": cost, "is_default": 1 if row.is_default else 0})
+
+	def validate_pricing_options(self):
+		"""A row names one of the package's own panels, inverters and batteries, and each way of
+		building the package is priced once. A battery is only for a package that has batteries."""
+		panels = {panel_name(r) for r in self.get("modules") or []} - {""}
+		inverters = {inverter_name(r) for r in self.get("inverters") or []} - {""}
+		batteries = {battery_name(r) for r in self.get("batteries") or []} - {""}
+		problems, seen = [], set()
+		for row in self.get("pricing_options") or []:
+			row.panel, row.inverter, row.battery = _name(row.panel), _name(row.inverter), _name(row.battery) or None
+			if not batteries:
+				row.battery = None
+			if row.panel not in panels:
+				problems.append(_("Row {0}: the panel {1} is not one of this package's Solar Panels.").format(row.idx, frappe.bold(row.panel)))
+			if row.inverter not in inverters:
+				problems.append(_("Row {0}: the inverter {1} is not one of this package's Inverter Options.").format(row.idx, frappe.bold(row.inverter)))
+			if row.battery and row.battery not in batteries:
+				problems.append(_("Row {0}: the battery {1} is not one of this package's Batteries.").format(row.idx, frappe.bold(row.battery)))
+			key = (row.panel, row.inverter, row.battery or "")
+			if key in seen:
+				problems.append(_("Row {0}: this panel, inverter and battery are priced in an earlier row.").format(row.idx))
+			seen.add(key)
+		if problems:
+			frappe.throw("<br>".join(problems), title=_("Pricing Options"))
 
 	def validate_payment_terms(self):
 		"""The package's payment terms are this company's, active, and add up to the whole price."""
@@ -197,6 +261,15 @@ class SolarPackage(Document):
 	def total_the_expenses(self):
 		self.total_expenses = flt(sum(flt(r.amount) for r in self.get("expenses") or []), self.precision("total_expenses"))
 
+	def total_the_panels(self):
+		"""Each panel option's Total Panel Rate: its Rate per Panel for every panel."""
+		for row in self.get("modules") or []:
+			row.amount = flt(flt(row.rate) * cint(row.module_count), row.precision("amount"))
+
+	def total_the_package(self):
+		"""The Total Package Cost: what the default build adds up to (package_build_up)."""
+		self.total_package_cost = flt(package_build_up(self)["total"], self.precision("total_package_cost"))
+
 	def compute_batteries(self):
 		"""Batteries belong to off-grid and hybrid packages only; the count is typed."""
 		if self.system_type not in ("Off-Grid", "Hybrid"):
@@ -209,6 +282,7 @@ class SolarPackage(Document):
 			row.total_energy_kwh = flt(
 				flt(row.battery_voltage) * flt(row.battery_capacity_ah) * cint(row.nos) / 1000, 3
 			)
+			row.amount = flt(flt(row.rate) * cint(row.nos), row.precision("amount"))
 
 	def compute_expenses(self):
 		"""The same KSEB, mounting and installation tables as the estimate, on the default build.
@@ -364,10 +438,65 @@ def default_inverter(package):
 
 
 def default_package_cost(package):
-	"""What the package costs built its default way: the default inverter's cost. Zero when
-	it has none."""
+	"""What the package costs built its default way: the default pricing option's cost, else
+	the default inverter's. Zero when it has neither."""
+	option = _default_row(package, "pricing_options")
+	if option and flt(option.cost):
+		return flt(option.cost)
 	inverter = default_inverter(package)
 	return flt(inverter.cost) if inverter else 0.0
+
+
+def _name(text):
+	"""A panel, inverter or battery as a pricing option names it: its text on one line."""
+	return " ".join((text or "").split())
+
+
+def panel_name(row):
+	return _name(row.get("module_specification")) if row else ""
+
+
+def inverter_name(row):
+	return _name(row.get("inverter_specification")) if row else ""
+
+
+def battery_name(row):
+	"""A battery by its specification, else its volts and Ah."""
+	if not row:
+		return ""
+	return _name(row.get("specification")) or " x ".join(part for part in (
+		"{0:g} V".format(flt(row.get("battery_voltage"))) if flt(row.get("battery_voltage")) else "",
+		"{0:g} Ah".format(flt(row.get("battery_capacity_ah"))) if flt(row.get("battery_capacity_ah")) else "") if part)
+
+
+def pricing_option(package, inverter=None, panel=None, battery=None):
+	"""The pricing row for the package built with this inverter option (the default when None),
+	on this panel and with this battery - each a row or its name. A panel or battery without a
+	row of its own falls back to the inverter's own panel (Built with Panel, else the default)
+	and the default battery, then to any. None when the inverter is not priced at all."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	inverter = inverter or default_inverter(doc)
+	rows = [r for r in doc.get("pricing_options") or [] if inverter and r.inverter == inverter_name(inverter)]
+	if not rows:
+		return None
+
+	def named(value, name_of):
+		return _name(value) if isinstance(value, str) else name_of(value) if value else ""
+
+	panels = [p for p in (named(panel, panel_name), panel_name(inverter_panel(doc, inverter))) if p] + [None]
+	own_battery = default_battery(doc)
+	batteries = [b for b in (named(battery, battery_name), battery_name(own_battery) if own_battery else "") if b] + [None]
+	for want_panel in panels:
+		for want_battery in batteries:
+			hit = next((r for r in rows if (want_panel is None or r.panel == want_panel)
+				and (want_battery is None or (r.battery or "") == want_battery)), None)
+			if hit:
+				return hit
+	return None
 
 
 def package_cost(package):
@@ -494,6 +623,35 @@ def default_system_items(package):
 				continue
 			chosen[row.system_type] = row
 	return chosen
+
+
+def package_build_up(package):
+	"""What a package's default build adds up to, part by part, and its total - the Total
+	Package Cost: the default panel's Total Panel Rate, the default inverter's Rate per Inverter
+	x Nos, the batteries (an Off-Grid or Hybrid package's, not those offered as options), the
+	default Balance of System rows' Cost, and the KSEB, Mounting and Installation amounts.
+
+	A build-up, not a price: an estimate or proposal prices the package at its inverter
+	option's Cost (price_for), as before."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	panel = default_module(doc)
+	inverter = default_inverter(doc)
+	batteries = (doc.get("batteries") or []) if doc.get("system_type") in ("Off-Grid", "Hybrid") else []
+	parts = {
+		"panel": flt(panel.rate) * cint(panel.module_count) if panel else 0.0,
+		"inverter": flt(inverter.unit_rate) * (cint(inverter.inverter_count) or 1) if inverter else 0.0,
+		"batteries": sum(flt(r.rate) * cint(r.nos) for r in batteries if not r.get("is_option")),
+		"balance_of_system": system_cost(doc),
+		"kseb": sum(flt(r.amount) for r in doc.get("kseb_expenses") or []),
+		"mounting": sum(flt(r.amount) for r in doc.get("mounting_expenses") or []),
+		"installation": sum(flt(r.amount) for r in doc.get("installation_expenses") or []),
+	}
+	parts["total"] = sum(parts.values())
+	return parts
 
 
 def system_cost(package):

@@ -1,0 +1,14 @@
+{#- The proposal page's BOM tab: each of its design estimates' Material BOM, Structure BOM and
+    Expenses, in the table's order - Option 1 the base - as the estimates have them now.
+    Read only, and never saved with the proposal: they are changed on the estimate.
+    From api/portal_proposal.estimate_boms. -#}
+<div class="a3q" style="font-size: 13px; line-height: 1.5;">
+	{%- include "templates/includes/quotation_option_style.html" %}
+	{%- for b in blocks %}
+	<section class="a3s-pp-bom"{% if not loop.first %} style="margin-top: 28px; padding-top: 18px; border-top: 1px solid #c9ced6;"{% endif %}>
+		<h4 style="font-size: 15px;">Option {{ b.number }} &middot; {{ b.name }}{% if b.package %} &middot; {{ b.package }}{% endif %}</h4>
+		<p class="muted">From the design estimate as it is now. <a href="{{ b.route }}">Change them on the estimate</a>.</p>
+		{%- with boms = b.boms %}{% include "templates/includes/estimate_bom_tables.html" %}{% endwith %}
+	</section>
+	{%- endfor %}
+</div>

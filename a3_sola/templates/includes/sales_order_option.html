@@ -1,0 +1,53 @@
+{#- A quotation as the sales order page shows it: `part` is details - who and what is ordered,
+    and the order value - or preview, the pop-up that tells quotations apart. The quotation's
+    design option follows from quotation_option.html (executive summary, BOM, terms); bom and
+    terms here are only for a quotation that is not for a design option. From
+    api/sales_order_option.render. -#}
+<div class="a3q" style="font-size: 13px; line-height: 1.5;">
+	{%- include "templates/includes/quotation_option_style.html" %}
+	{%- if part in ("details", "preview") %}
+	<dl class="facts">
+		<div><dt>Quotation</dt><dd>{{ q.name }}</dd></div>
+		<div><dt>Quoted on</dt><dd>{{ frappe.utils.format_date(q.transaction_date) if q.transaction_date else "—" }}</dd></div>
+		<div><dt>Customer</dt><dd>{{ q.customer_name or q.party_name or "—" }}</dd></div>
+		{%- if q.selected_option %}<div><dt>Option</dt><dd>{{ q.selected_option }}</dd></div>{% endif %}
+		{%- if q.solar_proposal %}<div><dt>Proposal</dt><dd>{{ q.solar_proposal }}</dd></div>{% endif %}
+		{%- if opt %}
+		<div><dt>Design estimate</dt><dd>{{ opt.estimate }}</dd></div>
+		<div><dt>Package</dt><dd>{{ opt.package or "—" }}</dd></div>
+		<div><dt>System</dt><dd>{{ opt.capacity_kwp }} kWp {{ opt.connection_type }} {{ opt.system_type }}</dd></div>
+		{%- endif %}
+		{%- if loan %}<div><dt>Loan required</dt><dd>{{ loan }}</dd></div>{% endif %}
+	</dl>
+	<h4>Order Value</h4>
+	<table>
+		<colgroup><col><col style="width: 20%"></colgroup>
+		{%- for r in figures.lines %}
+		<tr><td>{{ r.description }}</td><td class="num">{{ frappe.utils.fmt_money(r.amount, currency="INR") }}</td></tr>
+		{%- endfor %}
+		{%- if figures.discount %}
+		<tr><td>Special Discount</td><td class="num">&minus; {{ frappe.utils.fmt_money(figures.discount, currency="INR") }}</td></tr>
+		{%- endif %}
+		{%- for t in figures.taxes %}
+		<tr><td>{{ t.description }}</td><td class="num">{{ frappe.utils.fmt_money(t.amount, currency="INR") }}</td></tr>
+		{%- endfor %}
+		<tr class="total"><td>Order total</td><td class="num">{{ frappe.utils.fmt_money(figures.grand_total, currency="INR") }}</td></tr>
+	</table>
+	<p class="muted">{% if order %}As this order charges it.{% else %}As the quotation charges it - the order takes it over line for line.{% endif %}
+		{%- if solar %} No GST line: the package price includes GST, which each milestone invoice works out.{% endif %}</p>
+
+	{%- elif part == "bom" %}
+	<h4>Items</h4>
+	<table>
+		<colgroup><col><col style="width: 20%"></colgroup>
+		{%- for r in figures.lines %}
+		<tr><td>{{ r.description }}</td><td class="num">{{ frappe.utils.fmt_money(r.amount, currency="INR") }}</td></tr>
+		{%- endfor %}
+	</table>
+	<p class="muted">This quotation is not for a design option, so it has no bill of materials beyond its items.</p>
+
+	{%- else %}
+	<h4>Terms &amp; Conditions</h4>
+	<div>{{ q.terms or "—" }}</div>
+	{%- endif %}
+</div>

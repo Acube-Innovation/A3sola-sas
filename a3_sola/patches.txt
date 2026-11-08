@@ -295,3 +295,11 @@ a3_sola.patches.v1_2.package_expenses
 a3_sola.patches.v1_2.lead_files_on_customer
 # Empty table fields of uninstalled apps (India Compliance, HRMS) no longer stop saves.
 a3_sola.patches.v1_2.drop_orphan_table_fields
+# Inverter Topology on each inverter option; the package takes its default option's.
+a3_sola.patches.v1_2.inverter_topology_per_row
+# Solar panels: Total Panel Rate; packages: Total Package Cost.
+a3_sola.patches.v1_2.package_panel_totals
+# A survey's Type of System spelled as the estimate spells it.
+a3_sola.patches.v1_2.survey_system_type_spelling
+# Package prices move to Pricing Options rows (panel + inverter + battery at a cost).
+a3_sola.patches.v1_2.package_pricing_options

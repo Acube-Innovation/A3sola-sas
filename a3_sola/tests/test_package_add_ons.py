@@ -87,7 +87,8 @@ class TestEstimateAddOns(FrappeTestCase):
 		from a3_sola.api import portal_estimate
 
 		est = make_estimate(self.consumer, solar_package=self.pkg)
-		section = portal_estimate._sections(est)[-1]
+		# After the charges, and before the BOM tabs that close the list (test_estimate_boms).
+		section = portal_estimate._sections(est)[-4]
 		self.assertEqual(section["key"], "optional_add_ons")
 		fields = {f["fieldname"] for f in section["fields"]}
 		# The panel's sizing fields; its module Item, specification and alternate makes are the
@@ -135,7 +136,7 @@ class TestAdminOnlyTabs(FrappeTestCase):
 
 	def test_an_admin_sees_both(self):
 		self.assertIn("special_discount", self.keys())
-		self.assertEqual(self.keys()[-1], "optional_add_ons")
+		self.assertEqual(self.keys()[-4:], ["optional_add_ons", "material_bom", "structure_bom", "bom_expenses"])
 
 	def test_anyone_else_sees_neither_and_cannot_change_them(self):
 		from a3_sola.api import portal_estimate

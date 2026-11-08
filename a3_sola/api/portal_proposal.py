@@ -320,6 +320,31 @@ def save_proposal(values, estimates=None, name=None):
 
 
 @frappe.whitelist()
+def estimate_boms(estimates=None):
+	"""The proposal page's BOM tab: each design estimate's Material BOM, Structure BOM and
+	Expenses, in the order given - Option 1 the base - read from the estimates as they are now.
+	Nothing of it is saved with the proposal; the rows are changed on the estimate."""
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import bom_tables
+
+	names = frappe.parse_json(estimates) if isinstance(estimates, str) else (estimates or [])
+	blocks = []
+	for number, name in enumerate(dict.fromkeys(n for n in names or [] if n), start=1):
+		if not frappe.db.exists("Solar Design Estimate", name) or not frappe.has_permission("Solar Design Estimate", "read", name):
+			continue
+		est = frappe.get_doc("Solar Design Estimate", name)
+		blocks.append({
+			"number": number, "name": est.name,
+			"package": link_title("Solar Package", est.solar_package) if est.solar_package else "",
+			"route": "/a3solaportal/design-estimates/{0}/design".format(frappe.utils.quote(est.name)),
+			"boms": bom_tables(est),
+		})
+	if not blocks:
+		return ""
+	return frappe.render_template("a3_sola/templates/includes/proposal_estimate_boms.html",
+		{"blocks": blocks, "money": lambda v: frappe.utils.fmt_money(flt(v), currency="INR")})
+
+
+@frappe.whitelist()
 def pdf(name, download=0):
 	"""The proposal as its customer receives it - the Solar Proposal Document print - to read
 	in the browser, or to save with `download=1`. Read with the caller's own permissions."""

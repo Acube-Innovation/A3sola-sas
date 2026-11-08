@@ -34,7 +34,7 @@
 	<tr><td colspan="4">Site Visit for &nbsp;
 		{%- for o in ("Virgin Power", "KSEB", "ANERT") %} {{ box(s.site_visit_for == o) }} {{ o }} &nbsp;{% endfor %}</td></tr>
 	<tr class="tall">
-		<td>Type of system<br>{% for o in ("On-grid", "Off-grid", "Hybrid") %}{{ box(s.system_type == o) }} {{ o }} {% endfor %}</td>
+		<td>Type of system<br>{% for o, says in (("On-Grid", "On-grid"), ("Off-Grid", "Off-grid"), ("Hybrid", "Hybrid")) %}{{ box(s.system_type == o) }} {{ says }} {% endfor %}</td>
 		<td>Capacity<br>{% if s.capacity_applied_kw %}{{ "%g" | format(s.capacity_applied_kw) }} kW{% endif %}</td>
 		<td>Consumer connection type</td><td>{{ v(s.connection_type) }}</td>
 	</tr>

@@ -1,0 +1,79 @@
+{#- The sales order page, new and existing, as the quotation page is: choose the lead, then one
+    of its quotations - one must be chosen; the tabs show the order details (with the dates
+    the order asks for), the bill of materials and the terms, all the quotation's. Context from
+    api/sales_order_option.page_context; portal_sales_order_form.js loads the quotations and tabs. -#}
+<script type="application/json" id="a3s-sf-state">{{ state_json }}</script>
+
+<div class="a3s-page__head a3s-detail__head">
+	<div>
+		<h2 class="a3s-main__title">{{ title | e }}</h2>
+		<p class="a3s-main__sub">A submitted quotation, ordered as quoted. Choose the lead, then the quotation.</p>
+	</div>
+	<div class="a3s-detail__actions">
+		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/sales-orders">&larr; Back</a>
+	</div>
+</div>
+
+<div class="a3s-qf a3s-sf" id="a3s-sf">
+	<div class="a3s-qf__main">
+		<section class="a3s-card a3s-edit__card">
+			<h3 class="a3s-edit__card-title">Sales Order For</h3>
+			<div class="a3s-form__grid">
+				<div class="a3s-field a3s-combo a3s-combo--field" data-combo id="f-sf-lead">
+					<label for="fld-sf-lead">Lead <span class="a3s-req">*</span></label>
+					<select id="fld-sf-lead" aria-label="Lead"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for c in lead_choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
+					</select>
+				</div>
+				{%- if order %}
+				<div class="a3s-field">
+					<label>Status</label>
+					<p class="a3s-qf__status">{{ order.status | e }}{% if order.grand_total %} &middot; {{ frappe.utils.fmt_money(order.rounded_total or order.grand_total, currency=order.currency) }}{% endif %}</p>
+				</div>
+				{%- endif %}
+			</div>
+			<p class="a3s-field__hint">Only leads with a quotation are listed. Choose one of its quotations <span class="a3s-req">*</span> - an order is raised from a submitted quotation, once.</p>
+			<div class="a3s-qf__options" id="a3s-sf-quotes" aria-live="polite"></div>
+		</section>
+
+		<div class="a3s-ce-tabs a3s-lf__tabs" role="tablist" aria-label="Sales order">
+			<button type="button" role="tab" id="tab-so-details" data-tab="details" aria-selected="true">Order Details</button>
+			<button type="button" role="tab" id="tab-so-bom" data-tab="bom" aria-selected="false" tabindex="-1">BOM</button>
+			<button type="button" role="tab" id="tab-so-terms" data-tab="terms" aria-selected="false" tabindex="-1">Terms</button>
+		</div>
+		{%- for key in ("details", "bom", "terms") %}
+		<section class="a3s-card a3s-edit__card" id="panel-so-{{ key }}" role="tabpanel" data-panel="{{ key }}"{% if not loop.first %} hidden{% endif %}>
+			{%- if key == "details" %}
+			{#- What the quotation cannot say: when it is ordered and when it is to be delivered. -#}
+			<div class="a3s-form__grid a3s-sf__dates">
+				<div class="a3s-field">
+					<label for="fld-sf-transaction_date">Order Date <span class="a3s-req">*</span></label>
+					<input type="date" id="fld-sf-transaction_date" name="transaction_date" value="{{ values.transaction_date | e }}"{% if not editable %} disabled{% endif %}>
+				</div>
+				<div class="a3s-field">
+					<label for="fld-sf-delivery_date">Delivery Date <span class="a3s-req">*</span></label>
+					<input type="date" id="fld-sf-delivery_date" name="delivery_date" value="{{ values.delivery_date | e }}"{% if not editable %} disabled{% endif %}>
+					{%- if editable %}<p class="a3s-field__hint">On a working day; a week out to begin with.</p>{% endif %}
+				</div>
+			</div>
+			{%- endif %}
+			<div data-html="{{ key }}"><p class="a3s-field__hint">Choose a quotation above to see it here.</p></div>
+		</section>
+		{%- endfor %}
+
+		<div class="a3s-form__actions a3s-edit__actions">
+			{%- if editable %}
+			<button type="button" class="a3s-btn a3s-btn--primary" id="a3s-sf-save" disabled>{% if order %}Save{% else %}Create sales order{% endif %}</button>
+			{%- if order and order.docstatus == 0 %}
+			<button type="button" class="a3s-btn a3s-btn--secondary" id="a3s-sf-submit">Submit order</button>
+			{%- endif %}
+			{%- endif %}
+			{%- if desk_route %}<a class="a3s-btn a3s-btn--ghost" href="{{ desk_route }}">Open in ERPNext</a>{% endif %}
+			<p class="a3s-form__status" id="a3s-sf-status" role="status" aria-live="polite"></p>
+		</div>
+	</div>
+	{%- if order %}
+	<aside class="a3s-qf__side">{% include "templates/includes/portal_record_aside.html" %}</aside>
+	{%- endif %}
+</div>
