@@ -36,6 +36,8 @@ function refresh_panel_choices(frm) {
 }
 
 frappe.ui.form.on("Solar Package", {
+	// Batteries count towards the Total Package Cost on an Off-Grid or Hybrid package only.
+	system_type: (frm) => total_the_package(frm),
 	payment_terms(frm) {
 		show_payment_terms(frm);
 	},
@@ -100,6 +102,7 @@ frappe.ui.form.on("Solar Package", {
 	refresh(frm) {
 		// The payment terms' milestones, shown under the two choices.
 		show_payment_terms(frm);
+		show_panel_items(frm);
 		refresh_panel_choices(frm);
 		setup_bom_tables(frm);
 		if (frm.doc.__islocal) return;
@@ -166,12 +169,85 @@ function default_the_first(frm, table, cdt, cdn) {
 	}
 }
 
+// The Solar Panels grid's first column: the panel's Item in bold, its specification under it.
+function show_panel_items(frm) {
+	const formatter = (value, df, options, row) => {
+		const spec = row && row.module_specification;
+		return [
+			value && `<b>${frappe.utils.escape_html(frappe.utils.get_link_title("Item", value) || value)}</b>`,
+			spec && frappe.utils.escape_html(spec),
+		].filter(Boolean).join("<br>");
+	};
+	// Each grid row formats from its own copy of the fields, made when it is first drawn (and
+	// copied from these for the rows still to come), so the base and every copy take it.
+	const map = frappe.meta.docfield_map["Solar Package Module"];
+	if (map && map.module_item) map.module_item.formatter = formatter;
+	Object.values(frappe.meta.docfield_copy["Solar Package Module"] || {}).forEach((fields) => {
+		if (fields.module_item) fields.module_item.formatter = formatter;
+	});
+	// A grid row is one line high; these grow to the two lines, every column with them.
+	frappe.dom.set_style(
+		`[data-route^="Form/Solar Package/"] .frappe-control[data-fieldname="modules"] .grid-body .data-row > .grid-static-col,
+		[data-route^="Form/Solar Package/"] .frappe-control[data-fieldname="modules"] .grid-body .data-row > .row-index,
+		[data-route^="Form/Solar Package/"] .frappe-control[data-fieldname="modules"] .grid-body .data-row > .row-check { height: auto; min-height: 38px; }`,
+		"a3s-package-panel-rows"
+	);
+	frm.refresh_field("modules");
+}
+
+// A panel option's Total Panel Rate is its Rate per Panel for every panel (solar_package.py
+// total_the_panels does it again on save).
+function total_the_panel(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	frappe.model.set_value(cdt, cdn, "amount", flt(row.rate) * cint(row.module_count));
+	total_the_package(frm);
+}
+
+// The Total Package Cost as the rows change: what the default build adds up to, as
+// solar_package.py package_build_up works it out again on save. The KSEB, Mounting and
+// Installation rows are worked out on save, so until then their amounts are the last saved.
+function total_the_package(frm) {
+	if (frm.doctype !== "Solar Package") return;
+	const doc = frm.doc;
+	const first_default = (rows) => (rows || []).find((r) => r.is_default) || (rows || [])[0];
+	const sum = (rows, amount) => (rows || []).reduce((total, r) => total + amount(r), 0);
+	const panel = first_default(doc.modules);
+	const inverter = first_default(doc.inverters);
+	const system = {};
+	(doc.system_items || []).forEach((r) => {
+		if (r.system_type && (r.is_default || !(r.system_type in system))) system[r.system_type] = r;
+	});
+	const batteries = ["Off-Grid", "Hybrid"].includes(doc.system_type) ? doc.batteries : [];
+	const total =
+		(panel ? flt(panel.rate) * cint(panel.module_count) : 0) +
+		(inverter ? flt(inverter.unit_rate) * (cint(inverter.inverter_count) || 1) : 0) +
+		sum((batteries || []).filter((r) => !r.is_option), (r) => flt(r.rate) * cint(r.nos)) +
+		sum(Object.values(system), (r) => flt(r.cost)) +
+		sum(doc.kseb_expenses, (r) => flt(r.amount)) +
+		sum(doc.mounting_expenses, (r) => flt(r.amount)) +
+		sum(doc.installation_expenses, (r) => flt(r.amount));
+	frm.set_value("total_package_cost", flt(total, 2));
+}
+
 frappe.ui.form.on("Solar Package Module", {
-	is_default: (frm, cdt, cdn) => keep_one_default(frm, "modules", cdt, cdn),
+	is_default(frm, cdt, cdn) {
+		keep_one_default(frm, "modules", cdt, cdn);
+		total_the_package(frm);
+	},
 	modules_add: (frm, cdt, cdn) => default_the_first(frm, "modules", cdt, cdn),
 	module_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "module_item", "module_specification"),
-	module_specification: (frm) => refresh_panel_choices(frm),
-	modules_remove: (frm) => refresh_panel_choices(frm),
+	module_specification(frm, cdt, cdn) {
+		refresh_panel_choices(frm);
+		// The first column shows it under the Item.
+		const row = frm.fields_dict.modules.grid.get_row(cdn);
+		if (row) row.refresh();
+	},
+	rate: total_the_panel,
+	module_count: total_the_panel,
+	modules_remove(frm) {
+		refresh_panel_choices(frm);
+		total_the_package(frm);
+	},
 });
 
 // Balance of system differs: the default is per type, so ticking a DCDB clears only the
@@ -179,33 +255,72 @@ frappe.ui.form.on("Solar Package Module", {
 frappe.ui.form.on("Solar Package System Item", {
 	is_default(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row.is_default || !row.system_type) return;
-		(frm.doc.system_items || []).forEach((other) => {
-			if (other.name !== cdn && other.system_type === row.system_type && other.is_default) {
-				frappe.model.set_value(other.doctype, other.name, "is_default", 0);
-			}
-		});
+		if (row.is_default && row.system_type) {
+			(frm.doc.system_items || []).forEach((other) => {
+				if (other.name !== cdn && other.system_type === row.system_type && other.is_default) {
+					frappe.model.set_value(other.doctype, other.name, "is_default", 0);
+				}
+			});
+		}
+		total_the_package(frm);
 	},
+	cost: (frm) => total_the_package(frm),
+	system_items_remove: (frm) => total_the_package(frm),
 
 	system_type(frm, cdt, cdn) {
 		// A row that has just been given its type is the only one of that type until
 		// another arrives, so it is the one quoted.
 		const row = locals[cdt][cdn];
-		if (!row.system_type || row.is_default) return;
-		const others = (frm.doc.system_items || []).filter(
-			(other) => other.name !== cdn && other.system_type === row.system_type
-		);
-		if (!others.length) frappe.model.set_value(cdt, cdn, "is_default", 1);
+		if (row.system_type && !row.is_default) {
+			const others = (frm.doc.system_items || []).filter(
+				(other) => other.name !== cdn && other.system_type === row.system_type
+			);
+			if (!others.length) frappe.model.set_value(cdt, cdn, "is_default", 1);
+		}
+		total_the_package(frm);
 	},
 
 	item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "item", "specification"),
 });
 
 frappe.ui.form.on("Solar Package Inverter", {
-	is_default: (frm, cdt, cdn) => keep_one_default(frm, "inverters", cdt, cdn),
+	is_default(frm, cdt, cdn) {
+		keep_one_default(frm, "inverters", cdt, cdn);
+		total_the_package(frm);
+	},
 	inverters_add: (frm, cdt, cdn) => default_the_first(frm, "inverters", cdt, cdn),
 
 	inverter_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "inverter_item", "inverter_specification"),
+	unit_rate: (frm) => total_the_package(frm),
+	inverter_count: (frm) => total_the_package(frm),
+	inverters_remove: (frm) => total_the_package(frm),
+});
+
+// The batteries and the KSEB, Mounting and Installation rows are the estimate's doctypes too:
+// these handlers act on a package only (total_the_package checks).
+frappe.ui.form.on("Design Estimate Battery", {
+	rate: battery_amount,
+	nos: battery_amount,
+	is_option: (frm) => total_the_package(frm),
+	batteries_remove: (frm) => total_the_package(frm),
+});
+
+function battery_amount(frm, cdt, cdn) {
+	if (frm.doctype !== "Solar Package") return;
+	const row = locals[cdt][cdn];
+	frappe.model.set_value(cdt, cdn, "amount", flt(row.rate) * cint(row.nos));
+	total_the_package(frm);
+}
+
+[
+	["Design Estimate KSEB Expense", "kseb_expenses"],
+	["Design Estimate Mounting Expense", "mounting_expenses"],
+	["Design Estimate Installation Expense", "installation_expenses"],
+].forEach(([doctype, table]) => {
+	frappe.ui.form.on(doctype, {
+		amount: (frm) => total_the_package(frm),
+		[`${table}_remove`]: (frm) => total_the_package(frm),
+	});
 });
 
 // The BOM tab's Material BOM, Structure BOMs and Expenses come from Excel as often as they are

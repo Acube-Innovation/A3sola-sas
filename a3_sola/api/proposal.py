@@ -86,7 +86,8 @@ def _executive_summary(doc, estimate, consumer, survey, package):
 	)
 	roof_label = roof.roof_type if roof else None
 	tilt = roof.typical_tilt_degrees if roof else None
-	area = flt(package.area_required_sqft) if package else flt(estimate.final_capacity_kw) * 80
+	# Area Required is no longer asked on the package; a package without it is sized as one without a package.
+	area = (flt(package.area_required_sqft) if package else 0) or flt(estimate.final_capacity_kw) * 80
 
 	phase = estimate.connection_type or consumer.connection_type or ""
 	capacity = f"{flt(estimate.final_capacity_kw):g} kWp"

@@ -249,6 +249,8 @@ def package(name=None, copy_from=None):
 			spec["rows"] = _rows(doc, t, spec["columns"])
 			tables[t] = spec
 	values = {f["fieldname"]: doc.get(f["fieldname"]) for tab in tabs for f in tab["fields"]}
+	# Not on the form, but every choice the page offers is narrowed to it.
+	values["company"] = doc.company
 	if not doc.get("name") or doc.is_new():
 		values.setdefault("status", "Draft")
 	return {"name": None if doc.is_new() else doc.name, "title": doc.package_name or _("New package"),

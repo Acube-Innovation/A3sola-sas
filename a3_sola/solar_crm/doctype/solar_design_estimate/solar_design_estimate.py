@@ -1248,10 +1248,10 @@ class SolarDesignEstimate(Document):
 			price = default_price(package) or frappe._dict()
 			self.append("options", {
 				"option_name": _("Option {0} - {1} kW {2}").format(
-					n, "{0:g}".format(flt(package.capacity_kw)), makes.get(row.inverter_make) or package.inverter_topology or ""
+					n, "{0:g}".format(flt(package.capacity_kw)), makes.get(row.inverter_make) or row.get("inverter_topology") or package.inverter_topology or ""
 				).strip(),
 				"component_type": "Inverter",
-				"inverter_topology": package.inverter_topology or "String",
+				"inverter_topology": row.get("inverter_topology") or package.inverter_topology or "String",
 				"solar_package": package.name,
 				"is_recommended": 1 if chosen == (package.name, row.inverter_make) and not kept_recommended else 0,
 				# The inverter row's cost is the package price built with that inverter; the
@@ -1854,12 +1854,13 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	module = default_module(pkg)
 	# The price of the inverter option this option names, not of the package's default.
 	price = price_for(pkg, chosen)
+	topology = (chosen.get("inverter_topology") if chosen else None) or pkg.inverter_topology
 
 	doc.append(
 		"options",
 		{
-			"option_name": option_name or f"Option {len(doc.options) + 1} - {pkg.inverter_topology}",
-			"inverter_topology": pkg.inverter_topology,
+			"option_name": option_name or f"Option {len(doc.options) + 1} - {topology}",
+			"inverter_topology": topology,
 			"solar_package": pkg.name,
 			"module_make": module.module_make if module else None,
 			"module_specification": module.module_specification if module else None,
