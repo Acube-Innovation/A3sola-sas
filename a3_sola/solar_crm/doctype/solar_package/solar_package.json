@@ -64,17 +64,17 @@
   "sb_11",
   "expenses",
   "total_expenses",
-  "sb_payment_terms",
-  "payment_terms",
-  "cb_payment_terms",
-  "financed_payment_terms",
-  "payment_terms_preview",
   "tab_pricing",
   "package_cost",
   "cb_pricing",
   "total_package_cost",
   "sb_pricing_options",
-  "pricing_options"
+  "pricing_options",
+  "sb_payment_terms",
+  "payment_terms",
+  "cb_payment_terms",
+  "financed_payment_terms",
+  "payment_terms_preview"
  ],
  "fields": [
   {
@@ -447,6 +447,26 @@
    "read_only": 1
   },
   {
+   "fieldname": "tab_pricing",
+   "fieldtype": "Tab Break",
+   "label": "Pricing Options"
+  },
+  {
+   "fieldname": "cb_pricing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_pricing_options",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Each way the package is priced: a panel, an inverter and a battery of its own at a package cost. More rows, more options. An estimate is priced at the row for the panel and inverter it is built with; tick one row as the default - its cost is the Package Cost.",
+   "fieldname": "pricing_options",
+   "fieldtype": "Table",
+   "label": "Pricing Options",
+   "options": "Solar Package Pricing Option"
+  },
+  {
    "description": "How the customer pays for a job on this package - e.g. 70% advance, 20% after installation, 10% after commissioning. The job's billing plan is built from these, and the Advance Payment checks the advance received against them.",
    "fieldname": "sb_payment_terms",
    "fieldtype": "Section Break",
@@ -474,31 +494,11 @@
    "fieldname": "payment_terms_preview",
    "fieldtype": "HTML",
    "label": "Milestones"
-  },
-  {
-   "fieldname": "tab_pricing",
-   "fieldtype": "Tab Break",
-   "label": "Pricing Options"
-  },
-  {
-   "fieldname": "cb_pricing",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "sb_pricing_options",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Each way the package is priced: a panel, an inverter and a battery of its own at a package cost. More rows, more options. An estimate is priced at the row for the panel and inverter it is built with; tick one row as the default - its cost is the Package Cost.",
-   "fieldname": "pricing_options",
-   "fieldtype": "Table",
-   "label": "Pricing Options",
-   "options": "Solar Package Pricing Option"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 16:00:00.000000",
+ "modified": "2026-11-09 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",
