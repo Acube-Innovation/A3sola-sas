@@ -95,7 +95,7 @@ function consumer_address_dialog(frm) {
 			...parts("permanent"),
 			{ fieldtype: "Section Break", label: __("Installation Site Address") },
 			{ fieldname: "permanent_address_same", fieldtype: "Select", label: __("Installation Site Same as Permanent Address?"),
-				options: "Yes\nNo", default: "Yes", reqd: 1 },
+				options: "Yes\nNo", default: "No", reqd: 1 },
 			{ fieldtype: "Section Break", depends_on: different },
 			...parts("site", different),
 		],

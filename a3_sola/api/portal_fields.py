@@ -260,27 +260,33 @@ DEPENDENT_LINKS = {
 	"discom_section": ("discom", "discom"),
 }
 
-#: Further fields of the same record a dependent Link also follows, as
-#: {fieldname: (target field, source field, how the source value is read)}. A section is
-#: offered only in the record's district: the form's District is an Indian District
-#: ("Ernakulam, Kerala"), the section's district is its name ("Ernakulam").
+#: Further fields of the same record a dependent Link also follows: the form reloads its list
+#: when any of them changes. A section is offered only in the district of the connection
+#: (`connection_district`): the form's District is an Indian District ("Ernakulam, Kerala"),
+#: the section's district is its name ("Ernakulam").
 DEPENDENT_ALSO = {
-	"discom_section": (("district", "district", "Indian District.district_name"),),
+	"discom_section": ("district", "permanent_address_same", "permanent_district", "site_district"),
 }
+
+
+def connection_district(values):
+	"""The Indian District the electricity connection is in. On a customer, the installation
+	site's - its permanent address's when the site is the same place; on a lead or a survey,
+	its District."""
+	values = values or {}
+	if values.get("permanent_address_same") == "No":
+		return values.get("site_district")
+	return values.get("permanent_district") or values.get("district")
 
 
 def _also_filters(fieldname, values):
 	"""The extra filters `DEPENDENT_ALSO` adds, from the record's or the form's values."""
-	out = []
-	for target_field, source_field, read in DEPENDENT_ALSO.get(fieldname, ()):
-		value = (values or {}).get(source_field)
-		if not value:
-			continue
-		if read:
-			doctype, field = read.split(".")
-			value = frappe.db.get_value(doctype, value, field) or value
-		out.append([target_field, "=", value])
-	return out
+	if fieldname != "discom_section":
+		return []
+	district = connection_district(values)
+	if not district:
+		return []
+	return [["district", "=", frappe.db.get_value("Indian District", district, "district_name") or district]]
 
 
 #: Link fields that start on a value named in A3 Sola Settings, as (options, fieldname): setting.
@@ -373,7 +379,7 @@ def edit_spec(df, value, doc=None):
 		rule = DEPENDENT_LINKS.get(df.fieldname)
 		spec["depends_field"] = rule[1] if rule else ""
 		# Other fields the list also follows (a section, the district), reloaded on change.
-		spec["depends_also"] = ",".join(source for _t, source, _r in DEPENDENT_ALSO.get(df.fieldname, ()))
+		spec["depends_also"] = ",".join(DEPENDENT_ALSO.get(df.fieldname, ()))
 		if not value:
 			value = default_for(df)
 			if value:
@@ -439,6 +445,8 @@ def add_discom_section(discom=None, section_name=None, section_code=None, distri
 	Returns the new option as {value, label}."""
 	section_name, section_code = (section_name or "").strip(), (section_code or "").strip()
 	district = (district or "").strip()
+	# The form's district is an Indian District ("Thrissur, Kerala"); a section keeps its name.
+	district = frappe.db.get_value("Indian District", district, "district_name") or district if district else ""
 	if not (discom and frappe.db.exists("DISCOM", discom)):
 		frappe.throw(frappe._("Choose the DISCOM first."))
 	if not section_name or not section_code:

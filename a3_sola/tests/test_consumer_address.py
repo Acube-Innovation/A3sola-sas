@@ -16,7 +16,8 @@ class TestConsumerAddress(FrappeTestCase):
 	def test_saved_without_an_address(self):
 		doc = make_consumer(installation_address=None)
 		self.assertFalse(doc.installation_site_address)
-		self.assertEqual(doc.permanent_address_same, "Yes")
+		# Not answered, the site is taken to be elsewhere: the form starts on No.
+		self.assertEqual(doc.permanent_address_same, "No")
 
 	def test_a_permanent_address_elsewhere_may_be_left_blank(self):
 		doc = make_consumer(installation_address=None, permanent_address_same="No")
@@ -85,6 +86,6 @@ class TestPermanentAddressFirst(FrappeTestCase):
 	def test_a_site_known_before_the_permanent_address_fills_it(self):
 		"""A customer with only its site (from its lead, or an Address record): the permanent
 		address is the site until the Aadhaar card is read."""
-		doc = make_consumer(installation_address=None, **parts("site", SITE))
+		doc = make_consumer(installation_address=None, permanent_address_same="Yes", **parts("site", SITE))
 		self.assertEqual(doc.permanent_city, "Kalamassery")
 		self.assertEqual(self.site(doc), SITE)

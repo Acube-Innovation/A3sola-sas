@@ -140,7 +140,7 @@
           fieldtype: "Select",
           label: __("Installation Site Same as Permanent Address?"),
           options: "Yes\nNo",
-          default: "Yes",
+          default: "No",
           reqd: 1
         },
         { fieldtype: "Section Break", depends_on: different },
@@ -209,4 +209,4 @@
     frm.add_custom_button(__("Audit Trail"), () => a3_sola.audit.show_trail(frm), group);
   };
 })();
-//# sourceMappingURL=a3_sola.bundle.473CLD7O.js.map
+//# sourceMappingURL=a3_sola.bundle.JTHJPIZO.js.map

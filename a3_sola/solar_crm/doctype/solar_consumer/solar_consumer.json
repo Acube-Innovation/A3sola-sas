@@ -310,7 +310,7 @@
    "label": "Installation Site Address"
   },
   {
-   "default": "Yes",
+   "default": "No",
    "fieldname": "permanent_address_same",
    "fieldtype": "Select",
    "label": "Installation Site Same as Permanent Address?",
@@ -797,7 +797,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-06 14:00:00.000000",
+ "modified": "2026-11-09 16:10:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

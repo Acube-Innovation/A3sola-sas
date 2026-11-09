@@ -519,7 +519,7 @@ def form_fields(meta, prefill=None, extra=()):
 					spec["value"] = seed
 			rule = DEPENDENT_LINKS.get(f.fieldname)
 			spec["depends_field"] = rule[1] if rule else ""
-			spec["depends_also"] = ",".join(source for _t, source, _r in DEPENDENT_ALSO.get(f.fieldname, ()))
+			spec["depends_also"] = ",".join(DEPENDENT_ALSO.get(f.fieldname, ()))
 			choices = link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
 			if seed and not any(c["value"] == seed for c in choices):
 				choices.insert(0, {"value": seed, "label": link_title(f.options, seed)})
