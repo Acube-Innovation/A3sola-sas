@@ -115,7 +115,11 @@ class TestPortalPackages(FrappeTestCase):
 		# The two costs have a tab of their own, the last, after the BOM tab.
 		keys = [t["key"] for t in saved["tabs"]]
 		self.assertEqual(keys[-2:], ["cost", "tab_pricing"])
-		self.assertEqual([f["fieldname"] for f in tabs["tab_pricing"]["fields"]], ["package_cost", "total_package_cost"])
+		self.assertEqual([f["fieldname"] for f in tabs["tab_pricing"]["fields"]],
+			["package_cost", "total_package_cost", "payment_terms", "financed_payment_terms"])
+		# The payment terms are priced with the options: their section ends the Pricing Options tab, not the BOM tab.
+		self.assertEqual(tabs["tab_pricing"]["sections"][-1]["label"], "Payment Terms")
+		self.assertNotIn("Payment Terms", [s["label"] for s in tabs["cost"]["sections"]])
 		# Company is set, not asked: still in the values, which narrow every choice.
 		self.assertNotIn("company", [f["fieldname"] for f in tabs["package"]["fields"]])
 		self.assertEqual(saved["values"]["company"], frappe.db.get_value("Solar Package", saved["name"], "company"))
