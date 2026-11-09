@@ -41,7 +41,6 @@
 		event.preventDefault();
 		markInvalid("lead_name", false);
 		markInvalid("company_name", false);
-		markInvalid("loan_required", false);
 
 		/* Same rule the server enforces, checked here only to spare a round trip. */
 		if (!value("lead_name") && !value("company_name")) {
@@ -49,13 +48,6 @@
 			markInvalid("company_name", true);
 			setStatus("Enter a lead name or a company name.", "error");
 			(form.elements.lead_name || {}).focus && form.elements.lead_name.focus();
-			return;
-		}
-
-		if (!value("loan_required")) {
-			markInvalid("loan_required", true);
-			setStatus("Say whether the customer needs a loan: Yes or No.", "error");
-			(form.elements.loan_required || {}).focus && form.elements.loan_required.focus();
 			return;
 		}
 

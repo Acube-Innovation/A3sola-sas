@@ -106,6 +106,16 @@ def get_context(context):
 	]
 	# A list runs the full width of the page.
 	context.main_wide = True
+	# Leads from a Google Sheet (api/lead_import): added, or updated, as the person may.
+	context.can_import = bool(frappe.has_permission("Lead", "create") or frappe.has_permission("Lead", "write"))
+	context.can_import_add = bool(frappe.has_permission("Lead", "create"))
+	context.can_import_update = bool(frappe.has_permission("Lead", "write"))
+	if context.can_import:
+		from a3_sola.api.lead_import import campaign_choices
+
+		# The campaign the imported leads go in: one there is, or a new one.
+		context.import_campaigns = campaign_choices()
+		context.can_make_campaign = bool(frappe.has_permission("Campaign", "create"))
 	return context
 
 

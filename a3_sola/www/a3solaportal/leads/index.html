@@ -15,10 +15,18 @@
 			</label>
 		</form>
 	</div>
-	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/leads/new">
-		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-lead"></use></svg>
-		<span>New lead</span>
-	</a>
+	<div class="a3s-leads__actions">
+		{%- if can_import %}
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-lead-import-open>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-sheet"></use></svg>
+			<span>Import from Google Sheet</span>
+		</button>
+		{%- endif %}
+		<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/leads/new">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-lead"></use></svg>
+			<span>New lead</span>
+		</a>
+	</div>
 </div>
 
 {#- ---- whose leads: all, ours, or the dealers' (staff only) -------------------- #}
@@ -99,4 +107,5 @@
 {% endif %}
 
 {% include "templates/includes/portal_todo_popup.html" %}
+{%- if can_import %}{% include "templates/includes/lead_import_dialog.html" %}{% endif %}
 {% endblock %}

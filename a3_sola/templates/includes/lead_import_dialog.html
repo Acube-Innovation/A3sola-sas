@@ -1,0 +1,118 @@
+{#- Leads from a Google Sheet (api/lead_import, lead_import.js), in three steps: the sheet's link
+    and whether its rows are new leads or changes to existing ones; what each row will do, nothing
+    saved yet; then the import, a batch at a time, and what came of each row.
+    Context: can_import_add, can_import_update (leads/index.py). -#}
+<div class="a3s-modal a3s-li" data-lead-import hidden role="dialog" aria-modal="true" aria-labelledby="a3s-li-title">
+	<div class="a3s-modal__panel a3s-li__panel">
+		<div class="a3s-assign__head">
+			<div>
+				<h3 class="a3s-modal__title" id="a3s-li-title">Import from Google Sheet</h3>
+				<p class="a3s-li__sub">Add new leads, or update the ones you have, from a Google Sheet.</p>
+			</div>
+			<button type="button" class="a3s-assign__x" data-li-close aria-label="Close">&times;</button>
+		</div>
+
+		{#- 1. The sheet, and what to do with its rows -#}
+		<div class="a3s-li__step" data-li-step="link">
+			<div class="a3s-li__modes" role="radiogroup" aria-label="What the rows are">
+				{%- if can_import_add %}
+				<label class="a3s-li__mode">
+					<input type="radio" name="a3s-li-mode" value="add" checked>
+					<span class="a3s-li__mode-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-lead"></use></svg></span>
+					<span class="a3s-li__mode-text"><strong>Add new leads</strong>
+						<small>Each row becomes a new lead. A row whose mobile number or email is already a lead's is skipped.</small></span>
+				</label>
+				{%- endif %}
+				{%- if can_import_update %}
+				<label class="a3s-li__mode">
+					<input type="radio" name="a3s-li-mode" value="update"{% if not can_import_add %} checked{% endif %}>
+					<span class="a3s-li__mode-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-edit"></use></svg></span>
+					<span class="a3s-li__mode-text"><strong>Update existing leads</strong>
+						<small>Each row finds its lead by Lead ID, else mobile number, else email. A blank cell changes nothing.</small></span>
+				</label>
+				{%- endif %}
+			</div>
+
+			<div class="a3s-field a3s-li__url">
+				<label for="a3s-li-url">Google Sheet link</label>
+				<input id="a3s-li-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+				       placeholder="https://docs.google.com/spreadsheets/d/…" data-li-url>
+			</div>
+
+			<div class="a3s-li__campaign">
+				<div class="a3s-field">
+					<label for="a3s-li-campaign">Campaign</label>
+					<select id="a3s-li-campaign" data-li-campaign>
+						<option value="">No campaign</option>
+						{%- for c in import_campaigns %}
+						<option value="{{ c.value | e }}">{{ c.label | e }}</option>
+						{%- endfor %}
+						{%- if can_make_campaign %}
+						<option value="__new__">New campaign…</option>
+						{%- endif %}
+					</select>
+				</div>
+				<div class="a3s-field" data-li-new-campaign-field hidden>
+					<label for="a3s-li-new-campaign">New campaign's name</label>
+					<input id="a3s-li-new-campaign" type="text" maxlength="140" autocomplete="off" placeholder="e.g. Renewcore Leads Campaign" data-li-new-campaign>
+				</div>
+				<p class="a3s-li__hint">Every lead added or updated goes in this campaign, unless its row names another. A new campaign is made when you import.</p>
+			</div>
+
+			<ol class="a3s-li__help">
+				<li>In Google Sheets choose <strong>Share</strong>, and set General access to <strong>Anyone with the link</strong> (Viewer).</li>
+				<li>Name the columns in the first row: <em>Name, Mobile, Email, District, Loan Required…</em> as on the lead form.
+					To update, a <strong>Lead ID</strong> column finds each lead surely.</li>
+				<li>Open the tab to import and copy the link from the address bar.</li>
+			</ol>
+			<p class="a3s-li__links">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
+				<span>Start from <a href="/api/method/a3_sola.api.lead_import.template">a blank template</a>{% if can_import_update %}
+				or <a href="/api/method/a3_sola.api.lead_import.template?with_leads=1">your leads, to update</a>{% endif %}:
+				in Google Sheets, File &rarr; Import.</span>
+			</p>
+
+			<p class="a3s-li__status" data-li-status role="status" aria-live="polite" hidden></p>
+			<div class="a3s-li__foot">
+				<button type="button" class="a3s-btn a3s-btn--secondary" data-li-close>Cancel</button>
+				<button type="button" class="a3s-btn a3s-btn--primary" data-li-check>
+					<svg class="a3s-ic" aria-hidden="true"><use href="#ic-checklist"></use></svg><span>Check the sheet</span>
+				</button>
+			</div>
+		</div>
+
+		{#- 2. What each row will do: nothing saved yet -#}
+		<div class="a3s-li__step" data-li-step="preview" hidden>
+			<div class="a3s-li__counts" data-li-counts></div>
+			<p class="a3s-li__cols" data-li-cols></p>
+			<div class="a3s-li__tablewrap">
+				<table class="a3s-li__table">
+					<thead><tr><th>Row</th><th>Lead</th><th>Will</th><th>Details</th></tr></thead>
+					<tbody data-li-rows></tbody>
+				</table>
+			</div>
+			<p class="a3s-li__note">Nothing is saved until you import. Fix a skipped row in the sheet and check again, or import the rest now.</p>
+			<div class="a3s-li__foot">
+				<button type="button" class="a3s-btn a3s-btn--secondary" data-li-back>Back</button>
+				<button type="button" class="a3s-btn a3s-btn--primary" data-li-run>Import</button>
+			</div>
+		</div>
+
+		{#- 3. The import, and what came of it -#}
+		<div class="a3s-li__step" data-li-step="run" hidden>
+			<p class="a3s-li__progress" data-li-progress role="status" aria-live="polite"></p>
+			<div class="a3s-progress"><span class="a3s-progress__fill" data-li-bar></span></div>
+			<div class="a3s-li__counts" data-li-result-counts hidden></div>
+			<div class="a3s-li__tablewrap" data-li-failed hidden>
+				<table class="a3s-li__table">
+					<thead><tr><th>Row</th><th>Lead</th><th>Why it was not saved</th></tr></thead>
+					<tbody data-li-failed-rows></tbody>
+				</table>
+			</div>
+			<div class="a3s-li__foot">
+				<button type="button" class="a3s-btn a3s-btn--primary" data-li-finish hidden>Done</button>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="/assets/a3_sola/js/lead_import.js?v={{ a3s_asset_version('js/lead_import.js') }}"></script>

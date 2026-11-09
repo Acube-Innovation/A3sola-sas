@@ -338,11 +338,12 @@ def create_lead(
 	if not lead_name and not company_name:
 		frappe.throw(_("Enter a lead name or a company name."), frappe.MandatoryError)
 
-	# Asked of every new lead: it decides whether the job's loan tasks apply, carried to the
-	# quotation and on to the project.
+	# Whether the customer needs a loan - carried to the quotation and on to the project, where it
+	# decides the loan tasks. Not always known on the first call, so it may wait (a lead without
+	# it is quoted as "Not stated" and taken as not financed); said, it is Yes or No.
 	loan_required = (loan_required or "").strip()
-	if loan_required not in ("Yes", "No"):
-		frappe.throw(_("Say whether the customer needs a loan: Yes or No."), frappe.MandatoryError)
+	if loan_required and loan_required not in ("Yes", "No"):
+		frappe.throw(_("Loan required: choose Yes or No, or leave it blank."))
 
 	status = (status or "Lead").strip()
 	if status not in LEAD_STATUSES:
@@ -355,7 +356,7 @@ def create_lead(
 	doc.mobile_no = (mobile_no or "").strip() or None
 	doc.phone = (phone or "").strip() or None
 	doc.status = status
-	doc.loan_required = loan_required
+	doc.loan_required = loan_required or None
 	# What the form chose - else the lead's defaults (a client, from social media, in process,
 	# a product enquiry). A choice that is not one of the field's options is ignored.
 	defaults = lead_defaults()
