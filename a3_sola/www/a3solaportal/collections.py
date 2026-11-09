@@ -37,7 +37,14 @@ COLLECTIONS = {
 	                             "permanent_state", "permanent_district", "permanent_pincode",
 	                             # Read from the KSEB bill (api/kseb_bill.py), so on the form to be filled in.
 	                             "discom_section", "tariff_category", "connection_type", "connected_load_watts",
-	                             "avg_consumption_units", "avg_bill_amount", "billing_frequency"]},
+	                             "avg_consumption_units", "avg_bill_amount", "billing_frequency"],
+	              # The create page starts with the documents read into it (api/portal_attachments.READERS):
+	              # a tile each - its type, icon and what it fills - and the form shows once one is
+	              # added, or the person chooses to type the details in (portal_attachments.html).
+	              "autofill": (("KSEB Bill", "bolt", "consumer number, connection, tariff, load and site address"),
+	                           ("Aadhaar Front", "user", "name, date of birth and gender"),
+	                           ("Aadhaar Back", "pin", "permanent address"),
+	                           ("Bank Proof", "bank", "bank, branch, IFSC and account number"))},
 	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
 	# detail pages are the pricing builder (www/a3solaportal/quotations).

@@ -25,11 +25,13 @@
 {#- The record's documents come first, as on its edit form: the same Attachments card. Nothing
     is created yet, so the files wait on the card - each can be Read into the form below - and
     go up once Create has made the record (portal_record_form.js). -#}
+{#- A collection whose documents fill its form (`autofill`, the customer) starts with them: the
+    form stays hidden until a document is added or the person chooses to type it in. -#}
 <div class="a3s-formattach{% if item_table %} a3s-formattach--wide{% endif %}{% if sections %} a3s-formattach--full{% endif %}">
-{%- with att_doctype=collection.doctype, att_name="", att_held=True %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+{%- with att_doctype=collection.doctype, att_name="", att_held=True, att_autofill=collection.autofill, att_from=(source_title if source_name else "") %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 </div>
 
-<div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}{% if sections %} a3s-formcard--full{% endif %}">
+<div class="a3s-card a3s-formcard{% if item_table %} a3s-formcard--wide{% endif %}{% if sections %} a3s-formcard--full{% endif %}"{% if collection.autofill %} data-autofill-form hidden{% endif %}>
 	<form class="a3s-form" id="a3s-record-form" data-slug="{{ collection.slug }}" data-doctype="{{ collection.doctype | e }}"
 	      data-source-dt="{{ source_dt | e }}" data-source="{{ source_name | e }}" data-source-task="{{ source_task | e }}" novalidate>
 		{%- macro form_field(f) %}
