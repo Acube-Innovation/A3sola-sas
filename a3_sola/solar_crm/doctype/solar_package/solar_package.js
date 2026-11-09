@@ -577,7 +577,8 @@ frappe.ui.form.on("Solar Package Structure BOM", {
 
 // The Expenses' total, as the rows change (the server totals it again on save).
 function total_expenses(frm) {
-	frm.set_value("total_expenses", (frm.doc.expenses || []).reduce((sum, r) => sum + flt(r.amount), 0));
+	// A bundle's or a BOM's items are its parts, already in its own amount (package_bom_tree).
+	frm.set_value("total_expenses", (frm.doc.expenses || []).reduce((sum, r) => sum + (r.row_kind === "Component" ? 0 : flt(r.amount)), 0));
 }
 
 frappe.ui.form.on("Solar Package Expense", {

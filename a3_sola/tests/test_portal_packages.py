@@ -87,7 +87,11 @@ class TestPortalPackages(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			pp.save_package(json.dumps(stale, default=str))
 		fresh = pp.package(saved["name"])
-		inverter = frappe.db.get_value("Item", {"item_group": ["in", ["On-Grid Inverters", "Hybrid Inverters"]]})
+		from a3_sola.api.package_bom_tree import is_assembly
+
+		# A plain inverter: a bundle or an Item with a BOM may stand in any row.
+		inverter = next((i for i in frappe.get_all("Item", filters={"item_group": ["in", ["On-Grid Inverters", "Hybrid Inverters"]]},
+			pluck="name") if not is_assembly(i)), None)
 		if inverter:
 			posted = _posted(fresh)
 			posted["tables"]["modules"][0]["module_item"] = inverter
@@ -122,10 +126,14 @@ class TestPortalPackages(FrappeTestCase):
 		posted["tables"]["structure_boms"] = [{"item": item["value"], "qty": 1, "rate": 5, "panel_capacities": "5, 3"}]
 		posted["tables"]["expenses"] = [{"item": item["value"], "qty": 4, "rate": 25}]
 		again = pp.save_package(json.dumps(posted, default=str))
-		material = again["tables"]["material_bom"]["rows"][0]
+		# The rows posted; the other tabs' rows are copied in beside them (package_bom_tree).
+		def own(table):
+			return [r for r in again["tables"][table]["rows"] if not r.get("source_row") and r.get("row_kind") != "Component"]
+		material = own("material_bom")[0]
 		self.assertEqual((material["inverters"] or "", material["amount"], material["uom"]), (inverter or "", 20, item["uom"]))
-		self.assertEqual(again["tables"]["structure_boms"]["rows"][0]["panel_capacities"], "3, 5")
-		self.assertEqual(again["values"]["total_expenses"], 100)
+		self.assertEqual(own("structure_boms")[0]["panel_capacities"], "3, 5")
+		copied = sum(r["amount"] for r in again["tables"]["expenses"]["rows"] if r.get("source_row") and r.get("row_kind") != "Component")
+		self.assertEqual(again["values"]["total_expenses"], 100 + copied)
 
 	def test_status_and_delete(self):
 		saved = self.copy()

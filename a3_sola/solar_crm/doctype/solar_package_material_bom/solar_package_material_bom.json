@@ -14,7 +14,10 @@
   "rate",
   "amount",
   "inverters",
-  "choose_inverters"
+  "choose_inverters",
+  "row_kind",
+  "bom_no",
+  "source_row"
  ],
  "fields": [
   {
@@ -87,11 +90,33 @@
    "fieldtype": "Button",
    "in_list_view": 1,
    "label": "Select Inverters"
+  },
+  {
+   "fieldname": "row_kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "\nBundle\nBOM\nComponent",
+   "read_only": 1,
+   "description": "Bundle or BOM: an ERPNext Product Bundle or an Item with a BOM, its items listed under it. Component: one of those items."
+  },
+  {
+   "fieldname": "bom_no",
+   "fieldtype": "Link",
+   "label": "Sub BOM",
+   "options": "BOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_row",
+   "fieldtype": "Data",
+   "label": "Copied From",
+   "read_only": 1,
+   "description": "The tab the row is copied from on save (Solar Panel, Inverter, KSEB, Installation, Optional Add-ons): changed there."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-03 18:00:00.000000",
+ "modified": "2026-11-09 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package Material BOM",

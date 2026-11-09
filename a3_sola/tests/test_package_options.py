@@ -441,6 +441,8 @@ class TestExpenses(FrappeTestCase):
 		if not item:
 			self.skipTest("No stock Item.")
 		package = priceable(expenses=[{"item": item, "qty": 4, "rate": 250}, {"item": item, "qty": 1, "rate": 99}])
-		self.assertEqual([r.amount for r in package.expenses], [1000, 99])
-		self.assertEqual(package.total_expenses, 1099)
+		# The rows typed in; the KSEB and installation rows are copied in beside them (package_bom_tree).
+		self.assertEqual([r.amount for r in package.expenses if not r.source_row], [1000, 99])
+		copied = sum(r.amount for r in package.expenses if r.source_row and r.row_kind != "Component")
+		self.assertEqual(package.total_expenses, 1099 + copied)
 		self.assertEqual(default_price(package).system_cost, INVERTER["cost"])

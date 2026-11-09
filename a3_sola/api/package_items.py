@@ -13,6 +13,8 @@ import re
 import frappe
 from frappe import _
 
+from a3_sola.api import package_bom_tree
+
 #: table -> (item field, text field). KSEB rows are their Item alone.
 ROWS = {
 	"modules": ("module_item", "module_specification"),
@@ -64,7 +66,8 @@ def validate(doc):
 	for table, (field, _text) in ROWS.items():
 		for row in doc.get(table) or []:
 			item, group = row.get(field), category(table, row)
-			if item and group and not in_group(item, group):
+			# An ERPNext Product Bundle or an Item with a BOM may stand in any row (package_bom_tree).
+			if item and group and not in_group(item, group) and not package_bom_tree.is_assembly(item):
 				frappe.throw(_("Row {0} of {1}: {2} is not in the {3} item group.").format(
 					row.idx, doc.meta.get_label(table), frappe.bold(item), frappe.bold(group)), title=_("Wrong Item"))
 
@@ -155,14 +158,15 @@ def bom_lines(package):
 	roof type and capacity."""
 	from a3_sola.api import package_bom_tables
 
-	lines = {}
+	lines, made = {}, {}
 	for table, qty_field in MATERIAL_ROWS.items():
 		item_field = ROWS[table][0]
 		for row in package.get(table) or []:
 			item = row.get(item_field)
 			if not item or not _quoted(table, row):
 				continue
-			lines[item] = lines.get(item, 0) + (frappe.utils.flt(row.get(qty_field)) or 1)
+			for part, qty in package_bom_tree.line_items(item, frappe.utils.flt(row.get(qty_field)) or 1, made):
+				lines[part] = lines.get(part, 0) + qty
 	for item, qty in package_bom_tables.bom_lines(package).items():
 		lines[item] = lines.get(item, 0) + qty
 	return lines

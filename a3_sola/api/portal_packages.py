@@ -145,21 +145,55 @@ def _rows(doc, fieldname, columns):
 	return [{k: row.get(k) for k in keep} for row in doc.get(fieldname) or []]
 
 
-def _item_choices():
-	"""Each category group's Items - its subgroups' too - with the text a choice fills in."""
+def _assemblies():
+	"""The Items that are ERPNext Product Bundles or have an active BOM, as {item: "Bundle" | "BOM"}
+	- not the packages' own Items, whose BOM is the package's."""
+	from a3_sola.api.package_items import PACKAGE_GROUP
+
+	out = {}
+	for item in frappe.get_all("BOM", filters={"is_active": 1, "docstatus": 1}, pluck="item"):
+		out[item] = "BOM"
+	if frappe.db.exists("DocType", "Product Bundle"):
+		filters = {"disabled": 0} if frappe.get_meta("Product Bundle").has_field("disabled") else {}
+		for item in frappe.get_all("Product Bundle", filters=filters, pluck="new_item_code"):
+			out[item] = "Bundle"
+	packages = set(frappe.get_all("Item", filters={"name": ["in", list(out)], "item_group": PACKAGE_GROUP}, pluck="name")) if out else set()
+	return {item: kind for item, kind in out.items() if item not in packages}
+
+
+def _tagged(label, kind):
+	"""A Product Bundle or an Item with a BOM, said so ahead of its name: "Bundle: HOYM ..."."""
+	return "{0}: {1}".format(kind, label) if kind else label
+
+
+def _item_choices(assemblies=None):
+	"""Each category group's Items - its subgroups' too - with the text a choice fills in, the
+	Product Bundles and the Items with a BOM among them tagged so and listed first
+	(package_bom_tree); a bundle or BOM of no category group is in every list."""
+	assemblies = _assemblies() if assemblies is None else assemblies
 	groups = {g.name: (g.lft, g.rgt) for g in frappe.get_all("Item Group", filters={"name": ["in", list(ITEM_GROUPS)]},
 		fields=["name", "lft", "rgt"])}
 	at = {g.name: g.lft for g in frappe.get_all("Item Group", fields=["name", "lft"])}
 	items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", _under(groups)]},
 		fields=["name", "item_name", "item_group", "description"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)
+	listed = {i.name for i in items}
+	items += frappe.get_all("Item", filters={"disabled": 0, "name": ["in", [a for a in assemblies if a not in listed]]},
+		fields=["name", "item_name", "item_group", "description"], order_by="item_name asc") if assemblies else []
 	out = {g: [] for g in groups}
 	for item in items:
 		text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", item.description or ""))).strip() or item.item_name
-		entry = {"value": item.name, "label": item.item_name if item.item_name == item.name else
-			"{0} ({1})".format(item.item_name, item.name), "text": text, "group": item.item_group}
-		for group, (lft, rgt) in groups.items():
-			if lft <= at.get(item.item_group, -1) <= rgt:
-				out[group].append(entry)
+		kind = assemblies.get(item.name)
+		entry = {"value": item.name, "label": _tagged(item.item_name if item.item_name == item.name else
+			"{0} ({1})".format(item.item_name, item.name), kind), "text": text, "group": item.item_group, "kind": kind}
+		# Each Item in its own category's list - a bundle or a BOM too, so an inverter bundle is
+		# not offered as a panel; one of no category is offered in every list.
+		homes = [g for g, (lft, rgt) in groups.items() if lft <= at.get(item.item_group, -1) <= rgt]
+		for group in homes or (list(groups) if kind else []):
+			out[group].append(entry)
+	# The bundles and BOMs first, then the plain Items, each by name.
+	order = {"Bundle": 0, "BOM": 1}
+	for entries in out.values():
+		entries.sort(key=lambda e: (order.get(e["kind"], 2), e["label"].lower()))
 	return out
 
 
@@ -195,8 +229,9 @@ def _choices():
 	make_name = {m.name: m.make_name for m in makes}
 	milestones = _milestones()
 	companies = get_permitted_companies() or frappe.get_all("Company", pluck="name")
+	assemblies = _assemblies()
 	return {
-		"items": _item_choices(),
+		"items": _item_choices(assemblies),
 		"Component Make": [{"value": m.name, "label": m.make_name or m.name, "type": m.component_type,
 			"technology": m.technology, "company": m.company, "active": cint(m.is_active)} for m in makes],
 		"Inverter Model": [{"value": m.name, "label": "{0}, {1}, {2}, {3:g} kW".format(m.model_name,
@@ -215,9 +250,11 @@ def _choices():
 		"UOM": [{"value": u, "label": u} for u in frappe.get_all("UOM", filters={"enabled": 1}, pluck="name", order_by="name")],
 		"Company": [{"value": c, "label": c} for c in companies],
 		# The BOM tab's tables take any Item; choosing one fills its Category and UOM.
-		"Item": [{"value": i.name, "label": i.item_name if i.item_name == i.name else "{0} ({1})".format(i.item_name, i.name),
-			"group": i.item_group, "uom": i.stock_uom} for i in frappe.get_all("Item", filters={"disabled": 0},
+		"Item": sorted([{"value": i.name, "label": _tagged(i.item_name if i.item_name == i.name else "{0} ({1})".format(i.item_name, i.name),
+			assemblies.get(i.name)), "group": i.item_group, "uom": i.stock_uom, "kind": assemblies.get(i.name)} for i in frappe.get_all("Item", filters={"disabled": 0},
 				fields=["name", "item_name", "item_group", "stock_uom"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)],
+			# The bundles and BOMs first.
+			key=lambda e: ({"Bundle": 0, "BOM": 1}.get(e["kind"], 2), e["label"].lower())),
 		# Structure BOM rows' Panel Capacity choices: the capacities packages are made in.
 		"capacities": capacities(),
 	}

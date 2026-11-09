@@ -52,6 +52,7 @@ class SolarPackage(Document):
 		self.compute_batteries()
 		self.price_from_pricing_options()
 		self.compute_expenses()
+		self.full_bom()
 		self.total_the_package()
 		self.check_regulation()
 		self.validate_payment_terms()
@@ -259,7 +260,18 @@ class SolarPackage(Document):
 				)
 
 	def total_the_expenses(self):
-		self.total_expenses = flt(sum(flt(r.amount) for r in self.get("expenses") or []), self.precision("total_expenses"))
+		# A bundle's or a BOM's items are its parts, already in its own amount.
+		self.total_expenses = flt(sum(flt(r.amount) for r in self.get("expenses") or [] if r.get("row_kind") != "Component"),
+			self.precision("total_expenses"))
+
+	def full_bom(self):
+		"""The BOM tab whole: the other tabs' rows copied in, and each bundle or BOM with its items
+		under it (package_bom_tree), after the KSEB and installation rows are worked out."""
+		from a3_sola.api import package_bom_tables, package_bom_tree
+
+		package_bom_tree.sync(self)
+		package_bom_tables.validate(self)
+		self.total_the_expenses()
 
 	def total_the_panels(self):
 		"""Each panel option's Total Panel Rate: its Rate per Panel for every panel."""
