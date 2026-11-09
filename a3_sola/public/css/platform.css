@@ -4031,6 +4031,11 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-pkg__other { margin-top: 0.85rem; }
 .a3s-pkg__count { display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.75rem;
 	background: var(--color-accent-soft); color: var(--color-accent); vertical-align: middle; }
+/* The BOM tab as a full BOM: a bundle's or a BOM's row, and its items set in under it. */
+.a3s-pkg__parent td { font-weight: 600; }
+.a3s-pkg__child td { color: var(--color-text-muted); font-size: 0.9em; background: rgba(42,51,66,0.03); }
+.a3s-pkg__child td:first-child { padding-left: 1.75rem; }
+.a3s-pkg__twig { margin-right: 0.4rem; color: var(--color-text-muted); }
 .a3s-pkg__none { margin: 0; padding: 1rem; border: 1px dashed var(--color-border); border-radius: 0.85rem; text-align: center;
 	font-size: 0.875rem; color: var(--color-text-muted); }
 .a3s-pkg__rows td { vertical-align: top; overflow-wrap: anywhere; }

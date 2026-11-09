@@ -1,6 +1,8 @@
-{#- The create and edit forms' long dropdowns as search boxes (portal_combo.js), and the DISCOM
-    Section's "Add a new section": a section a customer's bill names that the list lacks is
-    added under the DISCOM chosen beside it (portal_fields.add_discom_section) and chosen.
+{#- The create and edit forms' long dropdowns as search boxes (portal_combo.js), and adding a
+    DISCOM Section: a section a customer's KSEB bill names that the list lacks is added in one
+    click from the bill's "+ Add [code] name" (portal_kseb_bill.js puts it under the field), and
+    any other from the list's "+ Add a new section" - under the DISCOM chosen beside it
+    (portal_fields.add_discom_section), and chosen.
 
     Context: combo_doctype, the form's doctype. -#}
 <script src="/assets/a3_sola/js/portal_combo.js?v={{ a3s_asset_version('js/portal_combo.js') }}"></script>
@@ -29,9 +31,11 @@
 		return box;
 	}
 
-	/* The district the form holds, as its list shows it, is the new section's too. */
+	/* The district of the connection, as its list shows it, is the new section's too: on a
+	   customer, the installation site's unless the site is the permanent address. */
 	function district() {
-		var d = document.getElementById("fld-district");
+		var same = document.getElementById("fld-permanent_address_same");
+		var d = document.getElementById(same ? (same.value === "No" ? "fld-site_district" : "fld-permanent_district") : "fld-district");
 		if (!d || !d.value) return "";
 		var o = d.options ? d.options[d.selectedIndex] : null;
 		return (o ? o.textContent : d.value).trim();
@@ -86,64 +90,64 @@
 			if (e.key === "Escape") { e.preventDefault(); cancel.click(); }
 		});
 		add.addEventListener("click", function () {
-			if (!discom || !discom.value) { status.textContent = "Choose the DISCOM first."; status.dataset.tone = "error"; return; }
 			add.disabled = true;
 			status.textContent = "Adding…"; status.dataset.tone = "";
-			fetch("/api/method/a3_sola.api.portal_fields.add_discom_section", {
-				method: "POST", credentials: "same-origin",
-				headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
-				body: JSON.stringify({ discom: discom.value, section_name: value("section_name"), section_code: value("section_code"),
-					district: value("district"), doctype: "{{ combo_doctype | e }}" })
-			}).then(function (r) {
-				return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, body: b }; });
-			}).then(function (res) {
-				if (!res.ok || !res.body.message) {
-					var text = "Could not add the section.";
-					try { text = JSON.parse(JSON.parse(res.body._server_messages)[0]).message.replace(/<[^>]*>/g, ""); } catch (e) { /* keep */ }
-					throw new Error(text);
-				}
-				var row = res.body.message;
-				var option = Array.prototype.filter.call(select.options, function (o) { return o.value === row.value; })[0];
-				if (!option) {
-					option = document.createElement("option");
-					option.value = row.value;
-					select.appendChild(option);
-				}
-				option.textContent = row.label;
-				select.value = row.value;
-				select.dispatchEvent(new Event("change", { bubbles: true }));
-				panel.remove(); panel = null;
-				/* The bill's section is on file now: its warning and "Add this section" go. */
-				if (fromBill()) {
-					delete wrap.dataset.billSection;
-					document.dispatchEvent(new CustomEvent("a3s:section-added", { detail: row }));
-				}
-			}).catch(function (e) {
-				add.disabled = false;
-				status.textContent = e.message; status.dataset.tone = "error";
-			});
+			addSection({ section_name: value("section_name"), section_code: value("section_code"), district: value("district") })
+				.then(function () { panel.remove(); panel = null; })
+				.catch(function (e) { add.disabled = false; status.textContent = e.message; status.dataset.tone = "error"; });
 		});
 	}
 
+	/* The section added under the DISCOM chosen, and chosen: resolves with its {value, label}. */
+	function addSection(section) {
+		var discom = document.getElementById("fld-discom");
+		if (!discom || !discom.value) return Promise.reject(new Error("Choose the DISCOM first."));
+		return fetch("/api/method/a3_sola.api.portal_fields.add_discom_section", {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
+			body: JSON.stringify({ discom: discom.value, section_name: section.section_name, section_code: section.section_code,
+				district: section.district || district(), doctype: "{{ combo_doctype | e }}" })
+		}).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, body: b }; });
+		}).then(function (res) {
+			if (!res.ok || !res.body.message) {
+				var text = "Could not add the section.";
+				try { text = JSON.parse(JSON.parse(res.body._server_messages)[0]).message.replace(/<[^>]*>/g, ""); } catch (e) { /* keep */ }
+				throw new Error(text);
+			}
+			var row = res.body.message;
+			var option = Array.prototype.filter.call(select.options, function (o) { return o.value === row.value; })[0];
+			if (!option) {
+				option = document.createElement("option");
+				option.value = row.value;
+				select.appendChild(option);
+			}
+			option.textContent = row.label;
+			select.value = row.value;
+			select.dispatchEvent(new Event("change", { bubbles: true }));
+			/* The bill's section is on file now: its warning and its "+ Add" go. */
+			if (fromBill()) {
+				delete wrap.dataset.billSection;
+				document.dispatchEvent(new CustomEvent("a3s:section-added", { detail: row }));
+			}
+			return row;
+		});
+	}
+
+	/* The bill's section, added in one click (portal_kseb_bill.js): its code and name as read. */
+	window.a3sAddBillSection = function (bill) {
+		return addSection({ section_name: (bill.name || "").trim(), section_code: String(bill.code || "").trim(),
+			district: district() || bill.district || "" });
+	};
+
 	select.addEventListener("a3s:combo-add", function (e) { open((e.detail && e.detail.query) || ""); });
 
-	/* The same, in plain sight: a button under the field, for a section the list lacks. */
+	/* A row under the field for the bill's section, when a KSEB bill read on this page names
+	   one the list lacks (portal_kseb_bill.js puts its "+ Add" there). Nothing otherwise: a
+	   section the list lacks is added from the list's own "+ Add a new section". */
 	if (wrap && wrap.hasAttribute("data-combo-add")) {
-		var addBtn = document.createElement("button");
-		addBtn.type = "button";
-		addBtn.className = "a3s-section-add__open";
-		addBtn.innerHTML = '<span aria-hidden="true">+</span> Add section';
-		addBtn.title = "A section the list does not have: add it under the DISCOM chosen";
-		addBtn.addEventListener("click", function () {
-			var box = wrap.querySelector('input[type="search"]');
-			var typed = box && box.value && box.value !== (select.options[select.selectedIndex] || {}).textContent ? box.value : "";
-			open(typed);
-		});
-		/* A row under the field: "+ Add section", and beside it the bill's section when a KSEB
-		   bill read on this page names one the list lacks (portal_kseb_bill.js puts it there). */
 		var addRow = document.createElement("div");
 		addRow.className = "a3s-section-add__row";
-		addRow.appendChild(addBtn);
 		wrap.appendChild(addRow);
 	}
 })();

@@ -16,7 +16,11 @@ class TestPackageItems(FrappeTestCase):
 
 	def test_a_row_takes_only_an_item_of_its_category(self):
 		panel = frappe.db.get_value("Item", {"item_group": ["in", ["TOPCon Modules", "Bifacial Modules", "Mono PERC Modules"]]})
-		inverter = frappe.db.get_value("Item", {"item_group": ["in", ["On-Grid Inverters", "Hybrid Inverters"]]})
+		from a3_sola.api.package_bom_tree import is_assembly
+
+		inverters = frappe.get_all("Item", filters={"item_group": ["in", ["On-Grid Inverters", "Hybrid Inverters"]]}, pluck="name")
+		# A plain inverter: a bundle or an Item with a BOM may stand in any row.
+		inverter = next((i for i in inverters if not is_assembly(i)), None)
 		if not (panel and inverter):
 			raise unittest.SkipTest("No panel and inverter Items.")
 		self.assertTrue(package_items.in_group(panel, "Modules"))
@@ -26,6 +30,10 @@ class TestPackageItems(FrappeTestCase):
 			package_items.validate(doc)
 		doc.modules[0].module_item = panel
 		package_items.validate(doc)
+		bundle = next((i for i in inverters if is_assembly(i)), None)
+		if bundle:
+			doc.modules[0].module_item = bundle
+			package_items.validate(doc)
 
 	def test_each_balance_of_system_type_has_its_group(self):
 		self.assertEqual(package_items.system_item_group("Solar Energy Meter"), "Meters")

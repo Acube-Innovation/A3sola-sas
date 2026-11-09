@@ -222,7 +222,11 @@
 			also.forEach(function (el) { out[el.name || el.id.replace(/^fld-/, "")] = el.value; });
 			return out;
 		}
+		/* Several fields it follows can change at once (a bill read fills the site and its
+		   district): only the latest list is shown. */
+		var asked = 0;
 		var reload = function () {
+			var mine = ++asked;
 			/* A value filled in with its parent (from the lead, say) waits in data-pending
 			   for the parent's list to arrive. */
 			var keep = select.dataset.pending || select.value;
@@ -233,6 +237,7 @@
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
 				body: JSON.stringify({ doctype: select.dataset.doctype, fieldname: select.name, value: source.value, also: alsoValues() })
 			}).then(function (r) { return r.json(); }).then(function (body) {
+				if (mine !== asked) return;
 				var choices = (body && body.message && body.message.choices) || [];
 				select.innerHTML = "";
 				var blank = document.createElement("option");
@@ -245,7 +250,7 @@
 					select.appendChild(o);
 				});
 			}).catch(function () { /* leave the list as it was */ })
-			  .then(function () { select.disabled = false; });
+			  .then(function () { if (mine === asked) select.disabled = false; });
 		};
 		source.addEventListener("change", reload);
 		also.forEach(function (el) { el.addEventListener("change", reload); });

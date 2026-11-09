@@ -297,7 +297,15 @@ def to_fields(parsed, doctype):
 
 	fields, warnings = {}, []
 	section, discom = find_section(parsed)
-	if parsed.get("section_code") and not section:
+	# The section's district, for a bill whose address names none ("..., VELLANGALLUR P.O.").
+	on_file = frappe.db.get_value("DISCOM Section", section, ["district", "section_code"], as_dict=True) if section else None
+	section_district = on_file.district if on_file else None
+	if on_file and parsed.get("section_code") and not on_file.section_code:
+		# On file without its code - from before KSEB's directory - so the form's list, which
+		# offers only coded sections, cannot show it: offered to be added instead, which gives
+		# it the bill's code (portal_fields.add_discom_section).
+		section = None
+	elif parsed.get("section_code") and not section:
 		warnings.append(_("Section [{0}] {1} is not among the DISCOM Sections: choose it.").format(
 			parsed["section_code"], parsed.get("section_name") or ""))
 	discom = discom or kseb_discom()
@@ -332,7 +340,8 @@ def to_fields(parsed, doctype):
 			fields.update({"permanent_address_same": "No", "permanent_address_line1": line1,
 				"permanent_address_line2": line2, "permanent_pincode": parsed.get("pincode")})
 	# The district the address names - the lead's, or the customer's site's - and its state.
-	district = district_from_address(parsed.get("address"))
+	district = district_from_address(parsed.get("address")) or (frappe.db.get_value("Indian District",
+		{"district_name": section_district}, ["name", "state", "district_name"], as_dict=True) if section_district else None)
 	if district:
 		place = {"Lead": ("state", "district"), "Solar Consumer": ("site_state", "site_district")}.get(doctype)
 		meta = frappe.get_meta(doctype)
@@ -439,9 +448,9 @@ def read_content(content, filename, doctype):
 	# A section the bill names that the list lacks: the form offers to add it, filled in.
 	missing_section = None
 	if parsed.get("section_code") and not fields.get("discom_section"):
-		district = district_from_address(parsed.get("address"))
+		place = fields.get("site_district") or fields.get("district")
 		missing_section = {"code": parsed["section_code"], "name": parsed.get("section_name") or "",
-			"district": district.district_name if district else ""}
+			"district": frappe.db.get_value("Indian District", place, "district_name") if place else ""}
 	return {"fields": fields, "warnings": warnings, "source": source, "missing_section": missing_section}
 
 

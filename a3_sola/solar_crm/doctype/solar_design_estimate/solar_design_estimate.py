@@ -1962,13 +1962,16 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 def package_bom_rows(package, inverter_item=None, roof_type=None):
 	"""The package's BOM rows an estimate takes, per estimate table: the Material BOM rows of
 	`inverter_item`, the Structure BOM rows of `roof_type` (else the package's) and its
-	capacity, every Expense."""
+	capacity, every Expense - of those typed into its BOM tab."""
 	from a3_sola.api.package_bom_tables import applies
+	from a3_sola.api.package_bom_tree import is_own
 
 	basis = frappe._dict(roof_type=roof_type or package.get("roof_type"), capacity_kw=package.get("capacity_kw"))
+	# The rows typed into the package's BOM tab - not those it copies from its other tabs, nor
+	# a bundle's or a BOM's items listed under it (package_bom_tree): the estimate has its own.
 	return {
 		field: [{f: row.get(f) for f in BOM_ROW_FIELDS} for row in package.get(source) or []
-			if row.item and (source == "expenses" or applies(source, row, basis, inverter_item))]
+			if row.item and is_own(row) and (source == "expenses" or applies(source, row, basis, inverter_item))]
 		for field, source, _label in ESTIMATE_BOMS
 	}
 

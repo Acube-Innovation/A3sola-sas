@@ -10,6 +10,17 @@
 	/* The BOM tab's tables, which come from Excel as often as they are typed (solar_package.js). */
 	var SHEETS = "a3_sola.api.package_bom_tables.";
 	var SHEET_TABLES = { material_bom: 1, structure_boms: 1, expenses: 1 };
+	/* The desk's Balance and Mounting tabs are not offered here; their rows stay as they are. */
+	var HIDDEN_TABS = { tab_system: 1, tab_mounting: 1 };
+	/* The BOM tab as a full BOM (package_bom_tree): rows copied there from the other tabs, and each
+	   bundle's or BOM's items under it - worked out on save, never typed. */
+	var TREE_FIELDS = { row_kind: 1, bom_no: 1, source_row: 1 };
+	var SOURCE_TABS = { "Solar Panel": "tab_modules", "Inverter": "tab_inverter", "KSEB": "tab_kseb",
+		"Installation": "tab_installation", "Optional Add-ons": "tab_add_ons" };
+	var ASSEMBLY_TABLES = { modules: 1, inverters: 1, kseb_expenses: 1, installation_expenses: 1, optional_add_ons: 1,
+		material_bom: 1, structure_boms: 1, expenses: 1 };
+	function isComponent(r) { return r.row_kind === "Component"; }
+	function isOwn(r) { return !r.source_row && !isComponent(r); }
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var pkg = JSON.parse(document.getElementById("a3s-package-data").textContent);
@@ -93,7 +104,7 @@
 	/* The Expenses' total, as the rows change (the server totals it again on save). */
 	function totalExpenses() {
 		if (!pkg.tables.expenses) return;
-		pkg.values.total_expenses = pkg.tables.expenses.rows.reduce(function (sum, r) { return sum + (Number(r.amount) || 0); }, 0);
+		pkg.values.total_expenses = pkg.tables.expenses.rows.reduce(function (sum, r) { return sum + (isComponent(r) ? 0 : Number(r.amount) || 0); }, 0);
 	}
 	/* The Package Cost is the default pricing option's, as the rows change (again on save). */
 	function packageCostFromPricing() {
@@ -179,7 +190,12 @@
 		var id = (opts.prefix || "f-") + col.fieldname, name = ' name="' + esc(col.fieldname) + '" id="' + id + '"';
 		var req = col.reqd ? ' <span class="a3s-req">*</span>' : "";
 		var label = '<label for="' + id + '">' + esc(col.label) + req + "</label>";
-		var hint = col.description ? '<p class="a3s-field__hint">' + esc(col.description) + "</p>" : "";
+		var described = col.description;
+		/* The tabs' Item fields take a Product Bundle or an Item with a BOM as well (package_bom_tree). */
+		if (opts.table && ASSEMBLY_TABLES[opts.table] && (ITEM_FIELD[opts.table] === col.fieldname || (SHEET_TABLES[opts.table] && col.fieldname === "item"))) {
+			described = "An Item, a Bundle or a BOM: bundles and BOMs are listed first. Saved, a bundle or BOM is shown in the BOM tab with its items under it.";
+		}
+		var hint = described ? '<p class="a3s-field__hint">' + esc(described) + "</p>" : "";
 		if (col.read_only) {
 			var shown = col.type === "Link" ? labelOf(col.options, value, opts.table, col.fieldname) :
 				col.type === "Currency" ? (value != null && value !== "" ? money(value) : "") : col.type === "Check" ? (value ? "Yes" : "No") : value;
@@ -214,7 +230,7 @@
 
 	/* ------------------------------------------------------------------ tabs and panels */
 	function visibleTabs() {
-		return pkg.tabs.filter(function (t) { return t.key !== "batteries" || hasBatteries(); });
+		return pkg.tabs.filter(function (t) { return !HIDDEN_TABS[t.key] && (t.key !== "batteries" || hasBatteries()); });
 	}
 	function paintTabs() {
 		tabsEl.innerHTML = visibleTabs().map(function (t) {
@@ -312,27 +328,54 @@
 	function dependsCell(names) {
 		return names.length ? esc(names.join(", ")) : '<span class="a3s-table__muted">All</span>';
 	}
+	/* A BOM-tab row's Item cell in the full BOM: a bundle or BOM marked as such, its items set in
+	   under it, a copied row saying which tab it comes from. */
+	function treeCell(f, row, html) {
+		if (!SHEET_TABLES[f]) return html;
+		if (isComponent(row)) return '<span class="a3s-pkg__twig" aria-hidden="true">\u2514</span>' + html;
+		var tags = "";
+		if (row.row_kind) tags += ' <span class="a3s-badge a3s-badge--open">' + esc(row.row_kind === "BOM" && row.bom_no ? "BOM · " + row.bom_no : row.row_kind) + "</span>";
+		if (row.source_row) tags += ' <span class="a3s-badge">From ' + esc(row.source_row) + "</span>";
+		return html + tags;
+	}
+	function rowClass(f, row) {
+		if (!SHEET_TABLES[f]) return "";
+		return isComponent(row) ? " a3s-pkg__child" : row.row_kind ? " a3s-pkg__parent" : "";
+	}
+	/* Copied and component rows are worked out on save: a copied row is changed on its own tab. */
+	function rowActions(f, row, i) {
+		if (SHEET_TABLES[f] && isComponent(row)) return "";
+		if (SHEET_TABLES[f] && row.source_row) {
+			var tab = SOURCE_TABS[String(row.source_row).replace(/ row \d+$/, "")];
+			return tab ? '<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-goto-tab="' + tab + '">Edit on its tab</button>' : "";
+		}
+		return '<div class="a3s-users__actions">' +
+			'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-edit-row title="Edit" aria-label="Edit row ' + (i + 1) + '">' + icon("edit") + "</button>" +
+			'<button type="button" class="a3s-icon-btn a3s-icon-btn--danger" data-remove-row title="Remove" aria-label="Remove row ' + (i + 1) + '">' + icon("trash") + "</button>" +
+			"</div>";
+	}
 	function tableHtml(f) {
 		var spec = pkg.tables[f], cols = listColumns(spec), rows = spec.rows || [];
 		var sheet = SHEET_TABLES[f] ?
 			'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-sheet="download">' + icon("download") + "<span>Download Excel</span></button>" +
 			'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-sheet="upload">' + icon("upload") + "<span>Upload Excel</span></button>" : "";
 		return '<section class="a3s-pkg__table" data-table="' + f + '">' +
-			'<div class="a3s-pkg__tablehead"><h3 class="a3s-pkg__tabletitle">' + esc(spec.label) + ' <span class="a3s-pkg__count">' + rows.length + "</span></h3>" +
+			'<div class="a3s-pkg__tablehead"><h3 class="a3s-pkg__tabletitle">' + esc(spec.label) + ' <span class="a3s-pkg__count">' + rows.filter(function (r) { return !isComponent(r); }).length + "</span></h3>" +
 			'<div class="a3s-pkg__tableacts">' + sheet +
 			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-add-row><span>+ Add row</span></button></div></div>' +
 			(rows.length ? '<div class="a3s-tablewrap"><table class="a3s-table a3s-pkg__rows"><thead><tr>' +
 				cols.map(function (c) { return "<th" + (isNum(c.type) ? ' class="a3s-table__num"' : "") + ">" + esc(c.label) + "</th>"; }).join("") +
 				'<th><span class="a3s-sr-only">Actions</span></th></tr></thead><tbody>' +
 				rows.map(function (row, i) {
-					return '<tr data-row="' + i + '">' + cols.map(function (c) {
-						return '<td data-label="' + esc(c.label) + '"' + (isNum(c.type) ? ' class="a3s-table__num"' : "") + ">" + cell(spec, c, row) + "</td>";
-					}).join("") + '<td><div class="a3s-users__actions">' +
-						'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-edit-row title="Edit" aria-label="Edit row ' + (i + 1) + '">' + icon("edit") + "</button>" +
-						'<button type="button" class="a3s-icon-btn a3s-icon-btn--danger" data-remove-row title="Remove" aria-label="Remove row ' + (i + 1) + '">' + icon("trash") + "</button>" +
-						"</div></td></tr>";
+					return '<tr data-row="' + i + '" class="' + rowClass(f, row) + '">' + cols.map(function (c, k) {
+						var html = cell(spec, c, row);
+						return '<td data-label="' + esc(c.label) + '"' + (isNum(c.type) ? ' class="a3s-table__num"' : "") + ">" + (k === 0 ? treeCell(f, row, html) : html) + "</td>";
+					}).join("") + "<td>" + rowActions(f, row, i) + "</td></tr>";
 				}).join("") + "</tbody></table></div>" :
 				'<p class="a3s-pkg__none">No rows yet.</p>') +
+			(SHEET_TABLES[f] ? '<p class="a3s-field__hint">' + (f === "material_bom" ? "On save, the solar panel, the inverter options and the optional add-ons are listed here, "
+				: f === "expenses" ? "On save, the KSEB and installation rows are listed here, " : "On save, ") +
+				"each Product Bundle or BOM with its items under it.</p>" : "") +
 			"</section>";
 	}
 	function paintTerms() {
@@ -397,7 +440,7 @@
 		var m = modal((adding ? "Add " : "Edit ") + spec.label.toLowerCase() + " row", adding ? "" : "Row " + (index + 1));
 		function paintForm() {
 			m.body.innerHTML = '<form class="a3s-modal__form" novalidate><div class="a3s-form__grid">' +
-				spec.columns.filter(function (c) { return !PICKED[table + "." + c.fieldname]; })
+				spec.columns.filter(function (c) { return !PICKED[table + "." + c.fieldname] && !TREE_FIELDS[c.fieldname]; })
 					.map(function (c) { return input(c, draft[c.fieldname], { table: table, row: draft, prefix: "r-" }); }).join("") +
 				pickerHtml(table, draft) +
 				'</div><div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary"><span>' + (adding ? "Add row" : "Done") + "</span></button>" +
@@ -535,6 +578,8 @@
 		}
 	}
 	panels.addEventListener("click", function (e) {
+		var go = e.target.closest("[data-goto-tab]");
+		if (go) { active = go.dataset.gotoTab; paint(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
 		var section = e.target.closest("[data-table]");
 		if (!section) return;
 		var table = section.dataset.table;
@@ -546,7 +591,10 @@
 		var i = Number(tr.dataset.row);
 		if (e.target.closest("[data-edit-row]")) return rowForm(table, i);
 		if (e.target.closest("[data-remove-row]")) {
-			pkg.tables[table].rows.splice(i, 1);
+			/* A bundle's or a BOM's items go with it. */
+			var rows = pkg.tables[table].rows, n = 1;
+			while (i + n < rows.length && isComponent(rows[i + n])) n++;
+			rows.splice(i, n);
 			if (table === "expenses") totalExpenses();
 			if (table === "pricing_options") packageCostFromPricing();
 			totalPackageCost();
@@ -559,7 +607,10 @@
 	/* Download Excel: the table as it stands here, saved or not, in the columns Upload Excel
 	   reads; headings alone for an empty table, as a template (package_bom_tables.download_sheet). */
 	function downloadSheet(table) {
-		var body = new URLSearchParams({ table: table, rows: JSON.stringify(pkg.tables[table].rows), package: pkg.name || "" });
+		/* The rows typed or uploaded here: the copied rows and the items listed under a bundle or
+		   BOM are worked out on save, and would come back as rows of their own. */
+		var own = pkg.tables[table].rows.filter(isOwn);
+		var body = new URLSearchParams({ table: table, rows: JSON.stringify(own), package: pkg.name || "" });
 		fetch("/api/method/" + SHEETS + "download_sheet", {
 			method: "POST", credentials: "same-origin", headers: { "X-Frappe-CSRF-Token": csrf }, body: body
 		}).then(function (r) {
@@ -582,7 +633,8 @@
 	   replace the table here, to be saved with the package (package_bom_tables.read_sheet). */
 	function uploadSheet(table) {
 		var spec = pkg.tables[table];
-		if (spec.rows.length && !window.confirm("The sheet's rows replace the " + spec.rows.length + " rows of the " + spec.label + ". Go on?")) return;
+		var own = spec.rows.filter(isOwn).length;
+		if (own && !window.confirm("The sheet's rows replace the " + own + " rows typed into the " + spec.label + ". Go on?")) return;
 		var picker = document.createElement("input");
 		picker.type = "file";
 		picker.accept = ".xlsx,.csv";

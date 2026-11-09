@@ -127,12 +127,22 @@ def validate(doc):
 
 # ------------------------------------------------------------------ into the package's BOM
 def bom_lines(package):
-	"""Both tables' rows for the package as quoted, item -> quantity in the Item's stock UOM."""
+	"""Both tables' rows for the package as quoted, item -> quantity in the Item's stock UOM.
+
+	Each part once (package_bom_tree): not the rows copied from the other tabs, which
+	package_items.bom_lines counts from the tabs themselves; a BOM row as itself, a sub-assembly,
+	and not its components; a bundle as its components, which follow it."""
 	inverter = default_inverter(package)
-	lines = {}
+	lines, parent_kind, parent_counts = {}, None, False
 	for table in BOM_TABLES:
 		for row in package.get(table) or []:
-			if row.item and applies(table, row, package, inverter):
+			if row.get("row_kind") == "Component":
+				counts = parent_kind == "Bundle" and parent_counts
+			else:
+				parent_kind = row.get("row_kind")
+				parent_counts = bool(row.item and not row.get("source_row") and applies(table, row, package, inverter))
+				counts = parent_counts and parent_kind != "Bundle"
+			if counts and row.item:
 				lines[row.item] = lines.get(row.item, 0) + flt(row.qty) * _to_stock_uom(package, table, row)
 	return lines
 

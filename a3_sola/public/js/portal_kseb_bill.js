@@ -33,9 +33,10 @@
 		return false;
 	});
 	if (!form) return;
-	/* Parents before the fields that depend on them. */
-	var ORDER = ["discom", "discom_section", "state", "district", "site_state", "site_district",
-		"permanent_address_same", "permanent_state", "permanent_district"];
+	/* Parents before the fields that depend on them - the section last, its list being the
+	   DISCOM's sections in the connection's district. */
+	var ORDER = ["discom", "state", "district", "site_state", "site_district",
+		"permanent_address_same", "permanent_state", "permanent_district", "discom_section"];
 	/* The customer's name is the one on the Aadhaar card: read, it replaces any other - the
 	   KSEB bill's, or one typed in - and a different one is shown in a pop-up. Until then
 	   the bill's or the typed name stands. */
@@ -172,32 +173,43 @@
 		})();
 	}
 
-	/* A section the bill names that the list lacks: beside the field's own "+ Add section", a
-	   button to add it, the add form filled in with the bill's code and name (portal_combo_fields.html). */
+	/* A section the bill names that the list lacks: under the field, a button that adds it in
+	   one click, with the bill's code and name, and chooses it (portal_combo_fields.html). */
 	function offerSection(missing) {
 		var select = document.getElementById("fld-discom_section");
 		var wrap = select && select.closest("[data-combo-add]");
 		if (!wrap) return;
-		/* Kept on the field: its "+ Add section" opens the add form filled in from this bill. */
-		if (!missing) { delete wrap.dataset.billSection; return; }
-		wrap.dataset.billSection = JSON.stringify(missing);
+		/* Kept on the field too: the add panel from the list starts on this bill's section. */
 		var row = wrap.querySelector(".a3s-section-add__row");
+		if (!missing) { delete wrap.dataset.billSection; if (row) row.innerHTML = ""; return; }
+		wrap.dataset.billSection = JSON.stringify(missing);
 		if (!row) return;
-		var old = row.querySelector(".a3s-section-add__bill");
-		if (old) old.remove();
+		/* A bill read again: its button replaces the last one's. */
+		row.innerHTML = "";
 		var near = document.createElement("button");
 		near.type = "button";
 		near.className = "a3s-section-add__open a3s-section-add__bill";
-		near.textContent = "+ Add [" + missing.code + "] " + (missing.name || "");
-		near.title = "The section the KSEB bill names: add it, filled in from the bill";
+		var label = "+ Add section [" + missing.code + "] " + (missing.name || "");
+		near.textContent = label;
+		near.title = "The section the KSEB bill names is not on file: add it and choose it";
+		var note = document.createElement("span");
+		note.className = "a3s-form__status";
+		note.setAttribute("role", "status");
 		near.addEventListener("click", function () {
-			wrap.scrollIntoView({ block: "center", behavior: "smooth" });
-			select.dispatchEvent(new CustomEvent("a3s:combo-add", { bubbles: true,
-				detail: { query: (missing.code + " " + (missing.name || "")).trim() } }));
+			if (!window.a3sAddBillSection) return;
+			near.disabled = true;
+			near.textContent = "Adding…";
+			note.textContent = ""; delete note.dataset.tone;
+			window.a3sAddBillSection(missing).catch(function (e) {
+				near.disabled = false;
+				near.textContent = label;
+				note.textContent = e.message; note.dataset.tone = "error";
+			});
 		});
 		row.appendChild(near);
+		row.appendChild(note);
 		/* Once added, the button is done with. */
-		document.addEventListener("a3s:section-added", function () { near.remove(); }, { once: true });
+		document.addEventListener("a3s:section-added", function () { near.remove(); note.remove(); }, { once: true });
 	}
 
 	/* The Attachments card's Read (portal_attachments.js): a document's fields into this form. Its
