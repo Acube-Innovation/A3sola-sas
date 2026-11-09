@@ -125,3 +125,23 @@ class TestLeadListFollowUp(FrappeTestCase):
 		self.assertEqual(row["outreach_stage"], "Step 1: First Contact")
 		self.assertTrue(row["next_followup"])
 		self.assertFalse(row["followup_due"])
+
+
+class TestLoanMayWait(FrappeTestCase):
+	"""Whether the customer needs a loan may not be known on the first call: a lead is made
+	without it, and given it, it is Yes or No."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def tearDown(self):
+		for name in frappe.get_all("Lead", filters={"lead_name": "Loan Unknown Test"}, pluck="name"):
+			frappe.delete_doc("Lead", name, force=True)
+
+	def test_a_lead_is_made_without_saying_whether_a_loan_is_needed(self):
+		name = leads.create_lead(lead_name="Loan Unknown Test", mobile_no="9000000007")["name"]
+		self.assertFalse(frappe.db.get_value("Lead", name, "loan_required"))
+
+	def test_a_loan_answer_other_than_yes_or_no_is_refused(self):
+		with self.assertRaises(frappe.ValidationError):
+			leads.create_lead(lead_name="Loan Unknown Test", mobile_no="9000000008", loan_required="Maybe")
