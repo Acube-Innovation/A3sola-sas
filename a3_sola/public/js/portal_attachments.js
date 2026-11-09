@@ -166,6 +166,25 @@
 		/* A record not yet created (data-held): the files picked wait here, as rows, and go up
 		   once the form has created it - window.a3sAttachHeld. */
 		var held = card.hasAttribute("data-held") ? [] : null;
+		/* A create page whose documents fill its form (data-autofill, the customer): a tile per
+		   document uploads it as that type, and the form - hidden till now - shows once one is
+		   added, or when the person chooses to type the details in. */
+		var auto = card.hasAttribute("data-autofill");
+		var tiles = card.querySelectorAll("[data-autofill-type]");
+		var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+		/* The form, shown - and, asked for, scrolled to with its first field ready to type in. */
+		function showForm(go) {
+			var f = document.querySelector("[data-autofill-form]");
+			if (!f) return;
+			var wrap = card.querySelector("[data-autofill-manual-wrap]");
+			if (wrap) wrap.hidden = true;
+			if (f.hidden) { f.hidden = false; f.classList.add("is-revealed"); }
+			if (!go) return;
+			f.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+			var first = f.querySelector("input:not([type=hidden]):not([type=file]):not([disabled]), select, textarea");
+			if (first) first.focus({ preventScroll: true });
+		}
 
 		/* tone: "" for progress, "ok" or "error". */
 		function setStatus(text, tone) {
@@ -232,7 +251,10 @@
 				readBtn.setAttribute("aria-label", "Read " + f.file_name);
 				readBtn.appendChild(icon("ic-scroll"));
 				readBtn.appendChild(el("span", "", "Read"));
+				/* Not read yet, where the page is built round reading: the button asks for it. */
+				if (auto && f.held && !f.read) readBtn.classList.add("is-cue");
 				readBtn.addEventListener("click", function () {
+					f.read = true; readBtn.classList.remove("is-cue");
 					if (f.held) readPicked(f.file, f.document_type, readBtn);
 					else readAgain(f, readBtn);
 				});
@@ -281,9 +303,25 @@
 			list.textContent = "";
 			files.forEach(function (f) { list.appendChild(row(f)); });
 			table.hidden = !files.length;
-			empty.hidden = files.length > 0;
-			count.hidden = !files.length;
-			count.textContent = files.length + " file" + (files.length === 1 ? "" : "s");
+			/* The tiles say what to upload, so "no files yet" is not said under them. */
+			empty.hidden = files.length > 0 || auto;
+			if (count) {
+				count.hidden = !files.length;
+				count.textContent = files.length + " file" + (files.length === 1 ? "" : "s");
+			}
+			if (auto) {
+				/* Each tile says whether its document is on the card; the first one added shows the form. */
+				Array.prototype.forEach.call(tiles, function (tile) {
+					var done = files.some(function (f) { return f.document_type === tile.dataset.autofillType; });
+					if (tile.classList.contains("is-done") === done) return;
+					tile.classList.toggle("is-done", done);
+					var cta = tile.querySelector("[data-autofill-cta]");
+					cta.textContent = "";
+					cta.appendChild(icon(done ? "ic-check" : "ic-upload"));
+					cta.appendChild(document.createTextNode(done ? "Added" : "Upload"));
+				});
+				if (files.length) showForm(false);
+			}
 			// The Snapshot tile counts the same files.
 			Array.prototype.forEach.call(document.querySelectorAll("[data-attachment-count]"), function (n) {
 				n.textContent = String(files.length);
@@ -401,7 +439,7 @@
 			   documents (the approval letter) are still read as they are picked. */
 			readInto(last, what);
 			var reads = hasForm() && readable.indexOf(what) !== -1;
-			var then = reads ? " Choose Read on it to fill the form from it." : "";
+			var then = reads ? (auto ? " Now press Read on it to fill the form below." : " Choose Read on it to fill the form from it.") : "";
 			var body = form({ document_type: what });
 			Array.prototype.forEach.call(files, function (file) { body.append("file", file, file.name); });
 			var n = files.length;
@@ -411,7 +449,9 @@
 					held.push({ held: true, file: file, file_name: file.name, size: file.size, document_type: what, by: "Uploads when saved" });
 				});
 				paint(held);
-				setStatus(label + " added as " + what + ". They upload when you save." + then, "ok");
+				setStatus(auto && reads
+					? "Added the " + what + ". Now press Read on it to fill the form below - it uploads when you create the record."
+					: label + " added as " + what + ". They upload when you save." + then, "ok");
 				typeSelect.value = ""; input.value = "";
 				return;
 			}
@@ -432,6 +472,35 @@
 		});
 		button.addEventListener("click", function () { if (!needType()) input.click(); });
 		input.addEventListener("change", function () { upload(input.files); });
+
+		/* A tile picks its document - or takes one dropped on it - as its own type. */
+		function asType(what) {
+			if (types.indexOf(what) === -1) { setStatus("The card is still loading. Try again in a moment.", "error"); return false; }
+			typeSelect.value = what; typeSelect.classList.remove("is-invalid");
+			return true;
+		}
+		Array.prototype.forEach.call(tiles, function (tile) {
+			var what = tile.dataset.autofillType;
+			tile.addEventListener("click", function () { if (!busy && asType(what)) input.click(); });
+			["dragenter", "dragover"].forEach(function (ev) {
+				tile.addEventListener(ev, function (e) {
+					if (!e.dataTransfer || Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") === -1) return;
+					e.preventDefault(); tile.classList.add("is-dragging");
+				});
+			});
+			["dragleave", "dragend"].forEach(function (ev) {
+				tile.addEventListener(ev, function (e) {
+					if (ev === "dragleave" && tile.contains(e.relatedTarget)) return;
+					tile.classList.remove("is-dragging");
+				});
+			});
+			tile.addEventListener("drop", function (e) {
+				e.preventDefault(); tile.classList.remove("is-dragging");
+				if (asType(what)) upload(e.dataTransfer && e.dataTransfer.files);
+			});
+		});
+		var manual = card.querySelector("[data-autofill-manual]");
+		if (manual) manual.addEventListener("click", function () { showForm(true); });
 
 		/* Files dropped on the panel upload as the type chosen in it. */
 		["dragenter", "dragover"].forEach(function (ev) {
@@ -482,8 +551,10 @@
 			types = data.document_types || [];
 			readable = data.readable || [];
 			fillTypes(typeSelect, types, "", "Document type…");
-			if (data.max_file_mb) hint.textContent = "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each." +
-				(hasForm() && readable.length ? " Then choose Read on each document to fill the form from it." : "");
+			if (data.max_file_mb) hint.textContent = auto
+				? "PAN or another document: pick its type, then choose or drop the file. Up to " + data.max_file_mb + " MB each."
+				: "Pick a document type, then choose or drop files. Up to " + data.max_file_mb + " MB each." +
+					(hasForm() && readable.length ? " Then choose Read on each document to fill the form from it." : "");
 			paint(data.files || []);
 			drop.hidden = !data.can_upload;
 		}).catch(function (e) { setStatus(e.message, "error"); });

@@ -3472,6 +3472,109 @@ select.a3s-items__input { min-width: 9rem; }
 	padding: 1.1rem; border-radius: 0.85rem; background: var(--color-bg); color: var(--color-text-muted); font-size: 0.875rem;
 }
 .a3s-attach__empty-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 0.6rem; background: rgba(42, 51, 66, 0.06); }
+
+/* ---- A create form filled from its documents (att_autofill: the new customer) ----
+   The card opens with what reading does and a tile per document; the form below waits,
+   hidden, until a document is added or "Enter the details manually" is chosen. */
+.a3s-formcard[hidden] { display: none; }
+/* Scrolled to by "Enter the details manually": clear of the top bar. */
+.a3s-formcard[data-autofill-form] { scroll-margin-top: calc(var(--a3s-topbar-h, 4rem) + 1.25rem); }
+.a3s-formcard.is-revealed { animation: a3s-autofill-in 0.35s var(--ease); }
+@keyframes a3s-autofill-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.a3s-attach--autofill { border-color: var(--color-accent-tint); }
+.a3s-autofill {
+	display: grid; gap: 1.35rem;
+	margin-bottom: 1.25rem; padding: 1.6rem 1.7rem 1.7rem; border-radius: 1.1rem; border: 1px solid rgba(247, 148, 30, 0.2);
+	background:
+		radial-gradient(120% 140% at 100% 0%, rgba(41, 171, 226, 0.1), transparent 55%),
+		linear-gradient(135deg, #fff1de 0%, #fff8ef 50%, #ffffff 100%);
+}
+/* What it does on the left, its three steps on the right; the tiles in a row beneath. */
+.a3s-autofill__intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "badge steps" "title steps" "lead steps"; column-gap: 2.5rem; align-items: start; }
+.a3s-autofill__badge { grid-area: badge; justify-self: start; }
+.a3s-autofill__title { grid-area: title; }
+.a3s-autofill__lead { grid-area: lead; max-width: 40rem; }
+.a3s-autofill__steps { grid-area: steps; align-self: center; }
+@media (max-width: 900px) {
+	.a3s-autofill__intro { grid-template-columns: 1fr; grid-template-areas: "badge" "title" "lead" "steps"; }
+}
+.a3s-autofill__badge {
+	display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.32rem 0.8rem 0.32rem 0.6rem; border-radius: var(--radius-pill);
+	background-image: var(--color-accent-gradient); color: #fff; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em;
+	text-transform: uppercase; box-shadow: 0 6px 16px rgba(247, 148, 30, 0.3);
+}
+.a3s-autofill__badge .a3s-ic { width: 0.9rem; height: 0.9rem; }
+.a3s-autofill__title { margin: 0.85rem 0 0.45rem; font-size: 1.5rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; color: var(--color-text); }
+.a3s-autofill__lead { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--color-text-muted); }
+.a3s-autofill__lead strong { color: var(--color-accent-hover); }
+.a3s-autofill__steps {
+	display: grid; gap: 0.55rem; margin: 0; padding: 0.9rem 1.1rem; list-style: none; font-size: 0.82rem; font-weight: 600;
+	border-radius: 0.9rem; background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(247, 148, 30, 0.18);
+}
+@media (max-width: 900px) { .a3s-autofill__steps { margin-top: 1rem; } }
+.a3s-autofill__steps li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.a3s-autofill__steps span {
+	display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 1.5px solid var(--color-accent);
+	background: var(--color-surface); color: var(--color-accent-hover); font-size: 0.72rem; font-weight: 800;
+}
+.a3s-autofill__docs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.9rem; }
+@media (max-width: 1100px) { .a3s-autofill__docs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .a3s-autofill__docs { grid-template-columns: 1fr; gap: 0.7rem; } .a3s-autofill { padding: 1.2rem 1.1rem; } }
+.a3s-autofill__doc {
+	display: grid; grid-template-rows: auto auto 1fr auto; justify-items: start; gap: 0.3rem; padding: 1.05rem 1rem 0.95rem;
+	border: 1.5px dashed var(--color-accent-tint); border-radius: var(--radius-tile); background: var(--color-surface);
+	color: var(--color-text); font: inherit; text-align: left; cursor: pointer; box-shadow: 0 2px 6px rgba(42, 51, 66, 0.04);
+	transition: transform var(--duration) var(--ease), box-shadow var(--duration) var(--ease), border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+.a3s-autofill__doc:hover, .a3s-autofill__doc:focus-visible {
+	outline: none; border-style: solid; border-color: var(--color-accent); transform: translateY(-2px); box-shadow: var(--shadow-raised);
+}
+.a3s-autofill__doc.is-dragging { border-style: solid; border-color: var(--color-accent); background: #fff4e5; }
+.a3s-autofill__doc-icon {
+	display: grid; place-items: center; width: 2.6rem; height: 2.6rem; margin-bottom: 0.35rem; border-radius: 0.8rem;
+	background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 6px 16px rgba(247, 148, 30, 0.28);
+}
+.a3s-autofill__doc-icon .a3s-ic { width: 1.25rem; height: 1.25rem; }
+.a3s-autofill__doc-name { font-size: 0.95rem; font-weight: 700; }
+.a3s-autofill__doc-fills { font-size: 0.78rem; line-height: 1.45; color: var(--color-text-muted); }
+.a3s-autofill__doc-cta {
+	display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.55rem; padding: 0.38rem 0.8rem; border-radius: var(--radius-pill);
+	background: var(--color-accent-soft); color: var(--color-accent-hover); font-size: 0.78rem; font-weight: 700;
+}
+.a3s-autofill__doc:hover .a3s-autofill__doc-cta, .a3s-autofill__doc:focus-visible .a3s-autofill__doc-cta { background-image: var(--color-accent-gradient); color: #fff; }
+.a3s-autofill__doc-cta .a3s-ic { width: 0.95rem; height: 0.95rem; }
+/* On a phone each tile is a row: its icon beside what it is. */
+@media (max-width: 560px) {
+	.a3s-autofill__doc { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: none; column-gap: 0.85rem; row-gap: 0.15rem; align-items: center; padding: 0.85rem 0.9rem; }
+	.a3s-autofill__doc-icon { grid-row: 1 / span 3; margin: 0; }
+	.a3s-autofill__doc-cta { margin-top: 0.3rem; }
+}
+/* Its document is on the card. */
+.a3s-autofill__doc.is-done { border-style: solid; border-color: rgba(34, 163, 58, 0.5); background: #f3fbf4; }
+.a3s-autofill__doc.is-done .a3s-autofill__doc-icon { background-image: linear-gradient(135deg, #1f9d36, #3cc955); box-shadow: 0 6px 16px rgba(34, 163, 58, 0.25); }
+.a3s-autofill__doc.is-done .a3s-autofill__doc-cta, .a3s-autofill__doc.is-done:hover .a3s-autofill__doc-cta { background: rgba(34, 163, 58, 0.12); color: #17752b; }
+/* The rest - PAN, or anything dropped - in the card's usual row, quieter than the tiles. */
+.a3s-attach--autofill .a3s-attach__drop { background: var(--color-bg); border-color: var(--color-border-strong); }
+.a3s-attach--autofill .a3s-attach__drop-icon { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-muted); box-shadow: none; }
+.a3s-attach--autofill .a3s-attach__pick { background: var(--color-surface); border-color: var(--color-border-strong); color: var(--color-text); box-shadow: none; }
+.a3s-attach--autofill .a3s-attach__pick:hover { border-color: var(--color-accent); color: var(--color-accent); transform: none; }
+/* Added, not read yet: Read asks to be pressed. */
+.a3s-attach__read.is-cue, .a3s-attach__read.is-cue:hover, .a3s-attach__read.is-cue:focus-visible {
+	background: var(--color-accent-gradient); border-color: transparent; color: #fff; animation: a3s-cue 1.6s ease-in-out infinite;
+}
+@keyframes a3s-cue { 0%, 100% { box-shadow: 0 0 0 0 rgba(247, 148, 30, 0.5); } 50% { box-shadow: 0 0 0 7px rgba(247, 148, 30, 0); } }
+.a3s-autofill__manual {
+	display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem 0.9rem;
+	margin-top: 1.25rem; padding-top: 1.15rem; border-top: 1px dashed var(--color-border-strong);
+}
+.a3s-autofill__manual[hidden] { display: none; }
+.a3s-autofill__or { font-size: 0.9rem; font-weight: 600; color: var(--color-text-muted); }
+.a3s-autofill__manual-btn .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-autofill__manual small { flex-basis: 100%; text-align: center; font-size: 0.78rem; color: var(--color-text-muted); }
+@media (prefers-reduced-motion: reduce) {
+	.a3s-formcard.is-revealed, .a3s-attach__read.is-cue { animation: none; }
+	.a3s-autofill__doc:hover, .a3s-autofill__doc:focus-visible { transform: none; }
+}
 .a3s-attach__empty-icon .a3s-ic { width: 1rem; height: 1rem; }
 
 /* what just happened */

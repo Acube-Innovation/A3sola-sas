@@ -5,14 +5,44 @@
 
     Context: att_doctype, att_name (set with `{% with %}` by the including page); att_held for
     a record not yet created - its files wait on the card and go up once it is saved
-    (window.a3sAttachHeld, called by portal_record_edit.js). -#}
+    (window.a3sAttachHeld, called by portal_record_edit.js).
+
+    att_autofill, on a create page whose documents fill its form (the collection's `autofill`:
+    type, icon, what it fills): the card opens with them - a tile each to upload it - and ends
+    with "Enter the details manually"; the form below waits, hidden, until either
+    (portal_attachments.js). att_from names the record the form was opened from, if any. -#}
 {%- if att_doctype and (att_name or att_held) %}
-<section class="a3s-card a3s-edit__card a3s-attach" id="a3s-attachments" tabindex="-1" data-attach
-         data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}"{% if att_held %} data-held{% endif %}>
+<section class="a3s-card a3s-edit__card a3s-attach{% if att_autofill %} a3s-attach--autofill{% endif %}" id="a3s-attachments" tabindex="-1" data-attach
+         data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}"{% if att_held %} data-held{% endif %}{% if att_autofill %} data-autofill{% endif %}>
+	{%- if att_autofill %}
+	<div class="a3s-autofill">
+		<div class="a3s-autofill__intro">
+			<span class="a3s-autofill__badge"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-bolt"></use></svg>Auto-fill from documents</span>
+			<h3 class="a3s-autofill__title">Upload the documents and the form fills itself</h3>
+			<p class="a3s-autofill__lead">The system reads each document and types its details into the form for you. Upload one, press <strong>Read</strong>, then check the details and create.</p>
+			<ol class="a3s-autofill__steps">
+				<li><span>1</span>Upload a document</li>
+				<li><span>2</span>Press Read</li>
+				<li><span>3</span>Check the form and create</li>
+			</ol>
+		</div>
+		<div class="a3s-autofill__docs">
+			{%- for doc_type, doc_icon, doc_fills in att_autofill %}
+			<button type="button" class="a3s-autofill__doc" data-autofill-type="{{ doc_type | e }}" title="Upload the {{ doc_type | e }}">
+				<span class="a3s-autofill__doc-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-{{ doc_icon }}"></use></svg></span>
+				<span class="a3s-autofill__doc-name">{{ doc_type | e }}</span>
+				<span class="a3s-autofill__doc-fills">Fills {{ doc_fills | e }}</span>
+				<span class="a3s-autofill__doc-cta" data-autofill-cta><svg class="a3s-ic" aria-hidden="true"><use href="#ic-upload"></use></svg>Upload</span>
+			</button>
+			{%- endfor %}
+		</div>
+	</div>
+	{%- else %}
 	<div class="a3s-attach__head">
 		<h3 class="a3s-edit__card-title">Attachments</h3>
 		<span class="a3s-attach__count" data-attach-count hidden></span>
 	</div>
+	{%- endif %}
 
 	{#- The task's papers the system makes (collections.task_papers): each to view or download,
 	    the same on every task, above the files people add. -#}
@@ -35,7 +65,7 @@
 	<div class="a3s-attach__drop" data-attach-new hidden>
 		<span class="a3s-attach__drop-icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-upload"></use></svg></span>
 		<span class="a3s-attach__drop-text">
-			<strong>Add documents</strong>
+			<strong>{% if att_autofill %}Other documents{% else %}Add documents{% endif %}</strong>
 			<span data-attach-hint>Pick a document type, then choose or drop files.</span>
 		</span>
 		<span class="a3s-attach__drop-controls">
@@ -64,6 +94,18 @@
 	</div>
 
 	<p class="a3s-attach__status" data-attach-status role="status" aria-live="polite" hidden></p>
+
+	{%- if att_autofill %}
+	{#- No documents to hand: the form, typed in - or, opened from a record, as it carried across. -#}
+	<div class="a3s-autofill__manual" data-autofill-manual-wrap>
+		<span class="a3s-autofill__or">Nothing to upload?</span>
+		<button type="button" class="a3s-btn a3s-btn--secondary a3s-autofill__manual-btn" data-autofill-manual>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-edit"></use></svg>
+			<span>{% if att_from %}Continue to the form{% else %}Enter the details manually{% endif %}</span>
+		</button>
+		{%- if att_from %}<small>What is known from {{ att_from | e }} is already in it.</small>{% endif %}
+	</div>
+	{%- endif %}
 </section>
 <script src="/assets/a3_sola/js/portal_attachments.js?v={{ a3s_asset_version('js/portal_attachments.js') }}"></script>
 {%- endif %}
