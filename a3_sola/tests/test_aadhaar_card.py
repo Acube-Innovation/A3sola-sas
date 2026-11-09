@@ -186,3 +186,40 @@ class TestAadhaarLetter(FrappeTestCase):
 			out = aadhaar_card.read_content(b"photo", "letter.jpg", side="front")
 		self.assertEqual(out["sides"], ["front", "back"])
 		self.assertIn("permanent_pincode", out["fields"])
+
+
+# A photographed e-Aadhaar letter: OCR reads the Malayalam name above the English one as noise
+# that passes for a name. Made-up details.
+LETTER_PHOTO = """Enrolment No.: 0000/00111/22222
+To
+@HGlan
+Rema
+W/O: Suresh,
+Puthenpurayil,
+Kalady,
+VTC: Kalady,
+PO: Kalady,
+District: Ernakulam,
+State: Kerala,
+PIN Code: 683574
+Mobile: 9000000002
+"""
+
+
+class TestAadhaarLetterPhoto(FrappeTestCase):
+	def test_the_english_name_not_the_malayalam_noise(self):
+		got = aadhaar_card.parse(LETTER_PHOTO)
+		self.assertEqual(got["name"], "Rema")
+		# The name is not taken for the house name.
+		self.assertEqual(got["address"]["line1"], "Puthenpurayil")
+		# The post office the address already names is not said twice.
+		self.assertEqual(got["address"]["line2"], "Kalady")
+
+	def test_the_mobile_fills_the_customer_mobile(self):
+		self.assertEqual(aadhaar_card.parse(LETTER_PHOTO)["mobile"], "9000000002")
+		self.assertEqual(aadhaar_card.parse(LETTER)["mobile"], "9000000001")
+		with patch.object(aadhaar_card, "find_state", return_value="Kerala"), \
+				patch.object(aadhaar_card, "find_district", return_value="Ernakulam, Kerala"):
+			fields, _warnings = aadhaar_card.to_fields(aadhaar_card.parse(LETTER_PHOTO))
+		self.assertEqual(fields["mobile_no"], "9000000002")
+		self.assertNotIn("mobile", aadhaar_card.parse(FRONT))

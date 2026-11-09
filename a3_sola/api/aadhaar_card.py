@@ -37,7 +37,8 @@ def scrub(text):
 
 # ------------------------------------------------------------------ reading the card
 def parse(text):
-	"""What the card says: name, date of birth, gender (front), address parts (back)."""
+	"""What the card says: name, date of birth, gender (front), address parts (back), and the
+	mobile number an e-Aadhaar letter prints."""
 	text = scrub(text).replace("\r", "").replace("|", " ")
 	# OCR reads a label's colon as a semicolon ("PO; Thuravoor"), and an l as "!" ("Muttathukunne! House").
 	text = re.sub(r"\b(VTC|PO|Sub\s*District|District|State|PIN\s*Code)\s*;", r"\1:", text, flags=re.IGNORECASE)
@@ -62,6 +63,7 @@ def parse(text):
 	address = (_address(letter_address) if letter_address else None) or _address(text)
 	if address:
 		out["address"] = address
+	out["mobile"] = _mobile(text)
 	return {k: v for k, v in out.items() if v}
 
 
@@ -72,14 +74,33 @@ def _letter(text):
 	if start is None:
 		return None, None
 	rest = [l for l in lines[start + 1:start + 20] if l]
-	if not rest or not _as_name(rest[0]):
+	# The name is printed twice - in Malayalam (which OCR reads as noise that can pass for a
+	# name: "@HGlan") and in English - before the address begins: the English one, the last.
+	at = next((i for i, l in enumerate(rest) if _starts_address(l)), None)
+	if not at:
 		return None, None
-	name, block = _as_name(rest[0]), []
-	for line in rest[1:]:
+	name = next((n for n in map(_as_name, reversed(rest[:at])) if n), None)
+	if not name:
+		return None, None
+	block = []
+	for line in rest[at:]:
 		block.append(line.rstrip(" ,"))
 		if re.search(r"\b[1-9]\d{5}\b", line):
 			return name, "Address: " + ", ".join(block)
 	return name, None
+
+
+def _starts_address(line):
+	"""An address line of the "To" block: a relation (W/O ...), a labelled part (VTC: ...), a
+	line with a number, or one ended by a comma - a name line is none of these."""
+	return bool(RELATION.match(line + ",") or re.match(r"(?:VTC|PO|District|State|PIN\s*Code)\s*[:;]", line, re.IGNORECASE)
+		or re.search(r"\d", line) or line.rstrip().endswith(","))
+
+
+def _mobile(text):
+	"""The holder's mobile number, as an e-Aadhaar letter prints it ("Mobile: 98xxxxxxxx")."""
+	match = re.search(r"\bMobile\s*(?:No\.?)?\s*[:;.]?\s*(?:\+?91[\s-]?)?([6-9]\d{4}\s?\d{5})\b", text, re.IGNORECASE)
+	return match.group(1).replace(" ", "") if match else None
 
 
 def _name_above(text, at):
@@ -119,7 +140,9 @@ def _address(text):
 	if labelled["District"] or labelled["VTC"]:
 		head = re.split(r"\b(?:VTC|PO|Sub\s*District|District|State|PIN\s*Code)\s*:", raw, maxsplit=1, flags=re.IGNORECASE)[0]
 		parts = _parts(head)
-		return {"line1": parts[0] if parts else None, "line2": ", ".join(parts[1:] + ([labelled["PO"]] if labelled["PO"] else [])) or None,
+		# The post office, unless the address already names it ("Vellangallur, ..., PO: Vellangallur").
+		po = [labelled["PO"]] if labelled["PO"] and labelled["PO"].lower() not in (p.lower() for p in parts) else []
+		return {"line1": parts[0] if parts else None, "line2": ", ".join(parts[1:] + po) or None,
 			"city": labelled["VTC"], "district": labelled["District"], "state": labelled["State"], "pincode": pin}
 	parts = _parts(raw.replace(pin, ""))
 	state = next((p for p in parts if find_state(p)), None)
@@ -218,6 +241,8 @@ def to_fields(parsed):
 		warnings.append(_("The card gives only the year of birth ({0}): enter the date of birth.").format(parsed["year_of_birth"]))
 	if parsed.get("gender") and frappe.db.exists("Gender", parsed["gender"]):
 		fields["gender"] = parsed["gender"]
+	if parsed.get("mobile"):
+		fields["mobile_no"] = parsed["mobile"]
 	return {k: v for k, v in fields.items() if v not in (None, "")}, warnings
 
 
