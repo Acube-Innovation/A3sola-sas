@@ -108,6 +108,8 @@ def expand(table, row):
 		qty = per * count
 		new.update({spec["item"]: item, spec["qty"]: math.ceil(qty - 1e-9) if whole else qty, spec["rate"]: selling_rate(item, uom),
 			"bundle_type": kind, "bundle_ref": ref, "bundle_qty": count, "bundle_key": key})
+		# Its amount at once, as the save works it out (rate x quantity): the page shows it before then.
+		new["amount"] = flt(new[spec["rate"]]) * flt(new[spec["qty"]])
 		if not (whole and head):
 			new[spec["text"]] = item_text(item)
 		if whole:

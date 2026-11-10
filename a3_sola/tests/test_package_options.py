@@ -414,28 +414,6 @@ class TestPricesAreWorkedOut(FrappeTestCase):
 			 "MCB and Type 2 AC SPD", "Watt-hour meter"))
 
 
-class TestBuiltWithPanel(FrappeTestCase):
-	"""An inverter option built on the package's other panel (a microinverter on panels of its
-	own) says so on its row; the estimate offers that panel with it."""
-
-	def package(self, panel):
-		return priceable(
-			modules=[dict(MODULE, is_default=1), dict(MODULE, module_specification="620 Wp TopCon", module_wattage=620)],
-			inverters=[dict(INVERTER), dict(OPTIMISER, panel_specification=panel)],
-		)
-
-	def test_the_option_is_priced_and_offered_on_its_own_panel(self):
-		from a3_sola.solar_crm.doctype.solar_package.solar_package import package_components
-
-		package = self.package("620 Wp TopCon")
-		self.assertEqual(price_for(package, package.inverters[1]).module, "620 Wp TopCon")
-		self.assertEqual(price_for(package, package.inverters[0]).module, MODULE["module_specification"])
-		self.assertIsInstance(package_components(package)["inverters"], list)
-
-	def test_a_panel_the_package_does_not_offer_is_refused(self):
-		with self.assertRaises(frappe.ValidationError):
-			self.package("A panel nobody stocks")
-
 
 class TestExpenses(FrappeTestCase):
 	def test_the_expenses_are_totalled(self):

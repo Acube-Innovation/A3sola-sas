@@ -478,3 +478,13 @@ def item_description(item):
 	from a3_sola.api.package_bom_tables import item_text
 
 	return item_text(item) if item and frappe.db.exists("Item", item) else ""
+
+
+@frappe.whitelist()
+def item_rate(item, uom=None):
+	"""An Item's selling price - its Item Price in the Selling Settings' price list, in this UOM
+	where it has one - for a package row's rate to fill in when the Item is chosen; 0 for none."""
+	require_admin()
+	from a3_sola.api.package_kits import selling_rate
+
+	return selling_rate(item, uom) if item and frappe.db.exists("Item", item) else 0
