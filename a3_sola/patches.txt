@@ -303,3 +303,7 @@ a3_sola.patches.v1_2.package_panel_totals
 a3_sola.patches.v1_2.survey_system_type_spelling
 # Package prices move to Pricing Options rows (panel + inverter + battery at a cost).
 a3_sola.patches.v1_2.package_pricing_options
+# The Google Sheets leads come in on, kept by name in A3 Sola Settings.
+a3_sola.patches.v1_2.lead_sheets
+# Customers: Proposed System Size (kW) and Loan Required, from their leads where blank.
+a3_sola.patches.v1_2.consumer_size_and_loan

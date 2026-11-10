@@ -185,3 +185,56 @@ class TestLeadImportCampaign(SheetCase, FrappeTestCase):
 			("Lead", "New", self.phones[0]))
 		# A status the sheet gives is kept.
 		self.assertEqual(frappe.db.get_value("Lead", {"lead_name": f"Mini {self.tag}"}, "status"), "Interested")
+
+
+class TestLeadSheets(FrappeTestCase):
+	"""The sheets leads come in on, kept by name in A3 Sola Settings: kept by who may change the
+	settings, a Google Sheet's link only; the same link kept again takes the new name."""
+
+	OTHER = "https://docs.google.com/spreadsheets/d/1Other_test-sheet/edit"
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		frappe.db.rollback()
+
+	def kept(self, url):
+		return [s["title"] for s in lead_import.saved_sheets() if s["url"] == url]
+
+	def test_sheets_are_kept_by_name_and_the_same_link_once(self):
+		before = len(lead_import.saved_sheets())
+		lead_import.save_sheet(f"  {SHEET} ", "Test Meta Leads")
+		lead_import.save_sheet(self.OTHER, "Test Walk-ins")
+		self.assertEqual(self.kept(SHEET), ["Test Meta Leads"])
+		lead_import.save_sheet(SHEET, "Test Meta Leads 2")
+		self.assertEqual(self.kept(SHEET), ["Test Meta Leads 2"])
+		sheets = lead_import.saved_sheets()
+		self.assertEqual(len(sheets), before + 2)
+		lead_import.remove_sheet(next(s["id"] for s in sheets if s["url"] == self.OTHER))
+		self.assertEqual(self.kept(self.OTHER), [])
+
+	def test_a_link_that_is_not_a_sheet_or_a_sheet_without_a_name_is_not_kept(self):
+		with self.assertRaises(frappe.ValidationError):
+			lead_import.save_sheet("https://example.com/leads.csv", "Leads")
+		with self.assertRaises(frappe.ValidationError):
+			lead_import.save_sheet(SHEET, "  ")
+		self.assertEqual(self.kept(SHEET), [])
+
+	def test_the_sheets_name_is_read_from_google_sheets(self):
+		page = type("R", (), {"ok": True, "text": "<html><title>Renewcore New Meta Leads - Google Sheets</title></html>"})()
+		with patch.object(lead_import.requests, "get", return_value=page):
+			self.assertEqual(lead_import.sheet_title(SHEET), "Renewcore New Meta Leads")
+		page.text = "<title>Sign in - Google Accounts</title>"
+		page.ok = False
+		with patch.object(lead_import.requests, "get", return_value=page):
+			self.assertEqual(lead_import.sheet_title(SHEET), "")
+
+	def test_someone_who_may_not_change_the_settings_may_not_keep_one(self):
+		frappe.set_user("Guest")
+		self.assertFalse(lead_import.may_save_sheet())
+		for call in (lambda: lead_import.save_sheet(SHEET, "X"), lambda: lead_import.sheet_title(SHEET),
+				lambda: lead_import.remove_sheet("x")):
+			with self.assertRaises(frappe.PermissionError):
+				call()

@@ -111,11 +111,14 @@ def get_context(context):
 	context.can_import_add = bool(frappe.has_permission("Lead", "create"))
 	context.can_import_update = bool(frappe.has_permission("Lead", "write"))
 	if context.can_import:
-		from a3_sola.api.lead_import import campaign_choices
+		from a3_sola.api.lead_import import campaign_choices, may_save_sheet, saved_sheets
 
 		# The campaign the imported leads go in: one there is, or a new one.
 		context.import_campaigns = campaign_choices()
 		context.can_make_campaign = bool(frappe.has_permission("Campaign", "create"))
+		# The sheets leads come in on (A3 Sola Settings), each read with one click; kept by who may.
+		context.lead_sheets = saved_sheets()
+		context.can_save_sheet = may_save_sheet()
 	return context
 
 

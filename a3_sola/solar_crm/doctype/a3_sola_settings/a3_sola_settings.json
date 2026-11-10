@@ -66,6 +66,8 @@
   "consecutive_non_connect_threshold",
   "cb_16",
   "outreach_escalation_role",
+  "sb_lead_import",
+  "lead_sheets",
   "sb_17",
   "outreach_cadence",
   "sb_18",
@@ -807,6 +809,18 @@
    "fieldtype": "Link",
    "label": "Escalation Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "sb_lead_import",
+   "fieldtype": "Section Break",
+   "label": "Lead Import"
+  },
+  {
+   "fieldname": "lead_sheets",
+   "fieldtype": "Table",
+   "label": "Lead Sheets",
+   "options": "Lead Import Sheet",
+   "description": "The Google Sheets leads come in on, each shared \"Anyone with the link\" as Viewer. Import from Google Sheet on the leads list reads any of them with one click."
   },
   {
    "fieldname": "sb_17",
@@ -3024,7 +3038,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-04 18:00:00.000000",
+ "modified": "2026-11-10 10:04:42.692800",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
