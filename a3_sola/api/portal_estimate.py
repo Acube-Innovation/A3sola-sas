@@ -216,7 +216,7 @@ TRAILING_SECTIONS = (
 		"compact": {"title": (("add_on_type", ""), ("panel_make", ""), ("panel_capacity_wp", " Wp")),
 			"sub": (("item", ""),)}},
 	# Last, the job's bill of materials and what it costs to build, copied from the package for
-	# the estimate's inverter and roof (Solar Design Estimate.fill_boms_from_package) and changed
+	# the Items the estimate uses (Solar Design Estimate.fill_boms_from_package) and changed
 	# here when this job needs otherwise. A record: the commercials are not built from them.
 	{"key": "material_bom", "label": "Material BOM", "icon": "stack", **BOM_SECTION},
 	{"key": "structure_bom", "label": "Structure BOM", "icon": "wrench", **BOM_SECTION},

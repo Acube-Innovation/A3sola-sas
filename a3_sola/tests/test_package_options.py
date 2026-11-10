@@ -49,7 +49,7 @@ OPTIMISER = {
 }
 
 
-def make_package(modules=None, inverters=None, system_items=None, **kwargs):
+def make_package(modules=None, inverters=None, system_items=None, save=True, **kwargs):
 	doc = frappe.get_doc(
 		{
 			"doctype": "Solar Package",
@@ -67,7 +67,9 @@ def make_package(modules=None, inverters=None, system_items=None, **kwargs):
 	)
 	doc.update(kwargs)
 	doc.flags.ignore_permissions = True
-	doc.insert(ignore_permissions=True)
+	# One with nothing to price it by is not saved (Solar Package.require_pricing_options): read as it stands.
+	if save:
+		doc.insert(ignore_permissions=True)
 	return doc
 
 
@@ -108,8 +110,8 @@ class TestModuleOptions(FrappeTestCase):
 		self.assertEqual(default_module(package).module_specification, "620 Wp TopCon")
 
 	def test_a_package_with_no_modules_resolves_to_nothing(self):
-		"""A draft package must be allowed to exist, so every reader copes with None."""
-		package = make_package(modules=[])
+		"""A package with no panel yet - not saved, having no price - leaves every reader with None."""
+		package = make_package(modules=[], save=False)
 		self.assertIsNone(default_module(package))
 
 	def test_the_accessor_takes_a_name_as_well_as_a_document(self):
@@ -183,7 +185,7 @@ class TestInverterOptions(FrappeTestCase):
 		self.assertEqual(default_inverter(package).cost, OPTIMISER["cost"])
 
 	def test_a_package_with_no_inverter_resolves_to_nothing(self):
-		self.assertIsNone(default_inverter(make_package(inverters=[])))
+		self.assertIsNone(default_inverter(make_package(inverters=[], save=False)))
 
 
 class TestDownstreamReadsTheDefaultInverter(FrappeTestCase):
@@ -388,7 +390,7 @@ class TestPricesAreWorkedOut(FrappeTestCase):
 
 	def test_an_unpriced_package_stays_at_zero(self):
 		"""Subtracting a subsidy from a blank price would publish a negative net rate."""
-		price = default_price(priceable(is_dcr_compliant=1, inverters=[dict(INVERTER, cost=0)]))
+		price = default_price(priceable(is_dcr_compliant=1, inverters=[dict(INVERTER, cost=0)], save=False))
 		self.assertEqual((price.system_cost, price.net_rate), (0, 0))
 
 	def test_the_default_inverter_is_the_quoted_price_and_moves_with_it(self):
@@ -441,8 +443,7 @@ class TestExpenses(FrappeTestCase):
 		if not item:
 			self.skipTest("No stock Item.")
 		package = priceable(expenses=[{"item": item, "qty": 4, "rate": 250}, {"item": item, "qty": 1, "rate": 99}])
-		# The rows typed in; the KSEB and installation rows are copied in beside them (package_bom_tree).
-		self.assertEqual([r.amount for r in package.expenses if not r.source_row], [1000, 99])
-		copied = sum(r.amount for r in package.expenses if r.source_row and r.row_kind != "Component")
-		self.assertEqual(package.total_expenses, 1099 + copied)
+		# The rows typed in, and only they: the KSEB and installation rows are not copied in (package_bom_tree).
+		self.assertEqual([r.amount for r in package.expenses], [1000, 99])
+		self.assertEqual(package.total_expenses, 1099)
 		self.assertEqual(default_price(package).system_cost, INVERTER["cost"])

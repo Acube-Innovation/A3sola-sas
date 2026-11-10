@@ -8,8 +8,16 @@
  "field_order": [
   "item",
   "specification",
+  "rate",
+  "qty",
   "amount",
-  "in_package"
+  "in_package",
+  "source",
+  "sb_bundle",
+  "bundle_type",
+  "bundle_ref",
+  "bundle_qty",
+  "bundle_key"
  ],
  "fields": [
   {
@@ -27,12 +35,25 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "description": "Per kW, or each."
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "default": "1",
+   "description": "kW, or how many."
+  },
+  {
    "fieldname": "amount",
    "fieldtype": "Currency",
    "label": "Amount",
    "read_only": 1,
    "in_list_view": 1,
-   "description": "Panel capacity x the Roof Type's installation rate."
+   "description": "Rate x Quantity."
   },
   {
    "fieldname": "in_package",
@@ -40,11 +61,54 @@
    "label": "Included in Package",
    "read_only": 1,
    "description": "Part of the solar package the estimate is built on: covered by the package price, so not priced on its own. Rows added by hand are priced at their own rate."
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Set on the installation line the system fills in; blank on rows added by hand."
+  },
+  {
+   "fieldname": "sb_bundle",
+   "fieldtype": "Section Break",
+   "label": "From a Bundle or BOM",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "bundle_type",
+   "fieldtype": "Select",
+   "label": "From",
+   "options": "\nBundle\nBOM",
+   "read_only": 1,
+   "description": "Bundle or BOM it replaced."
+  },
+  {
+   "fieldname": "bundle_ref",
+   "fieldtype": "Data",
+   "label": "Bundle / BOM",
+   "read_only": 1,
+   "description": "Which one, by its ID."
+  },
+  {
+   "fieldname": "bundle_qty",
+   "fieldtype": "Float",
+   "label": "Bundle Qty",
+   "read_only": 1,
+   "description": "How many of it."
+  },
+  {
+   "fieldname": "bundle_key",
+   "fieldtype": "Data",
+   "label": "Bundle Key",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-10-13 18:00:00.000000",
+ "modified": "2026-11-10 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate Installation Expense",

@@ -8,7 +8,6 @@ const ITEM_ROWS = [
 	["inverters", "inverter_item", "inverter_specification", () => "Inverters"],
 	["batteries", "battery_item", "specification", () => "Batteries"],
 	["system_items", "item", "specification", (row) => system_item_group(row.system_type)],
-	["optional_add_ons", "item_code", "item", () => "Optional Add-ons"],
 ];
 
 function system_item_group(system_type) {
@@ -99,6 +98,13 @@ frappe.ui.form.on("Solar Package", {
 				filters: { item_group: ["descendants of (inclusive)", group(locals[cdt][cdn])], disabled: 0 },
 			}));
 		});
+		// An add-on's Item Group is one of the add-on groups (package_items.add_on_groups); its Item
+		// is of that group, or of any of them till one is chosen.
+		const add_on_groups = () => (frm.doc.__onload && frm.doc.__onload.add_on_groups) || [];
+		frm.set_query("item_group", "optional_add_ons", () => ({ filters: { name: ["in", add_on_groups()] } }));
+		frm.set_query("item_code", "optional_add_ons", (doc, cdt, cdn) => ({
+			filters: { item_group: locals[cdt][cdn].item_group || ["in", add_on_groups()], disabled: 0 },
+		}));
 		frm.set_query("roof_type", () => ({ filters: { company: frm.doc.company } }));
 		// The row's own make and phase narrow the models, so every kit of them is offered
 		// (Hoymiles Single Phase: HM-1000 1 kW to 6 kW), smallest first, by inverter_model.search.
@@ -247,8 +253,11 @@ function total_the_panel(frm, cdt, cdn) {
 function total_the_package(frm) {
 	if (frm.doctype !== "Solar Package") return;
 	const doc = frm.doc;
-	const first_default = (rows) => (rows || []).find((r) => r.is_default) || (rows || [])[0];
+	// A kit's parts (api/package_kits) are not options; an option's amount takes them in.
+	const options = (rows) => (rows || []).filter((r) => !r.bundle_part);
+	const first_default = (rows) => options(rows).find((r) => r.is_default) || options(rows)[0];
 	const sum = (rows, amount) => (rows || []).reduce((total, r) => total + amount(r), 0);
+	const kit = (rows, head) => (head ? (rows || []).filter((r) => r === head || (head.bundle_key && r.bundle_part && r.bundle_key === head.bundle_key)) : []);
 	const panel = first_default(doc.modules);
 	const inverter = first_default(doc.inverters);
 	const system = {};
@@ -257,8 +266,8 @@ function total_the_package(frm) {
 	});
 	const batteries = ["Off-Grid", "Hybrid"].includes(doc.system_type) ? doc.batteries : [];
 	const total =
-		(panel ? flt(panel.rate) * cint(panel.module_count) : 0) +
-		(inverter ? flt(inverter.unit_rate) * (cint(inverter.inverter_count) || 1) : 0) +
+		sum(kit(doc.modules, panel), (r) => flt(r.rate) * cint(r.module_count)) +
+		sum(kit(doc.inverters, inverter), (r) => flt(r.unit_rate) * (cint(r.inverter_count) || 1)) +
 		sum((batteries || []).filter((r) => !r.is_option), (r) => flt(r.rate) * cint(r.nos)) +
 		sum(Object.values(system), (r) => flt(r.cost)) +
 		sum(doc.kseb_expenses, (r) => flt(r.amount)) +
@@ -282,11 +291,19 @@ frappe.ui.form.on("Solar Package Module", {
 	},
 	rate: total_the_panel,
 	module_count: total_the_panel,
+	// Rate per Panel is its Wattage x Wattage Rate, as on save.
+	module_wattage: (frm, cdt, cdn) => rate_from_wattage(cdt, cdn),
+	wattage_rate: (frm, cdt, cdn) => rate_from_wattage(cdt, cdn),
 	modules_remove(frm) {
 		refresh_panel_choices(frm);
 		total_the_package(frm);
 	},
 });
+
+function rate_from_wattage(cdt, cdn) {
+	const row = locals[cdt][cdn];
+	if (flt(row.wattage_rate) && !row.bundle_part) frappe.model.set_value(cdt, cdn, "rate", flt(row.module_wattage) * flt(row.wattage_rate));
+}
 
 // Balance of system differs: the default is per type, so ticking a DCDB clears only the
 // other DCDB rows. An ACDB alongside it is not a competing option.
@@ -371,7 +388,33 @@ function battery_amount(frm, cdt, cdn) {
 	});
 });
 
-// The BOM tab's Material BOM, Structure BOMs and Expenses come from Excel as often as they are
+// A KSEB row's Amount is its Rate x Quantity (api/expenses.price_by_rate); an Amount typed in the
+// grid sets the Rate to match, so the save keeps it.
+frappe.ui.form.on("Design Estimate KSEB Expense", {
+	rate: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
+	qty: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
+	amount(frm, cdt, cdn) {
+		if (frm.doctype !== "Solar Package") return;
+		const row = locals[cdt][cdn];
+		const qty = row.qty == null || row.qty === "" ? 1 : flt(row.qty);
+		if (!row.source && qty && flt(row.rate) * qty !== flt(row.amount)) frappe.model.set_value(cdt, cdn, "rate", flt(row.amount) / qty);
+	},
+});
+
+// An installation row's Amount is its Rate x Quantity; the line a roof type prices is set on save.
+frappe.ui.form.on("Design Estimate Installation Expense", {
+	rate: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
+	qty: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
+});
+
+function amount_from_rate(frm, cdt, cdn) {
+	if (frm.doctype !== "Solar Package") return;
+	const row = locals[cdt][cdn];
+	const amount = flt(row.rate) * (row.qty == null || row.qty === "" ? 1 : flt(row.qty));
+	if (flt(row.amount) !== amount) frappe.model.set_value(cdt, cdn, "amount", amount);
+}
+
+// The Material BOM, Structure BOMs and Expenses (each a tab of its own) come from Excel as often as they are
 // typed (api/package_bom_tables): the sheet is read on the server, which finds or makes each
 // Item, and its rows replace the table here, to be saved with the package.
 const BOM_TABLES_API = "a3_sola.api.package_bom_tables";
@@ -396,8 +439,12 @@ function setup_bom_tables(frm) {
 				upload_bom_table(frm, table);
 			}
 		});
+		// A Category narrows the Items offered (the groups under it too).
+		frm.set_query("item", table, (doc, cdt, cdn) => {
+			const category = locals[cdt][cdn].category;
+			return { filters: category ? { item_group: ["descendants of (inclusive)", category], disabled: 0 } : { disabled: 0 } };
+		});
 	});
-	show_roof_names(frm);
 }
 
 function upload_bom_table(frm, table) {
@@ -413,10 +460,7 @@ function upload_bom_table(frm, table) {
 					filename: file.name,
 					table,
 					company: frm.doc.company,
-					inverters: (frm.doc.inverters || []).map((r) => ({
-						inverter_item: r.inverter_item,
-						inverter_specification: r.inverter_specification,
-					})),
+					items: JSON.stringify(own_items(frm).map((o) => o.item)),
 				},
 				freeze: true,
 				freeze_message: __("Reading the sheet…"),
@@ -437,117 +481,59 @@ function upload_bom_table(frm, table) {
 	});
 }
 
-// A Structure BOM row keeps its roof types by name (SOL-ROOF-001); the grid shows what they say.
-function show_roof_names(frm) {
-	frappe.db.get_list("Roof Type", { fields: ["name", "roof_type"], limit: 500 }).then((roofs) => {
-		const says = Object.fromEntries(roofs.map((r) => [r.name, r.roof_type || r.name]));
-		const df = frappe.meta.docfield_map["Solar Package Structure BOM"] &&
-			frappe.meta.docfield_map["Solar Package Structure BOM"].roof_types;
-		if (!df) return;
-		df.formatter = (value) => (value || "").split(",").map((v) => v.trim()).filter(Boolean)
-			.map((v) => frappe.utils.escape_html(says[v] || v)).join(", ");
-		frm.refresh_field("structure_boms");
-	});
+// The package's own Items, as its other tabs name them: what a Materials, Structure or Expenses
+// row may depend on (api/package_bom_tables.OWN_ITEMS).
+const OWN_ITEMS = [
+	["modules", "module_item", "Solar Panel"], ["inverters", "inverter_item", "Inverter"], ["batteries", "battery_item", "Battery"],
+	["system_items", "item", "Balance"], ["kseb_expenses", "particulars", "KSEB"], ["mounting_expenses", "item", "Mounting"],
+	["installation_expenses", "item", "Installation"],
+];
+
+function own_items(frm) {
+	const seen = new Set();
+	const out = [];
+	OWN_ITEMS.forEach(([table, field, tab]) => (frm.doc[table] || []).forEach((r) => {
+		if (r[field] && !seen.has(r[field])) {
+			seen.add(r[field]);
+			out.push({ item: r[field], tab });
+		}
+	}));
+	return out;
 }
 
-// Depends on Roof Type and Panel Capacity: the company's roof types, and the capacities the
-// packages are made in with room for one that none is yet.
-function choose_structure_depends_on(frm, cdt, cdn) {
+// Depends On: the row is taken only where one of the Items ticked is used; none ticked, always.
+function choose_depends_on(frm, cdt, cdn) {
 	const row = locals[cdt][cdn];
-	const split = (value) => (value || "").split(",").map((v) => v.trim()).filter(Boolean);
-	// Not .map(flt): map's index and array would go in as flt's precision and number format.
-	const to_kw = (value) => flt(value);
-	const roofs_chosen = split(row.roof_types);
-	const kw_chosen = split(row.panel_capacities).map(to_kw);
-	Promise.all([
-		frappe.db.get_list("Roof Type", { filters: { company: frm.doc.company }, fields: ["name", "roof_type"], limit: 500 }),
-		frappe.xcall(`${BOM_TABLES_API}.capacities`),
-	]).then(([roofs, capacities]) => {
-		const kws = [...new Set(capacities.concat(kw_chosen))].sort((a, b) => a - b);
-		const dialog = new frappe.ui.Dialog({
-			title: __("Depends on Roof Type and Capacity"),
-			fields: [
-				{
-					fieldname: "roof_types",
-					fieldtype: "MultiCheck",
-					columns: 2,
-					label: __("Roof types"),
-					description: __("None ticked: every roof type."),
-					options: roofs.map((r) => ({
-						label: r.roof_type || r.name, value: r.name, checked: roofs_chosen.includes(r.name),
-					})),
-				},
-				{
-					fieldname: "capacities",
-					fieldtype: "MultiCheck",
-					columns: 4,
-					label: __("Panel capacity (kW)"),
-					description: __("None ticked: every capacity."),
-					options: kws.map((kw) => ({
-						label: `${kw} kW`, value: String(kw), checked: kw_chosen.includes(kw),
-					})),
-				},
-				{
-					fieldname: "other_capacities",
-					fieldtype: "Data",
-					label: __("Other capacities (kW)"),
-					description: __("Separated by commas, e.g. 6, 7.5"),
-				},
-			],
-			primary_action_label: __("Set"),
-			primary_action(values) {
-				const others = split(values.other_capacities).map(to_kw);
-				if (others.some((kw) => !(kw > 0))) {
-					frappe.msgprint(__("Other capacities are numbers of kW, such as 6 or 7.5."));
-					return;
-				}
-				const chosen = [...new Set((values.capacities || []).map(to_kw).concat(others))].sort((a, b) => a - b);
-				frappe.model.set_value(cdt, cdn, {
-					roof_types: (values.roof_types || []).join(", "),
-					panel_capacities: chosen.join(", "),
-				});
-				dialog.hide();
-			},
-		});
-		dialog.show();
-	});
-}
-
-// Depends on Inverter is chosen from the package's own inverter options, by their Items.
-function choose_inverters(frm, cdt, cdn) {
-	const row = locals[cdt][cdn];
-	const offered = [...new Set((frm.doc.inverters || []).map((r) => r.inverter_item).filter(Boolean))];
-	if (!offered.length) {
-		frappe.msgprint(__("Give the package's inverter options their Items first."));
+	const offered = own_items(frm);
+	const chosen = (row.depends_on || "").split("\n").map((s) => s.trim()).filter(Boolean);
+	const gone = chosen.filter((item) => !offered.some((o) => o.item === item)).map((item) => ({ item, tab: __("No longer on the package") }));
+	if (!offered.length && !gone.length) {
+		frappe.msgprint(__("Give the package's other tabs their Items first."));
 		return;
 	}
-	const chosen = (row.inverters || "").split("\n").map((s) => s.trim()).filter(Boolean);
-	const quoted = (frm.doc.inverters || []).find((r) => r.is_default);
 	const dialog = new frappe.ui.Dialog({
-		title: __("Depends on Inverter"),
+		title: __("Depends On"),
 		fields: [{
-			fieldname: "inverters",
+			fieldname: "items",
 			fieldtype: "MultiCheck",
 			columns: 1,
-			label: __("Needed with"),
-			description: __("None ticked: needed with every inverter."),
-			options: offered.map((item) => ({
-				label: item + (quoted && quoted.inverter_item === item ? ` (${__("default")})` : ""),
-				value: item,
-				checked: chosen.includes(item),
+			label: __("Taken only with"),
+			description: __("None ticked: always taken."),
+			options: offered.concat(gone).map(({ item, tab }) => ({
+				label: `${item} (${tab})`, value: item, checked: chosen.includes(item),
 			})),
 		}],
 		primary_action_label: __("Set"),
-		primary_action({ inverters }) {
-			frappe.model.set_value(cdt, cdn, "inverters", (inverters || []).join("\n"));
+		primary_action({ items }) {
+			frappe.model.set_value(cdt, cdn, "depends_on", (items || []).join("\n"));
 			dialog.hide();
 		},
 	});
 	dialog.show();
 }
 
-// Both tables' rows: the UOM follows the Item chosen (it stays the user's to change after), and
-// the amount is the quantity at the rate.
+// The three tables' rows: the UOM and description follow the Item chosen (they stay the user's to
+// change after), and the amount is the quantity at the rate.
 const BOM_ROW_EVENTS = {
 	item(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
@@ -555,7 +541,9 @@ const BOM_ROW_EVENTS = {
 		frappe.db.get_value("Item", row.item, "stock_uom").then(({ message }) => {
 			if (message && message.stock_uom) frappe.model.set_value(cdt, cdn, "uom", message.stock_uom);
 		});
+		fill_from_item(frm, cdt, cdn, "item", "description");
 	},
+	choose_depends_on: (frm, cdt, cdn) => choose_depends_on(frm, cdt, cdn),
 	qty: (frm, cdt, cdn) => bom_row_amount(cdt, cdn),
 	rate: (frm, cdt, cdn) => bom_row_amount(cdt, cdn),
 };
@@ -565,15 +553,9 @@ function bom_row_amount(cdt, cdn) {
 	frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(row.rate));
 }
 
-frappe.ui.form.on("Solar Package Material BOM", {
-	...BOM_ROW_EVENTS,
-	choose_inverters: (frm, cdt, cdn) => choose_inverters(frm, cdt, cdn),
-});
+frappe.ui.form.on("Solar Package Material BOM", BOM_ROW_EVENTS);
 
-frappe.ui.form.on("Solar Package Structure BOM", {
-	...BOM_ROW_EVENTS,
-	choose_depends_on: (frm, cdt, cdn) => choose_structure_depends_on(frm, cdt, cdn),
-});
+frappe.ui.form.on("Solar Package Structure BOM", BOM_ROW_EVENTS);
 
 // The Expenses' total, as the rows change (the server totals it again on save).
 function total_expenses(frm) {
@@ -591,8 +573,11 @@ frappe.ui.form.on("Design Estimate Battery", {
 	battery_item: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "battery_item", "specification"),
 });
 
+// An add-on's Amount is its Rate x Quantity, as on save.
 frappe.ui.form.on("Solar Package Add-on", {
 	item_code: (frm, cdt, cdn) => fill_from_item(frm, cdt, cdn, "item_code", "item"),
+	rate: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
+	qty: (frm, cdt, cdn) => amount_from_rate(frm, cdt, cdn),
 });
 
 function show_payment_terms(frm) {

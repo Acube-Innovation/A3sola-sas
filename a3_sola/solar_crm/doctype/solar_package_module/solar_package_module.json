@@ -11,12 +11,19 @@
   "module_specification",
   "module_make",
   "module_wattage",
+  "wattage_rate",
   "module_count",
   "rate",
   "amount",
   "is_default",
   "cb_1",
-  "module_alternate_makes"
+  "module_alternate_makes",
+  "sb_bundle",
+  "bundle_type",
+  "bundle_ref",
+  "bundle_qty",
+  "bundle_key",
+  "bundle_part"
  ],
  "fields": [
   {
@@ -52,6 +59,13 @@
    "precision": 2
   },
   {
+   "description": "Rate per Wp.",
+   "fieldname": "wattage_rate",
+   "fieldtype": "Currency",
+   "label": "Wattage Rate",
+   "options": "INR"
+  },
+  {
    "columns": 1,
    "fieldname": "module_count",
    "fieldtype": "Int",
@@ -60,7 +74,7 @@
   },
   {
    "columns": 1,
-   "description": "What one panel costs. A design estimate's panel row with no rate of its own is priced at this.",
+   "description": "Wattage x Wattage Rate.",
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -68,7 +82,7 @@
   },
   {
    "columns": 1,
-   "description": "Rate per Panel x Nos. The default panel's is part of the Total Package Cost.",
+   "description": "Rate per Panel x Nos.",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -92,11 +106,54 @@
    "fieldname": "module_alternate_makes",
    "fieldtype": "Data",
    "label": "Alternate Makes"
+  },
+  {
+   "fieldname": "sb_bundle",
+   "fieldtype": "Section Break",
+   "label": "From a Bundle or BOM",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "bundle_type",
+   "fieldtype": "Select",
+   "label": "From",
+   "options": "\nBundle\nBOM",
+   "read_only": 1,
+   "description": "Bundle or BOM it replaced."
+  },
+  {
+   "fieldname": "bundle_ref",
+   "fieldtype": "Data",
+   "label": "Bundle / BOM",
+   "read_only": 1,
+   "description": "Which one, by its ID."
+  },
+  {
+   "fieldname": "bundle_qty",
+   "fieldtype": "Float",
+   "label": "Bundle Qty",
+   "read_only": 1,
+   "description": "How many of it."
+  },
+  {
+   "fieldname": "bundle_key",
+   "fieldtype": "Data",
+   "label": "Bundle Key",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "bundle_part",
+   "fieldtype": "Check",
+   "label": "Part of the Kit Above",
+   "read_only": 1,
+   "default": "0",
+   "description": "Counted in its option."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-06 12:00:00.000000",
+ "modified": "2026-11-10 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package Module",

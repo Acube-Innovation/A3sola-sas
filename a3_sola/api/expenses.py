@@ -41,9 +41,10 @@ def fill_expense_tables(doc, roof_type, panel_kw, fees):
 		doc,
 		"kseb_expenses",
 		{
-			"application": {"particulars": kseb["application"], "amount": fees.get("application_fee")},
-			"registration": {"particulars": kseb["registration"], "amount": fees.get("registration_fee")},
-			"net_meter": {"particulars": kseb["net_meter"], "amount": fees.get("net_meter_charge")},
+			# A fee, once: its Rate the fee, Quantity 1.
+			"application": _fee(kseb["application"], fees.get("application_fee")),
+			"registration": _fee(kseb["registration"], fees.get("registration_fee")),
+			"net_meter": _fee(kseb["net_meter"], fees.get("net_meter_charge")),
 		},
 	)
 
@@ -78,17 +79,48 @@ def fill_expense_tables(doc, roof_type, panel_kw, fees):
 		},
 	)
 
-	# One line, whose specification is typed here and kept; only the amount follows.
-	if not doc.get("installation_expenses"):
-		doc.append(
-			"installation_expenses",
-			{
-				"item": EXPENSE_ITEMS["installation_expenses"]["installation"],
-				"specification": roof.installation_specification,
-			},
-		)
-	for row in doc.installation_expenses:
-		row.amount = flt(panel_kw * flt(roof.installation_rate_per_kw), 2)
+	fill_installation_line(doc, roof, panel_kw)
+
+
+def fill_installation_line(doc, roof, panel_kw):
+	"""The installation line (source "installation"), first in its table: the roof type's rate per kW
+	for the panel kW - Rate and Quantity set from them - where the roof type has a rate; else priced
+	at the Rate and Quantity typed on it. Its specification is typed here and kept. Before rows said
+	where they came from, the table's first row was the line. Rows added by hand are left as they are."""
+	rows = doc.get("installation_expenses") or []
+	line = next((r for r in rows if r.get("source") == "installation"), None)
+	if not line and rows and not any(r.get("source") for r in rows):
+		line = rows[0]
+		line.source = "installation"
+	if not line:
+		line = doc.append("installation_expenses", {"item": EXPENSE_ITEMS["installation_expenses"]["installation"],
+			"specification": roof.installation_specification, "source": "installation"})
+		rows = doc.get("installation_expenses")
+		rows.remove(line)
+		rows.insert(0, line)
+		for idx, row in enumerate(rows, 1):
+			row.idx = idx
+	rate = flt(roof.installation_rate_per_kw)
+	if rate:
+		line.rate, line.qty = rate, flt(panel_kw, 3)
+		line.amount = flt(rate * flt(panel_kw), 2)
+	else:
+		price_by_rate([line], computed_too=True)
+
+
+def _fee(particulars, amount):
+	return {"particulars": particulars, "rate": amount, "qty": 1, "amount": amount}
+
+
+def price_by_rate(rows, computed_too=False):
+	"""Each row added by hand (KSEB, installation, an optional add-on) priced at its Rate times its Quantity (one,
+	left blank); a row with no Rate yet - blank, or the 0 a new column starts at - keeps the Amount it
+	has. The rows the system fills in are priced by it, unless `computed_too`."""
+	for row in rows or []:
+		if (row.get("source") and not computed_too) or (not flt(row.get("rate")) and flt(row.get("amount"))):
+			continue
+		qty = 1 if row.get("qty") in (None, "") else flt(row.qty)
+		row.amount = flt(flt(row.rate) * qty, 2)
 
 
 def upsert_computed_rows(doc, table, computed):

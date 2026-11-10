@@ -1,23 +1,25 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A Solar Package's tables of Items beside its quoted rows, on its BOM tab: the Material BOM
-and the Structure BOMs - what the system and its mounting structure are built from, pipes,
-lugs, clamps, bolts, each an Item with its quantity and rate - and the Expenses, what the
-package costs to build, a costing record that goes into no BOM.
+"""A Solar Package's tables of Items beside its quoted rows, each on a tab of its own: the
+Material BOM and the Structure BOMs - what the system and its mounting structure are built
+from, pipes, lugs, clamps, bolts, each an Item with its quantity and rate - and the Expenses,
+what the package costs to build, a costing record that goes into no BOM.
 
-A row says what it goes with, and saying nothing means everything:
-- a Material BOM row, the inverter options (their Items);
-- a Structure BOM row, the roof types and the system capacities (kW).
-The package's BOM takes the rows of its own default inverter, roof type and capacity
-(package_items.bom_lines), in each Item's stock UOM.
+A row may depend on Items of the package's own - its panels', inverters', batteries', balance
+of system's, KSEB, mounting and installation rows' Items, Product Bundles and BOMs among them.
+It is then taken only where one of those is used: by the package as quoted (its default panel
+and inverter, and so on - used_items), or by the design estimate it is copied to. A row that
+depends on none is always taken. The package's BOM takes the rows of what it uses (bom_lines),
+in each Item's stock UOM.
 
 Every table comes from Excel as often as it is typed: Upload Excel reads a sheet with the
-table's columns - Item Name, Category, UOM, Quantity, Rate, Amount and its own "depends on"
-columns - finding each Item by its code or name and making the missing ones in their Category.
+columns Item Name, Item Description, Category, UOM, Quantity, Rate, Amount and Depends On,
+finding each Item by its code or name and making the missing ones in their Category.
 Download Excel gives the same sheet back, to fill or to edit.
 """
 
 import base64
+import html
 import json
 import re
 
@@ -27,123 +29,123 @@ from frappe.utils import flt
 
 from a3_sola.api import package_items
 
-#: The sheet's columns every table has, in order.
-COLUMNS = ("Item Name", "Category", "UOM", "Quantity", "Rate", "Amount")
-#: A sheet's header -> the row's field, for every table.
+#: The tables, a tab each.
+TABLES = ("material_bom", "structure_boms", "expenses")
+#: The tables that go into the package's BOM (package_items.bom_lines); Expenses do not.
+BOM_TABLES = ("material_bom", "structure_boms")
+#: The sheet's columns, in order.
+COLUMNS = ("Item Name", "Item Description", "Category", "UOM", "Quantity", "Rate", "Amount", "Depends On")
+#: A sheet's header -> the row's field. An older sheet's Depends on Inverter column is read as
+#: Depends On; its roof type and capacity columns are not read.
 HEADERS = {
 	"item name": "item", "item": "item", "item code": "item",
+	"item description": "description", "description": "description",
 	"category": "category", "item group": "category",
 	"uom": "uom", "unit": "uom",
 	"quantity": "qty", "qty": "qty",
 	"rate": "rate",
 	"amount": "amount",
+	"depends on": "depends_on", "depends on item": "depends_on", "depends on items": "depends_on",
+	"depends on inverter": "depends_on", "depends on inverters": "depends_on", "inverter": "depends_on",
+	"inverters": "depends_on",
 }
-#: table -> its "depends on" fields: (field, sheet column, the other headers it may go by).
-DEPENDS = {
-	"material_bom": (
-		("inverters", "Depends on Inverter", ("inverter", "inverters", "depends on inverters")),
-	),
-	"structure_boms": (
-		("roof_types", "Depends on Roof Type", ("roof type", "roof types", "depends on roof types")),
-		("panel_capacities", "Panel Capacity (kW)", ("panel capacity", "panel capacities", "panal capacity",
-			"panal capacity (kw)", "capacity", "capacity (kw)")),
-	),
-	"expenses": (),
-}
-#: The tables that go into the package's BOM (package_items.bom_lines); Expenses do not.
-BOM_TABLES = ("material_bom", "structure_boms")
-#: Inverter Items may hold commas, so their field keeps one per line; the others a list.
-STORED_SEPARATOR = {"inverters": "\n", "roof_types": ", ", "panel_capacities": ", "}
-#: What a "depends on" cell may say for "every one".
-EVERY = {"", "all", "any", "every"}
+#: The package's rows that name its own Items: (table, the Item's field).
+OWN_ITEMS = (("modules", "module_item"), ("inverters", "inverter_item"), ("batteries", "battery_item"),
+	("system_items", "item"), ("kseb_expenses", "particulars"), ("mounting_expenses", "item"),
+	("installation_expenses", "item"))
+#: What a Depends On cell may say for "none".
+EVERY = {"", "all", "any", "every", "none"}
 SEPARATORS = ",;|\n"
 
 
-def values_of(row, field):
-	"""What a row's "depends on" field names; nothing for every one."""
-	split = r"\n" if STORED_SEPARATOR[field] == "\n" else r"[,\n]"
-	return [v.strip() for v in re.split(split, row.get(field) or "") if v.strip()]
+def columns(table=None):
+	return list(COLUMNS)
 
 
-def _store(field, values):
-	return STORED_SEPARATOR[field].join(dict.fromkeys(values))
+def depends_on(row):
+	"""The Items a row depends on - one per line, as an Item may hold a comma; none, always taken."""
+	return [v.strip() for v in (row.get("depends_on") or "").split("\n") if v.strip()]
 
 
-def columns(table):
-	return list(COLUMNS) + [heading for _field, heading, _other in DEPENDS[table]]
+def own_items(package):
+	"""The Items the package's other tabs name, in tab order, each once: what a row may depend on."""
+	return list(dict.fromkeys(row.get(field) for table, field in OWN_ITEMS for row in package.get(table) or []
+		if row.get(field)))
 
 
-def default_inverter(package):
-	row = next((r for r in package.get("inverters") or [] if r.is_default), None)
-	return row.inverter_item if row else None
+def used_items(package, chosen=None):
+	"""The Items the package as quoted uses: its default panel and inverter (a kit's parts too),
+	the default of each balance-of-system type, every battery that is not an option
+	(package_items.quoted_rows), and every KSEB, mounting and installation row's. `chosen` gives
+	other rows for a table - a Pricing Options row's panel, inverter and battery."""
+	chosen = chosen or {}
+
+	def rows(table):
+		if table in chosen:
+			return chosen[table]
+		return package_items.quoted_rows(package, table) if table in package_items.MATERIAL_ROWS else package.get(table) or []
+
+	return {row.get(field) for table, field in OWN_ITEMS for row in rows(table) if row.get(field)}
 
 
-def applies(table, row, package, inverter=None):
-	"""Whether the row is needed for the package as quoted: its default inverter, its roof type
-	and its capacity."""
-	if table == "material_bom":
-		chosen = values_of(row, "inverters")
-		return not chosen or inverter in chosen
-	roofs, capacities = values_of(row, "roof_types"), [flt(c) for c in values_of(row, "panel_capacities")]
-	return (not roofs or package.get("roof_type") in roofs) and (
-		not capacities or any(abs(c - flt(package.get("capacity_kw"))) < 0.001 for c in capacities))
+def applies(row, used):
+	"""Whether a row is taken where `used` are the Items in use: one it depends on is, or it
+	depends on none."""
+	chosen = depends_on(row)
+	return not chosen or any(item in used for item in chosen)
+
+
+def item_text(item):
+	"""An Item's description as plain text, else its name."""
+	name, description = frappe.db.get_value("Item", item, ["item_name", "description"]) or (None, None)
+	text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", description or ""))).strip()
+	return text or name or ""
 
 
 # ------------------------------------------------------------------ on save
 def validate(doc):
-	"""Each row's amount and UOM, and what it depends on only what there is: the package's own
-	inverters, roof types, capacities in kW."""
-	offered = {r.inverter_item for r in doc.get("inverters") or [] if r.inverter_item}
-	for table in DEPENDS:
+	"""Each row's amount, its UOM and description where blank (the Item's), and what it depends on
+	only the package's own Items."""
+	own = set(own_items(doc))
+	for table in TABLES:
 		label = doc.meta.get_label(table)
 		for row in doc.get(table) or []:
 			if flt(row.qty) <= 0:
 				frappe.throw(_("Row {0} of {1}: the quantity of {2} must be more than 0.").format(
 					row.idx, label, frappe.bold(row.item)), title=_("Wrong Quantity"))
-			if not row.uom and row.item:
+			if row.item and not row.uom:
 				row.uom = frappe.db.get_value("Item", row.item, "stock_uom")
+			if row.item and not (row.description or "").strip():
+				row.description = item_text(row.item)
 			row.amount = flt(flt(row.qty) * flt(row.rate), row.precision("amount"))
-			if table == "material_bom":
-				unknown = [i for i in values_of(row, "inverters") if i not in offered]
-				if unknown:
-					frappe.throw(_("Row {0} of {1}: {2} is not one of this package's inverter options. Choose its "
-						"inverters again.").format(row.idx, label, ", ".join(frappe.bold(i) for i in unknown)),
-						title=_("Wrong Inverter"))
-				row.inverters = _store("inverters", values_of(row, "inverters"))
-				continue
-			if table != "structure_boms":
-				continue
-			unknown = [r for r in values_of(row, "roof_types") if not frappe.db.exists("Roof Type", r)]
+			unknown = [i for i in depends_on(row) if i not in own]
 			if unknown:
-				frappe.throw(_("Row {0} of {1}: there is no Roof Type {2}. Choose its roof types again.").format(
-					row.idx, label, ", ".join(frappe.bold(r) for r in unknown)), title=_("Wrong Roof Type"))
-			row.roof_types = _store("roof_types", values_of(row, "roof_types"))
-			capacities, wrong = _capacities(values_of(row, "panel_capacities"))
-			if wrong:
-				frappe.throw(_("Row {0} of {1}: {2} is not a capacity in kW.").format(row.idx, label, frappe.bold(wrong)),
-					title=_("Wrong Capacity"))
-			row.panel_capacities = _store("panel_capacities", capacities)
+				frappe.throw(_("Row {0} of {1}: {2} is not one of this package's Items. Choose what it depends on "
+					"again.").format(row.idx, label, ", ".join(frappe.bold(i) for i in unknown)),
+					title=_("Wrong Depends On"))
+			row.depends_on = "\n".join(dict.fromkeys(depends_on(row)))
 
 
 # ------------------------------------------------------------------ into the package's BOM
 def bom_lines(package):
 	"""Both tables' rows for the package as quoted, item -> quantity in the Item's stock UOM.
 
-	Each part once (package_bom_tree): not the rows copied from the other tabs, which
-	package_items.bom_lines counts from the tabs themselves; a BOM row as itself, a sub-assembly,
-	and not its components; a bundle as its components, which follow it."""
-	inverter = default_inverter(package)
-	lines, parent_kind, parent_counts = {}, None, False
+	The rows typed into the tables (package_bom_tree.is_own) that apply to what the package uses:
+	an Item with a BOM as itself, a sub-assembly; a Product Bundle as its items, which an ERPNext
+	BOM holds and a bundle it cannot."""
+	from a3_sola.api.package_bom_tree import is_own, line_items
+
+	used = used_items(package)
+	lines, made = {}, {}
 	for table in BOM_TABLES:
 		for row in package.get(table) or []:
-			if row.get("row_kind") == "Component":
-				counts = parent_kind == "Bundle" and parent_counts
-			else:
-				parent_kind = row.get("row_kind")
-				parent_counts = bool(row.item and not row.get("source_row") and applies(table, row, package, inverter))
-				counts = parent_counts and parent_kind != "Bundle"
-			if counts and row.item:
-				lines[row.item] = lines.get(row.item, 0) + flt(row.qty) * _to_stock_uom(package, table, row)
+			if not (row.item and is_own(row) and applies(row, used)):
+				continue
+			parts = line_items(row.item, flt(row.qty), made)
+			if parts == [(row.item, flt(row.qty))]:
+				parts = [(row.item, flt(row.qty) * _to_stock_uom(package, table, row))]
+			for item, qty in parts:
+				lines[item] = lines.get(item, 0) + qty
 	return lines
 
 
@@ -163,45 +165,34 @@ def _to_stock_uom(package, table, row):
 	return flt(factor)
 
 
-# ------------------------------------------------------------------ for the form's pickers
-@frappe.whitelist()
-def capacities():
-	"""The system capacities (kW) the packages are made in, smallest first."""
-	frappe.has_permission("Solar Package", "read", throw=True)
-	return sorted({flt(c) for c in frappe.get_all("Solar Package", pluck="capacity_kw") if flt(c) > 0})
-
-
 # ------------------------------------------------------------------ the Excel sheet
 @frappe.whitelist(methods=["POST"])
-def read_sheet(content, filename, table, inverters=None, company=None):
+def read_sheet(content, filename, table, items=None, company=None):
 	"""An uploaded sheet's rows, for the form to put in its `table`.
 
-	`content` is the file as a data URL; `inverters` the form's inverter options as they stand,
-	saved or not, and `company` its company, whose roof types a sheet may name. Every row is read
-	before anything is made: a sheet with a mistake makes no Items, and its mistakes come back
-	together, by the sheet's row numbers."""
+	`content` is the file as a data URL; `items` the Items the form's other tabs name as they
+	stand, saved or not - what a row may depend on. Every row is read before anything is made: a
+	sheet with a mistake makes no Items, and its mistakes come back together, by the sheet's row
+	numbers."""
 	frappe.has_permission("Solar Package", "write", throw=True)
-	if table not in DEPENDS:
+	if table not in TABLES:
 		frappe.throw(_("Not a table a sheet fills: {0}.").format(table))
-	inverters = json.loads(inverters) if isinstance(inverters, str) else inverters or []
+	items = json.loads(items) if isinstance(items, str) else items or []
 	cells = _cells(content, filename)
 	start = next((i for i, row in enumerate(cells) if any(_text(c) for c in row)), None)
 	if start is None:
 		frappe.throw(_("The sheet is empty."), title=_("Nothing to Read"))
-	headers = dict(HEADERS)
-	for field, heading, others in DEPENDS[table]:
-		headers.update({_key(h): field for h in (heading,) + others})
-	fields = {i: headers.get(_key(c)) for i, c in enumerate(cells[start])}
+	fields = {i: HEADERS.get(_key(c)) for i, c in enumerate(cells[start])}
 	if "item" not in fields.values():
 		frappe.throw(_("The sheet has no Item Name column. Its first row should be the headings: {0}.").format(
-			", ".join(columns(table))), title=_("No Item Name Column"))
-	keys = {"inverters": _inverter_keys(inverters), "roof_types": _roof_keys(company)}
+			", ".join(COLUMNS)), title=_("No Item Name Column"))
+	keys = _item_keys(items)
 	rows, errors, to_make = [], [], {}
 	for n, cells_of_row in enumerate(cells[start + 1:], start=start + 2):
 		values = {fields[i]: cell for i, cell in enumerate(cells_of_row) if fields.get(i)}
 		if not any(_text(v) for v in values.values()):
 			continue
-		row, problem = _read_row(table, values, keys, to_make)
+		row, problem = _read_row(values, keys, to_make)
 		if problem:
 			errors.append(_("Row {0}: {1}").format(n, problem))
 		else:
@@ -217,7 +208,7 @@ def read_sheet(content, filename, table, inverters=None, company=None):
 	return {"rows": rows, "created": made}
 
 
-def _read_row(table, values, keys, to_make):
+def _read_row(values, keys, to_make):
 	"""(row, None) for a row that reads, else (None, what is wrong)."""
 	name = re.sub(r"\s+", " ", _text(values.get("item"))).strip()[:140].strip()
 	if not name:
@@ -244,18 +235,11 @@ def _read_row(table, values, keys, to_make):
 	item = _find_item(name, category)
 	if item and frappe.db.get_value("Item", item, "disabled"):
 		return None, _("the Item {0} is disabled.").format(frappe.bold(item))
-	row = {"qty": qty, "rate": rate, "amount": qty * rate}
-	for field, heading, _others in DEPENDS[table]:
-		if field == "panel_capacities":
-			chosen, wrong = _capacities(_pieces(values.get(field)))
-			if wrong:
-				return None, _("{0} is not a capacity in kW.").format(frappe.bold(wrong))
-		else:
-			chosen, wrong = _match(values.get(field), keys[field])
-			if wrong:
-				return None, _("{0} under {1} is not one of {2}.").format(frappe.bold(wrong), heading,
-					_("this package's inverter options (with an Item)") if field == "inverters" else _("the roof types"))
-		row[field] = _store(field, chosen)
+	chosen, wrong = _match(values.get("depends_on"), keys)
+	if wrong:
+		return None, _("{0} under Depends On is not one of this package's Items.").format(frappe.bold(wrong))
+	row = {"qty": qty, "rate": rate, "amount": qty * rate, "description": _text(values.get("description")),
+		"depends_on": "\n".join(chosen)}
 	if item:
 		group, stock_uom = frappe.db.get_value("Item", item, ["item_group", "stock_uom"])
 		return row | {"item": item, "category": group, "uom": uom or stock_uom}, None
@@ -300,28 +284,15 @@ def _hsn(group):
 	return None
 
 
-def _inverter_keys(inverters):
-	"""What a sheet may call each inverter option -> its Item: the Item's code, its name, or the
-	row's specification."""
+def _item_keys(items):
+	"""What a sheet may call each of the package's Items -> the Item: its code or its name."""
 	keys = {}
-	for inv in inverters:
-		item = inv.get("inverter_item")
+	for item in items:
 		if not item:
 			continue
-		for text in (item, frappe.db.get_value("Item", item, "item_name"), inv.get("inverter_specification")):
+		for text in (item, frappe.db.get_value("Item", item, "item_name")):
 			if _key(text):
 				keys[_key(text)] = item
-	return keys
-
-
-def _roof_keys(company=None):
-	"""What a sheet may call each roof type -> its name: the name, or the roof type it says."""
-	filters = {"company": company} if company else {}
-	keys = {}
-	for roof in frappe.get_all("Roof Type", filters=filters, fields=["name", "roof_type"]):
-		keys[_key(roof.name)] = roof.name
-		if _key(roof.roof_type):
-			keys[_key(roof.roof_type)] = roof.name
 	return keys
 
 
@@ -344,47 +315,20 @@ def _match(cell, keys):
 	return (list(dict.fromkeys(chosen)), None) if not left else ([], left)
 
 
-def _pieces(cell):
-	text = _text(cell)
-	return [] if _key(text) in EVERY else [p for p in re.split(f"[{re.escape(SEPARATORS)}]", text) if p.strip()]
-
-
-def _capacities(pieces):
-	"""(capacities in kW, smallest first, as they are written; None), else ([], the piece that is
-	not one). "3", "3 kW" and "3.0" are all 3."""
-	out = set()
-	for piece in pieces:
-		raw = re.sub(r"\s*kw[p]?$", "", piece.strip(), flags=re.IGNORECASE)
-		try:
-			kw = float(raw)
-		except ValueError:
-			return [], piece.strip()
-		if kw <= 0:
-			return [], piece.strip()
-		out.add(kw)
-	return ["{0:g}".format(kw) for kw in sorted(out)], None
-
-
 @frappe.whitelist(methods=["POST"])
 def download_sheet(table, rows=None, package=None):
 	"""A table as a sheet, in the columns Upload Excel reads; headings alone for an empty table,
-	as a template. Roof types are written as they read, not by their codes."""
+	as a template."""
 	from frappe.utils.xlsxutils import build_xlsx_response
 
 	frappe.has_permission("Solar Package", "read", throw=True)
-	if table not in DEPENDS:
+	if table not in TABLES:
 		frappe.throw(_("Not a table a sheet fills: {0}.").format(table))
 	rows = json.loads(rows) if isinstance(rows, str) else rows or []
-	roofs = dict(frappe.get_all("Roof Type", fields=["name", "roof_type"], as_list=True))
-	data = [columns(table)]
+	data = [list(COLUMNS)]
 	for r in rows:
-		line = [r.get("item"), r.get("category"), r.get("uom"), flt(r.get("qty")), flt(r.get("rate")), flt(r.get("amount"))]
-		for field, _heading, _others in DEPENDS[table]:
-			names = values_of(r, field)
-			if field == "roof_types":
-				names = [roofs.get(n) or n for n in names]
-			line.append(", ".join(names))
-		data.append(line)
+		data.append([r.get("item"), r.get("description"), r.get("category"), r.get("uom"), flt(r.get("qty")),
+			flt(r.get("rate")), flt(r.get("amount")), "\n".join(depends_on(r))])
 	name = re.sub(r"[^\w\- ]+", "", package or "") or _("New Package")
 	label = frappe.get_meta("Solar Package").get_label(table)
 	build_xlsx_response(data, "{0} - {1}".format(label, name))

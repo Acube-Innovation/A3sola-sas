@@ -7,6 +7,7 @@ particular no statutory fee, warranty term, regulatory threshold or yield figure
 appear as a literal here — they each have exactly one home and this document reads them.
 """
 
+import hashlib
 import json
 import math
 import re
@@ -16,7 +17,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt
 
-from a3_sola.api import calculations, regulation, statutory
+from a3_sola.api import calculations, package_bom_tables, package_items, regulation, statutory
 from a3_sola.api.expenses import fill_expense_tables
 from a3_sola.api.naming import set_name
 from a3_sola.api.permissions import assert_same_company
@@ -33,6 +34,8 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	default_system_items,
 	inverter_phase,
 	inverters_for_phase,
+	option_unit_rate,
+	options,
 	package_components,
 	package_cost,
 	pricing_option,
@@ -490,9 +493,10 @@ class SolarDesignEstimate(Document):
 		for r in package.get("optional_add_ons") or []:
 			row = {"add_on_type": r.add_on_type or "Other", "item": r.item, "rate": r.amount, "is_option": 1}
 			if r.add_on_type == "Extra Panel" and module:
-				# One more of the package's own panel.
+				# As many more of the package's own panel as it says, at its rate a panel.
+				count = cint(r.get("qty")) or 1
 				row.update({"panel_capacity_wp": module.module_wattage, "panel_make": module.module_make,
-					"panel_count": 1})
+					"panel_count": count, "rate": flt(r.amount) / count})
 			self.append("optional_add_ons", row)
 
 	def compute_add_ons(self):
@@ -521,36 +525,55 @@ class SolarDesignEstimate(Document):
 			or next((r for r in self.get("inverters") or [] if not r.is_option), None))
 		if not priced:
 			return None
-		rows = inverters_for_phase(package, self.connection_type) or package.get("inverters") or []
+		rows = inverters_for_phase(package, self.connection_type) or options(package, "inverters")
 		return (
 			next((r for r in rows if priced.get("package_model") and r.get("inverter_model") == priced.package_model), None)
 			or next((r for r in rows if r.inverter_make == priced.inverter_make), None)
 		)
 
-	def bom_basis_for(self, package):
-		"""What the BOM tables are copied for: the package, its inverter option built on, the roof."""
+	def bom_used_items(self, package):
+		"""The Items this estimate uses, which its package's BOM rows may depend on: the package
+		inverter it is built on, its priced panel and batteries (else the package's as quoted),
+		the package's balance of system as quoted, and its own KSEB, mounting and installation
+		rows' Items."""
 		inverter = self.package_inverter(package)
-		return "{0}|{1}|{2}".format(self.solar_package, inverter.inverter_item if inverter else "",
-			self.get("roof_type") or package.get("roof_type") or "")
+		used = {inverter.inverter_item} if inverter and inverter.inverter_item else set()
+		for field, item_field, package_table, package_field in (("panels", "panel_item", "modules", "module_item"),
+				("batteries", "battery_item", "batteries", "battery_item")):
+			own = {r.get(item_field) for r in self.get(field) or [] if r.get(item_field) and not r.is_option}
+			used |= own or {r.get(package_field) for r in package_items.quoted_rows(package, package_table) if r.get(package_field)}
+		used |= {r.item for r in package_items.quoted_rows(package, "system_items") if r.item}
+		for field, item_field in (("kseb_expenses", "particulars"), ("mounting_expenses", "item"), ("installation_expenses", "item")):
+			used |= {r.get(item_field) for r in self.get(field) or [] if r.get(item_field)}
+		return used
+
+	def bom_basis_for(self, package, used=None):
+		"""What the BOM tables are copied for: the package, and which of the Items its rows depend
+		on the estimate uses - shortened, as there may be many."""
+		used = self.bom_used_items(package) if used is None else used
+		depended = {item for _field, source, _label in ESTIMATE_BOMS for row in package.get(source) or []
+			for item in package_bom_tables.depends_on(row)}
+		relevant = "\n".join(sorted(used & depended))
+		return "{0}|{1}".format(self.solar_package, hashlib.sha1(relevant.encode()).hexdigest()[:12] if relevant else "")
 
 	def fill_boms_from_package(self):
 		"""The package's Material BOM, Structure BOMs and Expenses, as the estimate's own tables:
-		the material rows of the inverter it is built on, the structure rows of its roof type and
-		the package's capacity, every expense (api/package_bom_tables.applies). Copied again only
-		when the package, that inverter or the roof changes, so rows changed by hand stay as left
-		- as the balance of system is. A package with none of these rows copies nothing and
-		leaves the basis open, so the rows it is given later still reach the estimate."""
+		the rows that depend on none of the package's Items, and those that depend on one the
+		estimate uses (api/package_bom_tables.applies). Copied again only when the package, or
+		which of those Items the estimate uses, changes, so rows changed by hand stay as left -
+		as the balance of system is. A package with none of these rows copies nothing and leaves
+		the basis open, so the rows it is given later still reach the estimate."""
 		if not self.solar_package or not frappe.db.exists("Solar Package", self.solar_package):
 			return
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
-		basis = self.bom_basis_for(package)
+		used = self.bom_used_items(package)
+		basis = self.bom_basis_for(package, used)
 		if basis == self.get("bom_basis"):
 			return
-		inverter = self.package_inverter(package)
-		rows = package_bom_rows(package, inverter.inverter_item if inverter else None, self.get("roof_type"))
+		rows = package_bom_rows(package, used)
 		if not any(rows.values()):
 			if self.get("bom_basis"):
-				# Moved to a package (or inverter, or roof) with none: what was copied goes.
+				# Moved to a package (or to Items) with none: what was copied goes.
 				for field, _source, _label in ESTIMATE_BOMS:
 					self.set(field, [])
 			self.bom_basis = None
@@ -985,7 +1008,7 @@ class SolarDesignEstimate(Document):
 		package = frappe.get_doc("Solar Package", self.solar_package)
 		priced = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("in_package")), None)
 		if priced:
-			rows = inverters_for_phase(package, self.connection_type) or package.get("inverters") or []
+			rows = inverters_for_phase(package, self.connection_type) or options(package, "inverters")
 			match = (
 				next((r for r in rows if priced.package_model and r.get("inverter_model") == priced.package_model), None)
 				or next((r for r in rows if r.inverter_make == priced.inverter_make), None)
@@ -1003,7 +1026,7 @@ class SolarDesignEstimate(Document):
 		# Read fresh, not from the cache: these are prices, and a stale copy prices wrongly.
 		package = frappe.get_doc("Solar Package", self.solar_package) if self.solar_package else None
 		if package:
-			modules = package.get("modules") or []
+			modules = options(package, "modules")
 			for row in self.get("panels"):
 				if flt(row.rate) or self.included(row):
 					continue
@@ -1012,9 +1035,10 @@ class SolarDesignEstimate(Document):
 						and flt(m.module_wattage) == flt(row.panel_capacity_wp)), None)
 					or next((m for m in modules if m.module_make == row.panel_make), None)
 				)
-				if match and flt(match.rate):
-					row.rate = flt(match.rate)
-			inverters = package.get("inverters") or []
+				# A kit's rate for one panel takes in its parts (option_unit_rate).
+				if match and option_unit_rate(package, "modules", match):
+					row.rate = option_unit_rate(package, "modules", match)
+			inverters = options(package, "inverters")
 			for row in self.get("inverters"):
 				if flt(row.rate) or self.included(row):
 					continue
@@ -1027,8 +1051,8 @@ class SolarDesignEstimate(Document):
 						and (not row.inverter_phase or inverter_phase(package, i) == row.inverter_phase)), None)
 					or next((i for i in same_make if flt(i.inverter_capacity_kw) == flt(row.inverter_capacity_kw)), None)
 				)
-				if match and flt(match.unit_rate):
-					row.rate = flt(match.unit_rate)
+				if match and option_unit_rate(package, "inverters", match):
+					row.rate = option_unit_rate(package, "inverters", match)
 
 		bos_rates = {}
 		if self.bos_package and frappe.db.exists("Balance of System Package", self.bos_package):
@@ -1930,7 +1954,7 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	pkg = frappe.get_cached_doc("Solar Package", solar_package)
 
 	position = cint(inverter_option)
-	rows = pkg.inverters or []
+	rows = options(pkg, "inverters")
 	chosen = rows[position - 1] if 0 < position <= len(rows) else default_inverter(pkg)
 	module = default_module(pkg)
 	# The price of the inverter option this option names, not of the package's default.
@@ -1959,19 +1983,16 @@ def add_option_from_package(design_estimate, solar_package, inverter_option="1",
 	return doc.name
 
 
-def package_bom_rows(package, inverter_item=None, roof_type=None):
-	"""The package's BOM rows an estimate takes, per estimate table: the Material BOM rows of
-	`inverter_item`, the Structure BOM rows of `roof_type` (else the package's) and its
-	capacity, every Expense - of those typed into its BOM tab."""
-	from a3_sola.api.package_bom_tables import applies
+def package_bom_rows(package, used):
+	"""The package's BOM rows an estimate takes, per estimate table: those typed into its Material
+	BOM, Structure BOMs and Expenses that apply where `used` are the estimate's Items."""
 	from a3_sola.api.package_bom_tree import is_own
 
-	basis = frappe._dict(roof_type=roof_type or package.get("roof_type"), capacity_kw=package.get("capacity_kw"))
-	# The rows typed into the package's BOM tab - not those it copies from its other tabs, nor
-	# a bundle's or a BOM's items listed under it (package_bom_tree): the estimate has its own.
+	# The rows typed into the package's tables - not those a save once copied in from its other
+	# tabs, nor a bundle's or a BOM's items listed under it (package_bom_tree).
 	return {
 		field: [{f: row.get(f) for f in BOM_ROW_FIELDS} for row in package.get(source) or []
-			if row.item and is_own(row) and (source == "expenses" or applies(source, row, basis, inverter_item))]
+			if row.item and is_own(row) and package_bom_tables.applies(row, used)]
 		for field, source, _label in ESTIMATE_BOMS
 	}
 
@@ -1987,8 +2008,7 @@ def bom_tables(estimate):
 		rows = {field: est.get(field) or [] for field, _source, _label in ESTIMATE_BOMS}
 	else:
 		package = frappe.get_cached_doc("Solar Package", est.solar_package)
-		inverter = est.package_inverter(package)
-		rows = package_bom_rows(package, inverter.inverter_item if inverter else None, est.get("roof_type"))
+		rows = package_bom_rows(package, est.bom_used_items(package))
 	out = []
 	for field, _source, label in ESTIMATE_BOMS:
 		lines = []
@@ -2012,7 +2032,7 @@ def package_panel_rows(package):
 	the same DCR type - as an Option, shown beside it and not priced. Ticking one of those
 	makes it the priced panel, as for any Option."""
 	default = default_module(package)
-	modules = ([default] if default else []) + [m for m in package.get("modules") or [] if m is not default]
+	modules = ([default] if default else []) + [m for m in options(package, "modules") if m is not default]
 	rows = []
 	for module in modules:
 		make = frappe.db.get_value("Component Make", module.module_make, ["technology", "is_dcr"], as_dict=True) \

@@ -1,8 +1,10 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A design estimate's Material BOM, Structure BOM and Expenses: copied from its package for
-the inverter it is built on and its roof, changed on the estimate, and shown - never kept -
-beside the proposal, the quotation and the sales order."""
+"""A design estimate's Material BOM, Structure BOM and Expenses: copied from its package for the
+Items it uses (the inverter it is built on, its panel ...), changed on the estimate, and shown -
+never kept - beside the proposal, the quotation and the sales order."""
+
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -33,16 +35,18 @@ class TestEstimateBoms(FrappeTestCase):
 		self.pkg = frappe.get_doc("Solar Package", package("3Kw 1PH", company))
 		self.default = next(r for r in self.pkg.inverters if r.is_default)
 		self.other = next(r for r in self.pkg.inverters if not r.is_default)
+		panel = next(r for r in self.pkg.modules if r.is_default).module_item
 		self.pkg.set("material_bom", [
 			{"item": part("BOM Test Lug"), "qty": 10, "rate": 5},
-			{"item": part("BOM Test DCDB"), "qty": 1, "rate": 2000, "inverters": self.default.inverter_item},
-			{"item": part("BOM Test Optimiser"), "qty": 6, "rate": 900, "inverters": self.other.inverter_item},
+			{"item": part("BOM Test DCDB"), "qty": 1, "rate": 2000, "depends_on": self.default.inverter_item},
+			{"item": part("BOM Test Optimiser"), "qty": 6, "rate": 900, "depends_on": self.other.inverter_item},
 		])
 		self.pkg.set("structure_boms", [
-			{"item": part("BOM Test Flat Leg"), "qty": 8, "rate": 300, "roof_types": self.flat, "panel_capacities": "3"},
-			{"item": part("BOM Test Sheet Clamp"), "qty": 12, "rate": 40, "roof_types": self.metal},
+			{"item": part("BOM Test Flat Leg"), "qty": 8, "rate": 300, "depends_on": panel},
+			{"item": part("BOM Test Sheet Clamp"), "qty": 12, "rate": 40, "depends_on": self.other.inverter_item},
 		])
-		self.pkg.set("expenses", [{"item": part("BOM Test Labour"), "qty": 1, "rate": 7500}])
+		self.pkg.set("expenses", [{"item": part("BOM Test Labour"), "qty": 1, "rate": 7500},
+			{"item": part("BOM Test Optimiser Fitting"), "qty": 1, "rate": 600, "depends_on": self.other.inverter_item}])
 		self.pkg.save()
 		self.survey = make_survey(self.consumer, roof_type=self.flat)
 
@@ -59,7 +63,7 @@ class TestEstimateBoms(FrappeTestCase):
 	def items(self, doc, table):
 		return [r.item for r in doc.get(table)]
 
-	def test_a_new_estimate_takes_the_rows_for_its_inverter_and_roof(self):
+	def test_a_new_estimate_takes_the_rows_for_the_items_it_uses(self):
 		est = self.estimate()
 		self.assertEqual(self.items(est, "material_bom"), ["BOM Test Lug", "BOM Test DCDB"])
 		self.assertEqual(self.items(est, "structure_bom"), ["BOM Test Flat Leg"])
@@ -68,16 +72,23 @@ class TestEstimateBoms(FrappeTestCase):
 		self.assertEqual((dcdb.category, dcdb.uom, flt(dcdb.amount)), ("BOM Test Parts", "Nos", 2000))
 		self.assertTrue(est.bom_basis)
 
-	def test_rows_changed_on_the_estimate_stay_until_the_roof_changes(self):
+	def test_rows_changed_on_the_estimate_stay_until_the_items_it_uses_change(self):
 		est = self.estimate()
 		est.material_bom[0].qty = 25
 		est.save()
 		est.reload()
 		self.assertEqual((flt(est.material_bom[0].qty), flt(est.material_bom[0].amount)), (25, 125))
+		# The roof is not what rows depend on.
 		est.roof_type = self.metal
 		est.save()
-		self.assertEqual(self.items(est, "structure_bom"), ["BOM Test Sheet Clamp"])
-		self.assertEqual(flt(est.material_bom[0].qty), 10, "copied again for the new roof")
+		self.assertEqual(flt(est.material_bom[0].qty), 25)
+		# Built on the package's other inverter: the rows of that inverter, copied again.
+		with patch.object(type(est), "package_inverter", return_value=self.other):
+			est.save()
+		self.assertEqual(self.items(est, "material_bom"), ["BOM Test Lug", "BOM Test Optimiser"])
+		self.assertEqual(self.items(est, "structure_bom"), ["BOM Test Flat Leg", "BOM Test Sheet Clamp"])
+		self.assertEqual(self.items(est, "bom_expenses"), ["BOM Test Labour", "BOM Test Optimiser Fitting"])
+		self.assertEqual(flt(est.material_bom[0].qty), 10, "copied again for the other inverter")
 
 	def test_the_estimates_price_is_not_built_from_them(self):
 		est = self.estimate()

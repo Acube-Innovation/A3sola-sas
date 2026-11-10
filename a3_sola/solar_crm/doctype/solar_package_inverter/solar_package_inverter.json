@@ -9,6 +9,7 @@
  "field_order": [
   "inverter_topology",
   "inverter_item",
+  "item_group",
   "inverter_specification",
   "inverter_model",
   "with_optimizer",
@@ -19,11 +20,18 @@
   "panel_specification",
   "cost",
   "unit_rate",
-  "is_default"
+  "amount",
+  "is_default",
+  "sb_bundle",
+  "bundle_type",
+  "bundle_ref",
+  "bundle_qty",
+  "bundle_key",
+  "bundle_part"
  ],
  "fields": [
   {
-   "description": "How this inverter is built: on strings, strings with optimisers, micro inverters, or hybrid. The default option's is the package's.",
+   "description": "How the inverter connects.",
    "fieldname": "inverter_topology",
    "fieldtype": "Select",
    "label": "Inverter Topology",
@@ -32,12 +40,19 @@
   },
   {
    "columns": 2,
-   "description": "The inverter, from the Inverters item group. Choosing it fills the specification.",
+   "description": "Choosing fills the specification.",
    "fieldname": "inverter_item",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Inverter Item",
    "options": "Item"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "options": "Item Group",
+   "description": "Narrows the inverter list."
   },
   {
    "columns": 2,
@@ -49,7 +64,7 @@
   },
   {
    "columns": 2,
-   "description": "From the inverter price list: fills the make, size, phase, specification and rate.",
+   "description": "Fills make, size, rate.",
    "fieldname": "inverter_model",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -58,7 +73,7 @@
   },
   {
    "depends_on": "eval:doc.inverter_model",
-   "description": "Takes the model's optimizers at the price list's quantity.",
+   "description": "Adds the model's optimisers.",
    "fieldname": "with_optimizer",
    "fieldtype": "Check",
    "label": "With Optimizer"
@@ -73,7 +88,7 @@
   },
   {
    "columns": 1,
-   "description": "The connection this inverter is for. An estimate offers only the inverters of its own phase. Left blank, it is the package's connection type.",
+   "description": "Blank: the package's phase.",
    "fieldname": "inverter_phase",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -96,7 +111,7 @@
    "label": "Nos"
   },
   {
-   "description": "The panel this option is quoted with, when it is not the package's default panel (a microinverter option on panels of its own). Blank: the default panel.",
+   "description": "Blank: the default panel.",
    "fieldname": "panel_specification",
    "fieldtype": "Select",
    "label": "Built with Panel"
@@ -110,23 +125,73 @@
    "read_only": 1
   },
   {
-   "description": "What one inverter costs. A design estimate's inverter row with no rate of its own is priced at this. The whole system's price with this inverter is on the Pricing Options tab.",
+   "description": "What one inverter costs.",
    "fieldname": "unit_rate",
    "fieldtype": "Currency",
    "label": "Rate per Inverter"
   },
   {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Inverter Amount",
+   "read_only": 1,
+   "description": "Rate x Nos."
+  },
+  {
    "columns": 1,
-   "description": "The option quoted unless another is chosen. Exactly one row carries it.",
+   "description": "Quoted unless another chosen.",
    "fieldname": "is_default",
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Default"
+  },
+  {
+   "fieldname": "sb_bundle",
+   "fieldtype": "Section Break",
+   "label": "From a Bundle or BOM",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "bundle_type",
+   "fieldtype": "Select",
+   "label": "From",
+   "options": "\nBundle\nBOM",
+   "read_only": 1,
+   "description": "Bundle or BOM it replaced."
+  },
+  {
+   "fieldname": "bundle_ref",
+   "fieldtype": "Data",
+   "label": "Bundle / BOM",
+   "read_only": 1,
+   "description": "Which one, by its ID."
+  },
+  {
+   "fieldname": "bundle_qty",
+   "fieldtype": "Float",
+   "label": "Bundle Qty",
+   "read_only": 1,
+   "description": "How many of it."
+  },
+  {
+   "fieldname": "bundle_key",
+   "fieldtype": "Data",
+   "label": "Bundle Key",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "bundle_part",
+   "fieldtype": "Check",
+   "label": "Part of the Kit Above",
+   "read_only": 1,
+   "default": "0",
+   "description": "Counted in its option."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-08 15:00:00.000000",
+ "modified": "2026-11-10 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package Inverter",

@@ -303,3 +303,17 @@ a3_sola.patches.v1_2.package_panel_totals
 a3_sola.patches.v1_2.survey_system_type_spelling
 # Package prices move to Pricing Options rows (panel + inverter + battery at a cost).
 a3_sola.patches.v1_2.package_pricing_options
+# A package's BOM tab holds only its own rows: nothing copied in from the other tabs, no bundle opened out.
+a3_sola.patches.v1_2.package_bom_tab_own_rows
+# An inverter option's Item Group (narrows its Items) and Inverter Amount (rate x nos), filled in.
+a3_sola.patches.v1_2.package_inverter_group_amount
+# A KSEB expense row's Rate and Quantity: its Amount as the Rate, Quantity 1.
+a3_sola.patches.v1_2.kseb_expense_rate_from_amount
+# An installation expense row's Rate, Quantity and Source (the first row is the system's line).
+a3_sola.patches.v1_2.installation_expense_rate_qty
+# A package add-on's Rate, Quantity and Item Group: its Amount as the Rate, Quantity 1.
+a3_sola.patches.v1_2.package_add_on_rate_qty
+# Materials, Structure and Expenses rows: one Depends On list (a Material row's inverters move in), descriptions from their Items.
+a3_sola.patches.v1_2.package_bom_depends_on
+# A panel option's Wattage Rate (its Rate per Panel is Wattage x Wattage Rate), where its rate divides exactly.
+a3_sola.patches.v1_2.package_module_wattage_rate
