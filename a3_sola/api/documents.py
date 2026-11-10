@@ -353,6 +353,28 @@ def letterhead_flow_pdf(html, company, signed=True, letter_head=None, cover=None
 	return buf.getvalue()
 
 
+#: Documents the bank takes as one sheet: on the letterhead, run smaller until they fit one page.
+ONE_PAGE_TEMPLATES = ("BANK-COMPLETION-REPORT",)
+#: The scales tried, largest first; the smallest is kept even if it still runs over.
+ONE_PAGE_SCALES = (1, 0.92, 0.85, 0.78, 0.72, 0.66, 0.6)
+
+
+def one_page_flow_pdf(html, company, signed=True, letter_head=None):
+	"""`html` on the letterhead as letterhead_flow_pdf lays it out, at the largest of
+	ONE_PAGE_SCALES that keeps it to one page - a long serial list shrinks it further."""
+	from io import BytesIO
+
+	from pypdf import PdfReader
+
+	content = None
+	for scale in ONE_PAGE_SCALES:
+		body = html if scale == 1 else f'<div style="zoom:{scale}">{html}</div>'
+		content = letterhead_flow_pdf(body, company, signed=signed, letter_head=letter_head)
+		if len(PdfReader(BytesIO(content)).pages) <= 1:
+			break
+	return content
+
+
 #: Text keeps this far (mm) from a letterhead's header and footer bands.
 BAND_GAP_MM = (8, 5)
 #: A footer image taller than this (mm across A4) is a watermark the text runs over, as
@@ -747,6 +769,8 @@ def _attach(target_doctype, target_name, template, html, content=None, customer=
 		pass
 	elif template.get("template_code") in LETTERHEAD_TEMPLATES:
 		content = letterhead_pdf(html, template.get("company"), letter_head=rim_letter_head())
+	elif template.get("template_code") in ONE_PAGE_TEMPLATES:
+		content = one_page_flow_pdf(html, template.get("company"), letter_head=rim_letter_head())
 	elif template.get("template_code") in LETTERHEAD_FLOW_TEMPLATES:
 		content = letterhead_flow_pdf(html, template.get("company"), letter_head=rim_letter_head(), cover=cover)
 	else:

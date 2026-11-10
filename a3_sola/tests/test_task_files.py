@@ -29,7 +29,7 @@ class TestTaskFiles(FrappeTestCase):
 
 	def test_a_general_type_is_the_row_it_means(self):
 		self.assertEqual(task_files.register_name(self.inst, "NPA", "PM Surya Ghar Acknowledgement"), "Portal acknowledgement")
-		self.assertEqual(task_files.register_name(self.inst, "NPA", "Pre-Installation Photo"), "Pre-installation site photo")
+		self.assertEqual(task_files.register_name(self.inst, "NPA", "E-Token"), "E-Token")
 		self.assertEqual(task_files.register_name(self.inst, "NPA", "Something New"), "Something New")
 		self.assertIn("Portal acknowledgement", task_files.names_for(self.doctype, self.name))
 
@@ -40,10 +40,10 @@ class TestTaskFiles(FrappeTestCase):
 		self.assertFalse(self.row("Portal acknowledgement").attachment)
 
 	def test_a_file_on_the_panel_is_on_the_record_too(self):
-		task_files.on_registered(self.inst, "NPA", "Pre-installation site photo", self.url)
+		task_files.on_registered(self.inst, "NPA", "Feasibility Report", self.url)
 		filed = frappe.db.get_value("File", {"attached_to_doctype": self.doctype, "attached_to_name": self.name,
 			"file_url": self.url}, "a3s_document_type")
-		self.assertEqual(filed, "Pre-installation site photo")
+		self.assertEqual(filed, "Feasibility Report")
 		task_files.on_unregistered(self.inst, "NPA", self.url)
 		self.assertFalse(frappe.db.exists("File", {"attached_to_doctype": self.doctype, "attached_to_name": self.name,
 			"file_url": self.url}))

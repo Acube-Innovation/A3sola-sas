@@ -159,6 +159,7 @@
 		var status = card.querySelector("[data-attach-status]");
 		var types = [];
 		var readable = [];
+		function got(data) { return (data && data.files) || []; }
 		/* The page's form, which Read fills: none on a view page. */
 		/* Asked each time, not once: on a create page the card comes before the form it fills. */
 		function hasForm() { return !!document.querySelector("#a3s-record-edit-form, #a3s-record-form, #a3s-lead-edit-form, #a3s-lead-form"); }
@@ -231,7 +232,7 @@
 					if (!window.confirm("File " + f.file_name + " as " + pick.value + "? It cannot be changed afterwards.")) { pick.value = ""; return; }
 					setStatus("Saving…");
 					call("set_type", form({ file: f.name, document_type: pick.value }))
-						.then(function (data) { paint(data.files || [], true); setStatus(f.file_name + " is filed as " + pick.value + ".", "ok"); })
+						.then(function (data) { paint(got(data), true); setStatus(f.file_name + " is filed as " + pick.value + ".", "ok"); })
 						.catch(function (e) { pick.value = ""; setStatus(e.message, "error"); });
 				});
 				typeCell.appendChild(pick);
@@ -290,7 +291,7 @@
 					if (!window.confirm("Remove " + f.file_name + " from " + name + "?")) return;
 					setStatus("Removing…");
 					call("remove", form({ file: f.name }))
-						.then(function (data) { paint(data.files || [], true); setStatus("Removed " + f.file_name + ".", "ok"); })
+						.then(function (data) { paint(got(data), true); setStatus("Removed " + f.file_name + ".", "ok"); })
 						.catch(function (e) { setStatus(e.message, "error"); });
 				});
 				act.appendChild(x);
@@ -300,14 +301,15 @@
 		}
 
 		function paint(files, changed) {
+			var shown = files;
 			list.textContent = "";
-			files.forEach(function (f) { list.appendChild(row(f)); });
-			table.hidden = !files.length;
+			shown.forEach(function (f) { list.appendChild(row(f)); });
+			table.hidden = !shown.length;
 			/* The tiles say what to upload, so "no files yet" is not said under them. */
-			empty.hidden = files.length > 0 || auto;
+			empty.hidden = shown.length > 0 || auto;
 			if (count) {
-				count.hidden = !files.length;
-				count.textContent = files.length + " file" + (files.length === 1 ? "" : "s");
+				count.hidden = !shown.length;
+				count.textContent = shown.length + " file" + (shown.length === 1 ? "" : "s");
 			}
 			if (auto) {
 				/* Each tile says whether its document is on the card; the first one added shows the form. */
@@ -458,7 +460,7 @@
 			busy = true; button.disabled = true; drop.classList.add("is-busy");
 			setStatus("Uploading " + label + " as " + what + "…");
 			call("upload", body).then(function (data) {
-				paint(data.files || [], true);
+				paint(got(data), true);
 				setStatus("Uploaded " + label + " as " + what + "." + then, "ok");
 				typeSelect.value = "";
 			}).catch(function (e) { setStatus(e.message, "error"); }).then(function () {
@@ -523,7 +525,7 @@
 		/* A file uploaded elsewhere on the page - the KYC Documents card - is listed here too. */
 		document.addEventListener("a3s:attachments-reload", function (e) {
 			if (!e.detail || e.detail.doctype !== doctype || e.detail.name !== name) return;
-			call("list_files", { doctype: doctype, name: name }, true).then(function (data) { paint(data.files || []); });
+			call("list_files", { doctype: doctype, name: name }, true).then(function (data) { paint(got(data)); });
 		});
 
 		/* Held files go up to the record the form has just created, a call per type. */

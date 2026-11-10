@@ -551,7 +551,7 @@ funded under the Rooftop Solar Program for the Residential Sector.</p>
 <p>{{ module_serials | join(", ") }}</p>
 <h4>Inverter Serial Number</h4>
 <p>{{ inverter_serials | join(", ") }}</p>
-<table width="100%"><tr>
+<table width="100%" style="margin-top:28mm"><tr>
   <td>Sign and Seal of the Vendor</td>
   <td style="text-align:right">Date: {{ today }}</td>
 </tr></table>""",

@@ -155,6 +155,24 @@ def _panel(inst, task_code):
 			# A file someone filed here (not a live print, not yet verified) can be taken off.
 			"removable": bool(d.attachment and not live and not d.is_verified),
 		})
+	if task_code == JAN_SAMARTH_TASK:
+		# The customer's papers first (PAN, Aadhaar, bank proof, KSEB bill, then tax papers), then
+		# the task's own, the approval letter last.
+		own = jan_samarth_rows(inst, rows)
+		for d in own:
+			d["name"] = JAN_SAMARTH_TITLES.get(d["name"], d["name"])
+		letter = [d for d in own if d["name"] == "Digital Approval Letter"]
+		rows = customer_rows(inst, JAN_SAMARTH_CUSTOMER, SURYA_GHAR_ANY_ONE) + \
+			[d for d in own if d not in letter] + letter
+	if task_code == FORM2_TASK:
+		rows = form2_rows(inst, rows)
+	if task_code == FORM1_TASK:
+		# The customer's papers Form 1 is filled from and goes with, fetched from the customer,
+		# before the form itself (as on Jan Samarth).
+		rows = customer_rows(inst, FORM1_CUSTOMER) + rows
+	if task_code == SURYA_GHAR_TASK:
+		# The customer's own papers the portal asks for, fetched from the customer.
+		rows.extend(customer_rows(inst, SURYA_GHAR_CUSTOMER, SURYA_GHAR_ANY_ONE))
 	return {
 		"task": {
 			"code": row.stage_code, "name": row.stage_name, "status": row.status,
@@ -162,8 +180,8 @@ def _panel(inst, task_code):
 		},
 		"documents": rows,
 		"claims": claims_for(inst.name, task_code),
-		# The loan's list is the bank's, fixed: nothing is added to it by hand.
-		"fixed": task_code == "LOAN",
+		# The loan's list is the bank's, and Jan Samarth files its letter only: nothing is added by hand.
+		"fixed": task_code in ("LOAN", "DAL"),
 		"can_upload": bool(inst.has_permission("write")),
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
@@ -237,7 +255,19 @@ def _prints(row, installation):
 
 		return {net_metering_print.CODE: net_metering_print.prints(installation),
 			vendor_agreement_print.CODE: vendor_agreement_print.prints(installation), **_rim_quotation(installation)}
-	if row.stage_code == "NPA":
+	if row.stage_code == "BCOM":
+		# The bank's completion papers, printed live from the job (no pack to generate first):
+		# the completion report and covering letter (api/bank_completion_print), the consumer-vendor
+		# agreement (api/vendor_agreement_print) and the data for the completion report.
+		from a3_sola.api import bank_completion_print, completion_print, vendor_agreement_print
+
+		matl = next((r for r in frappe.get_doc(INSTALLATION, installation).stages if r.stage_code == "MATL"), None)
+		notice = matl.task_document if matl and matl.task_doctype == "Material Dispatch Notice" else None
+		return {**{code: bank_completion_print.prints(installation, code) for code in bank_completion_print.CODES},
+			vendor_agreement_print.CODE: vendor_agreement_print.prints(installation),
+			completion_print.CODE: completion_print.prints(installation, notice)}
+	if row.stage_code == "DAL":
+		# Jan Samarth asks for the quotation in the RIM format, as the bank gets it.
 		return _rim_quotation(installation)
 	if row.stage_code == "STMP":
 		from a3_sola.api import stamp_print
@@ -271,10 +301,10 @@ def _rim_quotation(installation):
 #: Jan Samarth approval, and the consumer's own papers - (label, consumer document types).
 LOAN_PACK_CONSUMER = (
 	("KYC", ("Aadhaar Front", "Aadhaar Back", "PAN")),
-	("KSEB bill", ("KSEB Bill",)),
-	("Land tax receipt", ("Land Tax Receipt",)),
-	("Building tax receipt", ("Building Tax Receipt",)),
-	("Income tax return (ITR)", ("Income Tax Return",)),
+	("KSEB Bill", ("KSEB Bill",)),
+	("Land Tax Receipt", ("Land Tax Receipt",)),
+	("Building Tax Receipt", ("Building Tax Receipt",)),
+	("Income Tax Return (ITR)", ("Income Tax Return",)),
 )
 LOAN_PACK_PRINTED = (("Covering letter", "letter"), ("Vendor feasibility report", "feasibility"), ("Quotation", "quotation"))
 
@@ -298,30 +328,210 @@ def loan_pack(inst, row):
 
 	dal = next((r for r in inst.stages if r.stage_code == "DAL"), None)
 	if dal and dal.status == "Skipped":
-		out.append({"name": "Jan Samarth approval letter", "kind": "Expected", "files": [], "missing": [], "note": _("Not needed - not financed.")})
+		out.append({"name": "Digital Approval Letter", "kind": "Expected", "files": [], "missing": [], "note": _("Not needed - not financed.")})
 	else:
 		task = frappe._dict(name=dal.task_document if dal and dal.task_doctype == "Installation Task" else None,
 			solar_installation=inst.name)
 		files = [{"label": "", "url": f["file_url"]} for f in approval_letters(task)]
-		out.append({"name": "Jan Samarth approval letter", "kind": "Uploaded" if files else "Expected", "files": files,
-			"missing": [] if files else [{"label": "Jan Samarth approval letter",
-				"upload": {"kind": "task", "task_code": "DAL", "document_name": "Jan Samarth approval letter"}}]})
+		out.append({"name": "Digital Approval Letter", "kind": "Uploaded" if files else "Expected", "files": files,
+			"missing": [] if files else [{"label": "Digital Approval Letter",
+				"upload": {"kind": "task", "task_code": "DAL", "document_name": "Digital Approval Letter"}}]})
 
 	out.append(_surya_ghar_entry(inst))
 
+	out.extend(customer_rows(inst, LOAN_PACK_CONSUMER))
+	return out
+
+
+def customer_rows(inst, wanted, any_one=()):
+	"""A row per (label, document types) of the customer's own papers, read live from the
+	customer and its lead: each file to open, an upload onto the customer for each type still
+	missing. A label in `any_one` is complete with a file of any of its types."""
 	consumer = inst.get("solar_consumer")
 	readable = consumer and frappe.has_permission("Solar Consumer", "read", consumer)
 	have = consumer_files(consumer) if readable else {}
-	for label, types in LOAN_PACK_CONSUMER:
+	if readable:
+		cheque = frappe.db.get_value("Solar Consumer", consumer, "cancelled_cheque")
+		if cheque and cheque not in have.get("Cancelled Cheque", []):
+			have.setdefault("Cancelled Cheque", []).append(cheque)
+	out = []
+	for label, types in wanted:
 		if not readable:
 			out.append({"name": label, "kind": "Expected", "files": [], "missing": [], "note": _("No access to the customer.")})
 			continue
 		files = [{"label": t if len(types) > 1 else "", "url": url} for t in types for url in have.get(t, [])]
 		missing = [{"label": t, "upload": {"kind": "consumer", "consumer": consumer, "document_type": t}}
 			for t in types if not have.get(t)]
+		if label in any_one:
+			missing = [] if files else missing[:1]
 		out.append({"name": label, "kind": "Uploaded" if files and not missing else "Expected",
-			"files": files, "missing": missing})
+			"files": files, "missing": missing, "from_customer": True})
 	return out
+
+
+#: The customer's papers the PM Surya Ghar portal asks for, shown on its registration task from
+#: the customer: fetched when the customer has them, uploaded onto the customer when not.
+SURYA_GHAR_CUSTOMER = (
+	("Aadhaar", ("Aadhaar Front", "Aadhaar Back")),
+	("PAN", ("PAN",)),
+	("KSEB Bill", ("KSEB Bill",)),
+	("Bank Proof", ("Bank Proof", "Bank Passbook", "Cancelled Cheque")),
+)
+#: Bank proof is any one of a bank proof, the passbook or a cancelled cheque.
+SURYA_GHAR_ANY_ONE = ("Bank Proof",)
+
+
+#: KSEBL Form 1: the customer's KSEB bill and Aadhaar go with it, shown from the customer.
+FORM1_TASK = "FRM1"
+FORM1_CUSTOMER = (
+	("KSEB Bill", ("KSEB Bill",)),
+	("Aadhaar", ("Aadhaar Front", "Aadhaar Back")),
+)
+
+#: KSEBL Form 2 and its enclosures, in the order they go: the customer's KSEB bill, the form, the
+#: SLD (Design Freeze), the panel and inverter papers, the meter test certificate (Meter Purchase).
+FORM2_TASK = "FRM2"
+FORM2_FORM = "Annexure / Form 2"
+FORM2_COMPONENT_PAPERS = ("Solar Panel Test Certificate", "Solar Panel Data Sheet", "Inverter Data Sheet")
+METER_CERTIFICATE = "Meter test certificate"
+
+
+def form2_rows(inst, rows):
+	from a3_sola.api.work_order_print import SLD, sld_for
+
+	by_name = {d["name"]: d for d in rows}
+	# The SLD or meter certificate filed on Form 2 itself (its own task skipped) is that row, not another.
+	here = {key: (by_name.pop(name, None) or {}).get("file_url") for key, name in (("sld", SLD), ("meter", METER_CERTIFICATE))}
+	out = customer_rows(inst, (("KSEB Bill", ("KSEB Bill",)),))
+	if FORM2_FORM in by_name:
+		out.append(by_name.pop(FORM2_FORM))
+	out.append(_elsewhere_row("Approved Single Line Diagram (SLD)", sld_for(inst)[0] or here["sld"],
+		_upload_to(inst, "DSGN", SLD)))
+	for name in FORM2_COMPONENT_PAPERS:
+		d = by_name.pop(name, None)
+		if d:
+			out.append(_with_component_sheet(inst, d))
+	out.append(_elsewhere_row("Meter Test Certificate", meter_certificate(inst) or here["meter"],
+		_upload_to(inst, "MTR", METER_CERTIFICATE)))
+	return out + list(by_name.values())
+
+
+def _upload_to(inst, code, document_name):
+	"""Where a paper filed on another task is uploaded from here: that task, when the job has it
+	and has not skipped it; else this one (Form 2)."""
+	row = next((r for r in inst.stages if r.stage_code == code), None)
+	target = code if row and row.status != "Skipped" else FORM2_TASK
+	return {"kind": "task", "task_code": target, "document_name": document_name}
+
+
+def _elsewhere_row(label, url, upload):
+	"""A paper filed on another task, shown here: its file to open, or an upload into that task."""
+	return {"name": label, "mandatory": True, "kind": "Uploaded" if url else "Expected",
+		"files": [{"label": "", "url": url}] if url else [], "missing": [] if url else [{"label": label, "upload": upload}]}
+
+
+def meter_certificate(inst):
+	"""The net meter's test certificate: on the job's register (Meter Purchase, or filed here), else
+	on the meter task's record."""
+	filed = next((d.attachment for d in inst.documents if d.attachment
+		and (d.document_name or "").lower() == METER_CERTIFICATE.lower()), None)
+	return filed or frappe.db.get_value("Installation Task", {"solar_installation": inst.name,
+		"meter_test_certificate": ["is", "set"]}, "meter_test_certificate", order_by="creation desc")
+
+
+def _with_component_sheet(inst, d):
+	"""A data sheet not yet uploaded on the job: the one attached to its panel item or inverter
+	model, when there is one (a file named as a data sheet)."""
+	if d.get("file_url") or "Data Sheet" not in d["name"]:
+		return d
+	if d["name"].startswith("Inverter"):
+		owners = [("Inverter Model", r.inverter_model) for r in inst.get("inverters") or [] if r.inverter_model]
+	else:
+		owners = [("Item", r.panel_item) for r in inst.get("panels") or [] if r.panel_item]
+	files = []
+	for doctype, name in dict.fromkeys(owners):
+		for f in frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name, "is_folder": 0},
+				fields=["file_url", "file_name"], order_by="creation desc"):
+			if "datasheet" in (f.file_name or "").lower().replace(" ", "").replace("_", "").replace("-", ""):
+				files.append({"label": name, "url": f.file_url})
+				break
+	if not files:
+		return d
+	return {"row": d["row"], "name": d["name"], "mandatory": d["mandatory"], "kind": "Uploaded", "files": files,
+		"missing": [], "prints": d.get("prints") or []}
+
+
+#: Jan Samarth's task: its site photo and quotation are fetched where they already are.
+JAN_SAMARTH_TASK = "DAL"
+SITE_PHOTO = "Pre-installation site photo"
+#: The customer's papers Jan Samarth asks for - KYC and tax - shown from the customer (the site photo is its own
+#: row, fetched from the customer too - site_photos).
+JAN_SAMARTH_CUSTOMER = (
+	("PAN", ("PAN",)),
+	("Aadhaar", ("Aadhaar Front", "Aadhaar Back")),
+	("Bank Proof", ("Bank Proof", "Bank Passbook", "Cancelled Cheque")),
+	("KSEB Bill", ("KSEB Bill",)),
+	("Income Tax Return", ("Income Tax Return",)),
+	("Land Tax Receipt", ("Land Tax Receipt",)),
+	("Building Tax Receipt", ("Building Tax Receipt",)),
+)
+#: Jan Samarth's own documents' names as the panel shows them.
+JAN_SAMARTH_TITLES = {SITE_PHOTO: "Pre-Installation Site Photo"}
+BANK_QUOTATION = "Bank Quotation"
+
+
+def jan_samarth_rows(inst, rows):
+	"""Jan Samarth's site photo and quotation, when not uploaded on the task: the pre-installation
+	photos filed on the customer, lead, site survey or proposal, or the survey's own images; and
+	a file attached to the job's quotation when there is no quotation to print."""
+	out = []
+	for d in rows:
+		if d.get("file_url") or "files" in d:
+			out.append(d)
+			continue
+		files = []
+		if d["name"] == SITE_PHOTO:
+			files = [{"label": p["caption"], "url": p["url"]} for p in site_photos(inst)]
+		elif d["name"] == BANK_QUOTATION:
+			quotation = job_quotation(inst)
+			files = [{"label": "", "url": u} for u in frappe.get_all("File", filters={"attached_to_doctype": "Quotation",
+				"attached_to_name": quotation, "is_folder": 0}, pluck="file_url", order_by="creation desc")[:1]] if quotation else []
+		if not files:
+			out.append(d)
+			continue
+		out.append({"row": d["row"], "name": d["name"], "mandatory": d["mandatory"], "kind": "Uploaded",
+			"files": files, "missing": [], "prints": d.get("prints") or []})
+	return out
+
+
+def job_quotation(inst):
+	"""The job's quotation: the one it names, else the latest made for its customer or proposal."""
+	if inst.get("quotation") and frappe.db.exists("Quotation", inst.quotation):
+		return inst.quotation
+	for field, value in (("solar_proposal", inst.get("solar_proposal")), ("solar_consumer", inst.get("solar_consumer"))):
+		name = value and frappe.db.get_value("Quotation", {field: value, "docstatus": ["<", 2]}, "name",
+			order_by="creation desc")
+		if name:
+			return name
+	return None
+
+
+def site_photos(inst):
+	"""The site before the work, wherever it was filed (api/work_order_print._photos) - with the
+	customer's or lead's latest site survey when the job does not name one."""
+	from a3_sola.api import work_order_print
+
+	survey = inst.get("site_survey") or (inst.get("solar_proposal") and frappe.db.get_value(
+		"Solar Proposal", inst.solar_proposal, "site_survey"))
+	if not survey:
+		for field, value in (("solar_consumer", inst.get("solar_consumer")), ("lead", inst.get("lead"))):
+			survey = value and frappe.db.get_value("Site Survey", {field: value, "docstatus": ["<", 2]}, "name",
+				order_by="creation desc")
+			if survey:
+				break
+	view = frappe._dict(solar_consumer=inst.get("solar_consumer"), lead=inst.get("lead"), site_survey=survey,
+		solar_proposal=inst.get("solar_proposal"))
+	return work_order_print._photos(view, work_order_print.STRUCTURE)
 
 
 #: The PM Surya Ghar registration task, whose papers the bank also asks for.

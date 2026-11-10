@@ -47,14 +47,85 @@ def document_types(doctype=None, name=None, installation=None, task=None):
 #: a portal application's acknowledgement, feasibility, e-token and net meter agreement.
 #: A file of another type - the KYC card's pre-installation photo - is still accepted.
 OFFERED = {
-	CONSUMER: ("Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN"),
+	CONSUMER: ("Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN",
+		# What the bank asks for the loan (Jan Samarth), and the site as it is before the work.
+		"Income Tax Return", "Land Tax Receipt", "Building Tax Receipt", "Pre-Installation Photo"),
 	"Portal Application": ("PM Surya Ghar Acknowledgement", "Feasibility Report", "E-Token", "Net Meter Agreement"),
 }
 
 
+#: PM Surya Ghar registration (a National Portal application, task NPA): the papers the portal
+#: gives back. The customer's own papers (Aadhaar, PAN, KSEB bill, bank proof) are not shown
+#: here - the project board's PM Surya Ghar task shows them (api/portal_tasks.SURYA_GHAR_CUSTOMER).
+SURYA_GHAR = OFFERED["Portal Application"]
+#: The customer's own papers: an upload of one on the registration is the customer's too.
+CUSTOMER_PAPERS = ("KSEB Bill", "Aadhaar Front", "Aadhaar Back", "PAN", "Bank Proof", "Bank Passbook", "Cancelled Cheque")
+PORTAL_APPLICATION = "Portal Application"
+
+
+def _surya_ghar(doctype, name=None, task=None):
+	if doctype != PORTAL_APPLICATION:
+		return False
+	if task:
+		return task == "NPA"
+	return bool(name) and frappe.db.get_value(doctype, name, "application_type") == "National Portal"
+
+
+#: Tasks whose record files one kind of document only, by task code: Jan Samarth's approval letter.
+TASK_OFFERED = {"DAL": ("Digital Approval Letter",)}
+
+
+def _task_code(doctype, name=None, task=None):
+	if task:
+		return task
+	if doctype == "Installation Task" and name:
+		return frappe.db.get_value("Installation Stage Log", {"parenttype": "Solar Installation",
+			"task_doctype": doctype, "task_document": name}, "stage_code")
+	return None
+
+
 def offered_types(doctype=None, name=None, installation=None, task=None):
 	"""The card's list of types: the record's few, or all it may be filed as."""
+	if _surya_ghar(doctype, name, task):
+		return list(SURYA_GHAR)
+	only = TASK_OFFERED.get(_task_code(doctype, name, task))
+	if only:
+		return list(only)
 	return list(OFFERED.get(doctype) or document_types(doctype, name, installation, task))
+
+
+def _registration_customer(doctype, name=None, installation=None, task=None):
+	"""The customer whose papers a PM Surya Ghar registration carries, if it is one."""
+	if not _surya_ghar(doctype, name, task):
+		return None
+	consumer = frappe.db.get_value(doctype, name, "solar_consumer") if name else None
+	if not consumer and installation:
+		consumer = frappe.db.get_value("Solar Installation", installation, "solar_consumer")
+	return consumer if consumer and frappe.db.exists(CONSUMER, consumer) else None
+
+
+def share_with_customer(doctype, name, file_url, document_type):
+	"""A customer's paper uploaded on its PM Surya Ghar registration is the customer's too: attached
+	to it, as its KYC row, replacing an older one of a one-only type."""
+	if document_type not in CUSTOMER_PAPERS:
+		return
+	consumer = _registration_customer(doctype, name)
+	if not consumer:
+		return
+	if not frappe.db.exists("File", {"attached_to_doctype": CONSUMER, "attached_to_name": consumer, "file_url": file_url}):
+		f = frappe.db.get_value("File", {"attached_to_doctype": doctype, "attached_to_name": name, "file_url": file_url},
+			_FILE_FIELDS, as_dict=True)
+		if not f:
+			return
+		_attach_copy(consumer, f)
+	_sync_kyc(consumer, file_url, document_type)
+	supersede(CONSUMER, consumer, document_type, file_url)
+	_refresh_kyc(CONSUMER, consumer)
+
+
+def _listing(doctype, name):
+	"""What the card paints: the record's files."""
+	return {"files": _files(doctype, name)}
 
 
 def _kyc_types():
@@ -175,7 +246,7 @@ def _files(doctype, name):
 def list_files(doctype, name):
 	_record(doctype, name, "read")
 	can_write = bool(frappe.has_permission(doctype, "write", name))
-	return {"files": _files(doctype, name), "can_upload": can_write,
+	return {**_listing(doctype, name), "can_upload": can_write,
 		"document_types": offered_types(doctype, name), "max_file_mb": get_max_file_size() // (1024 * 1024),
 		# The types a row's Read button reads again into the form - only for someone who can save it.
 		"readable": _readable(doctype) if can_write else []}
@@ -341,6 +412,7 @@ def upload(doctype, name, document_type=None):
 		supersede(doctype, name, document_type, file.file_url)
 		if doctype == LEAD:
 			mirror_to_customer(name, file.file_url, document_type)
+		share_with_customer(doctype, name, file.file_url, document_type)
 		# A project task's record: the file is the task's document on the board's panel too.
 		task_files.on_attached(doctype, name, document_type, file.file_url)
 		_fill_field(doctype, name, document_type, file.file_url)
@@ -353,7 +425,7 @@ def upload(doctype, name, document_type=None):
 
 			portal_ack.fill_document(name, content, upload.filename)
 	_refresh_kyc(doctype, name)
-	return {"files": _files(doctype, name)}
+	return _listing(doctype, name)
 
 
 
@@ -376,10 +448,11 @@ def set_type(doctype, name, file, document_type=None):
 	supersede(doctype, name, document_type, file_url)
 	if doctype == LEAD:
 		mirror_to_customer(name, file_url, document_type)
+	share_with_customer(doctype, name, file_url, document_type)
 	task_files.on_attached(doctype, name, document_type, file_url)
 	_fill_field(doctype, name, document_type, file_url)
 	_refresh_kyc(doctype, name)
-	return {"files": _files(doctype, name)}
+	return _listing(doctype, name)
 
 
 # ------------------------------------------------------------------ the lead's files on its customer
@@ -487,4 +560,4 @@ def remove(doctype, name, file):
 	task_files.on_removed(doctype, name, file_url)
 	_clear_field(doctype, name, file_url)
 	_refresh_kyc(doctype, name)
-	return {"files": _files(doctype, name)}
+	return _listing(doctype, name)
