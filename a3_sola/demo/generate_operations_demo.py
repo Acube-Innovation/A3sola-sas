@@ -77,6 +77,8 @@ def _build_estimate(company, consumer_name):
 			"sanctioned_load_kw": 5,
 			"avg_consumption_units": 750,
 			"billing_frequency": "Bimonthly",
+			"approx_capacity_kw": 3,
+			"loan_required": "No",
 			"installation_address": make_address(),
 			"roof_type": name_of("Roof Type", "roof_type", "RCC Flat", company),
 			"local_body_type": "Panchayat",

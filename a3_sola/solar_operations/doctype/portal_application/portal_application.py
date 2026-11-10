@@ -22,8 +22,8 @@ LINKS = (("solar_installation", "Solar Installation"), ("solar_consumer", "Solar
 
 #: Which task each application type carries out - owned by the task engine, read here.
 STAGE_MAP = PORTAL_TASKS
+#: A National Portal application prints nothing: its data sheet is not one of its documents.
 DOCUMENT_MAP = {
-	"National Portal": "NP-APPLICATION",
 	"Net Meter Application": "KSEB-NETMETER-REQUEST",
 	"Registration Fee Refund": "KSEB-REFUND-REQUEST",
 }

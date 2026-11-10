@@ -94,9 +94,10 @@ class TestBankDocument(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			portal_attachments.read_file("Solar Consumer", consumer[0], file.name)
 
-	def test_a_customer_is_offered_its_five_document_types(self):
+	def test_a_customer_is_offered_its_document_types(self):
 		self.assertEqual(portal_attachments.offered_types("Solar Consumer"),
-			["Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN"])
+			["Aadhaar Front", "Aadhaar Back", "KSEB Bill", "Bank Proof", "PAN",
+			 "Income Tax Return", "Land Tax Receipt", "Building Tax Receipt", "Pre-Installation Photo"])
 		# The KYC card's other papers are still accepted on the customer.
 		self.assertIn("Pre-Installation Photo", portal_attachments.document_types("Solar Consumer"))
 		# Other records keep their full list.

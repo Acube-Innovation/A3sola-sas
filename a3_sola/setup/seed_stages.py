@@ -125,12 +125,11 @@ TASKS = [
 	      description="Application fee paid. Paying it starts the thirty-day window for Form 2."),
 	_task("NPA", "PM Surya Ghar Portal Registration", "Internal", 1, "Portal Application", role=DOCS,
 	      applicability="Subsidised Only", task_type="National Portal",
-	      documents=[("National portal application data sheet", 1, "NP-APPLICATION"),
-	                 ("Pre-installation site photo", 1, None),
-	                 # The accepted quotation in the registered vendor's (RIM) format, as the
-	                 # bank also gets it (api/loan_print.quotation).
-	                 ("Bank Quotation", 1, "BANK-QUOTATION"),
-	                 ("Portal acknowledgement", 1, None)],
+	      documents=[("Portal acknowledgement", 1, None),
+	                 # What the portal gives back as the application goes on (api/portal_attachments.OFFERED).
+	                 ("Feasibility Report", 0, None),
+	                 ("E-Token", 0, None),
+	                 ("Net Meter Agreement", 0, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
 	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
 	# Agreement the portal asks of them (api/net_metering_print), the quotation in the RIM
@@ -148,7 +147,13 @@ TASKS = [
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
 	_task("DAL", "Jan Samarth", "Bank", 1, "Installation Task", role=DOCS, task_type="DAL",
-	      applicability="Financed Sales Only", documents=[("Jan Samarth approval letter", 1, None)],
+	      applicability="Financed Sales Only",
+	      # The site photo and the RIM quotation are fetched where they already are: the photo from
+	      # the customer, lead, site survey or proposal, the quotation printed from the job's own
+	      # (api/portal_tasks.jan_samarth_rows).
+	      documents=[("Digital Approval Letter", 1, None),
+	                 ("Pre-installation site photo", 1, None),
+	                 ("Bank Quotation", 1, "BANK-QUOTATION")],
 	      description="The digital approval letter for the loan, from the Jan Samarth portal."),
 	_task("LOAN", "Loan Documents", "Bank", 3, "Loan Application", role=DOCS,
 	      applicability="Financed Sales Only",
@@ -224,7 +229,13 @@ TASKS = [
 	# registration fee, then Form 3 - the completion papers, with the executed agreement.
 	_task("FRM2", "Form 2 Submission", "Internal", 1, "Document Pack", role=DOCS,
 	      task_type="KSEB Form 2",
-	      documents=[("Annexure / Form 2", 1, "KSEB-FORM-2"), ("AE acknowledged Form 2", 0, None)],
+	      # Form 2's enclosures: the KSEB bill, the SLD and the meter test certificate are shown from
+	      # where they are filed (api/portal_tasks.form2_rows); the panel and inverter papers here.
+	      documents=[("Annexure / Form 2", 1, "KSEB-FORM-2"),
+	                 ("Solar Panel Test Certificate", 1, None),
+	                 ("Solar Panel Data Sheet", 1, None),
+	                 ("Inverter Data Sheet", 1, None),
+	                 ("AE acknowledged Form 2", 0, None)],
 	      description="Form 2 generated and submitted to the section office within thirty days of "
 	                  "the Form 1 fee."),
 	_task("F2PAY", "Form 2 Payment", "Internal", 2, "Statutory Fee Payment",

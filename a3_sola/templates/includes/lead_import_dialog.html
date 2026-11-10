@@ -2,7 +2,7 @@
     and whether its rows are new leads or changes to existing ones; what each row will do, nothing
     saved yet; then the import, a batch at a time, and what came of each row.
     Context: can_import_add, can_import_update (leads/index.py). -#}
-<div class="a3s-modal a3s-li" data-lead-import hidden role="dialog" aria-modal="true" aria-labelledby="a3s-li-title">
+<div class="a3s-modal a3s-li" data-lead-import{% if can_save_sheet %} data-can-save-sheet{% endif %} hidden role="dialog" aria-modal="true" aria-labelledby="a3s-li-title">
 	<div class="a3s-modal__panel a3s-li__panel">
 		<div class="a3s-assign__head">
 			<div>
@@ -37,7 +37,30 @@
 				<label for="a3s-li-url">Google Sheet link</label>
 				<input id="a3s-li-url" type="url" inputmode="url" autocomplete="off" spellcheck="false"
 				       placeholder="https://docs.google.com/spreadsheets/d/…" data-li-url>
+				{%- if can_save_sheet %}
+				<button type="button" class="a3s-textlink a3s-li__save" data-li-save hidden>Save this link as a lead sheet</button>
+				{%- endif %}
 			</div>
+			{%- if can_save_sheet %}
+			{#- The link kept by a name: the sheet's own, read from Google Sheets, to change if wished -#}
+			<div class="a3s-li__name" data-li-name-row hidden>
+				<div class="a3s-field">
+					<label for="a3s-li-sheet-name">Name of the sheet</label>
+					<input id="a3s-li-sheet-name" type="text" maxlength="140" autocomplete="off" data-li-sheet-name>
+				</div>
+				<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-li-save-confirm>
+					<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg><span>Save sheet</span>
+				</button>
+				<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-li-save-cancel>Cancel</button>
+			</div>
+			{%- endif %}
+
+			{#- The sheets leads come in on (A3 Sola Settings > Lead Sheets), each read with one click -#}
+			<div class="a3s-li__sheets" data-li-sheets-box{% if not lead_sheets %} hidden{% endif %}>
+				<p class="a3s-li__sheets-title">Saved lead sheets</p>
+				<ul class="a3s-li__sheets-list" data-li-sheets></ul>
+			</div>
+			<script type="application/json" data-li-sheets-data>{{ (lead_sheets or []) | tojson }}</script>
 
 			<div class="a3s-li__campaign">
 				<div class="a3s-field">

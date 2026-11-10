@@ -135,6 +135,9 @@ COLLECTIONS = {
 AUTO_FIELDS = {"company"}
 # Field types a plain form can capture. Attach, Table and the rest are handled by noting
 # them, not by pretending to render them.
+#: Mandatory Selects that start blank on a create form, not at their first option: a question
+#: only the customer can answer - whether they will take a loan - is asked, never assumed.
+UNANSWERED_SELECTS = {"loan_required"}
 INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone", "Attach Image"}
 DISPLAY_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Phone"}
 TEXTUAL = {"Data", "Select", "Link", "Small Text", "Phone"}
@@ -509,7 +512,8 @@ def form_fields(meta, prefill=None, extra=()):
 			# A mandatory Select has to start somewhere, so it falls back to the first real
 			# option. An optional one must not: its blank means "not answered", and
 			# pre-selecting an option answers it on the person's behalf.
-			fallback = next((o for o in opts if o), "") if f.reqd else ""
+			# Unless only the person can answer it (UNANSWERED_SELECTS): then it starts blank.
+			fallback = next((o for o in opts if o), "") if f.reqd and f.fieldname not in UNANSWERED_SELECTS else ""
 			spec["default"] = seed or f.default or fallback
 		elif f.fieldtype == "Link":
 			spec["link_doctype"] = f.options

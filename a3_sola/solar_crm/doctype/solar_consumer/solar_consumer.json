@@ -67,6 +67,10 @@
   "cb_6",
   "billing_frequency",
   "annual_consumption_units",
+  "sb_solar_requirement",
+  "approx_capacity_kw",
+  "cb_solar_requirement",
+  "loan_required",
   "tab_site",
   "sb_7",
   "installation_address",
@@ -507,6 +511,31 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_solar_requirement",
+   "fieldtype": "Section Break",
+   "label": "Solar Requirement"
+  },
+  {
+   "fieldname": "approx_capacity_kw",
+   "fieldtype": "Float",
+   "label": "Proposed System Size (kW)",
+   "precision": "3",
+   "reqd": 1,
+   "description": "From the lead when it has it. A change here reaches the lead too."
+  },
+  {
+   "fieldname": "cb_solar_requirement",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "loan_required",
+   "fieldtype": "Select",
+   "label": "Loan Required",
+   "options": "\nYes\nNo",
+   "reqd": 1,
+   "description": "From the lead when it has it. A change here reaches the lead, and the quotation follows it."
+  },
+  {
    "fieldname": "tab_site",
    "fieldtype": "Tab Break",
    "label": "Site"
@@ -797,7 +826,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 16:10:00.000000",
+ "modified": "2026-11-10 09:56:48.477723",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

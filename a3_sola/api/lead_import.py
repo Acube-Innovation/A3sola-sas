@@ -25,6 +25,7 @@ goes on every lead added or updated, unless its row names a campaign of its own.
 """
 
 import csv
+import html
 import io
 import json
 import re
@@ -401,6 +402,81 @@ def _chosen_campaign(campaign, new_campaign, specs):
 	if not choice:
 		frappe.throw(_("Choose a campaign from the list."))
 	return campaign, choice.get("label") or campaign, ""
+
+
+SETTINGS = "A3 Sola Settings"
+SHEET_ROW = "Lead Import Sheet"
+
+
+def saved_sheets():
+	"""The Google Sheets leads come in on (A3 Sola Settings > Lead Sheets), in their order:
+	[{id, title, url}]."""
+	rows = frappe.get_all(SHEET_ROW, filters={"parenttype": SETTINGS, "parentfield": "lead_sheets"},
+		fields=["name", "sheet_name", "sheet_url"], order_by="idx asc")
+	return [{"id": r.name, "title": r.sheet_name, "url": r.sheet_url} for r in rows]
+
+
+def may_save_sheet():
+	return bool(frappe.has_permission(SETTINGS, "write"))
+
+
+def _must_save():
+	if not may_save_sheet():
+		frappe.throw(_("You do not have permission to do that."), frappe.PermissionError)
+
+
+def add_sheet(title, url):
+	"""Keep a sheet by name; the same link kept again only takes the new name. Written as a row
+	of the settings, not by saving them, so nothing else in the settings is checked."""
+	url, title = (url or "").strip(), (title or "").strip()
+	export_url(url)
+	if not title:
+		frappe.throw(_("Name the sheet."))
+	if len(title) > 140:
+		frappe.throw(_("Keep the sheet's name under 140 letters."))
+	same = frappe.db.get_value(SHEET_ROW, {"parenttype": SETTINGS, "parentfield": "lead_sheets", "sheet_url": url})
+	if same:
+		frappe.db.set_value(SHEET_ROW, same, "sheet_name", title)
+		return
+	idx = frappe.db.sql("select coalesce(max(idx), 0) from `tabLead Import Sheet` where parenttype = %s and parentfield = 'lead_sheets'",
+		SETTINGS)[0][0]
+	row = frappe.get_doc({"doctype": SHEET_ROW, "parent": SETTINGS, "parenttype": SETTINGS, "parentfield": "lead_sheets",
+		"idx": idx + 1, "sheet_name": title, "sheet_url": url})
+	row.db_insert()
+
+
+@frappe.whitelist(methods=["POST"])
+def sheet_title(url=None):
+	"""The name Google Sheets gives the sheet at this link, to start the saved sheet's name from;
+	"" when it cannot be read - the person names it."""
+	_must_save()
+	sheet = re.search(r"/spreadsheets/d/([\w-]+)", export_url(url))
+	if not sheet or sheet.group(1) == "e":
+		return ""
+	try:
+		response = requests.get(f"https://docs.google.com/spreadsheets/d/{sheet.group(1)}/edit", timeout=15)
+	except requests.RequestException:
+		return ""
+	found = re.search(r"<title>(.*?)</title>", response.text or "", re.S) if response.ok else None
+	title = re.sub(r"\s*-\s*Google (Sheets|Drive)\s*$", "", html.unescape(found.group(1)).strip()) if found else ""
+	return "" if title.lower() in ("google sheets", "google drive", "sign in") else title[:140]
+
+
+@frappe.whitelist(methods=["POST"])
+def save_sheet(url=None, title=None):
+	"""Keep this link, by the name given, among the lead sheets; the sheets as they now are."""
+	_must_save()
+	add_sheet(title, url)
+	return saved_sheets()
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_sheet(sheet=None):
+	"""No longer keep this sheet among the lead sheets (the sheet itself is not touched)."""
+	_must_save()
+	if sheet and frappe.db.exists(SHEET_ROW, {"name": sheet, "parenttype": SETTINGS}):
+		frappe.db.delete(SHEET_ROW, {"name": sheet, "parenttype": SETTINGS})
+	return saved_sheets()
 
 
 @frappe.whitelist(methods=["POST"])
