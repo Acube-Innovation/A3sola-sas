@@ -25,7 +25,9 @@ class TestTaskDocuments(FrappeTestCase):
 
 	def expected_row(self, code):
 		doc = frappe.get_doc("Solar Installation", self.installation.name)
-		return next((r for r in doc.documents if r.stage_code == code and not r.attachment), None)
+		# One a person uploads: a templated row on BCOM prints live (api/bank_completion_print).
+		return next((r for r in doc.documents if r.stage_code == code and not r.attachment
+			and not r.solar_document_template), None)
 
 	def test_the_panel_lists_the_tasks_register_rows(self):
 		row = self.expected_row("BCOM")
@@ -185,9 +187,9 @@ class TestLoanPack(FrappeTestCase):
 	def test_the_pack_is_the_banks_list_in_order(self):
 		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
 		self.assertEqual([d["name"] for d in panel["documents"]], [
-			"Covering letter", "Vendor feasibility report", "Quotation", "Jan Samarth approval letter",
+			"Covering letter", "Vendor feasibility report", "Quotation", "Digital Approval Letter",
 			"PM Surya Ghar registration", "KYC",
-			"KSEB bill", "Land tax receipt", "Building tax receipt", "Income tax return (ITR)",
+			"KSEB Bill", "Land Tax Receipt", "Building Tax Receipt", "Income Tax Return (ITR)",
 		])
 		kyc = next(d for d in panel["documents"] if d["name"] == "KYC")
 		self.assertEqual([m["label"] for m in kyc["missing"]], ["Aadhaar Front", "Aadhaar Back", "PAN"])
@@ -200,7 +202,7 @@ class TestLoanPack(FrappeTestCase):
 		with patch.object(frappe, "request", posted("bill.txt", b"KSEB bill")):
 			portal_attachments.upload("Solar Consumer", consumer, document_type="KSEB Bill")
 		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
-		bill = next(d for d in panel["documents"] if d["name"] == "KSEB bill")
+		bill = next(d for d in panel["documents"] if d["name"] == "KSEB Bill")
 		self.assertEqual((len(bill["files"]), bill["missing"]), (1, []))
 
 	def test_a_paper_uploaded_on_the_pm_surya_ghar_task_shows_in_the_pack(self):
@@ -226,10 +228,10 @@ class TestLoanPack(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			complete(task.name)
 		with patch.object(frappe, "request", posted("approval.txt", b"approved")):
-			portal_tasks.upload(self.installation.name, "DAL", document_name="Jan Samarth approval letter")
+			portal_tasks.upload(self.installation.name, "DAL", document_name="Digital Approval Letter")
 		complete(task.name)
 		panel = portal_tasks.task_documents(self.installation.name, "LOAN")
-		letter = next(d for d in panel["documents"] if d["name"] == "Jan Samarth approval letter")
+		letter = next(d for d in panel["documents"] if d["name"] == "Digital Approval Letter")
 		self.assertEqual(len(letter["files"]), 1)
 
 	def test_a_self_funded_job_skips_the_approval(self):

@@ -195,6 +195,8 @@ def generate_consumers(company):
 			"sanctioned_load_kw": load,
 			"avg_consumption_units": units,
 			"billing_frequency": "Bimonthly",
+			"approx_capacity_kw": 3,
+			"loan_required": "No",
 			"installation_address": _address("Ernakulam"),
 			"roof_type": _master("Roof Type", "roof_type", "RCC Flat", company),
 			"local_body_type": "Panchayat",

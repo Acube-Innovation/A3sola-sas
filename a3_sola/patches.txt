@@ -303,3 +303,22 @@ a3_sola.patches.v1_2.package_panel_totals
 a3_sola.patches.v1_2.survey_system_type_spelling
 # Package prices move to Pricing Options rows (panel + inverter + battery at a cost).
 a3_sola.patches.v1_2.package_pricing_options
+# The Google Sheets leads come in on, kept by name in A3 Sola Settings.
+a3_sola.patches.v1_2.lead_sheets
+# Customers: Proposed System Size (kW) and Loan Required, from their leads where blank.
+a3_sola.patches.v1_2.consumer_size_and_loan
+a3_sola.patches.v1_2.digital_approval_letter_name
+# PM Surya Ghar registration: feasibility report, e-token and net meter agreement rows.
+a3_sola.patches.v1_2.surya_ghar_portal_papers
+# PM Surya Ghar registration: no data sheet or Bank Quotation rows.
+a3_sola.patches.v1_2.surya_ghar_drop_data_sheet_and_quotation
+# PM Surya Ghar registration: no pre-installation site photo row.
+a3_sola.patches.v1_2.surya_ghar_drop_site_photo
+# Jan Samarth: pre-installation site photo and Bank Quotation rows.
+a3_sola.patches.v1_2.jan_samarth_photo_and_quotation
+# Form 2: solar panel test certificate, panel and inverter data sheet rows.
+a3_sola.patches.v1_2.form2_enclosures
+# RIM Projects' letter pad as a Letter Head, for the bank's RIM-format documents.
+a3_sola.patches.v1_2.rim_letter_head
+# Project Completion Report (bank): room for the sign and seal.
+a3_sola.patches.v1_2.completion_report_sign_space

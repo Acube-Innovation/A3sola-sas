@@ -74,6 +74,9 @@ CHAIN = {
 				"roof_type": "roof_type",
 				"avg_consumption_units": "approx_consumption_units",
 				"avg_bill_amount": "avg_monthly_bill",
+				# What the customer asked for: the size, and whether they will take a loan.
+				"approx_capacity_kw": "approx_capacity_kw",
+				"loan_required": "loan_required",
 				"company": "company",
 				"customer": "customer",
 				"lead": "name",

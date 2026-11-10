@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""PM Surya Ghar Portal Registration asks for a pre-installation site photo and the quotation in
-the RIM format - printed from the job's quotation, loan or no loan."""
+"""PM Surya Ghar Portal Registration asks for the portal acknowledgement - not a site photo, the
+data sheet or the Bank Quotation; the quotation in the RIM format prints on Accept Customer, from the job's
+quotation or its design estimate."""
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -15,19 +16,19 @@ class TestSuryaGharPapers(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.installation = make_installation()
 
-	def test_the_registration_expects_the_photo_and_the_rim_quotation(self):
+	def test_the_registration_expects_the_acknowledgement_not_the_photo_data_sheet_or_quotation(self):
 		expected = {r.document_name: r for r in frappe.get_doc("Solar Installation", self.installation.name).documents
 			if r.stage_code == "NPA"}
-		self.assertIn("Pre-installation site photo", expected)
-		self.assertTrue(expected["Pre-installation site photo"].is_mandatory)
-		quotation = expected["Bank Quotation"]
-		self.assertEqual(frappe.db.get_value("Solar Document Template", quotation.solar_document_template, "template_code"),
-			loan_print.QUOTATION)
+		self.assertTrue(expected["Portal acknowledgement"].is_mandatory)
+		self.assertNotIn("Pre-installation site photo", expected)
+		self.assertNotIn("Bank Quotation", expected)
+		self.assertNotIn("National portal application data sheet", expected)
+		self.assertNotIn(loan_print.QUOTATION, portal_tasks._prints(frappe._dict(stage_code="NPA"), self.installation.name))
 
 	def test_the_rim_quotation_prints_only_once_there_is_a_quotation(self):
 		frappe.db.set_value("Solar Installation", self.installation.name, {"quotation": None, "solar_design_estimate": None})
-		row = frappe._dict(stage_code="NPA")
-		self.assertEqual(portal_tasks._prints(row, self.installation.name), {})
+		row = frappe._dict(stage_code="ACPT")
+		self.assertNotIn(loan_print.QUOTATION, portal_tasks._prints(row, self.installation.name))
 		with self.assertRaises(frappe.ValidationError):
 			loan_print.quotation(self.installation.name)
 		quotation = frappe.db.get_value("Quotation", {"docstatus": ["<", 2]}, "name")
@@ -48,4 +49,4 @@ class TestSuryaGharPapers(FrappeTestCase):
 		self.assertEqual(q.name, estimate)
 		self.assertTrue(q.items and q.grand_total > 0)
 		self.assertFalse(frappe.db.exists("Quotation", {"solar_design_estimate": estimate, "creation": [">", frappe.utils.add_to_date(None, minutes=-5)]}))
-		self.assertIn(loan_print.QUOTATION, portal_tasks._prints(frappe._dict(stage_code="NPA"), self.installation.name))
+		self.assertIn(loan_print.QUOTATION, portal_tasks._prints(frappe._dict(stage_code="ACPT"), self.installation.name))

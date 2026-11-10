@@ -143,3 +143,42 @@ class TestLeadFilesOnTheCustomer(FrappeTestCase):
 		lead_files_on_customer.execute()
 		self.assertEqual(self.customer_files(consumer).get(f.file_url), "KSEB Bill")
 		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, "gender"), "Male")
+
+
+class TestSizeAndLoanOnTheCustomer(FrappeTestCase):
+	"""Proposed System Size (kW) and Loan Required come from the lead when it has them, stay
+	blank to be filled in when it does not, are asked for when the customer is saved, and a
+	change on the customer reaches the lead."""
+
+	def make(self, **lead_values):
+		lead = make_lead(lead_name="Size And Loan")
+		frappe.db.set_value("Lead", lead, {"consumer_number": None, "approx_capacity_kw": 0, "loan_required": None, **lead_values})
+		return lead, portal_crud.create_mapped(slug="consumers", source_dt="Lead", source=lead)["name"]
+
+	def test_the_leads_answers_come_across(self):
+		_lead, consumer = self.make(approx_capacity_kw=4.5, loan_required="Yes")
+		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, ["approx_capacity_kw", "loan_required"]), (4.5, "Yes"))
+
+	def test_left_blank_when_the_lead_does_not_say_and_asked_for_on_save(self):
+		_lead, consumer = self.make()
+		doc = frappe.get_doc("Solar Consumer", consumer)
+		self.assertFalse(doc.approx_capacity_kw)
+		self.assertFalse(doc.loan_required)
+		doc.consumer_number = frappe.generate_hash(length=10)
+		with self.assertRaises(frappe.MandatoryError):
+			doc.save(ignore_permissions=True)
+
+	def test_a_change_on_the_customer_reaches_the_lead(self):
+		lead, consumer = self.make(approx_capacity_kw=3, loan_required="No")
+		doc = frappe.get_doc("Solar Consumer", consumer)
+		doc.update({"consumer_number": frappe.generate_hash(length=10), "approx_capacity_kw": 5, "loan_required": "Yes"})
+		doc.save(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Lead", lead, ["approx_capacity_kw", "loan_required"]), (5, "Yes"))
+
+	def test_the_patch_fills_a_customer_made_before(self):
+		from a3_sola.patches.v1_2 import consumer_size_and_loan
+
+		lead, consumer = self.make(approx_capacity_kw=6, loan_required="No")
+		frappe.db.set_value("Solar Consumer", consumer, {"approx_capacity_kw": 0, "loan_required": None})
+		consumer_size_and_loan.execute()
+		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, ["approx_capacity_kw", "loan_required"]), (6, "No"))

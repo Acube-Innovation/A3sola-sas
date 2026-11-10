@@ -109,6 +109,8 @@ def make_consumer(company=None, **kwargs):
 		"sanctioned_load_kw": 5,
 		"avg_consumption_units": 500,
 		"billing_frequency": "Bimonthly",
+		"approx_capacity_kw": 3,
+		"loan_required": "No",
 		"bank_account_holder_name": "Test Consumer",
 		"bank_account_no": "028905004574",
 		"bank_name": "ICICI Bank",

@@ -19,6 +19,12 @@
 	var LAST = "a3s-lead-import-campaign";
 	var url = $("[data-li-url]"), status = $("[data-li-status]"), check = $("[data-li-check]"), runBtn = $("[data-li-run]");
 	var preview = null, imported = 0, opener = null, running = false;
+	/* The sheets leads come in on (A3 Sola Settings > Lead Sheets), and who may keep or remove one. */
+	var sheetsBox = $("[data-li-sheets-box]"), sheetList = $("[data-li-sheets]"), saveBtn = $("[data-li-save]");
+	var nameRow = $("[data-li-name-row]"), sheetName = $("[data-li-sheet-name]"), canSave = modal.hasAttribute("data-can-save-sheet");
+	var SHEET = /^https:\/\/docs\.google\.com\/spreadsheets\//;
+	var sheets = [];
+	try { sheets = JSON.parse($("[data-li-sheets-data]").textContent) || []; } catch (e) { sheets = []; }
 	var WILL = { add: "Add", update: "Update", same: "No change", skip: "Skip" };
 
 	function el(tag, cls, text) {
@@ -83,7 +89,7 @@
 
 	/* 1. The sheet, checked: what each row will do. */
 	function checkSheet() {
-		if (!/^https:\/\/docs\.google\.com\/spreadsheets\//.test(url.value.trim())) {
+		if (!SHEET.test(url.value.trim())) {
 			say("Paste the link of a Google Sheet - it starts with https://docs.google.com/spreadsheets/", "error");
 			url.focus();
 			return;
@@ -153,6 +159,112 @@
 		step("preview");
 	}
 
+	function icon(name) {
+		var NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg"), use = document.createElementNS(NS, "use");
+		svg.setAttribute("class", "a3s-ic");
+		svg.setAttribute("aria-hidden", "true");
+		use.setAttribute("href", "#ic-" + name);
+		svg.appendChild(use);
+		return svg;
+	}
+
+	/* The saved sheets, each with its link to open it and a button to read it. */
+	function showSheets() {
+		sheetList.textContent = "";
+		sheets.forEach(function (sh) {
+			var li = el("li", "a3s-li__saved");
+			var ic = el("span", "a3s-li__saved-icon");
+			ic.appendChild(icon("sheet"));
+			li.appendChild(ic);
+			var text = el("span", "a3s-li__saved-text");
+			text.appendChild(el("strong", "", sh.title));
+			var open = el("a", "", "Open in Google Sheets");
+			open.href = sh.url; open.target = "_blank"; open.rel = "noopener";
+			text.appendChild(open);
+			li.appendChild(text);
+			var read = el("button", "a3s-btn a3s-btn--secondary a3s-btn--sm");
+			read.type = "button";
+			read.appendChild(icon("checklist"));
+			read.appendChild(el("span", "", "Read"));
+			read.setAttribute("aria-label", "Read " + sh.title);
+			read.addEventListener("click", function () { readSheet(sh); });
+			li.appendChild(read);
+			if (canSave) {
+				var drop = el("button", "a3s-icon-btn a3s-icon-btn--danger");
+				drop.type = "button";
+				drop.title = "Remove from saved sheets";
+				drop.setAttribute("aria-label", "Remove " + sh.title + " from saved sheets");
+				drop.appendChild(icon("trash"));
+				drop.addEventListener("click", function () { removeSheet(sh); });
+				li.appendChild(drop);
+			}
+			sheetList.appendChild(li);
+		});
+		sheetsBox.hidden = !sheets.length;
+		saveShown();
+	}
+
+	/* A saved sheet, read in one click: its link in the box, then checked as any other. */
+	function readSheet(sh) {
+		url.value = sh.url;
+		preview = null;
+		closeName();
+		checkSheet();
+	}
+
+	/* Another sheet's link may be kept - offered only when it is not kept already. */
+	function saveShown() {
+		if (!saveBtn) return;
+		var link = url.value.trim();
+		saveBtn.hidden = !nameRow.hidden || !SHEET.test(link) || sheets.some(function (sh) { return sh.url === link; });
+	}
+
+	function closeName() {
+		if (!nameRow) return;
+		nameRow.hidden = true;
+		saveShown();
+	}
+
+	/* Saving asks the sheet's name, starting from the one Google Sheets gives it. */
+	function askName() {
+		var link = url.value.trim();
+		nameRow.hidden = false;
+		saveShown();
+		sheetName.value = "";
+		sheetName.placeholder = "Reading the sheet's name…";
+		sheetName.focus();
+		post("sheet_title", { url: link }).then(function (title) {
+			if (!sheetName.value && url.value.trim() === link) sheetName.value = title || "";
+		}).catch(function () { /* the person names it */ }).then(function () {
+			sheetName.placeholder = "e.g. Renewcore New Meta Leads";
+			sheetName.select();
+		});
+	}
+
+	function saveSheet() {
+		var title = sheetName.value.trim();
+		if (!title) { say("Name the sheet, so it can be told from the others.", "error"); sheetName.focus(); return; }
+		var btn = $("[data-li-save-confirm]");
+		btn.disabled = true;
+		say("Saving…");
+		post("save_sheet", { url: url.value.trim(), title: title }).then(function (list) {
+			sheets = list || [];
+			nameRow.hidden = true;
+			showSheets();
+			say("Saved. " + title + " is in your saved lead sheets.");
+		}).catch(function (e) { say(e.message, "error"); }).then(function () { btn.disabled = false; });
+	}
+
+	function removeSheet(sh) {
+		if (!window.confirm("Remove " + sh.title + " from the saved lead sheets? The sheet itself is not changed.")) return;
+		say("Removing…");
+		post("remove_sheet", { sheet: sh.id }).then(function (list) {
+			sheets = list || [];
+			showSheets();
+			say("Removed " + sh.title + ".");
+		}).catch(function (e) { say(e.message, "error"); });
+	}
+
 	/* 3. The import, a batch at a time. */
 	function runImport() {
 		if (!preview || running) return;
@@ -212,7 +324,14 @@
 	Array.prototype.forEach.call(modal.querySelectorAll('input[name="a3s-li-mode"]'), function (r) {
 		r.addEventListener("change", function () { preview = null; say(""); });
 	});
-	url.addEventListener("input", function () { preview = null; });
+	url.addEventListener("input", function () { preview = null; closeName(); });
+	if (saveBtn) {
+		saveBtn.addEventListener("click", askName);
+		$("[data-li-save-confirm]").addEventListener("click", saveSheet);
+		$("[data-li-save-cancel]").addEventListener("click", function () { closeName(); url.focus(); });
+		sheetName.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveSheet(); } });
+	}
+	showSheets();
 	function campaignShown() {
 		newField.hidden = campaign.value !== "__new__";
 		if (!newField.hidden) newCampaign.focus();

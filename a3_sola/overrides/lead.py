@@ -108,6 +108,8 @@ def create_solar_consumer(lead, address=None):
 			"roof_type": doc.get("roof_type"),
 			"avg_consumption_units": doc.get("approx_consumption_units"),
 			"avg_bill_amount": doc.get("avg_monthly_bill"),
+			"approx_capacity_kw": doc.get("approx_capacity_kw"),
+			"loan_required": doc.get("loan_required"),
 			"billing_frequency": "Bimonthly",
 			"lead": doc.name,
 			**{k: v for k, v in address.items() if k in wanted and v},

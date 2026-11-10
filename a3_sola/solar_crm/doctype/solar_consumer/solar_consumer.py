@@ -326,12 +326,15 @@ LEAD_FROM_CUSTOMER = {
 	"consumer_category": "consumer_category", "discom": "discom", "discom_section": "discom_section",
 	"consumer_number": "consumer_number", "connection_type": "connection_type", "roof_type": "roof_type",
 	"city": "site_city", "state": "site_state", "district": "site_district",
+	"approx_capacity_kw": "approx_capacity_kw", "loan_required": "loan_required",
 }
 
 
 #: The lead's fields kept the same as the customer's on every save (sync_lead): the details its
-#: documents give.
-LEAD_SYNCED = ("lead_name", "consumer_number", "discom", "discom_section", "connection_type", "state", "district")
+#: documents give, and what the customer asked for - the size, and the loan the quotation
+#: and the project read from the lead.
+LEAD_SYNCED = ("lead_name", "consumer_number", "discom", "discom_section", "connection_type", "state", "district",
+	"approx_capacity_kw", "loan_required")
 
 
 def make_lead_for(doc):
