@@ -6,6 +6,9 @@
  * over the <select> inside `wrap`. Setting the select from a script and dispatching
  * "a3s:sync" on it updates the box - as does setting its value or rebuilding its options.
  * `a3sCombo.wireAll(root)` wires every [data-combo] field under root.
+ *
+ * Optional, on the wrap: data-combo-limit="10" shows only the first ten matches (the rest are
+ * found by typing), and data-combo-open opens the list as soon as the box is focused.
  */
 (function () {
 	"use strict";
@@ -29,6 +32,8 @@
 		/* data-combo-add names what can be added from the list ("section"): its last entry
 		   offers it, and choosing that fires "a3s:combo-add" on the select with what was typed. */
 		var adds = wrap.dataset.comboAdd || "";
+		var limit = parseInt(wrap.dataset.comboLimit, 10) || 0;
+		var openOnFocus = wrap.hasAttribute("data-combo-open");
 		var listId = "a3s-combo-list-" + (++comboCount);
 		var input = document.createElement("input");
 		input.type = "search";
@@ -86,6 +91,8 @@
 				var text = (o.textContent + " " + o.value).toLowerCase();
 				return words.every(function (w) { return text.indexOf(w) !== -1; });
 			});
+			var more = 0;
+			if (limit && shown.length > limit) { more = shown.length - limit; shown = shown.slice(0, limit); }
 			list.innerHTML = "";
 			if (!shown.length) {
 				list.appendChild(node("p", "a3s-combo__none", "No match."));
@@ -103,6 +110,7 @@
 				opt.addEventListener("mousedown", function (e) { e.preventDefault(); choose(o.value); });
 				list.appendChild(opt);
 			});
+			if (more) list.appendChild(node("p", "a3s-combo__more", more + " more: keep typing to find them."));
 			if (adds) {
 				var add = node("button", "a3s-combo__opt a3s-combo__add");
 				add.type = "button";
@@ -145,7 +153,7 @@
 		if (window.MutationObserver) {
 			new MutationObserver(sync).observe(select, { childList: true, attributes: true, attributeFilter: ["disabled"] });
 		}
-		input.addEventListener("focus", function () { input.select(); });
+		input.addEventListener("focus", function () { input.select(); if (openOnFocus && list.hidden) render(""); });
 		input.addEventListener("click", function () { if (list.hidden) render(""); });
 		input.addEventListener("input", function () { render(input.value); });
 		input.addEventListener("keydown", function (e) {

@@ -22,18 +22,22 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, format_datetime
 
-from a3_sola.api.package_items import CATEGORY
+from a3_sola.api.package_items import ADD_ON_GROUP, CATEGORY, add_on_groups
+from a3_sola.api.package_kits import KIT_FIELDS
 from a3_sola.api.portal_users import require_admin
 
 DOCTYPE = "Solar Package"
 #: The desk form's tab key the page knows each tab by (its Battery tab shows for Off-Grid and
-#: Hybrid only, its BOM tab carries the payment terms); any other tab goes by its fieldname.
-TAB_KEYS = {"tab_package": "package", "tab_battery": "batteries", "tab_commercial": "cost"}
+#: Hybrid only); any other tab goes by its fieldname.
+TAB_KEYS = {"tab_package": "package", "tab_battery": "batteries"}
 #: Made by the page's buttons, never typed.
 SET_BY_BUTTONS = {"item", "bom"}
-#: The BOM tab's "depends on" fields: read-only on the desk, where a dialog sets them; the page's
-#: row form sets them the same way, so a save takes them (package_bom_tables.validate checks).
-PICKED = {"material_bom": ("inverters",), "structure_boms": ("roof_types", "panel_capacities")}
+#: Worked out on save and kept on the desk form, not shown on the page: the Pricing Options tab
+#: is its rows and the payment terms.
+NOT_ON_PAGE = {"package_cost", "total_package_cost"}
+#: The Materials, Structure and Expenses rows' Depends On: read-only on the desk, where a dialog
+#: sets it; the page's row form sets it the same way, so a save takes it (package_bom_tables.validate checks).
+PICKED = {"material_bom": ("depends_on",), "structure_boms": ("depends_on",), "expenses": ("depends_on",)}
 #: The item a row names, and the text its choice fills in (solar_package.js ITEM_ROWS).
 ITEM_TEXT = {
 	"modules": ("module_item", "module_specification"),
@@ -114,7 +118,7 @@ def _layout():
 			hidden_section = cint(df.hidden)
 			section = None if hidden_section else new_section(df.label)
 			continue
-		if hidden_section or cint(df.hidden):
+		if hidden_section or cint(df.hidden) or df.fieldname in NOT_ON_PAGE:
 			continue
 		if df.fieldtype == "Column Break":
 			if section:
@@ -141,8 +145,12 @@ def _table_fields():
 
 
 def _rows(doc, fieldname, columns):
-	keep = ["name"] + [c["fieldname"] for c in columns]
-	return [{k: row.get(k) for k in keep} for row in doc.get(fieldname) or []]
+	# A row the system fills in says so (`source`, a KSEB fee): the page shows what follows it as
+	# set, not typed. Never posted back - _merge_rows keeps the row's own. A row from a bundle or
+	# BOM says which (package_kits.KIT_FIELDS), its hidden key too.
+	keep = ["name"] + [c["fieldname"] for c in columns] + ["source"] + [f for f in KIT_FIELDS if f not in
+		{c["fieldname"] for c in columns}]
+	return [{k: row.get(k) for k in keep if k != "source" or row.get("source")} for row in doc.get(fieldname) or []]
 
 
 def _assemblies():
@@ -169,12 +177,14 @@ def _tagged(label, kind):
 def _item_choices(assemblies=None):
 	"""Each category group's Items - its subgroups' too - with the text a choice fills in, the
 	Product Bundles and the Items with a BOM among them tagged so and listed first
-	(package_bom_tree); a bundle or BOM of no category group is in every list."""
+	(package_bom_tree); a bundle or BOM of no category group is in every list. The add-ons' list is
+	the Items of every add-on group (package_items.add_on_groups), its Item Group chosen first."""
 	assemblies = _assemblies() if assemblies is None else assemblies
 	groups = {g.name: (g.lft, g.rgt) for g in frappe.get_all("Item Group", filters={"name": ["in", list(ITEM_GROUPS)]},
 		fields=["name", "lft", "rgt"])}
 	at = {g.name: g.lft for g in frappe.get_all("Item Group", fields=["name", "lft"])}
-	items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", _under(groups)]},
+	add_ons = set(add_on_groups())
+	items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", list(set(_under(groups)) | add_ons)]},
 		fields=["name", "item_name", "item_group", "description"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)
 	listed = {i.name for i in items}
 	items += frappe.get_all("Item", filters={"disabled": 0, "name": ["in", [a for a in assemblies if a not in listed]]},
@@ -189,11 +199,25 @@ def _item_choices(assemblies=None):
 		# not offered as a panel; one of no category is offered in every list.
 		homes = [g for g, (lft, rgt) in groups.items() if lft <= at.get(item.item_group, -1) <= rgt]
 		for group in homes or (list(groups) if kind else []):
-			out[group].append(entry)
+			if group != ADD_ON_GROUP:
+				out[group].append(entry)
+		if item.item_group in add_ons:
+			out.setdefault(ADD_ON_GROUP, []).append(entry)
 	# The bundles and BOMs first, then the plain Items, each by name.
 	order = {"Bundle": 0, "BOM": 1}
 	for entries in out.values():
 		entries.sort(key=lambda e: (order.get(e["kind"], 2), e["label"].lower()))
+	return out
+
+
+def _category_groups():
+	"""{category group: the groups under it, by name} - not the category itself; the add-ons':
+	every add-on group (package_items.add_on_groups)."""
+	out = {}
+	for g in frappe.get_all("Item Group", filters={"name": ["in", list(ITEM_GROUPS)]}, fields=["name", "lft", "rgt"]):
+		out[g.name] = [{"value": n, "label": n} for n in frappe.get_all("Item Group",
+			filters={"lft": [">", g.lft], "rgt": ["<", g.rgt]}, order_by="name asc", pluck="name")]
+	out[ADD_ON_GROUP] = [{"value": n, "label": n} for n in add_on_groups()]
 	return out
 
 
@@ -219,7 +243,6 @@ def _milestones():
 
 def _choices():
 	"""Every dropdown the form has, loaded once; the page narrows them as the desk's queries do."""
-	from a3_sola.api.package_bom_tables import capacities
 	from a3_sola.api.permissions import get_permitted_companies
 
 	makes =frappe.get_all("Component Make", fields=["name", "make_name", "component_type", "technology", "company",
@@ -232,6 +255,9 @@ def _choices():
 	assemblies = _assemblies()
 	return {
 		"items": _item_choices(assemblies),
+		# The groups under each category group (the Inverters: On-Grid, Hybrid, Off-Grid), for a row's
+		# Item Group, which narrows its Items.
+		"item_groups": _category_groups(),
 		"Component Make": [{"value": m.name, "label": m.make_name or m.name, "type": m.component_type,
 			"technology": m.technology, "company": m.company, "active": cint(m.is_active)} for m in makes],
 		"Inverter Model": [{"value": m.name, "label": "{0}, {1}, {2}, {3:g} kW".format(m.model_name,
@@ -240,8 +266,9 @@ def _choices():
 		"Component Technology": [{"value": t.name, "label": t.technology_name or t.name, "type": t.component_type,
 			"company": t.company} for t in frappe.get_all("Component Technology", filters={"is_active": 1},
 				fields=["name", "technology_name", "component_type", "company"], order_by="technology_name")],
-		"Roof Type": [{"value": r.name, "label": r.roof_type or r.name, "company": r.company} for r in
-			frappe.get_all("Roof Type", fields=["name", "roof_type", "company"], order_by="roof_type")],
+		"Roof Type": [{"value": r.name, "label": r.roof_type or r.name, "company": r.company,
+			"installation_rate": flt(r.installation_rate_per_kw)} for r in
+			frappe.get_all("Roof Type", fields=["name", "roof_type", "company", "installation_rate_per_kw"], order_by="roof_type")],
 		"Billing Milestone Template": [{"value": t.name, "label": t.template_name or t.name, "company": t.company,
 			"milestones": milestones.get(t.name, [])} for t in frappe.get_all("Billing Milestone Template",
 				filters={"is_active": 1}, fields=["name", "template_name", "company"], order_by="template_name")],
@@ -255,9 +282,17 @@ def _choices():
 				fields=["name", "item_name", "item_group", "stock_uom"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)],
 			# The bundles and BOMs first.
 			key=lambda e: ({"Bundle": 0, "BOM": 1}.get(e["kind"], 2), e["label"].lower())),
-		# Structure BOM rows' Panel Capacity choices: the capacities packages are made in.
-		"capacities": capacities(),
+		# The Materials, Structure and Expenses rows' Category: any group, its Items those of it
+		# and of the groups under it.
+		"Item Group": _groups_with_subgroups(),
 	}
+
+
+def _groups_with_subgroups():
+	"""Every Item Group but the root, in tree order, each with the groups under it ("under", itself too)."""
+	groups = frappe.get_all("Item Group", fields=["name", "parent_item_group", "lft", "rgt"], order_by="lft asc")
+	return [{"value": g.name, "label": g.name, "under": [h.name for h in groups if g.lft <= h.lft <= g.rgt]}
+		for g in groups if g.parent_item_group]
 
 
 @frappe.whitelist()
@@ -306,7 +341,8 @@ def _merge_rows(doc, fieldname, posted):
 	"""The table in the posted order: a row the page knew (by `name`) is updated in place, so
 	what the page does not show - a computed row's `source` - stays; a new one is added."""
 	spec = _table(fieldname)
-	editable = _editable(spec)
+	# A bundle's or BOM's rows, opened on the page (package_kits.expand_row), keep what they came from.
+	editable = _editable(spec) + [f for f in KIT_FIELDS if frappe.get_meta(spec["doctype"]).has_field(f)]
 	had = {row.name: row for row in doc.get(fieldname) or []}
 	out = []
 	for row in posted or []:
@@ -413,8 +449,9 @@ def delete_package(name):
 		frappe.db.rollback(save_point="portal_package_delete")
 		frappe.clear_messages()
 		doc = frappe.get_doc(DOCTYPE, name)
-		# Retired: Draft and inactive, so estimates no longer offer it.
+		# Retired: Draft and inactive, so estimates no longer offer it - priced or not.
 		doc.status, doc.is_active = "Draft", 0
+		doc.flags.ignore_pricing_options = True
 		doc.save()
 		return {"deleted": 0, "draft": 1, "message": _("{0} is used in estimates, projects or quotations, so it was set "
 			"to Draft instead of deleted. It is no longer offered for new estimates.").format(doc.package_name)}
@@ -432,3 +469,12 @@ def delete_package(name):
 			frappe.clear_messages()
 			kept.append(record)
 	return {"deleted": 1, "kept": kept}
+
+
+@frappe.whitelist()
+def item_description(item):
+	"""An Item's description as plain text, for a Materials, Structure or Expenses row to fill in."""
+	require_admin()
+	from a3_sola.api.package_bom_tables import item_text
+
+	return item_text(item) if item and frappe.db.exists("Item", item) else ""

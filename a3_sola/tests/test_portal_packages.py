@@ -27,6 +27,10 @@ class TestPortalPackages(FrappeTestCase):
 			filters={"parenttype": "Solar Package"}, pluck="parent")]})
 		if not self.source:
 			raise unittest.SkipTest("No package with a solar panel row to copy.")
+		# Saved with a Pricing Options row at least, as every package is.
+		from a3_sola.tests.fixtures import _priced
+
+		_priced(self.source)
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -104,7 +108,13 @@ class TestPortalPackages(FrappeTestCase):
 		# The desk's tabs, without its hidden Components tab.
 		self.assertNotIn("tab_components", tabs)
 		self.assertIn("is_active", [f["fieldname"] for f in tabs["package"]["fields"]])
-		self.assertEqual(tabs["cost"]["tables"], ["material_bom", "structure_boms", "expenses"])
+		# Materials, Structure and Expenses: a tab each, where one BOM tab held all three.
+		self.assertNotIn("tab_commercial", tabs)
+		self.assertEqual([tabs[t]["tables"] for t in ("tab_materials", "tab_structure", "tab_expenses")],
+			[["material_bom"], ["structure_boms"], ["expenses"]])
+		self.assertEqual([tabs[t]["label"] for t in ("tab_materials", "tab_structure", "tab_expenses")],
+			["Materials", "Structure", "Expenses"])
+		self.assertIn("total_expenses", [f["fieldname"] for f in tabs["tab_expenses"]["fields"]])
 		self.assertEqual([s["label"] for s in tabs["package"]["sections"]], [""])
 		# Four desk columns, which the page reads across as rows.
 		columns = tabs["package"]["sections"][0]["columns"]
@@ -112,32 +122,32 @@ class TestPortalPackages(FrappeTestCase):
 		rows = [[c[i]["field"] for c in columns if i < len(c)] for i in range(max(map(len, columns)))]
 		self.assertEqual(rows, [["system_type", "connection_type", "specification_code", "package_name"],
 			["capacity_kw", "tier", "is_dcr_compliant", "is_active"], ["warranty_years", "status", "item", "bom"]])
-		# The two costs have a tab of their own, the last, after the BOM tab.
+		# The Pricing Options tab is the last, after the Expenses tab.
 		keys = [t["key"] for t in saved["tabs"]]
-		self.assertEqual(keys[-2:], ["cost", "tab_pricing"])
-		self.assertEqual([f["fieldname"] for f in tabs["tab_pricing"]["fields"]],
-			["package_cost", "total_package_cost", "payment_terms", "financed_payment_terms"])
-		# The payment terms are priced with the options: their section ends the Pricing Options tab, not the BOM tab.
+		self.assertEqual(keys[-4:], ["tab_materials", "tab_structure", "tab_expenses", "tab_pricing"])
+		# The two costs are worked out on save and not shown on the page (NOT_ON_PAGE).
+		self.assertEqual([f["fieldname"] for f in tabs["tab_pricing"]["fields"]], ["payment_terms", "financed_payment_terms"])
+		# The payment terms are priced with the options: their section ends the Pricing Options tab.
 		self.assertEqual(tabs["tab_pricing"]["sections"][-1]["label"], "Payment Terms")
-		self.assertNotIn("Payment Terms", [s["label"] for s in tabs["cost"]["sections"]])
+		self.assertNotIn("Payment Terms", [s["label"] for s in tabs["tab_expenses"]["sections"]])
 		# Company is set, not asked: still in the values, which narrow every choice.
 		self.assertNotIn("company", [f["fieldname"] for f in tabs["package"]["fields"]])
 		self.assertEqual(saved["values"]["company"], frappe.db.get_value("Solar Package", saved["name"], "company"))
 		inverter = next((r["inverter_item"] for r in saved["tables"]["inverters"]["rows"] if r.get("inverter_item")), None)
 		item = saved["choices"]["Item"][0]
 		posted = _posted(saved)
-		posted["tables"]["material_bom"] = [{"item": item["value"], "qty": 2, "rate": 10, "inverters": inverter or ""}]
-		posted["tables"]["structure_boms"] = [{"item": item["value"], "qty": 1, "rate": 5, "panel_capacities": "5, 3"}]
+		posted["tables"]["material_bom"] = [{"item": item["value"], "qty": 2, "rate": 10, "depends_on": inverter or ""}]
+		posted["tables"]["structure_boms"] = [{"item": item["value"], "qty": 1, "rate": 5}]
 		posted["tables"]["expenses"] = [{"item": item["value"], "qty": 4, "rate": 25}]
 		again = pp.save_package(json.dumps(posted, default=str))
-		# The rows posted; the other tabs' rows are copied in beside them (package_bom_tree).
-		def own(table):
-			return [r for r in again["tables"][table]["rows"] if not r.get("source_row") and r.get("row_kind") != "Component"]
-		material = own("material_bom")[0]
-		self.assertEqual((material["inverters"] or "", material["amount"], material["uom"]), (inverter or "", 20, item["uom"]))
-		self.assertEqual(own("structure_boms")[0]["panel_capacities"], "3, 5")
-		copied = sum(r["amount"] for r in again["tables"]["expenses"]["rows"] if r.get("source_row") and r.get("row_kind") != "Component")
-		self.assertEqual(again["values"]["total_expenses"], 100 + copied)
+		# The rows posted, and only they: nothing is copied in from the other tabs (package_bom_tree).
+		rows = {t: again["tables"][t]["rows"] for t in ("material_bom", "structure_boms", "expenses")}
+		self.assertEqual({t: len(r) for t, r in rows.items()}, {"material_bom": 1, "structure_boms": 1, "expenses": 1})
+		material = rows["material_bom"][0]
+		self.assertEqual((material["depends_on"] or "", material["amount"], material["uom"]), (inverter or "", 20, item["uom"]))
+		# The description is the Item's, where the row gave none.
+		self.assertTrue(material["description"])
+		self.assertEqual(again["values"]["total_expenses"], 100)
 
 	def test_status_and_delete(self):
 		saved = self.copy()

@@ -2,23 +2,28 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-10-15 17:30:00.000000",
- "description": "One material of a package's mounting structure: its Item, how much of it and at what rate, and the roof types and system capacities it goes with - none named, every one.",
+ "description": "One material of a package's mounting structure: its Item, how much of it and at what rate, and the package's Items it depends on - none named, always taken.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "item",
+  "description",
   "category",
   "uom",
   "qty",
   "rate",
   "amount",
-  "roof_types",
-  "panel_capacities",
+  "depends_on",
   "choose_depends_on",
   "row_kind",
   "bom_no",
-  "source_row"
+  "source_row",
+  "sb_bundle",
+  "bundle_type",
+  "bundle_ref",
+  "bundle_qty",
+  "bundle_key"
  ],
  "fields": [
   {
@@ -31,6 +36,12 @@
    "reqd": 1
   },
   {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Item Description",
+   "description": "Filled from the item."
+  },
+  {
    "columns": 1,
    "fetch_from": "item.item_group",
    "fieldname": "category",
@@ -38,7 +49,7 @@
    "in_list_view": 1,
    "label": "Category",
    "options": "Item Group",
-   "read_only": 1
+   "description": "Narrows the items offered."
   },
   {
    "columns": 1,
@@ -48,7 +59,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "UOM",
-   "options": "UOM"
+   "options": "UOM",
+   "description": "Unit it's counted in."
   },
   {
    "columns": 1,
@@ -57,7 +69,8 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Quantity",
-   "reqd": 1
+   "reqd": 1,
+   "description": "How many."
   },
   {
    "columns": 1,
@@ -65,7 +78,8 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Rate",
-   "options": "INR"
+   "options": "INR",
+   "description": "What one costs."
   },
   {
    "columns": 1,
@@ -74,24 +88,16 @@
    "in_list_view": 1,
    "label": "Amount",
    "options": "INR",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Quantity x Rate."
   },
   {
-   "columns": 1,
-   "description": "The roof types this material goes with. Blank: every roof type.",
-   "fieldname": "roof_types",
-   "fieldtype": "Data",
+   "columns": 2,
+   "description": "Taken only where the package uses one of these Items, one per line. Blank: always.",
+   "fieldname": "depends_on",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
-   "label": "Depends on Roof Type",
-   "read_only": 1
-  },
-  {
-   "columns": 1,
-   "description": "The system capacities (kW) this material goes with. Blank: every capacity.",
-   "fieldname": "panel_capacities",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Panel Capacity (kW)",
+   "label": "Depends On",
    "read_only": 1
   },
   {
@@ -99,7 +105,7 @@
    "fieldname": "choose_depends_on",
    "fieldtype": "Button",
    "in_list_view": 1,
-   "label": "Select Roof / kW"
+   "label": "Select Items"
   },
   {
    "fieldname": "row_kind",
@@ -122,11 +128,46 @@
    "label": "Copied From",
    "read_only": 1,
    "description": "The tab the row is copied from on save (Solar Panel, Inverter, KSEB, Installation, Optional Add-ons): changed there."
+  },
+  {
+   "fieldname": "sb_bundle",
+   "fieldtype": "Section Break",
+   "label": "From a Bundle or BOM",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "bundle_type",
+   "fieldtype": "Select",
+   "label": "From",
+   "options": "\nBundle\nBOM",
+   "read_only": 1,
+   "description": "Bundle or BOM it replaced."
+  },
+  {
+   "fieldname": "bundle_ref",
+   "fieldtype": "Data",
+   "label": "Bundle / BOM",
+   "read_only": 1,
+   "description": "Which one, by its ID."
+  },
+  {
+   "fieldname": "bundle_qty",
+   "fieldtype": "Float",
+   "label": "Bundle Qty",
+   "read_only": 1,
+   "description": "How many of it."
+  },
+  {
+   "fieldname": "bundle_key",
+   "fieldtype": "Data",
+   "label": "Bundle Key",
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-09 17:00:00.000000",
+ "modified": "2026-11-10 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package Structure BOM",

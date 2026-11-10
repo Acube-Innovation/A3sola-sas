@@ -39,7 +39,35 @@ def section(name="Athani", company=None):
 
 
 def package(code="3Kw 1PH", company=None):
-	return name_of("Solar Package", "specification_code", code, company)
+	name = name_of("Solar Package", "specification_code", code, company)
+	_priced(name)
+	return name
+
+
+def _priced(name):
+	"""A package is saved with a Pricing Options row at least (Solar Package.require_pricing_options).
+	The test site's seeded packages have none: each gets its default panel and inverter's, its margin
+	what keeps the cost it has (solar_package.pricing_build_up), so its prices stay as they were."""
+	if not name or frappe.db.exists("Solar Package Pricing Option", {"parent": name, "parenttype": "Solar Package"}):
+		return
+	from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+		default_inverter,
+		default_module,
+		inverter_name,
+		panel_name,
+		pricing_build_up,
+	)
+
+	doc = frappe.get_doc("Solar Package", name)
+	panel, inverter = default_module(doc), default_inverter(doc)
+	if not (panel_name(panel) and inverter_name(inverter)):
+		return
+	row = frappe.get_doc({"doctype": "Solar Package Pricing Option", "parent": name, "parenttype": "Solar Package",
+		"parentfield": "pricing_options", "idx": 1, "panel": panel_name(panel), "inverter": inverter_name(inverter),
+		"cost": frappe.utils.flt(doc.package_cost), "is_default": 1})
+	row.margin = frappe.utils.flt(doc.package_cost) - sum(pricing_build_up(doc, row).values())
+	row.db_insert()
+	frappe.clear_document_cache("Solar Package", name)
 
 
 def make_company(name, abbr, seed=True):

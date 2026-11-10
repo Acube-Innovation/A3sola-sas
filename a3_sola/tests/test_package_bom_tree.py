@@ -1,80 +1,85 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A package's BOM tab as a full BOM (package_bom_tree): the other tabs' rows copied in on save,
-each Product Bundle or BOM row followed by its items, and every part counted once."""
+"""A package's Materials, Structure and Expenses tabs hold only the rows typed or uploaded into
+them: a save copies nothing in from the other tabs, and the rows an earlier save added that way
+are taken out. A bundle chosen there is replaced by its items (api/package_kits), which go into
+the package's own ERPNext BOM."""
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import flt
 
-from a3_sola.api import package_bom_tree, package_items
+from a3_sola.api import package_bom_tables, package_bom_tree
+from a3_sola.tests.fixtures import default_company, package
+
+TABLES = ("material_bom", "structure_boms", "expenses")
 
 
-class TestPackageBomTree(FrappeTestCase):
+def part(code):
+	"""An Item to build with, in a group of its own."""
+	if not frappe.db.exists("Item Group", "BOM Test Parts"):
+		frappe.get_doc({"doctype": "Item Group", "item_group_name": "BOM Test Parts",
+			"parent_item_group": "All Item Groups", "is_group": 0}).insert(ignore_permissions=True)
+	if not frappe.db.exists("Item", code):
+		frappe.get_doc({"doctype": "Item", "item_code": code, "item_name": code, "item_group": "BOM Test Parts",
+			"stock_uom": "Nos", "is_stock_item": 0}).insert(ignore_permissions=True)
+	return code
+
+
+class TestPackageBomTab(FrappeTestCase):
 	def setUp(self):
-		self.package = frappe.db.get_value("Solar Package", {"bom": ["is", "set"]}) or frappe.db.get_value("Solar Package", {})
-		if not self.package:
-			self.skipTest("No Solar Package on this site.")
-		doc = frappe.get_doc("Solar Package", self.package)
-		if len(doc.material_bom) < 3 or not doc.kseb_expenses:
-			self.skipTest("The package has too few rows to build on.")
-		self.doc = doc
-		self.parts = [r.item for r in doc.material_bom[:3]]
+		frappe.set_user("Administrator")
+		self.pkg = frappe.get_doc("Solar Package", package("3Kw 1PH", default_company()))
 
-	def own(self, table):
-		return [r for r in self.doc.get(table) if package_bom_tree.is_own(r)]
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		pkg = frappe.get_doc("Solar Package", self.pkg.name)
+		for table in TABLES:
+			pkg.set(table, [])
+		pkg.save()
+		for name in frappe.get_all("Product Bundle", filters={"new_item_code": "BOM Tree Test Kit"}, pluck="name"):
+			frappe.delete_doc("Product Bundle", name, force=True, ignore_permissions=True)
 
-	def test_the_other_tabs_are_copied_in_and_the_typed_rows_kept(self):
-		typed = [(r.item, r.qty) for r in self.own("material_bom")]
-		self.doc.save()
-		self.assertEqual([(r.item, r.qty) for r in self.own("material_bom")], typed)
-		copied = [r for r in self.doc.material_bom if r.source_row]
-		inverters = [r for r in self.doc.inverters if r.inverter_item]
-		self.assertEqual(len([r for r in copied if r.source_row.startswith("Inverter")]), len(inverters))
-		# An inverter option's copy is needed with that inverter only.
-		for row in copied:
-			if row.source_row.startswith("Inverter"):
-				self.assertEqual(row.inverters, row.item)
-		self.assertTrue(any(r.source_row.startswith("KSEB") for r in self.doc.expenses))
-		# Saved again, the copies are not copied twice.
-		count = len(self.doc.material_bom)
-		self.doc.save()
-		self.assertEqual(len(self.doc.material_bom), count)
+	def items(self, table):
+		return [r.item for r in self.pkg.get(table)]
 
-	def test_a_bundle_and_a_bom_open_out(self):
-		kseb = self.doc.kseb_expenses[0].particulars
-		frappe.get_doc({"doctype": "Product Bundle", "new_item_code": kseb,
-			"items": [{"item_code": self.parts[1], "qty": 2}, {"item_code": self.parts[2], "qty": 3}]}).insert(ignore_permissions=True)
-		bom = frappe.get_doc({"doctype": "BOM", "item": self.parts[0], "company": self.doc.company, "quantity": 1,
-			"items": [{"item_code": self.parts[1], "qty": 4}, {"item_code": self.parts[2], "qty": 5}]})
-		frappe.flags.mute_messages = True
-		try:
-			bom.insert(ignore_permissions=True)
-			bom.submit()
-		finally:
-			frappe.flags.mute_messages = False
-		self.doc.save()
-		rows = list(self.doc.expenses)
-		at = next(i for i, r in enumerate(rows) if r.item == kseb and r.row_kind == "Bundle")
-		self.assertEqual([(r.item, r.qty, r.row_kind) for r in rows[at + 1:at + 3]],
-			[(self.parts[1], 2, "Component"), (self.parts[2], 3, "Component")])
-		# Its items are its parts: not counted again in the Expenses total.
-		self.assertAlmostEqual(self.doc.total_expenses, sum(r.amount for r in rows if r.row_kind != "Component"), 2)
-		rows = list(self.doc.material_bom)
-		at = next(i for i, r in enumerate(rows) if r.item == self.parts[0] and package_bom_tree.is_own(r))
-		parent = rows[at]
-		self.assertEqual((parent.row_kind, parent.bom_no), ("BOM", bom.name))
-		self.assertEqual([(r.item, r.qty) for r in rows[at + 1:at + 3]], [(self.parts[1], 4 * parent.qty), (self.parts[2], 5 * parent.qty)])
-		# The package's own BOM: the BOM row once, a sub-assembly, not its items on top.
-		lines = package_items.bom_lines(self.doc)
-		self.assertAlmostEqual(lines[self.parts[0]], parent.qty)
-		self.assertEqual(package_bom_tree.line_items(kseb, 2), [(self.parts[1], 4), (self.parts[2], 6)])
+	def test_a_save_copies_nothing_in_from_the_other_tabs(self):
+		# The package has rows on its other tabs that a save once copied into the BOM tab.
+		self.assertTrue(self.pkg.inverters and (self.pkg.kseb_expenses or self.pkg.installation_expenses))
+		self.pkg.set("material_bom", [{"item": part("BOM Tree Test Lug"), "qty": 10, "rate": 5}])
+		self.pkg.set("expenses", [{"item": part("BOM Tree Test Labour"), "qty": 1, "rate": 7500}])
+		self.pkg.save()
+		self.pkg.save()
+		self.assertEqual(self.items("material_bom"), ["BOM Tree Test Lug"])
+		self.assertEqual(self.items("expenses"), ["BOM Tree Test Labour"])
+		self.assertFalse(any(r.get(f) for t in TABLES for r in self.pkg.get(t) for f in package_bom_tree.TREE_FIELDS))
+		self.assertEqual(flt(self.pkg.total_expenses), 7500)
 
-	def test_an_estimate_takes_only_the_typed_rows(self):
-		from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import package_bom_rows
+	def test_rows_an_earlier_save_added_are_taken_out(self):
+		lug, labour = part("BOM Tree Test Lug"), part("BOM Tree Test Labour")
+		self.pkg.set("material_bom", [
+			{"item": lug, "qty": 10, "rate": 5, "row_kind": "Bundle"},
+			{"item": labour, "qty": 2, "rate": 1, "row_kind": "Component"},
+			{"item": labour, "qty": 1, "rate": 300, "source_row": "Inverter row 1"},
+		])
+		self.pkg.set("expenses", [
+			{"item": labour, "qty": 1, "rate": 1180, "source_row": "KSEB row 1"},
+			{"item": labour, "qty": 1, "rate": 7500},
+		])
+		self.pkg.save()
+		self.assertEqual([(r.item, r.row_kind) for r in self.pkg.material_bom], [(lug, None)])
+		self.assertEqual([flt(r.amount) for r in self.pkg.expenses], [7500])
+		self.assertEqual(flt(self.pkg.total_expenses), 7500)
 
-		typed = len(self.own("material_bom"))
-		self.doc.save()
-		rows = package_bom_rows(self.doc, None)
-		self.assertLessEqual(len(rows["material_bom"]), typed)
-		self.assertEqual(rows["bom_expenses"], [{f: r.get(f) for f in ("item", "category", "uom", "qty", "rate", "amount")}
-			for r in self.own("expenses") if r.item])
+	def test_a_bundle_is_replaced_by_its_items_which_go_into_the_package_bom(self):
+		kit, cable, clamp = part("BOM Tree Test Kit"), part("BOM Tree Test Cable"), part("BOM Tree Test Clamp")
+		frappe.get_doc({"doctype": "Product Bundle", "new_item_code": kit,
+			"items": [{"item_code": cable, "qty": 2}, {"item_code": clamp, "qty": 3}]}).insert(ignore_permissions=True)
+		self.pkg.set("material_bom", [{"item": kit, "qty": 2, "rate": 900}])
+		self.pkg.save()
+		# Its items, each saying which bundle it came from (api/package_kits).
+		self.assertEqual(self.items("material_bom"), [cable, clamp])
+		self.assertEqual({(r.bundle_type, r.bundle_ref) for r in self.pkg.material_bom}, {("Bundle", kit)})
+		lines = package_bom_tables.bom_lines(self.pkg)
+		self.assertEqual((lines.get(cable), lines.get(clamp)), (4, 6))
+		self.assertNotIn(kit, lines)

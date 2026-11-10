@@ -5,10 +5,25 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import flt
 
-from a3_sola.api import print_cover
+from a3_sola.api import package_items, portal_packages, print_cover
 from a3_sola.solar_crm.doctype.solar_package.solar_package import default_add_ons, extra_panel_item
-from a3_sola.tests.fixtures import make_consumer, make_estimate, package
+from a3_sola.tests.fixtures import default_company, make_consumer, make_estimate, package
+
+
+def item_group(name, parent="All Item Groups", is_group=0):
+	if not frappe.db.exists("Item Group", name):
+		frappe.get_doc({"doctype": "Item Group", "item_group_name": name, "parent_item_group": parent,
+			"is_group": is_group}).insert(ignore_permissions=True)
+	return name
+
+
+def add_on_item(code, group):
+	if not frappe.db.exists("Item", code):
+		frappe.get_doc({"doctype": "Item", "item_code": code, "item_name": code, "item_group": group,
+			"stock_uom": "Nos", "is_stock_item": 0}).insert(ignore_permissions=True)
+	return code
 
 
 class TestPackageAddOns(FrappeTestCase):
@@ -59,6 +74,59 @@ class TestPackageAddOns(FrappeTestCase):
 		self.assertFalse(print_cover.cost_pages(short, 3, False, 0)[-1]["add_ons"])
 
 
+class TestAddOnRows(FrappeTestCase):
+	"""A package add-on's Item is of an add-on group - Optional Add-ons, or any group set under
+	another - and the row is priced at its Rate x Quantity."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.top = item_group("Add-on Test Kit", is_group=1)
+		self.sub = item_group("Add-on Test Kit Spares", parent=self.top)
+		self.loose = item_group("Add-on Test Loose")
+		self.pkg = frappe.get_doc("Solar Package", package("3Kw 1PH", default_company()))
+		self.kept = [r.as_dict() for r in self.pkg.optional_add_ons]
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		pkg = frappe.get_doc("Solar Package", self.pkg.name)
+		pkg.set("optional_add_ons", [{k: r.get(k) for k in ("add_on_type", "item_code", "item", "rate", "qty", "amount")}
+			for r in self.kept])
+		pkg.save()
+
+	def mine(self):
+		return [r for r in self.pkg.optional_add_ons if r.add_on_type == "Other"]
+
+	def test_the_groups_are_optional_add_ons_then_every_group_under_another(self):
+		groups = package_items.add_on_groups()
+		self.assertEqual(groups[0], "Optional Add-ons")
+		self.assertIn(self.sub, groups)
+		self.assertFalse({self.top, self.loose, "All Item Groups"} & set(groups))
+
+	def test_a_row_is_its_rate_times_its_quantity_in_its_items_group(self):
+		fuse = add_on_item("Add-on Test Spare Fuse", self.sub)
+		self.pkg.set("optional_add_ons", [
+			{"add_on_type": "Other", "item_code": fuse, "item": "Two spare fuses", "rate": 450, "qty": 2},
+			# A row from before Rate and Quantity keeps its Amount.
+			{"add_on_type": "Other", "item": "Monitoring", "amount": 500},
+		])
+		self.pkg.save()
+		self.assertEqual([flt(r.amount) for r in self.mine()], [900, 500])
+		self.assertEqual(self.mine()[0].item_group, self.sub)
+
+	def test_an_item_of_a_top_level_group_is_refused(self):
+		box = add_on_item("Add-on Test Loose Box", self.loose)
+		self.pkg.set("optional_add_ons", [{"add_on_type": "Other", "item_code": box, "item": "A box", "rate": 100, "qty": 1}])
+		self.assertRaises(frappe.ValidationError, self.pkg.save)
+
+	def test_the_page_offers_the_groups_and_each_groups_items(self):
+		fuse = add_on_item("Add-on Test Spare Fuse", self.sub)
+		choices = portal_packages._choices()
+		self.assertEqual([g["value"] for g in choices["item_groups"]["Optional Add-ons"]], package_items.add_on_groups())
+		offered = {o["value"]: o["group"] for o in choices["items"]["Optional Add-ons"]}
+		self.assertEqual(offered.get(fuse), self.sub)
+		self.assertTrue(set(offered.values()) <= set(package_items.add_on_groups()))
+
+
 class TestEstimateAddOns(FrappeTestCase):
 	"""A design estimate takes its package's optional add-ons, changed per estimate, and its
 	proposal prints the estimate's own - never added to the commercials."""
@@ -76,6 +144,15 @@ class TestEstimateAddOns(FrappeTestCase):
 		est = make_estimate(self.consumer, solar_package=self.pkg)
 		self.assertEqual([(r.item, r.amount) for r in est.optional_add_ons], [("Monitoring", 500)])
 		self.assertNotIn("optional_add_ons", [line["key"] for line in est.commercials()["lines"]])
+
+	def test_an_extra_panel_takes_its_quantity_at_the_same_amount(self):
+		frappe.get_doc({"doctype": "Solar Package Add-on", "parent": self.pkg, "parenttype": "Solar Package",
+			"parentfield": "optional_add_ons", "idx": 2, "add_on_type": "Extra Panel", "item": "Two more panels",
+			"rate": 17500, "qty": 2, "amount": 35000}).db_insert()
+		frappe.clear_document_cache("Solar Package", self.pkg)
+		est = make_estimate(self.consumer, solar_package=self.pkg)
+		row = next(r for r in est.optional_add_ons if r.add_on_type == "Extra Panel")
+		self.assertEqual((row.panel_count, flt(row.rate), flt(row.amount)), (2, 17500, 35000))
 
 	def test_the_proposal_prints_the_estimates_own(self):
 		est = make_estimate(self.consumer, solar_package=self.pkg)

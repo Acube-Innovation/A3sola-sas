@@ -56,11 +56,13 @@
   "tab_add_ons",
   "sb_add_ons",
   "optional_add_ons",
-  "tab_commercial",
+  "tab_materials",
   "sb_material_bom",
   "material_bom",
+  "tab_structure",
   "sb_structure_boms",
   "structure_boms",
+  "tab_expenses",
   "sb_11",
   "expenses",
   "total_expenses",
@@ -399,14 +401,13 @@
    "options": "Solar Package Add-on"
   },
   {
-   "fieldname": "tab_commercial",
+   "fieldname": "tab_materials",
    "fieldtype": "Tab Break",
-   "label": "BOM"
+   "label": "Materials"
   },
   {
    "fieldname": "sb_material_bom",
-   "fieldtype": "Section Break",
-   "label": "Material BOM"
+   "fieldtype": "Section Break"
   },
   {
    "description": "The materials the system is built from besides its panel, inverter, batteries and balance of system. A row naming inverters is needed only with those; a blank one with every inverter. Create BOM / Update BOM adds the rows of the default inverter. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Inverter.",
@@ -416,9 +417,13 @@
    "options": "Solar Package Material BOM"
   },
   {
+   "fieldname": "tab_structure",
+   "fieldtype": "Tab Break",
+   "label": "Structure"
+  },
+  {
    "fieldname": "sb_structure_boms",
-   "fieldtype": "Section Break",
-   "label": "Structure BOMs"
+   "fieldtype": "Section Break"
   },
   {
    "description": "The materials the mounting structure is built from. A row naming roof types or capacities (kW) is needed only with those; a blank one with every one. Create BOM / Update BOM adds the rows of the package's own roof type and capacity. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount, Depends on Roof Type, Panel Capacity (kW).",
@@ -428,9 +433,13 @@
    "options": "Solar Package Structure BOM"
   },
   {
-   "fieldname": "sb_11",
-   "fieldtype": "Section Break",
+   "fieldname": "tab_expenses",
+   "fieldtype": "Tab Break",
    "label": "Expenses"
+  },
+  {
+   "fieldname": "sb_11",
+   "fieldtype": "Section Break"
   },
   {
    "description": "What the package costs to build, line by line: each an Item with its category, unit, quantity and rate. A costing record - the package's price comes from its inverter options' Cost. Upload Excel fills the table from a sheet: Item Name, Category, UOM, Quantity, Rate, Amount.",
@@ -498,7 +507,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-09 21:00:00.000000",
+ "modified": "2026-11-10 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",

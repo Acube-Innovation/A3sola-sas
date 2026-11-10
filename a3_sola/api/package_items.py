@@ -61,13 +61,34 @@ def in_group(item, group):
 	return bool(bounds and at and bounds[0] <= at <= bounds[1])
 
 
+def add_on_groups():
+	"""The Item Groups an Optional Add-on's Item comes from: Optional Add-ons, then every group set
+	under another group (the Modules', the Inverters', the expenses'), in tree order."""
+	groups = frappe.get_all("Item Group", fields=["name", "parent_item_group"], order_by="lft asc")
+	roots = {g.name for g in groups if not g.parent_item_group}
+	under = [g.name for g in groups if g.parent_item_group and g.parent_item_group not in roots and g.name != ADD_ON_GROUP]
+	return ([ADD_ON_GROUP] if any(g.name == ADD_ON_GROUP for g in groups) else []) + under
+
+
 def validate(doc):
-	"""Every row's Item is of its row's category: no inverter in the panels."""
+	"""Every row's Item is of its row's category: no inverter in the panels. An add-on's Item is
+	of one of the add-on groups."""
+	add_ons = None
 	for table, (field, _text) in ROWS.items():
 		for row in doc.get(table) or []:
-			item, group = row.get(field), category(table, row)
-			# An ERPNext Product Bundle or an Item with a BOM may stand in any row (package_bom_tree).
-			if item and group and not in_group(item, group) and not package_bom_tree.is_assembly(item):
+			item = row.get(field)
+			# An ERPNext Product Bundle or an Item with a BOM may stand in any row (package_bom_tree), and
+			# the items it is opened into are of any group (package_kits).
+			if not item or package_bom_tree.is_assembly(item) or row.get("bundle_ref"):
+				continue
+			if table == "optional_add_ons":
+				add_ons = add_on_groups() if add_ons is None else add_ons
+				if frappe.db.get_value("Item", item, "item_group") not in add_ons:
+					frappe.throw(_("Row {0} of {1}: {2} is in none of the add-on item groups.").format(
+						row.idx, doc.meta.get_label(table), frappe.bold(item)), title=_("Wrong Item"))
+				continue
+			group = category(table, row)
+			if group and not in_group(item, group):
 				frappe.throw(_("Row {0} of {1}: {2} is not in the {3} item group.").format(
 					row.idx, doc.meta.get_label(table), frappe.bold(item), frappe.bold(group)), title=_("Wrong Item"))
 
@@ -152,6 +173,15 @@ def _quoted(table, row):
 	return bool(row.get("is_default"))
 
 
+def quoted_rows(package, table):
+	"""The table's rows in the package as quoted (_quoted) - on the panel and inverter tabs a
+	kit's parts with their option (api/package_kits)."""
+	rows = package.get(table) or []
+	quoted = [r for r in rows if _quoted(table, r)]
+	keys = {r.get("bundle_key") for r in quoted if r.get("bundle_key")}
+	return [r for r in rows if r in quoted or (r.get("bundle_part") and r.get("bundle_key") in keys)]
+
+
 def bom_lines(package):
 	"""The package's raw materials, item -> quantity, in the order the package lists them: its
 	quoted rows, then the rows of its Material BOM and Structure BOMs for its default inverter,
@@ -161,9 +191,9 @@ def bom_lines(package):
 	lines, made = {}, {}
 	for table, qty_field in MATERIAL_ROWS.items():
 		item_field = ROWS[table][0]
-		for row in package.get(table) or []:
+		for row in quoted_rows(package, table):
 			item = row.get(item_field)
-			if not item or not _quoted(table, row):
+			if not item:
 				continue
 			for part, qty in package_bom_tree.line_items(item, frappe.utils.flt(row.get(qty_field)) or 1, made):
 				lines[part] = lines.get(part, 0) + qty
@@ -177,8 +207,8 @@ def _missing(package):
 	out = []
 	for table in MATERIAL_ROWS:
 		item_field, text_field = ROWS[table]
-		for row in package.get(table) or []:
-			if _quoted(table, row) and not row.get(item_field):
+		for row in quoted_rows(package, table):
+			if not row.get(item_field):
 				out.append("{0} row {1}{2}".format(package.meta.get_label(table), row.idx,
 					f" ({row.get(text_field)})" if text_field and row.get(text_field) else ""))
 	return out
