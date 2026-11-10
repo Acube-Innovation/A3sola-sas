@@ -42,9 +42,10 @@ class TestPackagePricingOptions(FrappeTestCase):
 	def cost(self, row):
 		return flt(sum(pricing_build_up(self.pkg, row).values()), 2)
 
-	def test_a_package_is_not_saved_without_a_pricing_option_but_may_be_retired(self):
-		def unpriced():
+	def test_an_active_package_needs_a_pricing_option_a_draft_does_not(self):
+		def unpriced(status="Active"):
 			doc = frappe.get_doc("Solar Package", self.pkg.name)
+			doc.status = status
 			# Nothing to make a row from either: no inverter Cost, no Package Cost.
 			doc.set("pricing_options", [])
 			doc.package_cost = 0
@@ -55,6 +56,14 @@ class TestPackagePricingOptions(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError) as raised:
 			unpriced().save()
 		self.assertIn("Pricing Options", str(raised.exception))
+		self.assertIn("Active", str(raised.exception))
+		# A Draft is saved as it stands, to be finished later.
+		draft = unpriced("Draft")
+		draft.save()
+		self.assertFalse(draft.pricing_options)
+		# Made Active again, it is asked for its row.
+		with self.assertRaises(frappe.ValidationError):
+			unpriced("Active").save()
 		retired = unpriced()
 		retired.flags.ignore_pricing_options = True
 		retired.save()

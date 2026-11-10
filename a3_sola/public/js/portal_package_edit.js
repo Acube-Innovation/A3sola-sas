@@ -43,7 +43,6 @@
 			Number(r.battery_capacity_ah) ? Number(r.battery_capacity_ah) + " Ah" : ""].filter(Boolean).join(" x ");
 	}
 	var ROW_SOURCES = {
-		"inverters.panel_specification": ["modules", function (r) { return r.module_specification; }],
 		"pricing_options.panel": ["modules", function (r) { return oneLine(r.module_specification); }],
 		"pricing_options.inverter": ["inverters", function (r) { return oneLine(r.inverter_specification); }],
 		"pricing_options.battery": ["batteries", batteryName]
@@ -52,6 +51,10 @@
 	var ITEM_FIELD = { kseb_expenses: "particulars", mounting_expenses: "item", installation_expenses: "item", components: "item" };
 	Object.keys(pkg.item_text).forEach(function (t) { ITEM_FIELD[t] = pkg.item_text[t][0]; });
 	var ONE_DEFAULT = { modules: 1, inverters: 1, pricing_options: 1 };
+	/* The rate an Item chosen fills with its selling price (api/portal_packages.item_rate). Not a
+	   panel's, worked out from its wattage, nor a KSEB fee's, set by the fees. */
+	var RATE_FIELD = { inverters: "unit_rate", batteries: "rate", optional_add_ons: "rate", installation_expenses: "rate",
+		material_bom: "rate", structure_boms: "rate", expenses: "rate" };
 	/* A row's amount is its rate times its count, as the server works it out on save. */
 	var ROW_AMOUNT = { modules: ["rate", "module_count"], batteries: ["rate", "nos"], inverters: ["unit_rate", "inverter_count"],
 		kseb_expenses: ["rate", "qty"], installation_expenses: ["rate", "qty"], optional_add_ons: ["rate", "qty"] };
@@ -64,7 +67,7 @@
 		modules: [["module_item"], ["module_specification"], ["module_make", "module_wattage", "wattage_rate", "is_default"],
 			["rate", "module_count", "amount"], ["module_alternate_makes"]],
 		inverters: [["inverter_item"], ["inverter_specification"], ["item_group", "inverter_phase", "inverter_topology"],
-			["inverter_make", "inverter_model", "panel_specification"], ["inverter_capacity_kw", "with_optimizer", "is_default"],
+			["inverter_make", "inverter_model"], ["inverter_capacity_kw", "with_optimizer", "is_default"],
 			["inverter_count", "unit_rate", "amount"]],
 		kseb_expenses: [["particulars"], ["rate", "qty", "amount"]],
 		installation_expenses: [["item"], ["specification"], ["rate", "qty", "amount"]],
@@ -536,7 +539,7 @@
 				}).join("") + "</tbody></table></div>" :
 				'<p class="a3s-pkg__none">No rows yet.</p>') +
 			(SHEET_TABLES[f] ? '<p class="a3s-field__hint">Only the rows added here: nothing is copied in from the other tabs on save.</p>' : "") +
-			(f === "pricing_options" ? '<p class="a3s-field__hint">The package is saved with one row at least.</p>' : "") +
+			(f === "pricing_options" ? '<p class="a3s-field__hint">Needed before the package is made Active; a Draft saves without.</p>' : "") +
 			"</section>";
 	}
 	/* The Payment Terms fields, each with its milestones under it; what a blank one says. */
@@ -675,6 +678,27 @@
 		}
 		paintForm();
 		if (adding) focusItem();
+		/* An Item chosen: the row's rate is its selling price, where it has one - the amount follows.
+		   A kit's part keeps its own; a rate the system sets (roof type) is left to it. */
+		function fillRate() {
+			var field = RATE_FIELD[table], asked = draft[itemField];
+			if (!field || !asked || part || (FROM_SOURCE[table + "." + field] && setBySystem(table, draft))) return;
+			call("item_rate", { item: asked, uom: draft.uom || "" }).then(function (rate) {
+				rate = Number(rate) || 0;
+				if (draft[itemField] !== asked || !rate) return;
+				draft[field] = rate;
+				var box = m.body.querySelector('[name="' + field + '"]');
+				if (box) box.value = rate;
+				var by = ROW_AMOUNT[table] || (SHEET_TABLES[table] ? ["rate", "qty"] : null);
+				if (by) {
+					draft.amount = (Number(draft[by[0]]) || 0) * (Number(draft[by[1]]) || 0);
+					var ro = m.body.querySelector('[data-ro="amount"]');
+					if (ro) ro.textContent = money(draft.amount);
+				}
+			}).catch(function () { /* left to fill by hand */ });
+		}
+		/* A row opened with its Item but no rate yet: the Item's selling price. */
+		if (draft[itemField] && RATE_FIELD[table] && !Number(draft[RATE_FIELD[table]])) fillRate();
 		/* A choice that narrows another (make and phase the model, variant the make, type the
 		   item) repaints the form; an Item fills the row's specification text. */
 		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1 };
@@ -712,6 +736,7 @@
 				var groups = ((pkg.choices.item_groups || {})[pkg.category[table]] || []).map(function (g) { return g.value; });
 				var groupBox = m.body.querySelector('[name="item_group"]');
 				if (chosen && groupBox && groups.indexOf(chosen.group) !== -1) { draft.item_group = chosen.group; groupBox.value = chosen.group; }
+				if (!SHEET_TABLES[table]) fillRate();
 			}
 			var fill = pkg.item_text[table];
 			if (fill && col.fieldname === fill[0] && draft[fill[0]]) {
@@ -726,6 +751,7 @@
 					if (chosen) { draft.uom = chosen.uom || draft.uom; draft.category = chosen.group; }
 					readPickers(table, draft, m.body);
 					paintForm();
+					fillRate();
 					/* Its description, from the Item. */
 					if (draft.item) {
 						var asked = draft.item;
@@ -975,11 +1001,12 @@
 	}
 	form.addEventListener("submit", function (e) {
 		e.preventDefault();
-		/* A package is saved with a Pricing Options row at least (Solar Package.require_pricing_options). */
-		if (pkg.tables.pricing_options && !pkg.tables.pricing_options.rows.length) {
+		/* An Active package has a Pricing Options row at least; a Draft is saved as it stands
+		   (Solar Package.require_pricing_options). */
+		if (pkg.values.status === "Active" && pkg.tables.pricing_options && !pkg.tables.pricing_options.rows.length) {
 			active = "tab_pricing";
 			paint();
-			setStatus(statusEl, "Add a Pricing Options row before saving: a panel, an inverter and the cost the package is offered at.", "error");
+			setStatus(statusEl, "Add a Pricing Options row before making the package Active: a panel, an inverter and the cost the package is offered at. Without one it can be saved as a Draft.", "error");
 			return;
 		}
 		var btn = form.querySelector("[data-save]");

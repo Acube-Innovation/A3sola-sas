@@ -24,14 +24,8 @@ function fill_from_item(frm, cdt, cdn, item_field, text_field) {
 	});
 }
 
-// An inverter option may be built on one of the package's other panels (Built with Panel):
-// its dropdown is the package's own panels, rebuilt as they change. Blank is the default panel.
+// The Pricing Options dropdowns follow the package's panels as they change.
 function refresh_panel_choices(frm) {
-	const grid = frm.fields_dict.inverters && frm.fields_dict.inverters.grid;
-	if (!grid) return;
-	const panels = [...new Set((frm.doc.modules || []).map((r) => r.module_specification).filter(Boolean))];
-	grid.update_docfield_property("panel_specification", "options", [""].concat(panels).join("\n"));
-	grid.refresh();
 	refresh_pricing_choices(frm);
 }
 

@@ -59,7 +59,6 @@ class SolarPackage(Document):
 		self.name_extra_panel_add_ons()
 		self.warranty_extension_from_model()
 		self.total_the_add_ons()
-		self.validate_inverter_panels()
 		self.total_the_expenses()
 		self.compute_batteries()
 		self.check_pricing_options()
@@ -174,13 +173,14 @@ class SolarPackage(Document):
 			seeded.flags.old_price = cost
 
 	def require_pricing_options(self):
-		"""A package is saved with a Pricing Options row at least: the panel, inverter and cost it
-		is offered at. Setting up, migrating and retiring a package are not held to it."""
-		if self.get("pricing_options") or self.flags.ignore_pricing_options or frappe.flags.in_install \
-				or frappe.flags.in_migrate or frappe.flags.in_patch:
+		"""An Active package has a Pricing Options row at least: the panel, inverter and cost it is
+		offered at. A Draft is saved as it stands, to finish later - the row is asked for when it is
+		made Active. Setting up, migrating and retiring a package are not held to it."""
+		if (self.status or "Draft") != "Active" or self.get("pricing_options") or self.flags.ignore_pricing_options \
+				or frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_patch:
 			return
-		frappe.throw(_("Add a Pricing Options row before saving: a panel, an inverter and the cost the package is "
-			"offered at."), title=_("No Pricing Option"))
+		frappe.throw(_("Add a Pricing Options row before making the package Active: a panel, an inverter and the cost "
+			"the package is offered at. Without one it can be saved as a Draft."), title=_("No Pricing Option"))
 
 	def validate_pricing_options(self):
 		"""A row names one of the package's own panels, inverters and batteries, and each way of
@@ -284,18 +284,6 @@ class SolarPackage(Document):
 		for row in self.get("optional_add_ons") or []:
 			if row.add_on_type == "Extra Panel" and not (row.item or "").strip():
 				row.item = extra_panel_item(self)
-
-	def validate_inverter_panels(self):
-		"""An inverter option built on panels other than the default names one of the package's
-		own panels - else it would be quoted on panels the package does not offer."""
-		offered = {r.module_specification for r in options(self, "modules") if r.module_specification}
-		for row in options(self, "inverters"):
-			if row.get("panel_specification") and row.panel_specification not in offered:
-				frappe.throw(
-					_("Inverter row {0} is built with panel {1}, which this package does not offer. Choose one of: "
-					  "{2}").format(row.idx, frappe.bold(row.panel_specification), ", ".join(sorted(offered)) or _("none - add one first")),
-					title=_("Panel Not Offered"),
-				)
 
 	def total_the_expenses(self):
 		# A bundle's or a BOM's items are its parts, already in its own amount.
@@ -584,7 +572,7 @@ def battery_name(row):
 def pricing_option(package, inverter=None, panel=None, battery=None):
 	"""The pricing row for the package built with this inverter option (the default when None),
 	on this panel and with this battery - each a row or its name. A panel or battery without a
-	row of its own falls back to the inverter's own panel (Built with Panel, else the default)
+	row of its own falls back to the default panel
 	and the default battery, then to any. None when the inverter is not priced at all."""
 	doc = (
 		package
@@ -703,8 +691,7 @@ def package_components(package, phase=None):
 				"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else ""),
 		})
 
-	# The panels each inverter is built with, where they are not the package's default panels
-	# (a microinverter option on panels of its own): its Built with Panel.
+	# The panel each inverter is costed on: the package's default panel.
 	default_panel = module.module_make if module else None
 	panel_of = {}
 	for row in options(doc, "inverters"):
@@ -803,10 +790,9 @@ def system_cost(package):
 
 
 def inverter_panel(package, inverter):
-	"""The panel row an inverter option is built with: its Built with Panel, else the default."""
-	spec = inverter.get("panel_specification") if inverter else None
-	rows = options(package, "modules")
-	return next((r for r in rows if spec and r.module_specification == spec), None) or default_module(package)
+	"""The panel row an inverter option is costed on: the package's default panel. (Each Pricing
+	Options row names its own panel.)"""
+	return default_module(package)
 
 
 def package_subsidy(package):

@@ -17,7 +17,6 @@
   "inverter_phase",
   "inverter_capacity_kw",
   "inverter_count",
-  "panel_specification",
   "cost",
   "unit_rate",
   "amount",
@@ -111,13 +110,7 @@
    "label": "Nos"
   },
   {
-   "description": "Blank: the default panel.",
-   "fieldname": "panel_specification",
-   "fieldtype": "Select",
-   "label": "Built with Panel"
-  },
-  {
-   "description": "Worked out on save from the Pricing Options: the package built with this inverter on its panel (Built with Panel, else the default) and the default battery. Read by the estimate and the proposal.",
+   "description": "Worked out on save from the Pricing Options: the package built with this inverter on the default panel and the default battery. Read by the estimate and the proposal.",
    "fieldname": "cost",
    "fieldtype": "Currency",
    "hidden": 1,
