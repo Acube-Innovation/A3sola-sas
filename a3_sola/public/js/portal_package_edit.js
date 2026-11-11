@@ -109,12 +109,14 @@
 	/* A row the system fills in (a KSEB fee; the installation line, where its roof type has a rate):
 	   these follow it and are not typed. */
 	var FROM_SOURCE = { "kseb_expenses.rate": "Set by KSEB fees.", "kseb_expenses.qty": "Set by KSEB fees.",
-		"installation_expenses.rate": "Set by roof type.", "installation_expenses.qty": "Set by roof type." };
+		"installation_expenses.rate": "Set by roof type.", "installation_expenses.qty": "Set by roof type.",
+		"expenses.rate": "Set by the dealer commission rule.", "expenses.qty": "Set by the dealer commission rule." };
 	function roofRate() {
 		var roof = (pkg.choices["Roof Type"] || []).find(function (r) { return r.value === pkg.values.roof_type; });
 		return roof ? Number(roof.installation_rate) || 0 : 0;
 	}
 	function setBySystem(table, row) {
+		if (table === "expenses") return isCommission(row);
 		if (!row.source) return false;
 		return table === "installation_expenses" ? roofRate() > 0 : true;
 	}
@@ -238,15 +240,70 @@
 		function applying(f) {
 			return sum(rows(f).filter(function (x) {
 				var deps = split(x.depends_on, true);
+				/* The dealer commission is worked out below, on this option's own cost. */
+				if (f === "expenses" && isCommission(x)) return false;
 				return x.item && isOwn(x) && (!deps.length || deps.some(function (d) { return used[d]; }));
 			}), function (x) { return n(x.qty) * n(x.rate); });
 		}
 		var parts = [["Panel", sum(panels, function (x) { return n(x.rate) * n(x.module_count); })],
 			["Inverter", sum(inverters, function (x) { return n(x.unit_rate) * (n(x.inverter_count) || 1); })]];
 		if (hasBatteries()) parts.push(["Battery", battery ? n(battery.rate) * n(battery.nos) : 0]);
-		return parts.concat([["Installation", sum(rows("installation_expenses"), function (x) { return n(x.amount); })],
-			["Materials", applying("material_bom")], ["Structure", applying("structure_boms")], ["Expenses", applying("expenses")],
-			["Margin", n(r.margin)]]);
+		parts = parts.concat([["Installation", sum(rows("installation_expenses"), function (x) { return n(x.amount); })],
+			["Materials", applying("material_bom")], ["Structure", applying("structure_boms")], ["Expenses", applying("expenses")]]);
+		/* The dealer commission, by the rule, where the Expenses carry it (api/dealer_commission). */
+		if (rows("expenses").some(isCommission)) parts.push(["Dealer Commission", commissionOn(sum(parts, function (p) { return p[1]; }))]);
+		/* The margin as typed, or - by Percentage - that percent of the cost before it
+		   (solar_package.pricing_margin). */
+		var margin = n(r.margin), label = "Margin";
+		if (r.margin_type === "Percentage") {
+			var before = sum(parts, function (p) { return p[1]; });
+			margin = Math.round(before * n(r.margin_percent)) / 100;
+			r.margin = margin;
+			label = "Margin (" + n(r.margin_percent) + "%)";
+		}
+		return parts.concat([[label, margin]]);
+	}
+	/* The package's dealer commission (api/dealer_commission): its row in the Expenses, priced by
+	   the package's own rule - the Dealer Commission section of the Expenses tab. */
+	function isCommission(x) { return !!(pkg.commission_item && x && x.item === pkg.commission_item); }
+	function commissionRule() { return pkg.values.dealer_commission_rule || "Formula"; }
+	function commissionOn(before) {
+		var v = pkg.values, n = function (x) { return Number(x) || 0; }, rule = commissionRule();
+		var value = rule === "Percentage" ? before * n(v.dealer_commission_percent) / 100 : rule === "Lump Sum" ? n(v.dealer_commission_lump_sum) :
+			n(v.dealer_commission_base) + n(v.dealer_commission_per_kw) * n(v.capacity_kw);
+		return Math.round(value * 100) / 100;
+	}
+	/* The rule's amounts, only the chosen rule's shown. */
+	var COMMISSION_FIELDS = { dealer_commission_base: "Formula", dealer_commission_per_kw: "Formula",
+		dealer_commission_percent: "Percentage", dealer_commission_lump_sum: "Lump Sum" };
+	/* The rule or the capacity changed: the commission row, the Expenses' total, each pricing
+	   option's cost and the Package Cost follow (the server works them out again on save). */
+	function repriceCommission() {
+		var row = ((pkg.tables.expenses && pkg.tables.expenses.rows) || []).find(isCommission);
+		if (row) {
+			row.qty = 1;
+			row.rate = defaultCommission();
+			row.amount = row.rate;
+		}
+		totalExpenses();
+		((pkg.tables.pricing_options && pkg.tables.pricing_options.rows) || []).forEach(function (r) { r.cost = pricingCost(r); });
+		packageCostFromPricing();
+		totalPackageCost();
+		/* On the Expenses tab: its table and total, redrawn where they stand - the field being
+		   typed in keeps its place. */
+		var table = panels.querySelector('[data-table="expenses"]');
+		if (table && row) table.outerHTML = tableHtml("expenses");
+		var total = panels.querySelector('[data-ro="total_expenses"]');
+		if (total) total.textContent = money(pkg.values.total_expenses);
+	}
+	/* The default pricing option's commission - what the Expenses row shows (the server sets it again on save). */
+	function defaultCommission() {
+		var list = (pkg.tables.pricing_options && pkg.tables.pricing_options.rows) || [];
+		var row = list.find(function (x) { return Number(x.is_default); }) || list[0];
+		/* Its cost before the commission and the margin: the row need not be in the table yet. */
+		var before = row ? pricingBuildUp(row).filter(function (p) { return p[0] !== "Dealer Commission" && p[0].indexOf("Margin") !== 0; })
+			.reduce(function (total, p) { return total + p[1]; }, 0) : 0;
+		return commissionOn(before);
 	}
 	function pricingCost(r) {
 		return Math.round(pricingBuildUp(r).reduce(function (total, p) { return total + p[1]; }, 0) * 100) / 100;
@@ -436,6 +493,8 @@
 	function fieldHtml(tab, fieldname) {
 		var col = tab.fields.find(function (c) { return c.fieldname === fieldname; });
 		if (col.fieldname === "item" || col.fieldname === "bom") col = Object.assign({}, col, { read_only: 1 });
+		/* A dealer commission amount the package's rule does not use is left out. */
+		if (COMMISSION_FIELDS[fieldname] && COMMISSION_FIELDS[fieldname] !== commissionRule()) return "";
 		return input(col, pkg.values[col.fieldname]);
 	}
 	/* A column's entries; in a one-column section its fields sit two to a row, as the rest of
@@ -571,6 +630,11 @@
 		if (col.fieldname === "system_type") { paintTabs(); totalPackageCost(); }
 		if (col.fieldname === "payment_terms" || col.fieldname === "financed_payment_terms") paintTerms();
 		if (col.fieldname === "company") paint();
+		/* The dealer commission's rule or amounts, or the capacity it is priced per kW on. */
+		if (col.fieldname.indexOf("dealer_commission_") === 0 || col.fieldname === "capacity_kw") {
+			repriceCommission();
+			if (col.fieldname === "dealer_commission_rule") paint();
+		}
 	});
 	tabsEl.addEventListener("click", function (e) {
 		var b = e.target.closest("[data-tab]");
@@ -623,6 +687,9 @@
 			return pkg.item_text[table] ? "Choosing fills the specification." : "From " + pkg.category[table] + " items.";
 		}
 		function shown(c) {
+			/* A pricing row asks its margin one way: in rupees, or as a percent (Margin Type). */
+			if (table === "pricing_options" && c.fieldname === "margin_percent") return draft.margin_type === "Percentage";
+			if (table === "pricing_options" && c.fieldname === "margin") return draft.margin_type !== "Percentage";
 			return !PICKED[table + "." + c.fieldname] && !TREE_FIELDS[c.fieldname] && !KIT_FIELD[c.fieldname] &&
 				!(layout && NOT_ASKED[table + "." + c.fieldname]);
 		}
@@ -641,6 +708,13 @@
 			/* A kit's part keeps its own rate (its selling price). */
 			if (layout && ((WORKED_OUT[key] && !part) || (FROM_SOURCE[key] && setBySystem(table, draft)))) {
 				opts.hint = WORKED_OUT[key] || FROM_SOURCE[key];
+				c = Object.assign({}, c, { read_only: 1 });
+			}
+			/* A Bundle or BOM is priced by its items, which replace it on save: its rate and amount
+			   are not typed. */
+			if (layout && !part && KIND_TABLES[table] && kind !== "Item" &&
+				(c.fieldname === "amount" || c.fieldname === RATE_FIELD[table] || (table === "modules" && (c.fieldname === "rate" || c.fieldname === "wattage_rate")))) {
+				opts.hint = "From its items.";
 				c = Object.assign({}, c, { read_only: 1 });
 			}
 			if (SMALL_TEXT[table + "." + c.fieldname]) opts.small = true;
@@ -683,6 +757,8 @@
 		function fillRate() {
 			var field = RATE_FIELD[table], asked = draft[itemField];
 			if (!field || !asked || part || (FROM_SOURCE[table + "." + field] && setBySystem(table, draft))) return;
+			/* A Bundle or BOM is priced by its items. */
+			if (KIND_TABLES[table] && kind !== "Item") return;
 			call("item_rate", { item: asked, uom: draft.uom || "" }).then(function (rate) {
 				rate = Number(rate) || 0;
 				if (draft[itemField] !== asked || !rate) return;
@@ -701,7 +777,7 @@
 		if (draft[itemField] && RATE_FIELD[table] && !Number(draft[RATE_FIELD[table]])) fillRate();
 		/* A choice that narrows another (make and phase the model, variant the make, type the
 		   item) repaints the form; an Item fills the row's specification text. */
-		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1 };
+		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1, margin_type: 1 };
 		/* The fields an Item's make and capacity fill, by table. */
 		var ITEM_SPECS = { modules: ["module_make", "module_wattage"], inverters: ["inverter_make", "inverter_capacity_kw"] };
 		m.body.addEventListener("change", function (e) {
@@ -748,9 +824,12 @@
 				   Wattage (Wp), an inverter's Make and Capacity (kW). The form is drawn again so
 				   the Make box shows the make's name. */
 				var into = ITEM_SPECS[table];
-				if (into && item && (item.make || item.capacity || item.model)) {
+				if (into && item && (item.make || item.capacity || item.model || item.phase || item.inverter_topology)) {
 					if (item.make) draft[into[0]] = item.make;
 					if (item.capacity) draft[into[1]] = item.capacity;
+					/* An inverter's phase and topology, as the Item has them (a model's phase, below, wins). */
+					if (table === "inverters" && item.phase) draft.inverter_phase = item.phase;
+					if (table === "inverters" && item.inverter_topology) draft.inverter_topology = item.inverter_topology;
 					/* An inverter's model sets its make and phase too, so the Model list (narrowed
 					   by them) offers it, and its kW where the Item gives none. */
 					var model = table === "inverters" && item.model &&
@@ -776,6 +855,12 @@
 				if (col.fieldname === "item") {
 					var chosen = pkg.choices.Item.find(function (i) { return i.value === draft.item; });
 					if (chosen) { draft.uom = chosen.uom || draft.uom; draft.category = chosen.group; }
+					/* The dealer commission: one, at the default pricing option's commission. */
+					if (table === "expenses" && isCommission(draft)) {
+						draft.qty = 1;
+						draft.rate = defaultCommission();
+						draft.amount = draft.rate;
+					}
 					readPickers(table, draft, m.body);
 					paintForm();
 					fillRate();

@@ -121,7 +121,14 @@ CUSTOM_FIELDS = {
 		 "description": "With its unit, e.g. 230 V AC or 48 V DC."},
 		{"fieldname": "capacity", "fieldtype": "Data", "label": "Capacity", "insert_after": "voltage",
 		 "description": "With its unit, e.g. 550 Wp, 5 kW or 100 Ah."},
-		{"fieldname": "a3s_spec_cb", "fieldtype": "Column Break", "insert_after": "capacity"},
+		# An inverter's phase and how it connects: choosing the Item on a package's Inverters row
+		# fills them, as the row offers the same choices.
+		{"fieldname": "phase", "fieldtype": "Select", "label": "Phase", "options": "\nSingle Phase\nThree Phase",
+		 "insert_after": "capacity"},
+		{"fieldname": "inverter_topology", "fieldtype": "Select", "label": "Inverter Topology",
+		 "options": "\nString\nString with Optimiser\nMicroinverter\nHybrid", "insert_after": "phase",
+		 "description": "For an inverter: how it connects."},
+		{"fieldname": "a3s_spec_cb", "fieldtype": "Column Break", "insert_after": "inverter_topology"},
 		{"fieldname": "specification", "fieldtype": "Small Text", "label": "Specification", "insert_after": "a3s_spec_cb"},
 	],
 	# --------------------------------------------------------------------- Lead

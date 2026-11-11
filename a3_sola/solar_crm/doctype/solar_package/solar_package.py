@@ -64,6 +64,7 @@ class SolarPackage(Document):
 		self.check_pricing_options()
 		self.compute_expenses()
 		self.full_bom()
+		self.price_dealer_commission()
 		# Once every amount is worked out: each Pricing Options row's cost is made of them.
 		self.cost_the_pricing_options()
 		self.total_the_package()
@@ -149,6 +150,9 @@ class SolarPackage(Document):
 			if row.flags.old_price is not None:
 				row.margin = flt(row.flags.old_price - (sum(parts.values()) - parts["margin"]), row.precision("margin"))
 				parts["margin"] = flt(row.margin)
+			# A margin by percentage is kept in rupees too: the estimate and reports read Margin.
+			if row.get("margin_type") == "Percentage":
+				row.margin = flt(parts["margin"], row.precision("margin"))
 			row.cost = flt(sum(parts.values()), row.precision("cost"))
 		for row in options(self, "inverters"):
 			option = pricing_option(self, row)
@@ -284,6 +288,30 @@ class SolarPackage(Document):
 		for row in self.get("optional_add_ons") or []:
 			if row.add_on_type == "Extra Panel" and not (row.item or "").strip():
 				row.item = extra_panel_item(self)
+
+	def price_dealer_commission(self):
+		"""The Dealer Commission row of the Expenses, priced by the package's own rule
+		(api/dealer_commission): Quantity 1, at the default pricing option's commission. Each
+		option's own commission is in its cost (pricing_build_up); this row shows the default's,
+		in the Total Expenses."""
+		from a3_sola.api import dealer_commission
+
+		rows = [r for r in self.get("expenses") or [] if dealer_commission.is_commission(r)]
+		if not rows:
+			return
+		if len(rows) > 1:
+			frappe.throw(_("The Expenses have the {0} row more than once: keep one.").format(dealer_commission.ITEM))
+		default = _default_row(self, "pricing_options")
+		if not default:
+			# No pricing option yet: priced on the default panel, inverter and battery.
+			module, inverter, battery = _default_row(self, "modules"), _default_row(self, "inverters"), default_battery(self)
+			default = frappe._dict(panel=panel_name(module) if module else None,
+				inverter=inverter_name(inverter) if inverter else None, battery=battery_name(battery) if battery else None)
+		commission = pricing_build_up(self, default)["commission"]
+		row = rows[0]
+		row.qty, row.rate = 1, commission
+		row.amount = flt(commission, row.precision("amount"))
+		self.total_the_expenses()
 
 	def total_the_expenses(self):
 		# A bundle's or a BOM's items are its parts, already in its own amount.
@@ -615,10 +643,14 @@ def pricing_build_up(package, row):
 	used = package_bom_tables.used_items(doc, chosen={"modules": option_rows(doc, "modules", panel),
 		"inverters": option_rows(doc, "inverters", inverter), "batteries": [battery] if battery else []})
 
-	def applying(table):
-		return sum(flt(r.amount) for r in doc.get(table) or [] if r.item and is_own(r) and package_bom_tables.applies(r, used))
+	from a3_sola.api import dealer_commission
 
-	return {
+	def applying(table):
+		# The dealer commission is worked out below, on this option's own cost, not read off its row.
+		return sum(flt(r.amount) for r in doc.get(table) or [] if r.item and is_own(r) and package_bom_tables.applies(r, used)
+			and not (table == "expenses" and dealer_commission.is_commission(r)))
+
+	parts = {
 		"panel": option_amount(doc, "modules", panel),
 		"inverter": option_amount(doc, "inverters", inverter),
 		"battery": flt(battery.rate) * cint(battery.nos) if battery else 0.0,
@@ -626,8 +658,20 @@ def pricing_build_up(package, row):
 		"materials": applying("material_bom"),
 		"structure": applying("structure_boms"),
 		"expenses": applying("expenses"),
-		"margin": flt(row.get("margin")),
 	}
+	# The dealer commission, by the package's rule, where it carries it: a percentage is of the
+	# cost so far - before the commission and the margin.
+	parts["commission"] = dealer_commission.amount(doc, sum(parts.values())) if dealer_commission.carries(doc) else 0.0
+	parts["margin"] = pricing_margin(row, sum(parts.values()))
+	return parts
+
+
+def pricing_margin(row, before):
+	"""A Pricing Options row's margin in rupees: as typed, or - its Margin Type Percentage - its
+	Margin (%) of the cost before the margin (`before`)."""
+	if row.get("margin_type") == "Percentage":
+		return flt(before * flt(row.get("margin_percent")) / 100, 2)
+	return flt(row.get("margin"))
 
 
 def package_cost(package):

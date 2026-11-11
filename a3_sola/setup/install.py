@@ -77,6 +77,7 @@ def setup(packages=True):
 
 	sync_default_subsidy_scheme()
 	seed_expense_items()
+	seed_dealer_commission_item()
 	seed_lead_sources()
 	seed_kseb_tariff_categories()
 	seed_kseb_section_offices()
@@ -749,6 +750,29 @@ def seed_expense_items():
 					"is_sales_item": 1,
 				}
 			)
+
+
+def seed_dealer_commission_item():
+	"""The Item a package's Expenses carries for the dealer's commission, priced by the rule
+	(api/dealer_commission). A non-stock service in its own group under the expense items."""
+	from a3_sola.api.dealer_commission import ITEM
+	from a3_sola.api.expenses import EXPENSE_ITEM_GROUP
+
+	group = "Commissions"
+	if frappe.db.exists("Item Group", EXPENSE_ITEM_GROUP) and not frappe.db.exists("Item Group", group):
+		_insert({"doctype": "Item Group", "item_group_name": group, "parent_item_group": EXPENSE_ITEM_GROUP})
+	if frappe.db.exists("Item", ITEM) or not frappe.db.exists("Item Group", group):
+		return
+	_insert({
+		"doctype": "Item",
+		"item_code": ITEM,
+		"item_name": ITEM,
+		"item_group": group,
+		"stock_uom": "Nos",
+		"is_stock_item": 0,
+		"is_sales_item": 1,
+		"description": "The dealer's commission on a package, priced by the Dealer Commission rule.",
+	})
 
 
 def seed_settings():

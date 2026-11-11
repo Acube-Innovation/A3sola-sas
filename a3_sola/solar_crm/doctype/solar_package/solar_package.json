@@ -66,6 +66,12 @@
   "sb_11",
   "expenses",
   "total_expenses",
+  "sb_dealer_commission",
+  "dealer_commission_rule",
+  "dealer_commission_base",
+  "dealer_commission_per_kw",
+  "dealer_commission_percent",
+  "dealer_commission_lump_sum",
   "tab_pricing",
   "package_cost",
   "cb_pricing",
@@ -456,6 +462,48 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_dealer_commission",
+   "fieldtype": "Section Break",
+   "label": "Dealer Commission"
+  },
+  {
+   "fieldname": "dealer_commission_rule",
+   "fieldtype": "Select",
+   "label": "Dealer Commission Rule",
+   "options": "Formula\nPercentage\nLump Sum",
+   "default": "Formula",
+   "description": "Prices the Dealer Commission row of the Expenses. Formula: base + amount per kW x capacity. Percentage: of the cost before the commission and the margin. Lump Sum: a fixed amount."
+  },
+  {
+   "fieldname": "dealer_commission_base",
+   "fieldtype": "Currency",
+   "label": "Base Amount",
+   "default": "10000",
+   "depends_on": "eval:(doc.dealer_commission_rule || \"Formula\")==\"Formula\"",
+   "description": "Paid on the package whatever its size."
+  },
+  {
+   "fieldname": "dealer_commission_per_kw",
+   "fieldtype": "Currency",
+   "label": "Amount per kW",
+   "default": "1000",
+   "depends_on": "eval:(doc.dealer_commission_rule || \"Formula\")==\"Formula\"",
+   "description": "Times the package's capacity."
+  },
+  {
+   "fieldname": "dealer_commission_percent",
+   "fieldtype": "Percent",
+   "label": "Commission Percentage",
+   "depends_on": "eval:doc.dealer_commission_rule==\"Percentage\"",
+   "description": "Of the panel, inverter, battery, installation, materials, structure and other expenses - not the margin."
+  },
+  {
+   "fieldname": "dealer_commission_lump_sum",
+   "fieldtype": "Currency",
+   "label": "Lump Sum",
+   "depends_on": "eval:doc.dealer_commission_rule==\"Lump Sum\""
+  },
+  {
    "fieldname": "tab_pricing",
    "fieldtype": "Tab Break",
    "label": "Pricing Options"
@@ -507,7 +555,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-10 15:30:00.000000",
+ "modified": "2026-11-11 18:50:07.849864",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Package",
