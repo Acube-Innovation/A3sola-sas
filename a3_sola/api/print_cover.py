@@ -552,10 +552,15 @@ def print_components(doc):
 		detail = " ".join(p for p in (technology_name(r.panel_variant) if r.panel_variant else "",
 			("DCR" if r.panel_type == "DCR" else "Non DCR") if r.panel_type else "") if p)
 		spec = " ".join(p for p in ("{0:g}Wp".format(flt(r.panel_capacity_wp)) if flt(r.panel_capacity_wp) else "", detail) if p)
-		names = [make(r.panel_make)] + [m.strip() for m in (alternates.get(r.panel_make) or "").split("/")
-			if m.strip() and m.strip().lower() not in ("equivalent", make(r.panel_make).lower())]
+		# The make, then the alternates it may be supplied in - "Solinteg / Vikram". The
+		# estimate row's own alternates first (written "Vikram, Waaree"), else its package's
+		# ("Rayzon/Vikram/Equivalent"); the make itself and "Equivalent" are not repeated.
+		main = make(r.panel_make) or ""
+		written = r.get("alternate_makes") or alternates.get(r.panel_make) or ""
+		names = [main] + [m.strip() for m in written.replace(",", "/").split("/")
+			if m.strip() and m.strip().lower() not in ("equivalent", main.lower())]
 		rows.append({"item": "Solar Panels", "spec": spec, "spec_detail": detail, "capacity": unit_capacity("panels", r),
-			"make": "/ ".join(n for n in names if n), "nos": cint(r.nos)})
+			"make": " / ".join(dict.fromkeys(n for n in names if n)), "nos": cint(r.nos)})
 	hybrid = est.system_type == "Hybrid"
 	# Each option's inverter - the options differ by inverter - or the one design's.
 	options = proposal_estimates(doc, est)

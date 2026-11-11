@@ -30,6 +30,12 @@
 		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg>
 	</a>
 	{%- endif %}
+	{%- if share.word %}
+	{#- The Administrator's editable copy, to change in Word before it goes out (api/proposal_word). -#}
+	<a class="a3s-square-btn" href="{{ share.word | e }}" title="Download as Word, to edit" aria-label="Download as Word, to edit">
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+	</a>
+	{%- endif %}
 	{#- A link carries no file: the click also downloads the PDF, to drop into the chat. -#}
 	<a class="a3s-square-btn a3s-square-btn--whatsapp" href="{{ share.whatsapp | e }}" target="_blank" rel="noopener"
 	   data-share-download="drag it into the WhatsApp chat, then press Send"

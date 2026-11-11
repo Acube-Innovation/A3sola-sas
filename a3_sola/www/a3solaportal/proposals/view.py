@@ -103,6 +103,11 @@ def get_context(context):
 	from a3_sola.api.portal_share import share_links
 
 	context.share = share_links(doc, "/api/method/a3_sola.api.portal_proposal.pdf?name=" + quote(doc.name))
+	# The Administrator also gets it as Word, to change there before it goes out.
+	from a3_sola.api import proposal_word
+
+	if proposal_word.can_download():
+		context.share["word"] = proposal_word.route(doc.name)
 	# The actions below are unsafe methods on an authenticated session, so they need a token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

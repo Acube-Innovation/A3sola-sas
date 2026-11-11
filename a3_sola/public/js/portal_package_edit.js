@@ -702,6 +702,8 @@
 		/* A choice that narrows another (make and phase the model, variant the make, type the
 		   item) repaints the form; an Item fills the row's specification text. */
 		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1 };
+		/* The fields an Item's make and capacity fill, by table. */
+		var ITEM_SPECS = { modules: ["module_make", "module_wattage"], inverters: ["inverter_make", "inverter_capacity_kw"] };
 		m.body.addEventListener("change", function (e) {
 			var el = e.target;
 			/* Item, Bundle or BOM: the Item's choices follow; one of the other kind is let go. */
@@ -742,6 +744,31 @@
 			if (fill && col.fieldname === fill[0] && draft[fill[0]]) {
 				var item = allItems().find(function (i) { return i.value === draft[fill[0]]; });
 				if (item && item.text) { draft[fill[1]] = item.text; var t = m.body.querySelector('[name="' + fill[1] + '"]'); if (t) t.value = item.text; }
+				/* Its make and capacity too, from the Item's Specifications: a panel's Make and
+				   Wattage (Wp), an inverter's Make and Capacity (kW). The form is drawn again so
+				   the Make box shows the make's name. */
+				var into = ITEM_SPECS[table];
+				if (into && item && (item.make || item.capacity || item.model)) {
+					if (item.make) draft[into[0]] = item.make;
+					if (item.capacity) draft[into[1]] = item.capacity;
+					/* An inverter's model sets its make and phase too, so the Model list (narrowed
+					   by them) offers it, and its kW where the Item gives none. */
+					var model = table === "inverters" && item.model &&
+						(pkg.choices["Inverter Model"] || []).find(function (x) { return x.value === item.model; });
+					if (model) {
+						draft.inverter_model = model.value;
+						if (model.make) draft.inverter_make = model.make;
+						if (model.phase) draft.inverter_phase = model.phase;
+						if (!item.capacity && model.kw) draft.inverter_capacity_kw = model.kw;
+					}
+					if (table === "modules" && !part && Number(draft.wattage_rate)) {
+						draft.rate = (Number(draft.module_wattage) || 0) * Number(draft.wattage_rate);
+						draft.amount = (Number(draft.rate) || 0) * (Number(draft.module_count) || 0);
+					}
+					readPickers(table, draft, m.body);
+					paintForm();
+					return;
+				}
 			}
 			if (SHEET_TABLES[table]) {
 				/* The UOM and Category follow the Item chosen (the UOM stays the user's to change

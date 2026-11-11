@@ -11,6 +11,8 @@ dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
     # Reads photos of KSEB bills (api/kseb_bill.py), with the tesseract-ocr apt package below.
     "pytesseract~=0.3.10",
+    # Builds the proposal as an editable Word file for the Administrator (api/proposal_word.py).
+    "python-docx~=1.2",
 ]
 
 [build-system]
