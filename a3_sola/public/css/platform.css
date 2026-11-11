@@ -2370,6 +2370,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-chain .a3s-edit__card-title { margin-bottom: 0.25rem; }
 .a3s-chain .a3s-btn--block { justify-content: flex-start; text-align: left; white-space: normal; min-width: 0; }
 .a3s-chain .a3s-btn--block .a3s-ic { flex: none; }
+/* Next-step actions read in Title Case ("Assign Site Survey"), by request - an exception to
+   the sentence case of other actions. */
+.a3s-chain .a3s-btn > span { text-transform: capitalize; }
 .a3s-chain .a3s-btn[aria-disabled="true"] { pointer-events: none; }
 .a3s-chain .a3s-edit__hint { margin: 0; }
 

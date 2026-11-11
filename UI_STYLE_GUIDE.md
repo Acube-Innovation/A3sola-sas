@@ -662,6 +662,7 @@ Each page has **one self-contained script**: an IIFE in `"use strict"` mode, wit
 ## 7. Copy and voice
 
 - **Sentence case for actions and messages:** "Save changes", "Choose files", "Record payment", "Upload Invoice", "New lead".
+- **Exception - Next steps buttons are Title Case:** "Assign Site Survey", "Create Sales Order". The card styles this (`.a3s-chain .a3s-btn > span { text-transform: capitalize; }`), so write the labels in sentence case as usual.
 - **Title Case for menu items and record types:** "Solar Installation", "Payment Schedule". The sidebar groups are "Customer Relations", "Operations Management", "Project Management" and "Stores & Accounts".
 - **Menu subtitles** are short noun phrases: "Prospects and enquiries", "Delivery and service".
 - **Standard messages:**

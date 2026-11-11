@@ -79,7 +79,7 @@
  "owner": "Administrator",
  "allow_rename": 1,
  "creation": "2026-10-28 18:00:00.000000",
- "modified": "2026-10-28 18:00:00.000000",
+ "modified": "2026-11-11 16:47:07.491942",
  "doctype": "DocType",
  "module": "Solar CRM",
  "name": "Inverter Model",
@@ -87,7 +87,7 @@
  "istable": 0,
  "autoname": "hash",
  "title_field": "model_name",
- "show_title_field_in_link": 0,
+ "show_title_field_in_link": 1,
  "search_fields": "model_name,inverter_make,inverter_phase,capacity_kw",
  "description": "Every inverter model sold, as the master price list gives it: price, GST, warranty and its extension, the optimizer and the micro inverter kit.",
  "field_order": [

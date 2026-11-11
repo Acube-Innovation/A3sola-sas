@@ -107,6 +107,22 @@ CUSTOM_FIELDS = {
 			"description": "Set on solar modules manufactured in India to DCR standard. Required by subsidy schemes.",
 		},
 		{"fieldname": "dcr_certificate_no", "fieldtype": "Data", "label": "DCR Certificate No", "insert_after": "is_dcr", "depends_on": "eval:doc.is_dcr"},
+		# What the item is, all optional: its make from the Component Make master, and the
+		# ratings as written on its datasheet. Voltage and capacity are text because the unit
+		# depends on the item - "230 V AC" or "48 V DC", "550 Wp", "5 kW" or "100 Ah".
+		{"fieldname": "a3s_spec_sb", "fieldtype": "Section Break", "label": "Specifications", "insert_after": "dcr_certificate_no"},
+		{"fieldname": "make", "fieldtype": "Link", "options": "Component Make", "label": "Make", "insert_after": "a3s_spec_sb",
+		 "in_standard_filter": 1},
+		# An inverter's model: choosing the Item on a package's Inverters row fills its Inverter
+		# Model, make, phase and kW (portal_package_edit.js).
+		{"fieldname": "model", "fieldtype": "Link", "options": "Inverter Model", "label": "Model", "insert_after": "make",
+		 "description": "For an inverter: its model from the Inverter Model master."},
+		{"fieldname": "voltage", "fieldtype": "Data", "label": "Voltage", "insert_after": "model",
+		 "description": "With its unit, e.g. 230 V AC or 48 V DC."},
+		{"fieldname": "capacity", "fieldtype": "Data", "label": "Capacity", "insert_after": "voltage",
+		 "description": "With its unit, e.g. 550 Wp, 5 kW or 100 Ah."},
+		{"fieldname": "a3s_spec_cb", "fieldtype": "Column Break", "insert_after": "capacity"},
+		{"fieldname": "specification", "fieldtype": "Small Text", "label": "Specification", "insert_after": "a3s_spec_cb"},
 	],
 	# --------------------------------------------------------------------- Lead
 	"Lead": [

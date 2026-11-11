@@ -54,6 +54,12 @@ FIELD_TYPES = {"Data", "Select", "Link", "Float", "Int", "Currency", "Percent", 
 ITEM_LIMIT = 3000
 
 
+def capacity_number(text):
+	"""The number in an Item's Capacity as written - "550", "550 Wp", "5 kW" - or 0."""
+	m = re.search(r"\d+(?:\.\d+)?", (text or "").replace(",", ""))
+	return float(m.group()) if m else 0
+
+
 # ------------------------------------------------------------------ the list
 @frappe.whitelist()
 def packages():
@@ -184,17 +190,27 @@ def _item_choices(assemblies=None):
 		fields=["name", "lft", "rgt"])}
 	at = {g.name: g.lft for g in frappe.get_all("Item Group", fields=["name", "lft"])}
 	add_ons = set(add_on_groups())
+	# An Item's make and capacity (its Specifications), where the site has them: choosing a panel
+	# or an inverter fills its row's make and wattage or kW from them.
+	spec = [f for f in ("make", "model", "capacity") if frappe.db.has_column("Item", f)]
+	fields = ["name", "item_name", "item_group", "description"] + spec
 	items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", list(set(_under(groups)) | add_ons)]},
-		fields=["name", "item_name", "item_group", "description"], order_by="item_name asc", limit_page_length=ITEM_LIMIT)
+		fields=fields, order_by="item_name asc", limit_page_length=ITEM_LIMIT)
 	listed = {i.name for i in items}
 	items += frappe.get_all("Item", filters={"disabled": 0, "name": ["in", [a for a in assemblies if a not in listed]]},
-		fields=["name", "item_name", "item_group", "description"], order_by="item_name asc") if assemblies else []
+		fields=fields, order_by="item_name asc") if assemblies else []
 	out = {g: [] for g in groups}
 	for item in items:
 		text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", item.description or ""))).strip() or item.item_name
 		kind = assemblies.get(item.name)
 		entry = {"value": item.name, "label": _tagged(item.item_name if item.item_name == item.name else
 			"{0} ({1})".format(item.item_name, item.name), kind), "text": text, "group": item.item_group, "kind": kind}
+		if item.get("make"):
+			entry["make"] = item.make
+		if item.get("model"):
+			entry["model"] = item.model
+		if capacity_number(item.get("capacity")):
+			entry["capacity"] = capacity_number(item.capacity)
 		# Each Item in its own category's list - a bundle or a BOM too, so an inverter bundle is
 		# not offered as a panel; one of no category is offered in every list.
 		homes = [g for g, (lft, rgt) in groups.items() if lft <= at.get(item.item_group, -1) <= rgt]
@@ -262,7 +278,7 @@ def _choices():
 			"technology": m.technology, "company": m.company, "active": cint(m.is_active)} for m in makes],
 		"Inverter Model": [{"value": m.name, "label": "{0}, {1}, {2}, {3:g} kW".format(m.model_name,
 			make_name.get(m.inverter_make) or m.inverter_make or "", m.inverter_phase or "", flt(m.capacity_kw)),
-			"make": m.inverter_make, "phase": m.inverter_phase} for m in models],
+			"make": m.inverter_make, "phase": m.inverter_phase, "kw": flt(m.capacity_kw)} for m in models],
 		"Component Technology": [{"value": t.name, "label": t.technology_name or t.name, "type": t.component_type,
 			"company": t.company} for t in frappe.get_all("Component Technology", filters={"is_active": 1},
 				fields=["name", "technology_name", "component_type", "company"], order_by="technology_name")],
