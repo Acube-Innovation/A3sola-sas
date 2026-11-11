@@ -22,6 +22,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, format_datetime
 
+from a3_sola.api import dealer_commission
 from a3_sola.api.package_items import ADD_ON_GROUP, CATEGORY, add_on_groups
 from a3_sola.api.package_kits import KIT_FIELDS
 from a3_sola.api.portal_users import require_admin
@@ -192,7 +193,7 @@ def _item_choices(assemblies=None):
 	add_ons = set(add_on_groups())
 	# An Item's make and capacity (its Specifications), where the site has them: choosing a panel
 	# or an inverter fills its row's make and wattage or kW from them.
-	spec = [f for f in ("make", "model", "capacity") if frappe.db.has_column("Item", f)]
+	spec = [f for f in ("make", "model", "capacity", "phase", "inverter_topology") if frappe.db.has_column("Item", f)]
 	fields = ["name", "item_name", "item_group", "description"] + spec
 	items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", list(set(_under(groups)) | add_ons)]},
 		fields=fields, order_by="item_name asc", limit_page_length=ITEM_LIMIT)
@@ -209,6 +210,9 @@ def _item_choices(assemblies=None):
 			entry["make"] = item.make
 		if item.get("model"):
 			entry["model"] = item.model
+		for field in ("phase", "inverter_topology"):
+			if item.get(field):
+				entry[field] = item.get(field)
 		if capacity_number(item.get("capacity")):
 			entry["capacity"] = capacity_number(item.capacity)
 		# Each Item in its own category's list - a bundle or a BOM too, so an inverter bundle is
@@ -344,6 +348,8 @@ def package(name=None, copy_from=None):
 	return {"name": None if doc.is_new() else doc.name, "title": doc.package_name or _("New package"),
 		"values": values, "tabs": tabs, "tables": tables, "choices": _choices(),
 		"item_text": ITEM_TEXT, "exact_group": list(EXACT_GROUP), "category": CATEGORY,
+		# The Expenses row the package's dealer commission rule prices (api/dealer_commission).
+		"commission_item": dealer_commission.ITEM,
 		"modified": str(doc.modified) if not doc.is_new() else None}
 
 
