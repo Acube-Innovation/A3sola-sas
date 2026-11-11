@@ -1,0 +1,77 @@
+{#- The builder's Proposal tab: the proposal's first page over the saved options. Who it is for
+    is the estimate's, shown; the date, customer and covering letter are asked; the options are
+    its estimates, the recommended first as the base. Context `proposal` from
+    api/portal_proposal.proposal_state; portal_estimate_builder.js paints the options and saves. -#}
+{%- macro control(f) %}
+	{%- if f.locked %}
+	<span class="a3s-de-proposal__locked" id="fld-{{ f.fieldname }}" data-value="{{ f.value | e }}">{{ f.display or "—" }}</span>
+	{%- elif f.input == "select" %}
+	<select id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" aria-label="{{ f.label | e }}">
+		{%- for o in f.options %}
+		<option value="{{ o.value | e }}"{% if o.value == f.value %} selected{% endif %}>{{ o.label | e }}</option>
+		{%- endfor %}
+	</select>
+	{%- elif f.input == "textarea" %}
+	<textarea id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" rows="4" aria-label="{{ f.label | e }}">{{ f.value | e }}</textarea>
+	{%- else %}
+	<input type="{{ f.input }}" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}" aria-label="{{ f.label | e }}">
+	{%- endif %}
+{%- endmacro %}
+<section class="a3s-card a3s-de-compare a3s-de-proposal" id="de-proposal-panel" hidden aria-labelledby="de-proposal-title">
+	<div class="a3s-de-compare__head">
+		<div>
+			<h3 class="a3s-de-card__title" id="de-proposal-title">Proposal</h3>
+			<p class="a3s-de-sub" id="de-proposal-sub"></p>
+		</div>
+		<div class="a3s-de-proposal__head-actions" id="de-proposal-head"></div>
+	</div>
+	<form class="a3s-form a3s-de-proposal__form" id="de-proposal-form" novalidate>
+		<div class="a3s-de-proposal__grid">
+			{%- for s in proposal.sections %}
+			<section class="a3s-de-proposal__card{% if s.wide %} is-wide{% endif %}">
+				<h4 class="a3s-de-proposal__card-title">{{ s.title | e }}</h4>
+				{%- if s.note %}<p class="a3s-field__hint a3s-pp__note">{{ s.note | e }}</p>{% endif %}
+				<div class="a3s-form__grid">
+					{%- for f in s.fields %}
+					<div class="a3s-field{% if s.wide %} a3s-field--wide{% endif %}">
+						<label for="fld-{{ f.fieldname }}">{{ f.label | e }}{% if f.reqd and not f.locked %} <span class="a3s-req">*</span>{% endif %}</label>
+						{{ control(f) }}
+					</div>
+					{%- endfor %}
+				</div>
+			</section>
+			{%- endfor %}
+			<section class="a3s-de-proposal__card">
+				<h4 class="a3s-de-proposal__card-title">Site &amp; Connection</h4>
+				<p class="a3s-field__hint a3s-pp__note">From the customer's record. Change them on the customer.</p>
+				<dl class="a3s-pp__site">
+					{%- for s in proposal.site %}
+					<div><dt>{{ s.label | e }}</dt><dd>{% if s.fieldname == "google_location_url" and s.value %}<a href="{{ s.value | e }}" target="_blank" rel="noopener">Open map</a>{% else %}{{ s.value or "—" }}{% endif %}</dd></div>
+					{%- endfor %}
+				</dl>
+			</section>
+			<section class="a3s-de-proposal__card is-wide">
+				<h4 class="a3s-de-proposal__card-title">Design estimates</h4>
+				<p class="a3s-field__hint a3s-pp__note">The options of this design, each saved as an estimate. The recommended option is the base: what the proposal is generated from and what the others are compared with.</p>
+				<div class="a3s-tablewrap">
+					<table class="a3s-table a3s-pp__rows">
+						<thead><tr><th>No.</th><th>Package</th><th>Chosen parts</th><th>Estimate</th></tr></thead>
+						<tbody id="de-proposal-rows"></tbody>
+					</table>
+				</div>
+				<p class="a3s-form__status" id="de-proposal-unsaved" role="status"></p>
+			</section>
+		</div>
+		<div class="a3s-de-actions a3s-de-proposal__actions">
+			<p class="a3s-form__status" id="de-proposal-status" role="status" aria-live="polite"></p>
+			<button type="button" class="a3s-btn a3s-btn--ghost" id="de-proposal-saveall" hidden>
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+				<span>Save all options</span>
+			</button>
+			<button type="submit" class="a3s-btn a3s-btn--primary" id="de-proposal-save">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+				<span id="de-proposal-save-label">Create proposal</span>
+			</button>
+		</div>
+	</form>
+</section>

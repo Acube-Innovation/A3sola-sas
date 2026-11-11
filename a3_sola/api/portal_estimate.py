@@ -183,43 +183,46 @@ LINKED_SECTIONS = (
 )
 LINKED_BY_KEY = {section["key"]: section for section in LINKED_SECTIONS}
 
-# A BOM table's row, as the package's: an Item, its UOM, how many and at what rate.
+# A BOM table's row, as the package's: a category, then an Item of it - which fills the
+# description - its UOM, how many and at what rate. A Product Bundle or an Item with a BOM is
+# replaced by its items when the tab is worked out (api/package_kits).
 BOM_FIELDS = (
-	{"fieldname": "item", "choices": "bom_item", "required": True},
+	{"fieldname": "category", "choices": "bom_category", "column": False, "hint": "Narrows the Items offered."},
+	{"fieldname": "item", "choices": "bom_item", "filter_by": "category", "required": True, "fills": {"description": "text"},
+		"hint": "A Product Bundle, or an Item with a BOM, is replaced by its items, each at its selling price."},
+	{"fieldname": "description", "column": False},
 	{"fieldname": "uom", "choices": "uom", "hint": "Left blank, the Item's own unit."},
 	{"fieldname": "qty"},
 	{"fieldname": "rate"},
 )
 BOM_SECTION = {
-	"fields": BOM_FIELDS, "computed": ("category", "amount"),
+	"fields": BOM_FIELDS, "computed": ("amount",),
 	# Not a line of the commercials: the tab's total is its own rows'.
 	"record": True,
-	"compact": {"title": (("item", ""),), "sub": (("category", ""), ("uom", "")), "count": "qty"},
+	"compact": {"title": (("item", ""),), "sub": (("description", ""), ("category", ""), ("uom", "")), "count": "qty"},
 }
 
 # After the charges: the estimate's own table of extras offered beside the system, copied
 # from the package. An Option is shown and printed in the proposal; one that is not is priced.
 TRAILING_SECTIONS = (
-	# The Solar Panel popup's fields, after the add-on's own type and item: an extra panel is
-	# chosen as a panel is. Not an Option, it is added to the commercials.
+	# As the package's add-on row: its group first, then an Item of that group, which fills the
+	# description; its rate and quantity. An Item of the Modules group is an extra panel (the
+	# estimate works out its Wp). Not an Option, it is added to the commercials.
 	{"key": "optional_add_ons", "label": "Optional Add-ons", "icon": "star", "fields": (
-		{"fieldname": "add_on_type", "choices": "add_on_type"},
-		{"fieldname": "item", "column": False, "hint": "Printed in the proposal. An Extra Panel left blank is named from its panel."},
-		{"fieldname": "panel_type", "choices": "panel_type"},
-		{"fieldname": "panel_capacity_wp"},
-		{"fieldname": "panel_count", "column": False, "hint": True},
-		{"fieldname": "panel_variant", "choices": "module_technology"},
-		{"fieldname": "panel_make", "choices": "module_make", "filter_by": "panel_variant"},
-		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: offered beside the system, not added to the commercials. No: added to the total."},
+		{"fieldname": "item_group", "choices": "add_on_group", "column": False, "hint": "Choose the group first; it narrows the Items."},
+		{"fieldname": "item_code", "choices": "add_on_item", "filter_by": "item_group", "column": False, "fills": {"item": "text"}},
+		{"fieldname": "item", "hint": "Printed in the proposal. Filled from the Item chosen."},
 		{"fieldname": "rate"},
+		{"fieldname": "panel_count", "hint": True},
+		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: offered beside the system, not added to the commercials. No: added to the total."},
 	), "computed": ("nos", "amount"),
-		"compact": {"title": (("add_on_type", ""), ("panel_make", ""), ("panel_capacity_wp", " Wp")),
-			"sub": (("item", ""),)}},
-	# Last, the job's bill of materials and what it costs to build, copied from the package for
-	# the Items the estimate uses (Solar Design Estimate.fill_boms_from_package) and changed
-	# here when this job needs otherwise. A record: the commercials are not built from them.
-	{"key": "material_bom", "label": "Material BOM", "icon": "stack", **BOM_SECTION},
-	{"key": "structure_bom", "label": "Structure BOM", "icon": "wrench", **BOM_SECTION},
+		"compact": {"title": (("item", ""),), "sub": (("item_group", ""), ("item_code", ""))}},
+	# Last, the job's bill of materials and what it costs to build - Materials, Structure and
+	# Expenses as the package has them - copied from the package for the Items the estimate uses
+	# (Solar Design Estimate.fill_boms_from_package) and changed here when this job needs
+	# otherwise. A record: the commercials are not built from them.
+	{"key": "material_bom", "label": "Materials", "icon": "stack", **BOM_SECTION},
+	{"key": "structure_bom", "label": "Structure", "icon": "wrench", **BOM_SECTION},
 	{"key": "bom_expenses", "label": "Expenses", "icon": "receipt", **BOM_SECTION},
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
@@ -614,8 +617,14 @@ def _choices(doc):
 				fields=["name", "make_name", "technology"], order_by="make_name")
 		]
 
+	from a3_sola.api.package_items import add_on_groups as _add_on_groups
+
 	meta = frappe.get_meta("Design Estimate BOS Item")
 	bos_items = [o for o in (meta.get_field("item").options or "").split("\n") if o]
+	bom_items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["!=", "Solar Packages"]},
+		fields=["name", "item_name", "item_group", "description"], order_by="item_name")
+	bom_groups = sorted({r.item_group for r in bom_items if r.item_group})
+	add_on_groups = _add_on_groups()
 	bos_make = [
 		{"value": r.name, "label": r.make_name, "filter": item}
 		for item in bos_items
@@ -650,11 +659,18 @@ def _choices(doc):
 		"battery_technology": technologies("Battery"),
 		"battery_make": makes("Battery"),
 		"bos_item": [{"value": v, "label": v} for v in bos_items],
-		# A BOM row's Item: any but the packages themselves, and its unit.
-		"bom_item": [{"value": r.name, "label": r.item_name if r.item_name == r.name else "{0} ({1})".format(r.item_name, r.name)}
-			for r in frappe.get_all("Item", filters={"disabled": 0, "item_group": ["!=", "Solar Packages"]},
-				fields=["name", "item_name"], order_by="item_name")],
+		# A BOM row's category and Item: any Item but the packages themselves, under its group,
+		# with the description its choice fills in; and its unit.
+		"bom_category": [{"value": g, "label": g} for g in bom_groups],
+		"bom_item": [{"value": r.name, "label": r.item_name if r.item_name == r.name else "{0} ({1})".format(r.item_name, r.name),
+			"filter": r.item_group or "", "text": _plain(r.description) or r.item_name} for r in bom_items],
 		"uom": [{"value": u, "label": u} for u in frappe.get_all("UOM", filters={"enabled": 1}, pluck="name", order_by="name")],
+		# An add-on's group - Optional Add-ons, or any group of parts - and the Items of it.
+		"add_on_group": [{"value": g, "label": g} for g in add_on_groups],
+		"add_on_item": [{"value": r.name, "label": r.item_name if r.item_name == r.name else "{0} ({1})".format(r.item_name, r.name),
+			"filter": r.item_group or "", "text": _plain(r.description) or r.item_name}
+			for r in frappe.get_all("Item", filters={"disabled": 0, "item_group": ["in", add_on_groups or [""]]},
+				fields=["name", "item_name", "item_group", "description"], order_by="item_name")],
 		"bos_make": bos_make,
 		"mounting_make": makes("Mounting Structure"),
 	}
@@ -672,6 +688,11 @@ def _choices(doc):
 				fields=["name", "item_name"], order_by="item_name")
 		]
 	return out
+
+
+def _plain(html):
+	"""An Item's description as one line of text."""
+	return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html or "")).strip()
 
 
 def group_item_choices(group):
@@ -877,6 +898,7 @@ def builder_state(doc, editable=None):
 		"editable": bool(editable),
 		"docstatus": cint(doc.docstatus),
 		"pdf_route": "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name) if saved else "",
+		"pdf_view_route": "/api/method/a3_sola.api.portal_estimate.download_pdf?view=1&name=" + frappe.utils.quote(doc.name) if saved else "",
 		"view_route": "/a3solaportal/{0}/{1}".format(SLUG, frappe.utils.quote(doc.name)) if saved else "",
 		"summary": [
 			{"label": _("Proposed size"), "value": "{0:g} kW".format(flt(doc.final_capacity_kw))},
@@ -891,17 +913,9 @@ def builder_state(doc, editable=None):
 		"is_admin": is_admin(),
 		"choices": _choices(doc),
 		"commercials": commercials,
-		# The proposal this saved option is offered in, or the way to one.
-		"proposal_action": _proposal_action(doc.name) if saved else None,
 		# Said on the last change without stopping it, as the inverter sizing with Options.
 		"warnings": list(doc.flags.get("warnings") or []),
 	}
-
-
-def _proposal_action(name):
-	from a3_sola.api import portal_proposal
-
-	return portal_proposal.proposal_action(name)
 
 
 # --------------------------------------------------------------- option tabs
@@ -1106,13 +1120,17 @@ def _tab_doc(root, option, changes, permtype="read"):
 
 
 def _payload(root, option, doc, editable=None):
+	from a3_sola.api import portal_proposal
+
 	frappe.local.message_log = []  # worked out, not saved: the page shows its own messages
 	root_editable = bool(root.has_permission("write")) and cint(root.docstatus) == 0
 	return {"tabs": option_tabs(root), "option": option or "", "root": root.name,
 		"details_route": details_route(root.name) if root_editable else "",
 		# Options can be taken off a draft estimate the person may change.
 		"can_remove": root_editable and len(root.get("sizing_options") or []) > 1,
-		"state": builder_state(doc, editable)}
+		"state": builder_state(doc, editable),
+		# The Proposal tab: the proposal of the options, as it stands after this.
+		"proposal": portal_proposal.proposal_state(root)}
 
 
 @frappe.whitelist()
@@ -1317,8 +1335,9 @@ def comparison_pdf(name, download=0):
 	frappe.local.response.type = "download" if cint(download) else "pdf"
 
 
-def page_json(doc):
-	"""Step two's first paint: the tabs of `doc`'s root estimate, on the tab `doc` is."""
+def page_json(doc, open_tab=None):
+	"""Step two's first paint: the tabs of `doc`'s root estimate, on the tab `doc` is - or, with
+	`open_tab` "proposal", opened on the Proposal tab."""
 	root = root_of(doc)
 	option = option_key(root, doc)
 	editable = None
@@ -1327,6 +1346,7 @@ def page_json(doc):
 	else:
 		target, editable = _tab_doc(root, option, [])
 	payload = _payload(root, option, target, editable)
+	payload["open_tab"] = open_tab or ""
 	return json.dumps(payload, default=str).replace("</", "<\\/")
 
 

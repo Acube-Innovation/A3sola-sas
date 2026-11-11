@@ -29,6 +29,11 @@ TABLES = {
 	"structure_boms": {"item": "item", "qty": "qty", "rate": "rate", "text": "description", "uom": "uom", "category": "category"},
 	"expenses": {"item": "item", "qty": "qty", "rate": "rate", "text": "description", "uom": "uom", "category": "category"},
 }
+#: The design estimate's Materials, Structure and Expenses: the same rows, so a bundle or BOM
+#: added there is replaced by its items too (Solar Design Estimate.open_kits).
+ESTIMATE_TABLES = {
+	"material_bom": TABLES["material_bom"], "structure_bom": TABLES["structure_boms"], "bom_expenses": TABLES["expenses"],
+}
 #: The tabs whose rows are options: a kit's rows there are one option, its first row's.
 OPTION_TABLES = ("modules", "inverters")
 #: What a row from a bundle or BOM says of it.
@@ -78,9 +83,13 @@ def selling_rate(item, uom=None):
 	return flt(hit.price_list_rate) if hit else 0.0
 
 
+def spec_of(table):
+	return TABLES.get(table) or ESTIMATE_TABLES.get(table)
+
+
 def opens(table, row):
 	"""Whether a row is to be replaced by its items: a bundle or BOM not yet opened."""
-	spec = TABLES.get(table)
+	spec = spec_of(table)
 	return bool(spec and not row.get("bundle_ref") and assembly(row.get(spec["item"])))
 
 
@@ -92,7 +101,7 @@ def expand(table, row):
 	description."""
 	from a3_sola.api.package_bom_tables import item_text
 
-	spec = TABLES[table]
+	spec = spec_of(table)
 	found = assembly(row.get(spec["item"])) if not row.get("bundle_ref") else None
 	lines = parts(*found) if found else []
 	if not lines:
@@ -129,10 +138,11 @@ def expand(table, row):
 	return out
 
 
-def open_up(doc):
-	"""Every bundle or BOM row of the package's tabs replaced by its items, in its place; then on
-	the panel and inverter tabs, each kit led by an option row and its parts never the default."""
-	for table in TABLES:
+def open_up(doc, tables=None):
+	"""Every bundle or BOM row of the package's tabs (or of the `tables` given, an estimate's)
+	replaced by its items, in its place; then on the panel and inverter tabs, each kit led by an
+	option row and its parts never the default."""
+	for table in tables or TABLES:
 		rows = doc.get(table) or []
 		if any(opens(table, r) for r in rows):
 			out = []
@@ -166,7 +176,7 @@ def expand_row(table, row):
 	from a3_sola.api.portal_users import require_admin
 
 	require_admin()
-	if table not in TABLES:
+	if not spec_of(table):
 		frappe.throw(frappe._("Not a table a bundle opens into: {0}.").format(table))
 	row = json.loads(row) if isinstance(row, str) else row or {}
 	return expand(table, frappe._dict(row))

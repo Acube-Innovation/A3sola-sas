@@ -1,15 +1,20 @@
 /* Copyright (c) 2026, Acube Innovations and contributors
  * For license information, please see license.txt
  *
- * Step two of the design estimate builder: a tab per option chosen on step one, then
- * Compare. In a tab - left: the System & Options tables; middle: the chosen table's rows,
- * a row added or changed in a popup; right: what each table costs, the tax and the total.
+ * Step two of the design proposal: a tab per option chosen on step one, then Compare, then
+ * Proposal. In a tab - left: the System & Options tables; middle: the chosen table's rows,
+ * a row added or changed in a popup; right: what each table costs, the tax and the total,
+ * and the saved option's print.
  *
  * A change is worked out on the server at once - counts, expense rows and prices are its to
  * work out - and held, with the tab's other changes, until the tab's Save. The recommended
  * option saves this estimate; any other option is saved as an estimate of its own for the
  * same lead. Additional structure, cable and discount rows are records of their own and are
  * kept as they are made, on a saved option only.
+ *
+ * The Proposal tab is step three: the proposal's first page over the saved options, saved to
+ * api/portal_proposal.save_from_estimate, which makes the proposal (or saves it again, as a
+ * new version once issued) and opens its page.
  */
 (function () {
 	"use strict";
@@ -17,11 +22,13 @@
 	var dataEl = document.getElementById("a3s-de-data");
 	if (!dataEl) return;
 
-	var page = JSON.parse(dataEl.textContent);  // {tabs, option, root, details_route, state}
+	var page = JSON.parse(dataEl.textContent);  // {tabs, option, root, details_route, state, proposal, open_tab}
 	var COMPARE = "__compare__";
+	var PROPOSAL = "__proposal__";
 	var LINKED = { additional_structure: true, additional_cable: true, special_discount: true };
-	var option = page.option;      // the tab on show: an option row's name, or COMPARE
+	var option = page.option;      // the tab on show: an option row's name, COMPARE or PROPOSAL
 	var state = page.state;        // that tab as last worked out
+	var proposal = page.proposal;  // the Proposal tab, as last worked out (portal_proposal.proposal_state)
 	var cache = {};                // option -> state, so a tab comes back as it was left
 	var pending = {};              // option -> its unsaved changes, in order
 	var comparison = null;         // the last Compare, or null when it is out of date
@@ -98,7 +105,11 @@
 	}
 
 	function call(method, args) {
-		return fetch("/api/method/a3_sola.api.portal_estimate." + method, {
+		return post("a3_sola.api.portal_estimate." + method, args);
+	}
+
+	function post(path, args) {
+		return fetch("/api/method/" + path, {
 			method: "POST",
 			credentials: "same-origin",
 			headers: { "Content-Type": "application/json", "Accept": "application/json", "X-Frappe-CSRF-Token": csrf },
@@ -155,6 +166,19 @@
 			compare.addEventListener("click", function () { selectTab(COMPARE); });
 			bar.appendChild(compare);
 		}
+		/* Step three: the proposal of the saved options - made here, or saved again. */
+		var existing = proposal && proposal.existing;
+		var waiting = proposalWaiting();
+		var proposalTab = el("button", {
+			type: "button", role: "tab", class: "a3s-de-tab a3s-de-tab--compare a3s-de-tab--proposal" + (existing ? "" : " is-unsaved"),
+			"aria-selected": option === PROPOSAL ? "true" : "false", disabled: busy ? "disabled" : null
+		}, [
+			el("span", { class: "a3s-de-tab__top" }, [icon("doc"), el("strong", { text: "Proposal" }),
+				waiting.length ? el("span", { class: "a3s-de-tab__dot", title: "Options to save first", "aria-label": "Options to save first" }) : null]),
+			el("span", { class: "a3s-de-tab__state", text: existing ? existing.name + " · " + existing.status : "Not made yet" })
+		]);
+		proposalTab.addEventListener("click", function () { selectTab(PROPOSAL); });
+		bar.appendChild(proposalTab);
 		/* Save all (every option saved in turn), with the way back to the details beside it. */
 		var actions = el("div", { class: "a3s-de-tabs__actions" });
 		if (page.tabs.some(function (t) { return t.docstatus !== 1; })) {
@@ -326,6 +350,7 @@
 						page.tabs = payload.tabs;
 						page.details_route = payload.details_route;
 						page.can_remove = payload.can_remove;
+						if (payload.proposal) proposal = payload.proposal;
 						saved += 1;
 						line.className = "is-done";
 						line.lastChild.textContent = "Saved as " + payload.state.name + (payload.state.name === page.root ? " (this estimate)" : "");
@@ -352,7 +377,7 @@
 	$("de-saveall-close").addEventListener("click", function () {
 		$("de-saveall").hidden = true;
 		// The tab on show stays, now with the estimate it was saved as.
-		if (option !== COMPARE && cache[option]) {
+		if (option !== COMPARE && option !== PROPOSAL && cache[option]) {
 			state = cache[option];
 			keepActive();
 		}
@@ -368,6 +393,10 @@
 		if (key === COMPARE) {
 			paint();
 			loadCompare();
+			return;
+		}
+		if (key === PROPOSAL) {
+			paint();
 			return;
 		}
 		if (cache[key]) {
@@ -386,15 +415,21 @@
 	/* ------------------------------------------------------------ header */
 	function paintHeader() {
 		/* The title is the estimate on show: a saved option's own ID, else this estimate's. */
-		var shown = option !== COMPARE && state.saved && state.name ? state.name : page.root;
+		var aside = option === COMPARE || option === PROPOSAL;
+		var shown = !aside && state.saved && state.name ? state.name : page.root;
 		$("de-title").textContent = shown + (state.title && state.title !== shown ? " · " + state.title : "");
 		$("de-details-link").href = page.details_route || "#";
 		$("de-details-link").hidden = !page.details_route;
-		var comparing = option === COMPARE;
-		$("de-tabhead").hidden = comparing;
-		$("a3s-de-builder").hidden = comparing;
+		var comparing = option === COMPARE, proposing = option === PROPOSAL;
+		$("de-tabhead").hidden = aside;
+		$("a3s-de-builder").hidden = aside;
 		$("de-compare").hidden = !comparing;
-		if (comparing) return;
+		$("de-proposal-panel").hidden = !proposing;
+		/* The steps above the title: the Proposal tab is step three. */
+		Array.prototype.forEach.call(document.querySelectorAll("#de-steps [data-step]"), function (step) {
+			step.classList.toggle("is-current", step.dataset.step === (proposing ? "3" : "2"));
+		});
+		if (aside) return;
 
 		var t = tab(option) || { number: 1, package: "", estimate: state.name, recommended: true };
 		var dirty = changes(option).length > 0;
@@ -409,15 +444,6 @@
 		$("de-pdf-link").href = state.pdf_route || "#";
 		$("de-pdf-link").hidden = !state.saved || dirty;
 		$("de-whatsapp").hidden = !state.saved || dirty;
-		/* The proposal this option is in, or the way to one - as at the foot of Commercials. */
-		var action = state.proposal_action;
-		var proposalLink = $("de-proposal-link");
-		proposalLink.hidden = !action || dirty;
-		if (action) {
-			proposalLink.href = action.href;
-			proposalLink.title = action.hint || "";
-			$("de-proposal-label").textContent = action.label;
-		}
 		$("de-discard").hidden = !dirty || busy;
 		var save = $("de-save");
 		var canSave = state.editable && (dirty || !state.saved);
@@ -680,18 +706,108 @@
 			totals.appendChild(el("p", { class: "a3s-field__hint", text: "GST on " + money.format(c.taxable) + "; KSEB fees are already gross." }));
 		}
 
-		var proposal = $("de-proposal");
-		proposal.innerHTML = "";
-		var action = state.proposal_action;
-		if (action && !changes(option).length) {
-			proposal.appendChild(el("a", { class: "a3s-btn a3s-btn--primary a3s-btn--block a3s-de-com__proposal", href: action.href }, [
-				icon("doc"), el("span", { text: action.label })
-			]));
-			proposal.appendChild(el("p", { class: "a3s-edit__hint", text: action.hint }));
-		} else if (!state.saved) {
-			proposal.appendChild(el("p", { class: "a3s-edit__hint", text: "Save this option to add it to a proposal." }));
+		/* The saved option's own print, under its figures: read in the browser, or saved. */
+		var print = $("de-com-print");
+		print.innerHTML = "";
+		if (state.saved && !changes(option).length) {
+			var view = el("a", { class: "a3s-btn a3s-btn--secondary a3s-de-com__pdf", href: state.pdf_view_route, target: "_blank", rel: "noopener" },
+				[icon("eye"), el("span", { text: "View estimate PDF" })]);
+			var save = el("a", { class: "a3s-square-btn", href: state.pdf_route, download: "", title: "Download estimate PDF", "aria-label": "Download estimate PDF" }, [icon("download")]);
+			print.appendChild(el("div", { class: "a3s-de-com__print-row" }, [view, save]));
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: "This option's estimate as a document. The proposal of every option is made on the Proposal tab." }));
+		} else {
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: state.saved ? "Save the changes to print this option." : "Save this option to print it, and to make the proposal." }));
 		}
 	}
+
+	/* ------------------------------------------------------------ proposal */
+	/* The options still to be saved before the proposal can be made: those never saved as an
+	   estimate, and those with changes held in their tabs. */
+	function proposalWaiting() {
+		var out = [];
+		page.tabs.forEach(function (t) {
+			if (!t.estimate) out.push("Option " + t.number + " is not saved as an estimate");
+			else if (changes(t.key).length) out.push("Option " + t.number + " has unsaved changes");
+		});
+		return out;
+	}
+
+	function paintProposal() {
+		if (option !== PROPOSAL || !proposal) return;
+		var existing = proposal.existing;
+		var waiting = proposalWaiting();
+		$("de-proposal-sub").textContent = existing
+			? (existing.issued ? "Issued proposal " + existing.name + " (" + existing.status + "). Saving opens version " + existing.next_version + "; the version already sent stays as it was."
+				: "Draft proposal " + existing.name + ". Saving updates it.")
+			: "No proposal yet. Saving makes one of the options below, and opens it.";
+		var head = $("de-proposal-head");
+		head.innerHTML = "";
+		if (existing) {
+			head.appendChild(el("a", { class: "a3s-btn a3s-btn--ghost", href: existing.route }, [icon("eye"), el("span", { text: "View proposal" })]));
+		}
+		var body = $("de-proposal-rows");
+		body.innerHTML = "";
+		proposal.options.forEach(function (o, i) {
+			var t = tab(o.key) || {};
+			var saved = t.estimate || o.estimate;
+			var pkg = el("td", { class: "a3s-pp__pkg" }, [
+				el("div", { class: "a3s-pp__pkgtop" }, [el("strong", { text: o.package || "No package" }), o.recommended ? el("span", { class: "a3s-pp__base", text: "Base" }) : null]),
+				o.capacity ? el("div", { class: "a3s-pp__pkgsub", text: o.capacity }) : null
+			]);
+			var est = el("td", {});
+			if (saved) {
+				est.appendChild(el("a", { href: "/a3solaportal/design-estimates/" + encodeURIComponent(saved) + "/design", text: saved }));
+				if (changes(o.key).length) est.appendChild(el("span", { class: "a3s-pp__draft", text: "Unsaved changes" }));
+			} else {
+				est.appendChild(el("span", { class: "a3s-pp__draft", text: "Not saved yet" }));
+			}
+			body.appendChild(el("tr", { class: o.recommended ? "is-base" : "" }, [
+				el("td", { text: String(i + 1) }), pkg, el("td", { text: (o.parts || []).join(" · ") || "—" }), est
+			]));
+		});
+		var note = $("de-proposal-unsaved");
+		note.textContent = waiting.length ? waiting.join(". ") + ". Save all options, then make the proposal." : "";
+		note.classList.toggle("is-error", waiting.length > 0);
+		$("de-proposal-saveall").hidden = !waiting.length || !page.tabs.some(function (t) { return t.docstatus !== 1; });
+		var save = $("de-proposal-save");
+		save.disabled = busy || waiting.length > 0 || !proposal.can_write;
+		$("de-proposal-save-label").textContent = !existing ? "Create proposal"
+			: (existing.issued && existing.has_versions ? "Save as version " + existing.next_version : "Save proposal");
+		save.title = waiting.length ? "Save every option first." : (proposal.can_write ? "" : "You cannot change this proposal.");
+	}
+
+	$("de-proposal-saveall").addEventListener("click", saveAllOptions);
+
+	$("de-proposal-form").addEventListener("submit", function (event) {
+		event.preventDefault();
+		if (busy || proposalWaiting().length) return;
+		var form = $("de-proposal-form");
+		var values = {};
+		Array.prototype.forEach.call(form.elements, function (input) { if (input.name) values[input.name] = input.value; });
+		var required = ["customer_name", "location"];
+		var missing = required.filter(function (f) { return form.elements[f] && !String(form.elements[f].value || "").trim(); });
+		if (missing.length) {
+			setStatus("Fill in " + missing.map(function (f) { return form.elements[f].getAttribute("aria-label") || f; }).join(", ") + ".", "error", $("de-proposal-status"));
+			form.elements[missing[0]].focus();
+			return;
+		}
+		busy = true;
+		paintTabs();
+		$("de-proposal-save").disabled = true;
+		setStatus(proposal.existing ? "Saving the proposal…" : "Making the proposal…", null, $("de-proposal-status"));
+		post("a3_sola.api.portal_proposal.save_from_estimate", { name: page.root, values: values })
+			.then(function (result) {
+				setStatus("Saved. Opening the proposal…", "success", $("de-proposal-status"));
+				pending = {};
+				window.location.assign(result.route);
+			})
+			.catch(function (error) {
+				busy = false;
+				paintTabs();
+				paintProposal();
+				setStatus(error.message, "error", $("de-proposal-status"));
+			});
+	});
 
 	/* ------------------------------------------------------------- compare */
 	function paintCompare() {
@@ -780,6 +896,7 @@
 	function paint() {
 		paintTabs();
 		paintHeader();
+		if (option === PROPOSAL) { paintProposal(); return; }
 		if (option === COMPARE) return;
 		paintNav();
 		paintSaved();
@@ -829,6 +946,7 @@
 	function apply(payload, key, message, target) {
 		page.tabs = payload.tabs;
 		page.details_route = payload.details_route;
+		if (payload.proposal) proposal = payload.proposal;
 		cache[key] = payload.state;
 		comparison = null;
 		if (key === option) {
@@ -947,5 +1065,7 @@
 		}
 	});
 
+	/* Opened on the Proposal tab (?tab=proposal), else on the option's own. */
+	if (page.open_tab === "proposal") option = PROPOSAL;
 	paint();
 })();

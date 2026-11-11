@@ -17,11 +17,11 @@ def get_context(context):
 	doc = load_record("design-estimates", name, "write")
 	fill_shell(
 		context,
-		active_route="/a3solaportal/design-estimates",
+		active_route="/a3solaportal/proposals",
 		page_title="Details of " + doc.name,
 		crumbs=[
 			{"label": "Home", "href": "/a3solaportal/dashboard"},
-			{"label": "Solar Design Estimate", "href": "/a3solaportal/design-estimates"},
+			{"label": "Solar Design Proposal", "href": "/a3solaportal/proposals"},
 			{"label": doc.name, "href": record_route("design-estimates", doc.name)},
 			{"label": "Details"},
 		],

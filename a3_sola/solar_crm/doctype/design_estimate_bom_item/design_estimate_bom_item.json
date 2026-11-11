@@ -2,17 +2,23 @@
  "actions": [],
  "allow_rename": 0,
  "creation": "2026-11-08 17:00:00.000000",
- "description": "One line of a design estimate's Material BOM, Structure BOM or Expenses: an Item, how much of it and at what rate. Copied from its package for the estimate's inverter and roof, then the estimate's own to change. A record; the estimate's price is not built from it.",
+ "description": "One line of a design estimate's Materials, Structure or Expenses: an Item, its description, how much of it and at what rate - as the package's rows, copied for the estimate's inverter and panel, then the estimate's own to change. A Product Bundle or an Item with a BOM added here is replaced by its items, each saying what it came from. A record; the estimate's price is not built from it.",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "item",
+  "description",
   "category",
   "uom",
   "qty",
   "rate",
-  "amount"
+  "amount",
+  "sb_bundle",
+  "bundle_type",
+  "bundle_ref",
+  "bundle_qty",
+  "bundle_key"
  ],
  "fields": [
   {
@@ -25,14 +31,19 @@
    "reqd": 1
   },
   {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Item Description",
+   "description": "Filled from the Item when left blank."
+  },
+  {
    "columns": 2,
-   "fetch_from": "item.item_group",
    "fieldname": "category",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Category",
    "options": "Item Group",
-   "read_only": 1
+   "description": "Narrows the Items offered; set from the Item chosen."
   },
   {
    "columns": 1,
@@ -69,11 +80,43 @@
    "label": "Amount",
    "options": "INR",
    "read_only": 1
+  },
+  {
+   "fieldname": "sb_bundle",
+   "fieldtype": "Section Break",
+   "label": "From a Bundle or BOM",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "bundle_type",
+   "fieldtype": "Select",
+   "label": "From",
+   "options": "\nBundle\nBOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_ref",
+   "fieldtype": "Data",
+   "label": "Bundle / BOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_qty",
+   "fieldtype": "Float",
+   "label": "Bundle Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_key",
+   "fieldtype": "Data",
+   "label": "Bundle Key",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-11-08 17:00:00.000000",
+ "modified": "2026-11-11 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Design Estimate BOM Item",

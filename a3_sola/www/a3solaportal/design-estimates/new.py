@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Step one of a new design estimate: its details, in two columns. Next creates it."""
+"""Step one of a new design proposal: the design estimate's details, in two columns. Next creates
+the estimate and goes on to its options; the proposal itself is made on the last step."""
 
 import frappe
 
@@ -15,11 +16,11 @@ def get_context(context):
 	frappe.has_permission("Solar Design Estimate", "create", throw=True)
 	fill_shell(
 		context,
-		active_route="/a3solaportal/design-estimates",
-		page_title="New design estimate",
+		active_route="/a3solaportal/proposals",
+		page_title="New design proposal",
 		crumbs=[
 			{"label": "Home", "href": "/a3solaportal/dashboard"},
-			{"label": "Solar Design Estimate", "href": "/a3solaportal/design-estimates"},
+			{"label": "Solar Design Proposal", "href": "/a3solaportal/proposals"},
 			{"label": "New"},
 		],
 	)
@@ -39,6 +40,6 @@ def get_context(context):
 	context.columns = portal_estimate.detail_columns(prefill=prefill)
 	context.packages_json = portal_estimate.package_choices_json(context.columns)
 	context.profile = portal_estimate.subject_profile(prefill.get("lead"), prefill.get("solar_consumer"))
-	context.cancel_route = "/a3solaportal/design-estimates"
+	context.cancel_route = "/a3solaportal/proposals"
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context

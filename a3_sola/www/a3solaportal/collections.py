@@ -45,7 +45,11 @@ COLLECTIONS = {
 	                           ("Aadhaar Front", "user", "name, date of birth and gender"),
 	                           ("Aadhaar Back", "pin", "permanent address"),
 	                           ("Bank Proof", "bank", "bank, branch, IFSC and account number"))},
-	"proposals": {"doctype": "Solar Proposal", "title": "Solar Proposal", "singular": "proposal", "subtitle": "Offer document", "icon": "doc"},
+	# The Solar Design Proposal page: a proposal is made from a design estimate's builder (its
+	# Proposal tab), so New opens step one of a design estimate, and a proposal is edited in that
+	# builder (edit_route). The list adds the estimates not yet made into a proposal (proposals/index).
+	"proposals": {"doctype": "Solar Proposal", "title": "Solar Design Proposal", "singular": "design proposal", "subtitle": "Design and offer", "icon": "doc",
+	              "new_route": "/a3solaportal/design-estimates/new", "search_hint": "Search by customer name, proposal or lead ID"},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
 	# detail pages are the pricing builder (www/a3solaportal/quotations).
 	"quotations": {"doctype": "Quotation", "title": "Quotation", "singular": "quotation", "subtitle": "Priced offer", "icon": "calc"},
@@ -57,7 +61,9 @@ COLLECTIONS = {
 		# A week from today, on a working day; the person may change it, but not to a weekend.
 		"defaults": {"delivery_date": "a3_sola.overrides.sales_order.default_delivery_date"},
 		"no_weekend": ("delivery_date",)},
-	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Solar Design Estimate", "singular": "design estimate", "subtitle": "System sizing", "icon": "pen",
+	# The design estimate's own pages are the steps of a Solar Design Proposal (see "proposals");
+	# its list page sends the person to the proposals.
+	"design-estimates": {"doctype": "Solar Design Estimate", "title": "Design Proposal", "singular": "design proposal", "subtitle": "System sizing", "icon": "pen",
 	                     "list_filters": ["solar_consumer"], "search_hint": "Search by customer name, estimate, lead or site survey ID",
 	                     "list_edit": True},
 	# `edit_after_create`: the create form asks only the few fields a record needs to exist,
@@ -1138,7 +1144,12 @@ def record_route(slug, name):
 
 def edit_route(slug, name):
 	"""Where a record is edited: a design estimate in its builder, where the system and the
-	prices live; anything else in its edit form."""
+	prices live; a proposal in the builder of the estimate it quotes, whose Proposal tab saves
+	it again (api/portal_proposal.design_route_of); anything else in its edit form."""
+	if slug == "proposals":
+		from a3_sola.api.portal_proposal import design_route_of
+
+		return design_route_of(name) or record_route(slug, name) + "/edit"
 	return record_route(slug, name) + ("/design" if slug == "design-estimates" else "/edit")
 
 

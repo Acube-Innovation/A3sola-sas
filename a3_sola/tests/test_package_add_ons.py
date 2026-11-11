@@ -160,20 +160,18 @@ class TestEstimateAddOns(FrappeTestCase):
 		est.save()
 		self.assertEqual([r["item_html"] for r in print_cover.add_on_rows([est])], ["Monitoring for 5 years"])
 
-	def test_the_builder_shows_them_after_the_charges_with_the_panel_fields(self):
+	def test_the_builder_shows_them_after_the_charges_as_the_package_asks_them(self):
 		from a3_sola.api import portal_estimate
 
 		est = make_estimate(self.consumer, solar_package=self.pkg)
 		# After the charges, and before the BOM tabs that close the list (test_estimate_boms).
 		section = portal_estimate._sections(est)[-4]
 		self.assertEqual(section["key"], "optional_add_ons")
-		fields = {f["fieldname"] for f in section["fields"]}
-		# The panel's sizing fields; its module Item, specification and alternate makes are the
-		# system panel's own - an add-on names itself in its Item text.
-		panel = {f["fieldname"] for f in portal_estimate.SECTION_BY_KEY["panels"]["fields"]} - {
-			"panel_item", "specification", "alternate_makes"}
-		self.assertLessEqual(panel, fields)
-		self.assertTrue({"add_on_type", "item"} <= fields)
+		# As the package's add-on row: the group first, then an Item of it, the description it
+		# fills, the rate and the quantity; no type asked, no panel fields.
+		self.assertEqual([f["fieldname"] for f in section["fields"]], ["item_group", "item_code", "item", "rate", "panel_count", "is_option"])
+		item = next(f for f in section["fields"] if f["fieldname"] == "item_code")
+		self.assertEqual((item["filter_by"], item["fills"]), ("item_group", {"item": "text"}))
 
 	def test_an_add_on_taken_is_added_to_the_commercials(self):
 		est = make_estimate(self.consumer, solar_package=self.pkg)
