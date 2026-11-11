@@ -1,0 +1,27 @@
+{#- On the Solar Design Proposal list: the design estimates not yet made into a proposal, each
+    opening on its builder, where the Proposal tab makes one (api/portal_proposal.unproposed_estimates). -#}
+{%- if pending %}
+<section class="a3s-card a3s-pending" aria-labelledby="a3s-pending-title">
+	<div class="a3s-pending__head">
+		<h3 class="a3s-edit__card-title" id="a3s-pending-title">Not yet made into a proposal</h3>
+		<p class="a3s-field__hint">Design estimates with no proposal. Open one to finish its options and make the proposal on its Proposal tab.</p>
+	</div>
+	<ul class="a3s-pending__list">
+		{%- for e in pending %}
+		<li>
+			<a class="a3s-pending__row" href="{{ e.route }}">
+				<span class="a3s-pending__who">
+					<strong>{{ e.customer | e }}</strong>
+					<small>{{ e.name | e }}{% if e.draft %} &middot; Draft{% endif %}</small>
+				</span>
+				<span class="a3s-pending__what">
+					<span>{{ e.package or "No package" }}{% if e.capacity %} &middot; {{ e.capacity }}{% endif %}</span>
+					<small>{{ e.options }} option{{ "" if e.options == 1 else "s" }}{% if e.changed %} &middot; changed {{ e.changed }}{% endif %}</small>
+				</span>
+				<span class="a3s-pending__go" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-pen"></use></svg></span>
+			</a>
+		</li>
+		{%- endfor %}
+	</ul>
+</section>
+{%- endif %}

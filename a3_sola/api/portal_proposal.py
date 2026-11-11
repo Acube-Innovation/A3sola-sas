@@ -1,9 +1,16 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The portal's proposal page, new and edit, laid out as the desk form is: two tabs.
+"""The portal's proposal: made and saved again from a design estimate's builder, and the
+older proposal page (new and edit) laid out as the desk form is.
 
-Proposal Details asks for the lead first; its consumer, latest site survey, customer and
-site details and every design estimate it has are filled in from it, by the same helpers
+The Solar Design Proposal page lists the proposals; each is made on its design estimate's
+page - the details, then the system and commercials of each option, then the Proposal tab
+(`proposal_state`, `save_from_estimate`): the proposal's first page, with the saved options
+as its estimates, the recommended one the base. An estimate not yet made into a proposal is
+listed beside them (`unproposed_estimates`).
+
+The proposal page proper asks for the lead first; its consumer, latest site survey, customer
+and site details and every design estimate it has are filled in from it, by the same helpers
 the desk form calls (`proposal_defaults_for`, `lead_estimates`). Design Comparison shows
 those estimates compared, from `proposal_comparison`. Saving sends only what a person
 chooses - the fields below and the estimates in order - and the proposal's own `validate`
@@ -42,7 +49,7 @@ def page_context(context, name=None):
 	title = doc.name if doc else _("New proposal")
 	crumbs = [
 		{"label": "Home", "href": "/a3solaportal/dashboard"},
-		{"label": "Solar Proposal", "href": "/a3solaportal/" + SLUG},
+		{"label": "Solar Design Proposal", "href": "/a3solaportal/" + SLUG},
 	]
 	if doc:
 		crumbs.append({"label": doc.name, "href": record_route(SLUG, doc.name)})
@@ -109,37 +116,6 @@ def _source_estimate():
 			or not frappe.has_permission("Solar Design Estimate", "read", name):
 		return None
 	return name
-
-
-def proposal_action(estimate):
-	"""The proposal step from a design estimate, as {label, href, hint}, or None.
-
-	One proposal per lead, so: the proposal the estimate is already in; else the lead's
-	proposal, opened with this estimate added as an option (a re-quote is a new version of
-	it); else a new proposal, filled from the estimate. None when the user may do none of it.
-	"""
-	est = frappe.db.get_value("Solar Design Estimate", estimate, ["name", "lead", "solar_consumer"], as_dict=True)
-	if not est:
-		return None
-	query = "?" + frappe.utils.urlencode({"source_dt": "Solar Design Estimate", "source": est.name})
-	in_proposal = frappe.db.get_value("Solar Proposal Estimate",
-		{"solar_design_estimate": est.name, "parenttype": DOCTYPE, "docstatus": ["<", 2]}, "parent")
-	if in_proposal:
-		if not frappe.has_permission(DOCTYPE, "read", in_proposal):
-			return None
-		return {"label": _("View proposal"), "href": record_route(SLUG, in_proposal),
-			"hint": _("This estimate is an option of proposal {0}.").format(in_proposal)}
-	lead = est.lead or (frappe.db.get_value("Solar Consumer", est.solar_consumer, "lead") if est.solar_consumer else None)
-	existing = frappe.db.get_value(DOCTYPE, {"lead": lead, "docstatus": ["<", 2]}, "name") if lead else None
-	if existing:
-		if not frappe.has_permission(DOCTYPE, "write", existing):
-			return None
-		return {"label": _("Add to proposal"), "href": record_route(SLUG, existing) + "/edit" + query,
-			"hint": _("This lead already has proposal {0}; it opens with this estimate added as an option.").format(existing)}
-	if not frappe.has_permission(DOCTYPE, "create"):
-		return None
-	return {"label": _("Create proposal"), "href": "/a3solaportal/" + SLUG + "/new" + query,
-		"hint": _("Opens a new proposal filled in from this estimate.")}
 
 
 def _preset_lead():
@@ -357,6 +333,153 @@ def pdf(name, download=0):
 	frappe.local.response.filename = "{0}.pdf".format(doc.get("proposal_file_name") or doc.name)
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
+
+
+# ---------------------------------------------------- made from the design estimate
+#: What the proposal's first page asks for on the builder's Proposal tab. Who it is for is
+#: the estimate's, shown and not asked.
+WHO = ("lead", "solar_consumer", "site_survey")
+ASKED = ("proposal_date",) + CUSTOMER + LETTER
+
+
+def design_route_of(proposal):
+	"""Where a proposal is edited: the builder of the estimate it quotes - the one its base was
+	saved from - whose Proposal tab saves it again. None when that estimate is gone."""
+	from a3_sola.api import portal_estimate
+
+	base = frappe.db.get_value(DOCTYPE, proposal, "solar_design_estimate")
+	if not base or not frappe.db.exists("Solar Design Estimate", base):
+		return None
+	return portal_estimate.design_route(portal_estimate.root_of(frappe.get_doc("Solar Design Estimate", base)).name)
+
+
+def _estimates_of(root):
+	"""A root estimate and the estimates its options were saved as."""
+	return [root.name] + [r.design_estimate for r in root.get("sizing_options") or [] if r.design_estimate and r.design_estimate != root.name]
+
+
+def proposal_of(root):
+	"""The proposal a root estimate's options are in - the one that quotes any of them, else the
+	lead's one proposal - or None while there is none."""
+	names = _estimates_of(root)
+	found = frappe.db.get_value("Solar Proposal Estimate", {"solar_design_estimate": ["in", names], "parenttype": DOCTYPE,
+		"docstatus": ["<", 2]}, "parent")
+	if not found:
+		found = frappe.db.get_value(DOCTYPE, {"solar_design_estimate": ["in", names], "docstatus": ["<", 2]}, "name")
+	if not found and root.lead:
+		found = frappe.db.get_value(DOCTYPE, {"lead": root.lead, "docstatus": ["<", 2]}, "name")
+	return found
+
+
+def option_estimates(root):
+	"""The options of a root estimate as the proposal's estimates: the recommended first (the
+	base), then the rest in tab order, each with the estimate it is saved as - "" while not."""
+	from a3_sola.api import portal_estimate
+
+	tabs = portal_estimate.option_tabs(root)
+	return [{"key": t["key"], "number": t["number"], "recommended": t["recommended"], "estimate": t["estimate"] or "",
+		"package": t["package"], "capacity": t["capacity"], "parts": t["parts"],
+		"route": "/a3solaportal/design-estimates/{0}/design".format(frappe.utils.quote(t["estimate"])) if t["estimate"] else ""}
+		for t in sorted(tabs, key=lambda t: (not t["recommended"], t["number"]))]
+
+
+def proposal_state(root):
+	"""What the builder's Proposal tab paints: the proposal the options are in, if any; the
+	fields of its first page, valued from it, else from the estimate's lead and customer; the
+	site details; and the options as its estimates, those not saved yet marked."""
+	existing = proposal_of(root)
+	doc = frappe.get_doc(DOCTYPE, existing) if existing and frappe.has_permission(DOCTYPE, "read", existing) else None
+	lead = root.lead or (frappe.db.get_value("Solar Consumer", root.solar_consumer, "lead") if root.solar_consumer else None)
+	defaults = proposal_defaults_for(lead, root.solar_consumer) if (lead or root.solar_consumer) else {}
+	if doc:
+		values = {f: doc.get(f) for f in EDITABLE}
+	else:
+		values = {f: defaults.get(f) for f in CUSTOMER}
+		values.update({"lead": lead, "solar_consumer": root.solar_consumer or defaults.get("solar_consumer"),
+			"site_survey": root.site_survey or defaults.get("site_survey"), "remarks": None})
+	values["proposal_date"] = str(values.get("proposal_date") or today())
+	sections = _sections(values)
+	for section in sections:
+		for field in section["fields"]:
+			if field["fieldname"] in WHO:
+				# The estimate's: shown, not asked.
+				field["locked"] = True
+				field["display"] = link_title(frappe.get_meta(DOCTYPE).get_field(field["fieldname"]).options, field["value"]) if field["value"] else ""
+	sections[0]["note"] = _("Who it is for is the design estimate's. The rest is filled from the lead and its customer; change what the proposal should say.")
+	options = option_estimates(root)
+	current = doc.versions[-1] if doc and doc.versions else None
+	return {
+		"existing": {"name": doc.name, "route": record_route(SLUG, doc.name), "status": doc.status or "Draft",
+			"issued": doc.docstatus == 1, "has_versions": bool(doc.versions), "current_version": current.version_no if current else 0,
+			"next_version": (current.version_no if current else 0) + 1} if doc else None,
+		"can_write": bool(doc.has_permission("write") and doc.docstatus < 2) if doc else bool(frappe.has_permission(DOCTYPE, "create")),
+		"sections": sections,
+		"site": _site(doc or defaults),
+		"options": options,
+		"unsaved": [o["number"] for o in options if not o["estimate"]],
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def save_from_estimate(name, values):
+	"""Make the proposal of a design estimate's options from its builder's Proposal tab, or save
+	it again: every option, saved as an estimate, is one of its estimates, the recommended one
+	the base. An issued proposal takes the change as a new version. Returns the proposal's page."""
+	from a3_sola.api import portal_estimate
+
+	root = portal_estimate.root_of(portal_estimate._load(name, "read"))
+	options = option_estimates(root)
+	unsaved = [str(o["number"]) for o in options if not o["estimate"]]
+	if unsaved:
+		frappe.throw(_("Save every option first: Option {0} is not saved as an estimate yet.").format(", ".join(unsaved)),
+			title=_("Options Not Saved"))
+	lead = root.lead or (frappe.db.get_value("Solar Consumer", root.solar_consumer, "lead") if root.solar_consumer else None)
+	if not lead:
+		frappe.throw(_("The estimate's customer has no lead, and a proposal belongs to a lead."), frappe.MandatoryError)
+	posted = frappe.parse_json(values) or {}
+	values = {f: posted.get(f) for f in ASKED if f in posted}
+	values.update({"lead": lead, "solar_consumer": root.solar_consumer, "site_survey": root.site_survey})
+	existing = proposal_of(root)
+	estimates = [o["estimate"] for o in options]
+	if existing:
+		# Estimates the proposal quotes from elsewhere stay, after these.
+		estimates += [r.solar_design_estimate for r in frappe.get_doc(DOCTYPE, existing).get("design_estimates") or []
+			if r.solar_design_estimate and r.solar_design_estimate not in estimates]
+	return save_proposal(values, estimates, existing)
+
+
+def unproposed_estimates(limit=100):
+	"""The design estimates not yet made into a proposal - the roots whose options are in none -
+	newest first, for the Solar Design Proposal list: each opens on its builder."""
+	from a3_sola.api import portal_estimate
+
+	quoted = set(frappe.get_all("Solar Proposal Estimate", filters={"parenttype": DOCTYPE, "docstatus": ["<", 2]},
+		pluck="solar_design_estimate"))
+	quoted |= set(frappe.get_all(DOCTYPE, filters={"docstatus": ["<", 2]}, pluck="solar_design_estimate"))
+	rows = frappe.get_list("Solar Design Estimate", filters={"docstatus": ["<", 2], "parent_estimate": ["is", "not set"]},
+		fields=["name", "lead", "solar_consumer", "solar_package", "final_capacity_kw", "estimate_date", "modified", "docstatus"],
+		order_by="modified desc", limit_page_length=max(limit * 2, 200))
+	out = []
+	for row in rows:
+		options = [o for o in frappe.get_all("Design Estimate Sizing Option", filters={"parent": row.name, "parenttype": "Solar Design Estimate"},
+			pluck="design_estimate") if o]
+		if row.name in quoted or any(o in quoted for o in options):
+			continue
+		subject = row.solar_consumer or row.lead
+		out.append({
+			"name": row.name,
+			"customer": link_title("Solar Consumer" if row.solar_consumer else "Lead", subject) if subject else row.name,
+			"package": link_title("Solar Package", row.solar_package) if row.solar_package else "",
+			"capacity": "{0:g} kW".format(flt(row.final_capacity_kw)) if flt(row.final_capacity_kw) else "",
+			"date": format_date(row.estimate_date) if row.estimate_date else "",
+			"changed": frappe.utils.format_datetime(row.modified, "d MMM, h:mm a") if row.modified else "",
+			"options": len(options) or 1,
+			"draft": cint(row.docstatus) == 0,
+			"route": portal_estimate.design_route(row.name),
+		})
+		if len(out) >= limit:
+			break
+	return out
 
 
 def _revise(doc):

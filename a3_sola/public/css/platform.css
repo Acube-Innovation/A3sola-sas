@@ -4364,3 +4364,47 @@ select.a3s-items__input { min-width: 9rem; }
 @media (max-width: 640px) { .a3s-pkg__line--2, .a3s-pkg__line--3, .a3s-pkg__line--4 { grid-template-columns: 1fr; } .a3s-pkg__line > .a3s-check { margin-top: 0; min-height: 0; } }
 /* The first ten matches, and how many more typing finds. */
 .a3s-combo__more { margin: 0; padding: 0.5rem 0.75rem; font-size: 0.78rem; color: var(--color-text-muted); border-top: 1px solid var(--color-border); }
+
+/* The Solar Design Proposal list: the estimates not yet made into a proposal, above the proposals. */
+.a3s-pending { height: auto; margin-bottom: 1.25rem; padding: 1.1rem 1.4rem; }
+.a3s-pending:hover { transform: none; box-shadow: var(--shadow-soft); }
+.a3s-pending__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; margin-bottom: 0.6rem; }
+.a3s-pending__head .a3s-edit__card-title { margin: 0; }
+.a3s-pending__head .a3s-field__hint { margin: 0; }
+.a3s-pending__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); }
+.a3s-pending__row {
+	display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: center; gap: 0.75rem;
+	padding: 0.65rem 0.9rem; border: 1px dashed var(--color-border); border-radius: var(--radius-tile);
+	color: inherit; text-decoration: none; transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+.a3s-pending__row:hover, .a3s-pending__row:focus-visible { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.a3s-pending__who, .a3s-pending__what { display: grid; gap: 0.1rem; min-width: 0; font-size: 0.85rem; }
+.a3s-pending__who strong, .a3s-pending__what > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-pending__who small, .a3s-pending__what small { font-size: 0.72rem; color: var(--color-text-muted); }
+.a3s-pending__go .a3s-ic { width: 1.1rem; height: 1.1rem; color: var(--color-accent-hover); }
+
+/* The builder's Proposal tab: the proposal's first page over the saved options. */
+.a3s-de-tab--proposal .a3s-de-tab__top .a3s-ic { width: 1rem; height: 1rem; color: var(--color-accent-hover); }
+.a3s-de-proposal[hidden] { display: none; }
+.a3s-de-proposal__head-actions { display: flex; gap: 0.5rem; }
+.a3s-de-proposal__head-actions .a3s-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+.a3s-de-proposal__form { margin-top: 0.75rem; }
+.a3s-de-proposal__grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.a3s-de-proposal__card { padding: 1rem 1.1rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface); }
+.a3s-de-proposal__card.is-wide { grid-column: 1 / -1; }
+.a3s-de-proposal__card-title { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 800; }
+.a3s-de-proposal__locked { display: block; padding: 0.55rem 0; font-weight: 600; color: var(--color-text); }
+.a3s-de-proposal__actions { margin-top: 1rem; }
+.a3s-de-proposal__actions .a3s-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+.a3s-de-proposal__actions .a3s-btn[hidden] { display: none; }
+.a3s-de-proposal #de-proposal-unsaved:empty { display: none; }
+.a3s-de-proposal #de-proposal-unsaved { margin: 0.6rem 0 0; }
+.a3s-de-proposal .a3s-pp__pkgsub { font-size: 0.75rem; color: var(--color-text-muted); }
+.a3s-de-proposal .a3s-pp__draft { margin-left: 0.4rem; }
+@media (max-width: 56rem) { .a3s-de-proposal__grid { grid-template-columns: 1fr; } }
+
+/* A saved option's print, under its commercials. */
+.a3s-de-com__print { margin-top: 1.25rem; }
+.a3s-de-com__print-row { display: flex; align-items: center; gap: 0.5rem; }
+.a3s-de-com__print-row .a3s-de-com__pdf { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.a3s-de-com__print .a3s-edit__hint { margin: 0.5rem 0 0; text-align: center; }

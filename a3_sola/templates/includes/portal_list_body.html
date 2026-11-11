@@ -4,7 +4,8 @@
 		<h2 class="a3s-main__title">{{ collection.title }}</h2>
 		<p class="a3s-main__sub">{{ collection.subtitle }} &middot; stored in ERPNext.</p>
 	</div>
-	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">
+	{#- A collection made from another's page (a proposal from a design estimate) names where New goes. -#}
+	<a class="a3s-btn a3s-btn--primary" href="{{ collection.new_route or ('/a3solaportal/' ~ collection.slug ~ '/new') }}">
 		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ collection.icon }}"></use></svg>
 		<span>New {{ collection.singular }}</span>
 	</a>
@@ -25,6 +26,7 @@
 	<button type="submit" class="a3s-btn a3s-btn--ghost">Search</button>
 	{%- if q or filtered %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
 </form>
+{%- if list_extra_template %}{% include list_extra_template %}{% endif %}
 
 {% if rows %}
 <div class="a3s-card a3s-tablewrap">
@@ -83,7 +85,7 @@
 	{%- else %}
 	<h3 class="a3s-empty__title">No {{ collection.title | lower }} yet</h3>
 	<p class="a3s-empty__text">Create the first one and it will appear here.</p>
-	<a class="a3s-btn a3s-btn--primary" href="/a3solaportal/{{ collection.slug }}/new">New {{ collection.singular }}</a>
+	<a class="a3s-btn a3s-btn--primary" href="{{ collection.new_route or ('/a3solaportal/' ~ collection.slug ~ '/new') }}">New {{ collection.singular }}</a>
 	{%- endif %}
 </div>
 {% endif %}

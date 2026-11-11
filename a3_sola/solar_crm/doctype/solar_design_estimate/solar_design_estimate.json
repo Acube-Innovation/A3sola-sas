@@ -529,7 +529,7 @@
   {
    "fieldname": "material_bom",
    "fieldtype": "Table",
-   "label": "Material BOM",
+   "label": "Materials",
    "options": "Design Estimate BOM Item"
   },
   {
@@ -542,7 +542,7 @@
   {
    "fieldname": "structure_bom",
    "fieldtype": "Table",
-   "label": "Structure BOM",
+   "label": "Structure",
    "options": "Design Estimate BOM Item"
   },
   {

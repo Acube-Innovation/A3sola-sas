@@ -63,11 +63,13 @@ BUILDING_BY_CATEGORY = {
 
 #: An estimate's BOM tables: (its field, the package table it is copied from, the label).
 ESTIMATE_BOMS = (
-	("material_bom", "material_bom", "Material BOM"),
-	("structure_bom", "structure_boms", "Structure BOM"),
+	("material_bom", "material_bom", "Materials"),
+	("structure_bom", "structure_boms", "Structure"),
 	("bom_expenses", "expenses", "Expenses"),
 )
-BOM_ROW_FIELDS = ("item", "category", "uom", "qty", "rate", "amount")
+# Copied from the package's row: what it is, and - a bundle's or BOM's item - what it came from.
+BOM_ROW_FIELDS = ("item", "description", "category", "uom", "qty", "rate", "amount",
+	"bundle_type", "bundle_ref", "bundle_qty", "bundle_key")
 
 LINKS = (
 	("lead", "Lead"),
@@ -108,6 +110,7 @@ class SolarDesignEstimate(Document):
 		self.compute_balance_of_system()
 		self.no_dcdb_for_microinverter()
 		self.fill_boms_from_package()
+		self.open_kits()
 		self.compute_boms()
 		self.price_equipment()
 		self.compute_options()
@@ -491,19 +494,35 @@ class SolarDesignEstimate(Document):
 		module = default_module(package)
 		self.set("optional_add_ons", [])
 		for r in package.get("optional_add_ons") or []:
-			row = {"add_on_type": r.add_on_type or "Other", "item": r.item, "rate": r.amount, "is_option": 1}
+			row = {"add_on_type": r.add_on_type or "Other", "item_group": r.get("item_group"), "item_code": r.get("item_code"),
+				"item": r.item, "rate": r.amount, "is_option": 1}
 			if r.add_on_type == "Extra Panel" and module:
 				# As many more of the package's own panel as it says, at its rate a panel.
 				count = cint(r.get("qty")) or 1
 				row.update({"panel_capacity_wp": module.module_wattage, "panel_make": module.module_make,
 					"panel_count": count, "rate": flt(r.amount) / count})
+			elif flt(r.get("rate")) and cint(r.get("qty")) > 1:
+				row.update({"panel_count": cint(r.qty), "rate": flt(r.rate)})
 			self.append("optional_add_ons", row)
 
 	def compute_add_ons(self):
-		"""Each add-on's count and amount: its panels (one if not said) at its rate. A panel make
-		brings its variant and DCR type, as on a Solar Panel row; an Extra Panel left unnamed is
-		named from its panel."""
+		"""Each add-on's count and amount: its quantity (one if not said) at its rate. An add-on
+		chosen as an Item takes its group and, left blank, its description, and is an Extra Panel
+		when the Item is a module. A panel make brings its variant and DCR type, as on a Solar
+		Panel row; an Extra Panel left unnamed is named from its panel."""
 		for row in self.get("optional_add_ons") or []:
+			if row.get("item_code"):
+				item = frappe.db.get_value("Item", row.item_code, ["item_group", "item_name"], as_dict=True)
+				if item:
+					row.item_group = item.item_group
+					if not (row.item or "").strip():
+						row.item = package_bom_tables.item_text(row.item_code)
+					if _is_module_group(item.item_group):
+						row.add_on_type = "Extra Panel"
+						if not flt(row.panel_capacity_wp):
+							row.panel_capacity_wp = panel_item_values(item.item_name or row.item_code)["wp"] or None
+					elif row.add_on_type == "Extra Panel":
+						row.add_on_type = "Other"
 			if row.panel_make:
 				make = frappe.db.get_value("Component Make", row.panel_make, ["technology", "is_dcr"], as_dict=True)
 				if make:
@@ -584,8 +603,17 @@ class SolarDesignEstimate(Document):
 				self.append(field, values)
 		self.bom_basis = basis
 
+	def open_kits(self):
+		"""A Product Bundle or an Item with a BOM added to Materials, Structure or Expenses is
+		replaced by its items, each priced at its selling price and saying what it came from - as
+		on the package (api/package_kits)."""
+		from a3_sola.api import package_kits
+
+		package_kits.open_up(self, package_kits.ESTIMATE_TABLES)
+
 	def compute_boms(self):
-		"""Each BOM row's category and UOM from its Item, and its amount: quantity times rate."""
+		"""Each BOM row's category, UOM and description from its Item (where the row has none),
+		and its amount: quantity times rate."""
 		for field, _source, label in ESTIMATE_BOMS:
 			for row in self.get(field) or []:
 				if not row.item:
@@ -596,6 +624,8 @@ class SolarDesignEstimate(Document):
 				item = frappe.db.get_value("Item", row.item, ["item_group", "stock_uom"], as_dict=True) or {}
 				row.category = item.get("item_group") or row.category
 				row.uom = row.uom or item.get("stock_uom")
+				if not (row.get("description") or "").strip():
+					row.description = package_bom_tables.item_text(row.item)
 				row.amount = flt(flt(row.qty) * flt(row.rate), 2)
 
 	def fill_from_package(self):
@@ -1110,6 +1140,11 @@ class SolarDesignEstimate(Document):
 			for table, label in COMMERCIAL_LINES
 			if table != "batteries" or self.get("batteries")
 		]
+		if self.solar_package:
+			# The package's price is the system's: its panels, inverter, battery, boards, mounting
+			# and installation are in it, so those tables have no line of their own unless something
+			# beyond the package is charged on them. The KSEB fees are always over and above it.
+			lines = [line for line in lines if line["key"] in ("package", "kseb_expenses") or flt(line["amount"])]
 		# An add-on is offered beside the system; one taken (not an Option) is charged.
 		add_ons = flt(sum(flt(row.amount) for row in self.get("optional_add_ons") or [] if not row.is_option), 2)
 		if add_ons:
@@ -1902,6 +1937,17 @@ def compare_packages(design_estimate):
 			}
 		)
 	return rows
+
+
+def _is_module_group(group):
+	"""Whether an item group is the Modules group or under it."""
+	if not group or not frappe.db.exists("Item Group", "Modules"):
+		return False
+	if group == "Modules":
+		return True
+	lft, rgt = frappe.db.get_value("Item Group", "Modules", ["lft", "rgt"])
+	own = frappe.db.get_value("Item Group", group, ["lft", "rgt"])
+	return bool(own and lft < own[0] and own[1] < rgt)
 
 
 def panel_item_values(item_name, is_dcr=None):

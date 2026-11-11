@@ -1,13 +1,14 @@
-{#- Step two of the design estimate builder: a tab per option of step one, then Compare. A
-    tab is the option's system and commercials in three columns at 20:50:30 - the System &
+{#- Step two of the design proposal: a tab per option of step one, then Compare, then Proposal.
+    A tab is the option's system and commercials in three columns at 20:50:30 - the System &
     Options tables, the chosen table's rows, and the commercials. A row is added or changed
-    in a popup over the page; changes are held until the tab's own Save.
+    in a popup over the page; changes are held until the tab's own Save. The Proposal tab is
+    step three: the proposal of the saved options (portal_estimate_proposal.html).
     `builder_json` is portal_estimate.page_json; portal_estimate_builder.js paints it. -#}
 <script type="application/json" id="a3s-de-data">{{ builder_json }}</script>
 
 <div class="a3s-page__head a3s-de-head">
 	<div>
-		<p class="a3s-de-steps"><span>1 &middot; Estimate details</span><span class="is-current">2 &middot; System &amp; commercials</span></p>
+		<p class="a3s-de-steps" id="de-steps"><span>1 &middot; Proposal details</span><span class="is-current" data-step="2">2 &middot; System &amp; commercials</span><span data-step="3">3 &middot; Proposal</span></p>
 		<h2 class="a3s-main__title" id="de-title">{{ record_name | e }}</h2>
 	</div>
 	{#- The way back moves into the option tabs' row, beside Save all (paintTabs) - and the two
@@ -35,11 +36,6 @@
 		<button type="button" class="a3s-square-btn a3s-square-btn--whatsapp" id="de-whatsapp" title="Send to WhatsApp" aria-label="Send to WhatsApp" hidden>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
 		</button>
-		{#- The saved option's proposal: View, Add to or Create (api/portal_proposal.proposal_action). -#}
-		<a class="a3s-btn a3s-btn--ghost" id="de-proposal-link" href="#" hidden>
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
-			<span id="de-proposal-label"></span>
-		</a>
 		<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" id="de-discard" hidden>Discard changes</button>
 		<button type="button" class="a3s-btn a3s-btn--primary" id="de-save">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
@@ -72,8 +68,9 @@
 			<h3 class="a3s-de-card__title" id="de-com-title">Commercials</h3>
 			<ul class="a3s-de-com__lines" id="de-com-lines"></ul>
 			<dl class="a3s-de-com__totals" id="de-com-totals"></dl>
-			{#- The next step for a saved option: the proposal it is offered in (api/portal_proposal.proposal_action). -#}
-			<div id="de-proposal"></div>
+			{#- The saved option's own print, under its commercials: read in the browser, or saved.
+			    The proposal of every option is made on the Proposal tab. -#}
+			<div class="a3s-de-com__print" id="de-com-print"></div>
 		</aside>
 	</div>
 </div>
@@ -93,6 +90,9 @@
 	<p class="a3s-form__status" id="de-compare-status" role="status" aria-live="polite"></p>
 	<div class="a3s-de-table" id="de-compare-body"></div>
 </section>
+
+{#- Step three: the proposal of the saved options (api/portal_proposal.proposal_state). -#}
+{% include "templates/includes/portal_estimate_proposal.html" %}
 
 <div class="a3s-modal" id="de-modal" hidden role="dialog" aria-modal="true" aria-labelledby="de-form-title">
 	<div class="a3s-modal__panel a3s-de-modal">

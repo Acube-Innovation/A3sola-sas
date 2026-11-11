@@ -28,8 +28,10 @@ NAV_GROUPS = [
 			{"title": "Customer", "sub": "Homes and businesses", "ic": "user", "route": "/a3solaportal/consumers"},
 			{"title": "Site Survey", "sub": "Roof and load", "ic": "pin", "route": "/a3solaportal/site-surveys"},
 			{"title": "Subsidy Eligibility Check", "sub": "PM Surya Ghar", "ic": "check", "route": "/a3solaportal/subsidy-eligibility"},
-			{"title": "Solar Design Estimate", "sub": "System sizing", "ic": "pen", "route": "/a3solaportal/design-estimates"},
-			{"title": "Solar Proposal", "sub": "Offer document", "ic": "doc", "route": "/a3solaportal/proposals"},
+			# One page for the design and the offer: its list is the proposals, each opened from
+			# its first design estimate (details, then the system and commercials of each option,
+			# then the proposal itself). The estimate list stays reachable by its link only.
+			{"title": "Solar Design Proposal", "sub": "Design and offer", "ic": "doc", "route": "/a3solaportal/proposals"},
 			{"title": "Quotation", "sub": "Priced offer", "ic": "calc", "route": "/a3solaportal/quotations"},
 			{"title": "Sales Order", "sub": "Confirmed orders", "ic": "cart", "route": "/a3solaportal/sales-orders"},
 			# Additional Structure, Additional Cable and Special Discount are entered in the design

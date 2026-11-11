@@ -1,6 +1,6 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""A design estimate's Material BOM, Structure BOM and Expenses: copied from its package for the
+"""A design estimate's Materials, Structure and Expenses: copied from its package for the
 Items it uses (the inverter it is built on, its panel ...), changed on the estimate, and shown -
 never kept - beside the proposal, the quotation and the sales order."""
 
@@ -138,5 +138,5 @@ class TestEstimateBoms(FrappeTestCase):
 		est.save()
 		self.assertIn("8,100", portal_proposal.estimate_boms(frappe.as_json([est.name])))
 		bom = quotation_option.option_view(est.name)["bom"]
-		for text in ("Material BOM", "Structure BOM", "BOM Test Flat Leg", "8,100"):
+		for text in ("Materials", "Structure", "BOM Test Flat Leg", "8,100"):
 			self.assertIn(text, bom)
