@@ -479,7 +479,7 @@
 			nav.appendChild(el("li", {}, [button]));
 		});
 		if (!state.saved) {
-			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: (state.is_admin ? "Additional structure, cable and discount" : "Additional structure and cable") + " can be added once this option is saved." }));
+			nav.appendChild(el("li", { class: "a3s-de-nav__note", text: "Additional structure, cable and discount can be added once this option is saved." }));
 		}
 	}
 
@@ -487,17 +487,22 @@
 	/* Amounts stay on one line: "₹ 1,95,000.00" broken after the sign reads as two numbers. */
 	var MONEY = { rate: true, amount: true, system_cost: true };
 
+	/* Whether a tab's rows can be changed: the estimate is, and the tab is not an admin's alone
+	   (portal_estimate.ADMIN_EDIT - panels, inverter, balance of system, KSEB, mounting, installation). */
+	function canEdit(s) { return state.editable && !(s && s.locked); }
+
 	function paintSaved() {
 		var s = section();
 		$("de-saved-title").textContent = s.label;
 		$("de-saved-total").textContent = money.format(s.total != null ? s.total : lineAmount(s.key));
-		$("de-add").hidden = !state.editable;
+		$("de-add").hidden = !canEdit(s);
 		$("de-add").disabled = busy;
 		var body = $("de-saved");
 		body.innerHTML = "";
+		if (state.editable && s.locked) body.appendChild(el("p", { class: "a3s-field__hint a3s-de-locked", text: "Only an admin can change the " + s.label + "." }));
 		body.appendChild(s.rows.length
 			? (s.compact ? compactTable(s) : savedTable(s))
-			: el("p", { class: "a3s-de-empty", text: state.editable ? "Nothing here yet. Use Add to enter the first one." : "Nothing here." }));
+			: el("p", { class: "a3s-de-empty", text: canEdit(s) ? "Nothing here yet. Use Add to enter the first one." : "Nothing here." }));
 	}
 
 	/* A row action as an icon; its name is the tooltip and what a screen reader says. */
@@ -508,11 +513,11 @@
 		return button;
 	}
 
-	function rowActions(row) {
+	function rowActions(row, s) {
 		var actions = el("td", { class: "a3s-de-saved__actions" });
 		if (row.computed) {
 			actions.appendChild(el("span", { class: "a3s-badge", title: "Worked out by the estimate on every change", text: "Auto" }));
-		} else if (state.editable) {
+		} else if (canEdit(s)) {
 			actions.appendChild(iconButton("edit", "Edit", function () { openModal(row); }));
 			actions.appendChild(iconButton("trash", "Remove", function () { removeRow(row); }, true));
 		}
@@ -533,7 +538,7 @@
 				var tick = el("input", {
 					type: "checkbox", "aria-label": "Option - shown, not added to the commercials",
 					checked: isOption ? "checked" : null,
-					disabled: state.editable && !row.computed && !busy ? null : "disabled"
+					disabled: canEdit(s) && !row.computed && !busy ? null : "disabled"
 				});
 				tick.addEventListener("change", function () { setOption(s, row, tick); });
 				optionLabel = el("label", { class: "a3s-de-option__name", title: "Option: shown to the customer, not added to the commercials" }, [
@@ -555,7 +560,7 @@
 				row.included && !isOption
 					? el("td", { class: "a3s-de-money" }, [el("span", { class: "a3s-de-included", text: "In package" })])
 					: el("td", { class: "a3s-de-money a3s-de-amount", text: isOption ? "" : (row.display.amount || "") }),
-				rowActions(row)
+				rowActions(row, s)
 			]);
 		});
 		return el("div", { class: "a3s-de-table a3s-de-table--compact" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
@@ -571,7 +576,7 @@
 				}
 				return el("td", { class: MONEY[c.fieldname] ? "a3s-de-money" : null, text: row.display[c.fieldname] || "" });
 			});
-			cells.push(rowActions(row));
+			cells.push(rowActions(row, s));
 			return el("tr", {}, cells);
 		});
 		return el("div", { class: "a3s-de-table" }, [el("table", {}, [el("thead", {}, [head]), el("tbody", {}, rows)])]);
@@ -905,7 +910,7 @@
 
 	/* ------------------------------------------------------------- popup */
 	function openModal(row) {
-		if (!state.editable || busy) return;
+		if (!canEdit(section()) || busy) return;
 		editing = row || null;
 		submit.disabled = false;
 		setStatus("");

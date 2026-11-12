@@ -150,8 +150,8 @@ class SolarPackage(Document):
 			if row.flags.old_price is not None:
 				row.margin = flt(row.flags.old_price - (sum(parts.values()) - parts["margin"]), row.precision("margin"))
 				parts["margin"] = flt(row.margin)
-			# A margin by percentage is kept in rupees too: the estimate and reports read Margin.
-			if row.get("margin_type") == "Percentage":
+			# A margin by percentage, or to a cap, is kept in rupees too: the estimate and reports read Margin.
+			if row.get("margin_type") == "Percentage" or is_capped(row):
 				row.margin = flt(parts["margin"], row.precision("margin"))
 			row.cost = flt(sum(parts.values()), row.precision("cost"))
 		for row in options(self, "inverters"):
@@ -203,6 +203,8 @@ class SolarPackage(Document):
 				problems.append(_("Row {0}: the inverter {1} is not one of this package's Inverter Options.").format(row.idx, frappe.bold(row.inverter)))
 			if row.battery and row.battery not in batteries:
 				problems.append(_("Row {0}: the battery {1} is not one of this package's Batteries.").format(row.idx, frappe.bold(row.battery)))
+			if cint(row.get("cap_applicable")) and flt(row.get("cap_amount")) <= 0:
+				problems.append(_("Row {0}: give the Cap Amount, or untick Cap Applicable.").format(row.idx))
 			key = (row.panel, row.inverter, row.battery or "")
 			if key in seen:
 				problems.append(_("Row {0}: this panel, inverter and battery are priced in an earlier row.").format(row.idx))
@@ -668,10 +670,18 @@ def pricing_build_up(package, row):
 
 def pricing_margin(row, before):
 	"""A Pricing Options row's margin in rupees: as typed, or - its Margin Type Percentage - its
-	Margin (%) of the cost before the margin (`before`)."""
+	Margin (%) of the cost before the margin (`before`). A row with Cap Applicable is sold at its
+	Cap Amount: its margin is the cap less the cost before the margin, so the cost is the cap."""
+	if is_capped(row):
+		return flt(flt(row.get("cap_amount")) - before, 2)
 	if row.get("margin_type") == "Percentage":
 		return flt(before * flt(row.get("margin_percent")) / 100, 2)
 	return flt(row.get("margin"))
+
+
+def is_capped(row):
+	"""A Pricing Options row priced at its Cap Amount."""
+	return bool(cint(row.get("cap_applicable")) and flt(row.get("cap_amount")))
 
 
 def package_cost(package):

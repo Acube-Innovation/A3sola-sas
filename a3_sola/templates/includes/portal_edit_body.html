@@ -65,7 +65,9 @@
 		{#- The record's documents come first, on every form: a KSEB bill, an Aadhaar card, a
 		    passbook or cheque, an approval letter fill the form below when read. A task not yet
 		    created holds its files on the card and uploads them once it is. -#}
-		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
+		{#- A collection whose documents fill its form (`autofill`, the customer) opens with them, as
+		    on its create page - so a customer made from its lead starts with the same tiles. -#}
+		{%- with att_doctype=record.doctype, att_name=("" if task_form else record.name), att_held=task_form, att_autofill=(collection.autofill if not task_form else None) %}{%- include "templates/includes/portal_attachments.html" %}{% endwith %}
 
 		{#- An eligibility check: the customer's documents and what each says. -#}
 		{%- include "templates/includes/portal_document_evidence.html" %}

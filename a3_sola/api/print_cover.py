@@ -517,7 +517,8 @@ def proposal_estimates(doc, est):
 def print_components(doc):
 	"""3.2 Specifications & Quantity of Major Components, from the proposal's base design
 	estimate: its priced panel, inverter and battery rows, its balance of system, mounting
-	structure and installation - and, where the proposal offers options, each option's inverter.
+	structure and installation - and, where the proposal offers options, each option's inverter;
+	where the design offers alternative panels (its Option rows), each as an option of its own.
 	Returns {"rows": [...], "missing": [...], "notes": [...]} - each row is {item, spec, make,
 	nos}, `missing` names the rows without a make on record, and `notes` explains an asterisk:
 	a micro inverter is marked, and its option has no DCDB (api/microinverter.py). A panel,
@@ -548,7 +549,10 @@ def print_components(doc):
 	alternates = {r.module_make: r.module_alternate_makes for r in frappe.get_all("Solar Package Module",
 		filters={"parent": est.solar_package}, fields=["module_make", "module_alternate_makes"])} if est.solar_package else {}
 	rows = []
-	for r in priced("panels"):
+	# The panels the design offers: the priced one first, then each alternative the package
+	# offers (its Option rows) - "Option 1: 600Wp ...", "Option 2: 565Wp ...", as the inverters are.
+	panels = priced("panels") + [r for r in est.get("panels") or [] if r.get("is_option")]
+	for number, r in enumerate(panels, 1):
 		detail = " ".join(p for p in (technology_name(r.panel_variant) if r.panel_variant else "",
 			("DCR" if r.panel_type == "DCR" else "Non DCR") if r.panel_type else "") if p)
 		spec = " ".join(p for p in ("{0:g}Wp".format(flt(r.panel_capacity_wp)) if flt(r.panel_capacity_wp) else "", detail) if p)
@@ -559,8 +563,15 @@ def print_components(doc):
 		written = r.get("alternate_makes") or alternates.get(r.panel_make) or ""
 		names = [main] + [m.strip() for m in written.replace(",", "/").split("/")
 			if m.strip() and m.strip().lower() not in ("equivalent", main.lower())]
+		if len(panels) > 1:
+			spec, detail = ("Option {0}: {1}".format(number, text) for text in (spec, detail))
 		rows.append({"item": "Solar Panels", "spec": spec, "spec_detail": detail, "capacity": unit_capacity("panels", r),
 			"make": " / ".join(dict.fromkeys(n for n in names if n)), "nos": cint(r.nos)})
+	# The panel options are one item, as the inverter options are: one Sl. No. and description.
+	if len(panels) > 1:
+		rows[0]["span"] = len(panels)
+		for r in rows[1:]:
+			r["spanned"] = True
 	hybrid = est.system_type == "Hybrid"
 	# Each option's inverter - the options differ by inverter - or the one design's.
 	options = proposal_estimates(doc, est)
@@ -673,6 +684,21 @@ WAY_FORWARD = (
 CONTACTS = (("Nevil Jose", "Managing Partner", "+91 8891024312"), ("Shiju N K", "Strategic Partner", "+91 9895778516"))
 
 
+def registration_fees(estimates):
+	"""[(inverter kW, registration fee)] for the options' estimates, one per capacity in their
+	order: each fee as the fee schedule resolved it for its estimate (compute_statutory)."""
+	import json
+
+	out = {}
+	for e in estimates:
+		fees = json.loads(e.statutory_breakdown) if e.get("statutory_breakdown") else {}
+		kw = flt(e.inverter_capacity_kw() or e.get("final_capacity_kw"), 3)
+		fee = flt(fees.get("registration_fee_gross"))
+		if kw and fee and kw not in out:
+			out[kw] = fee
+	return list(out.items())
+
+
 def print_rest(doc):
 	"""Sections 3.3/3.4 to 5 of a Solar Proposal print: the solar power plant cost and KSEBL
 	expenses, the terms, payment and bank details, the schedule, the warranty, the scope of
@@ -733,6 +759,13 @@ def print_rest(doc):
 	purchased = (est.net_meter_mode or "") == "Purchased by Customer"
 	kseb = [{"item": labels.get(r.get("item"), r.get("item")) + (" *" if "Meter" in (r.get("item") or "") and purchased else ""),
 		"amount_text": money(r.get("amount"))} for r in statutory.get("breakdown") or [] if flt(r.get("amount"))]
+	# The registration fee is charged on the inverter's capacity, so options on inverters of
+	# different sizes each have theirs: a row per capacity, in the options' order - "Registration
+	# Fee (3 kW inverter)", "Registration Fee (5 kW inverter)". A quotation is one option.
+	registration = [] if q else registration_fees(proposal_estimates(doc, est))
+	if len(registration) > 1:
+		at = next((i for i, r in enumerate(kseb) if r["item"] == "Registration Fee"), len(kseb))
+		kseb[at:at + 1] = [{"item": "Registration Fee ({0:g} kW inverter)".format(kw), "amount_text": money(fee)} for kw, fee in registration]
 	out["kseb"] = kseb
 	out["kseb_total"] = money(statutory.get("statutory_total"))
 	if flt(statutory.get("statutory_total")):

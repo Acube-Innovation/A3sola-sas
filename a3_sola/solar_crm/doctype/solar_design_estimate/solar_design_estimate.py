@@ -586,10 +586,11 @@ class SolarDesignEstimate(Document):
 			return
 		package = frappe.get_cached_doc("Solar Package", self.solar_package)
 		used = self.bom_used_items(package)
-		basis = self.bom_basis_for(package, used)
+		# A switch between a string and a micro inverter copies them again: a micro one has no DCDB.
+		basis = self.bom_basis_for(package, used) + self.micro_basis()
 		if basis == self.get("bom_basis"):
 			return
-		rows = package_bom_rows(package, used)
+		rows = without_dcdb(package_bom_rows(package, used), self)
 		if not any(rows.values()):
 			if self.get("bom_basis"):
 				# Moved to a package (or to Items) with none: what was copied goes.
@@ -2043,6 +2044,21 @@ def package_bom_rows(package, used):
 	}
 
 
+def without_dcdb(rows, est):
+	"""{table: rows} less the DCDB lines, where the design is priced with a micro inverter:
+	each panel's inverter takes its DC on the roof, so there is no DC to combine."""
+	from a3_sola.api.microinverter import is_dcdb, uses_microinverter
+
+	if not uses_microinverter(est):
+		return rows
+
+	def dcdb(row):
+		item = row.get("item")
+		return is_dcdb(item) or is_dcdb(row.get("description")) or is_dcdb(item and frappe.db.get_value("Item", item, "item_name"))
+
+	return {field: [r for r in table if not dcdb(r)] for field, table in rows.items()}
+
+
 def bom_tables(estimate):
 	"""An estimate's Material BOM, Structure BOM and Expenses as the proposal, quotation and
 	sales order show them - read from the estimate, never kept on those records. An estimate
@@ -2055,6 +2071,8 @@ def bom_tables(estimate):
 	else:
 		package = frappe.get_cached_doc("Solar Package", est.solar_package)
 		rows = package_bom_rows(package, est.bom_used_items(package))
+	# A micro-inverter design has no DCDB (api/microinverter), whatever its rows were copied with.
+	rows = without_dcdb(rows, est)
 	out = []
 	for field, _source, label in ESTIMATE_BOMS:
 		lines = []
@@ -2068,8 +2086,40 @@ def bom_tables(estimate):
 				"category": row.get("category") or item.get("item_group") or "", "uom": row.get("uom") or item.get("stock_uom") or "",
 				"qty": qty, "rate": rate, "amount": flt(row.get("amount")) or flt(qty * rate, 2),
 			})
+		if field == "material_bom":
+			lines += add_on_bom_lines(est)
 		out.append({"key": field, "label": label, "rows": lines, "total": flt(sum(r["amount"] for r in lines), 2)})
 	return out
+
+
+#: The category an add-on's line is listed under in the Material BOM.
+ADD_ON_CATEGORY = "Optional Add-on"
+
+
+def add_on_bom_lines(est):
+	"""The Optional Add-ons the customer takes (not an Option), as Material BOM lines: an add-on
+	naming an Item is that Item, as many as it is for; one naming none but adding panels (Supply
+	and Installation of 1 Solar Panel) is that many more of the design's priced panel. One that
+	is neither - a warranty extension - has nothing to build, and no line."""
+	priced_panel = next((r.get("panel_item") for r in est.get("panels") or [] if not r.get("is_option") and r.get("panel_item")), None)
+	lines = []
+	for row in est.get("optional_add_ons") or []:
+		if row.get("is_option"):
+			continue
+		item, qty = row.get("item_code"), flt(row.get("nos")) or 1
+		if not item and cint(row.get("panel_count")) and priced_panel:
+			item, qty = priced_panel, cint(row.get("panel_count"))
+		elif item and cint(row.get("panel_count")):
+			qty = cint(row.get("panel_count"))
+		if not item or not frappe.db.exists("Item", item):
+			continue
+		info = frappe.db.get_value("Item", item, ["item_name", "stock_uom"], as_dict=True)
+		lines.append({
+			"item": item, "item_name": info.item_name or item, "category": ADD_ON_CATEGORY, "uom": info.stock_uom or "Nos",
+			"qty": qty, "rate": flt(flt(row.get("amount")) / qty, 2) if qty else 0, "amount": flt(row.get("amount")),
+			"add_on": row.get("item") or "",
+		})
+	return lines
 
 
 def package_panel_rows(package):

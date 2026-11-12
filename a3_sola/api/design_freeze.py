@@ -117,6 +117,95 @@ def _bom(value, choices, inst=None):
 	return {"value": value or "", "choices": choices, "lines": structure_bom.bom_items(value, inst)["lines"] if value else []}
 
 
+def _estimate(inst):
+	"""The design estimate the job was sold on: its own, else its quotation's."""
+	name = inst.get("solar_design_estimate") or (
+		frappe.db.get_value("Quotation", inst.quotation, "solar_design_estimate") if inst.get("quotation") else None)
+	return frappe.get_doc("Solar Design Estimate", name) if name and frappe.db.exists("Solar Design Estimate", name) else None
+
+
+def own_bom(bom):
+	"""Whether a BOM is a job's own - made for it in its Design Freeze - and not one a package, A3
+	Sola Settings' structure BOMs or its BOMs by inverter capacity list for every job."""
+	return bool(bom) and not frappe.db.exists("Solar Package", {"bom": bom}) \
+		and bom not in structure_bom.structure_boms() and bom not in structure_bom.capacity_boms()
+
+
+def _line(item_code, qty, uom=None, item_name=None):
+	return {"item_code": item_code or "", "item_name": item_name or frappe.db.get_value("Item", item_code, "item_name") or item_code or "",
+		"description": "", "qty": frappe.utils.flt(qty), "uom": uom or (frappe.db.get_value("Item", item_code, "stock_uom") if item_code else ""),
+		"note": ""}
+
+
+def _major_lines(inst, est):
+	"""The design's panels, inverter and batteries as BOM lines: the priced panel (on its module
+	Item), the package inverter the option is built on with a kit's parts, and its batteries."""
+	from a3_sola.solar_crm.doctype.solar_package.solar_package import option_rows
+
+	# The priced panel on its own Item where the design names one, else by its make and Wp.
+	lines = []
+	for row, by_make in zip([r for r in est.get("panels") or [] if not r.get("is_option")], structure_bom.panel_lines(est)):
+		item = row.get("panel_item")
+		lines.append(_line(item, frappe.utils.cint(row.get("panel_count")) or frappe.utils.cint(row.get("nos"))) if item and frappe.db.exists("Item", item) else by_make)
+	package = frappe.get_cached_doc("Solar Package", est.solar_package) \
+		if est.get("solar_package") and frappe.db.exists("Solar Package", est.solar_package) else None
+	inverter = est.package_inverter(package) if package else None
+	for row in option_rows(package, "inverters", inverter) if inverter else []:
+		if row.get("inverter_item"):
+			lines.append(_line(row.inverter_item, frappe.utils.cint(row.inverter_count) or 1))
+	for row in est.get("batteries") or []:
+		if not row.get("is_option") and row.get("battery_item"):
+			lines.append(_line(row.battery_item, frappe.utils.cint(row.get("nos")) or 1))
+	return lines
+
+
+def design_lines(inst, field):
+	"""The BOM lines the job was sold on, as its sales order shows them (bom_tables): the Material
+	BOM - with the panels, inverter and batteries - for the material BOM, the Structure BOM for
+	the structure BOM. A line listed twice is counted once, its quantities added."""
+	from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import bom_tables
+
+	est = _estimate(inst)
+	if not est:
+		return []
+	tables = {t["key"]: t["rows"] for t in bom_tables(est)}
+	lines = _major_lines(inst, est) if field == "material_bom" else []
+	lines += [_line(r["item"], r["qty"], r["uom"], r["item_name"])
+		for r in tables.get("material_bom" if field == "material_bom" else "structure_bom") or []]
+	merged = {}
+	for line in lines:
+		key = line["item_code"] or line["item_name"]
+		if key in merged:
+			merged[key]["qty"] += line["qty"]
+		else:
+			merged[key] = line
+	return list(merged.values())
+
+
+def _source(inst):
+	"""What the design was sold as: its quotation's package and option - "3KW 1PH System · Option 2 - 3 kW Hoymiles"."""
+	q = frappe.db.get_value("Quotation", inst.quotation, ["solar_package", "selected_option"], as_dict=True) \
+		if inst.get("quotation") else None
+	package = (q and q.solar_package) or inst.get("solar_package")
+	name = frappe.db.get_value("Solar Package", package, "package_name") if package else ""
+	return " · ".join(p for p in (name, q and q.selected_option) if p)
+
+
+def _design_bom(inst, field, fallback):
+	"""A design freeze's BOM card: the job's own BOM where it has one (edited or frozen here), else
+	the lines it was sold on (design_lines), else - a job with no design estimate - `fallback`,
+	the BOM A3 Sola Settings or its package lists."""
+	bom = inst.get(field)
+	if own_bom(bom):
+		return {"value": bom, "source": _("This project's own BOM · {0}").format(bom), "own": True,
+			"choices": [], "lines": structure_bom.bom_items(bom, inst)["lines"]}
+	lines = design_lines(inst, field)
+	if lines:
+		return {"value": "", "source": _source(inst), "own": False, "choices": [], "lines": lines}
+	return {"value": fallback or "", "source": structure_bom._label(fallback) if fallback else "", "own": False,
+		"choices": [], "lines": structure_bom.bom_items(fallback, inst)["lines"] if fallback else []}
+
+
 def _procurement(inst):
 	"""The procurement tasks that read the job's BOMs, and where each stands."""
 	out = []
@@ -151,10 +240,10 @@ def state(installation, task_code=DESIGN_TASK):
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
 	if task_code == STRUCTURE_TASK:
-		out["structure_bom"] = _bom(structure_bom.bom_for(inst), structure_bom.structure_choices_for(inst) if editable else [])
+		out["structure_bom"] = _design_bom(inst, "structure_bom", structure_bom.bom_for(inst))
 		out["sld"] = _drawing(inst)
 	else:
-		out["material_bom"] = _bom(structure_bom.material_bom_for(inst), structure_bom.material_choices_for(inst) if editable else [], inst)
+		out["material_bom"] = _design_bom(inst, "material_bom", structure_bom.material_bom_for(inst))
 		out["sld"] = _sld(inst)
 		out["images"] = [{"row": i.name, "url": i.image, "caption": i.caption or ""} for i in inst.get("design_images") or [] if i.image]
 	return out
@@ -264,6 +353,15 @@ def freeze(installation, task_code=DESIGN_TASK):
 		frappe.throw(_("{0} is already {1}.").format(row.stage_name, row.status.lower()))
 	field, label, bom = (("structure_bom", _("structure BOM"), structure_bom.bom_for(inst)) if task_code == STRUCTURE_TASK
 		else ("material_bom", _("material BOM"), structure_bom.material_bom_for(inst)))
+	# What the card shows is frozen: the job's own BOM, else the lines it was sold on, made its own.
+	lines = [] if own_bom(inst.get(field)) else design_lines(inst, field)
+	if lines:
+		missing = [l["item_name"] for l in lines if not l["item_code"]]
+		if missing:
+			frappe.throw(_("Choose the Item for {0} in the {1} before freezing.").format(", ".join(missing), label),
+				title=_("Item Needed"))
+		bom = _make_job_bom(inst, field, None, [{"item_code": l["item_code"], "qty": l["qty"], "uom": l["uom"]}
+			for l in lines if frappe.utils.flt(l["qty"]) > 0])
 	if not bom:
 		frappe.throw(_("Choose the {0} before freezing the design.").format(label), title=_("BOM Needed"))
 	if field == "material_bom" and bom in structure_bom.capacity_boms():

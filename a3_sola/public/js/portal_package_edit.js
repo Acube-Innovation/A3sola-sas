@@ -72,8 +72,14 @@
 		kseb_expenses: [["particulars"], ["rate", "qty", "amount"]],
 		installation_expenses: [["item"], ["specification"], ["rate", "qty", "amount"]],
 		optional_add_ons: [["item_group", "item_code"], ["item"], ["rate", "qty", "amount"]],
-		material_bom: sheetRowLayout, structure_boms: sheetRowLayout, expenses: sheetRowLayout
+		material_bom: sheetRowLayout, structure_boms: sheetRowLayout, expenses: sheetRowLayout,
+		/* What the row is built from down the left, half the width; its price on the right. */
+		pricing_options: [["panel", "margin_type", "margin", "margin_percent"], ["battery", "cap_applicable", "cap_amount"], ["inverter", "cost"]]
 	};
+	/* A pricing row's lines: three fields at half, a quarter and a quarter; two at half each. */
+	var LINE_WIDTHS = { pricing_options: { 3: "a3s-pkg__line--half-quarters", 2: "a3s-pkg__line--halves" } };
+	/* A pricing row sold at its Cap Amount: the margin is what brings the cost to it. */
+	function isCapped(r) { return !!(Number(r && r.cap_applicable) && Number(r && r.cap_amount)); }
 	/* A Materials, Structure or Expenses row: an Item by its Category first; a Bundle or a BOM by
 	   name alone, the line's full width. */
 	function sheetRowLayout(kind) {
@@ -255,7 +261,11 @@
 		/* The margin as typed, or - by Percentage - that percent of the cost before it
 		   (solar_package.pricing_margin). */
 		var margin = n(r.margin), label = "Margin";
-		if (r.margin_type === "Percentage") {
+		if (isCapped(r)) {
+			margin = Math.round((n(r.cap_amount) - sum(parts, function (p) { return p[1]; })) * 100) / 100;
+			r.margin = margin;
+			label = "Margin (to the cap)";
+		} else if (r.margin_type === "Percentage") {
 			var before = sum(parts, function (p) { return p[1]; });
 			margin = Math.round(before * n(r.margin_percent)) / 100;
 			r.margin = margin;
@@ -309,9 +319,36 @@
 		return Math.round(pricingBuildUp(r).reduce(function (total, p) { return total + p[1]; }, 0) * 100) / 100;
 	}
 	function breakdownRows(r) {
+		var cost = pricingCost(r);
 		return '<p class="a3s-pkg__breakdownhead">How the cost is made up</p><dl class="a3s-pkg__breakdownlist">' +
 			pricingBuildUp(r).map(function (p) { return "<div><dt>" + esc(p[0]) + "</dt><dd>" + money(p[1]) + "</dd></div>"; }).join("") +
-			'<div class="a3s-pkg__breakdowntotal"><dt>Package Cost</dt><dd>' + money(pricingCost(r)) + "</dd></div></dl>";
+			'<div class="a3s-pkg__breakdowntotal"><dt>Package Cost' + (pkg.gst ? " <small>(GST included)</small>" : "") + "</dt><dd>" + money(cost) + "</dd></div></dl>" +
+			gstRows(cost);
+	}
+	/* The GST inside a price, worked back out of it by the company's GST valuation rule
+	   (portal_packages.gst_split): the value before tax, and each share's GST at its rate -
+	   70% goods at 5%, 30% services at 18%. */
+	function gstRows(cost) {
+		var g = pkg.gst;
+		if (!g || !cost) return "";
+		function pct(x) { return Number((Number(x) || 0).toFixed(2)) + "%"; }
+		function r2(x) { return Math.round(x * 100) / 100; }
+		var shares = [["goods", g.goods_percent, g.goods_rate], ["services", g.services_percent, g.services_rate]].filter(function (s) { return Number(s[1]); });
+		var effective = shares.reduce(function (t, s) { return t + s[1] * s[2] / 100; }, 0);
+		var taxable = r2(cost / (1 + effective / 100));
+		var lines = shares.map(function (s) {
+			return [taxable * s[1] / 100, s];
+		});
+		var taxes = lines.map(function (l) { return r2(l[0] * l[1][2] / 100); });
+		/* The GST is what the price holds over its value, so the two always add up to it. */
+		var total = r2(cost - taxable);
+		if (taxes.length) taxes[taxes.length - 1] = r2(total - taxes.slice(0, -1).reduce(function (t, x) { return t + x; }, 0));
+		return '<p class="a3s-pkg__breakdownhead a3s-pkg__breakdownhead--gst">GST in the price</p><dl class="a3s-pkg__breakdownlist">' +
+			"<div><dt>Value before GST</dt><dd>" + money(taxable) + "</dd></div>" +
+			lines.map(function (l, i) {
+				return "<div><dt>GST on " + l[1][0] + " <small>(" + pct(l[1][1]) + " of the value at " + pct(l[1][2]) + ", on " + money(r2(l[0])) + ")</small></dt><dd>" + money(taxes[i]) + "</dd></div>";
+			}).join("") +
+			'<div class="a3s-pkg__breakdowntotal"><dt>Total GST <small>(' + pct(effective) + " overall)</small></dt><dd>" + money(total) + "</dd></div></dl>";
 	}
 	/* The Package Cost is the default pricing option's, as the rows change (again on save). */
 	function packageCostFromPricing() {
@@ -435,10 +472,10 @@
 				options.map(function (o) { return '<option value="' + esc(o.value) + '"' + (o.value === value ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("");
 			var combo = options.length > 12 || opts.comboLimit;
 			var comboAttrs = combo ? " data-combo" + (opts.comboLimit ? ' data-combo-limit="' + opts.comboLimit + '" data-combo-open' : "") : "";
-			return '<div class="a3s-field' + (combo ? " a3s-combo a3s-combo--field" : "") + '"' + comboAttrs + ">" + label + "<select" + name + ">" + html + "</select>" + hint + "</div>";
+			return '<div class="a3s-field' + (combo ? " a3s-combo a3s-combo--field" : "") + '"' + comboAttrs + ">" + label + "<select" + name + (opts.disabled ? " disabled" : "") + ">" + html + "</select>" + hint + "</div>";
 		}
 		var type = isNum(col.type) ? ' type="number" step="' + (col.type === "Int" ? "1" : "any") + '" inputmode="decimal"' : "";
-		return '<div class="a3s-field">' + label + "<input" + type + name + ' value="' + esc(value == null ? "" : value) + '">' + hint + "</div>";
+		return '<div class="a3s-field">' + label + "<input" + type + name + (opts.disabled ? " disabled" : "") + ' value="' + esc(value == null ? "" : value) + '">' + hint + "</div>";
 	}
 	function readValue(el, col) {
 		if (col.type === "Check") return el.checked ? 1 : 0;
@@ -688,8 +725,8 @@
 		}
 		function shown(c) {
 			/* A pricing row asks its margin one way: in rupees, or as a percent (Margin Type). */
-			if (table === "pricing_options" && c.fieldname === "margin_percent") return draft.margin_type === "Percentage";
-			if (table === "pricing_options" && c.fieldname === "margin") return draft.margin_type !== "Percentage";
+			if (table === "pricing_options" && c.fieldname === "margin_percent") return draft.margin_type === "Percentage" && !Number(draft.cap_applicable);
+			if (table === "pricing_options" && c.fieldname === "margin") return draft.margin_type !== "Percentage" || !!Number(draft.cap_applicable);
 			return !PICKED[table + "." + c.fieldname] && !TREE_FIELDS[c.fieldname] && !KIT_FIELD[c.fieldname] &&
 				!(layout && NOT_ASKED[table + "." + c.fieldname]);
 		}
@@ -705,6 +742,19 @@
 			if (layout && SHEET_TABLES[table] && c.fieldname === "category") opts.comboLimit = 10;
 			var key = table + "." + c.fieldname;
 			if (key === "pricing_options.cost") opts.hint = "Worked out, as below.";
+			if (key === "pricing_options.cap_amount" && !Number(draft.cap_applicable)) {
+				opts.disabled = true;
+				opts.hint = "Tick Cap Applicable to set it.";
+			}
+			if (Number(draft.cap_applicable) && (key === "pricing_options.margin" || key === "pricing_options.margin_type")) {
+				if (key === "pricing_options.margin") {
+					c = Object.assign({}, c, { read_only: 1 });
+					opts.hint = Number(draft.margin) < 0 ? "Below the cost: the Cap Amount is less than the rest of the cost." : "Worked out: the Cap Amount less the rest of the cost.";
+				} else {
+					opts.disabled = true;
+					opts.hint = "Set by the cap.";
+				}
+			}
 			/* A kit's part keeps its own rate (its selling price). */
 			if (layout && ((WORKED_OUT[key] && !part) || (FROM_SOURCE[key] && setBySystem(table, draft)))) {
 				opts.hint = WORKED_OUT[key] || FROM_SOURCE[key];
@@ -729,7 +779,8 @@
 			var lines = (byKind ? layout(kind) : layout).map(function (line) {
 				var cols = line.map(function (f) { placed[f] = 1; return spec.columns.find(function (c) { return c.fieldname === f; }); })
 					.filter(function (c) { return c && shown(c); });
-				return cols.length ? '<div class="a3s-pkg__line a3s-pkg__line--' + line.length + '">' + cols.map(field).join("") + "</div>" : "";
+				var width = (LINE_WIDTHS[table] || {})[cols.length] || "a3s-pkg__line--" + line.length;
+				return cols.length ? '<div class="a3s-pkg__line ' + width + '">' + cols.map(field).join("") + "</div>" : "";
 			}).join("");
 			var rest = byKind ? [] : spec.columns.filter(function (c) { return shown(c) && !placed[c.fieldname]; });
 			var kinds = KIND_TABLES[table] && !part ? pills("a3s-row-kind", spec.label + " row is", KINDS, kind) : "";
@@ -777,7 +828,7 @@
 		if (draft[itemField] && RATE_FIELD[table] && !Number(draft[RATE_FIELD[table]])) fillRate();
 		/* A choice that narrows another (make and phase the model, variant the make, type the
 		   item) repaints the form; an Item fills the row's specification text. */
-		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1, margin_type: 1 };
+		var REPAINT = { inverter_make: 1, inverter_phase: 1, battery_variant: 1, system_type: 1, margin_type: 1, cap_applicable: 1 };
 		/* The fields an Item's make and capacity fill, by table. */
 		var ITEM_SPECS = { modules: ["module_make", "module_wattage"], inverters: ["inverter_make", "inverter_capacity_kw"] };
 		m.body.addEventListener("change", function (e) {
@@ -894,7 +945,9 @@
 			if (table === "pricing_options") {
 				draft.cost = pricingCost(draft);
 				var costBox = m.body.querySelector('[data-ro="cost"]'), parts = m.body.querySelector("[data-breakdown]");
+				var marginBox = m.body.querySelector('[data-ro="margin"]');
 				if (costBox) costBox.textContent = money(draft.cost);
+				if (marginBox) marginBox.textContent = money(draft.margin);
 				if (parts) parts.innerHTML = breakdownRows(draft);
 			}
 			var by = ROW_AMOUNT[table];
@@ -914,6 +967,9 @@
 			var wrong = readPickers(table, draft, m.body);
 			if (wrong) { m.status(wrong, "error"); return; }
 			if (SHEET_TABLES[table]) draft.amount = (Number(draft.qty) || 0) * (Number(draft.rate) || 0);
+			if (table === "pricing_options" && Number(draft.cap_applicable) && !(Number(draft.cap_amount) > 0)) {
+				m.status("Give the Cap Amount, or untick Cap Applicable.", "error"); return;
+			}
 			if (table === "pricing_options") draft.cost = pricingCost(draft);
 			if (table === "modules" && !part && Number(draft.wattage_rate)) draft.rate = (Number(draft.module_wattage) || 0) * Number(draft.wattage_rate);
 			if (ROW_AMOUNT[table]) draft.amount = (Number(draft[ROW_AMOUNT[table][0]]) || 0) * (Number(draft[ROW_AMOUNT[table][1]]) || 0);

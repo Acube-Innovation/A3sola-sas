@@ -844,6 +844,14 @@
 	border-color: var(--color-accent);
 	background: var(--color-surface);
 }
+/* Not to be typed in until something else is chosen (a pricing row's Cap Amount). */
+.a3s-field input:disabled, .a3s-field select:disabled {
+	color: var(--color-text-muted);
+	background: var(--color-bg);
+	border-style: dashed;
+	opacity: 0.75;
+	cursor: not-allowed;
+}
 .a3s-field--error input, .a3s-field--error select, .a3s-field--error textarea {
 	border-color: var(--color-danger);
 }
@@ -4383,11 +4391,16 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-pkg__line--2 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
 .a3s-pkg__line--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .a3s-pkg__line--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* A pricing row: what it is built from at half the width, its price beside it. */
+.a3s-pkg__line--half-quarters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+.a3s-pkg__line--halves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.a3s-pkg__breakdownhead--gst { margin-top: 1rem; }
+.a3s-pkg__breakdownlist dt small { color: var(--color-text-muted); font-size: 0.85em; }
 .a3s-pkg__line .a3s-field--wide { grid-column: auto; }
 .a3s-pkg__line textarea { min-height: 0; resize: vertical; }
 /* A tick level with the boxes beside it, under where their labels sit. */
 .a3s-pkg__line > .a3s-check { align-self: start; margin-top: 1.55rem; min-height: 2.85rem; }
-@media (max-width: 640px) { .a3s-pkg__line--2, .a3s-pkg__line--3, .a3s-pkg__line--4 { grid-template-columns: 1fr; } .a3s-pkg__line > .a3s-check { margin-top: 0; min-height: 0; } }
+@media (max-width: 640px) { .a3s-pkg__line--2, .a3s-pkg__line--3, .a3s-pkg__line--4, .a3s-pkg__line--half-quarters, .a3s-pkg__line--halves { grid-template-columns: 1fr; } .a3s-pkg__line > .a3s-check { margin-top: 0; min-height: 0; } }
 /* The first ten matches, and how many more typing finds. */
 .a3s-combo__more { margin: 0; padding: 0.5rem 0.75rem; font-size: 0.78rem; color: var(--color-text-muted); border-top: 1px solid var(--color-border); }
 
@@ -4434,3 +4447,7 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-de-com__print-row { display: flex; align-items: center; gap: 0.5rem; }
 .a3s-de-com__print-row .a3s-de-com__pdf { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
 .a3s-de-com__print .a3s-edit__hint { margin: 0.5rem 0 0; text-align: center; }
+
+/* Design freeze: what the BOM is, as text, and Freeze at the foot of the page. */
+.a3s-dsgn__source { margin: 0 0 0.35rem; font-weight: 600; color: var(--color-text); }
+.a3s-dsgn__freeze { margin-top: 1.5rem; }
