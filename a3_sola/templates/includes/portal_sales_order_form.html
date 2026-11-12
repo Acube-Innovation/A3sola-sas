@@ -29,11 +29,9 @@
 				{#- The proposal the order is made under, fetched (the quotation's, else the lead's) and
 				    not changed here; portal_sales_order_form.js keeps it with the lead and quotation chosen. -#}
 				<div class="a3s-field">
-					<label id="a3s-sf-proposal-label">Proposal</label>
-					<p class="a3s-qf__status a3s-sf__proposal" id="a3s-sf-proposal" aria-labelledby="a3s-sf-proposal-label" aria-live="polite">
-						{%- if proposal %}<a href="{{ proposal.route }}">{{ proposal.name | e }}</a> &middot; {{ proposal.status | e }}{% else %}<span class="a3s-table__muted">&mdash;</span>{% endif -%}
-					</p>
-					<p class="a3s-field__hint">Fetched from the quotation, else the lead. Not changed here.</p>
+					<label for="fld-sf-proposal">Proposal</label>
+					<input type="text" id="fld-sf-proposal" value="{{ proposal.name if proposal else '' }}" readonly aria-live="polite"
+					       data-route="{{ proposal.route if proposal else '' }}" title="{{ (proposal.name ~ ' · ' ~ proposal.status) if proposal else '' }}">
 				</div>
 				{%- if order %}
 				<div class="a3s-field">

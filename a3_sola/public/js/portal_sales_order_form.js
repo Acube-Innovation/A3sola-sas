@@ -28,17 +28,15 @@
 	};
 	var chosen = state.quotation || "";
 	var cards = {};
-	var proposalBox = document.getElementById("a3s-sf-proposal");
+	var proposalBox = document.getElementById("fld-sf-proposal");
 
-	/* The proposal beside the lead: the quotation's, else the lead's; fetched, not typed. */
+	/* The proposal beside the lead: the quotation's, else the lead's; fetched into a read-only
+	   box, never typed. */
 	function paintProposal(p) {
 		if (!proposalBox) return;
-		proposalBox.innerHTML = "";
-		if (!p) { proposalBox.appendChild(node("span", "a3s-table__muted", "\u2014")); return; }
-		var a = node("a", "", p.name);
-		a.href = p.route;
-		proposalBox.appendChild(a);
-		proposalBox.appendChild(document.createTextNode(" \u00b7 " + p.status));
+		proposalBox.value = p ? p.name : "";
+		proposalBox.dataset.route = p ? p.route : "";
+		proposalBox.title = p ? p.name + " \u00b7 " + p.status : "";
 	}
 	function loadProposal() {
 		if (!proposalBox) return;

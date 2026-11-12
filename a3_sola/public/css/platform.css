@@ -3367,6 +3367,8 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt.is-rejected:hover .a3s-qf__opt-more { color: var(--color-sky-ink); }
 .a3s-qf__opt-why { font-size: 0.72rem; font-style: italic; }
 .a3s-sf__dates { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); }
+/* The proposal beside the lead: a read-only box, fetched. */
+#fld-sf-proposal[readonly] { background: rgba(42, 51, 66, 0.04); color: var(--color-text); cursor: default; }
 /* The customer box: the address chosen is shown in full under its list. */
 .a3s-sf__address-text { margin: 0.35rem 0 0; font-size: 0.8125rem; color: var(--color-text-muted); white-space: pre-line; min-height: 1.2em; }
 .a3s-sf__party [hidden] { display: none; }
