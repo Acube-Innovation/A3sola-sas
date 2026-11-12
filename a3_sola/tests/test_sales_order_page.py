@@ -80,6 +80,37 @@ class TestSalesOrderPage(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, so.save_order, self.first.name,
 			dict(self.when, gst_category="Registered Regular", billing_address_gstin="not-a-gstin"))
 
+	def test_a_customer_is_made_from_the_pop_up_for_a_lead_that_is_none_yet(self):
+		# A lead without a consumer is quoted as a lead (quotation_option.create); ordering it
+		# needs a customer, which the page's pop-up makes.
+		from a3_sola.tests.fixtures import make_lead
+		from a3_sola.tests.test_quotation import ensure_item
+
+		lead = make_lead(lead_name="Pop-up Lead " + frappe.generate_hash(length=5))
+		quotation = frappe.get_doc({"doctype": "Quotation", "company": self.consumer.company, "quotation_to": "Lead",
+			"party_name": lead, "items": [{"item_code": ensure_item(), "qty": 1, "rate": 215000}]})
+		quotation.flags.ignore_permissions = True
+		quotation.insert(ignore_permissions=True)
+		quotation.submit()
+		# Ordering a lead's quotation needs its customer: ERPNext's own, filed under the selling
+		# default (a group), would be refused.
+		with self.assertRaises(frappe.MandatoryError):
+			so.save_order(quotation.name, self.when)
+		box = so.new_customer_box(lead)
+		self.assertNotIn("All Customer Groups", box["groups"])
+		self.assertEqual(box["values"]["customer_name"], frappe.db.get_value("Lead", lead, "lead_name"))
+		with self.assertRaises(frappe.ValidationError):
+			so.new_customer(dict(box["values"], customer_group="All Customer Groups"), lead)
+		made = so.new_customer(dict(box["values"], customer_name="Pop-up Customer " + frappe.generate_hash(length=5),
+			address_line1="12 Solar Lane", city="Kochi", pincode="682001", email_id="pop@example.com"), lead)
+		customer = frappe.get_doc("Customer", made["customer"])
+		self.assertEqual((customer.lead_name, customer.email_id), (lead, "pop@example.com"))
+		self.assertEqual(frappe.db.get_value("Address", made["address"], "address_line1"), "12 Solar Lane")
+		self.assertIn(made["address"], [a["value"] for a in so.party_box(quotation=quotation.name)["addresses"]])
+		order = frappe.get_doc("Sales Order", so.save_order(quotation.name, dict(self.when, customer=made["customer"],
+			customer_address=made["address"]))["name"])
+		self.assertEqual((order.customer, order.customer_address), (made["customer"], made["address"]))
+
 	def test_a_quotation_must_be_chosen(self):
 		with self.assertRaises(frappe.MandatoryError):
 			so.save_order(None, self.when)

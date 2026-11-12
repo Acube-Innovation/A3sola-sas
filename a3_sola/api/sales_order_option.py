@@ -214,6 +214,121 @@ def company_place():
 	return _place_of(state)
 
 
+# ------------------------------------------------------------------ a new customer
+#: What the order page's New customer pop-up asks: the customer, how to reach them, where
+#: they are billed, and GST.
+NEW_CUSTOMER = ("customer_name", "customer_type", "customer_group", "territory", "mobile_no", "email_id",
+	"address_line1", "address_line2", "city", "state", "pincode", "gst_category", "gstin")
+
+
+def _leaves(doctype, prefer=()):
+	"""The non-group records of a tree (Customer Group, Territory): a customer is filed
+	against a leaf, never a group such as All Customer Groups."""
+	names = frappe.get_all(doctype, filters={"is_group": 0}, pluck="name", order_by="name asc")
+	return [n for n in prefer if n in names] + [n for n in names if n not in prefer]
+
+
+def _leaf(doctype, name, label):
+	if not name or not frappe.db.exists(doctype, name):
+		frappe.throw(_("Choose the {0}.").format(label), frappe.MandatoryError, title=_("{0} Missing").format(label))
+	if cint(frappe.db.get_value(doctype, name, "is_group")):
+		frappe.throw(_("{0} is a group: choose a {1} under it, such as {2}.").format(name, label.lower(),
+			", ".join(_leaves(doctype)[:3]) or "-"), title=_("{0} Is a Group").format(label))
+	return name
+
+
+@frappe.whitelist()
+def new_customer_box(lead=None):
+	"""What the New customer pop-up offers and starts with: the leaf customer groups and
+	territories, the types, states and GST categories, and the lead's details filled in."""
+	frappe.has_permission("Customer", "create", throw=True)
+	row = frappe.db.get_value("Lead", lead, ["lead_name", "company_name", "email_id", "mobile_no", "phone", "state", "country"],
+		as_dict=True) if lead and frappe.db.exists("Lead", lead) else frappe._dict()
+	company = bool(row.get("company_name"))
+	groups = _leaves("Customer Group", prefer=("Commercial", "Individual") if company else ("Individual", "Commercial"))
+	territories = _leaves("Territory", prefer=("India",))
+	gst = gst_fields_present("Customer") and gst_fields_present("Address")
+	states = [o.split("-", 1)[-1].strip() for o in place_choices()] if gst_fields_present("Sales Order") else []
+	company_state = (company_place().split("-", 1)[-1].strip() if company_place() else "") or "Kerala"
+	return {
+		"groups": groups, "territories": territories, "types": ["Individual", "Company"], "states": states,
+		"categories": gst_categories() if gst else [], "gst": gst,
+		"values": {
+			"customer_name": row.get("company_name") or row.get("lead_name") or "",
+			"customer_type": "Company" if company else "Individual",
+			"customer_group": groups[0] if groups else "", "territory": territories[0] if territories else "",
+			"mobile_no": row.get("mobile_no") or row.get("phone") or "", "email_id": row.get("email_id") or "",
+			"address_line1": "", "address_line2": "", "city": "", "state": row.get("state") or company_state, "pincode": "",
+			"gst_category": "Unregistered", "gstin": "",
+		},
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def new_customer(values, lead=None):
+	"""Make the customer the order is billed to, from the pop-up: the customer (of the lead,
+	when there is one), its billing address and - through ERPNext - its contact. Returns
+	{customer, address} for the box to take."""
+	frappe.has_permission("Customer", "create", throw=True)
+	v = {k: (str(x).strip() if x is not None else "") for k, x in (frappe.parse_json(values) or {}).items() if k in NEW_CUSTOMER}
+	if lead and not frappe.db.exists("Lead", lead):
+		lead = None
+	if lead and frappe.db.get_value("Customer", {"lead_name": lead}):
+		frappe.throw(_("Lead {0} is already customer {1}: choose it.").format(lead, frappe.db.get_value("Customer", {"lead_name": lead})))
+	if not v.get("customer_name"):
+		frappe.throw(_("Give the customer's name."), frappe.MandatoryError, title=_("Name Missing"))
+	customer_type = v.get("customer_type") or "Individual"
+	if customer_type not in ("Individual", "Company"):
+		frappe.throw(_("{0} is not a customer type.").format(customer_type))
+	group = _leaf("Customer Group", v.get("customer_group"), _("Customer Group"))
+	territory = _leaf("Territory", v.get("territory"), _("Territory"))
+	email = v.get("email_id") or ""
+	if email:
+		frappe.utils.validate_email_address(email, throw=True)
+	gst = gst_fields_present("Customer") and gst_fields_present("Address")
+	category, gstin = "Unregistered", ""
+	if gst:
+		category = v.get("gst_category") or "Unregistered"
+		if category not in gst_categories():
+			frappe.throw(_("{0} is not a GST category.").format(category))
+		gstin = (v.get("gstin") or "").upper()
+		registered = category not in ("Unregistered", "Overseas")
+		if registered and not gstin:
+			frappe.throw(_("A {0} customer needs a GSTIN.").format(category), frappe.MandatoryError, title=_("GSTIN Missing"))
+		if gstin and not GSTIN.match(gstin):
+			frappe.throw(_("{0} is not a GSTIN: 15 characters, starting with the state code.").format(gstin), title=_("GSTIN"))
+		if not registered:
+			gstin = ""
+	address_asked = any(v.get(k) for k in ("address_line1", "address_line2", "city", "pincode"))
+	if address_asked and not (v.get("address_line1") and v.get("city")):
+		frappe.throw(_("An address needs at least its first line and the city."), frappe.MandatoryError, title=_("Address Incomplete"))
+
+	customer = frappe.get_doc({
+		"doctype": "Customer", "customer_name": v["customer_name"], "customer_type": customer_type,
+		"customer_group": group, "territory": territory, "lead_name": lead or None,
+		"mobile_no": v.get("mobile_no") or None, "email_id": email or None,
+		**({"gst_category": category, "gstin": gstin or None} if gst else {}),
+	})
+	customer.insert()
+	address = None
+	if address_asked:
+		frappe.has_permission("Address", "create", throw=True)
+		address = frappe.get_doc({
+			"doctype": "Address", "address_title": customer.customer_name, "address_type": "Billing",
+			"address_line1": v["address_line1"], "address_line2": v.get("address_line2") or None, "city": v["city"],
+			"state": v.get("state") or None, "pincode": v.get("pincode") or None,
+			"country": frappe.db.get_value("Lead", lead, "country") if lead else None,
+			"email_id": email or None, "phone": v.get("mobile_no") or None, "is_primary_address": 1,
+			**({"gst_category": category, "gstin": gstin or None} if gst else {}),
+			"links": [{"link_doctype": "Customer", "link_name": customer.name}]
+				+ ([{"link_doctype": "Lead", "link_name": lead}] if lead else []),
+		})
+		address.country = address.country or frappe.db.get_single_value("System Settings", "country") or "India"
+		address.insert()
+		customer.db_set("customer_primary_address", address.name, update_modified=False)
+	return {"customer": customer.name, "customer_name": customer.customer_name, "address": address.name if address else ""}
+
+
 @frappe.whitelist()
 def party_box(quotation=None, order=None, customer=None, lead=None):
 	"""The customer box of the order page: the customer, address, e-mail and GST details,
@@ -415,6 +530,7 @@ def save_order(quotation=None, values=None, name=None):
 		reason = why_not(q, name)
 		if reason:
 			frappe.throw(_("{0} cannot be ordered ({1}).").format(quotation, reason), title=_("Choose Another Quotation"))
+		_customer_for_lead(q, values.get("customer"))
 		from erpnext.selling.doctype.quotation.quotation import make_sales_order
 
 		mapped = make_sales_order(quotation)
@@ -438,6 +554,28 @@ def save_order(quotation=None, values=None, name=None):
 	else:
 		doc.save()
 	return {"name": doc.name, "route": route_of(doc.name)}
+
+
+def _customer_for_lead(q, chosen=None):
+	"""A quotation raised for a lead is ordered by that lead's customer. ERPNext would make
+	one from the lead with the selling defaults - All Customer Groups, a group, which a
+	customer cannot be filed under - so the customer is made in the page's pop-up instead,
+	or the one chosen by hand is taken as the lead's."""
+	if q.quotation_to != "Lead" or not q.party_name:
+		return
+	lead = q.party_name
+	if frappe.db.get_value("Customer", {"lead_name": lead}):
+		return
+	if not chosen:
+		frappe.throw(_("{0} is not a customer yet: add the customer (New customer, beside the customer on this page) "
+			"or choose an existing one.").format(frappe.db.get_value("Lead", lead, "lead_name") or lead),
+			frappe.MandatoryError, title=_("Customer Missing"))
+	other = frappe.db.get_value("Customer", chosen, "lead_name")
+	if other and other != lead:
+		frappe.throw(_("{0} is the customer of another lead ({1}): add a new customer for this one.").format(chosen, other),
+			title=_("Another Lead's Customer"))
+	frappe.has_permission("Customer", "write", chosen, throw=True)
+	frappe.db.set_value("Customer", chosen, "lead_name", lead)
 
 
 #: An order's own fields, kept when a draft is pointed at another quotation.
@@ -506,6 +644,7 @@ def page_context(context, name=None):
 	context.lead_choices = lead_choices(lead)
 	context.proposal = proposal_of(quotation, lead)
 	context.party = party_box(quotation, name, lead=lead) if (quotation or name) else party_box(lead=lead)
+	context.new_customer = new_customer_box(lead) if editable and frappe.has_permission("Customer", "create") else None
 	context.state_json = frappe.as_json({"lead": lead, "quotation": quotation, "name": name or "", "editable": editable,
 		"docstatus": cint(doc.docstatus) if doc else 0, "status": doc.status if doc else ""})
 	context.desk_route = "/app/sales-order/" + frappe.utils.quote(name) if name else ""

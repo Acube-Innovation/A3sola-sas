@@ -3371,6 +3371,14 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-sf__address-text { margin: 0.35rem 0 0; font-size: 0.8125rem; color: var(--color-text-muted); white-space: pre-line; min-height: 1.2em; }
 .a3s-sf__party [hidden] { display: none; }
 .a3s-sf__party .a3s-form__grid { align-items: start; }
+.a3s-link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--color-sky-ink); cursor: pointer; text-decoration: underline; }
+/* The New customer pop-up: two columns, the name and address lines across both. */
+.a3s-sf-newcust__panel { width: min(44rem, 100%); }
+.a3s-sf-newcust__head { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 0.75rem; }
+.a3s-sf-newcust__panel .a3s-form__grid { align-items: start; }
+.a3s-sf-newcust__panel .a3s-form__grid > .a3s-sf-newcust__wide { grid-column: 1 / -1; }
+.a3s-sf-newcust__panel .a3s-form__actions { margin-top: 1rem; }
+.a3s-sf-newcust__panel [hidden] { display: none; }
 .a3s-sf__dates .a3s-field { align-content: start; }  /* a hint under one date leaves the other's box as it is */
 
 /* list: the Edit column - a small link to where the record is edited */
