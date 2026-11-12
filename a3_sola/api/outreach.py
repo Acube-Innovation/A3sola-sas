@@ -100,10 +100,23 @@ def whatsapp_link(mobile_no, message):
 	business-API decision has not been taken. This puts the message one tap away without
 	pretending to send on their behalf.
 	"""
+	return f"https://wa.me/{whatsapp_number(mobile_no)}?text={urllib.parse.quote(message or '')}"
+
+
+def whatsapp_number(mobile_no):
+	"""An Indian mobile number as wa.me takes it: country code and number, digits only -
+	"919497314432". Written with the trunk 0 ("09497314432"), the international 00 or a +91
+	before either, it is put right; wa.me opens a blank chat for a number it cannot read."""
 	digits = "".join(ch for ch in (mobile_no or "") if ch.isdigit())
-	if digits and not digits.startswith("91") and len(digits) == 10:
+	if digits.startswith("00"):
+		digits = digits[2:]
+	if digits.startswith("910") and len(digits) == 13:
+		digits = "91" + digits[3:]
+	if digits.startswith("0") and len(digits) == 11:
+		digits = digits[1:]
+	if len(digits) == 10:
 		digits = "91" + digits
-	return f"https://wa.me/{digits}?text={urllib.parse.quote(message or '')}"
+	return digits
 
 
 @frappe.whitelist()
