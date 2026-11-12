@@ -330,7 +330,6 @@ def page_context(context, name=None):
 			"view": context.pdf_route + "&print_format=" + frappe.utils.quote(f),
 			"download": context.pdf_route + "&download=1&print_format=" + frappe.utils.quote(f),
 		} for f in print_formats()]
-	context.desk_route = "/app/quotation/" + frappe.utils.quote(name) if name else ""
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
 

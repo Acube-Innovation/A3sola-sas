@@ -1144,8 +1144,8 @@ def record_route(slug, name):
 
 def edit_route(slug, name):
 	"""Where a record is edited: a design estimate in its builder, where the system and the
-	prices live; a proposal in the builder of the estimate it quotes, whose Proposal tab saves
-	it again (api/portal_proposal.design_route_of); anything else in its edit form."""
+	prices live; a proposal at step one of the estimate it quotes, whose Proposal tab saves it
+	again (api/portal_proposal.design_route_of); anything else in its edit form."""
 	if slug == "proposals":
 		from a3_sola.api.portal_proposal import design_route_of
 

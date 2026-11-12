@@ -214,3 +214,39 @@ def make_estimate(consumer, survey=None, with_default_options=True, submit=False
 	if submit:
 		doc.submit()
 	return doc
+
+
+#: The GST fields India Compliance adds on production; a test site without that app gets
+#: them here, so the sales order page's customer box is tested as production shows it.
+GST_STATES = ["01-Jammu and Kashmir", "07-Delhi", "27-Maharashtra", "29-Karnataka", "32-Kerala", "33-Tamil Nadu"]
+GST_CATEGORIES = "Registered Regular\nRegistered Composition\nUnregistered\nSEZ\nOverseas\nDeemed Export\nUIN Holders\nTax Deductor\nTax Collector\nInput Service Distributor"
+
+
+def ensure_gst_fields():
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+	wanted = {
+		"Customer": [
+			{"fieldname": "gstin", "label": "GSTIN / UIN", "fieldtype": "Data", "insert_after": "tax_id"},
+			{"fieldname": "gst_category", "label": "GST Category", "fieldtype": "Select", "options": GST_CATEGORIES,
+				"default": "Unregistered", "insert_after": "gstin"},
+		],
+		"Address": [
+			{"fieldname": "gstin", "label": "GSTIN / UIN", "fieldtype": "Data", "insert_after": "fax"},
+			{"fieldname": "gst_category", "label": "GST Category", "fieldtype": "Select", "options": GST_CATEGORIES,
+				"default": "Unregistered", "insert_after": "gstin"},
+		],
+		"Sales Order": [
+			{"fieldname": "gst_category", "label": "GST Category", "fieldtype": "Data", "read_only": 1,
+				"fetch_from": "customer_address.gst_category", "insert_after": "customer_address"},
+			{"fieldname": "billing_address_gstin", "label": "Billing Address GSTIN", "fieldtype": "Data", "read_only": 1,
+				"fetch_from": "customer_address.gstin", "insert_after": "gst_category"},
+			{"fieldname": "place_of_supply", "label": "Place of Supply", "fieldtype": "Autocomplete",
+				"options": "\n".join(GST_STATES), "insert_after": "billing_address_gstin"},
+		],
+	}
+	missing = {dt: [f for f in fields if not frappe.get_meta(dt).has_field(f["fieldname"])] for dt, fields in wanted.items()}
+	missing = {dt: fields for dt, fields in missing.items() if fields}
+	if missing:
+		create_custom_fields(missing, ignore_validate=True)
+		frappe.clear_cache()

@@ -3359,7 +3359,28 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-qf__opt.is-off { opacity: 0.62; }
 .a3s-qf__opt.is-off:hover, .a3s-qf__opt.is-off:focus-visible { opacity: 0.85; }
 .a3s-qf__opt-text .a3s-sf__why { color: var(--color-danger); font-weight: 600; }
+/* The quotation page once submitted: the options not taken, in light grey, not to be chosen. */
+.a3s-qf__opt.is-rejected { color: #9aa3af; border-style: dashed; background: #fafbfc; cursor: default; }
+.a3s-qf__opt.is-rejected b, .a3s-qf__opt.is-rejected small, .a3s-qf__opt.is-rejected .a3s-qf__price { color: #9aa3af; font-weight: 500; }
+.a3s-qf__opt.is-rejected .a3s-qf__opt-more { color: #b0b7c1; }
+.a3s-qf__opt.is-rejected:hover, .a3s-qf__opt.is-rejected:focus-visible { border-color: var(--color-border); box-shadow: none; transform: none; }
+.a3s-qf__opt.is-rejected:hover .a3s-qf__opt-more { color: var(--color-sky-ink); }
+.a3s-qf__opt-why { font-size: 0.72rem; font-style: italic; }
 .a3s-sf__dates { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-border); }
+/* The proposal beside the lead: a read-only box, fetched. */
+#fld-sf-proposal[readonly] { background: rgba(42, 51, 66, 0.04); color: var(--color-text); cursor: default; }
+/* The customer box: the address chosen is shown in full under its list. */
+.a3s-sf__address-text { margin: 0.35rem 0 0; font-size: 0.8125rem; color: var(--color-text-muted); white-space: pre-line; min-height: 1.2em; }
+.a3s-sf__party [hidden] { display: none; }
+.a3s-sf__party .a3s-form__grid { align-items: start; }
+.a3s-link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--color-sky-ink); cursor: pointer; text-decoration: underline; }
+/* The New customer pop-up: two columns, the name and address lines across both. */
+.a3s-sf-newcust__panel { width: min(44rem, 100%); }
+.a3s-sf-newcust__head { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 0.75rem; }
+.a3s-sf-newcust__panel .a3s-form__grid { align-items: start; }
+.a3s-sf-newcust__panel .a3s-form__grid > .a3s-sf-newcust__wide { grid-column: 1 / -1; }
+.a3s-sf-newcust__panel .a3s-form__actions { margin-top: 1rem; }
+.a3s-sf-newcust__panel [hidden] { display: none; }
 .a3s-sf__dates .a3s-field { align-content: start; }  /* a hint under one date leaves the other's box as it is */
 
 /* list: the Edit column - a small link to where the record is edited */
@@ -4219,20 +4240,22 @@ select.a3s-items__input { min-width: 9rem; }
 	.a3s-form__grid--4 .a3s-field--wide { grid-column: auto; }
 }
 
-/* Step one: the package's inverter an option comes with, shown, not chosen. */
+/* Step one: the package's inverter and panel an option comes with, shown, not chosen:
+   the inverter on one line, the panel on the next. */
 .a3s-de-opt__value {
 	display: flex;
 	align-items: center;
 	min-height: 2.6rem;
-	padding: 0 0.85rem;
+	padding: 0.3rem 0.85rem;
 	border: 1px dashed var(--color-accent-tint);
 	border-radius: 0.6rem;
 	background: rgba(247, 148, 30, 0.1);
 	font-weight: 600;
+	font-size: 0.92rem;
+	line-height: 1.3;
 	color: var(--color-text);
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	white-space: pre-line;
 }
 @media (min-width: 600px) { .a3s-de-opt__parts .a3s-de-sizing__part { grid-column: span 2; } }
 

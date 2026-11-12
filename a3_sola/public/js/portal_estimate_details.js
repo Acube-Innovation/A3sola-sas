@@ -298,14 +298,15 @@
 	/* The panel, inverter and battery are not chosen here: each is the package's own - its
 	   default, or the inverter an option was added for (expandInverters) - carried in a hidden
 	   list, and changed on the next step. Inverters are those of the row's connection type, a
-	   battery only for Off-Grid and Hybrid. The inverter is shown as text, so options of the
-	   same package tell apart. */
+	   battery only for Off-Grid and Hybrid. The inverter and the panel are shown as one text
+	   ("inverter / panel"), so options of the same package tell apart. */
 	function fillComponents(tr) {
 		function field(name) { return tr.querySelector('[data-field="' + name + '"]'); }
 		var pkg = field("solar_package");
 		var info = packages[pkg ? pkg.value : ""] || null;
 		var phase = field("connection_type") ? field("connection_type").value : "";
 		var system = field("system_type") ? field("system_type").value : "";
+		var picked = {};  // each component's chosen label, for the text below
 		Array.prototype.forEach.call(tr.querySelectorAll("[data-component]"), function (select) {
 			var wrap = select.closest(".a3s-de-sizing__part");
 			var onlyFor = wrap && wrap.dataset.onlyFor ? wrap.dataset.onlyFor.split("|") : null;
@@ -325,14 +326,17 @@
 			var fallback = list.filter(function (o) { return o["default"]; })[0] || list[0];
 			select.value = offered ? keep : (fallback ? fallback.value : "");
 			select.dataset.value = select.value;
+			var chosenOne = list.filter(function (o) { return o.value === select.value; })[0];
+			picked[select.dataset.component] = chosenOne ? chosenOne.label : "";
 			var text = wrap && wrap.querySelector("[data-component-text]");
-			if (text) {
-				var picked = list.filter(function (o) { return o.value === select.value; })[0];
-				text.textContent = picked ? picked.label : "\u2014";
-				text.title = text.textContent;
-				wrap.hidden = !applies || !info;
-			}
+			if (text) wrap.hidden = !applies || !info;
 		});
+		/* The inverter on one line, the panel it is costed on under it. */
+		var shown = tr.querySelector("[data-component-text]");
+		if (shown) {
+			shown.textContent = [picked.inverters, picked.panels].filter(Boolean).join("\n") || "\u2014";
+			shown.title = shown.textContent.replace("\n", " / ");
+		}
 		/* The option's price: the package built with the inverter chosen (the price list's MRP). */
 		var cost = tr.querySelector("[data-package-cost]");
 		var inv = tr.querySelector('[data-component="inverters"]');

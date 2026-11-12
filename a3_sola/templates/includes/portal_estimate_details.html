@@ -131,7 +131,8 @@
 				{%- endfor %}
 			{#- The package's panel, inverter and battery: not chosen here (they are changed on the next
 			    step), but carried, the package's default or the inverter the option was added for.
-			    The inverter is shown, so options of one package tell apart. -#}
+			    The inverter and the panel it is costed on are shown together, so options of one
+			    package tell apart. -#}
 			<div class="a3s-de-opt__parts">
 				{%- for c in package.components %}
 				<div class="a3s-field a3s-de-sizing__part"{% if c.only_for %} data-only-for="{{ c.only_for | e }}"{% endif %}{% if c.key != "inverters" %} hidden{% endif %}>
@@ -139,8 +140,8 @@
 						<option value="">—</option>
 					</select>
 					{%- if c.key == "inverters" %}
-					<span class="a3s-de-sizing__part-label">{{ c.label }}</span>
-					<span class="a3s-de-opt__value" data-component-text>—</span>
+					<span class="a3s-de-sizing__part-label">{{ _("Inverter / Panel") }}</span>
+					<span class="a3s-de-opt__value" data-component-text title="">—</span>
 					{%- endif %}
 				</div>
 				{%- endfor %}

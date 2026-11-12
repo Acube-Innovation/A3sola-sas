@@ -26,6 +26,13 @@
 						{%- for c in lead_choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
 					</select>
 				</div>
+				{#- The proposal the order is made under, fetched (the quotation's, else the lead's) and
+				    not changed here; portal_sales_order_form.js keeps it with the lead and quotation chosen. -#}
+				<div class="a3s-field">
+					<label for="fld-sf-proposal">Proposal</label>
+					<input type="text" id="fld-sf-proposal" value="{{ proposal.name if proposal else '' }}" readonly aria-live="polite"
+					       data-route="{{ proposal.route if proposal else '' }}" title="{{ (proposal.name ~ ' · ' ~ proposal.status) if proposal else '' }}">
+				</div>
 				{%- if order %}
 				<div class="a3s-field">
 					<label>Status</label>
@@ -36,6 +43,138 @@
 			<p class="a3s-field__hint">Only leads with a quotation are listed. Choose one of its quotations <span class="a3s-req">*</span> - an order is raised from a submitted quotation, once.</p>
 			<div class="a3s-qf__options" id="a3s-sf-quotes" aria-live="polite"></div>
 		</section>
+
+		{#- Who the order is billed to: fetched from the quotation and its lead (the order's own once
+		    saved), each chosen by hand while the order is a draft; read-only once submitted. GSTIN
+		    and place of supply only for a registered customer. Painted by portal_sales_order_form.js
+		    from api/sales_order_option.party_box; here as the page first shows it. -#}
+		<section class="a3s-card a3s-edit__card a3s-sf__party" id="a3s-sf-party">
+			<h3 class="a3s-edit__card-title">Customer</h3>
+			<div class="a3s-form__grid">
+				<div class="a3s-field">
+					<label for="fld-sf-customer">Customer <span class="a3s-req">*</span></label>
+					<select id="fld-sf-customer" name="customer" aria-label="Customer"{% if not editable %} disabled{% endif %}>
+						{%- if party.from_lead %}<option value="">{{ party.from_lead | e }} &middot; not a customer yet: add the customer</option>{% endif %}
+						{%- for c in party.customers %}<option value="{{ c.value | e }}"{% if c.value == party.customer %} selected{% endif %}>{{ c.label | e }}</option>{% endfor %}
+					</select>
+					<p class="a3s-field__hint">From the quotation; choose another if the order is billed to someone else.
+						{%- if new_customer %} <button type="button" class="a3s-link-btn" id="a3s-sf-newcust-open">+ New customer</button>{% endif %}</p>
+				</div>
+				<div class="a3s-field">
+					<label for="fld-sf-contact_email">Email</label>
+					<input type="email" id="fld-sf-contact_email" name="contact_email" value="{{ party.email | e }}"{% if not editable %} disabled{% endif %}>
+				</div>
+				<div class="a3s-field a3s-sf__address">
+					<label for="fld-sf-customer_address">Address</label>
+					<select id="fld-sf-customer_address" name="customer_address" aria-label="Address"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for a in party.addresses %}<option value="{{ a.value | e }}"{% if a.value == party.address %} selected{% endif %}>{{ a.label | e }}</option>{% endfor %}
+					</select>
+					<p class="a3s-sf__address-text" id="a3s-sf-address-text">{{ (party.addresses | selectattr("value", "equalto", party.address) | map(attribute="display") | first) or "" }}</p>
+				</div>
+				{%- if party.gst %}
+				<div class="a3s-field">
+					<label for="fld-sf-gst_category">GST Category</label>
+					<select id="fld-sf-gst_category" name="gst_category" aria-label="GST category"{% if not editable %} disabled{% endif %}>
+						{%- for c in party.categories %}<option value="{{ c | e }}"{% if c == party.gst_category %} selected{% endif %}>{{ c | e }}</option>{% endfor %}
+					</select>
+				</div>
+				<div class="a3s-field" data-gst-only{% if party.gst_category in ("Unregistered", "Overseas") %} hidden{% endif %}>
+					<label for="fld-sf-gstin">GSTIN <span class="a3s-req">*</span></label>
+					<input type="text" id="fld-sf-gstin" name="billing_address_gstin" value="{{ party.gstin | e }}" maxlength="15" placeholder="e.g. 32ABCDE1234F1Z5" autocapitalize="characters"{% if not editable %} disabled{% endif %}>
+				</div>
+				<div class="a3s-field" data-gst-only{% if party.gst_category in ("Unregistered", "Overseas") %} hidden{% endif %}>
+					<label for="fld-sf-place_of_supply">Place of Supply</label>
+					<select id="fld-sf-place_of_supply" name="place_of_supply" aria-label="Place of supply"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for o in party.places %}<option value="{{ o | e }}"{% if o == party.place_of_supply %} selected{% endif %}>{{ o | e }}</option>{% endfor %}
+					</select>
+				</div>
+				{%- endif %}
+			</div>
+		</section>
+
+		{%- if new_customer %}
+		{#- The New customer pop-up: a complete customer - who, how to reach them, where they are
+		    billed, GST - saved and then taken by the box above (api/sales_order_option.new_customer).
+		    Filled from the lead; portal_sales_order_form.js refills it as the lead changes. -#}
+		<div class="a3s-modal" id="a3s-sf-newcust" hidden role="dialog" aria-modal="true" aria-labelledby="a3s-sf-newcust-title">
+			<div class="a3s-modal__panel a3s-sf-newcust__panel">
+				<div class="a3s-sf-newcust__head">
+					<h3 class="a3s-modal__title" id="a3s-sf-newcust-title">New customer</h3>
+					<button type="button" class="a3s-qf-preview__x" data-newcust-close aria-label="Close">&times;</button>
+				</div>
+				<form class="a3s-form a3s-modal__form" id="a3s-sf-newcust-form" novalidate>
+					<div class="a3s-form__grid">
+						<div class="a3s-field a3s-sf-newcust__wide">
+							<label for="nc-customer_name">Customer Name <span class="a3s-req">*</span></label>
+							<input type="text" id="nc-customer_name" name="customer_name" value="{{ new_customer['values'].customer_name | e }}" required>
+						</div>
+						<div class="a3s-field">
+							<label for="nc-customer_type">Type</label>
+							<select id="nc-customer_type" name="customer_type">{% for t in new_customer.types %}<option value="{{ t }}"{% if t == new_customer['values'].customer_type %} selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+						</div>
+						<div class="a3s-field">
+							<label for="nc-customer_group">Customer Group <span class="a3s-req">*</span></label>
+							<select id="nc-customer_group" name="customer_group">{% for g in new_customer.groups %}<option value="{{ g | e }}"{% if g == new_customer['values'].customer_group %} selected{% endif %}>{{ g | e }}</option>{% endfor %}</select>
+						</div>
+						<div class="a3s-field">
+							<label for="nc-territory">Territory <span class="a3s-req">*</span></label>
+							<select id="nc-territory" name="territory">{% for t in new_customer.territories %}<option value="{{ t | e }}"{% if t == new_customer['values'].territory %} selected{% endif %}>{{ t | e }}</option>{% endfor %}</select>
+						</div>
+						<div class="a3s-field">
+							<label for="nc-mobile_no">Mobile</label>
+							<input type="tel" id="nc-mobile_no" name="mobile_no" value="{{ new_customer['values'].mobile_no | e }}">
+						</div>
+						<div class="a3s-field">
+							<label for="nc-email_id">Email</label>
+							<input type="email" id="nc-email_id" name="email_id" value="{{ new_customer['values'].email_id | e }}">
+						</div>
+						<div class="a3s-field a3s-sf-newcust__wide">
+							<label for="nc-address_line1">Address Line 1</label>
+							<input type="text" id="nc-address_line1" name="address_line1" placeholder="House / building, street">
+						</div>
+						<div class="a3s-field a3s-sf-newcust__wide">
+							<label for="nc-address_line2">Address Line 2</label>
+							<input type="text" id="nc-address_line2" name="address_line2">
+						</div>
+						<div class="a3s-field">
+							<label for="nc-city">City / Town</label>
+							<input type="text" id="nc-city" name="city">
+						</div>
+						<div class="a3s-field">
+							<label for="nc-pincode">PIN Code</label>
+							<input type="text" id="nc-pincode" name="pincode" inputmode="numeric" maxlength="6">
+						</div>
+						<div class="a3s-field">
+							<label for="nc-state">State</label>
+							{%- if new_customer.states %}
+							<select id="nc-state" name="state">{% for st in new_customer.states %}<option value="{{ st | e }}"{% if st == new_customer['values'].state %} selected{% endif %}>{{ st | e }}</option>{% endfor %}</select>
+							{%- else %}
+							<input type="text" id="nc-state" name="state" value="{{ new_customer['values'].state | e }}">
+							{%- endif %}
+						</div>
+						{%- if new_customer.gst %}
+						<div class="a3s-field">
+							<label for="nc-gst_category">GST Category</label>
+							<select id="nc-gst_category" name="gst_category">{% for c in new_customer.categories %}<option value="{{ c | e }}"{% if c == new_customer['values'].gst_category %} selected{% endif %}>{{ c | e }}</option>{% endfor %}</select>
+						</div>
+						<div class="a3s-field" data-nc-gst-only hidden>
+							<label for="nc-gstin">GSTIN <span class="a3s-req">*</span></label>
+							<input type="text" id="nc-gstin" name="gstin" maxlength="15" placeholder="e.g. 32ABCDE1234F1Z5" autocapitalize="characters">
+						</div>
+						{%- endif %}
+					</div>
+					<p class="a3s-field__hint">The address, when given, is saved as the billing address and chosen for the order.</p>
+					<div class="a3s-form__actions">
+						<button type="submit" class="a3s-btn a3s-btn--primary" id="a3s-sf-newcust-save">Save customer</button>
+						<button type="button" class="a3s-btn a3s-btn--ghost" data-newcust-close>Cancel</button>
+						<p class="a3s-form__status" id="a3s-sf-newcust-status" role="status" aria-live="polite"></p>
+					</div>
+				</form>
+			</div>
+		</div>
+		{%- endif %}
 
 		<div class="a3s-ce-tabs a3s-lf__tabs" role="tablist" aria-label="Sales order">
 			<button type="button" role="tab" id="tab-so-details" data-tab="details" aria-selected="true">Order Details</button>
