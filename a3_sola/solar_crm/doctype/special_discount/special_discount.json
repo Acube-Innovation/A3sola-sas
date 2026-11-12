@@ -122,7 +122,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-11-12 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Special Discount",
@@ -176,7 +176,9 @@
    "share": 1,
    "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
   },
   {
    "role": "Solar Design Engineer",
@@ -186,7 +188,9 @@
    "share": 1,
    "report": 1,
    "export": 1,
-   "permlevel": 0
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
   },
   {
    "role": "Solar Survey Engineer",

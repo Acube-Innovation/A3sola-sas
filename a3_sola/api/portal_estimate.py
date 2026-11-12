@@ -227,18 +227,25 @@ TRAILING_SECTIONS = (
 )
 SECTION_BY_KEY.update({section["key"]: section for section in TRAILING_SECTIONS})
 
-# Tabs only an admin sees and changes: what the customer is let off, and what is offered
-# beside the system. Anyone else sees their effect in the commercials, not the tabs.
-ADMIN_ONLY = ("special_discount", "optional_add_ons")
+# Tabs only an admin sees and changes. None now: the additional structure and cable, the special
+# discount and the optional add-ons are anyone's who may change the estimate.
+ADMIN_ONLY = ()
+# Tabs everyone sees but only an admin changes: the system itself - its panels, inverter and
+# balance of system - and what the KSEB, the mounting and the installation cost. Anyone else
+# reads them as the package and the admin set them.
+ADMIN_EDIT = ("panels", "inverters", "bos_items", "kseb_expenses", "mounting_expenses", "installation_expenses")
 ADMIN_ROLES = ("Solar CRM Manager", "System Manager")
 
 
 def is_admin():
-	return bool(set(ADMIN_ROLES) & set(frappe.get_roles()))
+	"""An admin of the estimates: one of the admin roles, or the portal's Admin login."""
+	from a3_sola.api.portal_users import is_user_admin
+
+	return bool(set(ADMIN_ROLES) & set(frappe.get_roles())) or is_user_admin()
 
 
 def _check_admin(section):
-	if section in ADMIN_ONLY and not is_admin():
+	if (section in ADMIN_ONLY or section in ADMIN_EDIT) and not is_admin():
 		label = (SECTION_BY_KEY.get(section) or LINKED_BY_KEY[section])["label"]
 		frappe.throw(_("Only an admin can change the {0}.").format(_(label)), frappe.PermissionError)
 
@@ -791,6 +798,8 @@ def _section(doc, section, child, rows):
 		# Which field holds the count, and whether a row can be marked as an Option.
 		"count_field": (compact or {}).get("count", "nos"),
 		"has_option": any(f["fieldname"] == "is_option" for f in section["fields"]),
+		# Shown, not changed, by anyone but an admin (ADMIN_EDIT).
+		"locked": section["key"] in ADMIN_EDIT and not is_admin(),
 		"columns": columns, "fields": fields,
 		"rows": rows,
 		# A table kept for the record (the BOM tabs) totals its own rows; the others show
@@ -909,7 +918,7 @@ def builder_state(doc, editable=None):
 			{"label": _("System price"), "value": frappe.utils.fmt_money(doc.package_price(), currency="INR") if doc.solar_package else "—"},
 		],
 		"sections": _sections(doc),
-		# The Special Discount and Optional Add-ons tabs are an admin's (ADMIN_ONLY).
+		# The panels, inverter, balance of system, KSEB, mounting and installation are an admin's (ADMIN_EDIT).
 		"is_admin": is_admin(),
 		"choices": _choices(doc),
 		"commercials": commercials,
