@@ -9,16 +9,25 @@ quotation cannot say - the order date and the delivery date - and shows the rest
 tabs, as the quotation page does: the order details, the bill of materials, the terms.
 """
 
+import re
+
 import frappe
 from frappe import _
 from frappe.model import no_value_fields, table_fields
 from frappe.utils import cint, flt, format_date, getdate, today
+
+from frappe.contacts.doctype.address.address import get_address_display, get_default_address
 
 from a3_sola.api import quotation_option
 
 SLUG = "sales-orders"
 #: What the page asks of an order; everything else is the quotation's.
 ASKED = ("transaction_date", "delivery_date")
+#: The customer box: who the order is billed to, fetched from the quotation and the lead, and
+#: chosen by hand while the order is a draft. GST details are kept on the address they belong
+#: to (the order reads them from there) and on the customer.
+PARTY = ("customer", "customer_address", "contact_email", "gst_category", "billing_address_gstin", "place_of_supply")
+GSTIN = re.compile(r"^[0-9]{2}[A-Z0-9]{13}$")
 QUOTE_FIELDS = ["name", "docstatus", "status", "transaction_date", "valid_till", "solar_design_estimate", "solar_consumer",
 	"solar_proposal", "selected_option", "quotation_to", "party_name", "customer_name", "rounded_total", "grand_total", "currency"]
 
@@ -111,6 +120,223 @@ def _card(q, order=None):
 
 
 @frappe.whitelist()
+def proposal_of(quotation=None, lead=None):
+	"""The proposal an order is made under, shown beside the lead and not changed there: the
+	quotation's own, else the lead's (a lead has one). None when there is none, or it cannot
+	be read."""
+	name = frappe.db.get_value("Quotation", quotation, "solar_proposal") if quotation else None
+	if not name and lead:
+		name = frappe.db.get_value("Solar Proposal", {"lead": lead, "docstatus": ["<", 2]}, "name", order_by="creation desc")
+	if not name or not frappe.has_permission("Solar Proposal", "read", name):
+		return None
+	row = frappe.db.get_value("Solar Proposal", name, ["name", "status", "customer_name", "current_version"], as_dict=True)
+	return {"name": row.name, "status": row.status or "", "customer": row.customer_name or "",
+		"version": cint(row.current_version), "route": "/a3solaportal/proposals/" + frappe.utils.quote(row.name)}
+
+
+# ------------------------------------------------------------------ the customer box
+def _party_of(quotation, order=None):
+	"""(customer, lead) the order is for: the order's own customer, else the quotation's -
+	a customer, or the lead it was raised for and the customer already made from that lead."""
+	customer, lead = None, None
+	if order and frappe.db.exists("Sales Order", order):
+		customer = frappe.db.get_value("Sales Order", order, "customer")
+	q = frappe.db.get_value("Quotation", quotation, QUOTE_FIELDS, as_dict=True) if quotation else None
+	if q:
+		lead = lead_of(q)
+		if not customer:
+			if q.quotation_to == "Customer":
+				customer = q.party_name
+			elif lead:
+				customer = frappe.db.get_value("Customer", {"lead_name": lead})
+	return customer, lead
+
+
+def _linked(doctype, links):
+	"""The `doctype` records (Address, Contact) linked to any of `links` [(doctype, name)]."""
+	names = []
+	for link_doctype, link_name in links:
+		if not link_name:
+			continue
+		for n in frappe.get_all("Dynamic Link", filters={"parenttype": doctype, "link_doctype": link_doctype, "link_name": link_name},
+				pluck="parent", order_by="creation asc"):
+			if n not in names and frappe.has_permission(doctype, "read", n):
+				names.append(n)
+	return names
+
+
+def _plain_address(name):
+	"""An address as lines of text (ERPNext renders it as HTML)."""
+	html = get_address_display(name) or ""
+	text = re.sub(r"<br\s*/?>", "\n", html)
+	text = re.sub(r"<[^>]+>", "", text)
+	return "\n".join(line.strip() for line in frappe.utils.strip_html(text).splitlines() if line.strip())
+
+
+def _place_of(state):
+	"""The place-of-supply option for a state name ("32-Kerala"), or ""."""
+	if not state:
+		return ""
+	for option in place_choices():
+		if option.split("-", 1)[-1].strip().lower() == str(state).strip().lower():
+			return option
+	return ""
+
+
+#: The GST fields the order and its parties carry (India Compliance's custom fields); a
+#: site without them has no GST details on the box.
+GST_FIELDS = {"Sales Order": ("gst_category", "billing_address_gstin", "place_of_supply"),
+	"Customer": ("gstin", "gst_category"), "Address": ("gstin", "gst_category")}
+
+
+def gst_fields_present(doctype=None):
+	return all(frappe.get_meta(dt).has_field(f) for dt, fields in GST_FIELDS.items() if not doctype or dt == doctype for f in fields)
+
+
+def _options(doctype, fieldname):
+	df = frappe.get_meta(doctype).get_field(fieldname)
+	return [o for o in ((df and df.options) or "").split("\n") if o]
+
+
+def place_choices():
+	return _options("Sales Order", "place_of_supply")
+
+
+def gst_categories():
+	return _options("Customer", "gst_category")
+
+
+def company_place():
+	"""Where the company bills from: the state of its address, as the place of supply when the
+	customer's address says nothing."""
+	company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
+	state = frappe.db.get_value("Address", {"is_your_company_address": 1}, "state") if company else None
+	return _place_of(state)
+
+
+@frappe.whitelist()
+def party_box(quotation=None, order=None, customer=None, lead=None):
+	"""The customer box of the order page: the customer, address, e-mail and GST details,
+	fetched - the order's own, else the quotation's and its lead's - with what else can be
+	chosen. `customer` is one chosen by hand, whose addresses and details are fetched instead."""
+	if order:
+		frappe.has_permission("Sales Order", "read", order, throw=True)
+	if quotation:
+		frappe.has_permission("Quotation", "read", quotation, throw=True)
+	so = frappe.db.get_value("Sales Order", order, ["customer", "customer_address", "contact_email"]
+		+ (list(GST_FIELDS["Sales Order"]) if gst_fields_present("Sales Order") else []), as_dict=True) if order else None
+	fetched_customer, fetched_lead = _party_of(quotation, order)
+	lead = lead or fetched_lead
+	own = bool(so and (not customer or customer == so.customer))  # the order's stored details apply
+	customer = customer or fetched_customer
+	lead_name = frappe.db.get_value("Lead", lead, "lead_name") if lead else ""
+	consumer = frappe.db.get_value("Solar Consumer", {"lead": lead}, ["name", "email_id"], as_dict=True) if lead else None
+
+	customers = frappe.get_list("Customer", fields=["name", "customer_name"], order_by="customer_name asc", limit=500)
+	choices = [{"value": c.name, "label": c.customer_name or c.name} for c in customers]
+	if customer and customer not in {c["value"] for c in choices} and frappe.db.exists("Customer", customer):
+		choices.insert(0, {"value": customer, "label": frappe.db.get_value("Customer", customer, "customer_name") or customer})
+
+	gst = gst_fields_present()
+	links = [("Customer", customer)] if customer else []
+	links += [("Lead", lead), ("Solar Consumer", consumer.name if consumer else None)]
+	addresses = []
+	for name in _linked("Address", links):
+		a = frappe.db.get_value("Address", name, ["name", "address_title", "address_type", "city", "state", "pincode"]
+			+ (["gstin", "gst_category"] if gst else []), as_dict=True)
+		addresses.append({
+			"value": a.name, "label": " \u00b7 ".join(x for x in (a.address_title, a.address_type, a.city, a.pincode) if x),
+			"display": _plain_address(a.name), "gstin": a.gstin or "", "gst_category": a.gst_category or "",
+			"place": _place_of(a.state),
+		})
+	address = (so.customer_address if own else None) or ""
+	if not address and customer:
+		address = get_default_address("Customer", customer) or ""
+	if address and address not in {a["value"] for a in addresses}:
+		address = ""
+	chosen = next((a for a in addresses if a["value"] == address), None)
+	if not address and addresses:
+		chosen, address = addresses[0], addresses[0]["value"]
+
+	cust = frappe.db.get_value("Customer", customer, ["email_id"] + (["gstin", "gst_category"] if gst else []), as_dict=True) \
+		if customer else None
+	email = (so.contact_email if own else None) or (cust.email_id if cust else None) \
+		or frappe.db.get_value("Quotation", quotation, "contact_email") if quotation else None
+	if not email:
+		email = (consumer.email_id if consumer else None) or (frappe.db.get_value("Lead", lead, "email_id") if lead else None)
+	category, gstin, place = "", "", ""
+	if gst:
+		category = (so.gst_category if own else None) or (chosen or {}).get("gst_category") or (cust.gst_category if cust else None) \
+			or "Unregistered"
+		gstin = (so.billing_address_gstin if own else None) or (chosen or {}).get("gstin") or (cust.gstin if cust else None) or ""
+		place = (so.place_of_supply if own else None) or (chosen or {}).get("place") or company_place()
+	return {
+		"gst": gst,
+		"customer": customer or "", "customer_name": (next((c["label"] for c in choices if c["value"] == customer), "") if customer else ""),
+		"from_lead": "" if customer else (lead_name or ""), "customers": choices,
+		"address": address, "addresses": addresses, "email": email or "",
+		"gst_category": category, "gstin": gstin, "place_of_supply": place or "",
+		"categories": gst_categories() if gst else [], "places": place_choices() if gst else [],
+	}
+
+
+def _apply_party(doc, values):
+	"""The customer box's choices onto the order; GST details onto the address they belong
+	to, and the customer, so the order keeps reading them from there."""
+	if values.get("customer") and values["customer"] != doc.customer:
+		if not frappe.db.exists("Customer", values["customer"]):
+			frappe.throw(_("Customer {0} does not exist.").format(values["customer"]))
+		doc.customer = values["customer"]
+		doc.customer_name = frappe.db.get_value("Customer", doc.customer, "customer_name")
+		for field in ("customer_address", "address_display", "contact_person", "contact_display", "contact_mobile",
+				"contact_email", "customer_group", "territory"):
+			doc.set(field, None)
+	if "customer_address" in values:
+		address = values.get("customer_address") or None
+		if address and not frappe.db.exists("Address", address):
+			frappe.throw(_("Address {0} does not exist.").format(address))
+		doc.customer_address = address
+		doc.address_display = get_address_display(address) if address else None
+	if "contact_email" in values:
+		email = (values.get("contact_email") or "").strip()
+		if email:
+			frappe.utils.validate_email_address(email, throw=True)
+		doc.contact_email = email or None
+
+	if not gst_fields_present():
+		return
+	category = (values.get("gst_category") or doc.get("gst_category") or "Unregistered").strip()
+	if category not in gst_categories():
+		frappe.throw(_("{0} is not a GST category.").format(category))
+	gstin = (values.get("billing_address_gstin") if "billing_address_gstin" in values else doc.get("billing_address_gstin")) or ""
+	gstin = gstin.strip().upper()
+	registered = category not in ("Unregistered", "Overseas")
+	if registered and not gstin:
+		frappe.throw(_("A {0} customer needs a GSTIN.").format(category), frappe.MandatoryError, title=_("GSTIN Missing"))
+	if gstin and not GSTIN.match(gstin):
+		frappe.throw(_("{0} is not a GSTIN: 15 characters, starting with the state code.").format(gstin), title=_("GSTIN"))
+	if not registered:
+		gstin = ""
+	doc.gst_category = category
+	doc.billing_address_gstin = gstin or None
+	if "place_of_supply" in values:
+		place = (values.get("place_of_supply") or "").strip()
+		if place and place not in place_choices():
+			frappe.throw(_("{0} is not a place of supply.").format(place))
+		doc.place_of_supply = place or None
+	# The order reads gst_category and the GSTIN from its address (fetched on every save), so
+	# what was chosen is kept there, and on the customer.
+	for doctype, name in (("Address", doc.customer_address), ("Customer", doc.customer)):
+		if not name or not frappe.db.exists(doctype, name):
+			continue
+		current = frappe.db.get_value(doctype, name, ["gstin", "gst_category"], as_dict=True)
+		if (current.gstin or "") == gstin and (current.gst_category or "") == category:
+			continue
+		frappe.has_permission(doctype, "write", name, throw=True)
+		frappe.db.set_value(doctype, name, {"gstin": gstin or None, "gst_category": category})
+
+
+@frappe.whitelist()
 def quotations(lead=None, order=None):
 	"""The quotations an order can be raised from: the lead's, each said orderable or why not.
 	An existing order's own quotation is always among them."""
@@ -199,6 +425,8 @@ def save_order(quotation=None, values=None, name=None):
 	for field in ASKED:
 		if field in values:
 			doc.set(field, values.get(field) or None)
+	if any(field in values for field in PARTY):
+		_apply_party(doc, values)
 	doc.transaction_date = doc.transaction_date or today()
 	if not doc.delivery_date:
 		frappe.throw(_("Choose the delivery date."), frappe.MandatoryError, title=_("Delivery Date Missing"))
@@ -276,6 +504,8 @@ def page_context(context, name=None):
 		"delivery_date": str(doc.delivery_date or "") if doc else default_delivery_date(),
 	}
 	context.lead_choices = lead_choices(lead)
+	context.proposal = proposal_of(quotation, lead)
+	context.party = party_box(quotation, name, lead=lead) if (quotation or name) else party_box(lead=lead)
 	context.state_json = frappe.as_json({"lead": lead, "quotation": quotation, "name": name or "", "editable": editable,
 		"docstatus": cint(doc.docstatus) if doc else 0, "status": doc.status if doc else ""})
 	context.desk_route = "/app/sales-order/" + frappe.utils.quote(name) if name else ""

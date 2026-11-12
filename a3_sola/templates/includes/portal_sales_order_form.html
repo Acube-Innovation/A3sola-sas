@@ -26,6 +26,15 @@
 						{%- for c in lead_choices %}<option value="{{ c.value | e }}">{{ c.label | e }}</option>{% endfor %}
 					</select>
 				</div>
+				{#- The proposal the order is made under, fetched (the quotation's, else the lead's) and
+				    not changed here; portal_sales_order_form.js keeps it with the lead and quotation chosen. -#}
+				<div class="a3s-field">
+					<label id="a3s-sf-proposal-label">Proposal</label>
+					<p class="a3s-qf__status a3s-sf__proposal" id="a3s-sf-proposal" aria-labelledby="a3s-sf-proposal-label" aria-live="polite">
+						{%- if proposal %}<a href="{{ proposal.route }}">{{ proposal.name | e }}</a> &middot; {{ proposal.status | e }}{% else %}<span class="a3s-table__muted">&mdash;</span>{% endif -%}
+					</p>
+					<p class="a3s-field__hint">Fetched from the quotation, else the lead. Not changed here.</p>
+				</div>
 				{%- if order %}
 				<div class="a3s-field">
 					<label>Status</label>
@@ -35,6 +44,55 @@
 			</div>
 			<p class="a3s-field__hint">Only leads with a quotation are listed. Choose one of its quotations <span class="a3s-req">*</span> - an order is raised from a submitted quotation, once.</p>
 			<div class="a3s-qf__options" id="a3s-sf-quotes" aria-live="polite"></div>
+		</section>
+
+		{#- Who the order is billed to: fetched from the quotation and its lead (the order's own once
+		    saved), each chosen by hand while the order is a draft; read-only once submitted. GSTIN
+		    and place of supply only for a registered customer. Painted by portal_sales_order_form.js
+		    from api/sales_order_option.party_box; here as the page first shows it. -#}
+		<section class="a3s-card a3s-edit__card a3s-sf__party" id="a3s-sf-party">
+			<h3 class="a3s-edit__card-title">Customer</h3>
+			<div class="a3s-form__grid">
+				<div class="a3s-field">
+					<label for="fld-sf-customer">Customer <span class="a3s-req">*</span></label>
+					<select id="fld-sf-customer" name="customer" aria-label="Customer"{% if not editable %} disabled{% endif %}>
+						{%- if party.from_lead %}<option value="">{{ party.from_lead | e }} &middot; new customer from the lead, made on save</option>{% endif %}
+						{%- for c in party.customers %}<option value="{{ c.value | e }}"{% if c.value == party.customer %} selected{% endif %}>{{ c.label | e }}</option>{% endfor %}
+					</select>
+					<p class="a3s-field__hint">From the quotation; choose another if the order is billed to someone else.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="fld-sf-contact_email">Email</label>
+					<input type="email" id="fld-sf-contact_email" name="contact_email" value="{{ party.email | e }}"{% if not editable %} disabled{% endif %}>
+				</div>
+				<div class="a3s-field a3s-sf__address">
+					<label for="fld-sf-customer_address">Address</label>
+					<select id="fld-sf-customer_address" name="customer_address" aria-label="Address"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for a in party.addresses %}<option value="{{ a.value | e }}"{% if a.value == party.address %} selected{% endif %}>{{ a.label | e }}</option>{% endfor %}
+					</select>
+					<p class="a3s-sf__address-text" id="a3s-sf-address-text">{{ (party.addresses | selectattr("value", "equalto", party.address) | map(attribute="display") | first) or "" }}</p>
+				</div>
+				{%- if party.gst %}
+				<div class="a3s-field">
+					<label for="fld-sf-gst_category">GST Category</label>
+					<select id="fld-sf-gst_category" name="gst_category" aria-label="GST category"{% if not editable %} disabled{% endif %}>
+						{%- for c in party.categories %}<option value="{{ c | e }}"{% if c == party.gst_category %} selected{% endif %}>{{ c | e }}</option>{% endfor %}
+					</select>
+				</div>
+				<div class="a3s-field" data-gst-only{% if party.gst_category in ("Unregistered", "Overseas") %} hidden{% endif %}>
+					<label for="fld-sf-gstin">GSTIN <span class="a3s-req">*</span></label>
+					<input type="text" id="fld-sf-gstin" name="billing_address_gstin" value="{{ party.gstin | e }}" maxlength="15" placeholder="e.g. 32ABCDE1234F1Z5" autocapitalize="characters"{% if not editable %} disabled{% endif %}>
+				</div>
+				<div class="a3s-field" data-gst-only{% if party.gst_category in ("Unregistered", "Overseas") %} hidden{% endif %}>
+					<label for="fld-sf-place_of_supply">Place of Supply</label>
+					<select id="fld-sf-place_of_supply" name="place_of_supply" aria-label="Place of supply"{% if not editable %} disabled{% endif %}>
+						<option value="">—</option>
+						{%- for o in party.places %}<option value="{{ o | e }}"{% if o == party.place_of_supply %} selected{% endif %}>{{ o | e }}</option>{% endfor %}
+					</select>
+				</div>
+				{%- endif %}
+			</div>
 		</section>
 
 		<div class="a3s-ce-tabs a3s-lf__tabs" role="tablist" aria-label="Sales order">

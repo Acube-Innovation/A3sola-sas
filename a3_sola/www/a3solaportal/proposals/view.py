@@ -35,8 +35,8 @@ def get_context(context):
 	# A proposal goes on after it is submitted: edited into a new version, regenerated,
 	# dispatched. Only a cancelled one - replaced by its amendment - is closed.
 	context.can_write = bool(doc.has_permission("write")) and frappe.utils.cint(doc.docstatus) < 2
-	# Edited where it was made: the builder of the estimate it quotes, whose System & commercials
-	# tabs are changed first and whose Proposal tab then saves it again (as a new version once issued).
+	# Edited where it was made: step one of the estimate it quotes, then its System & commercials
+	# tabs, then its Proposal tab, which saves it again (as a new version once issued).
 	from a3_sola.api.portal_proposal import design_route_of
 
 	context.edit_route = design_route_of(doc.name) or context.edit_route

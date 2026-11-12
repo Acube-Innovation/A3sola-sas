@@ -9,16 +9,17 @@ from frappe.utils import flt
 
 from a3_sola.api import sales_order_option as so
 from a3_sola.overrides.sales_order import default_delivery_date
-from a3_sola.tests.fixtures import make_consumer, make_estimate, make_survey
+from a3_sola.tests.fixtures import ensure_gst_fields, make_consumer, make_estimate, make_survey
 from a3_sola.tests.test_quotation import make_quotation
 
 
 class TestSalesOrderPage(FrappeTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
+		ensure_gst_fields()
 		self.consumer = make_consumer()
 		self.lead = self.consumer.lead
-		estimate = make_estimate(self.consumer, make_survey(self.consumer))
+		estimate = self.estimate = make_estimate(self.consumer, make_survey(self.consumer))
 		self.first = make_quotation(self.consumer, estimate)
 		self.first.submit()
 		self.second = make_quotation(self.consumer, estimate)
@@ -36,6 +37,48 @@ class TestSalesOrderPage(FrappeTestCase):
 		self.assertFalse(cards[self.draft.name]["orderable"])
 		self.assertIn("submit it first", cards[self.draft.name]["reason"])
 		self.assertIn(self.lead, [c["value"] for c in so.lead_choices()])
+
+	def test_the_page_shows_the_proposal_the_order_is_made_under(self):
+		from a3_sola.tests.test_proposal import make_proposal
+
+		self.assertIsNone(so.proposal_of(lead=self.lead))
+		proposal = make_proposal(self.estimate, self.consumer)
+		shown = so.proposal_of(lead=self.lead)
+		self.assertEqual(shown["name"], proposal.name)
+		self.assertEqual(shown["route"], "/a3solaportal/proposals/" + proposal.name)
+		# A quotation without a proposal of its own still shows the lead's.
+		self.assertEqual(so.proposal_of(quotation=self.first.name, lead=self.lead)["name"], proposal.name)
+
+	def test_the_customer_box_is_fetched_from_the_quotation(self):
+		box = so.party_box(quotation=self.first.name)
+		self.assertEqual(box["customer"], self.first.party_name)
+		self.assertIn(self.first.party_name, [c["value"] for c in box["customers"]])
+		self.assertIn("Unregistered", box["categories"])
+		self.assertIn("32-Kerala", box["places"])
+		self.assertEqual(box["from_lead"], "")
+
+	def test_the_customer_details_chosen_are_kept_on_the_order_and_read_only_once_submitted(self):
+		values = dict(self.when, contact_email="jacob@example.com", gst_category="Registered Regular",
+			billing_address_gstin="32abcde1234f1z5", place_of_supply="32-Kerala")
+		order = frappe.get_doc("Sales Order", so.save_order(self.first.name, values)["name"])
+		self.assertEqual(order.contact_email, "jacob@example.com")
+		self.assertEqual(order.gst_category, "Registered Regular")
+		self.assertEqual(order.billing_address_gstin, "32ABCDE1234F1Z5")
+		self.assertEqual(order.place_of_supply, "32-Kerala")
+		# Kept on the customer too, where the order reads it from.
+		self.assertEqual(frappe.db.get_value("Customer", order.customer, "gstin"), "32ABCDE1234F1Z5")
+		# The box shows the order's own details once it exists.
+		box = so.party_box(quotation=self.first.name, order=order.name)
+		self.assertEqual((box["gstin"], box["email"]), ("32ABCDE1234F1Z5", "jacob@example.com"))
+		order.submit()
+		self.assertRaises(frappe.ValidationError, so.save_order, self.first.name, dict(values, contact_email="x@example.com"), order.name)
+		frappe.db.set_value("Customer", order.customer, {"gstin": None, "gst_category": "Unregistered"})
+
+	def test_a_registered_customer_needs_a_gstin(self):
+		self.assertRaises(frappe.MandatoryError, so.save_order, self.first.name,
+			dict(self.when, gst_category="Registered Regular", billing_address_gstin=""))
+		self.assertRaises(frappe.ValidationError, so.save_order, self.first.name,
+			dict(self.when, gst_category="Registered Regular", billing_address_gstin="not-a-gstin"))
 
 	def test_a_quotation_must_be_chosen(self):
 		with self.assertRaises(frappe.MandatoryError):

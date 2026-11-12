@@ -86,9 +86,14 @@
 	Array.prototype.forEach.call(root.querySelectorAll("[data-combo]"), window.a3sCombo.wire);
 	/* A card per option: hover lifts it, a click opens its details to tell it from the
 	   others (preview below), and its radio - or Choose there - picks it. */
+	/* Once the quotation is submitted, the option it quotes is settled: the others are shown
+	   greyed, as not taken, and cannot be chosen any more. */
+	function notTaken(o) {
+		return state.docstatus === 1 && o.estimate !== chosen.estimate;
+	}
 	function optionCard(o, proposal) {
 		var id = "qf-opt-" + o.estimate;
-		var card = node("div", "a3s-qf__opt");
+		var card = node("div", "a3s-qf__opt" + (notTaken(o) ? " is-rejected" : ""));
 		card.tabIndex = 0;
 		card.setAttribute("role", "button");
 		card.setAttribute("aria-label", optionTitle(o) + " - view details");
@@ -103,6 +108,7 @@
 		var text = node("span", "a3s-qf__opt-text");
 		text.appendChild(node("b", "", optionTitle(o)));
 		text.appendChild(node("small", "", optionSub(o)));
+		if (notTaken(o)) text.appendChild(node("small", "a3s-qf__opt-why", "Not taken \u00b7 the quotation is submitted for another option"));
 		card.appendChild(text);
 		var right = node("span", "a3s-qf__opt-right");
 		right.appendChild(node("span", "a3s-qf__price", o.price_text));

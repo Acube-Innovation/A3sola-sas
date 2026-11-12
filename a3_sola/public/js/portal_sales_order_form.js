@@ -28,6 +28,25 @@
 	};
 	var chosen = state.quotation || "";
 	var cards = {};
+	var proposalBox = document.getElementById("a3s-sf-proposal");
+
+	/* The proposal beside the lead: the quotation's, else the lead's; fetched, not typed. */
+	function paintProposal(p) {
+		if (!proposalBox) return;
+		proposalBox.innerHTML = "";
+		if (!p) { proposalBox.appendChild(node("span", "a3s-table__muted", "\u2014")); return; }
+		var a = node("a", "", p.name);
+		a.href = p.route;
+		proposalBox.appendChild(a);
+		proposalBox.appendChild(document.createTextNode(" \u00b7 " + p.status));
+	}
+	function loadProposal() {
+		if (!proposalBox) return;
+		if (!lead.value && !chosen) { paintProposal(null); return; }
+		call("sales_order_option.proposal_of", { quotation: chosen, lead: lead.value })
+			.then(paintProposal)
+			.catch(function () { paintProposal(null); });
+	}
 
 	function say(text, kind) {
 		status.textContent = text || "";
@@ -212,6 +231,8 @@
 		}
 		if (save) save.disabled = false;
 		paintTabs();
+		loadProposal();
+		loadParty();
 	}
 	function paintTabs() {
 		var blank = "<p class=\"a3s-field__hint\">Choose a quotation above to see it here.</p>";
@@ -234,6 +255,8 @@
 		if (save) save.disabled = true;
 		paintTabs();
 		loadQuotes();
+		loadProposal();
+		loadParty();
 	});
 
 	/* ------------------------------------------------------------ dates */
@@ -244,9 +267,74 @@
 		say(day === 0 || day === 6 ? "That is a " + (day === 0 ? "Sunday" : "Saturday") + ": deliveries are on working days." : "",
 			day === 0 || day === 6 ? "error" : "");
 	});
+	/* ------------------------------------------------------------ the customer box */
+	/* Fetched from the quotation and its lead (the order's own once saved) and chosen by hand
+	   while the order is a draft: another customer refetches its addresses and details; an
+	   address brings its GST details; GSTIN and place of supply only for a registered customer. */
+	var party = {
+		customer: document.getElementById("fld-sf-customer"),
+		contact_email: document.getElementById("fld-sf-contact_email"),
+		customer_address: document.getElementById("fld-sf-customer_address"),
+		gst_category: document.getElementById("fld-sf-gst_category"),
+		billing_address_gstin: document.getElementById("fld-sf-gstin"),
+		place_of_supply: document.getElementById("fld-sf-place_of_supply")
+	};
+	var addressText = document.getElementById("a3s-sf-address-text");
+	var addresses = {};
+	function fill(select, choices, value, blank) {
+		select.innerHTML = "";
+		if (blank !== undefined) select.appendChild(new Option(blank, ""));
+		choices.forEach(function (c) { select.appendChild(new Option(c.label === undefined ? c : c.label, c.value === undefined ? c : c.value)); });
+		select.value = value || "";
+	}
+	function gstToggle() {
+		var registered = party.gst_category && ["Unregistered", "Overseas", ""].indexOf(party.gst_category.value) === -1;
+		Array.prototype.forEach.call(root.querySelectorAll("[data-gst-only]"), function (el) { el.hidden = !registered; });
+	}
+	function paintParty(p) {
+		if (!party.customer) return;
+		addresses = {};
+		(p.addresses || []).forEach(function (a) { addresses[a.value] = a; });
+		fill(party.customer, p.customers || [], p.customer, p.from_lead ? p.from_lead + " \u00b7 new customer from the lead, made on save" : undefined);
+		fill(party.customer_address, p.addresses || [], p.address, "\u2014");
+		if (addressText) addressText.textContent = p.address && addresses[p.address] ? addresses[p.address].display : "";
+		party.contact_email.value = p.email || "";
+		if (party.gst_category) {
+			fill(party.gst_category, p.categories || [], p.gst_category);
+			party.billing_address_gstin.value = p.gstin || "";
+			fill(party.place_of_supply, p.places || [], p.place_of_supply, "\u2014");
+		}
+		gstToggle();
+	}
+	function loadParty(customer) {
+		if (!party.customer || !state.editable) return;
+		call("sales_order_option.party_box", { quotation: chosen, order: state.name, customer: customer || "", lead: lead.value })
+			.then(paintParty)
+			.catch(function (e) { say(e.message, "error"); });
+	}
+	if (party.customer) {
+		party.customer.addEventListener("change", function () { loadParty(party.customer.value); if (save && chosen) save.disabled = false; });
+		party.customer_address.addEventListener("change", function () {
+			var a = addresses[party.customer_address.value];
+			if (addressText) addressText.textContent = a ? a.display : "";
+			if (party.gst_category) {
+				if (a && a.gst_category) party.gst_category.value = a.gst_category;
+				if (a && a.gstin) party.billing_address_gstin.value = a.gstin;
+				if (a && a.place) party.place_of_supply.value = a.place;
+			}
+			gstToggle();
+			if (save && chosen) save.disabled = false;
+		});
+		if (party.gst_category) party.gst_category.addEventListener("change", function () { gstToggle(); if (save && chosen) save.disabled = false; });
+		[party.contact_email, party.billing_address_gstin, party.place_of_supply].forEach(function (el) {
+			if (el) el.addEventListener("change", function () { if (save && chosen) save.disabled = false; });
+		});
+	}
+
 	function values() {
 		var out = {};
 		Object.keys(dates).forEach(function (k) { if (dates[k]) out[k] = dates[k].value; });
+		Object.keys(party).forEach(function (k) { if (party[k]) out[k] = party[k].value; });
 		return out;
 	}
 
@@ -257,6 +345,11 @@
 			say("Choose the delivery date.", "error");
 			showTab("details");
 			dates.delivery_date.focus();
+			return Promise.reject(null);
+		}
+		if (party.gst_category && ["Unregistered", "Overseas"].indexOf(party.gst_category.value) === -1 && !party.billing_address_gstin.value.trim()) {
+			say("A " + party.gst_category.value + " customer needs a GSTIN.", "error");
+			party.billing_address_gstin.focus();
 			return Promise.reject(null);
 		}
 		return call("sales_order_option.save_order", { quotation: chosen, values: values(), name: state.name }, true);

@@ -80,8 +80,8 @@ class TestDesignProposal(FrappeTestCase):
 		# From then on the tab shows it, and it is edited in the estimate's builder.
 		state = portal_proposal.proposal_state(frappe.get_doc("Solar Design Estimate", self.root.name))
 		self.assertEqual(state["existing"]["name"], doc.name)
-		self.assertEqual(portal_proposal.design_route_of(doc.name), portal_estimate.design_route(self.root.name))
-		self.assertEqual(edit_route("proposals", doc.name), portal_estimate.design_route(self.root.name))
+		self.assertEqual(portal_proposal.design_route_of(doc.name), portal_estimate.details_route(self.root.name))
+		self.assertEqual(edit_route("proposals", doc.name), portal_estimate.details_route(self.root.name))
 
 	def test_saving_again_keeps_the_one_proposal(self):
 		first = self.make()["name"]

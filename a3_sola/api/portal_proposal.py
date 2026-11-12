@@ -343,14 +343,15 @@ ASKED = ("proposal_date",) + CUSTOMER + LETTER
 
 
 def design_route_of(proposal):
-	"""Where a proposal is edited: the builder of the estimate it quotes - the one its base was
-	saved from - whose Proposal tab saves it again. None when that estimate is gone."""
+	"""Where a proposal is edited: step one (Proposal details) of the estimate it quotes - the
+	one its base was saved from - from where its options and then its Proposal tab save it
+	again. None when that estimate is gone."""
 	from a3_sola.api import portal_estimate
 
 	base = frappe.db.get_value(DOCTYPE, proposal, "solar_design_estimate")
 	if not base or not frappe.db.exists("Solar Design Estimate", base):
 		return None
-	return portal_estimate.design_route(portal_estimate.root_of(frappe.get_doc("Solar Design Estimate", base)).name)
+	return portal_estimate.details_route(portal_estimate.root_of(frappe.get_doc("Solar Design Estimate", base)).name)
 
 
 def _estimates_of(root):
