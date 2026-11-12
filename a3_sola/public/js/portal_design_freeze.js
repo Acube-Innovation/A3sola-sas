@@ -90,13 +90,6 @@
 			(extra ? ' <span class="a3s-edit__toggle-count">' + extra + "</span>" : "") + "</h3>" + inner + "</section>";
 	}
 
-	function select(name, current, choices, blank) {
-		return '<select data-field="' + name + '"><option value="">' + esc(blank) + "</option>" +
-			choices.map(function (c) {
-				return '<option value="' + esc(c.value) + '"' + (c.value === current ? " selected" : "") + ">" + esc(c.label) + "</option>";
-			}).join("") + "</select>";
-	}
-
 	function lines(rows, field, editable) {
 		var table = !rows.length ? '<p class="a3s-field__hint">No lines.</p>' :
 			'<div class="a3s-tablewrap"><table class="a3s-table"><thead><tr><th>Item</th><th>Qty</th><th>UOM</th>' + (editable ? "<th></th>" : "") + "</tr></thead><tbody>" +
@@ -137,14 +130,11 @@
 		}).join("") + "</div>";
 	}
 
-	function bomCard(title, field, bom, frozen) {
-		var inner = "";
-		if (state.can_edit) {
-			inner += '<div class="a3s-dsgn__pick">' + select(field, bom.value, bom.choices, "— the package's —") + "</div>";
-		} else {
-			inner += '<p class="a3s-field__hint">' + esc(bom.value || "None chosen") + "</p>";
-		}
-		if (!frozen && bom.value) inner += '<p class="a3s-field__hint">From the package; freezing the design keeps it on the project.</p>';
+	/* What the BOM is, as text: the package and option the job was sold on (its sales order's
+	   BOM), or the project's own BOM once edited or frozen here. */
+	function bomCard(title, field, bom) {
+		var inner = '<p class="a3s-dsgn__source">' + esc(bom.source || "No BOM for this project yet.") + "</p>";
+		if (!bom.own && bom.lines.length) inner += '<p class="a3s-field__hint">As on the sales order. Freezing the design keeps it on the project.</p>';
 		var rows = drafts[field] || bom.lines;
 		return card(title, inner + lines(rows, field, state.can_edit), rows.length ? rows.length + " lines" : "");
 	}
@@ -153,10 +143,6 @@
 		var s = state, t = s.task, html = "";
 		var head = '<p class="a3s-taskdocs__meta">Status: <span class="a3s-taskdocs__state is-' + esc(t.status.toLowerCase().replace(/ /g, "-")) + '">' +
 			esc(t.status) + "</span>" + (t.completed_on ? " · frozen " + esc(t.completed_on) + (t.completed_by ? " by " + esc(t.completed_by) : "") : "") + "</p>";
-		if (s.can_freeze) {
-			head += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">Freeze design</button></div>' +
-				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "material BOM") + ' below on the project and completes the task. Everything here stays changeable afterwards.</p>';
-		}
 		html += card(t.name, head);
 
 		var q = s.quotations;
@@ -183,8 +169,8 @@
 		}
 		html += card("Site Survey", survey, sv.surveys.length ? String(sv.surveys.length) : "");
 
-		if (s.structure_bom) html += bomCard("Structure BOM", "structure_bom", s.structure_bom, s.frozen.structure_bom);
-		if (s.material_bom) html += bomCard("Material BOM", "material_bom", s.material_bom, s.frozen.material_bom);
+		if (s.structure_bom) html += bomCard("Structure BOM", "structure_bom", s.structure_bom);
+		if (s.material_bom) html += bomCard("Material BOM", "material_bom", s.material_bom);
 
 		var sld = s.sld || {};
 		html += card(structural ? "Structure Drawing" : "Single Line Diagram", '<ul class="a3s-taskdocs"><li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
@@ -204,6 +190,11 @@
 			html += card("Design Images", imgs, s.images.length ? String(s.images.length) : "");
 		}
 
+		/* Freeze last, under everything it settles. */
+		if (s.can_freeze) {
+			html += '<div class="a3s-dsgn__freeze"><div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--primary" data-act="freeze">FREEZE DESIGN</button></div>' +
+				'<p class="a3s-field__hint">Freezing keeps the ' + (structural ? "structure BOM" : "material BOM") + ' above on the project and completes the task. Everything here stays changeable afterwards.</p></div>';
+		}
 		/* No Procurement card: the procurement tasks are on the project's board, and the draft ones
 		   still follow the BOMs above (api/design_freeze.refresh_procurement). */
 		body.innerHTML = html;
