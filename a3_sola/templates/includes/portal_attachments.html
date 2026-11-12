@@ -10,7 +10,8 @@
     att_autofill, on a create page whose documents fill its form (the collection's `autofill`:
     type, icon, what it fills): the card opens with them - a tile each to upload it - and ends
     with "Enter the details manually"; the form below waits, hidden, until either
-    (portal_attachments.js). att_from names the record the form was opened from, if any. -#}
+    (portal_attachments.js). On an edit form (a saved record, the customer made from its lead)
+    the tiles upload straight onto it and the form is already shown, so there is no manual step. att_from names the record the form was opened from, if any. -#}
 {%- if att_doctype and (att_name or att_held) %}
 <section class="a3s-card a3s-edit__card a3s-attach{% if att_autofill %} a3s-attach--autofill{% endif %}" id="a3s-attachments" tabindex="-1" data-attach
          data-doctype="{{ att_doctype | e }}" data-name="{{ att_name | e }}"{% if att_held %} data-held{% endif %}{% if att_autofill %} data-autofill{% endif %}>
@@ -19,11 +20,11 @@
 		<div class="a3s-autofill__intro">
 			<span class="a3s-autofill__badge"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-bolt"></use></svg>Auto-fill from documents</span>
 			<h3 class="a3s-autofill__title">Upload the documents and the form fills itself</h3>
-			<p class="a3s-autofill__lead">The system reads each document and types its details into the form for you. Upload one, press <strong>Read</strong>, then check the details and create.</p>
+			<p class="a3s-autofill__lead">The system reads each document and types its details into the form for you. Upload one, press <strong>Read</strong>, then check the details and {% if att_held %}create{% else %}save{% endif %}.</p>
 			<ol class="a3s-autofill__steps">
 				<li><span>1</span>Upload a document</li>
 				<li><span>2</span>Press Read</li>
-				<li><span>3</span>Check the form and create</li>
+				<li><span>3</span>Check the form and {% if att_held %}create{% else %}save{% endif %}</li>
 			</ol>
 		</div>
 		<div class="a3s-autofill__docs">
@@ -95,7 +96,7 @@
 
 	<p class="a3s-attach__status" data-attach-status role="status" aria-live="polite" hidden></p>
 
-	{%- if att_autofill %}
+	{%- if att_autofill and att_held %}
 	{#- No documents to hand: the form, typed in - or, opened from a record, as it carried across. -#}
 	<div class="a3s-autofill__manual" data-autofill-manual-wrap>
 		<span class="a3s-autofill__or">Nothing to upload?</span>
