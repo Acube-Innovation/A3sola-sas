@@ -35,7 +35,9 @@ TAB_KEYS = {"tab_package": "package", "tab_battery": "batteries"}
 SET_BY_BUTTONS = {"item", "bom"}
 #: Worked out on save and kept on the desk form, not shown on the page: the Pricing Options tab
 #: is its rows and the payment terms.
-NOT_ON_PAGE = {"package_cost", "total_package_cost"}
+# The Optional Add-ons are offered on each design estimate (its Optional Add-ons tab), not set
+# on the package here: the package keeps any it has, as the page never posts the table.
+NOT_ON_PAGE = {"package_cost", "total_package_cost", "optional_add_ons"}
 #: The Materials, Structure and Expenses rows' Depends On: read-only on the desk, where a dialog
 #: sets it; the page's row form sets it the same way, so a save takes it (package_bom_tables.validate checks).
 PICKED = {"material_bom": ("depends_on",), "structure_boms": ("depends_on",), "expenses": ("depends_on",)}
@@ -144,7 +146,8 @@ def _layout():
 		tab["sections"] = [s for s in tab["sections"] if any(s["columns"])]
 		for s in tab["sections"]:
 			s["columns"] = [c for c in s["columns"] if c]
-	return tabs
+	# A tab left with nothing on the page (Optional Add-ons) is not shown.
+	return [tab for tab in tabs if tab["sections"]]
 
 
 def _table_fields():
@@ -350,7 +353,38 @@ def package(name=None, copy_from=None):
 		"item_text": ITEM_TEXT, "exact_group": list(EXACT_GROUP), "category": CATEGORY,
 		# The Expenses row the package's dealer commission rule prices (api/dealer_commission).
 		"commission_item": dealer_commission.ITEM,
+		# The GST a price holds, for the Pricing Options' reverse calculation.
+		"gst": gst_split(doc.company),
 		"modified": str(doc.modified) if not doc.is_new() else None}
+
+
+def gst_split(company):
+	"""The GST a package's price holds, by the company's active Solar GST Valuation Rule: its
+	goods and services shares and each share's rate - {goods_percent, goods_rate,
+	services_percent, services_rate} - or None without a rule. The rates are the rule's Item
+	Tax Templates' (their IGST, which is CGST + SGST). Blended, the goods template is the blend
+	of both shares, so the goods rate is what is left of it after the services' share."""
+	from a3_sola.api.gst import find_valuation
+
+	name = company and find_valuation(company)
+	if not name:
+		return None
+	rule = frappe.get_cached_doc("Solar GST Valuation Rule", name)
+
+	def rate(template):
+		rows = frappe.get_all("Item Tax Template Detail", filters={"parent": template, "tax_type": ["like", "Output Tax IGST%"]},
+			fields=["tax_type", "tax_rate"]) if template else []
+		return max([flt(r.tax_rate) for r in rows if "RCM" not in r.tax_type and "Refund" not in r.tax_type] or [0])
+
+	goods, services = flt(rule.goods_value_percent), flt(rule.services_value_percent)
+	goods_rate, services_rate = rate(rule.goods_item_tax_template), rate(rule.services_item_tax_template)
+	if rule.valuation_mode == "Blended 70:30" and goods:
+		goods_rate = flt((goods_rate - services * services_rate / 100) * 100 / goods, 2)
+	if rule.valuation_mode == "Single Rate":
+		goods, services, services_rate = 100, 0, 0
+	if not (goods_rate or services_rate):
+		return None
+	return {"goods_percent": goods, "goods_rate": goods_rate, "services_percent": services, "services_rate": services_rate}
 
 
 # ------------------------------------------------------------------ saving
