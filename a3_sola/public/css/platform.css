@@ -2501,7 +2501,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-ce-tabs a[aria-current="page"] { background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 8px 20px -10px rgba(247, 148, 30, 0.9); }
 .a3s-ce-tabs a[aria-current="page"] .a3s-ce-tabs__n { background: rgba(255, 255, 255, 0.28); }
 /* The scope tabs with the Follow Up box beside them, on one line; the box alone for a dealer. */
-.a3s-leads__scoperow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 1rem; }
+.a3s-leads__scoperow, .a3s-filterrow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 1rem; }
 .a3s-leads__scoperow .a3s-leads__view { margin: 0 0.5rem 0 0.5rem; }
 .a3s-leads__filters .a3s-leads__scope-note { margin-top: -0.4rem; }
 .a3s-leads__scope { margin-bottom: 0; }
