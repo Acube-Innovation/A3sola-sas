@@ -1542,10 +1542,11 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-side__item.is-active .a3s-side__icon { background: var(--color-accent); color: #fff; }
 .a3s-side__item.is-active:hover .a3s-side__icon { background: var(--color-accent-hover); }
 
-/* Page header: title on the left, a primary action on the right. */
+/* Page header: title on the left, the actions on the right, their top level with the title's,
+   so the heading and the buttons start on the same line whatever sits under the heading. */
 .a3s-page__head {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
 	flex-wrap: wrap;
@@ -2360,7 +2361,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	display: grid;
 	/* The name keeps room for itself; many actions wrap onto a second line beside it. */
 	grid-template-columns: minmax(14rem, 1fr) minmax(0, max-content);
-	align-items: center;
+	align-items: start;
 	column-gap: 1rem;
 	row-gap: 0;
 }
@@ -3924,6 +3925,32 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-leads__view .a3s-check { font-size: 0.85rem; }
 .a3s-pill--due { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill);
 	font-size: 0.72rem; font-weight: 700; background: rgba(255, 95, 87, 0.14); color: #c0392b; }
+/* The follow-up view colours each lead's row by its outreach stage (leads/index.py STAGE_KEYS):
+   the badge in the stage's full tint, the row in a wash of the same colour and a coloured left
+   edge, so a glance down the list shows where the leads sit on the cadence. The legend above
+   the table repeats the badges. */
+.a3s-leads__legend { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
+/* The legend is also the stage filter: a chosen stage is ringed, the others fade until it is cleared. */
+.a3s-leads__legend .a3s-badge { padding: 0.3rem 0.75rem; text-decoration: none; cursor: pointer; transition: opacity 0.12s ease, box-shadow 0.12s ease; }
+.a3s-leads__legend .a3s-badge:hover { box-shadow: 0 0 0 2px rgba(42, 51, 66, 0.14); }
+.a3s-leads__legend .a3s-badge[aria-current="true"] { box-shadow: 0 0 0 2px currentColor; }
+.a3s-leads__legend.has-filter .a3s-badge:not([aria-current="true"]) { opacity: 0.5; }
+.a3s-leads__legend.has-filter .a3s-badge:not([aria-current="true"]):hover { opacity: 1; }
+.a3s-badge--stage-all { background: rgba(42, 51, 66, 0.08); color: var(--color-text); }
+.a3s-leads__legend-n { margin-left: 0.4rem; padding: 0 0.4rem; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.6); font-size: 0.7rem; font-weight: 800; }
+.a3s-badge--stage-step-1 { background: rgba(41, 171, 226, 0.16); color: #1b6fa8; }
+.a3s-badge--stage-step-2 { background: rgba(245, 166, 35, 0.2); color: #9a5b00; }
+.a3s-badge--stage-step-3 { background: rgba(122, 90, 248, 0.16); color: #5b3fd1; }
+.a3s-badge--stage-step-4 { background: rgba(255, 95, 87, 0.18); color: #b3261e; }
+.a3s-badge--stage-completed { background: rgba(40, 200, 64, 0.18); color: #1a7a2b; }
+.a3s-table--stages tbody tr.a3s-row--stage-step-1 { --a3s-stage-wash: rgba(41, 171, 226, 0.07); --a3s-stage-edge: #29abe2; }
+.a3s-table--stages tbody tr.a3s-row--stage-step-2 { --a3s-stage-wash: rgba(245, 166, 35, 0.09); --a3s-stage-edge: #f5a623; }
+.a3s-table--stages tbody tr.a3s-row--stage-step-3 { --a3s-stage-wash: rgba(122, 90, 248, 0.07); --a3s-stage-edge: #7a5af8; }
+.a3s-table--stages tbody tr.a3s-row--stage-step-4 { --a3s-stage-wash: rgba(255, 95, 87, 0.08); --a3s-stage-edge: #ff5f57; }
+.a3s-table--stages tbody tr.a3s-row--stage-completed { --a3s-stage-wash: rgba(40, 200, 64, 0.08); --a3s-stage-edge: #28c840; }
+.a3s-table--stages tbody tr[class*="a3s-row--stage-"] { background: var(--a3s-stage-wash); }
+.a3s-table--stages tbody tr[class*="a3s-row--stage-"]:hover { background: var(--a3s-stage-wash); filter: brightness(0.97); }
+.a3s-table--stages tbody tr[class*="a3s-row--stage-"] td:first-child { box-shadow: inset 4px 0 0 var(--a3s-stage-edge); }
 
 /* ---- dashboard: the person's work (api/my_work.py) ---- */
 .a3s-dash-stat__icon--red { background: rgba(217, 45, 32, 0.1); color: #b42318; }
