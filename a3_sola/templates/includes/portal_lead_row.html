@@ -1,7 +1,8 @@
 {#- One lead as a table row: name and place, contact, status, and who raised it and holds it.
     `lead` is a row from leads/index.lead_rows. Used by the Leads list and the project page;
     the assignment pill opens portal_todo_popup.html, which the page includes once. -#}
-			<tr>
+			{#- In the follow-up view the whole row is tinted by the lead's outreach stage. -#}
+			<tr{% if followup_view and lead.stage_key %} class="a3s-row--stage-{{ lead.stage_key }}"{% endif %}>
 				<td>
 					{#- The lead's picture when it has one, its initials when it does not, so the
 					    column scans the same way either way. -#}
@@ -46,7 +47,7 @@
 					{#- The follow-up view (the list's Follow Up box): the outreach stage and the next follow-up. -#}
 					<div class="a3s-assigncell">
 						<span class="a3s-assigncell__line">
-							{%- if lead.outreach_stage %}<span class="a3s-badge">{{ lead.outreach_stage | e }}</span>
+							{%- if lead.outreach_stage %}<span class="a3s-badge{% if lead.stage_key %} a3s-badge--stage-{{ lead.stage_key }}{% endif %}">{{ lead.outreach_stage | e }}</span>
 							{%- else %}<span class="a3s-table__muted">No outreach stage</span>{% endif %}
 						</span>
 						<span class="a3s-assigncell__line">

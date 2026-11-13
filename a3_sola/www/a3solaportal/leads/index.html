@@ -72,8 +72,14 @@
 </form>
 
 {% if leads %}
+{%- if followup_view %}
+{#- What the row colours mean: the cadence's steps, in order. -#}
+<p class="a3s-leads__legend" aria-label="Row colours">
+	{%- for s in stage_legend %}<span class="a3s-badge a3s-badge--stage-{{ s.key }}">{{ s.label | e }}</span>{% endfor %}
+</p>
+{%- endif %}
 <div class="a3s-card a3s-tablewrap">
-	<table class="a3s-table">
+	<table class="a3s-table{% if followup_view %} a3s-table--stages{% endif %}">
 		<thead>
 			<tr>
 				<th>Name</th>
