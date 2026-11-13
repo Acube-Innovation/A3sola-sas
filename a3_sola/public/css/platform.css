@@ -1542,10 +1542,11 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-side__item.is-active .a3s-side__icon { background: var(--color-accent); color: #fff; }
 .a3s-side__item.is-active:hover .a3s-side__icon { background: var(--color-accent-hover); }
 
-/* Page header: title on the left, a primary action on the right. */
+/* Page header: title on the left, the actions on the right, their top level with the title's,
+   so the heading and the buttons start on the same line whatever sits under the heading. */
 .a3s-page__head {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
 	flex-wrap: wrap;
@@ -2360,7 +2361,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	display: grid;
 	/* The name keeps room for itself; many actions wrap onto a second line beside it. */
 	grid-template-columns: minmax(14rem, 1fr) minmax(0, max-content);
-	align-items: center;
+	align-items: start;
 	column-gap: 1rem;
 	row-gap: 0;
 }
