@@ -279,7 +279,7 @@
    "fieldname": "avg_monthly_units",
    "fieldtype": "Float",
    "label": "Avg Monthly Units",
-   "precision": "0",
+   "precision": "1",
    "read_only": 1,
    "description": "Units a month: the units on one bill, halved for a bimonthly bill. Compared with the capacity by rule ELG-12."
   },
@@ -312,7 +312,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-13 12:00:00.000000",
+ "modified": "2026-11-13 12:50:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Subsidy Eligibility Check",

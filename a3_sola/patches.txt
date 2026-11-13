@@ -336,3 +336,5 @@ a3_sola.patches.v1_2.package_add_on_rate_qty
 a3_sola.patches.v1_2.package_bom_depends_on
 # A panel option's Wattage Rate (its Rate per Panel is Wattage x Wattage Rate), where its rate divides exactly.
 a3_sola.patches.v1_2.package_module_wattage_rate
+# Eligibility checks made before ELG-12: Avg Monthly Units and the consumption rule's row, submitted ones too.
+a3_sola.patches.v1_2.eligibility_consumption_rule
