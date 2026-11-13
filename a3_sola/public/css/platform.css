@@ -1575,6 +1575,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	align-items: center;
 	margin-bottom: 1.25rem;
 }
+.a3s-toolbar[hidden] { display: none; }
 .a3s-toolbar__search, .a3s-toolbar__select {
 	font-family: inherit;
 	font-size: 0.9375rem;
