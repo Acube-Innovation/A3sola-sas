@@ -94,8 +94,8 @@
    "fieldtype": "Link",
    "label": "Portal User",
    "options": "User",
-   "unique": 1,
-   "description": "The contractor's portal login: he sees the projects he is contractor on and the tasks given to him."
+   "search_index": 1,
+   "description": "The contractor's portal login: he sees the projects he is contractor on and the tasks given to him. One record per login in each company: a login shared with another company has its own record there."
   },
   {
    "fieldname": "company",
@@ -178,7 +178,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-09 09:00:00.000000",
+ "modified": "2026-11-13 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Contractor",

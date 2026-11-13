@@ -100,9 +100,7 @@ def clear_applied(context):
 def get_tenant_usage(tenant_name):
 	"""Seats used, pending and available. The one place the arithmetic lives."""
 	quota = cint(frappe.db.get_value("Tenant", tenant_name, "user_quota"))
-	used = frappe.db.count(
-		"User", {TENANT_FIELD: tenant_name, "enabled": 1, "user_type": "System User"}
-	)
+	used = seats_used(tenant_name)
 	pending = frappe.db.count(
 		"Tenant Invitation", {"tenant": tenant_name, "status": ["in", ["Pending", "Sent"]]}
 	)
@@ -114,6 +112,29 @@ def get_tenant_usage(tenant_name):
 		"available_ignoring_pending": max(0, quota - used),
 		"over_quota": used > quota if quota else False,
 	}
+
+
+def seats_used(tenant_name):
+	return len(seat_holders(tenant_name))
+
+
+def seat_holders(tenant_name):
+	"""Desk users of the tenant. One seat per company a person works in, so a login shared
+	between two tenants uses a seat in each; a partner (portal only) uses none.
+
+	Counted from Company Membership, plus anyone stamped with the tenant who has none yet.
+	"""
+	legacy = set(frappe.get_all("User", filters={TENANT_FIELD: tenant_name, "enabled": 1,
+		"user_type": "System User"}, pluck="name"))
+	if not frappe.db.table_exists("Company Membership"):
+		return legacy
+	if legacy:
+		legacy -= set(frappe.get_all("Company Membership", filters={"user": ["in", list(legacy)]}, pluck="user"))
+	members = frappe.get_all("Company Membership", filters={"tenant": tenant_name, "enabled": 1, "counts_seat": 1},
+		pluck="user")
+	enabled = set(frappe.get_all("User", filters={"name": ["in", members], "enabled": 1}, pluck="name")) \
+		if members else set()
+	return enabled | legacy
 
 
 def recalculate_usage(tenant_name):
@@ -156,6 +177,12 @@ def before_user_save(doc, method=None):
 	"""
 	if frappe.flags.in_install or frappe.flags.in_migrate:
 		return
+	if doc.flags.get("a3s_applying_membership"):
+		# A company switch. Never blocked by quota: the seat belongs to the membership,
+		# which was checked when it was given (Company Membership.validate).
+		return
+	if not doc.is_new() and frappe.db.count("Company Membership", {"user": doc.name}) > 1:
+		return  # a login in several companies: its seats are checked per membership
 	tenant = doc.get(TENANT_FIELD)
 	if not tenant:
 		return
@@ -183,9 +210,12 @@ def before_user_save(doc, method=None):
 
 
 def after_user_change(doc, method=None):
-	tenant = doc.get(TENANT_FIELD)
-	if tenant and frappe.db.exists("Tenant", tenant):
-		recalculate_usage(tenant)
+	tenants = {doc.get(TENANT_FIELD)}
+	if frappe.db.table_exists("Company Membership"):
+		tenants |= set(frappe.get_all("Company Membership", filters={"user": doc.name}, pluck="tenant"))
+	for tenant in tenants - {None, ""}:
+		if frappe.db.exists("Tenant", tenant):
+			recalculate_usage(tenant)
 
 
 # ------------------------------------------------------------ module gating

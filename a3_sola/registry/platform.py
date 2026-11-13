@@ -69,6 +69,9 @@ PROVISIONING_DOCTYPES = [
 	"Provisioning Job",
 	"Provisioning Step Log",
 	"Tenant Invitation",
+	"Company Membership",
+	"Company Membership Role",
+	"Impersonation Session",
 ]
 
 #: Phase 7. Subscription lifecycle and access control. Guest has NO permission on any of
@@ -102,7 +105,10 @@ DOCTYPES = (
 
 #: Deliberately empty. See the module docstring: these records are not tenant-scoped, so
 #: binding them to the company permission hooks would filter public content to nothing.
-PERMISSION_DOCTYPES = []
+#
+#: The two exceptions are a person's place in a company and a "Log in as" session: both are
+#: about one company, and an admin of one company must never read another's.
+PERMISSION_DOCTYPES = ["Company Membership", "Impersonation Session"]
 
 #: Seat enforcement lives on the User document itself, because that is the only place
 #: where "one more user" is an event rather than a report. See api/entitlements.py.
@@ -117,13 +123,22 @@ DOC_EVENTS = {
 		"on_update_after_submit": ["a3_sola.api.lifecycle.gate.block_writes"],
 	},
 	"User": {
-		"validate": ["a3_sola.api.entitlements.before_user_save"],
-		"on_update": ["a3_sola.api.entitlements.after_user_change"],
+		"validate": [
+			"a3_sola.api.entitlements.before_user_save",
+			# A login shared between companies keeps the roles of the one it is working in.
+			"a3_sola.api.memberships.reconcile_user_roles",
+		],
+		"on_update": [
+			"a3_sola.api.entitlements.after_user_change",
+			"a3_sola.api.memberships.sync_membership",
+		],
 		"after_insert": ["a3_sola.api.entitlements.after_user_change"],
 	},
 }
 
 SCHEDULER_EVENTS = {
+	# A "Log in as" session past its time is closed even if nobody clicks again.
+	"cron": {"*/5 * * * *": ["a3_sola.api.impersonation.expire_stale"]},
 	"hourly": [
 		"a3_sola.api.reconciliation.gateway_health_check",
 		# The watchdog runs hourly so a stopped daily job is noticed the same day rather

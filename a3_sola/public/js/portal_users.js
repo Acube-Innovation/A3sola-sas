@@ -32,8 +32,9 @@
 		} catch (e) { /* fall through */ }
 		return (body && body.exception) ? String(body.exception).split(":").slice(1).join(":").trim() : "";
 	}
+	/* A method of this page's API by its short name, or any whitelisted method by its full path. */
 	function call(method, args) {
-		return fetch("/api/method/" + API + method, {
+		return fetch("/api/method/" + (method.indexOf(".") !== -1 ? method : API + method), {
 			method: "POST", credentials: "same-origin",
 			headers: { "X-Frappe-CSRF-Token": csrf, "Accept": "application/json", "Content-Type": "application/json" },
 			body: JSON.stringify(args || {})
@@ -91,7 +92,8 @@
 			access += jobs;
 			return '<tr data-user="' + esc(u.name) + '"' + (u.enabled ? "" : ' class="is-disabled"') + ">" +
 				'<td><span class="a3s-table__record"><span class="a3s-avatar a3s-avatar--initials">' + esc(initials(u.full_name)) + "</span>" +
-				'<span><span class="a3s-table__link">' + esc(u.full_name) + (u.is_me ? ' <span class="a3s-users__me">You</span>' : "") + "</span>" +
+				'<span><span class="a3s-table__link">' + esc(u.full_name) + (u.is_me ? ' <span class="a3s-users__me">You</span>' : "") +
+				(u.shared ? ' <span class="a3s-users__shared" title="This login also works in another company">Also in another company</span>' : "") + "</span>" +
 				'<span class="a3s-table__meta">' + esc(u.name) + (u.mobile_no ? " &middot; " + esc(u.mobile_no) : "") + "</span></span></span></td>" +
 				'<td class="a3s-table__status"><span class="a3s-badge ' + (BADGE[u.type] || "") + '">' + esc(u.type) + "</span></td>" +
 				"<td>" + access + "</td>" +
@@ -99,8 +101,11 @@
 				'<td class="a3s-table__muted">' + (esc(u.last_login) || "Never") + "</td>" +
 				'<td><div class="a3s-users__actions">' +
 				'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="edit" title="Edit" aria-label="Edit ' + esc(u.full_name) + '">' + icon("edit") + "</button>" +
+				/* A login shared with another company keeps its own password: no welcome or reset here. */
+				(u.shared ? "" :
 				'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="welcome" title="Send welcome" aria-label="Send welcome">' + icon("whatsapp") + "</button>" +
-				'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="password" title="Reset password" aria-label="Reset password">' + icon("shield") + "</button>" +
+				'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="password" title="Reset password" aria-label="Reset password">' + icon("shield") + "</button>") +
+				(u.can_impersonate ? '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="login-as" title="Log in as ' + esc(u.full_name) + '" aria-label="Log in as ' + esc(u.full_name) + '">' + icon("eye") + "</button>" : "") +
 				(u.is_me ? "" :
 				'<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-act="toggle" title="' + (u.enabled ? "Disable" : "Enable") + '" aria-label="' + (u.enabled ? "Disable" : "Enable") + '">' + icon("power") + "</button>" +
 				'<button type="button" class="a3s-icon-btn a3s-icon-btn--danger" data-act="delete" title="Delete" aria-label="Delete">' + icon("trash") + "</button>") +
@@ -161,7 +166,9 @@
 	function userForm(u) {
 		var editing = !!u;
 		u = u || { type: "Employee", enabled: 1 };
-		var m = modal(editing ? "Edit user" : "Add user", editing ? esc(u.name) : "They will get a link to set their own password.", true);
+		var m = modal(editing ? "Edit user" : "Add user", editing ? esc(u.name) + (u.shared ? " &middot; also works in another company: only their access here can be changed." : "")
+			: "They will get a link to set their own password. Someone who already has a login in another company is added to this one instead, with their own login.", true);
+		var own = editing && u.shared ? " disabled" : "";
 		var con = u.contractor || null;
 		var roles = u.roles || [];
 		m.body.innerHTML =
@@ -174,11 +181,11 @@
 			'<div class="a3s-form__grid">' +
 			/* A partner may be both: a dealer who also installs, or a contractor who also sells. */
 			'<label class="a3s-check a3s-field--wide a3s-users__also" data-for="Dealer Contractor"><input type="checkbox" name="also"' + (u.also ? " checked" : "") + '><span data-also-text></span></label>' +
-			'<div class="a3s-field"><label for="u-first">First name <span class="a3s-req">*</span></label><input id="u-first" name="first_name" value="' + esc(u.first_name) + '" required></div>' +
-			'<div class="a3s-field"><label for="u-last">Last name</label><input id="u-last" name="last_name" value="' + esc(u.last_name) + '"></div>' +
+			'<div class="a3s-field"><label for="u-first">First name <span class="a3s-req">*</span></label><input id="u-first" name="first_name" value="' + esc(u.first_name) + '" required' + own + '></div>' +
+			'<div class="a3s-field"><label for="u-last">Last name</label><input id="u-last" name="last_name" value="' + esc(u.last_name) + '"' + own + '></div>' +
 			'<div class="a3s-field"><label for="u-email">E-mail (login) <span class="a3s-req">*</span></label><input id="u-email" name="email" type="email" value="' + esc(editing ? u.name : "") + '"' + (editing ? " disabled" : "") + ' required>' +
 			(editing ? '<p class="a3s-field__hint">The login stays as it is.</p>' : "") + "</div>" +
-			'<div class="a3s-field"><label for="u-mobile">Mobile</label><input id="u-mobile" name="mobile_no" inputmode="tel" value="' + esc(u.mobile_no) + '"><p class="a3s-field__hint">For the WhatsApp welcome.</p></div>' +
+			'<div class="a3s-field"><label for="u-mobile">Mobile</label><input id="u-mobile" name="mobile_no" inputmode="tel" value="' + esc(u.mobile_no) + '"' + own + '><p class="a3s-field__hint">' + (own ? "Theirs to change, on their own login." : "For the WhatsApp welcome.") + '</p></div>' +
 			'<fieldset class="a3s-field a3s-field--wide a3s-users__access" data-for="Employee Dealer Contractor"><legend class="a3s-users__legend">Access <span class="a3s-req" data-access-req>*</span></legend>' +
 			'<p class="a3s-field__hint" data-access-hint></p>' +
 			'<div class="a3s-users__jobs" role="group" aria-label="Add the roles of a job">' + choices.profiles.map(function (p) {
@@ -300,6 +307,7 @@
 			call("save_user", { data: data, name: editing ? u.name : null }).then(function (r) {
 				return reload().then(function () {
 					if (r.created) { m.close(); welcomePanel(find(r.name), "User added", true); }
+					else if (r.added) { m.close(); setStatus(pageStatus, "Added " + (r.user ? r.user.full_name : r.name) + " to this company. They sign in with the login they already have and choose this company at the top of the page.", "ok"); }
 					else { m.close(); setStatus(pageStatus, "Saved " + (r.user ? r.user.full_name : r.name) + ".", "ok"); }
 				});
 			}).catch(function (err) { m.status(err.message, "error"); busy(btn, false); });
@@ -387,6 +395,41 @@
 		});
 	}
 
+	/* Log in as: see the portal exactly as they see it. A reason and a time limit; recorded. */
+	function loginAsPanel(u) {
+		var m = modal("Log in as", esc(u.full_name) + " &middot; " + esc(u.name), false);
+		var limit = choices.impersonation_minutes || 60;
+		var opts = [15, 30, 60, 120].filter(function (n) { return n <= limit; });
+		m.body.innerHTML = '<form class="a3s-modal__form" novalidate>' +
+			'<p class="a3s-users__sub">You will see the portal as ' + esc(u.full_name) + ' sees it, until you return to your own account or the time runs out. ' +
+			"Everything you do is recorded as done by you on their behalf.</p>" +
+			'<div class="a3s-field"><label for="la-reason">Why <span class="a3s-req">*</span></label>' +
+			'<textarea id="la-reason" name="reason" rows="3" minlength="15" required placeholder="For example: checking why the dealer cannot see his new lead"></textarea>' +
+			'<p class="a3s-field__hint" data-count>At least 15 characters. Kept in the audit trail and shown to them.</p></div>' +
+			'<div class="a3s-field"><label for="la-min">For</label><select id="la-min" name="minutes">' +
+			opts.map(function (n) { return '<option value="' + n + '"' + (n === 30 ? " selected" : "") + ">" + n + " minutes</option>"; }).join("") + "</select></div>" +
+			'<label class="a3s-check"><input type="checkbox" name="notify"' + (choices.notify_on_impersonation ? " checked" : "") + "><span>Tell " + esc(u.first_name || u.full_name) + " by e-mail</span></label>" +
+			'<div class="a3s-form__actions"><button type="submit" class="a3s-btn a3s-btn--primary"><span>Log in as ' + esc(u.first_name || u.full_name) + "</span></button>" +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div></form>';
+		var form = m.body.querySelector("form");
+		var count = form.querySelector("[data-count]");
+		form.reason.addEventListener("input", function () {
+			var n = form.reason.value.trim().length;
+			count.textContent = n < 15 ? (15 - n) + " more characters needed." : "Kept in the audit trail and shown to them.";
+		});
+		form.reason.focus();
+		form.addEventListener("submit", function (e) {
+			e.preventDefault();
+			if (form.reason.value.trim().length < 15) { m.status("Say why, in at least 15 characters.", "error"); return; }
+			var btn = form.querySelector('[type="submit"]');
+			busy(btn, true, "Opening…"); m.status("");
+			call("a3_sola.api.impersonation.start", { user: u.name, reason: form.reason.value.trim(),
+				minutes: form.minutes.value, notify_user: form.notify.checked ? 1 : 0 })
+				.then(function (r) { window.location.assign((r && r.redirect) || "/a3solaportal/dashboard"); })
+				.catch(function (err) { m.status(err.message, "error"); busy(btn, false); });
+		});
+	}
+
 	rows.addEventListener("click", function (e) {
 		var b = e.target.closest("[data-act]");
 		if (!b) return;
@@ -395,6 +438,7 @@
 		if (b.dataset.act === "edit") userForm(u);
 		else if (b.dataset.act === "welcome") welcomePanel(u);
 		else if (b.dataset.act === "password") passwordPanel(u);
+		else if (b.dataset.act === "login-as") loginAsPanel(u);
 		else if (b.dataset.act === "toggle") {
 			confirmPanel(u.enabled ? "Disable user" : "Enable user",
 				u.enabled ? "<b>" + esc(u.full_name) + "</b> will be signed out and can no longer sign in. Their records stay as they are."
@@ -403,8 +447,10 @@
 				function () { return call("set_enabled", { name: u.name, enabled: u.enabled ? 0 : 1 }).then(function () {
 					return [(u.enabled ? "Disabled " : "Enabled ") + u.full_name + ".", "ok"]; }); });
 		} else if (b.dataset.act === "delete") {
-			confirmPanel("Delete user", "Delete <b>" + esc(u.full_name) + "</b> (" + esc(u.name) + ")? If records in the system name them, they are disabled instead, so the history stays intact.",
-				"Delete", true,
+			confirmPanel(u.shared ? "Remove from this company" : "Delete user", u.shared
+				? "Remove <b>" + esc(u.full_name) + "</b> (" + esc(u.name) + ") from this company? Their login stays for the other company they work in."
+				: "Delete <b>" + esc(u.full_name) + "</b> (" + esc(u.name) + ")? If records in the system name them, they are disabled instead, so the history stays intact.",
+				u.shared ? "Remove" : "Delete", true,
 				function () { return call("delete_user", { name: u.name }).then(function (r) {
 					return r.deleted ? ["Deleted " + u.full_name + ".", "ok"] : [r.message, "warn"]; }); });
 		}

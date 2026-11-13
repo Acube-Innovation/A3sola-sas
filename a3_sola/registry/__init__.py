@@ -44,6 +44,10 @@ def merged_scheduler_events():
 	merged = {}
 	for module in MODULES:
 		for cadence, handlers in getattr(module, "SCHEDULER_EVENTS", {}).items():
+			if isinstance(handlers, dict):  # "cron": {expression: [handlers]}
+				for expression, jobs in handlers.items():
+					merged.setdefault(cadence, {}).setdefault(expression, []).extend(jobs)
+				continue
 			merged.setdefault(cadence, []).extend(handlers)
 	return merged
 

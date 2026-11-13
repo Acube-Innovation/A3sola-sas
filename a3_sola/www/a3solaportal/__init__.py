@@ -103,12 +103,15 @@ NAV_GROUPS = [
 			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
 			{"title": "Packages", "sub": "Systems, prices and BOMs", "ic": "package", "route": "/a3solaportal/packages"},
 			{"title": "Menu", "sub": "What the menu shows", "ic": "checklist", "route": "/a3solaportal/menu"},
+			{"title": "Support", "sub": "Log in as any user", "ic": "eye", "route": "/a3solaportal/support"},
 		],
 	},
 ]
 
 #: Menu items for admins alone: the page refuses anyone else too.
 ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/menu"}
+#: Menu items for our own platform staff alone ("Log in as" across every company).
+PLATFORM_NAV = {"/a3solaportal/support"}
 
 # The top bar names the signed-in user's company: their default Company, else the site's
 # default. Shown with the company's logo when one is set on the Company record. The
@@ -118,7 +121,10 @@ WORKSPACE_NAME = "A3 Sola"
 
 def user_company():
 	"""(name, logo_url) for the signed-in user's company, or (fallback, None)."""
-	company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	from a3_sola.api.memberships import active_company
+
+	company = active_company() or frappe.defaults.get_user_default("Company") or \
+		frappe.defaults.get_global_default("company")
 	if not company or not frappe.db.exists("Company", company):
 		return WORKSPACE_NAME, None
 	name, logo = frappe.db.get_value("Company", company, ["company_name", "company_logo"]) or (None, None)
@@ -164,7 +170,11 @@ def nav_groups(user=None):
 	from a3_sola.api.portal_menu import hidden
 	from a3_sola.api.portal_users import is_user_admin
 
+	from a3_sola.api.impersonation import is_platform_staff
+
 	off = hidden()
+	if not is_platform_staff(user):
+		off = set(off) | PLATFORM_NAV
 	if not is_partner(user):
 		admin = is_user_admin(user)
 		shown = lambda i: i["route"] not in off and (admin or i["route"] not in ADMIN_NAV)  # noqa: E731
@@ -195,9 +205,9 @@ def fill_shell(context, *, active_route, page_title, crumbs):
 	# Every page carries the CSRF token (the shell's <meta>): Sign out posts to /api/method/logout,
 	# which Frappe refuses without it.
 	if not context.get("csrf_token"):
-		import frappe.sessions
+		from frappe.sessions import get_csrf_token  # not "import frappe.sessions": that makes frappe a local here
 
-		context.csrf_token = frappe.sessions.get_csrf_token()
+		context.csrf_token = get_csrf_token()
 	context.page_meta_title = page_title
 
 	full_name, email = frappe.db.get_value(
@@ -208,6 +218,14 @@ def fill_shell(context, *, active_route, page_title, crumbs):
 	context.user_first_name = (full_name or "").split(" ")[0] or context.user_full_name
 
 	context.workspace_name, context.workspace_logo = user_company()
+	# A login in several companies switches between them in the top bar; while viewing as
+	# someone, the banner says so on every page and the switcher is not offered.
+	from a3_sola.api import impersonation, memberships
+
+	context.impersonation = impersonation.current()
+	companies = memberships.my_companies()
+	context.companies = companies if len(companies) > 1 and not context.impersonation else []
+	context.company_changed = getattr(frappe.local, "a3s_company_changed", None) and context.workspace_name
 	context.nav_groups = nav_groups()
 	context.active_route = active_route
 	context.page_title = page_title

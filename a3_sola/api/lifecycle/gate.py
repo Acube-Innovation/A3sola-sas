@@ -42,6 +42,12 @@ ALWAYS_ALLOWED = (
 	"/api/method/frappe.realtime",
 	"/socket.io",
 	"/app/subscription-suspended",
+	# 4. Leaving: a person who also works in another company switches to it, and a
+	#    support session can always be ended.
+	"/api/method/a3_sola.api.memberships.switch_company",
+	"/api/method/a3_sola.api.memberships.my_companies",
+	"/a3solaportal/choose-company",
+	"/api/method/a3_sola.api.impersonation.end",
 )
 
 #: Roles that belong to your own business. A holder is never gated, whatever a stray
@@ -111,6 +117,15 @@ def _refuse(state):
 	"""A branded message with a way out, not a bare permission error."""
 	from frappe.utils import get_url
 
+	from a3_sola.api import memberships
+
+	if any(r.eligible and not r.is_active for r in memberships.memberships(frappe.session.user)):
+		frappe.throw(
+			_("Access to this company is paused because of an unpaid invoice. Your other company is "
+			  "open: switch to it at {0}.").format(f"{get_url()}/a3solaportal/choose-company"),
+			frappe.PermissionError,
+			title=_("Company Paused"),
+		)
 	frappe.throw(
 		_("Access to A3 Sola is paused for your organisation because of an unpaid "
 		  "invoice. Nothing has been deleted - your data and your team's permissions are "
@@ -158,7 +173,10 @@ def invalidate(user=None, tenant=None):
 		frappe.cache().hdel(CACHE_KEY, user)
 		return
 	if tenant:
-		for name in frappe.get_all("User", filters={TENANT_FIELD: tenant}, pluck="name"):
+		names = set(frappe.get_all("User", filters={TENANT_FIELD: tenant}, pluck="name"))
+		if frappe.db.table_exists("Company Membership"):
+			names |= set(frappe.get_all("Company Membership", filters={"tenant": tenant}, pluck="user"))
+		for name in names:
 			frappe.cache().hdel(CACHE_KEY, name)
 		return
 	frappe.cache().delete_value(CACHE_KEY)

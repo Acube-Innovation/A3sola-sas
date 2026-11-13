@@ -250,6 +250,11 @@ def _assert_tenant_admin(subscription):
 	# `frappe.get_roles()` would never contain it. Whichever profile the tenant was
 	# provisioned with is the one that counts, so it is read from the tenant rather than
 	# hardcoded.
+	# A company admin by membership - also for a login that works in other companies too.
+	if frappe.db.exists("Company Membership", {"user": frappe.session.user, "tenant": tenant, "is_admin": 1,
+			"enabled": 1}):
+		return tenant
+
 	profile = frappe.db.get_value("Tenant", tenant, "assigned_role_profile")
 	if profile and frappe.db.get_value("User", frappe.session.user, "role_profile_name") == profile:
 		if frappe.db.get_value("User", frappe.session.user, TENANT_FIELD) == tenant:

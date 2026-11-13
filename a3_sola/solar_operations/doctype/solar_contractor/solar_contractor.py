@@ -17,6 +17,8 @@ from a3_sola.api.uniqueness import assert_unique_in_company
 class SolarContractor(Document):
 	def validate(self):
 		assert_unique_in_company(self, ["contractor_name"])
+		# One contractor record per portal login in each company (a login may work in several).
+		assert_unique_in_company(self, ["user"])
 		if self.email_id:
 			frappe.utils.validate_email_address(self.email_id, throw=True)
 		if self.licence_valid_till and getdate(self.licence_valid_till) < getdate(today()):

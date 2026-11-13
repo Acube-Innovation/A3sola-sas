@@ -49,7 +49,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Event",
-   "options": "Refund Requested\nRefund Approved\nRefund Processed\nRefund Failed\nManual Payment Override\nPayment Status Refetched\nPayment Link Reissued\nWebhook Reprocessed\nMandate Re-registered\nMandate Cancelled\nReconciliation Imported\nReconciliation Submitted\nAccounting Posted\nAccounting Reposted\nGateway Credentials Changed\nGateway Mode Changed\nCompliance Setting Changed\nSupport Session Started\nSupport Session Ended",
+   "options": "Refund Requested\nRefund Approved\nRefund Processed\nRefund Failed\nManual Payment Override\nPayment Status Refetched\nPayment Link Reissued\nWebhook Reprocessed\nMandate Re-registered\nMandate Cancelled\nReconciliation Imported\nReconciliation Submitted\nAccounting Posted\nAccounting Reposted\nGateway Credentials Changed\nGateway Mode Changed\nCompliance Setting Changed\nSupport Session Started\nSupport Session Ended\nSupport Session Expired\nSupport Session Revoked",
    "read_only": 1,
    "reqd": 1
   },
@@ -215,7 +215,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-27 21:00:00.000000",
+ "modified": "2026-11-13 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Platform",
  "name": "Platform Audit Entry",

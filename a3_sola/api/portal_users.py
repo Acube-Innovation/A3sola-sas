@@ -13,6 +13,10 @@ Four kinds of user, each a role profile:
 
 Only an admin may use any of it. Nobody is given a password by default: a new user is sent a
 set-password link, by WhatsApp or e-mail, and chooses his own.
+
+One login may work in several companies, with a different type in each (api/memberships). Adding
+an e-mail that is already someone's login adds them to this company: this page then sets only
+their type and roles here, never their name, mobile, password or anything in their other company.
 """
 
 import json
@@ -23,6 +27,7 @@ from frappe.utils import cint, format_datetime, get_url
 
 from a3_sola.api import partner_scope
 from a3_sola.api.permissions import get_permitted_companies
+from a3_sola.api.settings import get_value
 
 ADMIN_ROLES = ("System Manager", "Solar CRM Manager")
 ADMIN_PROFILE = "Solar Tenant Administrator"
@@ -49,7 +54,14 @@ def is_user_admin(user=None):
 	user = user or frappe.session.user
 	if user == "Administrator":
 		return True
-	if user == "Guest" or partner_scope.is_partner(user):
+	if user == "Guest":
+		return False
+	from a3_sola.api import memberships
+
+	m = memberships.active_membership(user)
+	if m:
+		return bool(cint(m.enabled) and cint(m.is_admin))
+	if partner_scope.is_partner(user):
 		return False
 	if set(frappe.get_roles(user)) & set(ADMIN_ROLES):
 		return True
@@ -168,13 +180,47 @@ def _scope_filters():
 	return {field: tenant} if tenant else {}
 
 
+def _company_permissions():
+	"""{user: [companies]} from Company User Permissions, in one read."""
+	out = {}
+	for row in frappe.get_all("User Permission", filters={"allow": "Company"}, fields=["user", "for_value"]):
+		out.setdefault(row.user, []).append(row.for_value)
+	return out
+
+
+def _here():
+	"""{user: membership row} in this company, and the users who work in any company."""
+	company = _company()
+	rows = frappe.get_all("Company Membership", filters={"company": company}, fields=["name", "user", "portal_type",
+		"enabled", "is_admin", "role_profile", "also_kind", "designation", "department"]) if company else []
+	here = {r.user: r for r in rows}
+	for r in rows:
+		r.roles = frappe.get_all("Company Membership Role", filters={"parent": r.name,
+			"parenttype": "Company Membership"}, pluck="role", order_by="idx asc")
+	counts = {}
+	for u in frappe.get_all("Company Membership", pluck="user"):
+		counts[u] = counts.get(u, 0) + 1
+	return here, counts
+
+
 @frappe.whitelist()
 def users(type=None, search=None):
 	require_admin()
+	from a3_sola.api import impersonation
+
 	filters = {"name": ["not in", list(HIDDEN_USERS)], "user_type": ["in", ["System User", "Website User"]]}
-	filters.update(_scope_filters())
+	here, member_counts = _here()
+	if not here:
+		filters.update(_scope_filters())
 	rows = frappe.get_all("User", filters=filters, fields=["name", "full_name", "first_name", "last_name", "mobile_no",
 		"enabled", "last_login", "role_profile_name", "user_type", "user_image"], order_by="enabled desc, full_name asc")
+	# Only the people of this company: those with a membership here, and those who have none
+	# anywhere (made before memberships). Someone who works only elsewhere is not listed.
+	company = _company()
+	permitted = _company_permissions()
+	default = frappe.db.get_single_value("Global Defaults", "default_company")  # the site's, not the user's
+	rows = [r for r in rows if r.name in here or (not member_counts.get(r.name)
+		and company in (permitted.get(r.name) or [default]))]
 	internal = _internal_users()
 	contractors = {c.user: c for c in frappe.get_all("Solar Contractor", filters={"user": ["is", "set"]},
 		fields=["name", "contractor_name", "contractor_type", "user"])}
@@ -186,7 +232,11 @@ def users(type=None, search=None):
 	for row in rows:
 		if row.name in internal:
 			continue
-		kind = type_of(row)
+		m = here.get(row.name)
+		shared = member_counts.get(row.name, 0) > 1
+		kind = m.portal_type if m and shared else type_of(row)
+		if m and shared:
+			row.enabled = cint(row.enabled) and cint(m.enabled)
 		# A website user with no partner role is a customer of the customer portal, not staff.
 		if row.user_type == "Website User" and kind == "Employee":
 			continue
@@ -197,15 +247,26 @@ def users(type=None, search=None):
 			continue
 		con = contractors.get(row.name)
 		emp = employees.get(row.name) or {}
+		mine = held_roles.get(row.name, [])
+		if m and shared:
+			# Their roles in this company, not in whichever company they are working in now.
+			mine = m.roles or []
+			emp = {"designation": m.designation, "department": m.department,
+				"department_name": frappe.db.get_value("Department", m.department, "department_name") or m.department
+				if m.department else ""}
 		out.append({
 			"name": row.name, "full_name": row.full_name or row.name, "first_name": row.first_name or "",
 			"last_name": row.last_name or "", "mobile_no": row.mobile_no or "", "enabled": cint(row.enabled),
 			"type": kind, "profile": row.role_profile_name or "",
 			"also": OTHER_KIND.get(kind, "") if kind in OTHER_KIND and {partner_scope.DEALER, partner_scope.CONTRACTOR}
-				<= set(held_roles.get(row.name, [])) else "",
-			"roles": [r for r in held_roles.get(row.name, []) if r in tickable],
-			"other_roles": [r for r in held_roles.get(row.name, []) if r not in tickable and r != BASE_ROLE
-				and r not in partner_scope.AUTOMATIC_ROLES],
+				<= set(mine) else "",
+			"roles": [r for r in mine if r in tickable],
+			"other_roles": [r for r in mine if r not in tickable and r != BASE_ROLE
+				and r not in partner_scope.AUTOMATIC_ROLES and r not in PARTNER_ROLE_OF.values()],
+			# Also works in another company: their name, mobile and password are theirs to keep.
+			"shared": shared,
+			"can_impersonate": bool(impersonation.can_impersonate(frappe.session.user, row.name)[0])
+				if row.enabled and row.name != frappe.session.user else False,
 			"contractor": {"name": con.name, "contractor_name": con.contractor_name, "contractor_type": con.contractor_type}
 				if con else None,
 			"last_login": format_datetime(row.last_login, "d MMM yyyy") if row.last_login else "",
@@ -299,15 +360,29 @@ def options():
 		"contractor_types": list(CONTRACTOR_TYPES), "can_email": bool(_outgoing_account("User")),
 		"login_url": get_url(LOGIN_PATH), "staff_types": list(STAFF_TYPES),
 		"designations": frappe.get_all("Designation", pluck="name", order_by="name asc"),
+		"impersonation_minutes": _impersonation_minutes(),
+		"notify_on_impersonation": cint(get_value("notify_user_on_impersonation", 1)),
 		"departments": _departments(company), "genders": frappe.get_all("Gender", pluck="name", order_by="name asc"),
 		"today": frappe.utils.today()}
 
 
+def _impersonation_minutes():
+	from a3_sola.api.impersonation import is_platform_staff, minutes_for
+
+	return minutes_for("Platform" if is_platform_staff() else "Company Admin", 10**6)
+
+
 # ------------------------------------------------------------------ saving
 def _company():
+	from a3_sola.api import memberships
+
+	active = memberships.active_company(frappe.session.user)
+	if active:
+		return active
+	default = frappe.defaults.get_user_default("company")
 	companies = get_permitted_companies(frappe.session.user)
 	if companies:
-		return companies[0]
+		return default if default in companies else companies[0]
 	return frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company") or \
 		frappe.db.get_value("Company", {}, "name")
 
@@ -366,7 +441,9 @@ def _desk_roles(user):
 
 def _link_contractor(email, data, company):
 	"""The contractor's own record, its Portal User this login: one picked, or one made now."""
-	frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s", email)  # one record per login
+	# One record per login in each company; another company's record of the same person stays.
+	frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s and ifnull(company, '') in (%s, '')",
+		(email, company or ""))
 	name = data.get("contractor")
 	if not name:
 		c = data.get("new_contractor") or {}
@@ -393,6 +470,12 @@ def save_user(data, name=None):
 	from a3_sola.api.tenant_users import _set_default_company, ensure_company_permission
 
 	data = _clean(data)
+	from a3_sola.api import memberships
+
+	if not name and data.email and frappe.db.exists("User", data.email):
+		return _add_existing_user(data)
+	if name and memberships.is_shared(name):
+		return _save_shared(name, data)
 	roles = None  # an employee's own roles, when they are no one profile's
 	if data.type == "Employee":
 		data.name = name
@@ -430,8 +513,6 @@ def save_user(data, name=None):
 	else:
 		if not frappe.utils.validate_email_address(data.email):
 			frappe.throw(_("Enter a valid e-mail address."))
-		if frappe.db.exists("User", data.email):
-			frappe.throw(_("{0} is already a user.").format(data.email))
 		user = frappe.new_doc("User")
 		user.email = data.email
 		user.send_welcome_email = 0
@@ -481,10 +562,138 @@ def save_user(data, name=None):
 	if data.type == "Contractor" or partner_both:
 		contractor = _link_contractor(user.name, data, company)
 	else:
-		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s", user.name)
+		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s and ifnull(company, '') in (%s, '')",
+			(user.name, company or ""))
+	_record_membership(user.name, data, company)
 	frappe.clear_cache(user=user.name)
 	return {"name": user.name, "created": not name, "contractor": contractor, "employee": employee,
 		"user": next((u for u in users()["users"] if u["name"] == user.name), None)}
+
+
+# ------------------------------------------------------------------ one login, several companies
+def _access_here(data, name=None):
+	"""(profile, roles, also) a user is given in this company, from what the form sent - the same
+	rules as for a login of his own (save_user), as a membership rather than on the User."""
+	if data.type == "Employee":
+		data.name = name
+		profile, roles = _employee_access(data)
+		if roles is None:
+			roles = memberships_profile_roles(profile)
+		if not profile and not roles:
+			frappe.throw(_("Tick at least one role for the employee."))
+		roles = list(dict.fromkeys([BASE_ROLE] + (roles or [])))
+		return profile, roles, 0
+	partner_both = data.type in OTHER_KIND and cint(data.get("also"))
+	jobs = _partner_jobs(data)
+	if data.type in OTHER_KIND:
+		kinds = [data.type] + ([OTHER_KIND[data.type]] if partner_both else [])
+		roles = list(dict.fromkeys([PARTNER_ROLE_OF[k] for k in kinds] + jobs))
+		return (None if partner_both or jobs else PROFILE_OF[data.type]), roles, cint(partner_both)
+	return ADMIN_PROFILE, memberships_profile_roles(ADMIN_PROFILE), 0
+
+
+def memberships_profile_roles(profile):
+	from a3_sola.api import memberships
+
+	return memberships.profile_roles(profile) if profile else []
+
+
+def _record_membership(user, data, company):
+	"""A login of this company's own: its membership here follows what was just saved."""
+	from a3_sola.api import memberships
+
+	return memberships.record_current(user, company, data.type, source="Portal")
+
+
+def _add_existing_user(data):
+	"""The e-mail is already someone's login - in another company, or this one."""
+	from a3_sola.api import memberships
+
+	email = data.email
+	company = _company()
+	if email in HIDDEN_USERS or not company:
+		frappe.throw(_("{0} cannot be added.").format(email))
+	if memberships.get_membership(email, company) or (not memberships.has_memberships(email)
+			and company in (memberships.company_permissions(email) or [company])):
+		frappe.throw(_("{0} is already a user here.").format(email))
+	if not cint(get_value("allow_shared_logins", 1)):
+		frappe.throw(_("{0} is already someone's login in another company. Adding one login to more than one "
+			"company is turned off on this site.").format(email), title=_("Already a User"))
+	memberships.assert_shareable(email)
+	_adopt_legacy(email)
+	profile, roles, also = _access_here(data)
+	memberships.ensure_membership(email, company, data.type, roles=roles, role_profile=profile, also_kind=also,
+		designation=data.get("designation") or None, department=data.get("department") or None, source="Portal")
+	contractor = _link_contractor(email, data, company) if data.type == "Contractor" or also else None
+	_tell_added(email, company)
+	return {"name": email, "created": False, "added": True, "contractor": contractor, "employee": None,
+		"user": next((u for u in users()["users"] if u["name"] == email), None)}
+
+
+def _adopt_legacy(email):
+	"""Someone made before memberships, about to join a second company: their first company
+	becomes a membership, exactly as they are now, before the second is added."""
+	from a3_sola.api import memberships
+
+	if memberships.has_memberships(email):
+		return
+	companies = memberships.company_permissions(email)
+	if len(companies) != 1:
+		frappe.throw(_("{0} is set up for several companies in a way this page cannot change. Ask support to "
+			"sort the account out first.").format(email))
+	user = frappe.db.get_value("User", email, ["name", "role_profile_name", "enabled"], as_dict=True)
+	frappe.flags.a3s_migrating = True
+	try:
+		memberships.ensure_membership(email, companies[0], type_of(user), roles=_roles(email),
+			role_profile=user.role_profile_name, also_kind=cint(both_kinds(email)), enabled=1, source="Migration")
+	finally:
+		frappe.flags.a3s_migrating = False
+	frappe.db.set_value("User", email, memberships.ACTIVE_FIELD, companies[0], update_modified=False)
+	frappe.clear_cache(user=email)
+
+
+def _tell_added(email, company):
+	"""No password link: they already have one. Just where to find the new company."""
+	name = frappe.db.get_value("Company", company, "company_name") or company
+	try:
+		frappe.sendmail(recipients=[email], subject=_("You were added to {0}").format(name),
+			message=_("<p>{0} added you to <b>{1}</b> on the portal.</p><p>Sign in as usual at {2} and choose {1} "
+				"from the company menu at the top of the page.</p>").format(
+				frappe.utils.escape_html(frappe.utils.get_fullname(frappe.session.user)), frappe.utils.escape_html(name),
+				get_url(LOGIN_PATH)))
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "a3_sola: added-to-company e-mail")
+
+
+def _save_shared(name, data):
+	"""A login that also works elsewhere: only its type, roles and access in this company change."""
+	from a3_sola.api import memberships
+
+	company = _company()
+	m = memberships.get_membership(name, company)
+	if not m:
+		frappe.throw(_("No such user."), frappe.DoesNotExistError)
+	if name == frappe.session.user and (data.type != "Admin" or not cint(data.get("enabled", 1))):
+		frappe.throw(_("You cannot take away your own admin access, or disable yourself."))
+	profile, roles, also = _access_here(data, name)
+	memberships.ensure_membership(name, company, data.type, roles=roles, role_profile=profile, also_kind=also,
+		designation=data.get("designation") or "", department=data.get("department") or "",
+		enabled=cint(data.get("enabled", 1)), source=m.source)
+	contractor = None
+	if data.type == "Contractor" or also:
+		contractor = _link_contractor(name, data, company)
+	else:
+		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s and company = %s", (name, company))
+	return {"name": name, "created": False, "contractor": contractor, "employee": None,
+		"user": next((u for u in users()["users"] if u["name"] == name), None)}
+
+
+def _refuse_if_shared(name):
+	from a3_sola.api import memberships
+
+	if memberships.is_shared(name):
+		frappe.throw(_("{0} also works in another company with this login, so they set their own password. "
+			"They can use \"Forgot password\" on the sign-in page.").format(name), title=_("Their Own Login"))
 
 
 def _user(name):
@@ -499,6 +708,19 @@ def set_enabled(name, enabled):
 	user = _user(name)
 	if name == frappe.session.user:
 		frappe.throw(_("You cannot disable yourself."))
+	from a3_sola.api import memberships
+
+	m = memberships.get_membership(name, _company())
+	if memberships.is_shared(name):
+		# Only their access here: their other company is not this admin's to switch off.
+		if not m:
+			frappe.throw(_("No such user."), frappe.DoesNotExistError)
+		m.enabled = cint(enabled)
+		m.flags.ignore_permissions = True
+		m.save(ignore_permissions=True)
+		return {"name": name, "enabled": m.enabled}
+	if m:
+		m.db_set("enabled", cint(enabled), update_modified=False)
 	user.enabled = cint(enabled)
 	user.flags.ignore_permissions = True
 	user.save(ignore_permissions=True)
@@ -514,9 +736,22 @@ def delete_user(name):
 	user = _user(name)
 	if name == frappe.session.user:
 		frappe.throw(_("You cannot delete yourself."))
+	from a3_sola.api import memberships
+
+	if memberships.is_shared(name):
+		company = _company()
+		if not memberships.get_membership(name, company):
+			frappe.throw(_("No such user."), frappe.DoesNotExistError)
+		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s and company = %s", (name, company))
+		memberships.remove_membership(name, company)
+		return {"deleted": 1, "message": _("{0} was removed from this company. Their login stays for the other "
+			"company they work in.").format(user.full_name or name)}
 	frappe.db.savepoint("portal_user_delete")
 	try:
 		frappe.db.sql("update `tabSolar Contractor` set user = null where user = %s", name)
+		frappe.db.delete("Company Membership Role", {"parent": ["in", frappe.get_all("Company Membership",
+			filters={"user": name}, pluck="name")]})
+		frappe.db.delete("Company Membership", {"user": name})
 		frappe.delete_doc("User", name, ignore_permissions=True)
 		frappe.db.delete("DefaultValue", {"parent": name})
 		return {"deleted": 1}
@@ -544,6 +779,7 @@ def _set_password_link(user):
 @frappe.whitelist(methods=["POST"])
 def password_link(name):
 	user = _user(name)
+	_refuse_if_shared(name)
 	return {"link": _set_password_link(user), "hours": cint(frappe.db.get_single_value("System Settings",
 		"reset_password_link_expiry_duration") or 0) // 3600 or None}
 
@@ -555,6 +791,7 @@ def set_password(name, password):
 	from frappe.utils.password_strength import test_password_strength
 
 	user = _user(name)
+	_refuse_if_shared(name)
 	password = password or ""
 	if len(password) < 8:
 		frappe.throw(_("Use at least 8 characters."))
@@ -590,6 +827,7 @@ def welcome(name, channel="whatsapp"):
 	"""The welcome - the sign-in address, the login and a set-password link - as a WhatsApp link
 	to the user's mobile, or sent by e-mail."""
 	user = _user(name)
+	_refuse_if_shared(name)
 	link = _set_password_link(user)
 	text = welcome_text(user, link)
 	if channel == "email":

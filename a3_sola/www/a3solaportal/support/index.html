@@ -1,0 +1,41 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Support</h2>
+		<p class="a3s-main__sub">Find anyone in any company and log in as them to see what they see. Each session needs a reason, ends on its own, and is recorded.</p>
+	</div>
+</div>
+
+<form class="a3s-support__search" data-search role="search">
+	<input class="a3s-toolbar__search" type="search" name="q" placeholder="Name or e-mail" aria-label="Find a user" autocomplete="off">
+	<button type="submit" class="a3s-btn a3s-btn--primary"><span>Find</span></button>
+</form>
+<p class="a3s-attach__status" data-page-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-card a3s-tablewrap" data-results hidden>
+	<table class="a3s-table">
+		<thead><tr><th>User</th><th>Companies</th><th><span class="a3s-sr-only">Actions</span></th></tr></thead>
+		<tbody data-result-rows></tbody>
+	</table>
+</div>
+
+<h3 class="a3s-card__title a3s-support__heading">Sessions</h3>
+<div class="a3s-card a3s-tablewrap">
+	<table class="a3s-table">
+		<thead><tr><th>Who</th><th>As</th><th>Company</th><th>Started</th><th>Status</th><th>Why</th><th><span class="a3s-sr-only">Actions</span></th></tr></thead>
+		<tbody data-session-rows></tbody>
+	</table>
+	<div class="a3s-empty" data-session-empty hidden>
+		<h3 class="a3s-empty__title">No sessions yet</h3>
+		<p class="a3s-empty__text">Each time someone logs in as a user, it appears here.</p>
+	</div>
+</div>
+
+<script type="application/json" id="a3s-support-data">{{ boot | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_support.js?v={{ a3s_asset_version('js/portal_support.js') }}"></script>
+{% endblock %}

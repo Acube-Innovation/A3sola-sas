@@ -4467,3 +4467,70 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-elg__tally { margin: 0 0 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
 .a3s-table tbody tr.a3s-elg__row--warning td:first-child { box-shadow: inset 3px 0 0 #f79009; }
 .a3s-table tbody tr.a3s-elg__row--fail td:first-child { box-shadow: inset 3px 0 0 #d92d20; }
+
+/* ---- one login, several companies: the switcher in the top bar (api/memberships) ---- */
+.a3s-switcher { position: relative; min-width: 0; }
+.a3s .a3s-workspace--switch { cursor: pointer; font: inherit; font-size: 0.9375rem; font-weight: inherit; }
+.a3s .a3s-workspace--switch:hover { border-color: var(--color-accent); }
+.a3s-workspace__chevron { flex: none; width: 0.9rem; height: 0.9rem; color: var(--color-accent-hover); transition: transform var(--duration) var(--ease); }
+.a3s-workspace--switch[aria-expanded="true"] .a3s-workspace__chevron { transform: rotate(180deg); }
+.a3s-switcher__menu {
+	position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 90;
+	width: min(22rem, calc(100vw - 2rem)); padding: 0.5rem;
+	background: var(--color-surface); border: 1px solid var(--color-border);
+	border-radius: var(--radius-tile); box-shadow: var(--shadow-raised);
+}
+.a3s-switcher__head { margin: 0.25rem 0.6rem 0.4rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.1em;
+	text-transform: uppercase; color: var(--color-text-muted); }
+.a3s-switcher__item {
+	display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.55rem 0.6rem;
+	border: 0; border-radius: 0.75rem; background: transparent; font: inherit; font-size: 0.875rem;
+	color: var(--color-text); text-align: left; cursor: pointer;
+}
+.a3s-switcher__item:hover:not([disabled]) { background: var(--color-accent-soft); }
+.a3s-switcher__item.is-current { background: var(--color-accent-soft); font-weight: 700; }
+.a3s-switcher__item[disabled] { opacity: 0.55; cursor: not-allowed; }
+.a3s-switcher__name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-switcher__tick { flex: none; color: var(--color-accent-hover); }
+.a3s-switcher__menu .a3s-form__status { margin: 0.35rem 0.6rem 0; }
+.a3s-switcher__menu .a3s-form__status:empty { display: none; }
+.a3s-badge--admin { background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-badge--employee { background: rgba(41, 171, 226, 0.14); color: #1b8dc0; }
+.a3s-switcher .a3s-badge--dealer { background: rgba(40, 200, 64, 0.16); color: #1a7a2b; margin-top: 0; }
+.a3s-badge--contractor { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; }
+.a3s-badge--paused { background: rgba(247, 144, 9, 0.12); color: #93370d; }
+.a3s-notice--warn { background: rgba(247, 144, 9, 0.12); border: 0; border-left: 3px solid #f79009; color: #93370d; max-width: none; }
+.a3s-notice--warn a { color: inherit; font-weight: 700; }
+
+/* ---- "Log in as": the banner over the top bar, on every page (api/impersonation) ---- */
+:root { --a3s-viewas-h: 2.75rem; }
+.a3s-viewing-as { --a3s-topbar-h: calc(4rem + var(--a3s-viewas-h)); }
+.a3s-viewing-as .a3s-topbar { top: var(--a3s-viewas-h); height: 4rem; }
+.a3s-viewas {
+	position: fixed; top: 0; left: 0; right: 0; z-index: 51;
+	height: var(--a3s-viewas-h); display: flex; align-items: center; gap: 0.75rem; padding: 0 1.5rem;
+	background: #fdecea; border-top: 4px solid #d92d20; color: #b42318; font-size: 0.875rem;
+}
+.a3s-viewas .a3s-ic { flex: none; }
+.a3s-viewas__text { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-viewas__time { color: #b42318; opacity: 0.85; }
+.a3s .a3s-viewas__back { flex: none; padding: 0.3rem 0.9rem; font-size: 0.8125rem; background: #d92d20; color: #fff; border-color: #d92d20; }
+.a3s .a3s-viewas__back:hover { background: #b42318; border-color: #b42318; }
+@media (max-width: 640px) {
+	.a3s-viewas { padding: 0 0.75rem; gap: 0.5rem; font-size: 0.8125rem; }
+	.a3s-viewas__time, .a3s-viewas__long { display: none; }
+}
+.a3s-viewas__short { display: none; }
+@media (max-width: 640px) { .a3s-viewas__short { display: inline; } }
+
+/* ---- the Users page: a login that also works in another company ---- */
+.a3s-users__shared { display: inline-block; margin-left: 0.35rem; padding: 0.05rem 0.45rem; border-radius: var(--radius-pill);
+	font-size: 0.6875rem; font-weight: 700; background: rgba(41, 171, 226, 0.12); color: #1b8dc0; }
+
+/* ---- choose company and support pages ---- */
+.a3s-companies { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); max-width: 56rem; }
+.a3s-companies .a3s-switcher__item { padding: 1rem; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-tile); }
+.a3s-support__search { display: flex; gap: 0.75rem; margin-bottom: 1rem; max-width: 40rem; }
+.a3s-support__search input { flex: 1 1 auto; }
+.a3s-support__companies { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.a3s-support__heading { margin: 2rem 0 0.75rem; }

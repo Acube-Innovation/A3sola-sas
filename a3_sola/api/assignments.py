@@ -51,6 +51,11 @@ def designation_of(user):
 	"""
 	if not user:
 		return ""
+	from a3_sola.api import memberships
+
+	m = memberships.active_membership(user)
+	if m and m.designation:
+		return m.designation  # their title in the company they work in now
 	employee = frappe.db.get_value("Employee", {"user_id": user}, "designation")
 	if employee:
 		return employee

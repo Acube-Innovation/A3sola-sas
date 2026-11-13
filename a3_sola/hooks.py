@@ -33,8 +33,21 @@ after_migrate = "a3_sola.setup.install.after_migrate"
 # already open. Both are cheap: one cached lookup per request, cleared on any state change.
 # See a3_sola/api/lifecycle/gate.py, which also holds the allowlist that guarantees a
 # suspended customer can always reach the page that ends their suspension.
-before_request = ["a3_sola.api.lifecycle.gate.enforce"]
-on_session_creation = ["a3_sola.api.lifecycle.gate.on_session_creation"]
+#
+# One login may work in several companies (api/memberships): at sign-in it opens the last
+# company worked in, before the gate looks at it, and each request notices a switch made in
+# another window. "Log in as" (api/impersonation) is checked before the gate too: its clock,
+# its company lock, and what is off limits while viewing as someone.
+before_request = [
+	"a3_sola.api.memberships.sync_session",
+	"a3_sola.api.impersonation.enforce",
+	"a3_sola.api.lifecycle.gate.enforce",
+]
+on_session_creation = [
+	"a3_sola.api.memberships.on_session_creation",
+	"a3_sola.api.lifecycle.gate.on_session_creation",
+]
+on_logout = ["a3_sola.api.impersonation.on_logout"]
 
 # A heartbeat around every scheduled job, recorded here rather than by decorating fifteen
 # functions - because the sixteenth job is the one that would be added without one, and
