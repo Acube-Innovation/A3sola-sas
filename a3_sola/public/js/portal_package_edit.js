@@ -470,8 +470,10 @@
 			var html = '<option value="">' + (col.type === "Link" ? "Choose…" : "—") + "</option>" +
 				(found ? "" : '<option value="' + esc(value) + '" selected>' + esc(labelOf(col.options, value, opts.table, col.fieldname)) + " (not offered)</option>") +
 				options.map(function (o) { return '<option value="' + esc(o.value) + '"' + (o.value === value ? " selected" : "") + ">" + esc(o.label) + "</option>"; }).join("");
-			var combo = options.length > 12 || opts.comboLimit;
-			var comboAttrs = combo ? " data-combo" + (opts.comboLimit ? ' data-combo-limit="' + opts.comboLimit + '" data-combo-open' : "") : "";
+			/* A row form's item picker opens on its whole list, scrolled, not the first few:
+			   every choice is there to see, and typing narrows it. */
+			var combo = options.length > 12 || opts.comboOpen;
+			var comboAttrs = combo ? " data-combo" + (opts.comboOpen ? " data-combo-open" : "") : "";
 			return '<div class="a3s-field' + (combo ? " a3s-combo a3s-combo--field" : "") + '"' + comboAttrs + ">" + label + "<select" + name + (opts.disabled ? " disabled" : "") + ">" + html + "</select>" + hint + "</div>";
 		}
 		var type = isNum(col.type) ? ' type="number" step="' + (col.type === "Int" ? "1" : "any") + '" inputmode="decimal"' : "";
@@ -734,12 +736,12 @@
 			var opts = { table: table, row: draft, prefix: "r-" };
 			if (layout && c.fieldname === itemField) {
 				opts.options = itemOptions(table, kind, draft);
-				opts.comboLimit = 10;
+				opts.comboOpen = true;
 				opts.hint = itemHint();
 				/* A kit's part is the item the bundle or BOM has. */
 				if (part) c = Object.assign({}, c, { read_only: 1 });
 			}
-			if (layout && SHEET_TABLES[table] && c.fieldname === "category") opts.comboLimit = 10;
+			if (layout && SHEET_TABLES[table] && c.fieldname === "category") opts.comboOpen = true;
 			var key = table + "." + c.fieldname;
 			if (key === "pricing_options.cost") opts.hint = "Worked out, as below.";
 			if (key === "pricing_options.cap_amount" && !Number(draft.cap_applicable)) {
