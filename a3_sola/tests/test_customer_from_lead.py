@@ -147,7 +147,7 @@ class TestLeadFilesOnTheCustomer(FrappeTestCase):
 
 class TestSizeAndLoanOnTheCustomer(FrappeTestCase):
 	"""Proposed System Size (kW) and Loan Required come from the lead when it has them, stay
-	blank to be filled in when it does not, are asked for when the customer is saved, and a
+	blank when it does not - the customer saves without them, as neither is required - and a
 	change on the customer reaches the lead."""
 
 	def make(self, **lead_values):
@@ -159,14 +159,14 @@ class TestSizeAndLoanOnTheCustomer(FrappeTestCase):
 		_lead, consumer = self.make(approx_capacity_kw=4.5, loan_required="Yes")
 		self.assertEqual(frappe.db.get_value("Solar Consumer", consumer, ["approx_capacity_kw", "loan_required"]), (4.5, "Yes"))
 
-	def test_left_blank_when_the_lead_does_not_say_and_asked_for_on_save(self):
+	def test_left_blank_when_the_lead_does_not_say_and_saves_without_them(self):
 		_lead, consumer = self.make()
 		doc = frappe.get_doc("Solar Consumer", consumer)
 		self.assertFalse(doc.approx_capacity_kw)
 		self.assertFalse(doc.loan_required)
 		doc.consumer_number = frappe.generate_hash(length=10)
-		with self.assertRaises(frappe.MandatoryError):
-			doc.save(ignore_permissions=True)
+		doc.save(ignore_permissions=True)
+		self.assertFalse(doc.loan_required)
 
 	def test_a_change_on_the_customer_reaches_the_lead(self):
 		lead, consumer = self.make(approx_capacity_kw=3, loan_required="No")

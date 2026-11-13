@@ -141,7 +141,7 @@ COLLECTIONS = {
 AUTO_FIELDS = {"company"}
 # Field types a plain form can capture. Attach, Table and the rest are handled by noting
 # them, not by pretending to render them.
-#: Mandatory Selects that start blank on a create form, not at their first option: a question
+#: Selects that start blank on a create form, not at their first option: a question
 #: only the customer can answer - whether they will take a loan - is asked, never assumed.
 UNANSWERED_SELECTS = {"loan_required"}
 INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone", "Attach Image"}
@@ -1513,6 +1513,9 @@ def detail_context(context, slug, name):
 	context.item_table = item_table(slug, doc)
 	if context.item_table:
 		context.extra_template = "templates/includes/portal_item_table.html"
+	elif doc.doctype == "Subsidy Eligibility Check":
+		# The rules the check ran and what each found, warnings first in the reader's eye.
+		context.extra_template = "templates/includes/portal_eligibility_rules.html"
 	return context
 
 

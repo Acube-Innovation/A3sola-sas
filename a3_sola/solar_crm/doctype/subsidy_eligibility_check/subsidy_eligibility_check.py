@@ -30,6 +30,7 @@ WAIVER_ROLES = ("Solar CRM Manager", "Solar Sales Manager", "System Manager")
 SNAPSHOT_FIELDS = (
 	"consumer_name", "mobile_no", "email_id", "consumer_category", "connection_type",
 	"discom", "discom_section", "consumer_number", "roof_type", "capacity_kw", "avg_bill_amount",
+	"avg_monthly_units",
 )
 
 
@@ -171,6 +172,11 @@ def reference_details(lead=None, solar_consumer=None, design_estimate=None):
 	for field in ("consumer_name", "mobile_no", "email_id", "consumer_category", "connection_type",
 			"discom", "discom_section", "consumer_number", "roof_type", "avg_bill_amount"):
 		out[field] = pick(field)
+
+	# Units a month, from the units of one bill and how often the customer is billed.
+	out["avg_monthly_units"] = eligibility.monthly_units(
+		pick("avg_consumption_units"), pick("billing_frequency")
+	)
 
 	# The scheme: whatever the lead was qualified under, else the company default.
 	out["subsidy_scheme"] = (lead_doc.get("subsidy_scheme") if lead_doc else None) or get_value(

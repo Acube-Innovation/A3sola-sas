@@ -4,7 +4,8 @@
 
 Rules are functions in a registry, not branches in a controller, so a new rule is a new
 function and a scheme change is not a controller rewrite. Every rule returns
-(result, remarks) where result is Pass / Fail / Not Applicable.
+(result, remarks) where result is Pass / Fail / Warning / Not Applicable. A Warning asks
+someone to look before going on; unlike a Fail it does not make the customer ineligible.
 """
 
 import frappe
@@ -50,6 +51,7 @@ def consumer_view_from_lead(lead):
 		roof_type=lead.get("roof_type"),
 		avg_bill_amount=lead.get("avg_monthly_bill"),
 		avg_consumption_units=lead.get("approx_consumption_units"),
+		billing_frequency=lead.get("billing_frequency"),
 		capacity_kw=lead.get("approx_capacity_kw"),
 		has_availed_prior_subsidy=0,
 		prior_scheme_name=None,
@@ -59,6 +61,28 @@ def consumer_view_from_lead(lead):
 		bank_account_no=None,
 		bank_ifsc_code=None,
 	)
+
+
+#: PM Surya Ghar's suitable rooftop capacity for a household, by average monthly units:
+#: (units up to, largest suitable kW, band as the scheme names it). The last band is open.
+SUITABLE_CAPACITY = (
+	(150, 2.0, "0-150 units: 1-2 kW"),
+	(300, 3.0, "150-300 units: 2-3 kW"),
+	(None, None, "above 300 units: above 3 kW"),
+)
+
+
+def monthly_units(units_per_cycle, billing_frequency):
+	"""Average units a month from the units of one bill. A bill is two months' worth unless
+	the customer is billed monthly - KSEB's domestic default is bimonthly."""
+	return flt(units_per_cycle) / (1 if billing_frequency == "Monthly" else 2)
+
+
+def suitable_band(units):
+	"""The (largest suitable kW, band label) for an average monthly consumption."""
+	for upto, max_kw, label in SUITABLE_CAPACITY:
+		if upto is None or flt(units) <= upto:
+			return max_kw, label
 
 
 class Context:
@@ -278,6 +302,23 @@ def _finance(ctx):
 	if missing:
 		return "Fail", _("Financed sale missing {0}.").format(", ".join(missing))
 	return "Pass", _("Financed via {0}, {1}.").format(quotation.lender, quotation.lender_branch)
+
+
+@rule("ELG-12", "Capacity suits the household's average monthly consumption.", 12)
+def _consumption(ctx):
+	if (ctx.consumer.get("consumer_category") or "Residential") != "Residential":
+		return "Not Applicable", _("Consumption guidance applies to households only.")
+	if not ctx.capacity_kw:
+		return "Not Applicable", _("No design estimate linked and no capacity proposed.")
+	units = flt(ctx.check.get("avg_monthly_units"))
+	if not units:
+		return "Not Applicable", _("No average consumption on record, so the size cannot be compared with it.")
+	max_kw, band = suitable_band(units)
+	if max_kw and ctx.capacity_kw > max_kw:
+		return "Warning", _(
+			"Size above consumption: {0} kW is more than the {1} suited to {2} units a month. Confirm the size with the customer before you go on."
+		).format(ctx.capacity_kw, band.split(": ")[1], round(units))
+	return "Pass", _("{0} kW suits {1} units a month ({2}).").format(ctx.capacity_kw, round(units), band)
 
 
 def evaluate(check):
