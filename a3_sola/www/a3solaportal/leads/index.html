@@ -48,7 +48,7 @@
 			<option value="{{ opt }}"{% if opt == status_filter %} selected{% endif %}>{{ opt }}</option>
 			{%- endfor %}
 		</select>
-		<button type="submit" class="a3s-btn a3s-btn--ghost">Filter</button>
+		<button type="submit" class="a3s-btn a3s-btn--filter"><span class="a3s-btn--filter__ic"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-filter"></use></svg></span><span class="a3s-btn--filter__label">Filter</span></button>
 		{%- if q or status_filter or dealer_filter or stage_filter %}
 		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?scope={{ scope }}{% if followup_view %}&followup=1{% endif %}">Clear</a>
 		{%- endif %}

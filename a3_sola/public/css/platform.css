@@ -272,6 +272,20 @@
 .a3s a.a3s-btn--primary, .a3s a.a3s-btn--primary:hover { color: #fff; }
 .a3s a.a3s-btn--secondary:hover, .a3s a.a3s-btn--ghost:hover { color: var(--color-accent); }
 .a3s-btn--block { width: 100%; }
+/* The Filter button of a list: a split button, the funnel on an orange square at the left, the
+   word on a pale orange panel beside it, the same height and corner as the inputs it stands with. */
+.a3s-btn--filter {
+	padding: 0; gap: 0; overflow: hidden;
+	border-radius: 0.75rem; border-color: rgba(247, 148, 30, 0.45);
+	background: rgba(247, 148, 30, 0.12); color: var(--color-accent-hover);
+}
+.a3s-btn--filter__ic {
+	display: inline-flex; align-items: center; justify-content: center; align-self: stretch;
+	padding: 0 0.7rem; background-image: var(--color-accent-gradient); color: #fff;
+}
+.a3s-btn--filter__ic .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-btn--filter__label { padding: 0.6rem 1rem; line-height: 1.35; }
+.a3s-btn--filter:hover { color: var(--color-accent-hover); background: rgba(247, 148, 30, 0.2); border-color: var(--color-accent); box-shadow: var(--shadow-soft); }
 .a3s-btn[hidden] { display: none; }
 .a3s-btn[disabled], .a3s-btn[aria-disabled="true"] {
 	opacity: 0.55;
