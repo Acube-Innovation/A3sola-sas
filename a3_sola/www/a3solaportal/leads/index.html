@@ -5,15 +5,6 @@
 	<div>
 		<h2 class="a3s-main__title">Leads</h2>
 		<p class="a3s-main__sub">Prospects and enquiries, stored in ERPNext.</p>
-		{#- Follow Up: the Assignment column becomes each lead's outreach stage and next follow-up. -#}
-		<form class="a3s-leads__view" method="get" action="/a3solaportal/leads">
-			{%- if q %}<input type="hidden" name="q" value="{{ q | e }}">{% endif %}
-			{%- if status_filter %}<input type="hidden" name="status" value="{{ status_filter | e }}">{% endif %}
-			<label class="a3s-check">
-				<input type="checkbox" name="followup" value="1"{% if followup_view %} checked{% endif %} onchange="this.form.submit()">
-				<span>Follow Up</span>
-			</label>
-		</form>
 	</div>
 	<div class="a3s-leads__actions">
 		{%- if can_import %}
@@ -29,19 +20,32 @@
 	</div>
 </div>
 
-{#- ---- whose leads: all, ours, or the dealers' (staff only) -------------------- #}
-{%- if show_scope %}
-{%- set keep = ("&q=" ~ (q | urlencode) if q else "") ~ ("&status=" ~ (status_filter | urlencode) if status_filter else "") ~ ("&followup=1" if followup_view else "") ~ ("&stage=" ~ (stage_filter | urlencode) if stage_filter else "") %}
-<nav class="a3s-ce-tabs a3s-leads__scope" aria-label="Whose leads">
-	{%- for key, label in (("", "All"), ("ours", "Our leads"), ("dealers", "Dealer leads")) %}
-	<a href="/a3solaportal/leads?scope={{ key }}{{ keep }}"{% if key == scope %} aria-current="page"{% endif %}>
-		<span>{{ label }}</span><span class="a3s-ce-tabs__n">{{ scope_counts[key] }}</span>
-	</a>
-	{%- endfor %}
-</nav>
-{%- if scope == "dealers" %}
+{#- ---- whose leads: all, ours, or the dealers' (staff only) - and, beside the tabs, Follow Up:
+      the Assignment column becomes each lead's outreach stage and next follow-up. ------------ #}
+<div class="a3s-leads__scoperow">
+	{%- if show_scope %}
+	{%- set keep = ("&q=" ~ (q | urlencode) if q else "") ~ ("&status=" ~ (status_filter | urlencode) if status_filter else "") ~ ("&followup=1" if followup_view else "") ~ ("&stage=" ~ (stage_filter | urlencode) if stage_filter else "") %}
+	<nav class="a3s-ce-tabs a3s-leads__scope" aria-label="Whose leads">
+		{%- for key, label in (("", "All"), ("ours", "Our leads"), ("dealers", "Dealer leads")) %}
+		<a href="/a3solaportal/leads?scope={{ key }}{{ keep }}"{% if key == scope %} aria-current="page"{% endif %}>
+			<span>{{ label }}</span><span class="a3s-ce-tabs__n">{{ scope_counts[key] }}</span>
+		</a>
+		{%- endfor %}
+	</nav>
+	{%- endif %}
+	<form class="a3s-leads__view" method="get" action="/a3solaportal/leads">
+		{%- if q %}<input type="hidden" name="q" value="{{ q | e }}">{% endif %}
+		{%- if status_filter %}<input type="hidden" name="status" value="{{ status_filter | e }}">{% endif %}
+		{%- if scope %}<input type="hidden" name="scope" value="{{ scope }}">{% endif %}
+		{%- if dealer_filter %}<input type="hidden" name="dealer" value="{{ dealer_filter | e }}">{% endif %}
+		<label class="a3s-check">
+			<input type="checkbox" name="followup" value="1"{% if followup_view %} checked{% endif %} onchange="this.form.submit()">
+			<span>Follow Up</span>
+		</label>
+	</form>
+</div>
+{%- if show_scope and scope == "dealers" %}
 <p class="a3s-leads__scope-note">Leads brought in by dealers. The dealer runs each one; help where they ask.</p>
-{%- endif %}
 {%- endif %}
 
 {#- ---- filters (GET, so a search is a shareable URL) ---------------------- #}
