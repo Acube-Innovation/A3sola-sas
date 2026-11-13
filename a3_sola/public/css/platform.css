@@ -2482,7 +2482,9 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-ce-tabs a[aria-current="page"] { background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 8px 20px -10px rgba(247, 148, 30, 0.9); }
 .a3s-ce-tabs a[aria-current="page"] .a3s-ce-tabs__n { background: rgba(255, 255, 255, 0.28); }
 /* The scope tabs with the Follow Up box beside them, on one line; the box alone for a dealer. */
-.a3s-leads__scoperow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; margin-bottom: 1rem; }
+.a3s-leads__scoperow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 1rem; }
+.a3s-leads__scoperow .a3s-leads__view { margin: 0 0.5rem 0 0.5rem; }
+.a3s-leads__filters .a3s-leads__scope-note { margin-top: -0.4rem; }
 .a3s-leads__scope { margin-bottom: 0; }
 .a3s-leads__scope-note { margin: -0.4rem 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
 .a3s-badge--dealer { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; margin-top: 0.3rem; }
@@ -3936,8 +3938,7 @@ textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-paysched__pay-meta.is-warn { color: #c0392b; }
 
 /* The Leads list's Follow Up box (leads/index.html), and a follow-up that is due. */
-.a3s-leads__view { margin: 0; }
-.a3s-leads__view .a3s-check { font-size: 0.875rem; font-weight: 600; }
+.a3s-leads__view { margin: 0; font-size: 0.875rem; font-weight: 600; }
 .a3s-pill--due { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill);
 	font-size: 0.72rem; font-weight: 700; background: rgba(255, 95, 87, 0.14); color: #c0392b; }
 /* The follow-up view colours each lead's row by its outreach stage (leads/index.py STAGE_KEYS):
