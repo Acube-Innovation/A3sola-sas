@@ -329,6 +329,8 @@ PROPERTY_SETTERS = [
 	{"doctype": "Lead", "fieldname": "source", "property": "default", "value": "Social Media - NEXIT", "property_type": "Text"},
 	{"doctype": "Lead", "fieldname": "qualification_status", "property": "default", "value": "In Process", "property_type": "Text"},
 	{"doctype": "Lead", "fieldname": "request_type", "property": "default", "value": "Product Enquiry", "property_type": "Text"},
+	# A Product Bundle's parent is the bundle's own name, as the team calls it.
+	{"doctype": "Product Bundle", "fieldname": "new_item_code", "property": "label", "value": "Bundle Name", "property_type": "Data"},
 ]
 
 #: The Lead Source a new lead defaults to (PROPERTY_SETTERS): made where it is missing.
