@@ -35,6 +35,7 @@
   "roof_type",
   "capacity_kw",
   "avg_bill_amount",
+  "avg_monthly_units",
   "sb_3",
   "rule_results",
   "sb_4",
@@ -275,6 +276,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "avg_monthly_units",
+   "fieldtype": "Float",
+   "label": "Avg Monthly Units",
+   "precision": "0",
+   "read_only": 1,
+   "description": "Units a month: the units on one bill, halved for a bimonthly bill. Compared with the capacity by rule ELG-12."
+  },
+  {
    "fieldname": "documents_confirmed",
    "fieldtype": "Small Text",
    "label": "Documents Confirmed",
@@ -303,7 +312,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 16:25:44.065628",
+ "modified": "2026-11-13 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Subsidy Eligibility Check",

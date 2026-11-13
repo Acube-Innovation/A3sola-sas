@@ -434,8 +434,7 @@
    "fieldtype": "Data",
    "in_global_search": 1,
    "in_list_view": 1,
-   "label": "Consumer Number",
-   "reqd": 1
+   "label": "Consumer Number"
   },
   {
    "fieldname": "cb_4",
@@ -520,7 +519,6 @@
    "fieldtype": "Float",
    "label": "Proposed System Size (kW)",
    "precision": "3",
-   "reqd": 1,
    "description": "From the lead when it has it. A change here reaches the lead too."
   },
   {
@@ -532,7 +530,6 @@
    "fieldtype": "Select",
    "label": "Loan Required",
    "options": "\nYes\nNo",
-   "reqd": 1,
    "description": "From the lead when it has it. A change here reaches the lead, and the quotation follows it."
   },
   {
@@ -826,7 +823,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-10 09:56:48.477723",
+ "modified": "2026-11-13 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

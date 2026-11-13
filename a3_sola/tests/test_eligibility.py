@@ -134,3 +134,40 @@ class TestEligibility(FrappeTestCase):
 		check.save()
 		row = next(r for r in check.rule_results if r.rule_code == "ELG-01")
 		self.assertEqual(row.result, "Pass")
+
+
+class TestConsumptionRule(FrappeTestCase):
+	"""ELG-12: the size is compared with PM Surya Ghar's suitable capacity for the
+	household's monthly units. Oversizing warns; it never makes the customer ineligible."""
+
+	def test_monthly_units_halve_a_bimonthly_bill(self):
+		from a3_sola.api.eligibility import monthly_units
+
+		self.assertEqual(monthly_units(942, "Bimonthly"), 471)
+		self.assertEqual(monthly_units(942, None), 471)
+		self.assertEqual(monthly_units(300, "Monthly"), 300)
+
+	def test_bands(self):
+		from a3_sola.api.eligibility import _consumption
+
+		def run(units, kw, category="Residential"):
+			ctx = frappe._dict(
+				consumer=frappe._dict(consumer_category=category),
+				check=frappe._dict(avg_monthly_units=units),
+				capacity_kw=kw,
+			)
+			return _consumption(ctx)[0]
+
+		self.assertEqual(run(120, 1.5), "Pass")
+		self.assertEqual(run(150, 2), "Pass")
+		self.assertEqual(run(120, 3), "Warning")
+		self.assertEqual(run(151, 3), "Pass")
+		self.assertEqual(run(300, 3.2), "Warning")
+		self.assertEqual(run(420, 10), "Pass")
+		self.assertEqual(run(0, 3), "Not Applicable")
+		self.assertEqual(run(120, 5, "Commercial"), "Not Applicable")
+
+	def test_a_warning_leaves_the_customer_eligible(self):
+		from a3_sola.api.eligibility import overall_result
+
+		self.assertEqual(overall_result([{"result": "Pass"}, {"result": "Warning"}]), "Eligible")

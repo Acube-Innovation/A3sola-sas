@@ -1,0 +1,31 @@
+{#- The rules a Subsidy Eligibility Check ran (api/eligibility.py) and what each found.
+    A Warning asks someone to look before going on; it does not make the customer ineligible. -#}
+{%- set rules = record.rule_results or [] %}
+{%- set warnings = rules | selectattr("result", "equalto", "Warning") | list %}
+{%- set failing = rules | selectattr("result", "equalto", "Fail") | list %}
+<section class="a3s-card a3s-edit__card a3s-elg" id="sec-rule-results">
+	<h3 class="a3s-edit__card-title">Rule results</h3>
+	{%- if warnings %}
+	<p class="a3s-elg__warn" role="status"><strong>{{ warnings | length }} {{ "warning" if warnings | length == 1 else "warnings" }} to check.</strong> A warning does not make the customer ineligible, but go through {{ "it" if warnings | length == 1 else "them" }} with the customer before you go on.</p>
+	{%- endif %}
+	{%- if rules %}
+	<p class="a3s-elg__tally">{{ rules | selectattr("result", "equalto", "Pass") | list | length }} passed · {{ failing | length }} failed · {{ warnings | length }} {{ "warning" if warnings | length == 1 else "warnings" }}</p>
+	<div class="a3s-tablewrap">
+		<table class="a3s-table">
+			<thead><tr><th>Rule</th><th>Result</th><th>What it found</th></tr></thead>
+			<tbody>
+				{%- for r in rules %}
+				<tr{% if r.result in ("Warning", "Fail") %} class="a3s-elg__row--{{ r.result | lower }}"{% endif %}>
+					<td>{{ r.rule_description | e }}<span class="a3s-table__meta">{{ r.rule_code | e }}</span></td>
+					<td class="a3s-table__status"><span class="a3s-badge a3s-badge--{{ r.result | lower | replace(' ', '-') }}">{{ r.result | e }}</span></td>
+					<td>{% if r.remarks %}{{ r.remarks | e }}{% else %}<span class="a3s-table__muted">&mdash;</span>{% endif %}
+						{%- if r.result == "Waived" and r.waiver_reason %}<span class="a3s-table__meta">Waived by {{ r.waived_by | e }}: {{ r.waiver_reason | e }}</span>{% endif %}</td>
+				</tr>
+				{%- endfor %}
+			</tbody>
+		</table>
+	</div>
+	{%- else %}
+	<p class="a3s-elg__tally">No rules run yet. Save the check and the results will appear here.</p>
+	{%- endif %}
+</section>

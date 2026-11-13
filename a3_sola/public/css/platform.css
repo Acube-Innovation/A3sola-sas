@@ -1633,6 +1633,11 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-badge--lost-quotation, .a3s-badge--do-not-contact {
 	background: rgba(255, 95, 87, 0.14); color: #c0392b;
 }
+/* Subsidy eligibility: each rule's result and the check's overall result. */
+.a3s-badge--pass, .a3s-badge--eligible { background: rgba(40, 200, 64, 0.14); color: #1a7a2b; }
+.a3s-badge--fail, .a3s-badge--not-eligible { background: rgba(255, 95, 87, 0.14); color: #c0392b; }
+.a3s-badge--warning, .a3s-badge--eligible-with-conditions { background: rgba(247, 144, 9, 0.12); color: #93370d; }
+.a3s-badge--waived { background: var(--color-accent-soft); color: var(--color-accent-hover); }
 
 /* Empty state. */
 .a3s-empty { text-align: center; padding: 3rem 2rem; }
@@ -4451,3 +4456,14 @@ select.a3s-items__input { min-width: 9rem; }
 /* Design freeze: what the BOM is, as text, and Freeze at the foot of the page. */
 .a3s-dsgn__source { margin: 0 0 0.35rem; font-weight: 600; color: var(--color-text); }
 .a3s-dsgn__freeze { margin-top: 1.5rem; }
+
+/* Subsidy eligibility: the rule results card on the check's page. */
+.a3s-elg { min-width: 0; }
+.a3s-elg .a3s-tablewrap { max-width: 100%; overflow-x: auto; }
+.a3s-elg__warn {
+	margin: 0 0 0.75rem; padding: 0.75rem 1rem; border-radius: 8px;
+	background: rgba(247, 144, 9, 0.12); border-left: 3px solid #f79009; color: #93370d; font-size: 0.875rem;
+}
+.a3s-elg__tally { margin: 0 0 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-table tbody tr.a3s-elg__row--warning td:first-child { box-shadow: inset 3px 0 0 #f79009; }
+.a3s-table tbody tr.a3s-elg__row--fail td:first-child { box-shadow: inset 3px 0 0 #d92d20; }
