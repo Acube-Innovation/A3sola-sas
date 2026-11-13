@@ -314,11 +314,32 @@ def _consumption(ctx):
 	if not units:
 		return "Not Applicable", _("No average consumption on record, so the size cannot be compared with it.")
 	max_kw, band = suitable_band(units)
+	working = consumption_working(ctx.consumer, units)
 	if max_kw and ctx.capacity_kw > max_kw:
 		return "Warning", _(
-			"Size above consumption: {0} kW is more than the {1} suited to {2} units a month. Confirm the size with the customer before you go on."
-		).format(ctx.capacity_kw, band.split(": ")[1], round(units))
-	return "Pass", _("{0} kW suits {1} units a month ({2}).").format(ctx.capacity_kw, round(units), band)
+			"{0}. Suitable size for {1}. Proposed {2} kW is above that: confirm the size with the customer before you go on."
+		).format(working, band, _fmt(ctx.capacity_kw, 3))
+	return "Pass", _("{0}. Suitable size for {1}. Proposed {2} kW is within it.").format(
+		working, band, _fmt(ctx.capacity_kw, 3)
+	)
+
+
+def consumption_working(consumer, units):
+	"""How the monthly units were reached, in words: "216 units per bill, billed every 2
+	months = 108 units a month"."""
+	per_bill = flt(consumer.get("avg_consumption_units"))
+	monthly = consumer.get("billing_frequency") == "Monthly"
+	if per_bill and round(monthly_units(per_bill, consumer.get("billing_frequency"))) == round(units):
+		return _("{0} units per bill, billed {1} = {2} units a month").format(
+			_fmt(per_bill), _("monthly") if monthly else _("every 2 months"), _fmt(units)
+		)
+	return _("{0} units a month").format(_fmt(units))
+
+
+def _fmt(n, digits=1):
+	"""A number without a trailing ".0": 10 kW, 4.95 kW, 107.5 units."""
+	n = flt(n, digits)
+	return str(int(n)) if n == int(n) else str(n)
 
 
 def evaluate(check):
