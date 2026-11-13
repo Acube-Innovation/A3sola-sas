@@ -23,9 +23,19 @@
 	</script>
 	{%- block portal_head %}{% endblock %}
 </head>
-<body class="a3s a3s-app">
+<body class="a3s a3s-app{% if impersonation %} a3s-viewing-as{% endif %}">
 
 {%- include "templates/includes/portal_icons.html" %}
+
+{#- ---- "Log in as": on every page while viewing as someone, and not dismissable ---- #}
+{%- if impersonation %}
+<div class="a3s-viewas" role="status" data-viewas data-expires="{{ impersonation.expires_iso | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg>
+	<p class="a3s-viewas__text">Viewing as <b>{{ impersonation.target_name | e }}</b> at {{ impersonation.company_name | e }}
+		<span class="a3s-viewas__time">&middot; ends at {{ impersonation.expires_label | e }}<span data-viewas-left></span></span></p>
+	<button type="button" class="a3s-btn a3s-viewas__back" data-viewas-end aria-label="Return to my account"><span class="a3s-viewas__long">Return to my account</span><span class="a3s-viewas__short">Return</span></button>
+</div>
+{%- endif %}
 
 {#- ---- top bar: logo + heading (left), breadcrumb + sign out (right) -------- #}
 <header class="a3s-topbar">
@@ -50,6 +60,41 @@
 				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-sidebar"></use></svg>
 			</button>
 		</div>
+		{%- if companies %}
+		{#- A login in several companies: the company is a menu, to switch between them. -#}
+		<div class="a3s-switcher" data-switcher>
+			<h1 class="a3s-topbar__heading">
+				<button type="button" class="a3s-workspace a3s-workspace--switch" data-switcher-btn aria-haspopup="true"
+				        aria-expanded="false" aria-controls="a3s-companies" title="Switch company">
+					{%- if workspace_logo %}
+					<img class="a3s-workspace__logo" src="{{ workspace_logo | e }}" alt="">
+					{%- else %}
+					<span class="a3s-workspace__initial" aria-hidden="true">{{ workspace_name[0] | upper | e }}</span>
+					{%- endif %}
+					<span class="a3s-workspace__name">{{ workspace_name | e }}</span>
+					<svg class="a3s-ic a3s-workspace__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+				</button>
+			</h1>
+			<div class="a3s-switcher__menu" id="a3s-companies" role="menu" aria-label="Your companies" hidden>
+				<p class="a3s-switcher__head">Your companies</p>
+				{%- for c in companies %}
+				<button type="button" class="a3s-switcher__item{% if c.is_active %} is-current{% endif %}" role="menuitemradio"
+				        aria-checked="{{ 'true' if c.is_active else 'false' }}" data-company="{{ c.company | e }}"{% if c.paused and not c.is_active %} disabled{% endif %}>
+					{%- if c.logo %}
+					<img class="a3s-workspace__logo" src="{{ c.logo | e }}" alt="">
+					{%- else %}
+					<span class="a3s-workspace__initial" aria-hidden="true">{{ (c.company_name or c.company)[0] | upper | e }}</span>
+					{%- endif %}
+					<span class="a3s-switcher__name">{{ c.company_name | e }}</span>
+					<span class="a3s-badge a3s-badge--{{ (c.portal_type or '') | lower }}">{{ c.portal_type | e }}</span>
+					{%- if c.paused %}<span class="a3s-badge a3s-badge--paused">Paused</span>{% endif %}
+					{%- if c.is_active %}<svg class="a3s-ic a3s-switcher__tick" aria-hidden="true"><use href="#ic-check"></use></svg>{% endif %}
+				</button>
+				{%- endfor %}
+				<p class="a3s-form__status" data-switcher-status role="status" aria-live="polite"></p>
+			</div>
+		</div>
+		{%- else %}
 		<h1 class="a3s-topbar__heading a3s-workspace">
 			{%- if workspace_logo %}
 			<img class="a3s-workspace__logo" src="{{ workspace_logo | e }}" alt="">
@@ -58,6 +103,7 @@
 			{%- endif %}
 			<span class="a3s-workspace__name">{{ workspace_name | e }}</span>
 		</h1>
+		{%- endif %}
 	</div>
 
 	<div class="a3s-topbar__right">
@@ -120,6 +166,10 @@
 	<main class="a3s-main{% if main_wide %} a3s-main--wide{% endif %}" id="main">
 		{#- The trail sits above the page title, in line with the content it describes,
 		    with the way back out of this record at the far end of the same row. -#}
+		{%- if company_changed %}
+		<p class="a3s-notice a3s-notice--warn" role="status">You switched to <b>{{ company_changed | e }}</b> in another window, so this window now works in it too.
+			<a href="" data-reload>Reload</a> to see its menu and records.</p>
+		{%- endif %}
 		<div class="a3s-main__topline">
 			<nav class="a3s-crumbs a3s-main__crumbs" aria-label="Breadcrumb">
 				<ol>
@@ -223,6 +273,81 @@
 			.then(function (r) { if (r.ok) window.location.assign("/a3solaportal/login"); else fallback(); })
 			.catch(fallback);
 	});
+})();
+</script>
+<script>
+(function () {
+	"use strict";
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	function post(method, args) {
+		return fetch("/api/method/" + method, { method: "POST", credentials: "same-origin",
+			headers: { "X-Frappe-CSRF-Token": csrf, "Accept": "application/json", "Content-Type": "application/json" },
+			body: JSON.stringify(args || {}) }).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (body) {
+				if (!r.ok) {
+					var text = "";
+					try { var m = JSON.parse(body._server_messages || "[]"); if (m.length) text = String(JSON.parse(m[0]).message || "").replace(/<[^>]*>/g, ""); } catch (e) {}
+					throw new Error(text || "That did not go through. Try again.");
+				}
+				return body.message || {};
+			});
+		});
+	}
+	document.querySelectorAll("[data-reload]").forEach(function (a) {
+		a.addEventListener("click", function (e) { e.preventDefault(); window.location.reload(); });
+	});
+
+	/* The company switcher. */
+	var sw = document.querySelector("[data-switcher]");
+	if (sw) {
+		var btn = sw.querySelector("[data-switcher-btn]");
+		var menu = sw.querySelector("#a3s-companies");
+		var status = sw.querySelector("[data-switcher-status]");
+		var set = function (open) {
+			menu.hidden = !open;
+			btn.setAttribute("aria-expanded", open ? "true" : "false");
+			if (open) { var first = menu.querySelector(".a3s-switcher__item:not([disabled])"); if (first) first.focus(); }
+		};
+		btn.addEventListener("click", function () { set(menu.hidden); });
+		document.addEventListener("click", function (e) { if (!menu.hidden && !sw.contains(e.target)) set(false); });
+		document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !menu.hidden) { set(false); btn.focus(); } });
+		menu.addEventListener("click", function (e) {
+			var item = e.target.closest("[data-company]");
+			if (!item || item.disabled) return;
+			if (item.classList.contains("is-current")) { set(false); return; }
+			menu.querySelectorAll("[data-company]").forEach(function (b) { b.disabled = true; });
+			status.textContent = "Switching…";
+			post("a3_sola.api.memberships.switch_company", { company: item.dataset.company })
+				.then(function (r) { window.location.assign(r.redirect || "/a3solaportal/dashboard"); })
+				.catch(function (err) {
+					status.textContent = err.message; status.className = "a3s-form__status is-error";
+					menu.querySelectorAll("[data-company]").forEach(function (b) { b.disabled = false; });
+				});
+		});
+	}
+
+	/* "Log in as": the clock, and the way back. */
+	var bar = document.querySelector("[data-viewas]");
+	if (bar) {
+		var left = bar.querySelector("[data-viewas-left]");
+		var ends = Date.parse(bar.dataset.expires);
+		var tick = function () {
+			var ms = ends - Date.now();
+			if (isNaN(ms)) return;
+			if (ms <= 0) { window.location.assign("/a3solaportal/login"); return; }
+			var min = Math.ceil(ms / 60000);
+			left.textContent = " (" + (min <= 1 ? "under a minute" : min + " minutes") + " left)";
+		};
+		tick();
+		setInterval(tick, 20000);
+		var end = bar.querySelector("[data-viewas-end]");
+		end.addEventListener("click", function () {
+			end.disabled = true; end.textContent = "Returning…";
+			post("a3_sola.api.impersonation.end").then(function (r) { window.location.assign(r.redirect || "/a3solaportal/dashboard"); })
+				.catch(function () { window.location.assign("/a3solaportal/login"); });
+		});
+	}
 })();
 </script>
 {#- "From Aadhaar card" under a field read from a document, on every form (api/read_from). -#}

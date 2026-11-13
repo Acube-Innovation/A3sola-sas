@@ -453,6 +453,11 @@
   "health_rate_limit",
   "sb_9005",
   "notify_tenant_on_impersonation",
+  "notify_user_on_impersonation",
+  "company_admin_impersonation_enabled",
+  "company_admin_impersonation_max_minutes",
+  "impersonation_max_minutes",
+  "allow_shared_logins",
   "cb_9006",
   "error_log_retention_days"
  ],
@@ -3024,6 +3029,39 @@
    "label": "Tell the Tenant About Support Sessions"
   },
   {
+   "default": "1",
+   "fieldname": "notify_user_on_impersonation",
+   "fieldtype": "Check",
+   "label": "Tell the Person When Someone Logs In as Them",
+   "description": "E-mail the person whenever an admin or support logs in as them. They are always told in the app."
+  },
+  {
+   "default": "1",
+   "fieldname": "company_admin_impersonation_enabled",
+   "fieldtype": "Check",
+   "label": "Company Admins May Log In as Their Users",
+   "description": "A company admin may log in as the dealers, contractors and staff of their own company, never as another admin or anyone who also works in another company."
+  },
+  {
+   "default": "60",
+   "fieldname": "company_admin_impersonation_max_minutes",
+   "fieldtype": "Int",
+   "label": "Company Admin Session Limit (minutes)"
+  },
+  {
+   "default": "120",
+   "fieldname": "impersonation_max_minutes",
+   "fieldtype": "Int",
+   "label": "Support Session Limit (minutes)"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_shared_logins",
+   "fieldtype": "Check",
+   "label": "One Login May Work in Several Companies",
+   "description": "Adding someone whose e-mail is already a login in another company adds that company to their login, with the type chosen here. Their name, mobile and password stay theirs."
+  },
+  {
    "fieldname": "cb_9006",
    "fieldtype": "Column Break"
   },
@@ -3038,7 +3076,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-10 10:04:42.692800",
+ "modified": "2026-11-13 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

@@ -1,0 +1,64 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Choose company</h2>
+		<p class="a3s-main__sub">Your login works in more than one company. Pick the one to work in: the menu and the records follow it.</p>
+	</div>
+</div>
+
+{%- if impersonation %}
+<p class="a3s-notice">You are viewing as someone else, which stays in {{ impersonation.company_name | e }}. Return to your own account to change company.</p>
+{%- elif not choices %}
+<div class="a3s-card a3s-empty">
+	<h3 class="a3s-empty__title">One company</h3>
+	<p class="a3s-empty__text">Your login works in one company only. <a href="/a3solaportal/dashboard">Go to the dashboard</a>.</p>
+</div>
+{%- else %}
+<div class="a3s-companies" data-companies>
+	{%- for c in choices %}
+	<button type="button" class="a3s-switcher__item{% if c.is_active %} is-current{% endif %}" data-company="{{ c.company | e }}"
+	        aria-pressed="{{ 'true' if c.is_active else 'false' }}"{% if c.paused %} disabled{% endif %}>
+		{%- if c.logo %}
+		<img class="a3s-workspace__logo" src="{{ c.logo | e }}" alt="">
+		{%- else %}
+		<span class="a3s-workspace__initial" aria-hidden="true">{{ (c.company_name or c.company)[0] | upper | e }}</span>
+		{%- endif %}
+		<span class="a3s-switcher__name">{{ c.company_name | e }}</span>
+		<span class="a3s-badge a3s-badge--{{ (c.portal_type or '') | lower }}">{{ c.portal_type | e }}</span>
+		{%- if c.paused %}<span class="a3s-badge a3s-badge--paused">Paused</span>{% endif %}
+		{%- if c.is_active %}<svg class="a3s-ic a3s-switcher__tick" aria-hidden="true"><use href="#ic-check"></use></svg>{% endif %}
+	</button>
+	{%- endfor %}
+</div>
+<p class="a3s-attach__status" data-status role="status" aria-live="polite" hidden></p>
+{%- endif %}
+{% endblock %}
+
+{% block portal_scripts %}
+<script>
+(function () {
+	"use strict";
+	var list = document.querySelector("[data-companies]");
+	if (!list) return;
+	var meta = document.querySelector('meta[name="csrf-token"]');
+	var csrf = meta ? meta.getAttribute("content") : "";
+	var status = document.querySelector("[data-status]");
+	list.addEventListener("click", function (e) {
+		var item = e.target.closest("[data-company]");
+		if (!item || item.disabled) return;
+		if (item.classList.contains("is-current")) { window.location.assign("/a3solaportal/dashboard"); return; }
+		status.hidden = false; status.dataset.tone = ""; status.textContent = "Switching…";
+		fetch("/api/method/a3_sola.api.memberships.switch_company", { method: "POST", credentials: "same-origin",
+			headers: { "X-Frappe-CSRF-Token": csrf, "Accept": "application/json", "Content-Type": "application/json" },
+			body: JSON.stringify({ company: item.dataset.company }) })
+			.then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) {
+				if (!r.ok) throw new Error("That did not go through. Try again.");
+				window.location.assign((b.message && b.message.redirect) || "/a3solaportal/dashboard");
+			}); })
+			.catch(function (err) { status.dataset.tone = "error"; status.textContent = err.message; });
+	});
+})();
+</script>
+{% endblock %}

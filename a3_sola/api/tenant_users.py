@@ -10,7 +10,10 @@ one emailed in plaintext. The user is created with no password and a single-use 
 goes to the address Phase 4 already verified. A system that can set a password is a system
 whose logs, backups and support tooling all contain passwords.
 
-**An existing email address fails the step rather than reusing the account.** It is a
+**An existing email address fails the step rather than reusing the account.** (A company admin
+may still add an existing login to their company from the portal's Users page, deliberately and
+person by person - api/memberships. Provisioning a whole new tenant onto one never happens by
+accident.) It is a
 plausible situation - somebody signs up twice, or a consultant runs several tenants - and
 the tempting behaviour is to attach the existing user to the new tenant. That is a
 cross-tenant access bug with a friendly face: one login, two companies, and a User
@@ -148,6 +151,7 @@ def assign_admin_permissions(context):
 	_set_default_company(email, company)
 	frappe.db.set_value("User", email, TENANT_FIELD, tenant.name, update_modified=False)
 	_append_tenant_user(tenant, email, profile, is_admin=True)
+	_record_membership(email, company, "Admin", "Provisioning")
 
 	held = set(frappe.get_roles(email))
 	leaked = held & set(forbidden_roles(tenant.name))
@@ -296,4 +300,12 @@ def provision_invited_user(invitation):
 	ensure_company_permission(email, tenant.company)
 	_set_default_company(email, tenant.company)
 	_append_tenant_user(tenant, email, profile, is_admin=False, source="Invitation")
+	_record_membership(email, tenant.company, None, "Invitation")
 	return user.name
+
+
+def _record_membership(email, company, portal_type, source):
+	"""The new login's place in its company, on record from the start (api/memberships)."""
+	from a3_sola.api import memberships
+
+	memberships.record_current(email, company, portal_type, source=source)

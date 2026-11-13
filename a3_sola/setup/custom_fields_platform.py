@@ -37,6 +37,19 @@ PLATFORM_CUSTOM_FIELDS = {
 				"The tenant this user belongs to. Empty means internal staff, who are not "
 				"metered against any seat quota."
 			),
-		}
+		},
+		{
+			"fieldname": "a3_sola_active_company",
+			"label": "Working In",
+			"fieldtype": "Link",
+			"options": "Company",
+			"read_only": 1,
+			"insert_after": "a3_sola_tenant",
+			"no_copy": 1,
+			"description": (
+				"The company this login is working in now, for a login that works in several "
+				"(Company Membership). Changed by the portal's company switcher."
+			),
+		},
 	],
 }

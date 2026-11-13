@@ -38,13 +38,40 @@ NEVER_DISABLE = ("Administrator", "Guest")
 
 # --------------------------------------------------------------- resolution
 def tenant_users(tenant):
-	"""Every User stamped with this tenant, with the fields a snapshot needs."""
+	"""Every User of this tenant - stamped with it, or with a membership in it - with the
+	fields a snapshot needs."""
+	names = set(frappe.get_all("User", filters={TENANT_FIELD: tenant}, pluck="name"))
+	names |= set(_members(tenant))
+	if not names:
+		return []
 	return frappe.get_all(
 		"User",
-		filters={TENANT_FIELD: tenant},
+		filters={"name": ["in", list(names)]},
 		fields=["name", "full_name", "enabled", "last_active"],
 		order_by="creation asc",
 	)
+
+
+def _members(tenant):
+	if not frappe.db.table_exists("Company Membership"):
+		return []
+	return frappe.get_all("Company Membership", filters={"tenant": tenant}, pluck="user")
+
+
+def shared_membership(user, tenant):
+	"""The user's membership in this tenant when they also work somewhere else, else None.
+
+	Such a login is not disabled by a suspension: only this tenant's membership is paused,
+	and the person goes on working in their other company.
+	"""
+	if not frappe.db.table_exists("Company Membership"):
+		return None
+	others = frappe.db.exists("Company Membership", {"user": user, "tenant": ["!=", tenant], "enabled": 1})
+	others = others or frappe.db.exists("Company Membership", {"user": user, "tenant": ["is", "not set"],
+		"enabled": 1})
+	if not others:
+		return None
+	return frappe.db.get_value("Company Membership", {"user": user, "tenant": tenant}, "name")
 
 
 def excluded_reason(user_row, tenant):
@@ -58,12 +85,14 @@ def excluded_reason(user_row, tenant):
 		return _("{0} is a system account").format(name)
 
 	stamp = frappe.db.get_value("User", name, TENANT_FIELD)
+	if not stamp and name in _members(tenant):
+		stamp = tenant  # works in this tenant, while working in another company right now
 	if not stamp:
 		# Your own staff carry no tenant stamp. A resolution bug that returns them is the
 		# single worst outcome here, so it is checked again at the point of action rather
 		# than trusted from the query.
 		return _("{0} carries no tenant stamp - internal staff are never suspended").format(name)
-	if stamp != tenant:
+	if stamp != tenant and name not in _members(tenant):
 		return _("{0} belongs to tenant {1}, not {2}").format(name, stamp, tenant)
 
 	roles = set(frappe.get_roles(name))
@@ -123,7 +152,10 @@ def suspend_tenant_access(tenant, suspension):
 	#    still leave a complete record of what the first two were.
 	doc.set("affected_users", [])
 	for row in users:
+		membership = shared_membership(row["name"], tenant_name)
 		doc.append("affected_users", {
+			"scope": "Membership" if membership else "User",
+			"membership": membership,
 			"user": row["name"],
 			"user_full_name": row.get("full_name"),
 			"was_enabled": 1 if row.get("enabled") else 0,
@@ -138,6 +170,10 @@ def suspend_tenant_access(tenant, suspension):
 	disabled, failures = 0, []
 	for snap in doc.affected_users:
 		try:
+			if snap.scope == "Membership" and snap.membership:
+				_pause_membership(snap.membership, doc.name)
+				disabled += 1
+				continue
 			if snap.was_enabled:
 				_set_enabled(snap.user, 0)
 				disabled += 1
@@ -200,7 +236,12 @@ def restore_tenant_access(tenant, suspension, trigger="Manual", actor=None, reas
 	failures = []
 	for snap in doc.affected_users:
 		try:
-			_set_enabled(snap.user, 1 if snap.was_enabled else 0)
+			if snap.scope == "Membership" and snap.membership:
+				if frappe.db.exists("Company Membership", snap.membership):
+					frappe.db.set_value("Company Membership", snap.membership, "suspended_by", None,
+					                    update_modified=False)
+			else:
+				_set_enabled(snap.user, 1 if snap.was_enabled else 0)
 			snap.db_set({"restored": 1, "restored_on": now_datetime(), "restore_error": ""},
 			            update_modified=False)
 		except Exception as exception:
@@ -244,6 +285,15 @@ def _set_enabled(user, enabled):
 	"""
 	frappe.db.set_value("User", user, "enabled", cint(enabled), update_modified=False)
 	frappe.clear_cache(user=user)
+
+
+def _pause_membership(membership, suspension):
+	"""Pause one company of a shared login: it is moved to the other company it works in."""
+	from a3_sola.api import memberships
+
+	frappe.db.set_value("Company Membership", membership, "suspended_by", suspension, update_modified=False)
+	user, company = frappe.db.get_value("Company Membership", membership, ["user", "company"])
+	memberships.leave_if_active(user, company)
 
 
 def _terminate_sessions(user):

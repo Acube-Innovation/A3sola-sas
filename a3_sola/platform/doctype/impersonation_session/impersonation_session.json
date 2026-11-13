@@ -1,0 +1,208 @@
+{
+ "actions": [],
+ "creation": "2026-11-13 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "operator",
+  "target",
+  "company",
+  "tenant",
+  "level",
+  "cb_1",
+  "status",
+  "started_on",
+  "expires_on",
+  "ended_on",
+  "end_reason",
+  "sb_why",
+  "reason",
+  "sid_hash",
+  "source_ip",
+  "cb_2",
+  "tenant_notified",
+  "user_notified",
+  "audit_start",
+  "audit_end"
+ ],
+ "fields": [
+  {
+   "fieldname": "operator",
+   "fieldtype": "Link",
+   "label": "Operator",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "target",
+   "fieldtype": "Link",
+   "label": "Acting As",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "label": "Tenant",
+   "options": "Tenant",
+   "read_only": 1
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Select",
+   "label": "Level",
+   "options": "Platform\nCompany Admin",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nEnded",
+   "default": "Open",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "label": "Started",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Datetime",
+   "label": "Expires",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ended_on",
+   "fieldtype": "Datetime",
+   "label": "Ended",
+   "read_only": 1
+  },
+  {
+   "fieldname": "end_reason",
+   "fieldtype": "Select",
+   "label": "How It Ended",
+   "options": "\nReturned\nExpired\nLogged Out\nRevoked\nTarget Changed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_why",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sid_hash",
+   "fieldtype": "Data",
+   "label": "Session Fingerprint",
+   "read_only": 1,
+   "hidden": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "From IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tenant_notified",
+   "fieldtype": "Check",
+   "label": "Tenant Told",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user_notified",
+   "fieldtype": "Check",
+   "label": "User Told",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_start",
+   "fieldtype": "Link",
+   "label": "Audit (start)",
+   "options": "Platform Audit Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_end",
+   "fieldtype": "Link",
+   "label": "Audit (end)",
+   "options": "Platform Audit Entry",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-13 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Platform",
+ "name": "Impersonation Session",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Platform Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0,
+   "permlevel": 0
+  },
+  {
+   "role": "Platform Tenant Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0,
+   "permlevel": 0
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:IMP-{YYYY}-{#####}",
+ "in_create": 1
+}

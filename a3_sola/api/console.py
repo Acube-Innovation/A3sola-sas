@@ -197,7 +197,10 @@ def start_impersonation(tenant, reason, minutes=IMPERSONATION_MINUTES):
 	that. What this owns is the permission, the reason, the clock, the audit record and
 	the notification, so none of those can be skipped.
 	"""
-	permissions.require_role(("Platform Admin", "Platform Tenant Manager", "System Manager"),
+	# Platform staff only. Not System Manager: a company's own admin may hold that role, and
+	# must not be able to open a support session on another company. The portal's
+	# "Log in as" (api/impersonation) is the session that actually switches the user.
+	permissions.require_role(("Platform Admin", "Platform Tenant Manager"),
 	                         action="impersonate a tenant administrator")
 	if not reason or len(str(reason).strip()) < 15:
 		frappe.throw(
@@ -237,7 +240,7 @@ def start_impersonation(tenant, reason, minutes=IMPERSONATION_MINUTES):
 
 @frappe.whitelist()
 def end_impersonation(token=None):
-	permissions.require_role(("Platform Admin", "Platform Tenant Manager", "System Manager"),
+	permissions.require_role(("Platform Admin", "Platform Tenant Manager"),
 	                         action="end a support session")
 	token = token or frappe.cache().get_value(
 		f"a3s_impersonation_by::{frappe.session.user}")
