@@ -97,6 +97,19 @@ def get_context(context):
 			context.dealer_filter = dealer
 			filters["a3s_dealer"] = dealer
 
+	# The follow-up view's legend filters by stage: one click shows that stage's leads only.
+	# The counts on the legend are taken before the stage is applied, so each shows how many
+	# leads it would list; a stage not in the cadence is ignored.
+	context.stage_filter = ""
+	context.stage_legend = []
+	if followup:
+		stage = (frappe.form_dict.get("stage") or "").strip()
+		context.stage_filter = stage if stage in STAGE_KEYS else ""
+		context.stage_legend = [{"label": label, "key": key, "count": _count({**filters, "outreach_stage": label}, or_filters)}
+			for label, key in STAGE_KEYS.items()]
+		if context.stage_filter:
+			filters["outreach_stage"] = context.stage_filter
+
 	leads = lead_rows(filters, or_filters)
 
 	context.leads = leads
@@ -105,8 +118,6 @@ def get_context(context):
 	context.q = q
 	context.status_filter = status
 	context.followup_view = followup
-	# The legend above the follow-up list: each stage, in order, in its colour.
-	context.stage_legend = [{"label": stage, "key": key} for stage, key in STAGE_KEYS.items()]
 	# Ordered for the dropdown; the set is unordered.
 	context.status_options = [
 		"Lead", "Open", "Replied", "Opportunity", "Quotation",

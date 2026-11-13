@@ -3929,6 +3929,14 @@ select.a3s-items__input { min-width: 9rem; }
    edge, so a glance down the list shows where the leads sit on the cadence. The legend above
    the table repeats the badges. */
 .a3s-leads__legend { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
+/* The legend is also the stage filter: a chosen stage is ringed, the others fade until it is cleared. */
+.a3s-leads__legend .a3s-badge { padding: 0.3rem 0.75rem; text-decoration: none; cursor: pointer; transition: opacity 0.12s ease, box-shadow 0.12s ease; }
+.a3s-leads__legend .a3s-badge:hover { box-shadow: 0 0 0 2px rgba(42, 51, 66, 0.14); }
+.a3s-leads__legend .a3s-badge[aria-current="true"] { box-shadow: 0 0 0 2px currentColor; }
+.a3s-leads__legend.has-filter .a3s-badge:not([aria-current="true"]) { opacity: 0.5; }
+.a3s-leads__legend.has-filter .a3s-badge:not([aria-current="true"]):hover { opacity: 1; }
+.a3s-badge--stage-all { background: rgba(42, 51, 66, 0.08); color: var(--color-text); }
+.a3s-leads__legend-n { margin-left: 0.4rem; padding: 0 0.4rem; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.6); font-size: 0.7rem; font-weight: 800; }
 .a3s-badge--stage-step-1 { background: rgba(41, 171, 226, 0.16); color: #1b6fa8; }
 .a3s-badge--stage-step-2 { background: rgba(245, 166, 35, 0.2); color: #9a5b00; }
 .a3s-badge--stage-step-3 { background: rgba(122, 90, 248, 0.16); color: #5b3fd1; }
