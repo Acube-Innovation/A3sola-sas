@@ -33,6 +33,9 @@ from a3_sola.api.settings import get_value
 #   make           a dotted path to a function that creates the target from the source's
 #                  name and returns its name - for a target with more to it than a mapper
 #                  (the project, opened by the handoff). Posted, like `via`.
+#   prepare        a dotted path to a function run on the source before the create form
+#                  opens (the customer, made from the lead so a survey has one). Posted,
+#                  like `make`, but it ends on the create form rather than on a record.
 #   open           "edit": the record `make` created opens in its edit form, not its page.
 #   requires_submitted  the step `requires` names must have produced a submitted record,
 #                  not just a record.
@@ -86,6 +89,86 @@ CHAIN = {
 				"site_state": "state",
 			},
 			"defaults": {"consumer_category": "Residential", "billing_frequency": "Bimonthly"},
+		},
+		# The lead's page offers the three documents that follow as well, so a job that is
+		# ready to move does not have to go through the customer's page to do it. Each
+		# takes whatever the lead already knows.
+		{
+			"key": "survey",
+			"slug": "site-surveys",
+			"doctype": "Site Survey",
+			"label": "Create site survey",
+			"icon": "pin",
+			"link_field": "site_survey",
+			# A survey names its customer, so one is made from the lead first where the lead
+			# has none yet - the same record Create customer makes - and the form opens with
+			# both filled in.
+			"prepare": "a3_sola.api.portal_chain.make_customer_from_lead",
+			"prepare_note": "Makes the customer record from the lead first, if there is none yet.",
+			"card_title": "name",
+			"card_subtitle": "feasibility_status",
+			"card_subtitle_label": "Feasibility",
+			"map": {
+				"lead": "name",
+				"solar_consumer": "solar_consumer",
+				"customer_name": ("lead_name", "company_name"),
+				"contact_no": ("mobile_no", "phone"),
+				"email_id": "email_id",
+				"discom": "discom",
+				"discom_section": "discom_section",
+				"consumer_number": "consumer_number",
+				"connection_type": "connection_type",
+				"roof_type": "roof_type",
+				"district": "district",
+				"capacity_applied_kw": "approx_capacity_kw",
+				"company": "company",
+			},
+		},
+		{
+			"key": "eligibility",
+			"slug": "subsidy-eligibility",
+			"doctype": "Subsidy Eligibility Check",
+			"label": "Create subsidy eligibility check",
+			"icon": "check",
+			"card_title": "name",
+			"card_subtitle": "overall_result",
+			"card_subtitle_label": "Result",
+			"map": {
+				"lead": "name",
+				"solar_consumer": "solar_consumer",
+				"subsidy_scheme": "subsidy_scheme",
+				"consumer_name": ("lead_name", "company_name"),
+				"mobile_no": ("mobile_no", "phone"),
+				"email_id": "email_id",
+				"consumer_category": "consumer_category",
+				"connection_type": "connection_type",
+				"discom": "discom",
+				"discom_section": "discom_section",
+				"consumer_number": "consumer_number",
+				"roof_type": "roof_type",
+				"capacity_kw": "approx_capacity_kw",
+				"avg_bill_amount": "avg_monthly_bill",
+				"avg_monthly_units": "approx_consumption_units",
+				"company": "company",
+			},
+		},
+		{
+			"key": "estimate",
+			"slug": "design-estimates",
+			"doctype": "Solar Design Estimate",
+			"label": "Create design proposal",
+			"icon": "pen",
+			"card_title": "name",
+			"card_subtitle": "binding_constraint",
+			"card_subtitle_label": "Sized by",
+			"map": {
+				"lead": "name",
+				"solar_consumer": "solar_consumer",
+				"site_survey": "site_survey",
+				"connection_type": "connection_type",
+				"roof_type": "roof_type",
+				"company": "company",
+			},
 		},
 	],
 	"Solar Consumer": [
@@ -420,10 +503,10 @@ def make_customer_from_lead(lead):
 	step = find_step("Lead", "consumers")
 	doc = frappe.new_doc("Solar Consumer")
 	doc.update(mapped_values(step, lead))
-	if not doc.get("discom"):
-		doc.discom = kseb_discom()
 	if not doc.get("company"):
 		doc.company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+	if not doc.get("discom"):
+		doc.discom = kseb_discom(doc.company)
 	doc.flags.ignore_mandatory = True
 	doc.insert()
 	link_back(step, lead, doc.name)
@@ -478,7 +561,7 @@ def steps_for(doc):
 
 		blocked_by = step.get("requires")
 		blocked = bool(blocked_by) and blocked_by not in (submitted_keys if step.get("requires_submitted") else done_keys)
-		note = step.get("requires_note", "") if blocked else ""
+		note = step.get("requires_note", "") if blocked else step.get("prepare_note", "")
 		# A mapper reads a submitted document. Offering the step on a draft would only
 		# produce an error on the other side, so it is shown disabled with the reason.
 		if step.get("needs_submit") and frappe.utils.cint(doc.get("docstatus")) != 1:
@@ -495,10 +578,10 @@ def steps_for(doc):
 			"done": bool(target),
 			"card": _card(step, target) if target else None,
 			"blocked": blocked and not target,
-			"note": note if blocked and not target else "",
+			"note": note if not target else "",
 			"can_create": frappe.has_permission(step["doctype"], "create"),
 			# A mapped step is a write, so it is posted rather than followed as a link.
-			"posts": bool(step.get("make")) or (bool(step.get("via")) and not step.get("form")),
+			"posts": bool(step.get("make") or step.get("prepare")) or (bool(step.get("via")) and not step.get("form")),
 			"create_route": "/a3solaportal/{0}/new?source_dt={1}&source={2}".format(
 				step["slug"], frappe.utils.quote(doc.doctype), frappe.utils.quote(doc.name)
 			),
