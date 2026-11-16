@@ -9,6 +9,7 @@ Reading needs read permission on the job; uploading needs write permission on it
 """
 
 import os
+import re
 
 import frappe
 from frappe import _
@@ -166,6 +167,8 @@ def _panel(inst, task_code):
 			[d for d in own if d not in letter] + letter
 	if task_code == FORM2_TASK:
 		rows = form2_rows(inst, rows)
+	if task_code == FORM3_TASK:
+		rows = form3_rows(inst, rows)
 	if task_code == FORM1_TASK:
 		# The customer's papers Form 1 is filled from and goes with, fetched from the customer,
 		# before the form itself (as on Jan Samarth).
@@ -440,11 +443,44 @@ def meter_certificate(inst):
 
 
 def _with_component_sheet(inst, d):
-	"""A data sheet not yet uploaded on the job: the one attached to its panel item or inverter
-	model, when there is one (a file named as a data sheet)."""
-	if d.get("file_url") or "Data Sheet" not in d["name"]:
+	"""A data sheet or the panel test certificate not yet uploaded on the job: the files attached
+	to its panel item or inverter model, when there are any (component_files)."""
+	if d.get("file_url") or not ("Data Sheet" in d["name"] or d["name"] == PANEL_CERTIFICATE):
 		return d
-	if d["name"].startswith("Inverter"):
+	if d["name"] == PANEL_CERTIFICATE:
+		files = panel_certificates(inst)
+	else:
+		files = component_files(inst, "inverter" if d["name"].startswith("Inverter") else "panel", _is_datasheet)
+	if not files:
+		return d
+	return {"row": d["row"], "name": d["name"], "mandatory": d["mandatory"], "kind": "Uploaded", "files": files,
+		"missing": [], "prints": d.get("prints") or []}
+
+
+#: Form 2's panel test certificate - the panel's BIS certificates, attached to its Item.
+PANEL_CERTIFICATE = "Solar Panel Test Certificate"
+
+
+def _squash(file_name):
+	return (file_name or "").lower().replace(" ", "").replace("_", "").replace("-", "")
+
+
+def _is_datasheet(file_name):
+	return "datasheet" in _squash(file_name)
+
+
+def _is_certificate(file_name):
+	"""A BIS certificate, its renewal or an added-models letter: named BIS or certificate, and
+	not a data sheet."""
+	name = (file_name or "").lower()
+	return not _is_datasheet(file_name) and ("certificate" in _squash(file_name)
+		or bool(re.search(r"(^|[^a-z])bis([^a-z]|$)", name)))
+
+
+def component_files(inst, kind, match, every=False):
+	"""Files attached to the job's panel items ("panel") or inverter models ("inverter") whose
+	name `match`es: the newest per item, or all of them with `every`."""
+	if kind == "inverter":
 		owners = [("Inverter Model", r.inverter_model) for r in inst.get("inverters") or [] if r.inverter_model]
 	else:
 		owners = [("Item", r.panel_item) for r in inst.get("panels") or [] if r.panel_item]
@@ -452,13 +488,34 @@ def _with_component_sheet(inst, d):
 	for doctype, name in dict.fromkeys(owners):
 		for f in frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name, "is_folder": 0},
 				fields=["file_url", "file_name"], order_by="creation desc"):
-			if "datasheet" in (f.file_name or "").lower().replace(" ", "").replace("_", "").replace("-", ""):
-				files.append({"label": name, "url": f.file_url})
-				break
+			if match(f.file_name):
+				files.append({"label": f.file_name if every else name, "url": f.file_url})
+				if not every:
+					break
+	return files
+
+
+def panel_certificates(inst):
+	"""Every BIS certificate attached to the job's panel items - a licence, its renewal and the
+	letter adding models all go in."""
+	return component_files(inst, "panel", _is_certificate, every=True)
+
+
+#: KSEBL Form 3 submission: row 5 attaches the panel specifications, so the panel's test
+#: certificate goes with it, fetched as on Form 2.
+FORM3_TASK = "KFORMS"
+
+
+def form3_rows(inst, rows):
+	"""Form 3's papers, then the panel test certificate: the files on the panel items, else the one
+	uploaded on Form 2, else an upload into Form 2 (where it is filed)."""
+	files = panel_certificates(inst)
 	if not files:
-		return d
-	return {"row": d["row"], "name": d["name"], "mandatory": d["mandatory"], "kind": "Uploaded", "files": files,
-		"missing": [], "prints": d.get("prints") or []}
+		filed = next((d.attachment for d in inst.documents if d.attachment and d.stage_code == FORM2_TASK
+			and d.document_name == PANEL_CERTIFICATE), None)
+		files = [{"label": "", "url": filed}] if filed else []
+	return rows + [{"name": PANEL_CERTIFICATE, "mandatory": True, "kind": "Uploaded" if files else "Expected",
+		"files": files, "missing": [] if files else [{"label": PANEL_CERTIFICATE, "upload": _upload_to(inst, FORM2_TASK, PANEL_CERTIFICATE)}]}]
 
 
 #: Jan Samarth's task: its site photo and quotation are fetched where they already are.
