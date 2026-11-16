@@ -414,6 +414,10 @@ def form2_rows(inst, rows):
 		d = by_name.pop(name, None)
 		if d:
 			out.append(_with_component_sheet(inst, d))
+	# The inverter's BIS and IEC certificates, from its model - no register row of its own until
+	# one is uploaded here.
+	d = by_name.pop(INVERTER_CERTIFICATE, None)
+	out.append(d if d and d.get("file_url") else certificate_row(inst, INVERTER_CERTIFICATE))
 	out.append(_elsewhere_row("Meter Test Certificate", meter_certificate(inst) or here["meter"],
 		_upload_to(inst, "MTR", METER_CERTIFICATE)))
 	return out + list(by_name.values())
@@ -457,8 +461,11 @@ def _with_component_sheet(inst, d):
 		"missing": [], "prints": d.get("prints") or []}
 
 
-#: Form 2's panel test certificate - the panel's BIS certificates, attached to its Item.
+#: Form 2's panel test certificate - the panel's BIS certificates, attached to its Item - and the
+#: inverter's, attached to its Inverter Model. Form 3 carries both too.
 PANEL_CERTIFICATE = "Solar Panel Test Certificate"
+INVERTER_CERTIFICATE = "Inverter Test Certificate"
+CERTIFICATE_OWNER = {PANEL_CERTIFICATE: "panel", INVERTER_CERTIFICATE: "inverter"}
 
 
 def _squash(file_name):
@@ -470,11 +477,12 @@ def _is_datasheet(file_name):
 
 
 def _is_certificate(file_name):
-	"""A BIS certificate, its renewal or an added-models letter: named BIS or certificate, and
-	not a data sheet."""
+	"""A BIS licence, its renewal, an added-models letter or an IEC test certificate: named
+	certificate, licence, renewal, BIS or IEC - and not a data sheet."""
 	name = (file_name or "").lower()
-	return not _is_datasheet(file_name) and ("certificate" in _squash(file_name)
-		or bool(re.search(r"(^|[^a-z])bis([^a-z]|$)", name)))
+	return not _is_datasheet(file_name) and (
+		any(word in _squash(file_name) for word in ("certificate", "licence", "license", "renewal"))
+		or bool(re.search(r"(^|[^a-z])(bis|iec)([^a-z]|$)", name)))
 
 
 def component_files(inst, kind, match, every=False):
@@ -496,26 +504,31 @@ def component_files(inst, kind, match, every=False):
 
 
 def panel_certificates(inst):
-	"""Every BIS certificate attached to the job's panel items - a licence, its renewal and the
+	"""Every certificate attached to the job's panel items - a licence, its renewal and the
 	letter adding models all go in."""
 	return component_files(inst, "panel", _is_certificate, every=True)
 
 
-#: KSEBL Form 3 submission: row 5 attaches the panel specifications, so the panel's test
-#: certificate goes with it, fetched as on Form 2.
+def certificate_row(inst, name):
+	"""The panel's or inverter's test certificates as one row: the files on the job's panel items
+	or inverter models, else the one uploaded on Form 2, else an upload into Form 2 (where it is filed)."""
+	files = component_files(inst, CERTIFICATE_OWNER[name], _is_certificate, every=True)
+	if not files:
+		filed = next((d.attachment for d in inst.documents if d.attachment and d.stage_code == FORM2_TASK
+			and d.document_name == name), None)
+		files = [{"label": "", "url": filed}] if filed else []
+	return {"name": name, "mandatory": True, "kind": "Uploaded" if files else "Expected", "files": files,
+		"missing": [] if files else [{"label": name, "upload": _upload_to(inst, FORM2_TASK, name)}]}
+
+
+#: KSEBL Form 3 submission: row 5 attaches the panel and inverter specifications, so their test
+#: certificates go with it, fetched as on Form 2.
 FORM3_TASK = "KFORMS"
 
 
 def form3_rows(inst, rows):
-	"""Form 3's papers, then the panel test certificate: the files on the panel items, else the one
-	uploaded on Form 2, else an upload into Form 2 (where it is filed)."""
-	files = panel_certificates(inst)
-	if not files:
-		filed = next((d.attachment for d in inst.documents if d.attachment and d.stage_code == FORM2_TASK
-			and d.document_name == PANEL_CERTIFICATE), None)
-		files = [{"label": "", "url": filed}] if filed else []
-	return rows + [{"name": PANEL_CERTIFICATE, "mandatory": True, "kind": "Uploaded" if files else "Expected",
-		"files": files, "missing": [] if files else [{"label": PANEL_CERTIFICATE, "upload": _upload_to(inst, FORM2_TASK, PANEL_CERTIFICATE)}]}]
+	"""Form 3's papers, then the panel's and the inverter's test certificates."""
+	return rows + [certificate_row(inst, name) for name in (PANEL_CERTIFICATE, INVERTER_CERTIFICATE)]
 
 
 #: Jan Samarth's task: its site photo and quotation are fetched where they already are.
