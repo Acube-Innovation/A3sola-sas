@@ -41,7 +41,7 @@
 		     {% if combo %}data-combo{% if f.fieldname == "discom_section" %} data-combo-add="section"{% endif %} {% endif %}{% if f.show_when %}data-show-when="{{ f.show_when | e }}" hidden{% endif %}>
 			{%- if f.type == "Check" %}
 			<label class="a3s-check">
-				<input type="checkbox" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
+				<input type="checkbox" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="1"{% if f.value %} checked{% endif %}>
 				<span>{{ f.label }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</span>
 			</label>
 			{%- else %}
@@ -259,7 +259,8 @@
 </script>
 
 {#- A field that only applies to one answer stays hidden until that answer is given, the
-    way the desk's depends_on does it. The rule rides on the wrapper as "field=value". -#}
+    way the desk's depends_on does it. The rule rides on the wrapper as "field=value",
+    "field=a|b" for any of several answers, or a bare "field" for a box that is ticked. -#}
 <script>
 (function () {
 	var conditional = document.querySelectorAll("[data-show-when]");
@@ -268,7 +269,9 @@
 		Array.prototype.forEach.call(conditional, function (wrap) {
 			var parts = wrap.dataset.showWhen.split("=");
 			var source = document.getElementById("fld-" + parts[0]);
-			var on = !!source && source.value === parts.slice(1).join("=");
+			var on = !!source && (parts.length === 1
+				? (source.type === "checkbox" ? source.checked : !!source.value)
+				: parts.slice(1).join("=").split("|").indexOf(source.value) !== -1);
 			wrap.hidden = !on;
 			// A hidden field must not post an answer to a question no longer being asked.
 			if (!on) {
