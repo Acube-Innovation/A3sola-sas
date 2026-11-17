@@ -492,11 +492,13 @@ def component_files(inst, kind, match, every=False):
 		owners = [("Inverter Model", r.inverter_model) for r in inst.get("inverters") or [] if r.inverter_model]
 	else:
 		owners = [("Item", r.panel_item) for r in inst.get("panels") or [] if r.panel_item]
-	files = []
+	files, seen = [], set()
 	for doctype, name in dict.fromkeys(owners):
 		for f in frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name, "is_folder": 0},
 				fields=["file_url", "file_name"], order_by="creation desc"):
-			if match(f.file_name):
+			# One certificate covering two of the job's panels (550 and 565 Wp) is listed once.
+			if match(f.file_name) and f.file_url not in seen:
+				seen.add(f.file_url)
 				files.append({"label": f.file_name if every else name, "url": f.file_url})
 				if not every:
 					break
