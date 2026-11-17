@@ -19,6 +19,64 @@
   };
   var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
+  // ../a3_sola/a3_sola/public/js/cascade_delete_desk.js
+  frappe.provide("a3_sola");
+  a3_sola.CASCADE_DELETE_ROLES = ["System Manager", "Solar CRM Manager", "Solar Sales Manager"];
+  a3_sola.add_cascade_delete = function(frm, kind) {
+    if (frm.is_new() || !a3_sola.CASCADE_DELETE_ROLES.some((r) => frappe.user.has_role(r)))
+      return;
+    frm.add_custom_button(__("Delete with all records"), () => a3_sola.cascade_delete(frm, kind), __("Solar"));
+  };
+  a3_sola.cascade_delete = function(frm, kind) {
+    const args = { doctype: frm.doctype, name: frm.doc.name };
+    frappe.call({
+      method: "a3_sola.api.cascade_delete.preview",
+      args,
+      freeze: true,
+      freeze_message: __("Checking what goes with it\u2026")
+    }).then((r) => {
+      const p = r.message;
+      const rows = (items) => items.map((i) => `<li>${frappe.utils.escape_html(i)}</li>`).join("");
+      if (p.blockers.length) {
+        frappe.msgprint({
+          title: __("Cannot delete {0}", [kind]),
+          indicator: "red",
+          message: __("These documents are in the accounts. Cancel them first, then delete.") + `<ul>${rows(p.blockers.map((b) => `${b.doctype} ${b.name}: ${b.reason}`))}</ul>`
+        });
+        return;
+      }
+      const d = new frappe.ui.Dialog({
+        title: __("Delete {0}", [kind]),
+        fields: [
+          { fieldtype: "HTML", options: `<p>${__(
+            "{0} and the {1} records made for them will be deleted, with their attachments:",
+            [`<b>${frappe.utils.escape_html(p.title)}</b>`, p.total]
+          )}</p><ul>${rows(p.counts.map((c) => `${c.label}: ${c.count}`))}</ul>` },
+          { fieldname: "confirm", fieldtype: "Data", reqd: 1, label: __("Type {0} to confirm", [p.name]) }
+        ],
+        primary_action_label: __("Delete {0} records", [p.total]),
+        primary_action(values) {
+          if ((values.confirm || "").trim() !== p.name) {
+            frappe.msgprint(__("Type {0} exactly to confirm.", [p.name]));
+            return;
+          }
+          frappe.call({
+            method: "a3_sola.api.cascade_delete.delete",
+            args: __spreadProps(__spreadValues({}, args), { confirm: values.confirm.trim() }),
+            freeze: true,
+            freeze_message: __("Deleting\u2026")
+          }).then(() => {
+            d.hide();
+            frappe.show_alert({ message: __("Deleted {0} records.", [p.total]), indicator: "green" });
+            frappe.set_route("List", frm.doctype);
+          });
+        }
+      });
+      d.get_primary_btn().removeClass("btn-primary").addClass("btn-danger");
+      d.show();
+    });
+  };
+
   // ../a3_sola/a3_sola/public/js/lead_outreach.js
   frappe.ui.form.on("Lead", {
     refresh(frm) {
@@ -28,6 +86,7 @@
         frm.add_custom_button(__("Create Customer"), () => consumer_address_dialog(frm), __("Solar"));
       }
       frm.add_custom_button(__("Log Outreach"), () => log_outreach(frm), __("Solar"));
+      a3_sola.add_cascade_delete(frm, __("lead"));
       if (frm.doc.followup_status === "FOLLOW UP DUE") {
         frm.dashboard.add_indicator(__("Follow up due"), "red");
       }
@@ -209,4 +268,4 @@
     frm.add_custom_button(__("Audit Trail"), () => a3_sola.audit.show_trail(frm), group);
   };
 })();
-//# sourceMappingURL=a3_sola.bundle.JTHJPIZO.js.map
+//# sourceMappingURL=a3_sola.bundle.W7O5PVYQ.js.map

@@ -13,6 +13,7 @@ frappe.ui.form.on("Lead", {
 		}
 
 		frm.add_custom_button(__("Log Outreach"), () => log_outreach(frm), __("Solar"));
+		a3_sola.add_cascade_delete(frm, __("lead"));
 
 		if (frm.doc.followup_status === "FOLLOW UP DUE") {
 			frm.dashboard.add_indicator(__("Follow up due"), "red");

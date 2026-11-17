@@ -21,6 +21,7 @@ frappe.ui.form.on("Solar Consumer", {
 	},
 	refresh(frm) {
 		if (frm.is_new()) return;
+		a3_sola.add_cascade_delete(frm, __("customer"));
 		if (frm.doc.customer) {
 			frm.add_custom_button(__("ERPNext Customer"), () => frappe.set_route("Form", "Customer", frm.doc.customer), __("View"));
 			return;

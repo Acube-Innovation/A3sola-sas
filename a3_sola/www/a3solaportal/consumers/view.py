@@ -23,6 +23,11 @@ def get_context(context):
 	context.kyc_panel = kyc.summary(doc.doctype, doc.name)
 	context.groups = [g for g in context.groups if g["key"] != "kyc"]
 	context.csrf_token = frappe.sessions.get_csrf_token()
+	# Delete, with everything made for the customer (api/cascade_delete).
+	from a3_sola.api import cascade_delete
+
+	context.can_delete = cascade_delete.can_delete()
+	context.delete_doctype, context.delete_name, context.delete_kind = doc.doctype, doc.name, "customer"
 	# The site survey, before there is one: assigned first, and created only by its assignee
 	# (api/survey_assignment) - the step's Create button is theirs alone.
 	from a3_sola.api import survey_assignment
