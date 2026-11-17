@@ -35,19 +35,24 @@
 
 	{%- elif step.posts %}
 	{#- A step ERPNext maps for us is a write, so it is a posted button rather than a
-	    link: following a link must never create a document. -#}
-	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-chain-post
-	        data-slug="{{ step.slug | e }}" data-source-dt="{{ record_doctype | e }}" data-source="{{ record_name | e }}">
-		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ step.icon }}"></use></svg>
-		<span>{{ step.label }}</span>
-	</button>
-	<p class="a3s-edit__hint" data-chain-error hidden></p>
+	    link: following a link must never create a document. The error line is the
+	    button's own, as a page may offer more than one. -#}
+	<div class="a3s-chain__step">
+		<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-chain-post
+		        data-slug="{{ step.slug | e }}" data-source-dt="{{ record_doctype | e }}" data-source="{{ record_name | e }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ step.icon }}"></use></svg>
+			<span>{{ step.label }}</span>
+		</button>
+		<p class="a3s-edit__hint" data-chain-error hidden></p>
+		{%- if step.note %}<p class="a3s-edit__hint">{{ step.note }}</p>{% endif %}
+	</div>
 
 	{%- else %}
 	<a class="a3s-btn a3s-btn--primary a3s-btn--block" href="{{ step.create_route }}">
 		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-{{ step.icon }}"></use></svg>
 		<span>{{ step.label }}</span>
 	</a>
+	{%- if step.note %}<p class="a3s-edit__hint">{{ step.note }}</p>{% endif %}
 	{%- endif %}
 
 	{%- endfor %}
@@ -56,9 +61,8 @@
 {%- if chain_steps | selectattr("posts") | selectattr("blocked", "equalto", false) | rejectattr("done") | list %}
 <script>
 (function () {
-	var btn = document.querySelector("[data-chain-post]");
-	if (!btn) return;
-	var error = document.querySelector("[data-chain-error]");
+  document.querySelectorAll("[data-chain-post]").forEach(function (btn) {
+	var error = btn.parentNode.querySelector("[data-chain-error]");
 	btn.addEventListener("click", function () {
 		btn.disabled = true;
 		var label = btn.querySelector("span");
@@ -97,6 +101,7 @@
 			}
 		});
 	});
+  });
 })();
 </script>
 {%- endif %}

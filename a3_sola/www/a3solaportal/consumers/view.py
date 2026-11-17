@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Detail page for one consumer: the shared record page, and the consumer's ERPNext Customer
-- linked, or converted from here."""
+"""Detail page for one consumer: the shared record page, with the KYC papers as a card and
+the site survey's assignment ahead of its step."""
 
 import frappe
 
@@ -16,14 +16,6 @@ def get_context(context):
 	require_login(record_route("consumers", name) if name else "/a3solaportal/consumers")
 	detail_context(context, "consumers", name)
 	doc = context.record
-	customer = doc.customer if doc.customer and frappe.db.exists("Customer", doc.customer) else None
-	context.customer = {
-		"name": customer,
-		"customer_name": frappe.db.get_value("Customer", customer, "customer_name") if customer else "",
-		"desk": "/app/customer/" + frappe.utils.quote(customer) if customer else "",
-		"can_convert": not customer and bool(doc.has_permission("write")) and frappe.has_permission("Customer", "create"),
-	}
-	context.extra_template = "templates/includes/portal_consumer_customer.html"
 	# The KYC papers as a card of their own - each uploaded or pending - in place of the
 	# KYC tab's status and missing-list fields (portal_kyc.html).
 	from a3_sola.api import kyc
