@@ -7,12 +7,24 @@
 		<span>{{ title | e }}</span>
 		<span class="a3s-badge a3s-badge--{{ status_slug }}">{{ lead.status | e }}</span>
 	</h2>
-	{%- if can_write %}
+	{%- if can_write or can_delete %}
 	<div class="a3s-detail__actions">
+		{%- if can_write %}
 		<a class="a3s-btn a3s-btn--primary" href="{{ edit_route }}">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
 			<span>Edit</span>
 		</a>
+		{%- endif %}
+		{%- if can_delete %}
+		{#- Deletes the record and everything made for it (api/cascade_delete); the modal
+		    lists what goes and asks for the name typed in. -#}
+		<button type="button" class="a3s-btn a3s-btn--secondary a3s-cascade__btn" data-cascade-delete
+		        data-doctype="{{ delete_doctype | e }}" data-name="{{ delete_name | e }}" data-kind="{{ delete_kind | e }}">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-trash"></use></svg>
+			<span>Delete</span>
+		</button>
+		<script src="/assets/a3_sola/js/portal_cascade_delete.js?v={{ a3s_asset_version('js/portal_cascade_delete.js') }}" defer></script>
+		{%- endif %}
 	</div>
 	{%- endif %}
 	{%- if subline %}

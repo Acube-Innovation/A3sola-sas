@@ -4163,6 +4163,20 @@ select.a3s-items__input { min-width: 9rem; }
 .a3s-modal__panel--mismatch .a3s-modal__title { color: #b42318; }
 .a3s-modal__panel--mismatch p { margin: 0 0 0.6rem; }
 
+/* Delete a lead or customer with all its records (portal_cascade_delete.js). */
+.a3s .a3s-cascade__btn { color: #b42318; }
+.a3s .a3s-cascade__btn:hover { border-color: #d92d20; color: #b42318; }
+.a3s-cascade__text { font-size: 0.875rem; color: var(--color-text); }
+.a3s-cascade__list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.3rem;
+	max-height: 16rem; overflow-y: auto; }
+.a3s-cascade__list li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.875rem;
+	padding: 0.35rem 0.6rem; border-radius: 0.5rem; background: rgba(217,45,32,0.06); }
+.a3s-cascade__list b { color: #b42318; font-weight: 700; }
+.a3s-cascade .a3s-field { margin-bottom: 1rem; }
+.a3s .a3s-cascade__ok { background-image: none; background: #d92d20; color: #fff; border-color: #d92d20; }
+.a3s .a3s-cascade__ok:hover { background: #b42318; color: #fff; }
+.a3s .a3s-cascade__ok:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* The customer's documents on an eligibility check (portal_document_evidence.js). */
 .a3s-evidence .a3s-edit__hint { margin: -0.25rem 0 0.85rem; }
 .a3s-evidence__alert { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }

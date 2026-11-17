@@ -16,7 +16,7 @@ import frappe
 from frappe.utils import format_datetime, strip_html
 
 from a3_sola.www.a3solaportal import fill_shell, require_login
-from a3_sola.api import assignments, kyc, portal_chain
+from a3_sola.api import assignments, cascade_delete, kyc, portal_chain
 from a3_sola.api.leads import (
 	detail_sections, display_name, glance_rows, lead_route, lead_snapshot, lead_story, load_lead,
 )
@@ -93,6 +93,8 @@ def get_context(context):
 	context.glance = glance_rows(doc)
 
 	context.can_write = doc.has_permission("write")
+	context.can_delete = cascade_delete.can_delete()
+	context.delete_doctype, context.delete_name, context.delete_kind = doc.doctype, doc.name, "lead"
 	context.edit_route = lead_route(doc.name) + "/edit"
 	context.back_link = {"href": "/a3solaportal/leads", "label": "Back to leads"}
 	context.chain_steps = portal_chain.steps_for(doc)
