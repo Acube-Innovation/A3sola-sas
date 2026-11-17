@@ -260,7 +260,7 @@ def create_mapped(slug=None, source_dt=None, source=None):
 	only gets the person to a document they can check first.
 	"""
 	step = portal_chain.find_step(source_dt, slug)
-	if not step or not (step.get("via") or step.get("make")):
+	if not step or not (step.get("via") or step.get("make") or step.get("prepare")):
 		frappe.throw(_("Cannot create a {0} from a {1}.").format(slug, source_dt), frappe.ValidationError)
 	if not frappe.db.exists(source_dt, source):
 		frappe.throw(_("That record does not exist."), frappe.DoesNotExistError)
@@ -277,6 +277,14 @@ def create_mapped(slug=None, source_dt=None, source=None):
 	if step.get("needs_setting") and not portal_chain.get_value(step["needs_setting"]):
 		frappe.throw(_("Creating a {0} is turned off in A3 Sola Settings.").format(
 			_(step.get("kind_label") or step["doctype"]).lower()), frappe.ValidationError)
+	if step.get("prepare"):
+		# What the new record needs made first (the lead's customer, for its survey) is
+		# made now, and the person goes on to the create form as if they had followed its link.
+		source_doc.check_permission("write")
+		frappe.get_attr(step["prepare"])(source_doc)
+		route = "/a3solaportal/{0}/new?source_dt={1}&source={2}".format(
+			slug, frappe.utils.quote(source_dt), frappe.utils.quote(source))
+		return {"name": "", "route": route, "desk": ""}
 	if step.get("make"):
 		# The step's own creator writes the whole record (the project, by the handoff).
 		name = frappe.get_attr(step["make"])(source_doc)

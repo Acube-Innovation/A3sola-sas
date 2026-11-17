@@ -363,12 +363,16 @@ def name_case(name):
 	return " ".join(w if len(w.rstrip(".")) <= 2 else w.capitalize() for w in words)
 
 
-def kseb_discom():
-	"""The KSEB DISCOM record: of those named KSEB, the one with the most sections."""
-	rows = frappe.db.sql("""select d.name, count(s.name) n from `tabDISCOM` d
+def kseb_discom(company=None):
+	"""The KSEB DISCOM record: of those named KSEB, the one with the most sections - the
+	company's own first, where a company is given, so a record made for it is not pointed at
+	another tenant's DISCOM."""
+	rows = frappe.db.sql("""select d.name, d.company, count(s.name) n from `tabDISCOM` d
 		left join `tabDISCOM Section` s on s.discom = d.name
 		where d.discom_name like '%%KSEB%%' or d.discom_name like '%%Kerala State Electricity%%'
 		group by d.name order by n desc""", as_dict=True)
+	if company:
+		rows = [r for r in rows if r.company == company] or rows
 	return rows[0].name if rows else None
 
 
