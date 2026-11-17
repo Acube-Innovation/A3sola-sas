@@ -30,8 +30,10 @@ COLLECTIONS = {
 	# installation site (its show-when rule) - are not mandatory, so would not be picked up
 	# on their own.
 	# Its create form is laid out in four columns under the desk form's sections (form_sections).
+	# `all_fields`: the create form asks for everything the edit form does, so nothing has to
+	# be added by editing the customer straight after creating it.
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
-	              "form_columns": 4,
+	              "form_columns": 4, "all_fields": True,
 	              "form_extra": ["lead_mobile_no", "date_of_birth", "gender", "site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode",
@@ -501,7 +503,9 @@ def form_fields(meta, prefill=None, extra=()):
 		# A field named in `form_extra` is rendered but not demanded.
 		spec = {
 			"fieldname": f.fieldname, "label": f.label, "type": f.fieldtype,
-			"reqd": bool(f.reqd), "show_when": show_when(f),
+			# The same show-when rule as on the edit form (edit_fields_for).
+			"reqd": bool(f.reqd),
+			"show_when": PORTAL_SHOW_WHEN.get(meta.name, {}).get(f.fieldname) or show_when_expr(f),
 		}
 		seed = (prefill or {}).get(f.fieldname)
 		spec["value"] = "" if seed is None else seed
@@ -556,6 +560,10 @@ def form_extra(cfg, meta):
 	render them first. `form_fields` still skips the read-only and hidden ones among them.
 	"""
 	extra = list(cfg.get("form_extra") or ())
+	if cfg.get("all_fields"):
+		# Every field the form can take; `form_fields` drops the hidden and read-only ones, as
+		# `edit_fields_for` does on the edit form.
+		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES]
 	if cfg.get("first_tab_first"):
 		extra += first_tab_fieldnames(meta)
 	return extra

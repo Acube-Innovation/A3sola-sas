@@ -13,6 +13,12 @@ import frappe
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.www.a3solaportal.collections import initials
 from a3_sola.api.leads import LEAD_STATUSES, lead_route
+from a3_sola.api.outreach import CADENCE_ORDER
+
+#: The follow-up view colours each row by its outreach stage; these are the CSS keys, in the
+#: cadence's order: step-1 to step-4, then completed. A stage not in the cadence gets no colour.
+STAGE_KEYS = {stage: ("completed" if stage.startswith("Completed") else f"step-{i + 1}")
+	for i, stage in enumerate(CADENCE_ORDER)}
 
 no_cache = 1
 
@@ -90,6 +96,19 @@ def get_context(context):
 		if any(d["value"] == dealer for d in context.dealer_options):
 			context.dealer_filter = dealer
 			filters["a3s_dealer"] = dealer
+
+	# The follow-up view's legend filters by stage: one click shows that stage's leads only.
+	# The counts on the legend are taken before the stage is applied, so each shows how many
+	# leads it would list; a stage not in the cadence is ignored.
+	context.stage_filter = ""
+	context.stage_legend = []
+	if followup:
+		stage = (frappe.form_dict.get("stage") or "").strip()
+		context.stage_filter = stage if stage in STAGE_KEYS else ""
+		context.stage_legend = [{"label": label, "key": key, "count": _count({**filters, "outreach_stage": label}, or_filters)}
+			for label, key in STAGE_KEYS.items()]
+		if context.stage_filter:
+			filters["outreach_stage"] = context.stage_filter
 
 	leads = lead_rows(filters, or_filters)
 
@@ -170,6 +189,7 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 		# The follow-up view: where the lead is on the cadence, and when it is next followed up.
 		lead["next_followup"] = frappe.utils.format_date(lead.get("next_followup_date"), "medium") if lead.get("next_followup_date") else ""
 		lead["followup_due"] = lead.get("followup_status") == "FOLLOW UP DUE"
+		lead["stage_key"] = STAGE_KEYS.get(lead.get("outreach_stage") or "", "")
 
 	_add_assignment(leads)
 	# A dealer's lead names its dealer, so staff see whose it is first.

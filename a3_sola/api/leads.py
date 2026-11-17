@@ -224,6 +224,124 @@ def lead_snapshot(doc):
 	}
 
 
+def _title_of(doctype, name, field):
+	"""A linked record's display name, else its id."""
+	return (frappe.db.get_value(doctype, name, field) if name else None) or name or ""
+
+
+def _join(parts, last=" and "):
+	"""'a', 'a and b', 'a, b and c'."""
+	parts = [str(p) for p in parts if p]
+	if len(parts) <= 1:
+		return "".join(parts)
+	return ", ".join(parts[:-1]) + last + parts[-1]
+
+
+def lead_story(doc):
+	"""The lead told in a short paragraph for the About card - where they came from and who
+	made the record, how to reach them, what they asked for and whose supply it is, where
+	the conversation stands, and which papers are in. Each sentence is built only from what
+	the lead actually has, so a thin record reads as a short paragraph, not a row of blanks.
+	The person is 'they' throughout: the lead does not record a gender."""
+	from a3_sola.api import kyc
+
+	name = display_name(doc)
+	sentences = []
+
+	# Who, from where, through what, made by whom and when.
+	who = name
+	if doc.get("company_name") and doc.company_name != name:
+		who += " of {0}".format(doc.company_name)
+	# District on this site reads "Thrissur, Kerala": a place already named is not repeated.
+	place = []
+	for part in (doc.get("city"), doc.get("district"), doc.get("state")):
+		if part and not any(part.lower() in p.lower() for p in place):
+			place.append(part)
+	first = who
+	if doc.get("source"):
+		first += " came in through {0}".format(doc.source)
+	else:
+		first += " came in"
+	if place:
+		first += " from {0}".format(", ".join(place))
+	maker = doc.get("lead_owner") or doc.get("owner")
+	maker_name = _title_of("User", maker, "full_name")
+	first += ", and the record was made by {0} on {1}".format(maker_name, format_date(doc.creation, "medium")) if maker_name \
+		else ", and the record was made on {0}".format(format_date(doc.creation, "medium"))
+	sentences.append(first + ".")
+
+	# How to reach them.
+	reach = _join([doc.get("mobile_no"), doc.get("email_id")], " or ")
+	sentences.append("We can reach them on {0}.".format(reach) if reach else "The lead has no phone number or email yet.")
+
+	# What they asked for, and whose supply it is.
+	want = []
+	scheme = _title_of("Subsidy Scheme", doc.get("subsidy_scheme"), "scheme_name")
+	size = flt(doc.get("approx_capacity_kw"))
+	if scheme or size:
+		want.append("They asked for {0}".format(_join([scheme, "{0:g} kW".format(size) if size else ""], ", ")))
+		extras = _join([doc.get("connection_type"), (doc.get("consumer_category") or "").lower()], ", ")
+		if extras:
+			want[-1] += " ({0})".format(extras)
+	discom = _title_of("DISCOM", doc.get("discom"), "discom_name")
+	section = _title_of("DISCOM Section", doc.get("discom_section"), "section_name")
+	if discom or section:
+		supply = "their DISCOM is {0}".format(discom) if discom else "their supply is"
+		if section:
+			supply += " under the {0} section".format(section)
+		if doc.get("consumer_number"):
+			supply += ", consumer number {0}".format(doc.consumer_number)
+		want.append(supply)
+	elif doc.get("consumer_number"):
+		want.append("their consumer number is {0}".format(doc.consumer_number))
+	if want:
+		text = "; ".join(want)
+		sentences.append(text[0].upper() + text[1:] + ".")
+	if doc.get("loan_required") == "Yes":
+		sentences.append("They need a loan.")
+
+	# Where the conversation stands.
+	stand = []
+	if doc.get("last_message_date"):
+		last = "We last connected on {0}".format(format_date(doc.last_message_date, "medium"))
+		if doc.get("call_status") and doc.call_status != "Connected":
+			last += " ({0})".format(doc.call_status.lower())
+		stand.append(last)
+	else:
+		stand.append("We have not connected yet")
+	status = doc.get("solar_lead_status") or doc.get("status")
+	if status:
+		stand.append("the lead is {0}".format(status.lower()))
+	if doc.get("outreach_stage"):
+		stand.append("at {0}".format(doc.outreach_stage))
+	text = stand[0]
+	if len(stand) > 1:
+		text += ", " + " ".join(stand[1:])
+	if doc.get("next_followup_date"):
+		text += ", with the next follow-up planned for {0}".format(format_date(doc.next_followup_date, "medium"))
+		if doc.get("followup_status") == "FOLLOW UP DUE":
+			text += " (due)"
+	sentences.append(text + ".")
+
+	# The papers.
+	consumer, lead = kyc.pair("Lead", doc.name)
+	papers = kyc.documents(consumer, lead, kyc.loan_amount_for(consumer=consumer) if consumer else 0)
+	have = [i["label"] for i in papers["items"] if i["uploaded"]]
+	missing = [i["label"] for i in papers["items"] if not i["uploaded"]]
+	if have:
+		text = "We have their {0}".format(_join(have))
+		if missing:
+			text += "; still to come: {0}".format(_join(missing))
+		sentences.append(text + ".")
+	else:
+		sentences.append("None of their KYC papers are in yet.")
+
+	if doc.get("solar_consumer"):
+		sentences.append("They are now customer {0}.".format(
+			_title_of("Solar Consumer", doc.solar_consumer, "consumer_name") or doc.solar_consumer))
+	return " ".join(sentences)
+
+
 # -------------------------------------------------------------------------- edit page
 #: Fields only staff set. The dealer a lead is handed to decides which dealer sees it, so a
 #: dealer may not move his own lead to another (and it is stamped his when he makes one).

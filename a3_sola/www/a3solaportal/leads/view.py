@@ -18,7 +18,7 @@ from frappe.utils import format_datetime, strip_html
 from a3_sola.www.a3solaportal import fill_shell, require_login
 from a3_sola.api import assignments, kyc, portal_chain
 from a3_sola.api.leads import (
-	detail_sections, display_name, glance_rows, lead_route, lead_snapshot, load_lead,
+	detail_sections, display_name, glance_rows, lead_route, lead_snapshot, lead_story, load_lead,
 )
 
 no_cache = 1
@@ -86,7 +86,8 @@ def get_context(context):
 	]
 
 	context.snapshot = lead_snapshot(doc)
-	context.about = context.snapshot["about"]
+	# The About card tells the lead in a paragraph: origin, contact, ask, standing, papers.
+	context.about = lead_story(doc)
 	context.created = context.snapshot["created"]
 	context.modified = context.snapshot["modified"]
 	context.glance = glance_rows(doc)
