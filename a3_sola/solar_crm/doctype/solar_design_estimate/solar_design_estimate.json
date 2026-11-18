@@ -210,7 +210,8 @@
    "fieldtype": "Select",
    "label": "Connection Type",
    "options": "Single Phase\nThree Phase",
-   "fetch_from": "solar_consumer.connection_type"
+   "fetch_from": "solar_consumer.connection_type",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "company",
@@ -913,7 +914,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 17:00:00.000000",
+ "modified": "2026-11-18 13:20:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Design Estimate",

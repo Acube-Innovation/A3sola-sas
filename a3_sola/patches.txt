@@ -340,3 +340,7 @@ a3_sola.patches.v1_2.package_module_wattage_rate
 a3_sola.patches.v1_2.eligibility_consumption_rule
 # One login, several companies: each existing login's one company recorded as its Company Membership. Changes no one's access.
 a3_sola.patches.v1_3.company_memberships
+# A Salutation on the customer: taken from the lead where it has one, and shown on the survey, eligibility check, proposal and project.
+a3_sola.patches.v1_3.consumer_salutation
+# Design estimates' DCR Compliant set from their package (it was read before the option's package was taken).
+a3_sola.patches.v1_3.estimate_dcr_from_package

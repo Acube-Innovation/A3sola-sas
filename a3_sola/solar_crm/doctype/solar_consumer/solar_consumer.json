@@ -10,6 +10,7 @@
  "field_order": [
   "tab_consumer",
   "sb_1",
+  "salutation",
   "consumer_name",
   "consumer_photo",
   "customer",
@@ -76,6 +77,7 @@
   "installation_address",
   "roof_type",
   "approx_roof_area_sqft",
+  "google_location_url",
   "cb_8",
   "latitude",
   "longitude",
@@ -87,7 +89,6 @@
   "survey_number",
   "landmark",
   "taluk",
-  "google_location_url",
   "gps_coordinates",
   "tab_bank",
   "sb_11",
@@ -133,6 +134,12 @@
    "fieldname": "sb_1",
    "fieldtype": "Section Break",
    "label": "Customer Details"
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation"
   },
   {
    "fieldname": "consumer_name",
@@ -519,7 +526,7 @@
    "fieldtype": "Float",
    "label": "Proposed System Size (kW)",
    "precision": "3",
-   "description": "From the lead when it has it. A change here reaches the lead too."
+   "description": "From the lead when it has it, then the design proposal's size once one is made. A change here reaches the lead too."
   },
   {
    "fieldname": "cb_solar_requirement",
@@ -547,7 +554,8 @@
    "fieldtype": "Link",
    "label": "Installation Address Record",
    "options": "Address",
-   "description": "The ERPNext Address for delivery notes and the customer. Optional - the installation site address above is what documents print."
+   "description": "The ERPNext Address for delivery notes and the customer. Optional - the installation site address above is what documents print.",
+   "hidden": 1
   },
   {
    "fieldname": "roof_type",
@@ -562,6 +570,13 @@
    "precision": 2
   },
   {
+   "description": "Paste the shared Maps link: the latitude and longitude are read from it. Composed from the coordinates when blank.",
+   "fieldname": "google_location_url",
+   "fieldtype": "Data",
+   "label": "Google Location",
+   "options": "URL"
+  },
+  {
    "fieldname": "cb_8",
    "fieldtype": "Column Break"
   },
@@ -569,13 +584,15 @@
    "fieldname": "latitude",
    "fieldtype": "Float",
    "label": "Latitude",
-   "precision": 6
+   "precision": 6,
+   "description": "Read from the Google Location link when it has them."
   },
   {
    "fieldname": "longitude",
    "fieldtype": "Float",
    "label": "Longitude",
-   "precision": 6
+   "precision": 6,
+   "description": "Read from the Google Location link when it has them."
   },
   {
    "fieldname": "sb_9",
@@ -617,13 +634,6 @@
    "fieldname": "taluk",
    "fieldtype": "Data",
    "label": "Taluk"
-  },
-  {
-   "description": "Composed from the coordinates when blank. Paste the shared Maps link otherwise.",
-   "fieldname": "google_location_url",
-   "fieldtype": "Data",
-   "label": "Google Location",
-   "options": "URL"
   },
   {
    "fieldname": "gps_coordinates",
@@ -823,7 +833,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-13 12:30:00.000000",
+ "modified": "2026-11-18 13:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",

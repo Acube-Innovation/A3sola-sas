@@ -322,17 +322,18 @@ def _belongs(estimate, lead, solar_consumer):
 def proposal_defaults_for(lead, solar_consumer=None):
 	"""What section 1 holds for this lead: from the lead, its consumer and its site survey."""
 	values = {}
-	lead_doc = frappe.db.get_value("Lead", lead, ["lead_name", "company_name", "mobile_no", "email_id", "city",
+	lead_doc = frappe.db.get_value("Lead", lead, ["salutation", "lead_name", "company_name", "mobile_no", "email_id", "city",
 		"district", "solar_consumer", "site_survey", "discom", "discom_section", "consumer_number",
 		"connection_type"], as_dict=True) if lead else None
 	consumer = solar_consumer or (lead_doc.solar_consumer if lead_doc else None)
-	con = frappe.db.get_value("Solar Consumer", consumer, ["consumer_name", "mobile_no", "email_id", "site_survey",
+	con = frappe.db.get_value("Solar Consumer", consumer, ["salutation", "consumer_name", "mobile_no", "email_id", "site_survey",
 		"tariff_category", "discom", "discom_section", "consumer_number", "connection_type", "taluk", "landmark",
 		"google_location_url", "village", "local_body_name"], as_dict=True) if consumer else None
 	survey = (con.site_survey if con else None) or (lead_doc.site_survey if lead_doc else None)
 	pick = lambda field: (con.get(field) if con else None) or (lead_doc.get(field) if lead_doc and field in lead_doc else None)
 
 	values["solar_consumer"] = consumer
+	values["salutation"] = pick("salutation")
 	values["customer_name"] = (con.consumer_name if con else None) or (lead_doc.lead_name if lead_doc else None)
 	values["mobile_no"] = pick("mobile_no")
 	values["email_id"] = pick("email_id")
@@ -592,6 +593,10 @@ def generate_proposal(solar_proposal):
 
 	doc = frappe.get_doc("Solar Proposal", solar_proposal)
 	doc.check_permission("write")
+	if not doc.solar_design_estimate:
+		# Saved without one is fine; the PDF is the estimate's design, so not before it has one.
+		frappe.throw(_("Add a design estimate to this proposal before generating its PDF."),
+			frappe.MandatoryError, title=_("No Design Estimate"))
 
 	# The first Generate is what opens version one; there is no document to send before it.
 	version = _current_version(doc)

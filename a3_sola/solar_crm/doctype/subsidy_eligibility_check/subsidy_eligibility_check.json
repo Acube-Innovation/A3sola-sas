@@ -23,6 +23,7 @@
   "override_on",
   "amended_from",
   "consumer_details_section",
+  "salutation",
   "consumer_name",
   "mobile_no",
   "email_id",
@@ -196,6 +197,14 @@
    "description": "Filled from the Customer, or from the Lead when no customer exists yet. Edit these on the source record."
   },
   {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation",
+   "fetch_from": "solar_consumer.salutation",
+   "read_only": 1
+  },
+  {
    "fieldname": "consumer_name",
    "fieldtype": "Data",
    "label": "Customer Name",
@@ -312,7 +321,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-13 12:50:00.000000",
+ "modified": "2026-11-18 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Subsidy Eligibility Check",
