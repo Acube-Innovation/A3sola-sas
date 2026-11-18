@@ -446,7 +446,7 @@ def show_when(df):
 #: Fields the portal never shows, by doctype: ERPNext sets them itself (an order's
 #: currency and exchange rates come from the company, customer and price list), or they
 #: are the office's business, kept in ERPNext (a task's cost).
-PORTAL_HIDDEN = {
+STATIC_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
 	# The approval letter and the feasibility report go on the task's Attachments card.
 	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter", "feasibility_report"},
@@ -454,6 +454,14 @@ PORTAL_HIDDEN = {
 	# A customer's Contact is not asked for: ERPNext makes the primary contact with its Customer.
 	"Solar Consumer": {"contact_person"},
 }
+
+
+def portal_hidden(doctype):
+	"""The fields of `doctype` the portal does not show: the ones above, and those an admin
+	has hidden on Administration > Page Layout (api/page_layout)."""
+	from a3_sola.api import page_layout
+
+	return set(STATIC_HIDDEN.get(doctype, ())) | page_layout.hidden_fields(doctype)
 
 
 def partner_hidden(meta):
@@ -468,7 +476,7 @@ def partner_hidden(meta):
 	levels = set(meta.get_permlevel_access("read") or []) | {0}
 	# A contractor sees no money at all - not even the customer's price.
 	return {f.fieldname for f in meta.fields if (f.permlevel or 0) not in levels
-		or (kind == "contractor" and f.fieldtype == "Currency")} | set(PORTAL_HIDDEN.get(meta.name, ()))
+		or (kind == "contractor" and f.fieldtype == "Currency")} | portal_hidden(meta.name)
 
 
 def form_fields(meta, prefill=None, extra=()):
@@ -490,7 +498,7 @@ def form_fields(meta, prefill=None, extra=()):
 
 	optional = 0
 	wanted = set(extra or ())
-	hidden = set(PORTAL_HIDDEN.get(meta.name, set())) | partner_hidden(meta)
+	hidden = portal_hidden(meta.name) | partner_hidden(meta)
 	for f in meta.fields:
 		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only or f.fieldname in hidden:
 			continue
@@ -1437,7 +1445,7 @@ def detail_context(context, slug, name):
 		sections = []
 		for s in g["sections"]:
 			rows = [detail_row(df, doc.get(df.fieldname)) for df in s["fields"]
-			        if df.fieldname not in PORTAL_HIDDEN.get(doc.doctype, ())]
+			        if df.fieldname not in portal_hidden(doc.doctype)]
 			if rows:
 				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "rows": rows})
 		groups.append({"key": g["key"], "label": g["label"], "sections": sections})
@@ -1604,7 +1612,7 @@ def edit_fields_for(doc, first_label=None):
 			for df in s["fields"]:
 				if ((df.fieldtype not in INPUT_TYPES_ALL and not is_portal_file(doc.doctype, df))
 						or df.read_only or df.fieldname in AUTO_FIELDS
-						or df.fieldname in PORTAL_HIDDEN.get(doc.doctype, ())
+						or df.fieldname in portal_hidden(doc.doctype)
 						# A task's document: its people are the task's, in the Assigned to strip.
 						or (df.fieldname == "assigned_to" and doc.doctype in TASK_DOCTYPES_WITH_PEOPLE)
 						or (only is not None and df.fieldname not in only)):
