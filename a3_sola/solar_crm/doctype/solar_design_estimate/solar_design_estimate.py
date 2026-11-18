@@ -236,14 +236,43 @@ class SolarDesignEstimate(Document):
 				and before.equipment_package == self.equipment_package \
 				and all(previous.get(field) == row.get(field) for _table, field in COMPONENT_CHOICES):
 			return
+		# An inverter newly chosen brings the panel its package pairs it with (Pricing Options):
+		# the Hoymiles kit its 550 Wp Rayzon, not the default panel of another inverter.
+		paired = None
+		if not previous or previous.inverter_make != row.inverter_make or previous.solar_package != row.solar_package:
+			paired = self.paired_panel_row(row)
 		for table, field in COMPONENT_CHOICES:
 			make = row.get(field)
 			rows = self.get(table) or []
 			chosen = next((r for r in rows if make and r.get(field) == make), None)
+			if table == "panels" and paired is not None:
+				chosen = paired
+				row.panel_make = paired.panel_make
 			if not chosen:
 				continue
 			for r in rows:
 				r.is_option = 0 if r is chosen else 1
+
+	def paired_panel_row(self, row):
+		"""The estimate's panel row for the panel the option row's inverter is built with in its
+		package (solar_package.inverter_panel), or None when the package pairs none or the
+		estimate has no such panel."""
+		from a3_sola.solar_crm.doctype.solar_package.solar_package import inverter_panel
+
+		if not (row.solar_package and row.inverter_make):
+			return None
+		package = frappe.get_cached_doc("Solar Package", row.solar_package)
+		matching = [r for r in inverters_for_phase(package, row.connection_type or self.connection_type)
+			if r.inverter_make == row.inverter_make]
+		inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
+		module = inverter_panel(package, inverter) if inverter else None
+		if not module:
+			return None
+		for r in self.get("panels") or []:
+			if module.module_item and r.panel_item == module.module_item:
+				return r
+		return next((r for r in self.get("panels") or [] if r.panel_make == module.module_make
+			and flt(r.panel_capacity_wp) == flt(module.module_wattage)), None)
 
 	def record_component_choices(self):
 		"""Write the priced panel, inverter and battery back to the recommended option row,

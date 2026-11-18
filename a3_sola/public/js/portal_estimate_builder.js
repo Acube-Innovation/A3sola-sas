@@ -441,9 +441,6 @@
 		});
 
 		/* The PDF and WhatsApp send what is saved, so they wait for the changes to be saved. */
-		$("de-pdf-link").href = state.pdf_route || "#";
-		$("de-pdf-link").hidden = !state.saved || dirty;
-		$("de-whatsapp").hidden = !state.saved || dirty;
 		$("de-discard").hidden = !dirty || busy;
 		var save = $("de-save");
 		var canSave = state.editable && (dirty || !state.saved);
@@ -583,13 +580,32 @@
 	}
 
 	/* ------------------------------------------------------ middle: form */
+	/* The fields narrowed to what the row's Item is mapped to (a field's `only`): {fieldname:
+	   [values]} - the Item's make, and any make the row already had. Set by paintForm. */
+	var only = {};
+
 	function options(field, values) {
 		var list = state.choices[field.choices] || [];
+		if (only[field.fieldname]) {
+			var allowed = only[field.fieldname];
+			return list.filter(function (o) { return allowed.indexOf(o.value) !== -1; });
+		}
 		if (field.filter_by) {
 			var by = values[field.filter_by];
 			list = list.filter(function (o) { return !o.filter || !by || o.filter === by; });
 		}
 		return list;
+	}
+
+	/* What `f`'s choice narrows: an Item mapped to a make offers that make alone (and the one
+	   the row has, so an edit loses nothing). An Item with none leaves the list whole. */
+	function narrow(f, value, keep) {
+		var chosen = (state.choices[f.choices] || []).find(function (o) { return o.value === value; });
+		Object.keys(f.only || {}).forEach(function (target) {
+			var mapped = chosen && chosen[f.only[target]];
+			if (mapped) only[target] = [mapped].concat(keep && keep[target] && keep[target] !== mapped ? [keep[target]] : []);
+			else delete only[target];
+		});
 	}
 
 	function fillSelect(select, field, values) {
@@ -688,6 +704,8 @@
 		});
 		var byName = {};
 		s.fields.forEach(function (f) { byName[f.fieldname] = f; });
+		only = {};
+		s.fields.forEach(function (f) { if (f.only) narrow(f, values[f.fieldname], values); });
 
 		var holder = $("de-fields");
 		holder.innerHTML = "";
@@ -728,6 +746,16 @@
 			var source = $("de-fld-" + f.fieldname);
 			if (!source) return;
 			source.addEventListener("change", function () {
+				/* The lists it narrows first, so the make it fills is among them. */
+				if (f.only) {
+					narrow(f, source.value, null);
+					Object.keys(f.only).forEach(function (target) {
+						var input = $("de-fld-" + target), field = byName[target];
+						if (!input || !field) return;
+						fillSelect(input, field, currentValues());
+						input.dispatchEvent(new Event("a3s:sync"));
+					});
+				}
 				var chosen = (state.choices[f.choices] || []).find(function (o) { return o.value === source.value; });
 				if (!chosen) return;
 				Object.keys(f.fills).forEach(function (target) {
@@ -792,8 +820,8 @@
 		}
 
 		/* The saved option's own print, under its figures: read in the browser, or saved. */
-		/* The next step under the figures: the proposal, made on the Proposal tab. Its PDF is
-		   there and in the header's download, so it is not repeated here. */
+		/* The next step under the figures: the proposal, made on the Proposal tab, where its
+		   PDF is. */
 		var print = $("de-com-print");
 		print.innerHTML = "";
 		if (state.saved && !changes(option).length) {
@@ -1010,22 +1038,6 @@
 		modal.hidden = true;
 		editing = null;
 	}
-
-	/* WhatsApp opens with the customer's number and the estimate's summary, ready to send.
-	   The window is opened at once, inside the click, so the browser does not block it. */
-	$("de-whatsapp").addEventListener("click", function () {
-		var win = window.open("", "_blank");
-		setStatus("Opening WhatsApp…", null, tabStatus);
-		call("whatsapp_link", { name: state.name })
-			.then(function (link) {
-				if (win) win.location.href = link; else window.location.href = link;
-				setStatus("WhatsApp opened with the estimate summary. Download the PDF to send it in the chat.", "success", tabStatus);
-			})
-			.catch(function (error) {
-				if (win) win.close();
-				setStatus(error.message, "error", tabStatus);
-			});
-	});
 
 	$("de-add").addEventListener("click", function () { openModal(null); });
 	$("de-close").addEventListener("click", closeModal);

@@ -79,8 +79,12 @@ SECTIONS = (
 	{"key": "panels", "label": "Solar Panel", "icon": "bolt", "fields": (
 		# As the package's Solar Panel row: its Item first - required here, so a panel added or
 		# changed names the module bought - which fills the specification, Wp and DCR type.
+		# An Item mapped to a make in ERPNext (its Make) fills it, and its variant, and the Make
+		# list offers that make alone.
 		{"fieldname": "panel_item", "choices": "panel_item", "column": False, "required": True,
-			"fills": {"specification": "text", "panel_capacity_wp": "wp", "panel_type": "type"}},
+			"fills": {"specification": "text", "panel_capacity_wp": "wp", "panel_type": "type",
+				"panel_variant": "make_tech", "panel_make": "make"},
+			"only": {"panel_make": "make"}},
 		{"fieldname": "specification", "column": False},
 		{"fieldname": "panel_type", "choices": "panel_type"},
 		{"fieldname": "panel_capacity_wp"},
@@ -108,7 +112,9 @@ SECTIONS = (
 		{"fieldname": "inverter_count", "column": False, "hint": True},
 		{"fieldname": "inverter_phase", "choices": "phase"},
 		{"fieldname": "inverter_make", "choices": "inverter_make", "filter_by": "inverter_type"},
+		# A model chosen fills its make (and the make's type), so it can be picked first too.
 		{"fieldname": "inverter_model", "choices": "inverter_model", "filter_by": "inverter_make",
+			"fills": {"inverter_type": "make_tech", "inverter_make": "make"},
 			"hint": "From the inverter price list: sets the size, phase and price. Another model than the package's changes its price by the difference."},
 		{"fieldname": "with_optimizer", "choices": "yes_no", "hint": "Yes: the model's optimizers are added at the price list's quantity and price."},
 		{"fieldname": "specification", "column": False, "hint": "Printed in the proposal after the rating, e.g. Hybrid with MPPT and Online Monitoring."},
@@ -125,7 +131,8 @@ SECTIONS = (
 	{"key": "batteries", "label": "Battery", "icon": "stack", "only_for": ("Off-Grid", "Hybrid"), "fields": (
 		# As the package's Battery row: its Item, required here, fills the specification.
 		{"fieldname": "battery_item", "choices": "battery_item", "column": False, "required": True,
-			"fills": {"specification": "text"}},
+			"fills": {"specification": "text", "battery_variant": "make_tech", "battery_make": "make"},
+			"only": {"battery_make": "make"}},
 		{"fieldname": "battery_voltage"},
 		{"fieldname": "battery_phase", "choices": "phase"},
 		{"fieldname": "battery_capacity_ah"},
@@ -649,6 +656,8 @@ def _choices(doc):
 
 	from a3_sola.api.package_items import add_on_groups as _add_on_groups
 
+	make_tech = dict(frappe.get_all("Component Make", fields=["name", "technology"], as_list=True))
+
 	meta = frappe.get_meta("Design Estimate BOS Item")
 	bos_items = [o for o in (meta.get_field("item").options or "").split("\n") if o]
 	bom_items = frappe.get_all("Item", filters={"disabled": 0, "item_group": ["!=", "Solar Packages"]},
@@ -678,7 +687,8 @@ def _choices(doc):
 		"inverter_make": makes("Inverter"),
 		# The price list's models of each make, for the estimate's own connection.
 		"inverter_model": [
-			{"value": r.name, "filter": r.inverter_make, "label": "{0} \u00b7 {1:g} kW \u00b7 {2}{3}".format(
+			{"value": r.name, "filter": r.inverter_make, "make": r.inverter_make, "make_tech": make_tech.get(r.inverter_make) or "",
+				"label": "{0} \u00b7 {1:g} kW \u00b7 {2}{3}".format(
 				r.model_name, flt(r.capacity_kw), frappe.utils.fmt_money(r.rate, currency="INR"),
 				" + optimizer {0}".format(frappe.utils.fmt_money(r.optimizer_total, currency="INR")) if flt(r.optimizer_total) else "")}
 			for r in frappe.get_all("Inverter Model",
@@ -732,11 +742,15 @@ def group_item_choices(group):
 		return []
 	lft, rgt = frappe.db.get_value("Item Group", group, ["lft", "rgt"])
 	groups = frappe.get_all("Item Group", filters={"lft": [">=", lft], "rgt": ["<=", rgt]}, pluck="name")
+	# The make each Item is mapped to in ERPNext (Item.make), and that make's technology.
+	has_make = frappe.db.has_column("Item", "make")
+	make_tech = dict(frappe.get_all("Component Make", fields=["name", "technology"], as_list=True)) if has_make else {}
 	return [{"value": item.name, "label": item.item_name if item.item_name == item.name else
 		"{0} ({1})".format(item.item_name, item.name),
-		"text": re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", item.description or "")).strip() or item.item_name}
+		"text": re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", item.description or "")).strip() or item.item_name,
+		"make": item.get("make") or "", "make_tech": make_tech.get(item.get("make")) or ""}
 		for item in frappe.get_all("Item", filters={"item_group": ["in", groups], "disabled": 0},
-			fields=["name", "item_name", "description"], order_by="item_name")]
+			fields=["name", "item_name", "description"] + (["make"] if has_make else []), order_by="item_name")]
 
 
 def panel_item_choices():
@@ -796,7 +810,7 @@ def _section(doc, section, child, rows):
 			"fieldname": df.fieldname, "label": _((section.get("labels") or {}).get(df.fieldname) or df.label),
 			"reqd": bool(df.reqd or spec.get("required")),
 			"input": "select" if spec.get("choices") else INPUT.get(df.fieldtype, "text"),
-			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"), "fills": spec.get("fills"),
+			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"), "fills": spec.get("fills"), "only": spec.get("only"),
 			"default": default, "hint": _(hint) if hint else "",
 		})
 	rows = [{

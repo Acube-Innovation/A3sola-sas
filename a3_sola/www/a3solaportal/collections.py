@@ -34,6 +34,8 @@ COLLECTIONS = {
 	# be added by editing the customer straight after creating it.
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
 	              "form_columns": 4, "all_fields": True,
+	              # Done after the customer is made, on the edit form: the cheque and the bank check.
+	              "create_skip": ["cancelled_cheque", "bank_details_verified", "bank_details_verified_by"],
 	              "form_extra": ["lead_mobile_no", "date_of_birth", "gender", "site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode",
@@ -584,7 +586,9 @@ def form_extra(cfg, meta):
 		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES or is_portal_file(meta.name, df)]
 	if cfg.get("first_tab_first"):
 		extra += first_tab_fieldnames(meta)
-	return extra
+	# Fields left to the edit form (`create_skip`), unless the doctype demands them.
+	skip = set(cfg.get("create_skip") or ())
+	return [f for f in extra if f not in skip or (meta.get_field(f) and meta.get_field(f).reqd)]
 
 
 def task_source(slug, installation, task_code):
