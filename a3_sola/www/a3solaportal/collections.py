@@ -451,6 +451,8 @@ PORTAL_HIDDEN = {
 	# The approval letter and the feasibility report go on the task's Attachments card.
 	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter", "feasibility_report"},
 	"Document Pack": {"task_cost"},
+	# A customer's Contact is not asked for: ERPNext makes the primary contact with its Customer.
+	"Solar Consumer": {"contact_person"},
 }
 
 
