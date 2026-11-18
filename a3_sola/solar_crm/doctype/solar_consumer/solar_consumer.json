@@ -598,6 +598,7 @@
    "label": "Statutory Location"
   },
   {
+   "default": "Panchayat",
    "fieldname": "local_body_type",
    "fieldtype": "Select",
    "label": "Local Body Type",
@@ -829,7 +830,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-18 13:30:00.000000",
+ "modified": "2026-11-18 18:42:23.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Consumer",
