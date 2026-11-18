@@ -127,7 +127,9 @@ SECTIONS = (
 	), "computed": ("total_energy_kwh", "amount"),
 		"compact": {"title": (("battery_make", ""), ("battery_variant", ""), ("battery_voltage", " V"), ("battery_capacity_ah", " Ah")),
 			"sub": (("battery_phase", ""), ("total_energy_kwh", " kWh"))}},
-	{"key": "bos_items", "label": "Balance of System", "icon": "box", "fields": (
+	# Not offered on the design page: the packages carry no balance of system, so the section
+	# only ever showed an empty list. Kept here so the table still reads and saves if rows exist.
+	{"key": "bos_items", "label": "Balance of System", "icon": "box", "hidden": True, "fields": (
 		{"fieldname": "item", "choices": "bos_item"},
 		{"fieldname": "phase", "choices": "phase"},
 		{"fieldname": "specification"},
@@ -812,6 +814,8 @@ def _sections(doc):
 	out = []
 	admin = is_admin()
 	for section in SECTIONS:
+		if section.get("hidden"):
+			continue
 		if section.get("only_for") and doc.system_type not in section["only_for"]:
 			continue
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)
