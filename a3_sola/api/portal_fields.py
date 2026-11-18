@@ -259,6 +259,9 @@ DEPENDENT_LINKS = {
 	"site_district": ("state", "site_state"),
 	"permanent_district": ("state", "permanent_state"),
 	"discom_section": ("discom", "discom"),
+	# A design estimate is offered only for the customer chosen beside it.
+	"design_estimate": ("solar_consumer", "solar_consumer"),
+	"solar_design_estimate": ("solar_consumer", "solar_consumer"),
 }
 
 #: Further fields of the same record a dependent Link also follows: the form reloads its list
