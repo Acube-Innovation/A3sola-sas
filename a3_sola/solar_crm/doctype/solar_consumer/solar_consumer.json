@@ -700,16 +700,14 @@
    "fieldname": "bank_details_verified",
    "fieldtype": "Check",
    "label": "Verified",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "bank_details_verified_by",
    "fieldtype": "Link",
    "label": "Verified By",
    "options": "User",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "tab_subsidy",

@@ -28,6 +28,7 @@ INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
 #: doctype. Named one by one: any other attachment stays on the detail page and the desk.
 PORTAL_FILE_FIELDS = {
 	"Installation Task": {"feasibility_report", "approval_letter"},
+	"Solar Consumer": {"cancelled_cheque"},
 }
 
 

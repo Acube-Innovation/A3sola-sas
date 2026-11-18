@@ -491,7 +491,8 @@ def form_fields(meta, prefill=None, extra=()):
 		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only or f.fieldname in hidden:
 			continue
 		reqd = bool(f.reqd) or f.fieldname in wanted
-		if f.fieldtype not in INPUT_TYPES:
+		is_file = is_portal_file(meta.name, f)
+		if f.fieldtype not in INPUT_TYPES and not is_file:
 			if reqd and f.fieldtype in ("Attach", "Attach Image", "Table", "Table MultiSelect", "Signature", "Geolocation"):
 				unrenderable.append(f.label or f.fieldname)
 			continue
@@ -516,6 +517,9 @@ def form_fields(meta, prefill=None, extra=()):
 			spec["value"] = now.strftime("%Y-%m-%d") if f.fieldtype == "Date" else now.strftime("%Y-%m-%dT%H:%M")
 		if f.fieldtype == "Attach Image":
 			spec["input"] = "image"
+		elif is_file:
+			spec["input"] = "file"
+			spec["file_name"] = str(spec["value"]).rsplit("/", 1)[-1] if spec["value"] else ""
 		if f.fieldtype == "Select":
 			opts = [o for o in (f.options or "").split("\n")]
 			spec["options"] = opts
@@ -563,7 +567,7 @@ def form_extra(cfg, meta):
 	if cfg.get("all_fields"):
 		# Every field the form can take; `form_fields` drops the hidden and read-only ones, as
 		# `edit_fields_for` does on the edit form.
-		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES]
+		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES or is_portal_file(meta.name, df)]
 	if cfg.get("first_tab_first"):
 		extra += first_tab_fieldnames(meta)
 	return extra

@@ -11,7 +11,7 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from a3_sola.api.naming import set_name
 from a3_sola.api import kyc, record_links
@@ -330,6 +330,12 @@ class SolarConsumer(Document):
 				title=_("Check Bank Details"),
 				indicator="orange",
 			)
+		# Whoever ticks Verified verified them, unless another name is chosen; untick it and
+		# nobody has.
+		if cint(self.bank_details_verified):
+			self.bank_details_verified_by = self.bank_details_verified_by or frappe.session.user
+		else:
+			self.bank_details_verified_by = None
 
 	def set_status(self, status):
 		"""Status advances through the sales journey and is never set by hand."""
