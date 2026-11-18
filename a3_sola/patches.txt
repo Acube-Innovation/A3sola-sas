@@ -344,3 +344,4 @@ a3_sola.patches.v1_3.company_memberships
 a3_sola.patches.v1_3.consumer_salutation
 # Design estimates' DCR Compliant set from their package (it was read before the option's package was taken).
 a3_sola.patches.v1_3.estimate_dcr_from_package
+a3_sola.patches.v1_3.phase_rule_above_5kw

@@ -513,11 +513,11 @@ def seed_regulation_rules(company, discom):
 		{
 			"doctype": "Grid Regulation Rule",
 			"rule_code": "KSERC-3PH-ABOVE-3KW",
-			"rule_name": "Three-phase connection required above 3 kW",
+			"rule_name": "Three-phase connection required above 5 kW",
 			"discom": discom,
 			"regulator": "KSERC",
 			"rule_type": "Phase Requirement",
-			"threshold_kw": 3,
+			"threshold_kw": 5,
 			"required_connection_type": "Three Phase",
 			"notified_on": "2025-11-06",
 			"effective_from": "2025-11-06",
@@ -528,7 +528,7 @@ def seed_regulation_rules(company, discom):
 			"company": company,
 			# SOURCE: the sentence the client's proposals already print.
 			"customer_facing_clause": (
-				"<p>As per new KSERC regulations, solar plants above 3 kW shall be three-phase. However, the "
+				"<p>As per new KSERC regulations, solar plants above 5 kW shall be three-phase. However, the "
 				"regulation notified on 06.11.2025 has been stayed by the High Court till 22.05.2026. Based on "
 				"the status of the regulation, a three phase or single phase system may have to be chosen.</p>"
 			),

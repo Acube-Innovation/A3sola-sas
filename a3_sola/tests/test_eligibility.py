@@ -69,6 +69,8 @@ class TestEligibility(FrappeTestCase):
 		A back-dated check must reflect the law that applied then, so the same 5 kW
 		single-phase job is Not Applicable inside the stay and Fail after it.
 		"""
+		# The rule bites above 5 kW; held at 3 kW here so this job is above it whatever it sizes to.
+		frappe.db.set_value("Grid Regulation Rule", {"rule_code": "KSERC-3PH-ABOVE-3KW"}, "threshold_kw", 3)
 		consumer = make_consumer(
 			avg_consumption_units=1250, sanctioned_load_kw=10, connection_type="Single Phase"
 		)
