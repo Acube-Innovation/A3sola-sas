@@ -103,13 +103,14 @@ NAV_GROUPS = [
 			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
 			{"title": "Packages", "sub": "Systems, prices and BOMs", "ic": "package", "route": "/a3solaportal/packages"},
 			{"title": "Menu", "sub": "What the menu shows", "ic": "checklist", "route": "/a3solaportal/menu"},
+			{"title": "Page Layout", "sub": "Hide fields and sections", "ic": "sheet", "route": "/a3solaportal/page-layout"},
 			{"title": "Support", "sub": "Log in as any user", "ic": "eye", "route": "/a3solaportal/support"},
 		],
 	},
 ]
 
 #: Menu items for admins alone: the page refuses anyone else too.
-ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/menu"}
+ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/menu", "/a3solaportal/page-layout"}
 #: Menu items for our own platform staff alone ("Log in as" across every company).
 PLATFORM_NAV = {"/a3solaportal/support"}
 
@@ -230,4 +231,7 @@ def fill_shell(context, *, active_route, page_title, crumbs):
 	context.active_route = active_route
 	context.page_title = page_title
 	context.crumbs = crumbs
+	from a3_sola.api import page_layout
+
+	context.a3s_hidden_css = page_layout.hidden_css()
 	return context

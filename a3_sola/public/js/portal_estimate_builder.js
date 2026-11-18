@@ -604,48 +604,121 @@
 
 	function currentValues() {
 		var out = {};
-		Array.prototype.forEach.call(form.elements, function (input) { if (input.name) out[input.name] = input.value; });
+		Array.prototype.forEach.call(form.elements, function (input) {
+			if (!input.name) return;
+			out[input.name] = input.type === "checkbox" ? (input.checked ? "1" : "0") : input.value;
+		});
 		return out;
+	}
+
+	/* A Yes/No choice is a tick box, as on the package's row form. */
+	function isCheck(f) { return f.choices === "yes_no"; }
+	/* The text a row prints - its specification or description - alone on its line, in a box. */
+	var TEXT_FIELDS = { specification: 1, description: 1 };
+
+	/* The row's amount, its rate times its count, as the server works it out; blank till both are. */
+	function rowAmount(s) {
+		var by = s.row_total || [];
+		if (by.length !== 2) return null;
+		var rate = $("de-fld-" + by[0]), count = $("de-fld-" + by[1]);
+		if (!rate || !count || rate.value === "" || count.value === "") return null;
+		return (Number(rate.value) || 0) * (Number(count.value) || 0);
+	}
+	function paintAmount(s) {
+		var box = form.querySelector('[data-ro="amount"]');
+		if (!box) return;
+		var amount = rowAmount(s);
+		box.innerHTML = "";
+		if (amount === null) box.appendChild(el("span", { class: "a3s-table__muted", text: "Worked out when added" }));
+		else box.textContent = money.format(amount);
+	}
+
+	function fieldBox(s, f, values, alone) {
+		var id = "de-fld-" + f.fieldname;
+		var hint = f.hint ? el("p", { class: "a3s-field__hint", text: f.hint }) : null;
+		if (isCheck(f)) {
+			var tick = el("input", { type: "checkbox", id: id, name: f.fieldname });
+			tick.checked = values[f.fieldname] === "1";
+			var check = el("label", { class: "a3s-check", title: f.hint || null }, [tick, el("span", { text: f.label })]);
+			return check;
+		}
+		var input;
+		if (f.input === "select") {
+			input = el("select", { id: id, name: f.fieldname });
+			fillSelect(input, f, values);
+		} else if (f.input === "textarea" || (alone && TEXT_FIELDS[f.fieldname])) {
+			input = el("textarea", { id: id, name: f.fieldname, rows: "2" });
+			input.value = values[f.fieldname];
+		} else {
+			input = el("input", { id: id, name: f.fieldname, type: f.input === "number" ? "number" : "text",
+				step: f.input === "number" ? "any" : null, inputmode: f.input === "number" ? "decimal" : null });
+			input.value = values[f.fieldname];
+		}
+		var label = el("label", { for: id, text: f.label });
+		if (f.reqd) label.appendChild(el("span", { class: "a3s-req", text: " *" }));
+		var wrap = el("div", { class: "a3s-field" }, [label, input, hint]);
+		/* A long list - an Item first on its line above all - is a search box over its choices. */
+		if (f.input === "select" && (options(f, values).length > 12 || alone)) {
+			wrap.classList.add("a3s-combo", "a3s-combo--field");
+			wrap.setAttribute("data-combo", "");
+			if (alone) wrap.setAttribute("data-combo-open", "");
+		}
+		return wrap;
+	}
+
+	/* The row's amount, worked out and shown, never typed (the package's Total). */
+	function amountBox(s) {
+		return el("div", { class: "a3s-field" }, [
+			el("span", { class: "a3s-pkg__rolabel", text: s.amount_label || "Amount" }),
+			el("p", { class: "a3s-pkg__ro", "data-ro": "amount" }),
+			el("p", { class: "a3s-field__hint", text: "Rate x Nos." })
+		]);
 	}
 
 	function paintForm() {
 		var s = section();
-		$("de-form-title").textContent = (editing ? "Change " : "Add ") + s.label.toLowerCase();
-		submit.textContent = editing ? "Apply changes" : "Add";
+		var noun = s.label.toLowerCase();
+		$("de-form-title").textContent = (editing ? "Edit " : "Add ") + noun + " row";
+		submit.textContent = editing ? "Done" : "Add row";
 
 		var values = {};
 		s.fields.forEach(function (f) {
 			var v = editing ? editing.values[f.fieldname] : f.default;
 			values[f.fieldname] = v === null || v === undefined ? "" : String(v);
 		});
+		var byName = {};
+		s.fields.forEach(function (f) { byName[f.fieldname] = f; });
 
 		var holder = $("de-fields");
 		holder.innerHTML = "";
-		s.fields.forEach(function (f) {
-			var id = "de-fld-" + f.fieldname;
-			var input;
-			if (f.input === "select") {
-				input = el("select", { id: id, name: f.fieldname });
-				fillSelect(input, f, values);
-			} else if (f.input === "textarea") {
-				input = el("textarea", { id: id, name: f.fieldname, rows: "2" });
-				input.value = values[f.fieldname];
-			} else {
-				input = el("input", { id: id, name: f.fieldname, type: f.input === "number" ? "number" : "text", step: f.input === "number" ? "any" : null });
-				input.value = values[f.fieldname];
-			}
-			var label = el("label", { for: id, text: f.label });
-			if (f.reqd) label.appendChild(el("span", { class: "a3s-req", text: " *" }));
-			var parts = [label, input];
-			if (f.hint) parts.push(el("p", { class: "a3s-field__hint", text: f.hint }));
-			holder.appendChild(el("div", { class: "a3s-field" + (f.input === "textarea" ? " a3s-de-fields__wide" : "") }, parts));
+		/* Line by line, as the package's row form: a line of one field is full width, of three,
+		   three across. Any field not placed follows, two across. */
+		var placed = {};
+		var lines = el("div", { class: "a3s-pkg__lines" });
+		(s.lines || []).forEach(function (line) {
+			var boxes = [];
+			line.forEach(function (name) {
+				placed[name] = 1;
+				if (byName[name]) boxes.push(fieldBox(s, byName[name], values, line.length === 1));
+				else if (name === "amount" && (s.row_total || []).length === 2) boxes.push(amountBox(s));
+			});
+			if (boxes.length) lines.appendChild(el("div", { class: "a3s-pkg__line a3s-pkg__line--" + line.length }, boxes));
 		});
+		if (lines.childNodes.length) holder.appendChild(lines);
+		var rest = s.fields.filter(function (f) { return !placed[f.fieldname]; });
+		if (rest.length) holder.appendChild(el("div", { class: "a3s-form__grid" }, rest.map(function (f) { return fieldBox(s, f, values, false); })));
+		if (window.a3sCombo) window.a3sCombo.wireAll(holder);
+		paintAmount(s);
 
 		/* A make list follows the variant, type or item chosen beside it. */
 		s.fields.forEach(function (f) {
 			if (!f.filter_by) return;
 			var source = $("de-fld-" + f.filter_by);
-			if (source) source.addEventListener("change", function () { fillSelect($("de-fld-" + f.fieldname), f, currentValues()); });
+			if (source) source.addEventListener("change", function () {
+				var target = $("de-fld-" + f.fieldname);
+				fillSelect(target, f, currentValues());
+				target.dispatchEvent(new Event("a3s:sync"));
+			});
 		});
 
 		/* A choice that fills others (a panel's Item: its specification, Wp and DCR type) sets
@@ -662,8 +735,15 @@
 					if (!input || value === undefined || value === null || value === "") return;
 					input.value = String(value);
 					input.dispatchEvent(new Event("change"));
+					input.dispatchEvent(new Event("a3s:sync"));
 				});
 			});
+		});
+
+		/* The amount follows the rate and the count as they are typed. */
+		(s.row_total || []).forEach(function (name) {
+			var input = $("de-fld-" + name);
+			if (input) input.addEventListener("input", function () { paintAmount(s); });
 		});
 	}
 
@@ -712,16 +792,21 @@
 		}
 
 		/* The saved option's own print, under its figures: read in the browser, or saved. */
+		/* The next step under the figures: the proposal, made on the Proposal tab. Its PDF is
+		   there and in the header's download, so it is not repeated here. */
 		var print = $("de-com-print");
 		print.innerHTML = "";
 		if (state.saved && !changes(option).length) {
-			var view = el("a", { class: "a3s-btn a3s-btn--secondary a3s-de-com__pdf", href: state.pdf_view_route, target: "_blank", rel: "noopener" },
-				[icon("eye"), el("span", { text: "View estimate PDF" })]);
-			var save = el("a", { class: "a3s-square-btn", href: state.pdf_route, download: "", title: "Download estimate PDF", "aria-label": "Download estimate PDF" }, [icon("download")]);
-			print.appendChild(el("div", { class: "a3s-de-com__print-row" }, [view, save]));
-			print.appendChild(el("p", { class: "a3s-edit__hint", text: "This option's estimate as a document. The proposal of every option is made on the Proposal tab." }));
+			var existing = proposal && proposal.existing;
+			var next = el("button", { type: "button", class: "a3s-btn a3s-btn--primary a3s-de-com__pdf" },
+				[icon("doc"), el("span", { text: existing ? "Open Proposal" : "Create Proposal" })]);
+			next.addEventListener("click", function () { selectTab(PROPOSAL); });
+			print.appendChild(el("div", { class: "a3s-de-com__print-row" }, [next]));
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: existing
+				? "Next step: " + existing.name + " is made. Open it to see it or make it again with every saved option."
+				: "Next step: make the proposal with every saved option." }));
 		} else {
-			print.appendChild(el("p", { class: "a3s-edit__hint", text: state.saved ? "Save the changes to print this option." : "Save this option to print it, and to make the proposal." }));
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: state.saved ? "Save the changes to make the proposal." : "Save this option to make the proposal." }));
 		}
 	}
 
@@ -916,7 +1001,8 @@
 		setStatus("");
 		paintForm();
 		modal.hidden = false;
-		var first = form.querySelector("input, select, textarea");
+		/* Adding, the first field - the Item's search box - is ready to type in, its list open. */
+		var first = !editing && form.querySelector("input, select, textarea");
 		if (first) first.focus();
 	}
 
@@ -1004,7 +1090,7 @@
 		var missing = missingRequired();
 		if (missing.length) {
 			setStatus("Fill in " + missing.map(function (f) { return f.label; }).join(", ") + " to save this row.", "error");
-			$("de-fld-" + missing[0].fieldname).focus();
+			($("de-fld-" + missing[0].fieldname + "-search") || $("de-fld-" + missing[0].fieldname)).focus();
 			return;
 		}
 		submit.disabled = true;

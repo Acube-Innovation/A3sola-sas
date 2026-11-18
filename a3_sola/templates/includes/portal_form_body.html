@@ -86,6 +86,18 @@
 						<span class="a3s-field__hint" data-status></span>
 					</span>
 				</div>
+				{%- elif f.input == "file" %}
+				{#- A file (PDF or picture) uploads as soon as it is chosen, as a picture does; the
+				    hidden input carries its URL and the link opens what is there. -#}
+				<div class="a3s-imagefield" data-imagefield data-kind="file" data-fieldname="{{ f.fieldname }}">
+					<span class="a3s-imagefield__controls">
+						<a href="{{ f.value | e }}" target="_blank" rel="noopener" data-link{% if not f.value %} hidden{% endif %}>{{ f.file_name | e }}</a>
+						<input type="file" id="fld-{{ f.fieldname }}" accept="application/pdf,image/png,image/jpeg" data-file>
+						<input type="hidden" name="{{ f.fieldname }}" value="{{ f.value | e }}" data-value>
+						<button type="button" class="a3s-btn a3s-btn--ghost" data-clear{% if not f.value %} hidden{% endif %}>Remove</button>
+						<span class="a3s-field__hint" data-status></span>
+					</span>
+				</div>
 				{%- elif f.type == "Date" %}
 				<input type="date" id="fld-{{ f.fieldname }}" name="{{ f.fieldname }}" value="{{ f.value | e }}"{% if f.no_weekend %} data-no-weekend{% endif %}>
 				{%- elif f.type == "Datetime" %}
@@ -164,11 +176,20 @@
 		var value = root.querySelector("[data-value]");
 		var preview = root.querySelector("[data-preview]");
 		var empty = root.querySelector("[data-empty]");
+		var link = root.querySelector("[data-link]");
 		var clear = root.querySelector("[data-clear]");
 		var status = root.querySelector("[data-status]");
 
-		function show(url) {
+		function show(url, name) {
 			value.value = url || "";
+			if (link) {
+				/* A file: a link to it, named as it was uploaded. */
+				clear.hidden = !url;
+				link.hidden = !url;
+				link.href = url || "#";
+				link.textContent = name || (url || "").split("/").pop();
+				return;
+			}
 			if (url) { preview.src = url; preview.hidden = false; empty.hidden = true; clear.hidden = false; }
 			else { preview.removeAttribute("src"); preview.hidden = true; empty.hidden = false; clear.hidden = true; }
 		}
@@ -190,7 +211,7 @@
 			}).then(function (res) {
 				var url = res.ok && res.body && res.body.message && res.body.message.file_url;
 				if (!url) throw new Error(((res.body || {})._server_messages) || "Upload failed.");
-				show(url);
+				show(url, chosen.name);
 				status.textContent = "";
 			}).catch(function (e) {
 				file.value = "";

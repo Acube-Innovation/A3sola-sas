@@ -28,6 +28,7 @@ INPUT_TYPES = INPUT_TYPES | {"Attach Image"}
 #: doctype. Named one by one: any other attachment stays on the detail page and the desk.
 PORTAL_FILE_FIELDS = {
 	"Installation Task": {"feasibility_report", "approval_letter"},
+	"Solar Consumer": {"cancelled_cheque"},
 }
 
 
@@ -258,6 +259,9 @@ DEPENDENT_LINKS = {
 	"site_district": ("state", "site_state"),
 	"permanent_district": ("state", "permanent_state"),
 	"discom_section": ("discom", "discom"),
+	# A design estimate is offered only for the customer chosen beside it.
+	"design_estimate": ("solar_consumer", "solar_consumer"),
+	"solar_design_estimate": ("solar_consumer", "solar_consumer"),
 }
 
 #: Further fields of the same record a dependent Link also follows: the form reloads its list
@@ -349,6 +353,8 @@ CHOICE_SOURCES = {
 	("Lead", "a3s_dealer"): "a3_sola.api.leads.dealer_choices",
 	# The lead's owner: the company's people, and the dealers too (for staff).
 	("Lead", "lead_owner"): "a3_sola.api.leads.owner_choices",
+	# A customer's dealer: the dealer logins, as a lead's.
+	("Solar Consumer", "dealer"): "a3_sola.api.leads.dealer_choices",
 	("Solar Consumer", "contact_person"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.contact_choices",
 	("Solar Consumer", "installation_address"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
 	("Solar Consumer", "permanent_address_record"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",

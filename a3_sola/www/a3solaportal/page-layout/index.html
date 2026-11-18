@@ -1,0 +1,76 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+{#- Administration > Page Layout (api/page_layout): choose a page, then a checkbox per field or
+    part, a section's own box ticking or clearing all of it. Unticked is hidden from everyone on
+    the portal; the desk is unchanged. Saved by portal_page_layout.js. Styled as the Menu page. -#}
+<style>
+	.a3s-menuset { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); align-items: start; }
+	.a3s-menuset__group { padding: 0; overflow: hidden; }
+	.a3s-menuset__head { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--color-border);
+		background: var(--color-bg); font-weight: 800; font-size: 0.8125rem; letter-spacing: 0.04em; text-transform: uppercase; }
+	.a3s-menuset__head .a3s-check { flex: 1; font-size: inherit; }
+	.a3s-menuset__count { flex: none; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); letter-spacing: 0; text-transform: none; white-space: nowrap; }
+	.a3s-menuset__items { list-style: none; margin: 0; padding: 0.35rem 0.5rem 0.5rem; }
+	.a3s-menuset__item { display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.45rem 0.5rem; border-radius: 0.6rem; cursor: pointer; }
+	.a3s-menuset__item:hover { background: var(--color-accent-soft); }
+	.a3s-menuset__item input { width: 1.1rem; height: 1.1rem; flex: none; margin-top: 0.1rem; accent-color: var(--color-accent); }
+	.a3s-menuset__text { min-width: 0; display: grid; }
+	.a3s-menuset__title { font-size: 0.875rem; font-weight: 700; }
+	.a3s-menuset__sub { font-size: 0.75rem; color: var(--color-text-muted); }
+	.a3s-menuset__item.is-off .a3s-menuset__title { color: var(--color-text-muted); text-decoration: line-through; }
+	.a3s-menuset__item.is-locked { cursor: default; }
+	.a3s-layout__pick { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem 1rem; margin-bottom: 1.25rem; }
+	.a3s-layout__pick .a3s-field { min-width: min(24rem, 100%); }
+</style>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Page Layout</h2>
+		<p class="a3s-main__sub">Choose a page, then untick the fields, sections or parts it should not show. Hidden from everyone on the portal - nothing is deleted, the desk is unchanged, and ticking it again brings it back. Required fields are always shown.</p>
+	</div>
+	<button type="button" class="a3s-btn a3s-btn--primary" data-layout-save disabled>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+		<span>Save</span>
+	</button>
+</div>
+
+<div class="a3s-layout__pick">
+	<div class="a3s-field">
+		<label for="a3s-layout-page">Page</label>
+		<select id="a3s-layout-page" data-layout-page>
+			{%- for p in pages %}
+			<option value="{{ p.key | e }}"{% if p.key == current.key %} selected{% endif %}>{{ p.label | e }}{% if p.kind == "Record" %} (create, edit and detail){% endif %}{% if p.hidden %} &middot; {{ p.hidden }} hidden{% endif %}</option>
+			{%- endfor %}
+		</select>
+	</div>
+</div>
+
+<p class="a3s-attach__status" data-layout-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-menuset" data-layout-set data-key="{{ current.key | e }}">
+	{%- for s in current.sections %}
+	<section class="a3s-card a3s-menuset__group" data-group aria-label="{{ s.label | e }}">
+		<div class="a3s-menuset__head">
+			<label class="a3s-check"><input type="checkbox" data-group-toggle aria-label="Show all of {{ (s.label or 'this section') | e }}"><span>{{ (s.label or "Details") | e }}</span></label>
+			<span class="a3s-menuset__count" data-group-count></span>
+		</div>
+		<ul class="a3s-menuset__items">
+			{%- for f in s.fields %}
+			<li>
+				<label class="a3s-menuset__item{% if not f.shown %} is-off{% endif %}{% if f.locked %} is-locked{% endif %}">
+					<input type="checkbox" data-name="{{ f.name | e }}"{% if f.shown %} checked{% endif %}{% if f.locked %} disabled data-locked{% endif %}>
+					<span class="a3s-menuset__text"><span class="a3s-menuset__title">{{ f.label | e }}</span>
+						{%- if f.hint %}<span class="a3s-menuset__sub">{{ f.hint | e }}</span>{% endif %}</span>
+				</label>
+			</li>
+			{%- endfor %}
+		</ul>
+	</section>
+	{%- endfor %}
+</div>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_page_layout.js?v={{ a3s_asset_version('js/portal_page_layout.js') }}"></script>
+{% endblock %}

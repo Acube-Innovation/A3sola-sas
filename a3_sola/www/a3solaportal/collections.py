@@ -146,6 +146,8 @@ AUTO_FIELDS = {"company"}
 #: Selects that start blank on a create form, not at their first option: a question
 #: only the customer can answer - whether they will take a loan - is asked, never assumed.
 UNANSWERED_SELECTS = {"loan_required"}
+#: Link fields whose create-form choices come from portal_fields.CHOICE_SOURCES (they need no record).
+NEW_FORM_SOURCES = {("Solar Consumer", "dealer")}
 INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone", "Attach Image"}
 DISPLAY_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Phone"}
 TEXTUAL = {"Data", "Select", "Link", "Small Text", "Phone"}
@@ -444,12 +446,22 @@ def show_when(df):
 #: Fields the portal never shows, by doctype: ERPNext sets them itself (an order's
 #: currency and exchange rates come from the company, customer and price list), or they
 #: are the office's business, kept in ERPNext (a task's cost).
-PORTAL_HIDDEN = {
+STATIC_HIDDEN = {
 	"Sales Order": {"currency", "conversion_rate", "plc_conversion_rate"},
 	# The approval letter and the feasibility report go on the task's Attachments card.
 	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter", "feasibility_report"},
 	"Document Pack": {"task_cost"},
+	# A customer's Contact is not asked for: ERPNext makes the primary contact with its Customer.
+	"Solar Consumer": {"contact_person"},
 }
+
+
+def portal_hidden(doctype):
+	"""The fields of `doctype` the portal does not show: the ones above, and those an admin
+	has hidden on Administration > Page Layout (api/page_layout)."""
+	from a3_sola.api import page_layout
+
+	return set(STATIC_HIDDEN.get(doctype, ())) | page_layout.hidden_fields(doctype)
 
 
 def partner_hidden(meta):
@@ -464,7 +476,7 @@ def partner_hidden(meta):
 	levels = set(meta.get_permlevel_access("read") or []) | {0}
 	# A contractor sees no money at all - not even the customer's price.
 	return {f.fieldname for f in meta.fields if (f.permlevel or 0) not in levels
-		or (kind == "contractor" and f.fieldtype == "Currency")} | set(PORTAL_HIDDEN.get(meta.name, ()))
+		or (kind == "contractor" and f.fieldtype == "Currency")} | portal_hidden(meta.name)
 
 
 def form_fields(meta, prefill=None, extra=()):
@@ -486,12 +498,13 @@ def form_fields(meta, prefill=None, extra=()):
 
 	optional = 0
 	wanted = set(extra or ())
-	hidden = set(PORTAL_HIDDEN.get(meta.name, set())) | partner_hidden(meta)
+	hidden = portal_hidden(meta.name) | partner_hidden(meta)
 	for f in meta.fields:
 		if f.fieldname in AUTO_FIELDS or f.hidden or f.read_only or f.fieldname in hidden:
 			continue
 		reqd = bool(f.reqd) or f.fieldname in wanted
-		if f.fieldtype not in INPUT_TYPES:
+		is_file = is_portal_file(meta.name, f)
+		if f.fieldtype not in INPUT_TYPES and not is_file:
 			if reqd and f.fieldtype in ("Attach", "Attach Image", "Table", "Table MultiSelect", "Signature", "Geolocation"):
 				unrenderable.append(f.label or f.fieldname)
 			continue
@@ -516,6 +529,9 @@ def form_fields(meta, prefill=None, extra=()):
 			spec["value"] = now.strftime("%Y-%m-%d") if f.fieldtype == "Date" else now.strftime("%Y-%m-%dT%H:%M")
 		if f.fieldtype == "Attach Image":
 			spec["input"] = "image"
+		elif is_file:
+			spec["input"] = "file"
+			spec["file_name"] = str(spec["value"]).rsplit("/", 1)[-1] if spec["value"] else ""
 		if f.fieldtype == "Select":
 			opts = [o for o in (f.options or "").split("\n")]
 			spec["options"] = opts
@@ -534,7 +550,9 @@ def form_fields(meta, prefill=None, extra=()):
 			rule = DEPENDENT_LINKS.get(f.fieldname)
 			spec["depends_field"] = rule[1] if rule else ""
 			spec["depends_also"] = ",".join(DEPENDENT_ALSO.get(f.fieldname, ()))
-			choices = link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
+			# The choices a field draws from elsewhere where the record is not needed (a dealer).
+			source = CHOICE_SOURCES.get((meta.name, f.fieldname)) if (meta.name, f.fieldname) in NEW_FORM_SOURCES else None
+			choices = frappe.get_attr(source)(None) if source else link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
 			if seed and not any(c["value"] == seed for c in choices):
 				choices.insert(0, {"value": seed, "label": link_title(f.options, seed)})
 			spec["choices"] = choices
@@ -563,7 +581,7 @@ def form_extra(cfg, meta):
 	if cfg.get("all_fields"):
 		# Every field the form can take; `form_fields` drops the hidden and read-only ones, as
 		# `edit_fields_for` does on the edit form.
-		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES]
+		extra += [df.fieldname for df in meta.fields if df.fieldtype in INPUT_TYPES or is_portal_file(meta.name, df)]
 	if cfg.get("first_tab_first"):
 		extra += first_tab_fieldnames(meta)
 	return extra
@@ -1324,7 +1342,7 @@ def form_groups(meta, first_label=None):
 
 from a3_sola.api.portal_fields import (  # noqa: E402  - grouped with the code that uses it
 	DISPLAY_TYPES as DISPLAY_TYPES_ALL, INPUT_TYPES as INPUT_TYPES_ALL, detail_row, edit_spec,
-	is_portal_file, link_choices, link_title,
+	CHOICE_SOURCES, is_portal_file, link_choices, link_title,
 	DEPENDENT_ALSO, DEPENDENT_LINKS, default_for, link_filters,
 )
 
@@ -1427,7 +1445,7 @@ def detail_context(context, slug, name):
 		sections = []
 		for s in g["sections"]:
 			rows = [detail_row(df, doc.get(df.fieldname)) for df in s["fields"]
-			        if df.fieldname not in PORTAL_HIDDEN.get(doc.doctype, ())]
+			        if df.fieldname not in portal_hidden(doc.doctype)]
 			if rows:
 				sections.append({"label": s["label"] if s["label"] != g["label"] or len(g["sections"]) > 1 else "", "rows": rows})
 		groups.append({"key": g["key"], "label": g["label"], "sections": sections})
@@ -1594,7 +1612,7 @@ def edit_fields_for(doc, first_label=None):
 			for df in s["fields"]:
 				if ((df.fieldtype not in INPUT_TYPES_ALL and not is_portal_file(doc.doctype, df))
 						or df.read_only or df.fieldname in AUTO_FIELDS
-						or df.fieldname in PORTAL_HIDDEN.get(doc.doctype, ())
+						or df.fieldname in portal_hidden(doc.doctype)
 						# A task's document: its people are the task's, in the Assigned to strip.
 						or (df.fieldname == "assigned_to" and doc.doctype in TASK_DOCTYPES_WITH_PEOPLE)
 						or (only is not None and df.fieldname not in only)):

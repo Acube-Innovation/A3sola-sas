@@ -11,7 +11,7 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from a3_sola.api.naming import set_name
 from a3_sola.api import kyc, record_links
@@ -49,6 +49,18 @@ class SolarConsumer(Document):
 		self.compose_gps()
 		self.fill_discom_id()
 		self.validate_bank_details()
+		self.keep_dealer_for_partner()
+
+	def keep_dealer_for_partner(self):
+		"""Staff choose a customer's dealer; a dealer cannot hand a customer to another one. His
+		new customer is his (partner_scope.stamp_dealer), and one he has keeps its dealer."""
+		from a3_sola.api.partner_scope import partner_kinds
+
+		if "dealer" not in partner_kinds():
+			return
+		before = None if self.is_new() else frappe.db.get_value("Solar Consumer", self.name, "dealer")
+		if self.dealer != before and self.dealer != frappe.session.user:
+			self.dealer = frappe.session.user if self.is_new() else before
 
 	def on_update(self):
 		self.ensure_address_record()
@@ -330,6 +342,12 @@ class SolarConsumer(Document):
 				title=_("Check Bank Details"),
 				indicator="orange",
 			)
+		# Whoever ticks Verified verified them, unless another name is chosen; untick it and
+		# nobody has.
+		if cint(self.bank_details_verified):
+			self.bank_details_verified_by = self.bank_details_verified_by or frappe.session.user
+		else:
+			self.bank_details_verified_by = None
 
 	def set_status(self, status):
 		"""Status advances through the sales journey and is never set by hand."""

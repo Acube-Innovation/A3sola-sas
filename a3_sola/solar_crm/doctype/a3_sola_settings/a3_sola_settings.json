@@ -288,6 +288,7 @@
   "verification_token_retention_days",
   "sb_portal_menu",
   "hidden_portal_menu",
+  "hidden_page_parts",
   "payments_tab",
   "sb_1402",
   "payment_gateway",
@@ -2083,6 +2084,13 @@
    "read_only": 1
   },
   {
+   "description": "The fields and page parts hidden from the portal on Administration > Page Layout, one per line: Doctype:fieldname for a field, part:page:key for a part of a page. Hidden only: the desk is unchanged and nothing is deleted.",
+   "fieldname": "hidden_page_parts",
+   "fieldtype": "Long Text",
+   "label": "Hidden Page Parts",
+   "read_only": 1
+  },
+  {
    "fieldname": "payments_tab",
    "fieldtype": "Tab Break",
    "label": "Payments"
@@ -3076,7 +3084,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-13 16:00:00.000000",
+ "modified": "2026-11-18 17:17:39.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",

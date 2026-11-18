@@ -235,8 +235,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "New\nSurveyed\nDesigned\nProposed\nQuoted\nConverted\nDropped",
-   "read_only": 1
+   "options": "New\nSurveyed\nDesigned\nProposed\nQuoted\nConverted\nDropped"
   },
   {
    "fieldname": "lead",
@@ -251,8 +250,7 @@
    "fieldtype": "Link",
    "label": "Dealer",
    "options": "User",
-   "read_only": 1,
-   "description": "The dealer who brought this customer in. Set when a dealer creates the customer, or from the lead."
+   "description": "The dealer who brought this customer in. Set when a dealer creates the customer, or from the lead; staff may choose another."
   },
   {
    "fieldname": "site_survey",
@@ -700,16 +698,14 @@
    "fieldname": "bank_details_verified",
    "fieldtype": "Check",
    "label": "Verified",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "bank_details_verified_by",
    "fieldtype": "Link",
    "label": "Verified By",
    "options": "User",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "tab_subsidy",

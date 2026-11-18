@@ -93,6 +93,12 @@ SECTIONS = (
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
 	), "computed": ("nos", "amount"),
+		# The row form as the package's Solar Panel row: line by line, its labels.
+		"lines": (("panel_item",), ("specification",), ("panel_make", "panel_capacity_wp", "panel_type", "is_option"),
+			("rate", "panel_count", "amount"), ("panel_variant", "alternate_makes")),
+		"labels": {"panel_make": "Make", "panel_capacity_wp": "Wattage (Wp)", "rate": "Rate per Panel",
+			"panel_count": "Nos", "amount": "Total Panel Rate"},
+		"row_total": ("rate", "panel_count"),
 		# Shown as the Inverter Options are: a bold title, a line under it, then the figures.
 		"compact": {"title": (("panel_make", ""), ("panel_capacity_wp", " Wp"), ("panel_type", "")),
 			"sub": (("panel_variant", ""),)}},
@@ -109,6 +115,11 @@ SECTIONS = (
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: an alternative shown to the customer, not added to the commercials."},
 		{"fieldname": "rate", "hint": "Leave blank to use the price on file in the backend."},
 	), "computed": ("nos", "amount"),
+		"lines": (("inverter_type", "inverter_phase", "is_option"), ("specification",), ("inverter_make", "inverter_model"),
+			("inverter_capacity_kw", "with_optimizer"), ("inverter_count", "rate", "amount")),
+		"labels": {"inverter_make": "Make", "inverter_model": "Model",
+			"inverter_count": "Nos", "rate": "Unit Rate", "amount": "Amount"},
+		"row_total": ("rate", "inverter_count"),
 		"compact": {"title": (("inverter_make", ""), ("inverter_type", ""), ("inverter_capacity_kw", " kW")),
 			"sub": (("inverter_phase", ""),)}},
 	{"key": "batteries", "label": "Battery", "icon": "stack", "only_for": ("Off-Grid", "Hybrid"), "fields": (
@@ -125,9 +136,15 @@ SECTIONS = (
 		{"fieldname": "nos"},
 		{"fieldname": "rate"},
 	), "computed": ("total_energy_kwh", "amount"),
+		"lines": (("battery_item",), ("specification",), ("battery_variant", "battery_make", "battery_phase"),
+			("battery_voltage", "battery_capacity_ah", "is_option"), ("rate", "nos", "amount")),
+		"labels": {"battery_make": "Make", "battery_variant": "Variant", "battery_phase": "Phase", "nos": "Nos", "amount": "Amount"},
+		"row_total": ("rate", "nos"),
 		"compact": {"title": (("battery_make", ""), ("battery_variant", ""), ("battery_voltage", " V"), ("battery_capacity_ah", " Ah")),
 			"sub": (("battery_phase", ""), ("total_energy_kwh", " kWh"))}},
-	{"key": "bos_items", "label": "Balance of System", "icon": "box", "fields": (
+	# Not offered on the design page: the packages carry no balance of system, so the section
+	# only ever showed an empty list. Kept here so the table still reads and saves if rows exist.
+	{"key": "bos_items", "label": "Balance of System", "icon": "box", "hidden": True, "fields": (
 		{"fieldname": "item", "choices": "bos_item"},
 		{"fieldname": "phase", "choices": "phase"},
 		{"fieldname": "specification"},
@@ -141,18 +158,18 @@ SECTIONS = (
 	{"key": "kseb_expenses", "label": "KSEB Expenses", "icon": "receipt", "fields": (
 		{"fieldname": "particulars", "choices": "kseb_expenses_item"},
 		{"fieldname": "amount"},
-	), "computed": ()},
+	), "computed": (), "lines": (("particulars",), ("amount",))},
 	{"key": "mounting_expenses", "label": "Mounting Structure Expenses", "icon": "wrench", "fields": (
 		{"fieldname": "item", "choices": "mounting_expenses_item"},
 		{"fieldname": "specification"},
 		{"fieldname": "make", "choices": "mounting_make"},
 		{"fieldname": "capacity_kw"},
 		{"fieldname": "amount"},
-	), "computed": ()},
+	), "computed": (), "lines": (("item",), ("specification",), ("make", "capacity_kw", "amount"))},
 	{"key": "installation_expenses", "label": "Installation Expenses", "icon": "checklist", "fields": (
 		{"fieldname": "item", "choices": "installation_expenses_item"},
 		{"fieldname": "specification"},
-	), "computed": ("amount",)},
+	), "computed": ("amount",), "lines": (("item",), ("specification",))},
 )
 SECTION_BY_KEY = {section["key"]: section for section in SECTIONS}
 
@@ -197,6 +214,9 @@ BOM_FIELDS = (
 )
 BOM_SECTION = {
 	"fields": BOM_FIELDS, "computed": ("amount",),
+	# As the package's Materials, Structure and Expenses row.
+	"lines": (("category", "item"), ("description",), ("uom", "qty", "rate", "amount")),
+	"row_total": ("rate", "qty"),
 	# Not a line of the commercials: the tab's total is its own rows'.
 	"record": True,
 	"compact": {"title": (("item", ""),), "sub": (("description", ""), ("category", ""), ("uom", "")), "count": "qty"},
@@ -216,6 +236,9 @@ TRAILING_SECTIONS = (
 		{"fieldname": "panel_count", "hint": True},
 		{"fieldname": "is_option", "choices": "yes_no", "hint": "Yes: offered beside the system, not added to the commercials. No: added to the total."},
 	), "computed": ("nos", "amount"),
+		"lines": (("item_group", "item_code"), ("item",), ("rate", "panel_count", "amount"), ("is_option",)),
+		"labels": {"item_code": "Item", "item": "Description", "panel_count": "Qty"},
+		"row_total": ("rate", "panel_count"),
 		"compact": {"title": (("item", ""),), "sub": (("item_group", ""), ("item_code", ""))}},
 	# Last, the job's bill of materials and what it costs to build - Materials, Structure and
 	# Expenses as the package has them - copied from the package for the Items the estimate uses
@@ -770,7 +793,8 @@ def _section(doc, section, child, rows):
 		if hint is True:
 			hint = df.description or ""
 		fields.append({
-			"fieldname": df.fieldname, "label": _(df.label), "reqd": bool(df.reqd or spec.get("required")),
+			"fieldname": df.fieldname, "label": _((section.get("labels") or {}).get(df.fieldname) or df.label),
+			"reqd": bool(df.reqd or spec.get("required")),
 			"input": "select" if spec.get("choices") else INPUT.get(df.fieldtype, "text"),
 			"choices": spec.get("choices"), "filter_by": spec.get("filter_by"), "fills": spec.get("fills"),
 			"default": default, "hint": _(hint) if hint else "",
@@ -801,6 +825,10 @@ def _section(doc, section, child, rows):
 		# Shown, not changed, by anyone but an admin (ADMIN_EDIT).
 		"locked": section["key"] in ADMIN_EDIT and not is_admin(),
 		"columns": columns, "fields": fields,
+		# The row form line by line, as the package's (fieldnames; "amount" shown, worked out).
+		"lines": [list(line) for line in section.get("lines") or ()],
+		"amount_label": _((section.get("labels") or {}).get("amount") or "Amount"),
+		"row_total": list(section.get("row_total") or ()),
 		"rows": rows,
 		# A table kept for the record (the BOM tabs) totals its own rows; the others show
 		# their line of the commercials.
@@ -812,6 +840,8 @@ def _sections(doc):
 	out = []
 	admin = is_admin()
 	for section in SECTIONS:
+		if section.get("hidden"):
+			continue
 		if section.get("only_for") and doc.system_type not in section["only_for"]:
 			continue
 		child = frappe.get_meta(doc.meta.get_field(section["key"]).options)

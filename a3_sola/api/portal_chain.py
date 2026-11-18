@@ -197,7 +197,8 @@ CHAIN = {
 			},
 		},
 		# The consumer is the one record the whole job hangs off, so its page offers the
-		# three documents that name it directly as well as the survey that follows it.
+		# eligibility check and the design proposal as well as the survey that follows it.
+		# The solar proposal is made from the eligibility check, not from here.
 		# Everywhere else the chain stays linear; here a person picks up wherever the job
 		# actually is, which is not always the next step in the sequence.
 		{
@@ -241,29 +242,6 @@ CHAIN = {
 				"site_survey": "site_survey",
 				"connection_type": "connection_type",
 				"roof_type": "roof_type",
-				"company": "company",
-			},
-		},
-		{
-			"key": "proposal",
-			"slug": "proposals",
-			"doctype": "Solar Proposal",
-			"label": "Create solar proposal",
-			"icon": "doc",
-			# A proposal may be made before its design estimate; the estimate is added to it
-			# later, and is needed only to generate its PDF and raise the quotation.
-			"card_title": "name",
-			"card_subtitle": "status",
-			"card_subtitle_label": "Status",
-			"map": {
-				"solar_consumer": "name",
-				"lead": "lead",
-				"site_survey": "site_survey",
-				"salutation": "salutation",
-				"customer_name": "consumer_name",
-				"mobile_no": "mobile_no",
-				"email_id": "email_id",
-				"location": ("village", "local_body_name"),
 				"company": "company",
 			},
 		},
