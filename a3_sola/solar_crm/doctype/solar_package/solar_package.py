@@ -844,9 +844,24 @@ def system_cost(package):
 
 
 def inverter_panel(package, inverter):
-	"""The panel row an inverter option is costed on: the package's default panel. (Each Pricing
-	Options row names its own panel.)"""
-	return default_module(package)
+	"""The panel row an inverter option is built with: the panel its Pricing Options row names
+	(the default such row, where the inverter has several), else the package's default panel.
+
+	A Pricing Options row names its panel and inverter by their specification text, as the
+	package's Solar Panel and Inverter rows have them."""
+	doc = _doc(package)
+
+	def same(a, b):
+		return " ".join((a or "").split()).lower() == " ".join((b or "").split()).lower()
+
+	spec = inverter.get("inverter_specification") if inverter else None
+	paired = [r for r in doc.get("pricing_options") or [] if spec and same(r.inverter, spec)]
+	paired.sort(key=lambda r: not cint(r.is_default))
+	for row in paired:
+		module = next((m for m in options(doc, "modules") if same(m.module_specification, row.panel)), None)
+		if module:
+			return module
+	return default_module(doc)
 
 
 def package_subsidy(package):
