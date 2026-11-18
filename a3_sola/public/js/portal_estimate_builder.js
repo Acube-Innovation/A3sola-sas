@@ -792,16 +792,21 @@
 		}
 
 		/* The saved option's own print, under its figures: read in the browser, or saved. */
+		/* The next step under the figures: the proposal, made on the Proposal tab. Its PDF is
+		   there and in the header's download, so it is not repeated here. */
 		var print = $("de-com-print");
 		print.innerHTML = "";
 		if (state.saved && !changes(option).length) {
-			var view = el("a", { class: "a3s-btn a3s-btn--secondary a3s-de-com__pdf", href: state.pdf_view_route, target: "_blank", rel: "noopener" },
-				[icon("eye"), el("span", { text: "View estimate PDF" })]);
-			var save = el("a", { class: "a3s-square-btn", href: state.pdf_route, download: "", title: "Download estimate PDF", "aria-label": "Download estimate PDF" }, [icon("download")]);
-			print.appendChild(el("div", { class: "a3s-de-com__print-row" }, [view, save]));
-			print.appendChild(el("p", { class: "a3s-edit__hint", text: "This option's estimate as a document. The proposal of every option is made on the Proposal tab." }));
+			var existing = proposal && proposal.existing;
+			var next = el("button", { type: "button", class: "a3s-btn a3s-btn--primary a3s-de-com__pdf" },
+				[icon("doc"), el("span", { text: existing ? "Open Proposal" : "Create Proposal" })]);
+			next.addEventListener("click", function () { selectTab(PROPOSAL); });
+			print.appendChild(el("div", { class: "a3s-de-com__print-row" }, [next]));
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: existing
+				? "Next step: " + existing.name + " is made. Open it to see it or make it again with every saved option."
+				: "Next step: make the proposal with every saved option." }));
 		} else {
-			print.appendChild(el("p", { class: "a3s-edit__hint", text: state.saved ? "Save the changes to print this option." : "Save this option to print it, and to make the proposal." }));
+			print.appendChild(el("p", { class: "a3s-edit__hint", text: state.saved ? "Save the changes to make the proposal." : "Save this option to make the proposal." }));
 		}
 	}
 
