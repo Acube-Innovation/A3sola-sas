@@ -87,6 +87,7 @@ class SolarDesignEstimate(Document):
 
 	def validate(self):
 		self.apply_sizing_options()
+		self.set_dcr_from_package()
 		self.validate_package_system_type()
 		self.resolve_subject()
 		self.default_subsidy_scheme()
@@ -121,6 +122,13 @@ class SolarDesignEstimate(Document):
 		self.check_regulation()
 		self.compute_commercials()
 		self.validate_subsidy_conditions()
+
+	def set_dcr_from_package(self):
+		"""DCR Compliant is the package's. Fetched values are set before `validate`, while the
+		package is still the one the estimate had - the option row's comes in only with
+		apply_sizing_options - so it is read again here, from the package now chosen."""
+		self.is_dcr_compliant = cint(frappe.db.get_value("Solar Package", self.solar_package, "is_dcr_compliant")) \
+			if self.solar_package else 0
 
 	# ---------------------------------------------------------- sizing options
 	def apply_sizing_options(self):
@@ -1757,6 +1765,25 @@ class SolarDesignEstimate(Document):
 				+ _("Fix these, or set Subsidy to Without Subsidy."),
 				title=_("Subsidy Conditions Not Met"),
 			)
+
+	def on_update(self):
+		self.size_to_customer()
+
+	def size_to_customer(self):
+		"""The customer's (and its lead's) Proposed System Size is what the design proposal
+		ends up at: its recommended option's. Only the proposal's own estimate says so, not an
+		alternative option saved as an estimate of its own (parent_estimate)."""
+		size = flt(self.final_capacity_kw, 3)
+		if self.get("parent_estimate") or not size:
+			return
+		lead = self.lead
+		if self.solar_consumer and frappe.db.exists("Solar Consumer", self.solar_consumer):
+			if flt(frappe.db.get_value("Solar Consumer", self.solar_consumer, "approx_capacity_kw"), 3) != size:
+				frappe.db.set_value("Solar Consumer", self.solar_consumer, "approx_capacity_kw", size)
+			lead = lead or frappe.db.get_value("Solar Consumer", self.solar_consumer, "lead")
+		if lead and frappe.db.exists("Lead", lead) and frappe.get_meta("Lead").get_field("approx_capacity_kw") \
+				and flt(frappe.db.get_value("Lead", lead, "approx_capacity_kw"), 3) != size:
+			frappe.db.set_value("Lead", lead, "approx_capacity_kw", size)
 
 	def on_submit(self):
 		# A lead-only estimate has no consumer status to advance yet; the consumer picks

@@ -41,6 +41,7 @@ class SolarConsumer(Document):
 		self.kyc_rows_from_lead()
 		record_links.fill_consumer(self)
 		self.set_addresses()
+		self.coordinates_from_location()
 		kyc.stamp(self)
 		assert_same_company(self, LINKS)
 		self.validate_consumer_number_unique()
@@ -53,6 +54,26 @@ class SolarConsumer(Document):
 		self.ensure_address_record()
 		record_links.consumer_saved(self)
 		self.sync_lead()
+		self.sync_salutation()
+
+	def sync_salutation(self):
+		"""The salutation set or changed here is the ERPNext Customer's too - the quotation and
+		sales order read it from there - and the open records that show it: a draft survey,
+		eligibility check or proposal, and the projects."""
+		if not self.has_value_changed("salutation"):
+			return
+		value = self.salutation or None
+		if self.customer and frappe.db.exists("Customer", self.customer):
+			frappe.db.set_value("Customer", self.customer, "salutation", value, update_modified=False)
+		drafts = {doctype: {"solar_consumer": self.name} for doctype in
+			("Site Survey", "Subsidy Eligibility Check", "Solar Proposal", "Quotation")}
+		if self.customer:
+			drafts["Sales Order"] = {"customer": self.customer}
+		for doctype, filters in drafts.items():
+			for name in frappe.get_all(doctype, filters={**filters, "docstatus": 0}, pluck="name"):
+				frappe.db.set_value(doctype, name, "salutation", value, update_modified=False)
+		for name in frappe.get_all("Solar Installation", filters={"solar_consumer": self.name, "docstatus": ["<", 2]}, pluck="name"):
+			frappe.db.set_value("Solar Installation", name, "salutation", value, update_modified=False)
 
 	def sync_lead(self):
 		"""The lead shows what the customer holds: the details its documents give - the name,
@@ -67,6 +88,10 @@ class SolarConsumer(Document):
 		for lead_field in LEAD_SYNCED:
 			value = self.get(LEAD_FROM_CUSTOMER[lead_field])
 			if not value or (lead_field != "lead_name" and not meta.get_field(lead_field)) or lead.get(lead_field) == value:
+				continue
+			# A lead kept as first and last name has its name rebuilt from them and the
+			# salutation, so it would read "Mr Shiju"; only a one-field name takes it.
+			if lead_field == "salutation" and lead.first_name:
 				continue
 			if lead_field == "lead_name":
 				from a3_sola.api.leads import _set_full_name
@@ -242,6 +267,18 @@ class SolarConsumer(Document):
 		cycles = 12 if self.billing_frequency == "Monthly" else 6
 		self.annual_consumption_units = flt(self.avg_consumption_units) * cycles
 
+	def coordinates_from_location(self):
+		"""The site's latitude and longitude are where its Google Maps link points, when the
+		link says (api/maps_link). Read when the link is given or changed; a link to a place by
+		name alone leaves them as typed. Without a link, the coordinates make one (kyc.stamp)."""
+		if not self.google_location_url or not self.has_value_changed("google_location_url"):
+			return
+		from a3_sola.api.maps_link import coordinates
+
+		found = coordinates(self.google_location_url)
+		if found:
+			self.latitude, self.longitude = found
+
 	def compose_gps(self):
 		if self.latitude and self.longitude:
 			self.gps_coordinates = f"{flt(self.latitude, 6)}, {flt(self.longitude, 6)}"
@@ -322,7 +359,7 @@ def open_lead_of(doc):
 
 #: The lead's field for each customer field it is made from.
 LEAD_FROM_CUSTOMER = {
-	"lead_name": "consumer_name", "company": "company", "mobile_no": "mobile_no", "email_id": "email_id",
+	"salutation": "salutation", "lead_name": "consumer_name", "company": "company", "mobile_no": "mobile_no", "email_id": "email_id",
 	"consumer_category": "consumer_category", "discom": "discom", "discom_section": "discom_section",
 	"consumer_number": "consumer_number", "connection_type": "connection_type", "roof_type": "roof_type",
 	"city": "site_city", "state": "site_state", "district": "site_district",
@@ -333,7 +370,7 @@ LEAD_FROM_CUSTOMER = {
 #: The lead's fields kept the same as the customer's on every save (sync_lead): the details its
 #: documents give, and what the customer asked for - the size, and the loan the quotation
 #: and the project read from the lead.
-LEAD_SYNCED = ("lead_name", "consumer_number", "discom", "discom_section", "connection_type", "state", "district",
+LEAD_SYNCED = ("lead_name", "salutation", "consumer_number", "discom", "discom_section", "connection_type", "state", "district",
 	"approx_capacity_kw", "loan_required")
 
 
@@ -400,6 +437,7 @@ def ensure_customer(consumer):
 		customer = frappe.get_doc({
 			"doctype": "Customer",
 			"customer_name": doc.consumer_name,
+			"salutation": doc.get("salutation") or None,
 			"customer_type": "Individual" if individual else "Company",
 			"customer_group": group if frappe.db.exists("Customer Group", group)
 				else frappe.db.get_single_value("Selling Settings", "customer_group") or "All Customer Groups",

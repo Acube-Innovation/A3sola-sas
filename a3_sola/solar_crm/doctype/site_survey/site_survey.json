@@ -13,6 +13,7 @@
   "survey_date",
   "surveyor",
   "cb_2",
+  "salutation",
   "customer_name",
   "discom",
   "discom_section",
@@ -192,6 +193,14 @@
   {
    "fieldname": "cb_2",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation",
+   "fetch_from": "solar_consumer.salutation",
+   "read_only": 1
   },
   {
    "fieldname": "customer_name",
@@ -960,7 +969,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-08 14:00:00.000000",
+ "modified": "2026-11-18 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Site Survey",

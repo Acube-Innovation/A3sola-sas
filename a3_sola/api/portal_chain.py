@@ -63,6 +63,7 @@ CHAIN = {
 			"card_subtitle": "consumer_number",
 			"card_subtitle_label": "Consumer no.",
 			"map": {
+				"salutation": "salutation",
 				"consumer_name": ("lead_name", "company_name"),
 				"mobile_no": ("mobile_no", "phone"),
 				# The lead's number is kept as it was given, whoever's it is.
@@ -111,6 +112,7 @@ CHAIN = {
 			"map": {
 				"lead": "name",
 				"solar_consumer": "solar_consumer",
+				"salutation": "salutation",
 				"customer_name": ("lead_name", "company_name"),
 				"contact_no": ("mobile_no", "phone"),
 				"email_id": "email_id",
@@ -137,6 +139,7 @@ CHAIN = {
 				"lead": "name",
 				"solar_consumer": "solar_consumer",
 				"subsidy_scheme": "subsidy_scheme",
+				"salutation": "salutation",
 				"consumer_name": ("lead_name", "company_name"),
 				"mobile_no": ("mobile_no", "phone"),
 				"email_id": "email_id",
@@ -184,6 +187,7 @@ CHAIN = {
 			"map": {
 				"solar_consumer": "name",
 				"lead": "lead",
+				"salutation": "salutation",
 				"customer_name": "consumer_name",
 				"discom": "discom",
 				"discom_section": "discom_section",
@@ -208,6 +212,7 @@ CHAIN = {
 			"map": {
 				"solar_consumer": "name",
 				"lead": "lead",
+				"salutation": "salutation",
 				"consumer_name": "consumer_name",
 				"mobile_no": "mobile_no",
 				"email_id": "email_id",
@@ -245,10 +250,8 @@ CHAIN = {
 			"doctype": "Solar Proposal",
 			"label": "Create solar proposal",
 			"icon": "doc",
-			# A proposal quotes a design estimate - the field is mandatory on it - so the
-			# step is shown but held until there is one to quote.
-			"requires": "estimate",
-			"requires_note": "A proposal quotes a design estimate, so make that first.",
+			# A proposal may be made before its design estimate; the estimate is added to it
+			# later, and is needed only to generate its PDF and raise the quotation.
 			"card_title": "name",
 			"card_subtitle": "status",
 			"card_subtitle_label": "Status",
@@ -256,6 +259,7 @@ CHAIN = {
 				"solar_consumer": "name",
 				"lead": "lead",
 				"site_survey": "site_survey",
+				"salutation": "salutation",
 				"customer_name": "consumer_name",
 				"mobile_no": "mobile_no",
 				"email_id": "email_id",
@@ -318,6 +322,7 @@ CHAIN = {
 				"solar_design_estimate": "design_estimate",
 				"solar_consumer": "solar_consumer",
 				"lead": "lead",
+				"salutation": "salutation",
 				"customer_name": "consumer_name",
 				"mobile_no": "mobile_no",
 				"email_id": "email_id",

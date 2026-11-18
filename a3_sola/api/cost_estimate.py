@@ -485,7 +485,7 @@ def summary(doc):
 		"editable": doc.docstatus == 0,
 		"route": route_of(doc.name) if doc.name and not doc.get("__islocal") else None,
 		"desk": desk_route(doc.name) if doc.name and not doc.get("__islocal") else None,
-		"header": {f: doc.get(f) for f in HEADER_FIELDS + ("company", "currency", "customer_name", "title")},
+		"header": {f: doc.get(f) for f in HEADER_FIELDS + ("company", "currency", "salutation", "customer_name", "title")},
 		"solar": {f: doc.get(f) for f in SOLAR_LINK_FIELDS + FINANCE_FIELDS + SOLAR_DISPLAY_FIELDS},
 		"items": [
 			{

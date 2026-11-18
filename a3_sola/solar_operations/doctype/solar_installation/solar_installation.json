@@ -14,6 +14,7 @@
   "lead_name",
   "lead_mobile",
   "sb_consumer",
+  "salutation",
   "consumer_name",
   "consumer_mobile",
   "consumer_email",
@@ -265,6 +266,14 @@
    "fieldname": "sb_consumer",
    "fieldtype": "Section Break",
    "label": "Customer Details"
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Link",
+   "label": "Salutation",
+   "options": "Salutation",
+   "fetch_from": "solar_consumer.salutation",
+   "read_only": 1
   },
   {
    "fetch_from": "solar_consumer.consumer_name",
@@ -1662,7 +1671,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-11-04 10:00:00.000000",
+ "modified": "2026-11-18 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Solar Installation",

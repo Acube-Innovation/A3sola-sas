@@ -43,7 +43,7 @@
 	/* ------------------------------------------------------------- state */
 	var state = {
 		name: null, docstatus: 0, status: null,
-		quotation_to: "Lead", party_name: "", party_label: "",
+		quotation_to: "Lead", party_name: "", party_label: "", salutation: "",
 		transaction_date: cat.today, valid_till: addDays(cat.today, cat.validity_days || 30),
 		taxes_and_charges: cat.default_tax_template || "",
 		discount_type: "amount", discount: 0,
@@ -409,6 +409,7 @@
 		var p = state.parties.find(function (x) { return x.value === name; });
 		state.party_name = name;
 		state.party_label = p ? p.label : name;
+		state.salutation = "";  // the new party's comes back when the quotation is saved
 		el("ce-party").value = state.party_label;
 		el("ce-party-sub").textContent = p && p.sub ? p.sub : name;
 		closePartyList();
@@ -483,7 +484,8 @@
 				el("ce-actions").appendChild(a);
 			}
 		}
-		if (state.party_label) el("ce-title").textContent = state.party_label;
+		// The title names the customer as the letter does, "Mr Shiju"; the picker keeps the bare name.
+		if (state.party_label) el("ce-title").textContent = (state.salutation ? state.salutation + " " : "") + state.party_label;
 	}
 
 	/* ---------------------------------------------------------- hydrate */
@@ -492,6 +494,7 @@
 		state.name = record.name; state.docstatus = record.docstatus; state.status = record.status;
 		state.quotation_to = h.quotation_to || "Lead"; state.party_name = h.party_name || "";
 		state.party_label = h.customer_name || h.party_name || "";
+		state.salutation = h.salutation || "";
 		state.transaction_date = h.transaction_date; state.valid_till = h.valid_till;
 		state.taxes_and_charges = h.taxes_and_charges || "";
 		if (Number(t.additional_discount_percentage)) { state.discount_type = "percent"; state.discount = Number(t.additional_discount_percentage); }

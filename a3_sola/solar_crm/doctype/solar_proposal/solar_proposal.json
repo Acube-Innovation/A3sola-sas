@@ -123,7 +123,9 @@
    "fieldname": "salutation",
    "fieldtype": "Link",
    "label": "Salutation",
-   "options": "Salutation"
+   "options": "Salutation",
+   "fetch_from": "solar_consumer.salutation",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "customer_name",
@@ -314,9 +316,8 @@
    "fieldtype": "Link",
    "label": "Base Design Estimate",
    "options": "Solar Design Estimate",
-   "reqd": 1,
    "read_only": 1,
-   "description": "The first row of Design Estimates: what the proposal is generated from, and what the others are compared with."
+   "description": "The first row of Design Estimates: what the proposal is generated from, and what the others are compared with. A proposal may be saved before it has one; its PDF needs one."
   },
   {
    "fieldname": "capacity_label",
@@ -467,7 +468,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-11-18 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Proposal",

@@ -117,7 +117,7 @@ def _quotation(doc):
 		place = (con.village or con.local_body_name) if con else ""
 	return {
 		"title": "Solar Project Quotation",
-		"salutation": proposal.salutation if proposal else None,
+		"salutation": (proposal.salutation if proposal else None) or doc.get("salutation"),
 		"customer": customer or doc.customer_name or doc.party_name,
 		"place": place,
 		"number": doc.name,

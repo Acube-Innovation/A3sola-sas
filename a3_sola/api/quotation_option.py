@@ -94,13 +94,14 @@ def option_doc(estimate, proposal=None, quotation=None):
 	est = frappe.get_doc("Solar Design Estimate", estimate)
 	base = frappe.get_doc("Solar Proposal", proposal).as_dict() if proposal and frappe.db.exists("Solar Proposal", proposal) else {}
 	consumer = frappe.db.get_value("Solar Consumer", est.solar_consumer,
-		["consumer_name", "mobile_no", "email_id", "village", "local_body_name", "taluk"], as_dict=True) if est.solar_consumer else {}
+		["salutation", "consumer_name", "mobile_no", "email_id", "village", "local_body_name", "taluk"], as_dict=True) if est.solar_consumer else {}
 	doc = frappe._dict(base)
 	doc.update({
 		"doctype": "Solar Proposal", "solar_design_estimate": est.name,
 		"design_estimates": [frappe._dict(solar_design_estimate=est.name)],
 		"lead": doc.get("lead") or est.lead, "solar_consumer": doc.get("solar_consumer") or est.solar_consumer,
 		"site_survey": doc.get("site_survey") or est.site_survey, "company": doc.get("company") or est.company,
+		"salutation": doc.get("salutation") or (consumer or {}).get("salutation"),
 		"customer_name": doc.get("customer_name") or (consumer or {}).get("consumer_name"),
 		"location": doc.get("location") or (consumer or {}).get("village") or (consumer or {}).get("local_body_name"),
 		"district": doc.get("district") or (consumer or {}).get("taluk"),

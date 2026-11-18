@@ -229,6 +229,9 @@ CUSTOM_FIELDS = {
 		{"fieldname": "a3s_solar_sb", "fieldtype": "Section Break", "label": "Solar Details", "insert_after": "order_type", "collapsible": 1},
 		# Hidden: ERPNext's Customer is the quotation's party, and one Customer is shown.
 		{"fieldname": "solar_consumer", "fieldtype": "Link", "options": "Solar Consumer", "label": "Customer", "insert_after": "a3s_solar_sb", "hidden": 1},
+		# The customer's salutation, beside the party's name.
+		{"fieldname": "salutation", "fieldtype": "Link", "options": "Salutation", "label": "Salutation",
+		 "insert_after": "party_name", "fetch_from": "solar_consumer.salutation", "read_only": 1},
 		{"fieldname": "solar_design_estimate", "fieldtype": "Link", "options": "Solar Design Estimate", "label": "Design Estimate", "insert_after": "solar_consumer"},
 		{"fieldname": "selected_option", "fieldtype": "Data", "label": "Selected Option", "insert_after": "solar_design_estimate", "description": "The Design Estimate Option the customer chose. Mandatory when the estimate quotes more than one."},
 		{"fieldname": "subsidy_eligibility_check", "fieldtype": "Link", "options": "Subsidy Eligibility Check", "label": "Eligibility Check", "insert_after": "selected_option"},
@@ -305,8 +308,14 @@ CUSTOM_FIELDS = {
 		{"fieldname": "solar_package", "fieldtype": "Link", "options": "Solar Package", "label": "Solar Package", "insert_after": "item_name", "read_only": 1},
 		{"fieldname": "package_option", "fieldtype": "Data", "label": "Package Option", "insert_after": "solar_package", "read_only": 1, "description": "Which inverter option of the package this line prices."},
 	],
-	# Sales Order: ERPNext's own form, nothing added. It is linked to its quotation by
-	# ERPNext's item rows (prevdoc_docname), which is how the handoff finds the consumer.
+	# Sales Order: ERPNext's own form, with only the customer's salutation shown beside the
+	# name. It is linked to its quotation by ERPNext's item rows (prevdoc_docname), which is
+	# how the handoff finds the consumer; the salutation comes from the ERPNext Customer, which
+	# the Solar Consumer keeps in step (solar_consumer.sync_salutation).
+	"Sales Order": [
+		{"fieldname": "salutation", "fieldtype": "Link", "options": "Salutation", "label": "Salutation",
+		 "insert_after": "customer", "fetch_from": "customer.salutation", "read_only": 1},
+	],
 }
 
 

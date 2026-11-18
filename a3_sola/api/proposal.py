@@ -10,6 +10,7 @@ in the template computes anything.
 import json
 
 import frappe
+from frappe import _
 from frappe.utils import cint, flt, getdate
 
 from a3_sola.api import regulation, proposal_comparison
@@ -25,6 +26,11 @@ def proposal_context(proposal):
 	"""Assemble everything the Solar Proposal print format renders."""
 	doc = frappe.get_doc("Solar Proposal", proposal) if isinstance(proposal, str) else proposal
 	settings = get_settings()
+	if not doc.solar_design_estimate:
+		frappe.throw(
+			_("Add a design estimate to proposal {0} first: its PDF is generated from one.").format(doc.name),
+			frappe.MandatoryError, title=_("No Design Estimate"),
+		)
 	estimate = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate)
 	consumer = frappe.get_doc("Solar Consumer", estimate.solar_consumer)
 	survey = frappe.get_doc("Site Survey", estimate.site_survey) if estimate.site_survey else None
