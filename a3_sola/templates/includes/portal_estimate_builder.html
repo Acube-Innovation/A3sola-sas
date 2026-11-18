@@ -95,17 +95,19 @@
 {% include "templates/includes/portal_estimate_proposal.html" %}
 
 <div class="a3s-modal" id="de-modal" hidden role="dialog" aria-modal="true" aria-labelledby="de-form-title">
-	<div class="a3s-modal__panel a3s-de-modal">
-		<div class="a3s-de-modal__head">
+	{#- The same row form as the Packages page's (portal_package_edit.js): its panel, head, lines
+	    and actions. -#}
+	<div class="a3s-modal__panel a3s-users__panel a3s-pkg__modal">
+		<div class="a3s-users__modalhead">
 			<h3 class="a3s-modal__title" id="de-form-title"></h3>
-			<button type="button" class="a3s-de-modal__x" id="de-close" aria-label="Close">&times;</button>
+			<button type="button" class="a3s-icon-btn" id="de-close" aria-label="Close">&times;</button>
 		</div>
 		<form class="a3s-modal__form" id="de-form" novalidate>
-			<div class="a3s-de-fields" id="de-fields"></div>
-			<div class="a3s-de-actions">
-				<p class="a3s-form__status" id="de-status" role="status" aria-live="polite"></p>
+			<div id="de-fields"></div>
+			<div class="a3s-form__actions">
+				<button type="submit" class="a3s-btn a3s-btn--primary" id="de-submit">Add row</button>
 				<button type="button" class="a3s-btn a3s-btn--ghost" id="de-cancel">Cancel</button>
-				<button type="submit" class="a3s-btn a3s-btn--primary" id="de-submit">Add</button>
+				<p class="a3s-form__status" id="de-status" role="status" aria-live="polite"></p>
 			</div>
 		</form>
 	</div>
