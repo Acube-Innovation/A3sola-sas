@@ -146,6 +146,8 @@ AUTO_FIELDS = {"company"}
 #: Selects that start blank on a create form, not at their first option: a question
 #: only the customer can answer - whether they will take a loan - is asked, never assumed.
 UNANSWERED_SELECTS = {"loan_required"}
+#: Link fields whose create-form choices come from portal_fields.CHOICE_SOURCES (they need no record).
+NEW_FORM_SOURCES = {("Solar Consumer", "dealer")}
 INPUT_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Text", "Phone", "Attach Image"}
 DISPLAY_TYPES = {"Data", "Select", "Link", "Date", "Datetime", "Int", "Float", "Currency", "Percent", "Check", "Small Text", "Phone"}
 TEXTUAL = {"Data", "Select", "Link", "Small Text", "Phone"}
@@ -538,7 +540,9 @@ def form_fields(meta, prefill=None, extra=()):
 			rule = DEPENDENT_LINKS.get(f.fieldname)
 			spec["depends_field"] = rule[1] if rule else ""
 			spec["depends_also"] = ",".join(DEPENDENT_ALSO.get(f.fieldname, ()))
-			choices = link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
+			# The choices a field draws from elsewhere where the record is not needed (a dealer).
+			source = CHOICE_SOURCES.get((meta.name, f.fieldname)) if (meta.name, f.fieldname) in NEW_FORM_SOURCES else None
+			choices = frappe.get_attr(source)(None) if source else link_choices(f.options, filters=link_filters(f, frappe._dict(prefill or {})))
 			if seed and not any(c["value"] == seed for c in choices):
 				choices.insert(0, {"value": seed, "label": link_title(f.options, seed)})
 			spec["choices"] = choices
@@ -1328,7 +1332,7 @@ def form_groups(meta, first_label=None):
 
 from a3_sola.api.portal_fields import (  # noqa: E402  - grouped with the code that uses it
 	DISPLAY_TYPES as DISPLAY_TYPES_ALL, INPUT_TYPES as INPUT_TYPES_ALL, detail_row, edit_spec,
-	is_portal_file, link_choices, link_title,
+	CHOICE_SOURCES, is_portal_file, link_choices, link_title,
 	DEPENDENT_ALSO, DEPENDENT_LINKS, default_for, link_filters,
 )
 

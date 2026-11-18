@@ -350,6 +350,8 @@ CHOICE_SOURCES = {
 	("Lead", "a3s_dealer"): "a3_sola.api.leads.dealer_choices",
 	# The lead's owner: the company's people, and the dealers too (for staff).
 	("Lead", "lead_owner"): "a3_sola.api.leads.owner_choices",
+	# A customer's dealer: the dealer logins, as a lead's.
+	("Solar Consumer", "dealer"): "a3_sola.api.leads.dealer_choices",
 	("Solar Consumer", "contact_person"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.contact_choices",
 	("Solar Consumer", "installation_address"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
 	("Solar Consumer", "permanent_address_record"): "a3_sola.solar_crm.doctype.solar_consumer.solar_consumer.address_choices",
