@@ -441,9 +441,6 @@
 		});
 
 		/* The PDF and WhatsApp send what is saved, so they wait for the changes to be saved. */
-		$("de-pdf-link").href = state.pdf_route || "#";
-		$("de-pdf-link").hidden = !state.saved || dirty;
-		$("de-whatsapp").hidden = !state.saved || dirty;
 		$("de-discard").hidden = !dirty || busy;
 		var save = $("de-save");
 		var canSave = state.editable && (dirty || !state.saved);
@@ -823,8 +820,8 @@
 		}
 
 		/* The saved option's own print, under its figures: read in the browser, or saved. */
-		/* The next step under the figures: the proposal, made on the Proposal tab. Its PDF is
-		   there and in the header's download, so it is not repeated here. */
+		/* The next step under the figures: the proposal, made on the Proposal tab, where its
+		   PDF is. */
 		var print = $("de-com-print");
 		print.innerHTML = "";
 		if (state.saved && !changes(option).length) {
@@ -1041,22 +1038,6 @@
 		modal.hidden = true;
 		editing = null;
 	}
-
-	/* WhatsApp opens with the customer's number and the estimate's summary, ready to send.
-	   The window is opened at once, inside the click, so the browser does not block it. */
-	$("de-whatsapp").addEventListener("click", function () {
-		var win = window.open("", "_blank");
-		setStatus("Opening WhatsApp…", null, tabStatus);
-		call("whatsapp_link", { name: state.name })
-			.then(function (link) {
-				if (win) win.location.href = link; else window.location.href = link;
-				setStatus("WhatsApp opened with the estimate summary. Download the PDF to send it in the chat.", "success", tabStatus);
-			})
-			.catch(function (error) {
-				if (win) win.close();
-				setStatus(error.message, "error", tabStatus);
-			});
-	});
 
 	$("de-add").addEventListener("click", function () { openModal(null); });
 	$("de-close").addEventListener("click", closeModal);
