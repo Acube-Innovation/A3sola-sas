@@ -5,15 +5,6 @@
 	<div>
 		<h2 class="a3s-main__title">Leads</h2>
 		<p class="a3s-main__sub">Prospects and enquiries, stored in ERPNext.</p>
-		{#- Follow Up: the Assignment column becomes each lead's outreach stage and next follow-up. -#}
-		<form class="a3s-leads__view" method="get" action="/a3solaportal/leads">
-			{%- if q %}<input type="hidden" name="q" value="{{ q | e }}">{% endif %}
-			{%- if status_filter %}<input type="hidden" name="status" value="{{ status_filter | e }}">{% endif %}
-			<label class="a3s-check">
-				<input type="checkbox" name="followup" value="1"{% if followup_view %} checked{% endif %} onchange="this.form.submit()">
-				<span>Follow Up</span>
-			</label>
-		</form>
 	</div>
 	<div class="a3s-leads__actions">
 		{%- if can_import %}
@@ -29,47 +20,61 @@
 	</div>
 </div>
 
-{#- ---- whose leads: all, ours, or the dealers' (staff only) -------------------- #}
-{%- if show_scope %}
-{%- set keep = ("&q=" ~ (q | urlencode) if q else "") ~ ("&status=" ~ (status_filter | urlencode) if status_filter else "") ~ ("&followup=1" if followup_view else "") ~ ("&stage=" ~ (stage_filter | urlencode) if stage_filter else "") %}
-<nav class="a3s-ce-tabs a3s-leads__scope" aria-label="Whose leads">
-	{%- for key, label in (("", "All"), ("ours", "Our leads"), ("dealers", "Dealer leads")) %}
-	<a href="/a3solaportal/leads?scope={{ key }}{{ keep }}"{% if key == scope %} aria-current="page"{% endif %}>
-		<span>{{ label }}</span><span class="a3s-ce-tabs__n">{{ scope_counts[key] }}</span>
-	</a>
-	{%- endfor %}
-</nav>
-{%- if scope == "dealers" %}
-<p class="a3s-leads__scope-note">Leads brought in by dealers. The dealer runs each one; help where they ask.</p>
-{%- endif %}
-{%- endif %}
-
-{#- ---- filters (GET, so a search is a shareable URL) ---------------------- #}
-<form class="a3s-toolbar" method="get" action="/a3solaportal/leads" role="search">
-	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
-	       placeholder="Search name, company, email or phone" aria-label="Search leads">
-	<select class="a3s-toolbar__select" name="status" aria-label="Filter by status">
-		<option value="">All statuses</option>
-		{%- for opt in status_options %}
-		<option value="{{ opt }}"{% if opt == status_filter %} selected{% endif %}>{{ opt }}</option>
-		{%- endfor %}
-	</select>
-	{%- if dealer_options %}
-	{#- Dealer leads: one dealer's, when there are several. Choosing one filters straight away. -#}
-	<select class="a3s-toolbar__select" name="dealer" aria-label="Filter by dealer" onchange="this.form.submit()">
-		<option value="">All dealers</option>
-		{%- for d in dealer_options %}
-		<option value="{{ d.value | e }}"{% if d.value == dealer_filter %} selected{% endif %}>{{ d.label | e }} ({{ d.count }})</option>
-		{%- endfor %}
-	</select>
-	{%- endif %}
-	{%- if followup_view %}<input type="hidden" name="followup" value="1">{% endif %}
-	{%- if stage_filter %}<input type="hidden" name="stage" value="{{ stage_filter | e }}">{% endif %}
+{#- ---- one GET form, two rows, so a search is a shareable URL ------------------------
+      Row one: whose leads (staff only: All / Our leads / Dealer leads), then Follow Up - the
+      Assignment column becomes each lead's outreach stage and next follow-up - then the status
+      and Filter. Row two: the search box, and one dealer's leads when there are several. -#}
+<form class="a3s-leads__filters" method="get" action="/a3solaportal/leads" role="search">
 	{%- if scope %}<input type="hidden" name="scope" value="{{ scope }}">{% endif %}
-	<button type="submit" class="a3s-btn a3s-btn--ghost">Filter</button>
-	{%- if q or status_filter or dealer_filter or stage_filter %}
-	<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?scope={{ scope }}{% if followup_view %}&followup=1{% endif %}">Clear</a>
+	{%- if stage_filter %}<input type="hidden" name="stage" value="{{ stage_filter | e }}">{% endif %}
+	<div class="a3s-leads__scoperow">
+		{%- if show_scope %}
+		{%- set keep = ("&q=" ~ (q | urlencode) if q else "") ~ ("&status=" ~ (status_filter | urlencode) if status_filter else "") ~ ("&followup=1" if followup_view else "") ~ ("&stage=" ~ (stage_filter | urlencode) if stage_filter else "") %}
+		<nav class="a3s-ce-tabs a3s-leads__scope" aria-label="Whose leads">
+			{%- for key, label in (("", "All"), ("ours", "Our leads"), ("dealers", "Dealer leads")) %}
+			<a href="/a3solaportal/leads?scope={{ key }}{{ keep }}"{% if key == scope %} aria-current="page"{% endif %}>
+				<span>{{ label }}</span><span class="a3s-ce-tabs__n">{{ scope_counts[key] }}</span>
+			</a>
+			{%- endfor %}
+		</nav>
+		{%- endif %}
+		<label class="a3s-check a3s-leads__view">
+			<input type="checkbox" name="followup" value="1"{% if followup_view %} checked{% endif %} onchange="this.form.submit()">
+			<span>Follow Up</span>
+		</label>
+		{#- The status, and one dealer's leads when there are several: each filters as soon as it is chosen. -#}
+		<select class="a3s-toolbar__select" name="status" aria-label="Filter by status" onchange="this.form.submit()">
+			<option value="">All statuses</option>
+			{%- for opt in status_options %}
+			<option value="{{ opt }}"{% if opt == status_filter %} selected{% endif %}>{{ opt }}</option>
+			{%- endfor %}
+		</select>
+		{%- if dealer_options %}
+		<select class="a3s-toolbar__select" name="dealer" aria-label="Filter by dealer" onchange="this.form.submit()">
+			<option value="">All dealers</option>
+			{%- for d in dealer_options %}
+			<option value="{{ d.value | e }}"{% if d.value == dealer_filter %} selected{% endif %}>{{ d.label | e }} ({{ d.count }})</option>
+			{%- endfor %}
+		</select>
+		{%- endif %}
+		{#- Search: the first click opens the search box under this row and puts the cursor in it;
+		    with the box open, the button (or Enter in the box) runs the search. -#}
+		<button type="submit" class="a3s-btn a3s-btn--filter" aria-controls="a3s-leads-search" aria-expanded="{{ 'true' if q else 'false' }}"
+		        onclick="var row = document.getElementById('a3s-leads-search'); if (row.hidden) { row.hidden = false; this.setAttribute('aria-expanded', 'true'); row.querySelector('input').focus(); return false; }">
+			<span class="a3s-btn--filter__ic"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-filter"></use></svg></span><span class="a3s-btn--filter__label">Search</span>
+		</button>
+		{%- if q or status_filter or dealer_filter or stage_filter %}
+		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?scope={{ scope }}{% if followup_view %}&followup=1{% endif %}">Clear</a>
+		{%- endif %}
+	</div>
+	{%- if show_scope and scope == "dealers" %}
+	<p class="a3s-leads__scope-note">Leads brought in by dealers. The dealer runs each one; help where they ask.</p>
 	{%- endif %}
+	{#- Hidden until Search is clicked - shown from the start when a search is already on. -#}
+	<div class="a3s-toolbar" id="a3s-leads-search"{% if not q %} hidden{% endif %}>
+		<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
+		       placeholder="Search name, company, email or phone" aria-label="Search leads">
+	</div>
 </form>
 
 {%- if followup_view %}
@@ -86,7 +91,7 @@
 {%- endif %}
 {% if leads %}
 <div class="a3s-card a3s-tablewrap">
-	<table class="a3s-table{% if followup_view %} a3s-table--stages{% endif %}">
+	<table class="a3s-table a3s-table--even{% if followup_view %} a3s-table--stages{% endif %}">
 		<thead>
 			<tr>
 				<th>Name</th>

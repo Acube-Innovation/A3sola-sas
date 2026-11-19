@@ -12,17 +12,27 @@
 	</a>
 </div>
 
-<form class="a3s-toolbar" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
-	<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
-	       placeholder="Search customers" aria-label="Search customers">
-	<select name="status" aria-label="Status">
-		<option value="">All statuses</option>
-		{%- for s in statuses %}
-		<option value="{{ s }}"{% if s == status %} selected{% endif %}>{{ s }}</option>
-		{%- endfor %}
-	</select>
-	<button type="submit" class="a3s-btn a3s-btn--ghost">Search</button>
-	{%- if q or status %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
+{#- One GET form, two rows, as on the Leads list: the status filters as soon as it is chosen;
+    Search opens the search box under the row on the first click and runs the search on the
+    next (or on Enter in the box). The box is hidden until then, shown when a search is on. -#}
+<form class="a3s-leads__filters" method="get" action="/a3solaportal/{{ collection.slug }}" role="search">
+	<div class="a3s-filterrow">
+		<select class="a3s-toolbar__select" name="status" aria-label="Status" onchange="this.form.submit()">
+			<option value="">All statuses</option>
+			{%- for s in statuses %}
+			<option value="{{ s }}"{% if s == status %} selected{% endif %}>{{ s }}</option>
+			{%- endfor %}
+		</select>
+		<button type="submit" class="a3s-btn a3s-btn--filter" aria-controls="a3s-list-search" aria-expanded="{{ 'true' if q else 'false' }}"
+		        onclick="var row = document.getElementById('a3s-list-search'); if (row.hidden) { row.hidden = false; this.setAttribute('aria-expanded', 'true'); row.querySelector('input').focus(); return false; }">
+			<span class="a3s-btn--filter__ic"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-filter"></use></svg></span><span class="a3s-btn--filter__label">Search</span>
+		</button>
+		{%- if q or status %}<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/{{ collection.slug }}">Clear</a>{% endif %}
+	</div>
+	<div class="a3s-toolbar" id="a3s-list-search"{% if not q %} hidden{% endif %}>
+		<input class="a3s-toolbar__search" type="search" name="q" value="{{ q }}"
+		       placeholder="Search customers" aria-label="Search customers">
+	</div>
 </form>
 
 {% if rows %}

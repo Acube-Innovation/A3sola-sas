@@ -272,6 +272,20 @@
 .a3s a.a3s-btn--primary, .a3s a.a3s-btn--primary:hover { color: #fff; }
 .a3s a.a3s-btn--secondary:hover, .a3s a.a3s-btn--ghost:hover { color: var(--color-accent); }
 .a3s-btn--block { width: 100%; }
+/* The Filter button of a list: a split button, the funnel on an orange square at the left, the
+   word on a pale orange panel beside it, the same height and corner as the inputs it stands with. */
+.a3s-btn--filter {
+	padding: 0; gap: 0; overflow: hidden;
+	border-radius: 0.75rem; border-color: rgba(247, 148, 30, 0.45);
+	background: rgba(247, 148, 30, 0.12); color: var(--color-accent-hover);
+}
+.a3s-btn--filter__ic {
+	display: inline-flex; align-items: center; justify-content: center; align-self: stretch;
+	padding: 0 0.7rem; background-image: var(--color-accent-gradient); color: #fff;
+}
+.a3s-btn--filter__ic .a3s-ic { width: 1rem; height: 1rem; }
+.a3s-btn--filter__label { padding: 0.6rem 1rem; line-height: 1.35; }
+.a3s-btn--filter:hover { color: var(--color-accent-hover); background: rgba(247, 148, 30, 0.2); border-color: var(--color-accent); box-shadow: var(--shadow-soft); }
 .a3s-btn[hidden] { display: none; }
 .a3s-btn[disabled], .a3s-btn[aria-disabled="true"] {
 	opacity: 0.55;
@@ -1561,6 +1575,7 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 	align-items: center;
 	margin-bottom: 1.25rem;
 }
+.a3s-toolbar[hidden] { display: none; }
 .a3s-toolbar__search, .a3s-toolbar__select {
 	font-family: inherit;
 	font-size: 0.9375rem;
@@ -1604,6 +1619,10 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-table tbody td.a3s-table__status { vertical-align: middle; }
 .a3s-table tbody tr:last-child td { border-bottom: 0; }
 .a3s-table tbody tr:hover { background: var(--color-bg); }
+/* Columns of one width: the table takes the card's width and splits it evenly, whatever a cell
+   holds; a long email or address wraps inside its column rather than widening it. */
+.a3s-table--even { table-layout: fixed; width: 100%; }
+.a3s-table--even th, .a3s-table--even td { overflow-wrap: anywhere; }
 .a3s-table__num { white-space: nowrap; color: var(--color-text-muted); }
 .a3s-table__link { font-weight: 600; color: var(--color-text); }
 .a3s-table__link:hover { color: var(--color-accent); }
@@ -2481,7 +2500,11 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-ce-tabs a:hover { color: var(--color-text); background: var(--color-accent-soft); }
 .a3s-ce-tabs a[aria-current="page"] { background-image: var(--color-accent-gradient); color: #fff; box-shadow: 0 8px 20px -10px rgba(247, 148, 30, 0.9); }
 .a3s-ce-tabs a[aria-current="page"] .a3s-ce-tabs__n { background: rgba(255, 255, 255, 0.28); }
-.a3s-leads__scope { margin-bottom: 1rem; }
+/* The scope tabs with the Follow Up box beside them, on one line; the box alone for a dealer. */
+.a3s-leads__scoperow, .a3s-filterrow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 1rem; }
+.a3s-leads__scoperow .a3s-leads__view { margin: 0 0.5rem 0 0.5rem; }
+.a3s-leads__filters .a3s-leads__scope-note { margin-top: -0.4rem; }
+.a3s-leads__scope { margin-bottom: 0; }
 .a3s-leads__scope-note { margin: -0.4rem 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
 .a3s-badge--dealer { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; margin-top: 0.3rem; }
 
@@ -3934,8 +3957,7 @@ textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-paysched__pay-meta.is-warn { color: #c0392b; }
 
 /* The Leads list's Follow Up box (leads/index.html), and a follow-up that is due. */
-.a3s-leads__view { margin: 0.45rem 0 0; }
-.a3s-leads__view .a3s-check { font-size: 0.85rem; }
+.a3s-leads__view { margin: 0; font-size: 0.875rem; font-weight: 600; }
 .a3s-pill--due { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.5rem; border-radius: var(--radius-pill);
 	font-size: 0.72rem; font-weight: 700; background: rgba(255, 95, 87, 0.14); color: #c0392b; }
 /* The follow-up view colours each lead's row by its outreach stage (leads/index.py STAGE_KEYS):
