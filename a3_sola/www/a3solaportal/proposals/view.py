@@ -94,9 +94,20 @@ def get_context(context):
 	from a3_sola.api.proposal_comparison import render as render_comparison
 
 	context.comparison_html = render_comparison(proposal_estimate_names(doc))
-	# Generate / Regenerate sits in Next steps, above Create quotation. The head has Edit
-	# only: the proposal's PDF is not viewed, downloaded or shared from this page.
+	# Generate / Regenerate sits in Next steps, above Create quotation.
 	context.chain_lead_template = "templates/includes/portal_proposal_next.html"
+	# Once the proposal is saved it has a PDF, a draft as well (the print renders from the
+	# record, not a version): view and download it (and Word, for the Administrator), send it
+	# on WhatsApp or by email, or through the share sheet, beside Edit.
+	from urllib.parse import quote
+
+	from a3_sola.api import proposal_word
+	from a3_sola.api.portal_share import share_links
+
+	context.head_actions_template = "templates/includes/portal_share.html"
+	context.share = share_links(doc, "/api/method/a3_sola.api.portal_proposal.pdf?name=" + quote(doc.name))
+	if proposal_word.can_download():
+		context.share["word"] = proposal_word.route(doc.name)
 	# The actions below are unsafe methods on an authenticated session, so they need a token.
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
