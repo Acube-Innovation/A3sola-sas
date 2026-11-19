@@ -39,17 +39,12 @@ a3_sola.cascade_delete = function (frm, kind) {
 					`<p>${__("{0} and the {1} records made for them will be deleted, with their attachments:",
 						[`<b>${frappe.utils.escape_html(p.title)}</b>`, p.total])}</p>` +
 					`<ul>${rows(p.counts.map((c) => `${c.label}: ${c.count}`))}</ul>` },
-				{ fieldname: "confirm", fieldtype: "Data", reqd: 1, label: __("Type {0} to confirm", [p.name]) },
 			],
 			primary_action_label: __("Delete {0} records", [p.total]),
-			primary_action(values) {
-				if ((values.confirm || "").trim() !== p.name) {
-					frappe.msgprint(__("Type {0} exactly to confirm.", [p.name]));
-					return;
-				}
+			primary_action() {
 				frappe.call({
 					method: "a3_sola.api.cascade_delete.delete",
-					args: { ...args, confirm: values.confirm.trim() },
+					args,
 					freeze: true,
 					freeze_message: __("Deleting…"),
 				}).then(() => {

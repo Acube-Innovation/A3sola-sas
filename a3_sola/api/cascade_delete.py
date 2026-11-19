@@ -261,10 +261,11 @@ def preview(doctype, name):
 
 @frappe.whitelist(methods=["POST"])
 def delete(doctype, name, confirm=None):
-	"""Delete the lead or customer and everything gathered with it, or nothing at all."""
+	"""Delete the lead or customer and everything gathered with it, or nothing at all.
+
+	The Delete button is the confirmation. `confirm` is ignored: an older page still sends it.
+	"""
 	doc = _load(doctype, name)
-	if (confirm or "").strip() != doc.name:
-		frappe.throw(_("Type {0} to confirm the delete.").format(doc.name))
 	plan = collect(doc.doctype, doc.name)
 	if plan["blockers"]:
 		frappe.throw(_("{0} cannot be deleted: {1}. Cancel those in ERPNext first.").format(
@@ -295,7 +296,15 @@ def run(found, parties):
 			party.flags.ignore_mandatory = True
 			party.save()
 	# Contacts and Addresses first: ERPNext's Customer on_trash re-saves an address still
-	# linked to it, which fails once the Solar Consumer it also names is gone.
+	# linked to it, which fails once the Solar Consumer it also names is gone. Every field
+	# naming one is cleared before it goes - the records deleted after it too: a task
+	# document's on_trash saves its project, whose Site Address would then name nothing.
+	for party_dt, (delete, _keep) in parties.items():
+		if not delete:
+			continue
+		for parent_dt, owner, field, row in _referrers(party_dt, delete):
+			dt, name = row if row else (parent_dt, owner)
+			frappe.db.set_value(dt, name, field, None, update_modified=False)
 	for party_dt, (delete, _keep) in parties.items():
 		for record in delete:
 			if frappe.db.exists(party_dt, record):
