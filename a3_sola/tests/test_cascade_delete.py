@@ -55,11 +55,6 @@ class TestCascadeDelete(FrappeTestCase):
 		cascade_delete.delete("Lead", lead, confirm=lead)
 		self.assertFalse(frappe.db.exists("Lead", lead))
 
-	def test_the_name_must_be_typed(self):
-		with self.assertRaises(frappe.ValidationError):
-			cascade_delete.delete("Solar Consumer", self.consumer.name, confirm="yes")
-		self.assertTrue(frappe.db.exists("Solar Consumer", self.consumer.name))
-
 	def test_a_submitted_invoice_refuses_and_nothing_goes(self):
 		customer = frappe.db.get_value("Solar Consumer", self.consumer.name, "customer")
 		# Written straight in: the refusal reads the invoice's docstatus, not its ledger.

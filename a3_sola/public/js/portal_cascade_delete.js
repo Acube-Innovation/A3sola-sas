@@ -2,8 +2,7 @@
 // For license information, please see license.txt
 //
 // Delete a lead or a customer with everything made for them (api/cascade_delete).
-// The button first asks what would go and shows it; the delete needs the record's
-// name typed in, since it cannot be undone from here.
+// The button first asks what would go and shows it; Delete then removes it all.
 (function () {
 	"use strict";
 	var btn = document.querySelector("[data-cascade-delete]");
@@ -86,23 +85,19 @@
 			m.body.innerHTML = '<p class="a3s-cascade__text"><b>' + esc(p.title) + "</b> (" + esc(p.name) + ") and the " + esc(p.total) +
 				" records made for them will be deleted, with their attachments:</p>" + list(p.counts) +
 				(kept.length ? '<p class="a3s-cascade__text">' + esc(kept.join(" and ")) + " also used by someone else will stay, without this " + esc(kind) + ".</p>" : "") +
-				'<div class="a3s-field"><label for="a3s-cascade-confirm">Type ' + esc(p.name) + ' to confirm <span class="a3s-req">*</span></label>' +
-				'<input id="a3s-cascade-confirm" type="text" autocomplete="off" spellcheck="false"></div>' +
-				'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-cascade__ok" data-ok disabled>' +
+				'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-cascade__ok" data-ok>' +
 				'<svg class="a3s-ic" aria-hidden="true"><use href="#ic-trash"></use></svg><span>Delete ' + esc(p.total) + " records</span></button>" +
 				'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Cancel</button></div>';
-			var input = m.body.querySelector("input");
 			var ok = m.body.querySelector("[data-ok]");
-			input.focus();
-			input.addEventListener("input", function () { ok.disabled = input.value.trim() !== p.name; });
+			ok.focus();
 			ok.addEventListener("click", function () {
 				ok.disabled = true; ok.classList.add("is-busy"); ok.querySelector("span").textContent = "Deleting…"; m.status("");
-				call("delete", { doctype: args.doctype, name: args.name, confirm: input.value.trim() }).then(function (r) {
+				call("delete", { doctype: args.doctype, name: args.name }).then(function (r) {
 					window.location.href = r.redirect;
 				}).catch(function (err) {
 					m.status(err.message, "error");
 					ok.classList.remove("is-busy"); ok.querySelector("span").textContent = "Delete " + p.total + " records";
-					ok.disabled = input.value.trim() !== p.name;
+					ok.disabled = false;
 				});
 			});
 		}).catch(function (err) {
