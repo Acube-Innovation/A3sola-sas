@@ -33,31 +33,38 @@ def _key(installation, task_code, url, expires):
 	return hmac.new(secret, message.encode(), hashlib.sha256).hexdigest()[:40]
 
 
-def _urls(inst, task_code):
-	"""Every document link the task's panel shows: its files, and its papers as printed - signed
-	or not, to view or download."""
+def _names(inst, task_code):
+	"""Every document link the task's panel shows - its files, and its papers as printed, signed
+	or not, to view or download - with what the document is called. A file of a checklist row
+	(the Aadhaar's front and back) goes by its own label."""
 	from a3_sola.api.portal_tasks import _panel
 
-	out = set()
+	out = {}
 	for d in _panel(inst, task_code).get("documents") or []:
-		if d.get("file_url"):
-			out.add(d["file_url"])
-		out.update(f["url"] for f in d.get("files") or [] if f.get("url"))
 		for p in d.get("prints") or []:
-			out.update({p["url"], p["url"] + "&signed=1", p["url"] + "&signed=0"})
+			for u in (p["url"], p["url"] + "&signed=1", p["url"] + "&signed=0"):
+				out.setdefault(u, d.get("name"))
+		for f in d.get("files") or []:
+			if f.get("url"):
+				out.setdefault(f["url"], f.get("label") or d.get("name"))
+		if d.get("file_url"):
+			out.setdefault(d["file_url"], d.get("name"))
 	return out
+
+
+def _urls(inst, task_code):
+	"""Every document link the task's panel shows."""
+	return set(_names(inst, task_code))
 
 
 def _name(inst, task_code, url):
 	"""What the document is called, for its message and its file."""
-	from a3_sola.api.portal_tasks import _panel
+	return _names(inst, task_code).get(url) or _("Document")
 
-	for d in _panel(inst, task_code).get("documents") or []:
-		links = {d.get("file_url")} | {f.get("url") for f in d.get("files") or []} | \
-			{u for p in d.get("prints") or [] for u in (p["url"], p["url"] + "&signed=1", p["url"] + "&signed=0")}
-		if url in links:
-			return d.get("name")
-	return _("Document")
+
+def _link(installation, task_code, url, expires):
+	return get_url("/api/method/a3_sola.api.task_share.shared_document?i={0}&t={1}&e={2}&u={3}&k={4}".format(
+		quote(installation), quote(task_code), expires, quote(url, safe=""), _key(installation, task_code, url, expires)))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -72,8 +79,7 @@ def share_link(installation, task_code, url):
 	if url not in _urls(inst, task_code):
 		frappe.throw(_("That is not one of this task's documents."), frappe.PermissionError)
 	expires = str(getdate(today()) + timedelta(days=DAYS))
-	link = get_url("/api/method/a3_sola.api.task_share.shared_document?i={0}&t={1}&e={2}&u={3}&k={4}".format(
-		quote(installation), quote(task_code), expires, quote(url, safe=""), _key(installation, task_code, url, expires)))
+	link = _link(installation, task_code, url, expires)
 	name = _name(inst, task_code, url)
 	customer = inst.get("consumer_name") or inst.get("lead_name") or inst.name
 	sender, phone = _sender()
@@ -81,6 +87,34 @@ def share_link(installation, task_code, url):
 		name, customer, frappe.utils.formatdate(expires, "dd MMM yyyy"), link) + SIGNATURE.format(sender=sender, phone=phone)
 	return {"link": link, "name": name, "subject": _("{0} - {1}").format(name, customer), "message": message,
 		"expires": expires, "file_name": _file_name(name, url)}
+
+
+@frappe.whitelist(methods=["POST"])
+def share_links(installation, task_code, urls):
+	"""Links for several of the task's documents at once - the panel's Share, every document
+	ticked - and one message that lists them, each opening for DAYS days without a login."""
+	from a3_sola.api.portal_tasks import _job
+	from a3_sola.api.portal_share import SIGNATURE, _sender
+
+	urls = frappe.parse_json(urls) if isinstance(urls, str) else urls
+	urls = list(dict.fromkeys(u for u in urls or [] if u))
+	if not urls:
+		frappe.throw(_("Choose at least one document to share."))
+	inst = _job(installation, "read")
+	names = _names(inst, task_code)
+	if any(u not in names for u in urls):
+		frappe.throw(_("That is not one of this task's documents."), frappe.PermissionError)
+	expires = str(getdate(today()) + timedelta(days=DAYS))
+	docs = [{"url": u, "name": names[u], "link": _link(installation, task_code, u, expires),
+		"file_name": _file_name(names[u], u)} for u in urls]
+	customer = inst.get("consumer_name") or inst.get("lead_name") or inst.name
+	task = frappe.db.get_value("Installation Task", {"solar_installation": inst.name, "task_code": task_code}, "task_name")
+	sender, phone = _sender()
+	listed = "\n\n".join("{0}. {1}\n{2}".format(i, d["name"], d["link"]) for i, d in enumerate(docs, 1))
+	message = _("Dear Sir/Madam,\n\nPlease find the documents for {0} at the links below. They open until {1}.\n\n{2}\n\n").format(
+		customer, frappe.utils.formatdate(expires, "dd MMM yyyy"), listed) + SIGNATURE.format(sender=sender, phone=phone)
+	subject = _("{0} - {1}").format(task or _("Documents"), customer)
+	return {"documents": docs, "subject": subject, "message": message, "expires": expires}
 
 
 def _file_name(name, url):

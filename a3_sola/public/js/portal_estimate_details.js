@@ -331,10 +331,15 @@
 			var text = wrap && wrap.querySelector("[data-component-text]");
 			if (text) wrap.hidden = !applies || !info;
 		});
-		/* The inverter on one line, the panel it is costed on under it. */
+		/* The inverter on one line, the panel it is costed on under it: the panel the package's
+		   Pricing Options pair that inverter with (one make can come in several wattages, so
+		   the make alone does not say which). */
 		var shown = tr.querySelector("[data-component-text]");
 		if (shown) {
-			shown.textContent = [picked.inverters, picked.panels].filter(Boolean).join("\n") || "\u2014";
+			var invSel = tr.querySelector('[data-component="inverters"]');
+			var invRow = info && invSel ? (info.inverters || []).filter(function (o) { return o.value === invSel.value; })[0] : null;
+			var panelText = (invRow && invRow.panel_label) || picked.panels;
+			shown.textContent = [picked.inverters, panelText].filter(Boolean).join("\n") || "\u2014";
 			shown.title = shown.textContent.replace("\n", " / ");
 		}
 		/* The option's price: the package built with the inverter chosen (the price list's MRP). */

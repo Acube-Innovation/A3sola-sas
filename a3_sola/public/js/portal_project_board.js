@@ -141,8 +141,11 @@
 		back.className = "a3s-modal";
 		back.innerHTML =
 			'<div class="a3s-modal__panel a3s-taskpanel" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+			/* The title, and room beside it for the panel's own actions (the documents' Share). */
+			'<div class="a3s-taskpanel__head"><div class="a3s-taskpanel__titles">' +
 			'<h3 class="a3s-modal__title">' + esc(title) + "</h3>" +
 			(sub ? '<p class="a3s-taskpanel__sub">' + esc(sub) + "</p>" : "") +
+			'</div><div class="a3s-taskpanel__headacts" data-head-acts></div></div>' +
 			'<div class="a3s-taskpanel__body"></div>' +
 			'<p class="a3s-form__status" data-status role="status" aria-live="polite"></p>' +
 			"</div>";
@@ -155,6 +158,7 @@
 		return {
 			el: back,
 			body: back.querySelector(".a3s-taskpanel__body"),
+			head: back.querySelector("[data-head-acts]"),
 			close: close,
 			status: function (text, kind) {
 				status.textContent = text || "";
@@ -193,50 +197,141 @@
 		return iconLink(name, p.label, p.url + "&signed=1", ' data-print-base="' + esc(p.url) + '" target="_blank" rel="noopener"');
 	}
 
-	/* Share a document with someone who has no login - the bank, KSEB, the customer: a link
-	   that opens that one document (api/task_share), sent by WhatsApp, e-mail, the phone's
-	   share sheet, or copied. A paper the system prints is shared as the sign & seal box says. */
+	/* What the panel's Share (at the top) can send: each row marks its shareable document,
+	   unseen - a row has no share button of its own. A paper the system prints goes as the
+	   sign & seal box says. */
 	function shareButton(url, label, signable) {
-		return '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" title="Share ' + esc(label) +
-			'" aria-label="Share ' + esc(label) + '" data-share-url="' + esc(url) + '" data-share-name="' + esc(label) + '"' +
-			(signable ? " data-share-signable" : "") + ">" + svgIcon("share") + "</button>";
+		return '<span hidden data-share-url="' + esc(url) + '" data-share-name="' + esc(label) + '"' +
+			(signable ? " data-share-signable" : "") + "></span>";
 	}
-	function shareDocument(m, task, button) {
+
+	/* Share several of the task's documents at once, from the Share at the top of its panel:
+	   every document it can share is listed, all ticked; untick what is not wanted and send
+	   them by WhatsApp, e-mail, the phone's share sheet, or copy the links - one message, a
+	   link for each (api/task_share.share_links). Papers the system prints go as the sign &
+	   seal box says. */
+	function shareables(m) {
 		var signed = m.body.querySelector("[data-print-signed]");
-		var url = button.dataset.shareUrl;
-		if (button.hasAttribute("data-share-signable")) url += "&signed=" + (!signed || signed.checked ? "1" : "0");
-		var s = modal("Share " + button.dataset.shareName, task.name);
-		s.body.innerHTML = '<p class="a3s-taskpanel__empty">Making the link…</p>';
-		call("a3_sola.api.task_share.share_link", { installation: installation, task_code: task.code, url: url }).then(function (r) {
-			var canShare = !!(navigator.share);
-			s.body.innerHTML =
-				'<p class="a3s-taskpanel__sub">Anyone with the link can open this document until ' + esc(r.expires.split("-").reverse().join("-")) + ", without signing in.</p>" +
-				'<div class="a3s-taskshare">' +
-				'<a class="a3s-btn a3s-taskshare__wa" href="https://wa.me/?text=' + encodeURIComponent(r.message) + '" target="_blank" rel="noopener">' + svgIcon("whatsapp") + "<span>WhatsApp</span></a>" +
-				'<a class="a3s-btn a3s-btn--secondary" href="mailto:?subject=' + encodeURIComponent(r.subject) + "&body=" + encodeURIComponent(r.message) + '">' + svgIcon("mail") + "<span>E-mail</span></a>" +
-				(canShare ? '<button type="button" class="a3s-btn a3s-btn--secondary" data-share-device>' + svgIcon("share") + "<span>Share file</span></button>" : "") +
-				'<button type="button" class="a3s-btn a3s-btn--ghost" data-share-copy>' + svgIcon("doc") + "<span>Copy link</span></button>" +
-				"</div>" +
-				'<input class="a3s-taskshare__link" type="text" readonly value="' + esc(r.link) + '" aria-label="Share link">' +
-				'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--ghost" data-close>Close</button></div>';
-			s.body.addEventListener("click", function (e) {
-				if (e.target.closest("[data-share-copy]")) {
-					var box = s.body.querySelector(".a3s-taskshare__link");
-					(navigator.clipboard ? navigator.clipboard.writeText(r.link) : Promise.reject()).catch(function () {
+		var seen = {}, out = [];
+		Array.prototype.forEach.call(m.body.querySelectorAll("[data-share-url]"), function (b) {
+			var url = b.dataset.shareUrl;
+			if (b.hasAttribute("data-share-signable")) url += "&signed=" + (!signed || signed.checked ? "1" : "0");
+			if (seen[url]) return;
+			seen[url] = true;
+			out.push({ url: url, name: b.dataset.shareName });
+		});
+		return out;
+	}
+	function shareMany(m, task) {
+		var docs = shareables(m);
+		var s = modal("Share documents", task.name);
+		var canShare = !!(navigator.share);
+		s.body.innerHTML =
+			'<p class="a3s-taskpanel__sub">Untick any document you do not want to send. Anyone with the links can open them for 30 days, without signing in.</p>' +
+			'<div class="a3s-taskpick__bar"><label class="a3s-check"><input type="checkbox" checked data-pick-all><span>Select all</span></label>' +
+			'<span class="a3s-taskpick__count" data-pick-count></span></div>' +
+			'<ul class="a3s-taskdocs a3s-taskpick">' + docs.map(function (d, i) {
+				return '<li class="a3s-taskdocs__row"><label class="a3s-check"><input type="checkbox" checked data-pick="' + i + '">' +
+					"<span>" + esc(d.name) + "</span></label></li>";
+			}).join("") + "</ul>" +
+			'<div class="a3s-taskshare">' +
+			'<button type="button" class="a3s-btn a3s-taskshare__wa" data-send="whatsapp">' + svgIcon("whatsapp") + "<span>WhatsApp</span></button>" +
+			'<button type="button" class="a3s-btn a3s-btn--secondary" data-send="mail">' + svgIcon("mail") + "<span>E-mail</span></button>" +
+			(canShare ? '<button type="button" class="a3s-btn a3s-btn--secondary" data-send="device">' + svgIcon("share") + "<span>Share files</span></button>" : "") +
+			'<button type="button" class="a3s-btn a3s-btn--ghost" data-send="copy">' + svgIcon("doc") + "<span>Copy links</span></button>" +
+			"</div>" +
+			'<textarea class="a3s-taskshare__link" rows="4" readonly hidden aria-label="Share links" data-links></textarea>' +
+			'<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--ghost" data-close>Close</button></div>';
+
+		var picks = s.body.querySelectorAll("[data-pick]");
+		var all = s.body.querySelector("[data-pick-all]");
+		var count = s.body.querySelector("[data-pick-count]");
+		var sends = s.body.querySelectorAll("[data-send]");
+		function chosen() {
+			return Array.prototype.filter.call(picks, function (p) { return p.checked; })
+				.map(function (p) { return docs[Number(p.dataset.pick)].url; });
+		}
+		function refresh() {
+			var n = chosen().length;
+			count.textContent = n + " of " + docs.length + " selected";
+			all.checked = n === docs.length;
+			all.indeterminate = n > 0 && n < docs.length;
+			Array.prototype.forEach.call(sends, function (b) { b.disabled = !n; });
+		}
+		refresh();
+		s.body.addEventListener("change", function (e) {
+			if (e.target === all) Array.prototype.forEach.call(picks, function (p) { p.checked = all.checked; });
+			refresh();
+		});
+
+		/* One set of links per selection: asked for once, reused by each way of sending. */
+		var made = {};
+		function links(urls) {
+			var key = urls.join("\n");
+			if (!made[key]) made[key] = call("a3_sola.api.task_share.share_links",
+				{ installation: installation, task_code: task.code, urls: JSON.stringify(urls) });
+			return made[key];
+		}
+		var ready = null;
+		s.body.addEventListener("click", function (e) {
+			var b = e.target.closest("[data-send]");
+			if (!b) return;
+			var urls = chosen();
+			if (!urls.length) { s.status("Choose at least one document.", "error"); return; }
+			var how = b.dataset.send;
+			s.status("Making the links…");
+			if (how === "whatsapp") {
+				/* Opened now, while the click still counts, so no pop-up blocker stops it. */
+				var win = window.open("", "_blank");
+				links(urls).then(function (r) {
+					var href = "https://wa.me/?text=" + encodeURIComponent(r.message);
+					if (win) win.location = href; else window.open(href, "_blank");
+					s.status("");
+				}).catch(function (err) { if (win) win.close(); s.status(err.message, "error"); });
+				return;
+			}
+			if (how === "mail") {
+				links(urls).then(function (r) {
+					window.location.href = "mailto:?subject=" + encodeURIComponent(r.subject) + "&body=" + encodeURIComponent(r.message);
+					s.status("");
+				}).catch(function (err) { s.status(err.message, "error"); });
+				return;
+			}
+			if (how === "copy") {
+				links(urls).then(function (r) {
+					var box = s.body.querySelector("[data-links]");
+					box.value = r.message;
+					box.hidden = false;
+					return (navigator.clipboard ? navigator.clipboard.writeText(r.message) : Promise.reject()).catch(function () {
 						box.select(); document.execCommand("copy");
-					}).then(function () { s.status("Link copied.", "success"); });
-				}
-				if (e.target.closest("[data-share-device]")) {
-					/* The file itself where the phone can take it, else the link. */
-					fetch(r.link).then(function (res) { return res.blob(); }).then(function (blob) {
-						var file = new File([blob], r.file_name, { type: blob.type || "application/pdf" });
-						var withFile = navigator.canShare && navigator.canShare({ files: [file] });
-						return navigator.share(withFile ? { files: [file], title: r.subject, text: r.subject } :
-							{ title: r.subject, text: r.message, url: r.link });
-					}).catch(function (err) { if (err && err.name !== "AbortError") s.status("Could not share: " + err.message, "error"); });
-				}
-			});
-		}).catch(function (e) { s.body.innerHTML = ""; s.status(e.message, "error"); });
+					}).then(function () { s.status("Links copied.", "success"); });
+				}).catch(function (err) { s.status(err.message, "error"); });
+				return;
+			}
+			/* The files themselves where the device can take them, else the links. Fetching
+			   them can outlast the click; if the device then refuses, a second press shares them. */
+			var key = urls.join("\n");
+			function send(p) {
+				var data = p.files ? { files: p.files, title: p.r.subject, text: p.r.subject }
+					: { title: p.r.subject, text: p.r.message };
+				return navigator.share(data).then(function () { s.status(""); }).catch(function (err) {
+					if (err && err.name === "NotAllowedError") { s.status("Files ready. Press Share files again.", "success"); return; }
+					if (err && err.name !== "AbortError") s.status("Could not share: " + err.message, "error"); else s.status("");
+				});
+			}
+			if (ready && ready.key === key) { send(ready); return; }
+			links(urls).then(function (r) {
+				return Promise.all(r.documents.map(function (d) {
+					return fetch(d.link).then(function (res) { return res.blob(); }).then(function (blob) {
+						return new File([blob], d.file_name, { type: blob.type || "application/pdf" });
+					});
+				})).then(function (files) {
+					var p = { key: key, r: r, files: navigator.canShare && navigator.canShare({ files: files }) ? files : null };
+					ready = p;
+					return send(p);
+				});
+			}).catch(function (err) { s.status("Could not share: " + err.message, "error"); });
+		});
 	}
 
 	/* The print a row shares: the one to view, else the first - not its download twin. */
@@ -244,6 +339,11 @@
 		var prints = d.prints || [];
 		return prints.find(function (p) { return !/download=1/.test(p.url); }) || prints[0] || null;
 	}
+
+	/* The tasks done on the national portal - registration, accepting the customer for the
+	   loan, the installation update, the subsidy request - open it from their documents. */
+	var SURYA_GHAR_PORTAL = "https://pmsuryaghar.gov.in/#/";
+	var SURYA_GHAR_TASKS = ["NPA", "ACPT", "PORTUPD", "SUBREQ"];
 
 	function renderDocuments(m, task, data) {
 		var rows = data.documents || [];
@@ -353,6 +453,17 @@
 		html += '<div class="a3s-form__actions"><button type="button" class="a3s-btn a3s-btn--ghost" data-close>Close</button></div>';
 		html += '<input type="file" hidden data-file>';
 		m.body.innerHTML = html;
+		/* At the top: the PM Surya Ghar portal, for a task done on it, and Share - every
+		   document the panel can share, all ticked to start. */
+		m.head.innerHTML = (SURYA_GHAR_TASKS.indexOf(task.code) !== -1
+			? '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + SURYA_GHAR_PORTAL + '" target="_blank" rel="noopener"' +
+				' title="Open the PM Surya Ghar portal in a new tab">' + svgIcon("globe") + "<span>PM Surya Ghar portal</span></a>"
+			: "") +
+			(m.body.querySelector("[data-share-url]")
+				? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-share-many>' + svgIcon("share") + "<span>Share</span></button>"
+				: "");
+		var many = m.head.querySelector("[data-share-many]");
+		if (many) many.addEventListener("click", function () { shareMany(m, task); });
 
 		var signed = m.body.querySelector("[data-print-signed]");
 		if (signed) {
@@ -369,8 +480,6 @@
 			var extra = event.target.closest("[data-upload-new]");
 			var to = event.target.closest("[data-upload-to]");
 			var drop = event.target.closest("[data-remove]");
-			var share = event.target.closest("[data-share-url]");
-			if (share) { shareDocument(m, task, share); return; }
 			if (drop) {
 				if (!window.confirm("Remove the uploaded " + drop.dataset.removeName + "?")) return;
 				m.status("Removing…");

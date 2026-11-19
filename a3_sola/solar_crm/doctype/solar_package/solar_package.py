@@ -736,23 +736,26 @@ def package_components(package, phase=None):
 	def label(*parts):
 		return " \u00b7 ".join(p for p in parts if p)
 
+	def panel_label(row):
+		return label(makes.get(row.module_make) or row.module_make, number(row.module_wattage, "Wp"),
+			"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else "") if row else ""
+
 	panels = []
 	module = default_module(doc)
 	for row in ordered([r for r in options(doc, "modules") if r.module_make], module):
-		panels.append({
-			"value": row.module_make, "default": row is module,
-			"label": label(makes.get(row.module_make) or row.module_make, number(row.module_wattage, "Wp"),
-				"{0} nos".format(cint(row.module_count)) if cint(row.module_count) else ""),
-		})
+		panels.append({"value": row.module_make, "default": row is module, "label": panel_label(row)})
 
 	# The panel each inverter is costed on: the package's default panel.
 	default_panel = module.module_make if module else None
-	panel_of = {}
+	panel_of, paired_label = {}, {}
 	for row in options(doc, "inverters"):
 		panel = inverter_panel(doc, row)
 		make = panel.module_make if panel else None
 		if make and make != default_panel:
 			panel_of[row.inverter_specification] = make
+		# Panels are told apart by make above, and one make may come in several wattages: the
+		# option shows the panel row itself the Pricing Options pair this inverter with.
+		paired_label[row.inverter_specification] = panel_label(panel)
 
 	inverters = []
 	matching = [r for r in inverters_for_phase(doc, phase) if r.inverter_make]
@@ -764,6 +767,7 @@ def package_components(package, phase=None):
 			"cost": flt(row.cost) or (package_cost(doc) if row is inverter else 0.0),
 			# Its own panels, when the price list builds it on other panels than the default.
 			"panel": panel_of.get(row.inverter_specification, ""),
+			"panel_label": paired_label.get(row.inverter_specification, ""),
 			"label": label(makes.get(row.inverter_make) or row.inverter_make, row.get("inverter_model") and
 				frappe.db.get_value("Inverter Model", row.inverter_model, "model_name"), number(row.inverter_capacity_kw, "kW"),
 				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else "",
