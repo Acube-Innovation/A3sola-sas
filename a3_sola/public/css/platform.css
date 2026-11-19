@@ -3801,6 +3801,18 @@ select.a3s-items__input { min-width: 9rem; }
 
 .a3s-modal__panel.a3s-taskpanel { width: min(40rem, 100%); }
 .a3s-taskpanel__sub { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+/* The panel's head: title on the left, the panel's own actions (the documents' Share) on the right. */
+.a3s-taskpanel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.a3s-taskpanel__titles { min-width: 0; }
+.a3s-taskpanel__headacts { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+.a3s-taskpanel__headacts:empty { display: none; }
+/* Share documents: the ticked list, with Select all and the count above it. */
+.a3s-taskpick__bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; font-weight: 600; }
+.a3s-taskpick__count { font-size: 0.8125rem; color: var(--color-text-muted); }
+.a3s-taskpick .a3s-taskdocs__row { padding: 0.55rem 0.85rem; }
+.a3s-taskpick .a3s-check { font-weight: 600; }
+.a3s-taskshare .a3s-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-taskpanel__empty { margin: 0.5rem 0 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
 .a3s-taskdocs { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
 .a3s-taskdocs__row {
