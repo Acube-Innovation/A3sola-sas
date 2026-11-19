@@ -733,6 +733,12 @@ def print_rest(doc):
 	q = doc.get("quotation")
 	if q:
 		rows = [{"item": frappe.utils.strip_html(r.description or r.item_name or ""), "amount": flt(r.amount)} for r in q.items]
+		# The plant and its Additional Structure and Cable, as the proposal lists them, where
+		# they come to what the quotation charges (one line holds them all); else its own lines.
+		if est:
+			split, _discount = plant_item_rows(est)
+			if abs(sum(r["amount"] for r in split) - flt(q.total)) < 1:
+				rows = split
 		if any(flt(t.tax_amount) for t in q.taxes or []):
 			# Tax charged on top: the total, the price after discount, each tax, the grand total.
 			rows.append({"item": "Total", "amount": flt(q.total), "right": True, "bold": True})
@@ -876,10 +882,10 @@ def warranty_items(est, estimates):
 	return items
 
 
-def plant_cost_rows(est):
-	"""One option's 3.3.1 rows: the plant, each linked charge's lines, then the price before
-	GST, the discount and what the customer pays (closing_rows)."""
-	commercials = est.commercials()
+def plant_item_rows(est, commercials=None):
+	"""The plant and each linked charge's lines (Additional Structure, Additional Cable), as
+	the cost table lists them, and the Special Discount taken off them."""
+	commercials = commercials or est.commercials()
 	lines = {line["key"]: flt(line["amount"]) for line in commercials["lines"]}
 	rows = [{"item": plant_description(est), "amount": sum(lines.get(k, 0) for k in PLANT_LINES)}]
 	discount = 0.0
@@ -891,6 +897,14 @@ def plant_cost_rows(est):
 				else:
 					label = item.description or item.get("structure_type") or item.get("cable_type") or doctype
 					rows.append({"item": PRINTED_AS.get(label.strip(), label), "amount": flt(item.amount), "right": True})
+	return rows, discount
+
+
+def plant_cost_rows(est):
+	"""One option's 3.3.1 rows: the plant, each linked charge's lines, then the price before
+	GST, the discount and what the customer pays (closing_rows)."""
+	commercials = est.commercials()
+	rows, discount = plant_item_rows(est, commercials)
 	if flt(commercials.get("gst_amount")):
 		# GST charged on top: its own line, the total, then the discount.
 		rows.append({"item": "GST @ {0:g}%".format(flt(commercials["gst_percent"])), "amount": flt(commercials["gst_amount"]), "right": True})
