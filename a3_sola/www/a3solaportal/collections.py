@@ -34,8 +34,6 @@ COLLECTIONS = {
 	# be added by editing the customer straight after creating it.
 	"consumers": {"doctype": "Solar Consumer", "title": "Customer", "singular": "customer", "subtitle": "Homes and businesses", "icon": "user", "list_sub": "consumer_number",
 	              "form_columns": 4, "all_fields": True,
-	              # Done after the customer is made, on the edit form: the cheque and the bank check.
-	              "create_skip": ["cancelled_cheque", "bank_details_verified", "bank_details_verified_by"],
 	              "form_extra": ["lead_mobile_no", "date_of_birth", "gender", "site_address_line1", "site_address_line2", "site_city", "site_state", "site_district",
 	                             "site_pincode", "permanent_address_line1", "permanent_address_line2", "permanent_city",
 	                             "permanent_state", "permanent_district", "permanent_pincode",
@@ -454,7 +452,9 @@ STATIC_HIDDEN = {
 	"Installation Task": {"cost", "cost_category", "cost_remarks", "approval_letter", "feasibility_report"},
 	"Document Pack": {"task_cost"},
 	# A customer's Contact is not asked for: ERPNext makes the primary contact with its Customer.
-	"Solar Consumer": {"contact_person"},
+	# Nor the cancelled cheque and the bank check: the cheque is filed with the project's
+	# documents (portal_tasks), and the check is the office's, in ERPNext.
+	"Solar Consumer": {"contact_person", "cancelled_cheque", "bank_details_verified", "bank_details_verified_by"},
 }
 
 
