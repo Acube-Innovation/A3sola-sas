@@ -9,6 +9,7 @@ templates/includes/print_cover.html.
 """
 
 import frappe
+from frappe import _
 from frappe.utils import cint, flt, getdate
 
 from a3_sola.solar_crm.doctype.solar_design_estimate.solar_design_estimate import BUILDING_BY_CATEGORY as BUILDING
@@ -551,7 +552,9 @@ def print_components(doc):
 	rows = []
 	# The panels the design offers: the priced one first, then each alternative the package
 	# offers (its Option rows) - "Option 1: 600Wp ...", "Option 2: 565Wp ...", as the inverters are.
-	panels = priced("panels") + [r for r in est.get("panels") or [] if r.get("is_option")]
+	# A quotation is the one option the customer chose: its priced panel alone.
+	quoted = bool(doc.get("quotation"))
+	panels = priced("panels") + ([] if quoted else [r for r in est.get("panels") or [] if r.get("is_option")])
 	for number, r in enumerate(panels, 1):
 		detail = " ".join(p for p in (technology_name(r.panel_variant) if r.panel_variant else "",
 			("DCR" if r.panel_type == "DCR" else "Non DCR") if r.panel_type else "") if p)
@@ -574,7 +577,7 @@ def print_components(doc):
 			r["spanned"] = True
 	hybrid = est.system_type == "Hybrid"
 	# Each option's inverter - the options differ by inverter - or the one design's.
-	options = proposal_estimates(doc, est)
+	options = [est] if quoted else proposal_estimates(doc, est)
 	micro = [microinverter.uses_microinverter(e) for e in options]
 	for number, option in enumerate(options, 1):
 		for r in option.get("inverters") or []:
@@ -730,14 +733,22 @@ def print_rest(doc):
 	q = doc.get("quotation")
 	if q:
 		rows = [{"item": frappe.utils.strip_html(r.description or r.item_name or ""), "amount": flt(r.amount)} for r in q.items]
-		rows.append({"item": "Total", "amount": flt(q.total), "right": True, "bold": True})
-		if flt(q.discount_amount):
-			rows.append({"item": "Special Price after Discount", "amount": flt(q.net_total), "right": True, "bold": True})
-		for t in q.taxes:
-			if flt(t.tax_amount):
-				rows.append({"item": t.description, "amount": flt(t.tax_amount), "right": True})
-		if q.taxes:
+		if any(flt(t.tax_amount) for t in q.taxes or []):
+			# Tax charged on top: the total, the price after discount, each tax, the grand total.
+			rows.append({"item": "Total", "amount": flt(q.total), "right": True, "bold": True})
+			if flt(q.discount_amount):
+				rows.append({"item": "Special Price after Discount", "amount": flt(q.net_total), "right": True, "bold": True})
+			rows += [{"item": t.description, "amount": flt(t.tax_amount), "right": True} for t in q.taxes if flt(t.tax_amount)]
 			rows.append({"item": "Grand Total", "amount": flt(q.rounded_total or q.grand_total), "right": True, "bold": True})
+			rows.append(payable_row(rows[-1]["amount"]))
+		else:
+			# GST included: the Base Price, the GST it holds, the discount, what is paid.
+			# The discount as what it takes off - the total less the price after it - whatever
+			# sign the quotation keeps it in.
+			discount = flt(q.total) - flt(q.net_total) if flt(q.discount_amount) else 0
+			# The subsidy the quotation was made with, else its estimate's.
+			subsidy = flt(q.get("expected_subsidy_to_customer")) or subsidy_of(est)
+			rows = closing_rows(rows, flt(q.total), discount, company=q.company, show_gst=True, subsidy=subsidy)
 		options = [{"label": "", "rows": rows}]
 	else:
 		estimates = proposal_estimates(doc, est)
@@ -866,8 +877,8 @@ def warranty_items(est, estimates):
 
 
 def plant_cost_rows(est):
-	"""One option's 3.3.1 rows: the plant, each linked charge's lines, GST, the total and the
-	price after discount."""
+	"""One option's 3.3.1 rows: the plant, each linked charge's lines, then the price before
+	GST, the discount and what the customer pays (closing_rows)."""
 	commercials = est.commercials()
 	lines = {line["key"]: flt(line["amount"]) for line in commercials["lines"]}
 	rows = [{"item": plant_description(est), "amount": sum(lines.get(k, 0) for k in PLANT_LINES)}]
@@ -881,12 +892,82 @@ def plant_cost_rows(est):
 					label = item.description or item.get("structure_type") or item.get("cable_type") or doctype
 					rows.append({"item": PRINTED_AS.get(label.strip(), label), "amount": flt(item.amount), "right": True})
 	if flt(commercials.get("gst_amount")):
+		# GST charged on top: its own line, the total, then the discount.
 		rows.append({"item": "GST @ {0:g}%".format(flt(commercials["gst_percent"])), "amount": flt(commercials["gst_amount"]), "right": True})
-	total = sum(r["amount"] for r in rows)
-	rows.append({"item": "Total", "amount": total, "right": True, "bold": True})
-	if discount:
-		rows.append({"item": "Special Price after Discount", "amount": total - discount, "right": True, "bold": True})
+		total = sum(r["amount"] for r in rows)
+		rows.append({"item": "Total", "amount": total, "right": True, "bold": True})
+		return closing_rows(rows, total, discount, subsidy=subsidy_of(est))
+	# GST included: the Base Price; its GST lines are the quotation's to show, not the proposal's.
+	return closing_rows(rows, sum(r["amount"] for r in rows), discount, company=est.get("company"), subsidy=subsidy_of(est))
+
+
+def subsidy_of(est):
+	"""The PM Surya Ghar subsidy the option's customer gets back: its estimate's applicable
+	subsidy, when it is sold with subsidy."""
+	return flt(est.get("applicable_subsidy_amount")) if est.get("subsidy_option") == "With Subsidy" else 0.0
+
+
+def gst_included_rows(company, price):
+	"""The GST a GST-included price holds, as rows under its total: the goods share and the
+	services share, each at its rate, and the two together - worked back from the price by the
+	company's GST valuation rule, as the package page's cost breakdown shows them. [] without
+	a rule or a price."""
+	from frappe.utils import fmt_money
+
+	from a3_sola.api.portal_packages import gst_split
+
+	split = gst_split(company) if company and flt(price) else None
+	if not split:
+		return []
+	shares = [(_("goods"), flt(split["goods_percent"]), flt(split["goods_rate"])),
+		(_("services"), flt(split["services_percent"]), flt(split["services_rate"]))]
+	shares = [s for s in shares if s[1] and s[2]]
+	overall = sum(percent * rate for _kind, percent, rate in shares) / 100
+	if not overall:
+		return []
+	value = flt(price) * 100 / (100 + overall)
+	rows = []
+	for kind, percent, rate in shares:
+		part = flt(value * percent / 100, 2)
+		rows.append({"item": _("GST on {0} ({1:g}% of the value at {2:g}%, on {3})").format(
+			kind, percent, rate, fmt_money(part, precision=0)), "amount": flt(part * rate / 100, 2), "right": True})
+	rows.append({"item": _("Total GST ({0:g}% overall, included)").format(flt(overall, 2)),
+		"amount": sum(r["amount"] for r in rows), "right": True, "bold": True})
 	return rows
+
+
+def closing_rows(rows, total, discount, company=None, show_gst=False, subsidy=0):
+	"""The cost table's rows after its items, `total` being what they come to:
+
+	- with a `company` whose GST rule prices it, the Base Price (the total less the GST it
+	  holds), then - with `show_gst`, the quotation's - that GST (gst_included_rows); without,
+	  the Total, as it is;
+	- the Special Discount, the amount taken off, where there is one;
+	- the Customer Payable Final Project Price: the total less the discount;
+	- with a `subsidy`, the PM Surya Ghar Subsidy Amount and the Effective Price After
+	  Subsidy: what the customer pays less what the scheme gives back."""
+	gst = gst_included_rows(company, total) if company else []
+	out = list(rows)
+	if gst:
+		out.append({"item": _("Base Price"), "amount": flt(total) - gst[-1]["amount"], "right": True, "bold": True})
+		if show_gst:
+			out += gst
+	elif not (out and out[-1]["item"] == "Total"):
+		out.append({"item": "Total", "amount": flt(total), "right": True, "bold": True})
+	if flt(discount):
+		out.append({"item": _("Special Discount"), "amount": -flt(discount), "right": True})
+	payable = flt(total) - flt(discount)
+	out.append(payable_row(payable))
+	if flt(subsidy):
+		out.append({"item": _("PM Surya Ghar Subsidy Amount"), "amount": -flt(subsidy), "right": True})
+		out.append({"item": _("Effective Price After Subsidy"), "amount": payable - flt(subsidy), "right": True, "bold": True})
+	return out
+
+
+def payable_row(amount):
+	"""The cost table's closing line: what the customer pays for the plant, GST included -
+	its total, or its price after discount, or its grand total with tax."""
+	return {"item": _("Customer Payable Final Project Price"), "amount": flt(amount), "right": True, "bold": True}
 
 
 def _option_label(est, number):

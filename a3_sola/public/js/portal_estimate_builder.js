@@ -179,7 +179,12 @@
 		]);
 		proposalTab.addEventListener("click", function () { selectTab(PROPOSAL); });
 		bar.appendChild(proposalTab);
-		/* Save all (every option saved in turn), with the way back to the details beside it. */
+		/* Save all (every option saved in turn), with the way back to the details beside it -
+		   up beside the title, in place of the pair painted before. */
+		Array.prototype.forEach.call(document.querySelectorAll(".a3s-de-tabs__actions"), function (old) {
+			if (back && old.contains(back)) old.parentNode.insertBefore(back, old);
+			old.remove();
+		});
 		var actions = el("div", { class: "a3s-de-tabs__actions" });
 		if (page.tabs.some(function (t) { return t.docstatus !== 1; })) {
 			var saveAll = el("button", { type: "button", class: "a3s-square-btn a3s-square-btn--primary a3s-square-btn--labelled a3s-de-saveall-btn",
@@ -189,26 +194,14 @@
 			actions.appendChild(saveAll);
 		}
 		if (back) actions.appendChild(back);
-		bar.appendChild(actions);
-		placeTabActions();
-	}
-
-	/* Save all and the way back end the tabs' row while every option fits in it; once the
-	   row has to scroll, they go up beside the title, where they stay in sight. */
-	function placeTabActions() {
-		var bar = $("de-tabs"), actions = document.querySelector(".a3s-de-tabs__actions");
 		var head = document.querySelector(".a3s-de-head__actions");
-		if (!bar || !actions || !head) return;
-		bar.appendChild(actions);
-		var crowded = bar.scrollWidth > bar.clientWidth + 1;
-		if (crowded) head.appendChild(actions);
-		head.classList.toggle("is-holding", crowded);
+		if (head) {
+			head.appendChild(actions);
+			head.classList.add("is-holding");
+		} else {
+			bar.appendChild(actions);
+		}
 	}
-	var placing;
-	window.addEventListener("resize", function () {
-		clearTimeout(placing);
-		placing = setTimeout(placeTabActions, 120);
-	});
 
 	/* ---------------------------------------------- remove an option */
 	/* With `work`, the dialog stays open on OK while it runs: the button spins, nothing else
