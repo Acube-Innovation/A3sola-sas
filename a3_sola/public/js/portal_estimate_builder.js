@@ -898,6 +898,8 @@
 		var missing = required.filter(function (f) { return form.elements[f] && !String(form.elements[f].value || "").trim(); });
 		if (missing.length) {
 			setStatus("Fill in " + missing.map(function (f) { return form.elements[f].getAttribute("aria-label") || f; }).join(", ") + ".", "error", $("de-proposal-status"));
+			/* Its card may be closed: open it first. */
+			if (window.a3sReveal) window.a3sReveal(form.elements[missing[0]]);
 			form.elements[missing[0]].focus();
 			return;
 		}
