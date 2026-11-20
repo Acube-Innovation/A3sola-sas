@@ -735,6 +735,8 @@ def reimbursable(installation, task_code):
 def task_people(installation, task_code):
 	"""Who a task is assigned to - its people on the job, the defaults from its position
 	first - for the Assigned to strip on the task's own pages. None when there is no task."""
+	from a3_sola.api.partner_scope import shown_name
+
 	if not (installation and task_code):
 		return None
 	name = frappe.db.get_value(
@@ -750,7 +752,7 @@ def task_people(installation, task_code):
 	return {
 		"installation": installation, "task": task_code, "task_name": name.stage_name,
 		"position": name.default_assignee or "",
-		"assignees": [{"user": r.user, "name": r.full_name or r.user} for r in rows],
+		"assignees": [{"user": r.user, "name": shown_name(r.user, r.full_name or r.user)} for r in rows],
 		"can_assign": bool(frappe.has_permission("Solar Installation", "write", installation)),
 	}
 

@@ -82,6 +82,7 @@ class SolarInstallation(Document):
 		serials.validate_register(self)
 		self.roll_counts()
 		stages.recompute(self)
+		self.guard_dealer_tasks()
 
 	def guard_half_payment_exempt(self):
 		"""Only an Operations Manager exempts a job from the 50% payment rule, saying why; who and
@@ -291,6 +292,20 @@ class SolarInstallation(Document):
 			if not self.get(field):
 				self.set(field, frappe.get_cached_value("Company", self.company, default) or None)
 
+	def guard_dealer_tasks(self):
+		"""A dealer cannot move a task barred to dealers (partner_scope.DEALER_BARRED_TASKS) -
+		Accept Customer - from the board, its page or its document: whatever path changed its
+		status, the save is refused."""
+		from a3_sola.api import partner_scope
+
+		before = self.get_doc_before_save()
+		if not before:
+			return
+		was = {r.stage_code: r.status for r in before.get("stages") or []}
+		for row in self.stages:
+			if row.stage_code in partner_scope.DEALER_BARRED_TASKS and was.get(row.stage_code) not in (None, row.status):
+				partner_scope.check_dealer_barred(row.stage_code, row.stage_name)
+
 	def validate_capacity(self):
 		"""Capacity must match the design estimate unless a manager overrode it."""
 		if not self.solar_design_estimate:
@@ -380,6 +395,7 @@ class SolarInstallation(Document):
 			self.reapply_task_rules()
 		self.assign_people()
 		stages.recompute(self)
+		self.guard_dealer_tasks()
 
 	def reapply_task_rules(self):
 		"""Financing changed: the loan tasks follow, for tasks not started yet."""

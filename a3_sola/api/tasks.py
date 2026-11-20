@@ -717,6 +717,8 @@ def may_complete(inst, code, user=None):
 	from a3_sola.api import task_assignees
 
 	user = user or frappe.session.user
+	if partner_scope.dealer_barred(code, user):
+		return False
 	if set(frappe.get_roles(user)).intersection(MANAGER_ROLES):
 		return True
 	row = _get_stage(inst, code)
