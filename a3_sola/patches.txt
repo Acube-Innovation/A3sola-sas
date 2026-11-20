@@ -348,3 +348,9 @@ a3_sola.patches.v1_3.phase_rule_above_5kw
 a3_sola.patches.v1_3.estimate_panel_follows_inverter
 # Proposals stop quoting options taken off their design estimate.
 a3_sola.patches.v1_3.drop_removed_options_from_proposals
+# Packages offer no Optional Add-ons; their default rows are cleared.
+a3_sola.patches.v1_3.clear_package_add_ons
+# Estimates drop the add-ons they were given automatically.
+a3_sola.patches.v1_3.clear_estimate_add_ons
+# The KSEB fees are paid over and above an estimate total.
+a3_sola.patches.v1_3.kseb_outside_estimate_total

@@ -76,7 +76,6 @@
 		</tr>
 		<tr><td class="label">{{ _("Package") }}</td>{% for c in columns %}<td{% if c.key in lowest %} class="lowest"{% endif %}>{{ c.package | e }}</td>{% endfor %}</tr>
 		{{- row(_("Proposed size"), "size") }}
-		{{- row(_("System price"), "package_cost") }}
 		{{- row(_("Panels"), "panel_kwp") }}
 		{{- row(_("Solar panel"), "panel") }}
 		{{- row(_("Panel qty"), "panel_nos") }}
@@ -87,7 +86,6 @@
 		{%- for key, label in lines %}
 		<tr class="line"><td class="label">{{ label | e }}</td>{% for c in columns %}{{ cell(c, money(amounts[loop.index0].get(key) or 0)) }}{% endfor %}</tr>
 		{%- endfor %}
-		<tr class="sum"><td class="label">{{ _("Subtotal") }}</td>{% for c in columns %}{{ cell(c, money(c.subtotal)) }}{% endfor %}</tr>
 		{%- if columns | rejectattr("error") | selectattr("gst_amount") | list %}
 		<tr><td class="label">{{ _("GST") }}</td>{% for c in columns %}{{ cell(c, money(c.gst_amount)) }}{% endfor %}</tr>
 		{%- endif %}
@@ -97,5 +95,9 @@
 			<td{% if c.key in lowest %} class="lowest"{% endif %}>{% if c.error %}<span class="error">{{ c.error | e }}</span>{% else %}{{ money(c.total) }}{% endif %}</td>
 			{%- endfor %}
 		</tr>
+		{%- if columns | rejectattr("error") | selectattr("kseb_amount") | list %}
+		{#- The KSEB fees are paid over and above the total. #}
+		<tr class="line"><td class="label">{{ _("KSEB Expenses (over and above)") }}</td>{% for c in columns %}{{ cell(c, money(c.kseb_amount or 0)) }}{% endfor %}</tr>
+		{%- endif %}
 	</table>
 </div>

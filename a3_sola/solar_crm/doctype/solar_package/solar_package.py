@@ -28,11 +28,6 @@ class SolarPackage(Document):
 
 		self.set_onload("add_on_groups", add_on_groups())
 
-	def before_insert(self):
-		"""A new package offers the usual add-ons until its own are entered."""
-		if not self.get("optional_add_ons"):
-			self.set("optional_add_ons", default_add_ons(self))
-
 	def validate(self):
 		self.fill_company()
 		from a3_sola.api import package_kits
@@ -93,18 +88,17 @@ class SolarPackage(Document):
 				row.with_optimizer = 0
 
 	def warranty_extension_from_model(self):
-		"""The Warranty Extension add-on is the default inverter model's, and none where
-		that model has no extension. A package without a model keeps its own row."""
+		"""A Warranty Extension add-on someone entered takes the default inverter model's
+		extension, its wording and rate. None is added: add-ons are entered, never offered
+		of their own accord, and a row is left as it is where the model has no extension."""
 		inverter = _default_row(self, "inverters")
 		if not (inverter and inverter.get("inverter_model")):
 			return
 		offer = inverter_model.extension(inverter.inverter_model)
 		rows = [r for r in self.get("optional_add_ons") or [] if r.add_on_type == "Warranty Extension"]
-		if not offer:
-			for row in rows:
-				self.remove(row)
+		if not (offer and rows):
 			return
-		row = rows[0] if rows else self.append("optional_add_ons", {"add_on_type": "Warranty Extension"})
+		row = rows[0]
 		row.item, row.amount = offer
 		row.rate, row.qty = offer[1], 1
 

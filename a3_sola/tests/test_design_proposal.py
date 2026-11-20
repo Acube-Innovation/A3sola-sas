@@ -3,7 +3,7 @@
 """The Solar Design Proposal: one page for the design and the offer. Its list is the proposals,
 with the design estimates not yet made into one beside them; a proposal is made on the
 estimate's builder, from its saved options (api/portal_proposal), and edited there; an
-estimate's commercials are the package's price, the KSEB fees and GST; its add-ons and BOM
+estimate's commercials are the package's price and GST, the KSEB fees paid besides; its add-ons and BOM
 tabs take rows as the package's do (api/portal_estimate, package_kits)."""
 
 import frappe
@@ -106,14 +106,17 @@ class TestDesignProposal(FrappeTestCase):
 			self.make()
 
 	# ------------------------------------------------------------ the commercials
-	def test_the_commercials_are_the_package_the_kseb_fees_and_gst(self):
-		commercials = frappe.get_doc("Solar Design Estimate", self.root.name).commercials()
+	def test_the_commercials_are_the_package_and_gst_with_the_kseb_fees_besides(self):
+		est = frappe.get_doc("Solar Design Estimate", self.root.name)
+		commercials = est.commercials()
 		keys = [line["key"] for line in commercials["lines"]]
-		self.assertEqual(keys[:2], ["package", "kseb_expenses"])
-		for covered in ("panels", "inverters", "bos_items", "mounting_expenses", "installation_expenses"):
+		self.assertEqual(keys[:1], ["package"])
+		for covered in ("panels", "inverters", "bos_items", "mounting_expenses", "installation_expenses", "kseb_expenses"):
 			self.assertNotIn(covered, keys)
-		kseb = next(line["amount"] for line in commercials["lines"] if line["key"] == "kseb_expenses")
-		self.assertEqual(commercials["taxable"], flt(commercials["subtotal"] - kseb, 2))
+		# The KSEB fees are paid over and above the total: on their own, not in it.
+		self.assertEqual(commercials["kseb_amount"], flt(sum(flt(r.amount) for r in est.kseb_expenses), 2))
+		self.assertEqual(commercials["total"], flt(commercials["subtotal"] + commercials["gst_amount"], 2))
+		self.assertEqual(commercials["subtotal"], flt(sum(line["amount"] for line in commercials["lines"]), 2))
 
 	# ------------------------------------------------------------ rows as the package's
 	def test_an_add_on_is_chosen_by_group_then_item(self):

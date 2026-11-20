@@ -37,13 +37,10 @@ class TestPackageAddOns(FrappeTestCase):
 		self.assertEqual([(r["add_on_type"], r["amount"]) for r in rows], [("Extra Panel", 17500), ("Warranty Extension", 10000)])
 		self.assertIn("13th Year to 25th year", rows[1]["item"])
 
-	def test_a_new_package_offers_the_usual_add_ons_and_keeps_its_own(self):
+	def test_a_new_package_offers_no_add_ons_of_its_own_accord(self):
 		doc = frappe.get_doc({"doctype": "Solar Package"})
-		doc.before_insert()
-		self.assertEqual(len(doc.optional_add_ons), 2)
-		own = frappe.get_doc({"doctype": "Solar Package", "optional_add_ons": [{"add_on_type": "Other", "item": "Monitoring", "amount": 500}]})
-		own.before_insert()
-		self.assertEqual([r.item for r in own.optional_add_ons], ["Monitoring"])
+		doc.run_method("before_insert")
+		self.assertEqual(len(doc.get("optional_add_ons") or []), 0)
 
 	def test_a_blank_extra_panel_row_is_named_from_the_panel(self):
 		doc = frappe.get_doc({"doctype": "Solar Package", "modules": [{"module_wattage": 550, "is_default": 1}],

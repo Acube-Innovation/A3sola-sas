@@ -30,9 +30,14 @@
 			{%- for line in base.other_lines %}
 			<tr><td colspan="5">{{ _(line.label) }}</td><td class="num">{{ money(line.amount) }}</td></tr>
 			{%- endfor %}
-			<tr class="sub"><td colspan="5">{{ _("Subtotal") }}</td><td class="num">{{ money(base.subtotal) }}</td></tr>
-			<tr class="sub"><td colspan="5">{{ _("GST") }}{% if base.gst_percent %} ({{ "%g" | format(base.gst_percent) }}%){% endif %}</td><td class="num">{{ money(base.gst_amount) }}</td></tr>
+			{%- if base.gst_amount %}
+			<tr class="sub"><td colspan="5">{{ _("GST") }} ({{ "%g" | format(base.gst_percent) }}%)</td><td class="num">{{ money(base.gst_amount) }}</td></tr>
+			{%- endif %}
 			<tr class="total"><td colspan="5">{{ _("Total") }}</td><td class="num">{{ money(base.total) }}</td></tr>
+			{%- if base.kseb_amount %}
+			{#- The KSEB fees are paid over and above the total. #}
+			<tr class="sub"><td colspan="5">{{ _("KSEB Expenses (over and above the total)") }}</td><td class="num">{{ money(base.kseb_amount) }}</td></tr>
+			{%- endif %}
 		</table>
 	</div>
 
@@ -60,6 +65,9 @@
 				<td class="num" colspan="2">{{ money(e.total) }}
 					{%- if v.difference %} <span class="{{ 'up' if v.difference > 0 else 'down' }}">({{ '+' if v.difference > 0 else '&minus;' }}{{ money(v.difference | abs) }})</span>{% endif %}</td>
 			</tr>
+			{%- if e.kseb_amount %}
+			<tr class="sub"><td colspan="4">{{ _("KSEB Expenses (over and above the total)") }}</td><td class="num" colspan="2">{{ money(e.kseb_amount) }}</td></tr>
+			{%- endif %}
 		</table>
 	</div>
 	{%- endfor %}
