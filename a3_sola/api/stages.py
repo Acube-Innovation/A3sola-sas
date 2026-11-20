@@ -255,6 +255,68 @@ def sla_for(installation, row):
 	return int(row.sla_days or 0)
 
 
+# ------------------------------------------------------------------ when tasks start
+#: A task's Starts When on the template (Installation Stage Template Detail.start_trigger).
+IN_ORDER = "In order from the project start"
+FIRST_PAYMENT = "First payment"
+FIRST_OR_ORDER = "First payment, or with the order if self-funded"
+HALF_PAYMENT = "50% payment"
+AFTER_TASK = "After another task"
+
+
+def default_trigger(code):
+	"""(trigger, after-task code) a task starts by when its template row names none: the
+	app's own rule (seed_stages)."""
+	from a3_sola.setup.seed_stages import NEXT_AT_HALF, START_AT_HALF, START_ON_ADVANCE, WITH_ORDER_IF_SELF_FUNDED
+
+	if code in WITH_ORDER_IF_SELF_FUNDED:
+		return FIRST_OR_ORDER, None
+	if code in START_ON_ADVANCE:
+		return FIRST_PAYMENT, None
+	if code in START_AT_HALF:
+		return HALF_PAYMENT, None
+	if code in NEXT_AT_HALF:
+		return AFTER_TASK, NEXT_AT_HALF[code][0]
+	return IN_ORDER, None
+
+
+def start_rules(installation):
+	"""When the job's tasks start, from its template's Starts When (else default_trigger):
+	{"advance": codes started by the first payment, "early": those of them a self-funded job
+	starts with the order, "half": codes started at 50% payment, "next": {code: (after,)}}.
+	A task on the job but not on the template keeps the app's own rule."""
+	template = installation.get("stage_template") if not isinstance(installation, str) else \
+		frappe.db.get_value("Solar Installation", installation, "stage_template")
+	rows = {}
+	if template and frappe.db.exists("Installation Stage Template", template):
+		rows = {r.stage_code: r for r in frappe.get_cached_doc("Installation Stage Template", template).stages}
+	codes = set(rows)
+	if not isinstance(installation, str):
+		codes |= {r.stage_code for r in installation.get("stages") or []}
+	rules = {"advance": set(), "early": set(), "half": set(), "next": {}}
+	for code in codes:
+		row = rows.get(code)
+		trigger, after = (row.get("start_trigger"), (row.get("start_after_task") or "").strip()) if row else (None, None)
+		if not trigger or (trigger == AFTER_TASK and not after):
+			trigger, after = default_trigger(code)
+		if trigger in (FIRST_PAYMENT, FIRST_OR_ORDER):
+			rules["advance"].add(code)
+			if trigger == FIRST_OR_ORDER:
+				rules["early"].add(code)
+		elif trigger == HALF_PAYMENT:
+			rules["half"].add(code)
+		elif trigger == AFTER_TASK:
+			rules["next"][code] = (after,)
+	return rules
+
+
+def half_paid_tasks(installation):
+	"""The tasks held until 50% of the project value is in: those started at 50% and those
+	that follow another task."""
+	rules = start_rules(installation)
+	return rules["half"] | set(rules["next"])
+
+
 def plan_dates(installation):
 	"""The plan: each task from the day its work starts, taking its SLA days.
 
@@ -269,10 +331,11 @@ def plan_dates(installation):
 	A skipped task takes no time and carries no dates. Actual progress moves the plan only
 	through those two payment dates; the Due column follows the real start.
 	"""
-	from a3_sola.setup.seed_stages import NEXT_AT_HALF, START_AT_HALF, START_ON_ADVANCE, WITH_ORDER_IF_SELF_FUNDED
+	rules = start_rules(installation)
+	START_ON_ADVANCE, START_AT_HALF, NEXT_AT_HALF = rules["advance"], rules["half"], rules["next"]
 
 	start = getdate(installation.get("execution_start_date") or installation.order_date or today())
-	early = () if cint(installation.get("is_financed")) else WITH_ORDER_IF_SELF_FUNDED
+	early = () if cint(installation.get("is_financed")) else rules["early"]
 	rows = [r for r in installation.stages]
 	for row in rows:
 		if row.status == "Skipped":
@@ -440,21 +503,17 @@ def _get_stage(installation, stage_code):
 
 def start_on_advance(installation):
 	"""The customer's first payment - any amount - starts the work it pays for, all today
-	(seed_stages.START_ON_ADVANCE). Returns the rows started."""
-	from a3_sola.setup.seed_stages import START_ON_ADVANCE
-
+	(start_rules: First payment). Returns the rows started."""
 	installation.advance_received_on = installation.get("advance_received_on") or today()
-	return _start(installation, START_ON_ADVANCE)
+	return _start(installation, start_rules(installation)["advance"])
 
 
 def start_form1_early(installation):
 	"""On a job the customer pays, Form 1 starts with the order, ahead of the advance
-	(seed_stages.WITH_ORDER_IF_SELF_FUNDED). Returns the rows started."""
-	from a3_sola.setup.seed_stages import WITH_ORDER_IF_SELF_FUNDED
-
+	(start_rules: First payment, or with the order if self-funded). Returns the rows started."""
 	if cint(installation.get("is_financed")):
 		return []
-	return _start(installation, WITH_ORDER_IF_SELF_FUNDED)
+	return _start(installation, start_rules(installation)["early"])
 
 
 def _start(installation, codes):
@@ -502,9 +561,9 @@ def half_paid_open(installation):
 def half_paid_lock(installation, code):
 	"""Why task `code` cannot start yet, or None: it waits for half the project value and has
 	not started, and the job is neither half paid nor exempt."""
-	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT, HALF_PAID_TASKS
+	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT
 
-	if code not in HALF_PAID_TASKS:
+	if code not in half_paid_tasks(installation):
 		return None
 	row = next((r for r in installation.get("stages") or [] if r.stage_code == code), None)
 	if row is None or row.status not in ("Pending", "Skipped") or installation.get("half_payment_exempt"):
@@ -526,23 +585,19 @@ def check_half_paid(installation, code):
 
 
 def start_at_half(installation):
-	"""Half paid, or exempt: all the half's work starts today (seed_stages.START_AT_HALF).
+	"""Half paid, or exempt: all the half's work starts today (start_rules: 50% payment).
 	Returns the rows started."""
-	from a3_sola.setup.seed_stages import START_AT_HALF
-
 	installation.half_paid_on = installation.get("half_paid_on") or today()
-	return _start(installation, START_AT_HALF)
+	return _start(installation, start_rules(installation)["half"])
 
 
 def start_next(installation, code):
 	"""Task `code` is done: each task that follows it starts today - the serials after the
 	supplier's invoice, the payment after installation after its work order - if the half is
-	in (seed_stages.NEXT_AT_HALF). Returns the rows started."""
-	from a3_sola.setup.seed_stages import NEXT_AT_HALF
-
+	in (start_rules: After another task). Returns the rows started."""
 	if not half_paid_open(installation):
 		return []
-	ready = [nxt for nxt, before in NEXT_AT_HALF.items()
+	ready = [nxt for nxt, before in start_rules(installation)["next"].items()
 		if code in before and all(_done(installation, b) for b in before)]
 	return _start(installation, ready)
 

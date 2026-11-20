@@ -1,0 +1,134 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+{#- Administration > Task Assignees (api/task_defaults): per project task, the position it goes
+    to by default, a person in its place, and its SLA days. Saved by portal_task_defaults.js. -#}
+<style>
+	.a3s-taskdef__bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin: 0 0 1rem; }
+	.a3s-taskdef__bar .a3s-field { flex: 1 1 16rem; max-width: 24rem; }
+	.a3s-taskdef__count { font-size: 0.8125rem; color: var(--color-text-muted); }
+	.a3s-taskdef .a3s-table th, .a3s-taskdef .a3s-table td { padding: 0.55rem 0.85rem; vertical-align: middle; }
+	.a3s-taskdef__code { display: block; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; color: var(--color-text-muted); }
+	.a3s-taskdef__name { font-weight: 700; }
+	.a3s-taskdef__owner { font-size: 0.75rem; color: var(--color-text-muted); }
+	.a3s-taskdef .a3s-field select, .a3s-taskdef .a3s-field input { padding: 0.5rem 0.7rem; font-size: 0.875rem; }
+	.a3s-taskdef__sla { width: 6.5rem; }
+	.a3s-taskdef__sla input { text-align: right; }
+	.a3s-taskdef tr.is-changed td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+	.a3s-taskdef__hint { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--color-text-muted); }
+	.a3s-taskdef__total { font-weight: 700; text-align: right; }
+	.a3s-taskdef__start { min-width: 14rem; }
+	.a3s-taskdef__pick { min-width: 10.5rem; }
+	.a3s-taskdef__after { margin-top: 0.4rem; }
+	.a3s-taskdef__rules { margin: 0 0 1rem; padding-left: 1.1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+	.a3s-taskdef__rules li { margin: 0.15rem 0; }
+	@media (max-width: 767px) { .a3s-taskdef__sla, .a3s-taskdef__start, .a3s-taskdef__pick { width: auto; min-width: 0; } }
+</style>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Task Assignees</h2>
+		<p class="a3s-main__sub">Who each project task goes to, when it starts, and how many days it takes. A position is filled by each project's own person; a person named here takes the task on every project instead.</p>
+	</div>
+	<button type="button" class="a3s-btn a3s-btn--primary" data-taskdef-save disabled>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+		<span>Save</span>
+	</button>
+</div>
+
+<p class="a3s-attach__status" data-taskdef-status role="status" aria-live="polite" hidden></p>
+
+{% if not task_template %}
+<p class="a3s-notice a3s-notice--warn">There is no active project task template yet, so there are no tasks to set.</p>
+{% else %}
+<p class="a3s-notice">
+	New projects take these people, rules and days. A running project ({{ projects }} on <b>{{ template_title | e }}</b>) takes the new rules and SLA days, and its planned dates move, the next time it is saved. A task already started or assigned on it keeps its start date and people.
+</p>
+
+<ul class="a3s-taskdef__rules">
+	<li><b>Starts when</b> is the day a task's SLA days start counting. Its due date is that day plus the SLA days.</li>
+	<li><b>In order:</b> one after another from the project start. <b>First payment:</b> all together the day any first payment is received. <b>Or with the order if self-funded:</b> the same, but a customer paying without a loan starts it with the order.</li>
+	<li><b>50% payment:</b> held until half the project value is received (an Operations Manager can exempt a project), then all start together. <b>After another task:</b> starts the day that task is completed, once 50% is in.</li>
+</ul>
+
+<div class="a3s-taskdef__bar">
+	<div class="a3s-field">
+		<label for="a3s-taskdef-find">Find a task</label>
+		<input type="search" id="a3s-taskdef-find" placeholder="Task name or code" autocomplete="off" data-taskdef-find>
+	</div>
+	<span class="a3s-taskdef__count" data-taskdef-count></span>
+</div>
+
+<div class="a3s-card a3s-tablewrap a3s-taskdef">
+	<table class="a3s-table">
+		<thead>
+			<tr>
+				<th>#</th>
+				<th>Task</th>
+				<th>Default position</th>
+				<th>Assign to (person)</th>
+				<th class="a3s-taskdef__start">Starts when</th>
+				<th class="a3s-taskdef__sla">SLA days</th>
+			</tr>
+		</thead>
+		<tbody data-taskdef-rows>
+			{%- for t in tasks %}
+			<tr data-row="{{ t.name | e }}" data-find="{{ (t.stage_code ~ ' ' ~ t.stage_name) | lower | e }}">
+				<td data-label="#">{{ loop.index }}</td>
+				<th scope="row">
+					<span class="a3s-taskdef__code">{{ t.stage_code | e }}</span>
+					<span class="a3s-taskdef__name">{{ t.stage_name | e }}</span>
+					{%- if t.owner_type and t.owner_type != "Internal" %}<span class="a3s-taskdef__owner"> &middot; waits on {{ t.owner_type | e }}</span>{% endif %}
+				</th>
+				<td data-label="Default position" class="a3s-taskdef__pick">
+					<div class="a3s-field">
+						<select data-field="default_assignee" aria-label="Default position for {{ t.stage_name | e }}">
+							<option value="">&mdash; None &mdash;</option>
+							{%- for p in positions %}<option value="{{ p | e }}"{% if p == t.default_assignee %} selected{% endif %}>{{ p | e }}</option>{% endfor %}
+						</select>
+					</div>
+				</td>
+				<td data-label="Assign to (person)" class="a3s-taskdef__pick">
+					<div class="a3s-field">
+						<select data-field="default_user" aria-label="Person for {{ t.stage_name | e }}">
+							<option value="">By position</option>
+							{%- for u in people %}<option value="{{ u.name | e }}"{% if u.name == t.default_user %} selected{% endif %}>{{ (u.full_name or u.name) | e }}</option>{% endfor %}
+						</select>
+					</div>
+				</td>
+				<td data-label="Starts when" class="a3s-taskdef__start">
+					<div class="a3s-field">
+						<select data-field="start_trigger" aria-label="When {{ t.stage_name | e }} starts">
+							{%- for o in triggers %}<option value="{{ o | e }}"{% if o == t.start_trigger %} selected{% endif %}>{{ trigger_labels.get(o, o) | e }}</option>{% endfor %}
+						</select>
+					</div>
+					<div class="a3s-field a3s-taskdef__after"{% if t.start_trigger != "After another task" %} hidden{% endif %}>
+						<select data-field="start_after_task" aria-label="Task {{ t.stage_name | e }} starts after">
+							<option value="">Choose the task&hellip;</option>
+							{%- for o in tasks if o.stage_code != t.stage_code %}<option value="{{ o.stage_code | e }}"{% if o.stage_code == t.start_after_task %} selected{% endif %}>{{ o.stage_code | e }} &middot; {{ o.stage_name | e }}</option>{% endfor %}
+						</select>
+					</div>
+				</td>
+				<td data-label="SLA days" class="a3s-taskdef__sla">
+					<div class="a3s-field">
+						<input type="number" min="0" max="365" step="1" inputmode="numeric" data-field="sla_days" value="{{ t.sla_days or 0 }}" aria-label="SLA days for {{ t.stage_name | e }}">
+					</div>
+				</td>
+			</tr>
+			{%- endfor %}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="5" class="a3s-taskdef__total">Total of the SLA days</td>
+				<td class="a3s-taskdef__sla a3s-taskdef__total" data-taskdef-total></td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+<p class="a3s-taskdef__hint">The total adds every task's days. Many tasks run side by side, so a project usually takes less.</p>
+{% endif %}
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_task_defaults.js?v={{ a3s_asset_version('js/portal_task_defaults.js') }}"></script>
+{% endblock %}
