@@ -354,3 +354,5 @@ a3_sola.patches.v1_3.clear_package_add_ons
 a3_sola.patches.v1_3.clear_estimate_add_ons
 # The KSEB fees are paid over and above an estimate total.
 a3_sola.patches.v1_3.kseb_outside_estimate_total
+# Each template task's Starts When, as the app has started it, for Administration > Task Assignees.
+a3_sola.patches.v1_3.task_start_triggers

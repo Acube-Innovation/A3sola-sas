@@ -12,6 +12,8 @@
   "task_doctype",
   "owner_type",
   "sla_days",
+  "start_trigger",
+  "start_after_task",
   "cb_1",
   "responsible_role",
   "default_assignee",
@@ -81,6 +83,20 @@
    "fieldtype": "Int",
    "label": "SLA Days",
    "columns": 1
+  },
+  {
+   "fieldname": "start_trigger",
+   "fieldtype": "Select",
+   "label": "Starts When",
+   "options": "\nIn order from the project start\nFirst payment\nFirst payment, or with the order if self-funded\n50% payment\nAfter another task",
+   "description": "When the task's SLA days start counting. Blank: as the app has always started it."
+  },
+  {
+   "fieldname": "start_after_task",
+   "fieldtype": "Data",
+   "label": "Starts After Task",
+   "depends_on": "eval:doc.start_trigger=='After another task'",
+   "description": "Task code it starts after, once that task is completed and 50% is paid, e.g. SUPINV."
   },
   {
    "fieldname": "cb_1",
@@ -187,7 +203,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-26 12:00:00.000000",
+ "modified": "2026-11-20 16:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",

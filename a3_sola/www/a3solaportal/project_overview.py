@@ -91,8 +91,9 @@ def _half_paid(doc):
 	"""The 50% payment rule as the board states it: what is received, whether the held work may
 	go ahead, who exempted the job and why, and whether this person may exempt it."""
 	from a3_sola.api import stages
-	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT, HALF_PAID_TASKS
+	from a3_sola.setup.seed_stages import HALF_PAID_PERCENT
 
+	HALF_PAID_TASKS = stages.half_paid_tasks(doc)
 	held = [r for r in doc.stages if r.stage_code in HALF_PAID_TASKS and r.status in ("Pending", "Skipped")]
 	share = stages.paid_share(doc)
 	return {
@@ -292,8 +293,7 @@ def _task_columns(doc):
 	from a3_sola.api.tasks import may_complete
 
 	from a3_sola.api import stages
-	from a3_sola.setup.seed_stages import HALF_PAID_TASKS
-
+	HALF_PAID_TASKS = stages.half_paid_tasks(doc)
 	half_open = stages.half_paid_open(doc)
 	for row in doc.stages:
 		if not doc.is_financed and (row.activity_scope == FINANCED_ONLY or row.stage_code in FINANCED_ONLY_TASKS):
