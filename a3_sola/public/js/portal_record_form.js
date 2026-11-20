@@ -116,19 +116,19 @@
 		});
 	}
 
-	/* A date that may not fall on a weekend (an order's delivery date): said as it is picked,
-	   and refused on Create; the server holds the same rule. */
-	function weekendOf(input) {
-		if (!input.value) return "";
-		var day = new Date(input.value + "T00:00:00").getDay();
-		return day === 0 ? "Sunday" : day === 6 ? "Saturday" : "";
+	/* A date that may not fall on a Sunday (an order's delivery date): said as it is picked,
+	   and refused on Create; the server holds the same rule. A Saturday is allowed once the
+	   person confirms it. */
+	function dayOf(input) {
+		return input.value ? new Date(input.value + "T00:00:00").getDay() : -1;
 	}
 	function checkWeekend(input) {
-		var day = weekendOf(input);
-		input.setCustomValidity(day ? "That is a " + day + ". Choose a weekday." : "");
-		if (day) setStatus("The delivery date is a " + day + ". Choose a weekday.", "error");
+		var day = dayOf(input);
+		input.setCustomValidity(day === 0 ? "That is a Sunday. Choose another day." : "");
+		if (day === 0) setStatus("The delivery date is a Sunday: deliveries are not made on Sundays. Choose another day.", "error");
+		else if (day === 6) setStatus("The delivery date is a Saturday: you will be asked to confirm it.", "");
 		else setStatus("");
-		return !day;
+		return day !== 0;
 	}
 	Array.prototype.forEach.call(form.querySelectorAll("[data-no-weekend]"), function (input) {
 		input.addEventListener("change", function () { checkWeekend(input); });
@@ -138,6 +138,12 @@
 		event.preventDefault();
 		var bad = Array.prototype.filter.call(form.querySelectorAll("[data-no-weekend]"), function (input) { return !checkWeekend(input); });
 		if (bad.length) { bad[0].focus(); return; }
+		var saturday = Array.prototype.filter.call(form.querySelectorAll("[data-no-weekend]"), function (input) { return dayOf(input) === 6; });
+		if (saturday.length && !window.confirm("The delivery date " + saturday[0].value.split("-").reverse().join("-") +
+			" is a Saturday. Deliveries are usually on weekdays.\n\nDeliver on this Saturday anyway?")) {
+			saturday[0].focus();
+			return;
+		}
 		busy(true);
 		setStatus("Creating…");
 

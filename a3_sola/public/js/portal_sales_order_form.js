@@ -50,6 +50,7 @@
 		status.textContent = text || "";
 		status.classList.toggle("is-error", kind === "error");
 		status.classList.toggle("is-success", kind === "success");
+		status.classList.toggle("is-warn", kind === "warn");
 	}
 	function serverMessage(data) {
 		try {
@@ -258,13 +259,58 @@
 	});
 
 	/* ------------------------------------------------------------ dates */
-	/* Deliveries are on working days (the order's validate says so too): said here as it is typed. */
+	/* No delivery on a Sunday (the order's validate says so too). A Saturday is allowed once
+	   confirmed: warned as it is picked, and asked in a pop-up on Create or Save. */
+	function deliveryDay() {
+		var v = dates.delivery_date && dates.delivery_date.value;
+		return v ? new Date(v + "T00:00:00").getDay() : -1;
+	}
+	var saturdayOk = "";
 	if (dates.delivery_date) dates.delivery_date.addEventListener("change", function () {
-		var v = dates.delivery_date.value;
-		var day = v ? new Date(v + "T00:00:00").getDay() : -1;
-		say(day === 0 || day === 6 ? "That is a " + (day === 0 ? "Sunday" : "Saturday") + ": deliveries are on working days." : "",
-			day === 0 || day === 6 ? "error" : "");
+		var day = deliveryDay();
+		say(day === 0 ? "That is a Sunday: deliveries are not made on Sundays. Choose another day."
+			: day === 6 ? "That is a Saturday: you will be asked to confirm a Saturday delivery." : "",
+			day === 0 ? "error" : day === 6 ? "warn" : "");
 	});
+	function esc(v) {
+		return String(v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+	}
+	/* Resolves when the date is not a Saturday, or the person confirms it; rejects on Cancel. */
+	function confirmSaturday() {
+		var v = dates.delivery_date ? dates.delivery_date.value : "";
+		if (deliveryDay() !== 6 || saturdayOk === v) return Promise.resolve();
+		var shown = v.split("-").reverse().join("-");
+		return new Promise(function (resolve, reject) {
+			var modal = document.createElement("div");
+			modal.className = "a3s-modal";
+			modal.setAttribute("role", "dialog");
+			modal.setAttribute("aria-modal", "true");
+			modal.setAttribute("aria-labelledby", "a3s-saturday-title");
+			modal.innerHTML = '<div class="a3s-modal__panel a3s-modal__panel--warn">' +
+				'<p class="a3s-modal__title" id="a3s-saturday-title">&#9888; Saturday delivery</p>' +
+				"<p>The delivery date <b>" + esc(shown) + "</b> is a Saturday. Deliveries are usually on weekdays.</p>" +
+				"<p>Deliver on this Saturday anyway?</p>" +
+				'<div class="a3s-form__actions" style="margin-top:1rem">' +
+				'<button type="button" class="a3s-btn a3s-btn--primary" data-ok>Yes, deliver on Saturday</button>' +
+				'<button type="button" class="a3s-btn a3s-btn--ghost" data-close>Change the date</button></div></div>';
+			document.body.appendChild(modal);
+			function done(ok) {
+				modal.remove();
+				document.removeEventListener("keydown", onKey);
+				if (ok) { saturdayOk = v; resolve(); return; }
+				showTab("details");
+				dates.delivery_date.focus();
+				reject(null);
+			}
+			function onKey(e) { if (e.key === "Escape") done(false); }
+			modal.addEventListener("click", function (e) {
+				if (e.target.closest("[data-ok]")) done(true);
+				else if (e.target === modal || e.target.closest("[data-close]")) done(false);
+			});
+			document.addEventListener("keydown", onKey);
+			modal.querySelector("[data-ok]").focus();
+		});
+	}
 	/* ------------------------------------------------------------ the customer box */
 	/* Fetched from the quotation and its lead (the order's own once saved) and chosen by hand
 	   while the order is a draft: another customer refetches its addresses and details; an
@@ -421,7 +467,15 @@
 			party.billing_address_gstin.focus();
 			return Promise.reject(null);
 		}
-		return call("sales_order_option.save_order", { quotation: chosen, values: values(), name: state.name }, true);
+		if (deliveryDay() === 0) {
+			say("The delivery date is a Sunday: deliveries are not made on Sundays. Choose another day.", "error");
+			showTab("details");
+			dates.delivery_date.focus();
+			return Promise.reject(null);
+		}
+		return confirmSaturday().then(function () {
+			return call("sales_order_option.save_order", { quotation: chosen, values: values(), name: state.name }, true);
+		});
 	}
 	if (save) save.addEventListener("click", function () {
 		save.disabled = true;

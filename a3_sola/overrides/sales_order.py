@@ -26,7 +26,10 @@ def default_delivery_date():
 
 
 def validate_delivery_dates(doc, method=None):
-	"""No delivery on a weekend: the order's date and each item's, where set or changed."""
+	"""No delivery on a Sunday: the order's date and each item's, where set or changed.
+
+	A Saturday is allowed but said: deliveries are usually on weekdays, so the portal asks
+	the person to confirm a Saturday before saving, and the save shows a warning."""
 	from frappe import _
 	from frappe.utils import format_date, getdate
 
@@ -38,13 +41,22 @@ def validate_delivery_dates(doc, method=None):
 	for row in doc.get("items") or []:
 		if row.delivery_date and str(was.get(row.name)) != str(row.delivery_date):
 			checks.append((_("Row {0} delivery date").format(row.idx), row.delivery_date))
+	saturdays = set()
 	for label, date in checks:
-		if getdate(date).weekday() >= 5:
+		day = getdate(date).weekday()
+		if day == 6:
 			frappe.throw(
-				_("{0} {1} is a {2}. Deliveries are on working days: choose {3} or another weekday.").format(
-					label, format_date(date), getdate(date).strftime("%A"), format_date(working_day(date))),
-				title=_("Weekend Delivery Date"),
+				_("{0} {1} is a Sunday. Deliveries are not made on Sundays: choose {2} or another day.").format(
+					label, format_date(date), format_date(working_day(date))),
+				title=_("Sunday Delivery Date"),
 			)
+		if day == 5:
+			saturdays.add(str(getdate(date)))
+	for date in sorted(saturdays):
+		frappe.msgprint(
+			_("Delivery Date {0} is a Saturday. Make sure the team can deliver that day.").format(format_date(date)),
+			title=_("Saturday Delivery"), indicator="orange", alert=True,
+		)
 
 
 def no_gst_on_solar_orders(doc, method=None):

@@ -874,6 +874,7 @@
 .a3s-form__status { margin: 0; font-size: 0.875rem; }
 .a3s-form__status.is-error { color: var(--color-danger); }
 .a3s-form__status.is-success { color: #1a7a2b; }
+.a3s-form__status.is-warn { color: #93370d; }
 
 /* The honeypot has to be reachable by a bot and invisible to a person - so it is
    moved off-screen rather than display:none, which some bots skip. */
@@ -4198,6 +4199,10 @@ textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-modal__panel--mismatch { border-top: 4px solid #d92d20; }
 .a3s-modal__panel--mismatch .a3s-modal__title { color: #b42318; }
 .a3s-modal__panel--mismatch p { margin: 0 0 0.6rem; }
+/* A warning to confirm (not destructive): the warning tone, e.g. "Saturday delivery". */
+.a3s-modal__panel--warn { border-top: 4px solid #f79009; }
+.a3s-modal__panel--warn .a3s-modal__title { color: #93370d; }
+.a3s-modal__panel--warn p { margin: 0 0 0.6rem; }
 
 /* Delete a lead or customer with all its records (portal_cascade_delete.js). */
 .a3s .a3s-cascade__btn { color: #b42318; }
