@@ -454,7 +454,10 @@ STATIC_HIDDEN = {
 	# A customer's Contact is not asked for: ERPNext makes the primary contact with its Customer.
 	# Nor the cancelled cheque and the bank check: the cheque is filed with the project's
 	# documents (portal_tasks), and the check is the office's, in ERPNext.
-	"Solar Consumer": {"contact_person", "cancelled_cheque", "bank_details_verified", "bank_details_verified_by"},
+	# Nor the External Identifiers (DISCOM ID, National Portal ID, SPIN): the desk keeps
+	# them, and the loan and agreement records still fill and read them.
+	"Solar Consumer": {"contact_person", "cancelled_cheque", "bank_details_verified", "bank_details_verified_by",
+	                   "discom_id", "national_portal_consumer_id", "spin"},
 }
 
 
@@ -1550,14 +1553,7 @@ def detail_context(context, slug, name):
 
 
 #: Show-when rules the portal's edit form adds to a doctype's own, as {doctype: {field: rule}}.
-#: The consumer's external identifiers belong with the subsidy history on the portal; the
-#: desk keeps showing them.
-PORTAL_SHOW_WHEN = {
-	"Solar Consumer": {
-		"discom_id": "has_availed_prior_subsidy",
-		"national_portal_consumer_id": "has_availed_prior_subsidy",
-	},
-}
+PORTAL_SHOW_WHEN = {}
 
 #: Values the edit form offers for blank fields, as {doctype: fn(doc) -> (where from, {field: value})}.
 #: Only offered: the box is filled in the browser when the field shows, and nothing is
