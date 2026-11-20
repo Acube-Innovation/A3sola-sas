@@ -163,8 +163,18 @@ def default_people(inst, row, named=None):
 	whoever holds its position on the job."""
 	user = (named if named is not None else template_users(inst)).get(row.stage_code)
 	if user and frappe.db.get_value("User", user, "enabled"):
-		return [user]
-	return resolve(inst, row.default_assignee) if row.get("default_assignee") else []
+		return _not_barred(row.stage_code, [user])
+	return _not_barred(row.stage_code, resolve(inst, row.default_assignee) if row.get("default_assignee") else [])
+
+
+def _not_barred(code, users):
+	"""A task barred to dealers (Accept Customer) is never given to one by default: a dealer
+	holding its position on the job - the Sales Co-ordinator - leaves it to be assigned."""
+	from a3_sola.api import partner_scope
+
+	if code not in partner_scope.DEALER_BARRED_TASKS:
+		return users
+	return [u for u in users if not partner_scope.dealer_barred(code, u)]
 
 
 def template_users(inst):
@@ -212,6 +222,12 @@ def set_task_assignees(installation, task_code, users=None):
 	unknown = [u for u in users if not frappe.db.exists("User", {"name": u, "enabled": 1})]
 	if unknown:
 		frappe.throw(_("Not a user who can be assigned: {0}").format(", ".join(unknown)), frappe.ValidationError)
+	from a3_sola.api import partner_scope
+
+	for user in users:
+		if partner_scope.dealer_barred(task_code, user):
+			frappe.throw(_("{0} cannot be given to a dealer: the company's staff accept the customer.").format(row.stage_name),
+				title=_("Not for a Dealer"))
 	before = people(inst, task_code)
 	put(inst, task_code, users)
 	# The task's document names the lead person too.
@@ -224,4 +240,4 @@ def set_task_assignees(installation, task_code, users=None):
 	if before != users:
 		inst.add_comment("Info", _("Task {0} assigned to {1}").format(
 			row.stage_name, ", ".join(names.get(u) or u for u in users) or _("nobody")))
-	return {"assignees": [{"user": u, "full_name": names.get(u) or u} for u in users]}
+	return {"assignees": [{"user": u, "full_name": partner_scope.shown_name(u, names.get(u) or u)} for u in users]}

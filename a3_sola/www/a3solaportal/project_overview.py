@@ -288,8 +288,12 @@ def _task_columns(doc):
 	unnamed = list({a.user for a in doc.get("task_assignees") or [] if a.user and not a.full_name})
 	names = dict(frappe.get_all("User", filters={"name": ["in", unnamed]}, fields=["name", "full_name"],
 		as_list=True)) if unnamed else {}
+	from a3_sola.api.partner_scope import shown_name
+
 	for a in doc.get("task_assignees") or []:
-		people.setdefault(a.stage_code, []).append({"user": a.user, "name": a.full_name or names.get(a.user) or a.user})
+		# A dealer is shown as "Dealer", not by name.
+		people.setdefault(a.stage_code, []).append({"user": a.user,
+			"name": shown_name(a.user, a.full_name or names.get(a.user) or a.user)})
 	from a3_sola.api.tasks import may_complete
 
 	from a3_sola.api import stages

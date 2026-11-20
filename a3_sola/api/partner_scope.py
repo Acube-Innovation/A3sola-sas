@@ -182,6 +182,32 @@ def has_permission(doc=None, ptype=None, user=None, **kwargs):
 #: freezes and the serial numbers, a dealer reads the design freezes.
 CONTRACTOR_TASKS = ("DSGN", "SDSGN", "SERIAL")
 DEALER_TASKS = ("DSGN", "SDSGN")
+#: Tasks a dealer never works - not opened, completed, skipped or reopened by him, whatever
+#: other roles he holds or whoever it is assigned to: accepting the customer is the company's
+#: own decision.
+DEALER_BARRED_TASKS = ("ACPT",)
+
+
+def dealer_barred(code, user=None):
+	"""Whether `user` is a dealer and task `code` is one a dealer may not work."""
+	return code in DEALER_BARRED_TASKS and "dealer" in partner_kinds(user)
+
+
+#: How a dealer is named on a project's tasks: by his part, not by name.
+DEALER_LABEL = "Dealer"
+
+
+def shown_name(user, name=None):
+	"""The name a task's person is shown by: "Dealer" for a dealer, else his own."""
+	if user and "dealer" in partner_kinds(user):
+		return _(DEALER_LABEL)
+	return name or user
+
+
+def check_dealer_barred(code, stage_name=None, user=None):
+	if dealer_barred(code, user):
+		frappe.throw(_("A dealer cannot work the {0} task. The company's staff do.").format(stage_name or code),
+			frappe.PermissionError, title=_("Not Permitted"))
 
 
 def may_open_task(installation, code, user=None):
@@ -192,6 +218,8 @@ def may_open_task(installation, code, user=None):
 	kinds = partner_kinds(user)
 	if not kinds:
 		return True
+	if dealer_barred(code, user):
+		return False
 	if has_jobs(user):
 		# A partner with staff jobs works the tasks of his own projects, as their staff would.
 		return frappe.db.exists("Solar Installation", installation) and bool(
