@@ -305,7 +305,12 @@
 	/* ------------------------------------------------------------ save */
 	form.addEventListener("submit", function (e) {
 		e.preventDefault();
-		if (!lead.value) { say("Choose the lead this proposal is for.", "error"); showTab("details"); return; }
+		if (!lead.value) {
+			say("Choose the lead this proposal is for.", "error"); showTab("details");
+			/* Proposal For may be closed: open it to the lead. */
+			if (window.a3sReveal) window.a3sReveal(lead);
+			return;
+		}
 		var values = {};
 		["lead", "solar_consumer", "site_survey", "proposal_date", "remarks"].concat(CUSTOMER).forEach(function (f) {
 			var el = field(f);

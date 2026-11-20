@@ -16,6 +16,29 @@
 	{%- endif %}
 {%- endmacro %}
 
+{%- macro card_head(title, id, open) %}
+			<section class="a3s-card a3s-edit__card{% if not open %} is-collapsed{% endif %}" data-a3s-collapse>
+				<h3 class="a3s-edit__card-title"><button type="button" class="a3s-edit__toggle" aria-expanded="{{ 'true' if open else 'false' }}" aria-controls="{{ id }}">
+					<span class="a3s-edit__toggle-label">{{ title | e }}</span>
+					<svg class="a3s-ic a3s-edit__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg></button></h3>
+				<div class="a3s-edit__body" id="{{ id }}"{% if not open %} hidden{% endif %}>
+{%- endmacro %}
+{%- macro card_foot() %}
+				</div>
+			</section>
+{%- endmacro %}
+{%- macro section_body(s) %}
+				{%- if s.note %}<p class="a3s-field__hint a3s-pp__note">{{ s.note | e }}</p>{% endif %}
+				<div class="a3s-form__grid">
+					{%- for f in s.fields %}
+					<div class="a3s-field{% if f.searchable %} a3s-combo a3s-combo--field{% endif %}{% if s.wide %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"{% if f.searchable %} data-combo{% endif %}>
+						<label for="fld-{{ f.fieldname }}">{{ f.label | e }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
+						{{ control(f) }}
+					</div>
+					{%- endfor %}
+				</div>
+{%- endmacro %}
+
 <script type="application/json" id="a3s-pp-state">{{ state_json }}</script>
 
 <div class="a3s-page__head">
@@ -44,29 +67,27 @@
 
 		{#- ------------------------------------------------ Proposal Details -#}
 		<div class="a3s-lf__panel" id="panel-details" role="tabpanel" aria-labelledby="tab-details" data-panel="details">
-			{%- for s in sections %}
-			<section class="a3s-card a3s-edit__card">
-				<h3 class="a3s-edit__card-title">{{ s.title | e }}</h3>
-				{%- if s.note %}<p class="a3s-field__hint a3s-pp__note">{{ s.note | e }}</p>{% endif %}
-				<div class="a3s-form__grid">
-					{%- for f in s.fields %}
-					<div class="a3s-field{% if f.searchable %} a3s-combo a3s-combo--field{% endif %}{% if s.wide %} a3s-field--wide{% endif %}" id="f-{{ f.fieldname }}"{% if f.searchable %} data-combo{% endif %}>
-						<label for="fld-{{ f.fieldname }}">{{ f.label | e }}{% if f.reqd %} <span class="a3s-req">*</span>{% endif %}</label>
-						{{ control(f) }}
-					</div>
-					{%- endfor %}
-				</div>
-			</section>
+			{#- The details open and close from their heading (portal_collapse.js) and start closed -
+			    Proposal For open on a new proposal, where the lead is chosen first. Covering Letter
+			    and Site & Connection share a row; the design estimates are open, under them. -#}
+			{%- for s in sections if not s.wide %}
+			{{ card_head(s.title, "pp-sec-" ~ loop.index, not record_name and loop.first) }}
+				{{ section_body(s) }}
+			{{ card_foot() }}
 			{%- endfor %}
+			<div class="a3s-pp__pair">
+				{%- for s in sections if s.wide %}
+				{{ card_head(s.title, "pp-sec-wide-" ~ loop.index, false) }}
+					{{ section_body(s) }}
+				{{ card_foot() }}
+				{%- endfor %}
+				{{ card_head("Site & Connection", "pp-sec-site", false) }}
+					<p class="a3s-field__hint a3s-pp__note">From the lead's customer. Change them on the customer.</p>
+					<dl class="a3s-pp__site" id="a3s-pp-site"></dl>
+				{{ card_foot() }}
+			</div>
 
-			<section class="a3s-card a3s-edit__card">
-				<h3 class="a3s-edit__card-title">Site &amp; Connection</h3>
-				<p class="a3s-field__hint a3s-pp__note">From the lead's customer. Change them on the customer.</p>
-				<dl class="a3s-pp__site" id="a3s-pp-site"></dl>
-			</section>
-
-			<section class="a3s-card a3s-edit__card">
-				<h3 class="a3s-edit__card-title">Design Estimates</h3>
+			{{ card_head("Design Estimates", "pp-sec-estimates", true) }}
 				<p class="a3s-field__hint a3s-pp__note">Every design estimate for the lead. The first row is the base: what the proposal is generated from and what the others are compared with. Move a row up to make it the base.</p>
 				<div class="a3s-tablewrap">
 					<table class="a3s-table a3s-pp__rows">
@@ -79,7 +100,7 @@
 					<select id="a3s-pp-add-select" aria-label="Add a design estimate"></select>
 					<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" id="a3s-pp-add-btn">+ Add estimate</button>
 				</div>
-			</section>
+			{{ card_foot() }}
 		</div>
 
 		{#- ------------------------------------------------ Design Comparison -#}

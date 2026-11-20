@@ -798,18 +798,17 @@
 		});
 		var totals = $("de-com-totals");
 		totals.innerHTML = "";
-		var gstLabel = "GST" + (c.gst_percent ? " (" + c.gst_percent + "%)" : "");
-		[
-			["Subtotal", c.subtotal, ""],
-			[gstLabel, c.gst_amount, ""],
-			["Total", c.total, "is-grand"]
-		].forEach(function (t) {
+		/* The total, with GST only when a rate is set. The KSEB fees are paid besides it: under
+		   the total, not in it. */
+		var rows = [];
+		if (Number(c.gst_amount)) rows.push(["GST (" + c.gst_percent + "%)", c.gst_amount, ""]);
+		rows.push(["Total", c.total, "is-grand"]);
+		if (Number(c.kseb_amount)) rows.push([c.kseb_label || "KSEB Expenses", c.kseb_amount, "is-extra"]);
+		rows.forEach(function (t) {
 			totals.appendChild(el("div", { class: t[2] }, [el("dt", { text: t[0] }), el("dd", { text: money.format(t[1]) })]));
 		});
-		if (!c.gst_percent) {
-			totals.appendChild(el("p", { class: "a3s-field__hint", text: "No GST rate set. Enter Estimate GST % in A3 Sola Settings." }));
-		} else {
-			totals.appendChild(el("p", { class: "a3s-field__hint", text: "GST on " + money.format(c.taxable) + "; KSEB fees are already gross." }));
+		if (Number(c.kseb_amount)) {
+			totals.appendChild(el("p", { class: "a3s-field__hint", text: "KSEB fees are paid over and above the total." }));
 		}
 
 		/* The saved option's own print, under its figures: read in the browser, or saved. */
@@ -899,6 +898,8 @@
 		var missing = required.filter(function (f) { return form.elements[f] && !String(form.elements[f].value || "").trim(); });
 		if (missing.length) {
 			setStatus("Fill in " + missing.map(function (f) { return form.elements[f].getAttribute("aria-label") || f; }).join(", ") + ".", "error", $("de-proposal-status"));
+			/* Its card may be closed: open it first. */
+			if (window.a3sReveal) window.a3sReveal(form.elements[missing[0]]);
 			form.elements[missing[0]].focus();
 			return;
 		}
@@ -954,7 +955,6 @@
 
 		row("Package", cols.map(function (c) { return c.package; }));
 		row("Proposed size", pick(function (c) { return c.size; }));
-		row("System price", pick(function (c) { return c.package_cost; }));
 		row("Panels", pick(function (c) { return c.panel_kwp; }));
 		row("Solar panel", pick(function (c) { return c.panel; }));
 		row("Panel qty", pick(function (c) { return c.panel_nos || "—"; }));
@@ -978,13 +978,16 @@
 		}).forEach(function (k) {
 			row(k.label, pick(function (c) { return money.format(amount(c, k)); }), "is-line");
 		});
-		row("Subtotal", pick(function (c) { return money.format(c.subtotal); }), "is-sum");
 		/* GST only where some option carries it; nil everywhere, it is left out like a nil line. */
 		if (cols.some(function (c) { return !c.error && c.gst_amount; })) row("GST", pick(function (c) { return money.format(c.gst_amount); }));
 		rows.push(el("tr", { class: "is-grand" }, [el("th", { scope: "row", text: "Total" })].concat(cols.map(function (c) {
 			return el("td", { class: "a3s-de-money" + (isLowest(c) ? " is-lowest" : "") },
 				c.error ? [el("small", { class: "a3s-de-compare__error", text: c.error })] : [document.createTextNode(money.format(c.total))]);
 		}))));
+		/* The KSEB fees, paid over and above the total. */
+		if (cols.some(function (c) { return !c.error && Number(c.kseb_amount); })) {
+			row("KSEB Expenses (over and above)", pick(function (c) { return money.format(c.kseb_amount || 0); }), "is-line");
+		}
 		body.appendChild(el("table", { class: "a3s-de-compare__table" }, [el("thead", {}, [head]), el("tbody", {}, rows)]));
 	}
 

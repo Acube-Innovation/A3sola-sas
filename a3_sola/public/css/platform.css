@@ -3007,6 +3007,8 @@ img.a3s-avatar--sm { width: 1.75rem; height: 1.75rem; }
 .a3s-de-com__totals dd { margin: 0; font-weight: 700; }
 .a3s-de-com__totals .is-grand { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 2px solid var(--color-text); font-size: 1rem; }
 .a3s-de-com__totals .is-grand dt, .a3s-de-com__totals .is-grand dd { color: var(--color-text); font-weight: 800; }
+/* The KSEB fees, paid over and above the total: under it, set apart. */
+.a3s-de-com__totals .is-extra { margin-top: 0.5rem; padding: 0.55rem 0.65rem; border: 1px dashed var(--color-border); border-radius: 0.5rem; }
 .a3s-de-com__totals .a3s-field__hint { margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--color-text-muted); }
 .a3s-de-modal { width: min(46rem, 100%); }
 .a3s-de-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
@@ -4509,10 +4511,17 @@ textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-de-proposal__head-actions { display: flex; gap: 0.5rem; }
 .a3s-de-proposal__head-actions .a3s-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
 .a3s-de-proposal__form { margin-top: 0.75rem; }
-.a3s-de-proposal__grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.a3s-de-proposal__grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 .a3s-de-proposal__card { padding: 1rem 1.1rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-surface); }
 .a3s-de-proposal__card.is-wide { grid-column: 1 / -1; }
 .a3s-de-proposal__card-title { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 800; }
+/* Collapsible cards (portal_collapse.js): the chevron points down while closed; a closed card is its heading. */
+[data-a3s-collapse].is-collapsed .a3s-edit__chevron { transform: rotate(0deg); }
+.a3s-de-proposal__card.is-collapsed .a3s-de-proposal__card-title,
+.a3s-edit__card[data-a3s-collapse].is-collapsed .a3s-edit__card-title { margin-bottom: 0; }
+/* The proposal page: Covering Letter and Site & Connection side by side. */
+.a3s-pp__pair { display: grid; gap: 1.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+@media (max-width: 56rem) { .a3s-pp__pair { grid-template-columns: 1fr; } }
 .a3s-de-proposal__locked { display: block; padding: 0.55rem 0; font-weight: 600; color: var(--color-text); }
 .a3s-de-proposal__actions { margin-top: 1rem; }
 .a3s-de-proposal__actions .a3s-btn { display: inline-flex; align-items: center; gap: 0.4rem; }

@@ -786,18 +786,17 @@ class SolarDesignEstimate(Document):
 		return cint(frappe.db.get_value("Component Make", make, "product_warranty_years"))
 
 	def warranty_extension_from_model(self):
-		"""The optional Warranty Extension is the priced inverter model's: its years and rate,
-		and none where that model has no extension. Without a model the row stays as left."""
+		"""A Warranty Extension someone added takes the priced inverter model's: its years and
+		rate. None is added of its own accord - add-ons are entered when wanted - and a row is
+		left as it is where the model has no extension, or there is no model."""
 		priced = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("inverter_model")), None)
 		if not priced:
 			return
 		offer = inverter_model.extension(priced.inverter_model)
 		rows = [r for r in self.get("optional_add_ons") or [] if r.add_on_type == "Warranty Extension"]
-		if not offer:
-			for row in rows:
-				self.remove(row)
+		if not (offer and rows):
 			return
-		row = rows[0] if rows else self.append("optional_add_ons", {"add_on_type": "Warranty Extension", "is_option": 1})
+		row = rows[0]
 		row.item, row.rate = offer
 		row.nos = cint(row.panel_count) or 1
 		row.amount = flt(row.nos * flt(row.rate), 2)
@@ -1156,11 +1155,13 @@ class SolarDesignEstimate(Document):
 			row.rate = own or panel_rate(make, flt(row.panel_capacity_wp), row.panel_type != "Non-DCR", row.panel_variant)
 
 	def commercials(self):
-		"""Each System & Options table's total, the tax on them and the grand total.
+		"""Each System & Options table's total, the tax on them and the total, and the KSEB fees.
 
 		The additional structure, cable and special discount raised against the estimate
-		follow its own tables, the discount taken off. Tax is the Estimate GST % in A3 Sola Settings on everything but the KSEB fees, which
-		the fee schedule already resolves gross.
+		follow its own tables, the discount taken off. Tax is the Estimate GST % in A3 Sola
+		Settings. The KSEB fees are not in the lines or the total: they are paid over and above
+		it (a reimbursement, as the quotation and the proposal's cost table have them), and
+		are returned on their own as `kseb_amount`.
 		"""
 		# A panel, inverter or battery marked as an option is an alternative offered
 		# beside the system, not part of it: shown, not priced.
@@ -1182,7 +1183,7 @@ class SolarDesignEstimate(Document):
 			# The package's price is the system's: its panels, inverter, battery, boards, mounting
 			# and installation are in it, so those tables have no line of their own unless something
 			# beyond the package is charged on them. The KSEB fees are always over and above it.
-			lines = [line for line in lines if line["key"] in ("package", "kseb_expenses") or flt(line["amount"])]
+			lines = [line for line in lines if line["key"] == "package" or flt(line["amount"])]
 		# An add-on is offered beside the system; one taken (not an Option) is charged.
 		add_ons = flt(sum(flt(row.amount) for row in self.get("optional_add_ons") or [] if not row.is_option), 2)
 		if add_ons:
@@ -1191,17 +1192,21 @@ class SolarDesignEstimate(Document):
 			{"key": key, "label": doctype, "amount": self.linked_charge(doctype) * sign or 0.0}
 			for key, doctype, sign in LINKED_CHARGES
 		]
+		# The KSEB fees are paid besides the total: taken out of the lines, kept on their own.
+		kseb_amount = flt(sum(line["amount"] for line in lines if line["key"] == "kseb_expenses"), 2)
+		lines = [line for line in lines if line["key"] != "kseb_expenses"]
 		subtotal = flt(sum(line["amount"] for line in lines), 2)
-		taxable = flt(subtotal - sum(line["amount"] for line in lines if line["key"] == "kseb_expenses"), 2)
 		gst_percent = get_float("estimate_gst_percent", 0.0)
-		gst_amount = flt(taxable * gst_percent / 100, 2)
+		gst_amount = flt(subtotal * gst_percent / 100, 2)
 		return {
 			"lines": lines,
 			"subtotal": subtotal,
-			"taxable": taxable,
+			"taxable": subtotal,
 			"gst_percent": gst_percent,
 			"gst_amount": gst_amount,
 			"total": flt(subtotal + gst_amount, 2),
+			"kseb_label": _("KSEB Expenses"),
+			"kseb_amount": kseb_amount,
 		}
 
 	def linked_charge(self, doctype):

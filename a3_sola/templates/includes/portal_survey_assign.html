@@ -1,8 +1,9 @@
 {#- The customer's site survey, before there is one: who it is assigned to (a to-do on the
     customer, api/survey_assignment), or the button that assigns it. Only the assignee gets
-    "Create site survey", below. Context: survey_assign, record_name, csrf_token. -#}
+    "Create site survey", below. Context: survey_assign, csrf_token, and the customer -
+    survey_consumer, else record_name (the customer's own page). -#}
 {%- set sa = survey_assign %}
-<div class="a3s-survey-assign" data-survey-assign data-consumer="{{ record_name | e }}">
+<div class="a3s-survey-assign" data-survey-assign data-consumer="{{ (survey_consumer or record_name) | e }}">
 	{%- if sa.assignee %}
 	<div class="a3s-assign__row">
 		<span class="a3s-step-card__icon" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-pin"></use></svg></span>

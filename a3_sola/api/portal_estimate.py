@@ -1329,9 +1329,11 @@ def comparison(root, pending=None, permtype="read"):
 			"package_cost": next((s["value"] for s in state["summary"] if s["label"] == _("System price")), ""),
 			"panel": priced.get("panels", ""), "inverter": priced.get("inverters", ""), "battery": priced.get("batteries", ""),
 			"panel_nos": counts.get("panels", ""), "inverter_nos": counts.get("inverters", ""),
-			"lines": [{"key": line["key"], "label": line["label"], "amount": line["amount"]} for line in state["commercials"]["lines"]],
+			# The package's line is the same row in every option: Package Price, not its name.
+			"lines": [{"key": line["key"], "label": _("Package Price") if line["key"] == "package" else line["label"],
+				"amount": line["amount"]} for line in state["commercials"]["lines"]],
 			"subtotal": state["commercials"]["subtotal"], "gst_amount": state["commercials"]["gst_amount"],
-			"total": state["commercials"]["total"],
+			"total": state["commercials"]["total"], "kseb_amount": state["commercials"]["kseb_amount"],
 		})
 		out.append(entry)
 	frappe.local.message_log = []

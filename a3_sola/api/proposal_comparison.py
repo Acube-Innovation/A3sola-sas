@@ -86,11 +86,14 @@ def estimate_summary(name):
 		"capacity_kw": flt(doc.final_capacity_kw),
 		"main": main,
 		# Everything else priced, as one line each, in the commercials' order.
-		"other_lines": [line for line in commercials["lines"] if line["key"] not in main_keys and flt(line["amount"])],
+		# The package's line reads Package Price; its name is in the option's heading.
+		"other_lines": [dict(line, label=_("Package Price")) if line["key"] == "package" else line
+			for line in commercials["lines"] if line["key"] not in main_keys and flt(line["amount"])],
 		"subtotal": commercials["subtotal"],
 		"gst_percent": commercials["gst_percent"],
 		"gst_amount": commercials["gst_amount"],
 		"total": commercials["total"],
+		"kseb_amount": commercials["kseb_amount"],
 	}
 
 

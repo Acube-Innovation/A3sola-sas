@@ -1,0 +1,11 @@
+{#- A design estimate's own next steps, before the chain's (the subsidy eligibility check):
+    its design proposal - made on the design page's Proposal tab from the saved options, or,
+    once made, opened - and, while its customer has no site survey, who carries it out
+    (portal_survey_assign.html). Context from design-estimates/view.py. -#}
+{%- if design_proposal %}
+<a class="a3s-btn a3s-btn--primary a3s-btn--block" href="{{ design_proposal.route | e }}">
+	<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
+	<span>{{ design_proposal.label | e }}</span>
+</a>
+{%- endif %}
+{%- if survey_assign %}{% include "templates/includes/portal_survey_assign.html" %}{% endif %}
