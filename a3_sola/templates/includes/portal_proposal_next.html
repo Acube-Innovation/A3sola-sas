@@ -1,6 +1,7 @@
-{#- The proposal's own next steps: render it into a version, render the current version
-    again - or, once that version went to the client, revise it into a new one - and raise
-    the quotation for the version the client chose. Wired by portal_proposal.js. -#}
+{#- The proposal's own next steps: once its version went to the client, revise it into a new
+    one; and raise the quotation for the version the client chose. The PDF is made on save
+    (solar_proposal.queue_auto_generate); remaking it by hand is in Version history. Wired
+    by portal_proposal.js. -#}
 {%- if can_write %}
 <div class="a3s-proposal-next" data-proposal-actions data-name="{{ record.name | e }}">
 	{%- if version_out %}
@@ -10,11 +11,8 @@
 		<span>Revise proposal</span>
 	</button>
 	<p class="a3s-edit__hint">Version {{ current_version_no }} has gone to the client. Change the design estimate first, then revise to open Version {{ current_version_no + 1 }}.</p>
-	{%- else %}
-	<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--block" data-act="generate">
-		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
-		<span>{{ "Regenerate PDF" if has_versions else "Generate proposal" }}</span>
-	</button>
+	{%- elif not has_versions %}
+	<p class="a3s-edit__hint">Version one and its PDF are made automatically once the design estimate is priced and the proposal saved.</p>
 	{%- endif %}
 	{%- if can_quote %}
 	{#- Asks which version the client chose (portal_proposal.js), and records it accepted. -#}

@@ -64,19 +64,29 @@
 		{%- endfor %}
 	</ol>
 	{%- else %}
-	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Generate the proposal from Next steps to open version one.</p>
+	<p class="a3s-edit__hint">Nothing has gone to the customer yet. Version one and its PDF are made automatically once the proposal is saved with a priced design estimate - or generate it now below.</p>
 	{%- endif %}
 
 	{%- if can_write %}
-	{#- Generate / Regenerate is in Next steps; the PDF and its sharing beside Edit. -#}
-	{#- The quotation is raised from Next steps, for the version the client chose. -#}
-	{%- if has_versions %}
+	{#- The PDF is made on save, and on its design estimate's save (solar_proposal.queue_auto_generate).
+	    Refresh PDF remakes the current version's for what changed elsewhere - settings, terms, the
+	    app - while it has not gone to the client. The quotation is raised from Next steps. -#}
 	<div class="a3s-version__actions" data-proposal-actions data-name="{{ record.name | e }}">
+		{%- if has_versions %}
 		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="dispatch">Record dispatch</button>
 		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="response">Record client response</button>
+		{%- if not version_out %}
+		<button type="button" class="a3s-btn a3s-btn--ghost" data-act="generate" title="Remake Version {{ current_version_no }}'s PDF from today's design, settings and terms">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>Refresh PDF</span>
+		</button>
+		{%- endif %}
 		<button type="button" class="a3s-btn a3s-btn--ghost" data-act="revise">Revise</button>
+		{%- else %}
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-act="generate">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>Generate PDF now</span>
+		</button>
+		{%- endif %}
 		<p class="a3s-form__status" data-proposal-status role="status" aria-live="polite"></p>
 	</div>
-	{%- endif %}
 	{%- endif %}
 </section>

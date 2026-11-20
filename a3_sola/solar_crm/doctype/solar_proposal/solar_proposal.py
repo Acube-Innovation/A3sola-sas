@@ -277,6 +277,12 @@ class SolarProposal(Document):
 			customer_name=self.customer_name or "",
 		)
 
+	def on_update(self):
+		queue_auto_generate(self)
+
+	def on_update_after_submit(self):
+		queue_auto_generate(self)
+
 	def on_submit(self):
 		if self.solar_consumer:
 			frappe.get_doc("Solar Consumer", self.solar_consumer).set_status("Proposed")
@@ -615,11 +621,70 @@ def proposal_print_format():
 @frappe.whitelist()
 def generate_proposal(solar_proposal):
 	"""Render the PDF, name it on the client's convention, and render the greeting message."""
+	doc = frappe.get_doc("Solar Proposal", solar_proposal)
+	doc.check_permission("write")
+	return _generate(doc)
+
+
+# ------------------------------------------------------------------ made on save
+def queue_auto_generate(doc):
+	"""A proposal saved while its current version has not gone to the client gets its PDF
+	made - Version 1 opened on the first save - in the background, once the save is
+	committed: the person never has to click Generate. Not while the design estimate has no
+	price (the PDF would quote nothing), not for a version already out (it is kept as sent),
+	and not from the render's own save."""
+	if doc.flags.from_auto_generate or frappe.flags.in_patch or frappe.flags.in_migrate \
+			or frappe.flags.in_install or frappe.flags.in_import:
+		return
+	if not auto_generate_due(doc):
+		return
+	frappe.enqueue(
+		"a3_sola.solar_crm.doctype.solar_proposal.solar_proposal.auto_generate",
+		queue="short", job_id=f"proposal-pdf::{doc.name}", deduplicate=True,
+		enqueue_after_commit=True, solar_proposal=doc.name,
+	)
+
+
+def queue_for_estimate(estimate):
+	"""A design estimate was saved: every proposal quoting it - as its base or as an option -
+	gets its PDF made again (queue_auto_generate checks each is still with us and priced)."""
+	if frappe.flags.in_patch or frappe.flags.in_migrate or frappe.flags.in_install or frappe.flags.in_import:
+		return
+	names = set(frappe.get_all("Solar Proposal", filters={"solar_design_estimate": estimate, "docstatus": ["<", 2]}, pluck="name"))
+	names |= set(frappe.get_all("Solar Proposal Estimate", filters={"solar_design_estimate": estimate,
+		"parenttype": "Solar Proposal"}, pluck="parent"))
+	for name in sorted(names):
+		queue_auto_generate(frappe.get_doc("Solar Proposal", name))
+
+
+def auto_generate_due(doc):
+	"""Whether the proposal's PDF should be made now: it has a priced design estimate, and its
+	current version (if any) is still with us."""
+	if doc.docstatus == 2 or not doc.solar_design_estimate or version_is_out(_current_version(doc)):
+		return False
+	if not frappe.db.exists("Solar Design Estimate", doc.solar_design_estimate):
+		return False
+	total = frappe.get_doc("Solar Design Estimate", doc.solar_design_estimate).commercials().get("total")
+	return flt(total) > 0
+
+
+def auto_generate(solar_proposal):
+	"""The background render queue_auto_generate asks for, checked again on the saved record."""
+	if not frappe.db.exists("Solar Proposal", solar_proposal):
+		return
+	doc = frappe.get_doc("Solar Proposal", solar_proposal)
+	if not auto_generate_due(doc):
+		return
+	doc.flags.from_auto_generate = True
+	_generate(doc)
+	frappe.db.commit()
+
+
+def _generate(doc):
 	from frappe.utils.pdf import get_pdf
 	from frappe.utils.print_format import download_pdf  # noqa: F401  (ensures print deps load)
 
-	doc = frappe.get_doc("Solar Proposal", solar_proposal)
-	doc.check_permission("write")
+	doc.flags.from_auto_generate = True
 	if not doc.solar_design_estimate:
 		# Saved without one is fine; the PDF is the estimate's design, so not before it has one.
 		frappe.throw(_("Add a design estimate to this proposal before generating its PDF."),
@@ -636,8 +701,16 @@ def generate_proposal(solar_proposal):
 		)
 	if not version:
 		version = _open_version(doc)
-		_save_version_change(doc)
-		version = _current_version(doc)
+	else:
+		# Not out yet: the version quotes the design as it is today, so its snapshot follows.
+		doc.pull_from_estimate()
+		for field in ("capacity_label", "options_quoted"):
+			version.set(field, doc.get(field))
+		for field in ("capacity_kw", "recommended_option_cost"):
+			version.set(field, flt(doc.get(field)))
+		version.solar_design_estimate = doc.solar_design_estimate
+	_save_version_change(doc)
+	version = _current_version(doc)
 
 	html = frappe.get_print(doc.doctype, doc.name, print_format=proposal_print_format(), no_letterhead=0)
 	pdf = get_pdf(html)
