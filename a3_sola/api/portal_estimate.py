@@ -1207,9 +1207,22 @@ def remove_option(name, option):
 		if not heir:
 			frappe.throw(_("Every other option is saved as an estimate of its own, so this one stays as {0}.").format(doc.name))
 		heir.is_recommended = 1
+	saved_as = row.design_estimate if row.design_estimate and row.design_estimate != doc.name else None
 	doc.remove(row)
 	doc.save()
+	if saved_as:
+		_unquote(saved_as)
 	return {"route": design_route(doc.name)}
+
+
+def _unquote(estimate):
+	"""Take an option's estimate off the draft proposals that quote it, so their page and PDF
+	show only the options left. An issued proposal drops it with its next revision."""
+	for name in frappe.get_all("Solar Proposal Estimate", filters={"parenttype": "Solar Proposal",
+			"solar_design_estimate": estimate, "docstatus": 0}, pluck="parent", distinct=True):
+		proposal = frappe.get_doc("Solar Proposal", name)
+		if proposal.has_permission("write"):
+			proposal.save()
 
 
 def _changes(ops):

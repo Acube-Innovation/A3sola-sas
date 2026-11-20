@@ -443,7 +443,8 @@ def save_from_estimate(name, values):
 	existing = proposal_of(root)
 	estimates = [o["estimate"] for o in options]
 	if existing:
-		# Estimates the proposal quotes from elsewhere stay, after these.
+		# Estimates the proposal quotes from elsewhere stay, after these; an option taken off
+		# this design does not (dropped_options, in the proposal's validate).
 		estimates += [r.solar_design_estimate for r in frappe.get_doc(DOCTYPE, existing).get("design_estimates") or []
 			if r.solar_design_estimate and r.solar_design_estimate not in estimates]
 	return save_proposal(values, estimates, existing)
