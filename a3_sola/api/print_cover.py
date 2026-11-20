@@ -518,8 +518,8 @@ def proposal_estimates(doc, est):
 def print_components(doc):
 	"""3.2 Specifications & Quantity of Major Components, from the proposal's base design
 	estimate: its priced panel, inverter and battery rows, its balance of system, mounting
-	structure and installation - and, where the proposal offers options, each option's inverter;
-	where the design offers alternative panels (its Option rows), each as an option of its own.
+	structure and installation - and, where the proposal offers options, each option's panel and
+	inverter.
 	Returns {"rows": [...], "missing": [...], "notes": [...]} - each row is {item, spec, make,
 	nos}, `missing` names the rows without a make on record, and `notes` explains an asterisk:
 	a micro inverter is marked, and its option has no DCDB (api/microinverter.py). A panel,
@@ -547,15 +547,23 @@ def print_components(doc):
 	def priced(table):
 		return [r for r in est.get(table) or [] if not r.get("is_option")]
 
-	alternates = {r.module_make: r.module_alternate_makes for r in frappe.get_all("Solar Package Module",
-		filters={"parent": est.solar_package}, fields=["module_make", "module_alternate_makes"])} if est.solar_package else {}
+	def alternates_of(package):
+		"""A package's panel makes and the alternates each may be supplied in."""
+		return {r.module_make: r.module_alternate_makes for r in frappe.get_all("Solar Package Module",
+			filters={"parent": package}, fields=["module_make", "module_alternate_makes"])} if package else {}
+
 	rows = []
-	# The panels the design offers: the priced one first, then each alternative the package
-	# offers (its Option rows) - "Option 1: 600Wp ...", "Option 2: 565Wp ...", as the inverters are.
-	# A quotation is the one option the customer chose: its priced panel alone.
+	hybrid = est.system_type == "Hybrid"
+	# The options the proposal offers, in its order. A quotation is the one option the
+	# customer chose. Each option's priced panel and inverter is listed - "Option 1: 600Wp ...",
+	# "Option 2: 550Wp ..." - as the Design Comparison does; a design's own rows marked as
+	# Options are alternatives it was priced against, not options offered.
 	quoted = bool(doc.get("quotation"))
-	panels = priced("panels") + ([] if quoted else [r for r in est.get("panels") or [] if r.get("is_option")])
-	for number, r in enumerate(panels, 1):
+	options = [est] if quoted else proposal_estimates(doc, est)
+	panels = [(number, option, r) for number, option in enumerate(options, 1)
+		for r in option.get("panels") or [] if not r.get("is_option")]
+	for number, option, r in panels:
+		alternates = alternates_of(option.solar_package)
 		detail = " ".join(p for p in (technology_name(r.panel_variant) if r.panel_variant else "",
 			("DCR" if r.panel_type == "DCR" else "Non DCR") if r.panel_type else "") if p)
 		spec = " ".join(p for p in ("{0:g}Wp".format(flt(r.panel_capacity_wp)) if flt(r.panel_capacity_wp) else "", detail) if p)
@@ -566,7 +574,7 @@ def print_components(doc):
 		written = r.get("alternate_makes") or alternates.get(r.panel_make) or ""
 		names = [main] + [m.strip() for m in written.replace(",", "/").split("/")
 			if m.strip() and m.strip().lower() not in ("equivalent", main.lower())]
-		if len(panels) > 1:
+		if len(options) > 1:
 			spec, detail = ("Option {0}: {1}".format(number, text) for text in (spec, detail))
 		rows.append({"item": "Solar Panels", "spec": spec, "spec_detail": detail, "capacity": unit_capacity("panels", r),
 			"make": " / ".join(dict.fromkeys(n for n in names if n)), "nos": cint(r.nos)})
@@ -575,9 +583,7 @@ def print_components(doc):
 		rows[0]["span"] = len(panels)
 		for r in rows[1:]:
 			r["spanned"] = True
-	hybrid = est.system_type == "Hybrid"
 	# Each option's inverter - the options differ by inverter - or the one design's.
-	options = [est] if quoted else proposal_estimates(doc, est)
 	micro = [microinverter.uses_microinverter(e) for e in options]
 	for number, option in enumerate(options, 1):
 		for r in option.get("inverters") or []:
