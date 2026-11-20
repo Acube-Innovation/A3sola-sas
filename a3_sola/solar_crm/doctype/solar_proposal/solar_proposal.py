@@ -160,6 +160,14 @@ class SolarProposal(Document):
 			for name in names:
 				self.append("design_estimates", {"solar_design_estimate": name})
 
+		# An option taken off its design estimate is not quoted any more, though its own
+		# estimate is kept.
+		dropped = dropped_options([r.solar_design_estimate for r in self.design_estimates])
+		if dropped:
+			self.set("design_estimates", [r for r in self.design_estimates if r.solar_design_estimate not in dropped])
+			for idx, row in enumerate(self.design_estimates, start=1):
+				row.idx = idx
+
 		seen = set()
 		for row in self.design_estimates:
 			if row.solar_design_estimate in seen:
@@ -307,7 +315,26 @@ def lead_estimates(lead, solar_consumer=None):
 	rows = frappe.get_all("Solar Design Estimate", filters={"docstatus": ["<", 2]},
 		or_filters=[["lead", "=", lead or "__none__"], ["solar_consumer", "=", solar_consumer or "__none__"]],
 		fields=["name", "lead", "solar_consumer"], order_by="creation asc")
-	return [r.name for r in rows if _belongs(r, lead, solar_consumer)]
+	dropped = dropped_options([r.name for r in rows])
+	return [r.name for r in rows if _belongs(r, lead, solar_consumer) and r.name not in dropped]
+
+
+def dropped_options(names):
+	"""Those of `names` saved as an option of a design estimate and since taken off it (the x on
+	the design page): the estimate stays, but no proposal quotes it."""
+	names = [n for n in names or [] if n]
+	if not names:
+		return set()
+	rows = frappe.get_all("Solar Design Estimate", filters={"name": ["in", names], "parent_estimate": ["is", "set"]},
+		fields=["name", "parent_estimate"])
+	if not rows:
+		return set()
+	parents = set(frappe.get_all("Solar Design Estimate", filters={"name": ["in", list({r.parent_estimate for r in rows})]},
+		pluck="name"))
+	listed = set(frappe.get_all("Design Estimate Sizing Option",
+		filters={"parenttype": "Solar Design Estimate", "parent": ["in", list(parents) or ["__none__"]]}, pluck="design_estimate"))
+	# An estimate whose design is gone stands on its own.
+	return {r.name for r in rows if r.parent_estimate in parents and r.name not in listed}
 
 
 def _belongs(estimate, lead, solar_consumer):

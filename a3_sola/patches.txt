@@ -346,3 +346,5 @@ a3_sola.patches.v1_3.consumer_salutation
 a3_sola.patches.v1_3.estimate_dcr_from_package
 a3_sola.patches.v1_3.phase_rule_above_5kw
 a3_sola.patches.v1_3.estimate_panel_follows_inverter
+# Proposals stop quoting options taken off their design estimate.
+a3_sola.patches.v1_3.drop_removed_options_from_proposals
