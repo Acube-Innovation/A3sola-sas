@@ -1802,6 +1802,10 @@ class SolarDesignEstimate(Document):
 
 	def on_update(self):
 		self.size_to_customer()
+		# The proposals quoting it get their PDF made again, while it has not gone out.
+		from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import queue_for_estimate
+
+		queue_for_estimate(self.name)
 
 	def size_to_customer(self):
 		"""The customer's (and its lead's) Proposed System Size is what the design proposal

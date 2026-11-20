@@ -10,9 +10,6 @@
 		<span class="a3s-badge" id="ce-status"{% if not record %} hidden{% endif %}>{{ record.status | e if record else "" }}</span>
 	</h2>
 	<div class="a3s-detail__actions" id="ce-actions">
-		{%- if record %}
-		<a class="a3s-btn a3s-btn--ghost" href="{{ record.desk }}" target="_blank" rel="noopener" id="ce-desk">Open in ERPNext</a>
-		{%- endif %}
 	</div>
 	<p class="a3s-main__sub">
 		{%- if mode == "view" %}Stored in ERPNext as a Quotation &middot; read only. Amend it from ERPNext to change it.

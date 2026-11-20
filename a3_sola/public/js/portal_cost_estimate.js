@@ -477,12 +477,6 @@
 			badge.textContent = state.status || (state.docstatus === 1 ? "Submitted" : "Draft");
 			badge.className = "a3s-badge a3s-badge--" + String(badge.textContent).toLowerCase().replace(/\s+/g, "-");
 			el("ce-submit").hidden = readonly || state.docstatus !== 0;
-			if (!el("ce-desk")) {
-				var a = document.createElement("a");
-				a.className = "a3s-btn a3s-btn--ghost"; a.id = "ce-desk"; a.target = "_blank"; a.rel = "noopener";
-				a.href = "/app/quotation/" + encodeURIComponent(state.name); a.textContent = "Open in ERPNext";
-				el("ce-actions").appendChild(a);
-			}
 		}
 		// The title names the customer as the letter does, "Mr Shiju"; the picker keeps the bare name.
 		if (state.party_label) el("ce-title").textContent = (state.salutation ? state.salutation + " " : "") + state.party_label;
