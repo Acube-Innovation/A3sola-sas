@@ -754,7 +754,7 @@ def print_rest(doc):
 			rows.append({"item": "Grand Total", "amount": flt(q.rounded_total or q.grand_total), "right": True, "bold": True})
 			rows.append(payable_row(rows[-1]["amount"]))
 		else:
-			# GST included: the Base Price, the GST it holds, the discount, what is paid.
+			# GST included: the GST it holds, the discount, what is paid.
 			# The discount as what it takes off - the total less the price after it - whatever
 			# sign the quotation keeps it in.
 			discount = flt(q.total) - flt(q.net_total) if flt(q.discount_amount) else 0
@@ -917,7 +917,7 @@ def plant_cost_rows(est):
 		total = sum(r["amount"] for r in rows)
 		rows.append({"item": "Total", "amount": total, "right": True, "bold": True})
 		return closing_rows(rows, total, discount, subsidy=subsidy_of(est))
-	# GST included: the Base Price; its GST lines are the quotation's to show, not the proposal's.
+	# GST included: no Base Price line; its GST lines are the quotation's to show, not the proposal's.
 	return closing_rows(rows, sum(r["amount"] for r in rows), discount, company=est.get("company"), subsidy=subsidy_of(est))
 
 
@@ -959,9 +959,9 @@ def gst_included_rows(company, price):
 def closing_rows(rows, total, discount, company=None, show_gst=False, subsidy=0):
 	"""The cost table's rows after its items, `total` being what they come to:
 
-	- with a `company` whose GST rule prices it, the Base Price (the total less the GST it
-	  holds), then - with `show_gst`, the quotation's - that GST (gst_included_rows); without,
-	  the Total, as it is;
+	- with a `company` whose GST rule prices it and `show_gst` (the quotation's), the GST the
+	  price holds (gst_included_rows) - no Base Price line: the proposal does not print one;
+	  without a GST rule, the Total, as it is;
 	- the Special Discount, the amount taken off, where there is one;
 	- the Customer Payable Final Project Price: the total less the discount;
 	- with a `subsidy`, the PM Surya Ghar Subsidy Amount and the Effective Price After
@@ -969,7 +969,6 @@ def closing_rows(rows, total, discount, company=None, show_gst=False, subsidy=0)
 	gst = gst_included_rows(company, total) if company else []
 	out = list(rows)
 	if gst:
-		out.append({"item": _("Base Price"), "amount": flt(total) - gst[-1]["amount"], "right": True, "bold": True})
 		if show_gst:
 			out += gst
 	elif not (out and out[-1]["item"] == "Total"):
