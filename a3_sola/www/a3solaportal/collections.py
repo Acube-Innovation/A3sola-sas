@@ -1207,6 +1207,11 @@ EDITABLE_AFTER_SUBMIT = {
 		"loan_sanction_no", "feasibility_status", "capacity_applied_kw", "capacity_installable_kw",
 		"project_cost_all_inclusive",
 	),
+	# Submitted when it is filed on the portal; its answer comes weeks later. Approved here
+	# completes its task (National Portal, CEIG) - tasks.sync_from_document.
+	"Portal Application": (
+		"application_status", "approval_number", "approval_date", "approval_attachment",
+	),
 }
 
 
