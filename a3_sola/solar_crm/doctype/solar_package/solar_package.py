@@ -130,6 +130,7 @@ class SolarPackage(Document):
 		package saved with typed inverter Costs and no rows yet - made before the table, imported,
 		loaded - gets its rows from those Costs."""
 		self.seed_pricing_options()
+		self.follow_renamed_options()
 		self.require_pricing_options()
 		self.validate_pricing_options()
 		self.validate_one_default("pricing_options", _("pricing"))
@@ -169,6 +170,34 @@ class SolarPackage(Document):
 			seeded = self.append("pricing_options", {"panel": panel_name(panel), "inverter": inverter_name(row),
 				"battery": battery_name(battery) if battery else None, "cost": cost, "is_default": 1 if row.is_default else 0})
 			seeded.flags.old_price = cost
+
+	def follow_renamed_options(self):
+		"""A Pricing Options row names its panel, inverter and battery by their text. When one of
+		those rows is changed in place - a 1PH inverter swapped for its 3PH model - the pricing
+		rows that named it follow it, keeping their margin and cap, rather than refusing the save.
+		A kit swapped for another (a row taken away, a new one added) is followed the same way
+		when it is plain which replaced which: one option gone and one new, unpriced one."""
+		before = self.get_doc_before_save()
+		if not before or not self.get("pricing_options"):
+			return
+		for table, name_of, field in (("modules", panel_name, "panel"), ("inverters", inverter_name, "inverter"),
+				("batteries", battery_name, "battery")):
+			old = {row.name: name_of(row) for row in before.get(table) or [] if not row.get("bundle_part")}
+			now = {name_of(row) for row in self.get(table) or [] if not row.get("bundle_part")} - {""}
+			renamed = {}
+			for row in self.get(table) or []:
+				was, new = old.get(row.name), name_of(row)
+				if not row.get("bundle_part") and was and new and was != new and was not in now:
+					renamed[was] = new
+			priced = {_name(price.get(field)) for price in self.get("pricing_options") or []}
+			gone = [name for name in set(old.values()) - now - set(renamed) if name in priced]
+			added = [name for name in now - set(old.values()) - set(renamed.values()) if name not in priced]
+			if len(gone) == 1 and len(added) == 1:
+				renamed[gone[0]] = added[0]
+			for price in self.get("pricing_options") or []:
+				name = _name(price.get(field))
+				if name in renamed:
+					price.set(field, renamed[name])
 
 	def require_pricing_options(self):
 		"""An Active package has a Pricing Options row at least: the panel, inverter and cost it is

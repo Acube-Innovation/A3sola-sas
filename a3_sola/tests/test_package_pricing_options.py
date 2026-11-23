@@ -143,6 +143,15 @@ class TestPackagePricingOptions(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			self.pkg.save()
 
+	def test_an_inverter_changed_in_place_takes_its_pricing_rows_with_it(self):
+		"""Swapping an inverter for another model on its own row (1PH for 3PH) moves the Pricing
+		Options rows that named it, margin and all, instead of refusing the save."""
+		margin = next(r.margin for r in self.pkg.pricing_options if r.inverter == inverter_name(self.inverter))
+		self.inverter.inverter_specification = "Pricing test 3PH inverter"
+		self.pkg.save()
+		row = next(r for r in self.pkg.pricing_options if r.margin == margin)
+		self.assertEqual(row.inverter, "Pricing test 3PH inverter")
+
 	def test_a_package_priced_the_old_way_gets_its_rows(self):
 		doc = frappe.copy_doc(self.pkg)
 		doc.specification_code = "PRICING-ROWS-TEST"
