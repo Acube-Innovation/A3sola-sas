@@ -532,8 +532,12 @@ def bank_proposal(inst, survey, section):
 	from a3_sola.api.portal_fields import link_title
 
 	kw = flt(inst.capacity_kw)
-	panel = (inst.get("panels") or [None])[0]
-	inverter = (inst.get("inverters") or [None])[0]
+	# The panel and inverter the job is built with - not the alternates kept beside them for
+	# choice (`is_option`), which would print another make and add their counts in.
+	panels = [r for r in inst.get("panels") or [] if not r.get("is_option")] or (inst.get("panels") or [])[:1]
+	inverters = [r for r in inst.get("inverters") or [] if not r.get("is_option")] or (inst.get("inverters") or [])[:1]
+	panel = (panels or [None])[0]
+	inverter = (inverters or [None])[0]
 	bos = {r.item: r for r in inst.get("bos_items") or []}
 	mounting = (inst.get("mounting_expenses") or [None])[0]
 	roof = link_title("Roof Type", inst.roof_type) if inst.get("roof_type") else ""
@@ -561,9 +565,10 @@ def bank_proposal(inst, survey, section):
 		"generation": "%g - %g units" % (round(kw * 3), round(kw * 4)),
 		"components": [
 			{"item": "Solar Panels", "spec": "{0:g} Wp {1}".format(flt(panel.panel_capacity_wp), panel.panel_type or "") if panel else "",
-			 "make": make(panel, "panel_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("panels") or []) if panel else ""},
-			{"item": "Solar PV Inverter", "spec": "{0:g}kW {1} On-Grid Inverter and Online Monitoring".format(flt(inverter.inverter_capacity_kw), inverter.inverter_phase or phase) if inverter else "",
-			 "make": make(inverter, "inverter_make"), "nos": "%g" % sum(flt(r.nos) for r in inst.get("inverters") or []) if inverter else ""},
+			 "make": make(panel, "panel_make"), "nos": "%g" % sum(flt(r.nos) for r in panels) if panel else ""},
+			{"item": "Solar PV Inverter", "spec": "{0:g}kW {1} On-Grid {2}Inverter and Online Monitoring".format(
+				flt(inverter.inverter_capacity_kw), inverter.inverter_phase or phase, "Micro " if micro else "") if inverter else "",
+			 "make": make(inverter, "inverter_make"), "nos": "%g" % sum(flt(r.nos) for r in inverters) if inverter else ""},
 			{"item": "DCDB", **({"spec": "Not required for micro inverter", "make": "", "nos": "0"} if micro else
 				bos_row("DCDB", "With PV Fuses at input, DC Isolator and Type 2 DC SPD in IP65 rated enclosure", "ABB/Eaton, Mersen"))},
 			{"item": "ACDB", **bos_row("ACDB", "With MCB and Type 2 AC SPD in PC/ABS/CRCA IP54 rated enclosure", "ABB/Eaton, Mersen/Citel")},
