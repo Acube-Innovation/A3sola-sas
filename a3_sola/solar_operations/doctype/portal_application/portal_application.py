@@ -120,7 +120,14 @@ class PortalApplication(Document):
 			frappe.db.set_value("Solar Installation", self.solar_installation, updates, update_modified=False)
 
 	def before_update_after_submit(self):
-		"""Queries and approvals arrive over weeks; recompute the ageing before the write."""
+		"""Queries and approvals arrive over weeks; recompute the ageing before the write. A
+		status changed (from the portal's edit form, or the desk) is dated, and an approval
+		without a date is dated today - as `approve` does."""
+		before = self.get_doc_before_save()
+		if before and before.application_status != self.application_status:
+			self.status_updated_on = today()
+		if self.application_status == "Approved" and not self.approval_date:
+			self.approval_date = today()
 		self.compute_ageing()
 
 	def on_update_after_submit(self):
