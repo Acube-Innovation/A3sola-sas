@@ -309,7 +309,9 @@ LOAN_PACK_CONSUMER = (
 	("Building Tax Receipt", ("Building Tax Receipt",)),
 	("Income Tax Return (ITR)", ("Income Tax Return",)),
 )
-LOAN_PACK_PRINTED = (("Covering letter", "letter"), ("Vendor feasibility report", "feasibility"), ("Quotation", "quotation"))
+#: The bank's Quotation is the full project proposal in RIM's format - cover, letter, the
+#: system, its cost, terms, payment, warranty and scope - not the one-page quotation.
+LOAN_PACK_PRINTED = (("Covering letter", "letter"), ("Vendor feasibility report", "feasibility"), ("Quotation", "proposal"))
 
 
 def loan_pack(inst, row):
