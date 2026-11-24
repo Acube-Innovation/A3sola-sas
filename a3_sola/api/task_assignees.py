@@ -39,27 +39,54 @@ POSITION_FIELDS = {
 #: The role a job's position is prefilled from, when exactly one person holds it.
 POSITION_ROLES = {"site_engineer": "Solar Site Engineer", "sales_coordinator": "Solar Sales Coordinator"}
 ACCOUNTS_ROLE = "Solar Accounts Executive"
+#: Every Employee holds every staff role (the Solar Employee profile), so the person in a
+#: position is found by the designation on his Employee record; the role is read only for
+#: someone given it outside that profile.
+ROLE_DESIGNATIONS = {
+	"Solar Site Engineer": ("Project Engineer",),
+	"Solar Sales Coordinator": ("Sales Coordinator",),
+	ACCOUNTS_ROLE: ("Accountant", "Finance Manager"),
+}
 CLOSED = ("Completed", "Skipped")
 
 
+def _designated(designations):
+	"""Logins whose designation is one of these: on their Employee record, or on their
+	membership of a company (a login that works in several)."""
+	if not designations:
+		return set()
+	users = set(frappe.get_all("Employee", filters={"designation": ["in", list(designations)], "status": "Active",
+		"user_id": ["is", "set"]}, pluck="user_id"))
+	if frappe.db.exists("DocType", "Company Membership"):
+		users |= set(frappe.get_all("Company Membership", filters={"designation": ["in", list(designations)],
+			"enabled": 1}, pluck="user"))
+	return users
+
+
 def role_holders(role):
-	"""The enabled people who hold `role` as their job - not Administrator, not a system
-	manager, who holds every role without doing the work, and not a dealer, who works only
+	"""The enabled people who do `role`'s job: those with its designation (ROLE_DESIGNATIONS),
+	else those given the role on its own, not as every Employee's. Never Administrator, a
+	system manager, who holds every role without doing the work, or a dealer, who works only
 	his own customers."""
-	users = frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent")
+	from a3_sola.api import partner_scope
+	from a3_sola.setup.employee_profile import EMPLOYEE_PROFILE
+
+	users = _designated(ROLE_DESIGNATIONS.get(role))
+	if not users:
+		users = set(frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent"))
+		users -= set(frappe.get_all("User", filters={"role_profile_name": EMPLOYEE_PROFILE}, pluck="name"))
 	if not users:
 		return []
 	admins = set(frappe.get_all("Has Role", filters={"role": "System Manager", "parenttype": "User"}, pluck="parent"))
-	enabled = set(frappe.get_all("User", filters={"name": ["in", users], "enabled": 1, "user_type": "System User"}, pluck="name"))
-	from a3_sola.api import partner_scope
-
+	enabled = set(frappe.get_all("User", filters={"name": ["in", list(users)], "enabled": 1, "user_type": "System User"},
+		pluck="name"))
 	return sorted(u for u in users if u in enabled and u not in admins and u not in ("Administrator", "Guest")
 		and "dealer" not in partner_scope.partner_kinds(u))
 
 
 def prefill_people(inst):
-	"""Fill a job's blank Project Engineer and Sales Co-ordinator from their role, when one
-	person holds it; more than one is a choice for a person to make."""
+	"""Fill a job's blank Project Engineer and Sales Co-ordinator from their designation, when
+	one person has it; more than one is a choice for a person to make."""
 	for field, role in POSITION_ROLES.items():
 		if not inst.get(field):
 			holders = role_holders(role)
