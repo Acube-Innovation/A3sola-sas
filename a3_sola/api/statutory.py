@@ -25,6 +25,15 @@ def _round(value):
 	return flt(value, precision())
 
 
+def billable_kw(capacity_kw):
+	"""The kW the registration fee is charged on: the capacity rounded up to a whole kW
+	(3.3 -> 4, 3 -> 3). Rounded to 3 places first, so a float's 3.0000001 stays 3."""
+	import math
+
+	capacity_kw = flt(capacity_kw, 3)
+	return math.ceil(capacity_kw) if capacity_kw > 0 else 0
+
+
 def resolve_schedule(discom, on_date=None, company=None):
 	"""Return the active Statutory Fee Schedule for a DISCOM on a date.
 
@@ -95,7 +104,9 @@ def get_statutory_fees(
 	app_gross = app_base + app_gst
 
 	# --- registration fee ------------------------------------------------
-	reg_base = flt(sched.registration_fee_per_kw) * capacity_kw
+	# Charged per kW or part of a kW: a 3.3 kW inverter pays for 4 kW. Only the charge is
+	# rounded up - the capacity itself, and every label that names it, stays 3.3 kW.
+	reg_base = flt(sched.registration_fee_per_kw) * billable_kw(capacity_kw)
 	if sched.registration_fee_min and reg_base < flt(sched.registration_fee_min):
 		reg_base = flt(sched.registration_fee_min)
 	if sched.registration_fee_max and reg_base > flt(sched.registration_fee_max):

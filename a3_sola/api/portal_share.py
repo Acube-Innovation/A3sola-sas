@@ -331,8 +331,8 @@ def send_email(doctype, name, recipients, subject, message, cc=None, part=None):
 	account = _outgoing_account(doctype)
 	if not account:
 		frappe.throw(
-			_("No mailbox is set up to send from. In ERPNext, open Email Account, add the company's mailbox "
-			  "(sales@renewcoreinnovations.com) with Enable Outgoing and Default Outgoing ticked, then try again."),
+			_("No mailbox is set up to send from. Ask your administrator to set up the company's outgoing "
+			  "mailbox (sales@renewcoreinnovations.com), then try again."),
 			title=_("Email Not Set Up"),
 		)
 	# The PDF made here, so it carries the name a download has.
@@ -451,7 +451,7 @@ def share_links(doc, pdf_route, part=""):
 	# not open the file.
 	linked = template.format(document="attached.\nYou can also open it here: " + link, **values)
 	subject = SUBJECTS[part or doc.doctype].format(**values)
-	whatsapp = whatsapp_link(mobile, linked) if mobile else "https://wa.me/?text=" + quote(linked)
+	whatsapp = whatsapp_link(mobile, linked)
 	return {
 		"doctype": doc.doctype,
 		"name": doc.name,

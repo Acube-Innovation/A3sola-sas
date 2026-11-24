@@ -192,13 +192,13 @@
 				(bom ? '<details class="a3s-pkg__bom"><summary><svg class="a3s-ic" aria-hidden="true"><use href="#ic-clipboard"></use></svg> Bill of materials (' + ((p.bom_items && p.bom_items.length) || (p.components || []).length) + ")</summary><ul class=\"a3s-bom\">" + bom + "</ul></details>" : "") +
 				"</article>";
 		}).join("");
-		wrap.innerHTML = html || '<p class="a3s-pos__empty">No packages match. <a href="/app/solar-package" target="_blank" rel="noopener">Define packages in ERPNext</a>.</p>';
+		wrap.innerHTML = html || '<p class="a3s-pos__empty">No packages match. <a href="/a3solaportal/packages" target="_blank" rel="noopener">Define packages</a>.</p>';
 	}
 
 	function renderAddons() {
 		var wrap = el("ce-addons");
 		var list = cat.addons || [];
-		if (!list.length) { wrap.innerHTML = '<p class="a3s-pos__empty">No add-on items yet. Sales items you create in ERPNext appear here.</p>'; return; }
+		if (!list.length) { wrap.innerHTML = '<p class="a3s-pos__empty">No add-on items yet. Sales items your office adds appear here.</p>'; return; }
 		wrap.innerHTML = list.map(function (a) {
 			return '<div class="a3s-addon">' +
 				'<span class="a3s-addon__name">' + esc(a.item_name) + "<small>" + esc(a.item_group || "") + (a.description ? " &middot; " + esc(a.description) : "") + "</small></span>" +
@@ -521,7 +521,7 @@
 
 	function submit() {
 		if (!state.name) return;
-		if (!window.confirm("Submit " + state.name + "? A submitted estimate can only be amended from ERPNext.")) return;
+		if (!window.confirm("Submit " + state.name + "? A submitted estimate cannot be changed here; your office amends it if needed.")) return;
 		var btn = el("ce-submit"); btn.disabled = true; setMsg("Submitting…");
 		call("submit", { name: state.name }).then(function (s) {
 			setMsg("Submitted.", "success");

@@ -33,6 +33,16 @@ class TestStatutoryFees(FrappeTestCase):
 		self.assertEqual(fees["registration_refundable"], 8000)
 		self.assertNotEqual(fees["registration_refundable"], 4000)
 
+	def test_a_part_kw_is_charged_as_a_whole_kw(self):
+		"""A 3.3 kW inverter is charged as 4 kW; a whole 3 kW stays 3 kW."""
+		self.assertEqual(statutory.billable_kw(3.3), 4)
+		self.assertEqual(statutory.billable_kw(3), 3)
+		self.assertEqual(statutory.billable_kw(3.0000001), 3)
+		self.assertEqual(statutory.billable_kw(0), 0)
+		fees = statutory.get_statutory_fees("KSEB", "Single Phase", 3.3, "Purchased by Customer")
+		self.assertEqual(fees["registration_fee_base"], 4000)
+		self.assertEqual(fees["registration_fee_gross"], 4720)
+
 	def test_net_meter_from_discom_reports_lead_time_not_a_price(self):
 		fees = statutory.get_statutory_fees("KSEB", "Single Phase", 5, "Availed from DISCOM on Rental")
 		self.assertEqual(fees["net_meter_charge"], 0)

@@ -96,5 +96,5 @@ class TestOutreachMessaging(FrappeTestCase):
 
 	def test_whatsapp_link_normalises_the_number(self):
 		link = outreach.whatsapp_link("9895778516", "hello there")
-		self.assertTrue(link.startswith("https://wa.me/919895778516?text="))
+		self.assertTrue(link.startswith("https://api.whatsapp.com/send?phone=919895778516&text="))
 		self.assertIn("hello%20there", link)

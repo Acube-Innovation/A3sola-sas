@@ -521,7 +521,7 @@ def save_order(quotation=None, values=None, name=None):
 		doc = frappe.get_doc("Sales Order", name)
 		doc.check_permission("write")
 		if cint(doc.docstatus) != 0:
-			frappe.throw(_("{0} is submitted: amend it in ERPNext to change it.").format(name), frappe.ValidationError)
+			frappe.throw(_("{0} is submitted: ask your office to amend it.").format(name), frappe.ValidationError)
 	else:
 		frappe.has_permission("Sales Order", "create", throw=True)
 
@@ -647,7 +647,6 @@ def page_context(context, name=None):
 	context.new_customer = new_customer_box(lead) if editable and frappe.has_permission("Customer", "create") else None
 	context.state_json = frappe.as_json({"lead": lead, "quotation": quotation, "name": name or "", "editable": editable,
 		"docstatus": cint(doc.docstatus) if doc else 0, "status": doc.status if doc else ""})
-	context.desk_route = "/app/sales-order/" + frappe.utils.quote(name) if name else ""
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	return context
 

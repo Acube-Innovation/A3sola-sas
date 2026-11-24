@@ -76,8 +76,6 @@ def route_of(name):
 	return "/a3solaportal/{0}/{1}".format(SLUG, frappe.utils.quote(name))
 
 
-def desk_route(name):
-	return "/app/quotation/{0}".format(frappe.utils.quote(name))
 
 
 # ---------------------------------------------------------------- catalogue
@@ -484,7 +482,6 @@ def summary(doc):
 		"status": doc.get("status"),
 		"editable": doc.docstatus == 0,
 		"route": route_of(doc.name) if doc.name and not doc.get("__islocal") else None,
-		"desk": desk_route(doc.name) if doc.name and not doc.get("__islocal") else None,
 		"header": {f: doc.get(f) for f in HEADER_FIELDS + ("company", "currency", "salutation", "customer_name", "title")},
 		"solar": {f: doc.get(f) for f in SOLAR_LINK_FIELDS + FINANCE_FIELDS + SOLAR_DISPLAY_FIELDS},
 		"items": [
@@ -527,13 +524,13 @@ def load(name):
 
 @frappe.whitelist()
 def save(payload=None, name=None):
-	"""Create or update a draft. Submitted estimates are amended from ERPNext."""
+	"""Create or update a draft. Submitted estimates are amended by the office, not here."""
 	payload = _payload(payload)
 	if name:
 		doc = frappe.get_doc("Quotation", name)
 		doc.check_permission("write")
 		if doc.docstatus != 0:
-			frappe.throw(_("{0} is {1}. Amend it from ERPNext to change it.").format(name, doc.status))
+			frappe.throw(_("{0} is {1}: ask your office to amend it.").format(name, doc.status))
 	else:
 		frappe.has_permission("Quotation", "create", throw=True)
 		doc = frappe.new_doc("Quotation")

@@ -54,7 +54,7 @@
 						{%- elif w.due and col.key == "upcoming" %}<span class="a3s-work__due">{{ frappe.utils.formatdate(w.due, "EEE d MMM") }}</span>
 						{%- elif not w.due %}<span class="a3s-work__due is-undated">No date</span>{% endif %}
 					</div>
-					<a class="a3s-work__link" href="{{ w.url }}">{{ w.title }}</a>
+					{%- if w.url %}<a class="a3s-work__link" href="{{ w.url }}">{{ w.title }}</a>{% else %}<span class="a3s-work__link">{{ w.title }}</span>{% endif %}
 					{%- if w.context %}<span class="a3s-work__context">{{ w.context }}</span>{% endif %}
 					{%- if scope == "team" and w.people_names %}<span class="a3s-work__people">{{ w.people_names }}</span>{% endif %}
 				</li>

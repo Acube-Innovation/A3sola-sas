@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 """One sales order: its quotation's order details, bill of materials and terms. A draft can
 change its dates or be pointed at another quotation, and be submitted; a submitted one is
-read here and amended from ERPNext (api/sales_order_option)."""
+read here; a submitted one is amended by the office, not from the portal (api/sales_order_option)."""
 
 import frappe
 

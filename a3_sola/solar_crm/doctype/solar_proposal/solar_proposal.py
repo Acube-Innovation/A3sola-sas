@@ -869,7 +869,7 @@ def _recommended_option(estimate):
 
 @frappe.whitelist()
 def get_whatsapp_link(solar_proposal):
-	"""A wa.me deep link prefilled with the greeting, so sending is one tap."""
+	"""A WhatsApp chat link prefilled with the greeting, so sending is one tap."""
 	from a3_sola.api import outreach
 
 	doc = frappe.get_doc("Solar Proposal", solar_proposal)

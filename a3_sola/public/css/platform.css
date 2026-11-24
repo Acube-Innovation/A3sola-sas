@@ -4028,7 +4028,7 @@ textarea.a3s-taskshare__link { resize: vertical; }
 .a3s-work__due { margin-left: auto; font-size: 0.8125rem; color: var(--color-text-muted); white-space: nowrap; }
 .a3s-work__due.is-late { color: #b42318; font-weight: 700; }
 .a3s-work__link { font-weight: 600; color: var(--color-text, #101828); text-decoration: none; }
-.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: underline; }
+a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: underline; }
 .a3s-work__context, .a3s-work__people { font-size: 0.8125rem; color: var(--color-text-muted); }
 .a3s-work__people::before { content: "\2192  "; }
 .a3s-work__empty, .a3s-work__more { margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--color-text-muted); }

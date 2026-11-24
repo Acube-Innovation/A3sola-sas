@@ -24,7 +24,7 @@ class TestPurchaseListShare(FrappeTestCase):
 			links = portal_share.share_links(self.task[code], "/x")
 			self.assertIn(title, links["subject"])
 			self.assertIn(title + " purchase list", links["message"])
-			self.assertTrue(links["whatsapp"].startswith("https://wa.me/"))
+			self.assertTrue(links["whatsapp"].startswith("https://api.whatsapp.com/send?"))
 			self.assertFalse(links["locked"])
 			self.assertTrue(portal_share._pdf(self.task[code]).startswith(b"%PDF"))
 

@@ -38,7 +38,7 @@ TASKS = (
 		"Tariff orders change, and a stale rate makes every proposal's savings figure "
 		"wrong in a way the customer will notice after they have signed.",
 		1,
-		"/app/electricity-tariff",
+		"",
 	),
 	(
 		"CONFIRM_GST",
@@ -47,7 +47,7 @@ TASKS = (
 		"one reading of the rules; your CA's is the one that matters, and it is theirs to "
 		"sign off before anything reaches a return.",
 		1,
-		"/app/solar-gst-valuation-rule",
+		"",
 	),
 	(
 		"CHECK_DISCOM",
@@ -56,7 +56,7 @@ TASKS = (
 		"created and needs replacing with your own distribution company before the first "
 		"portal application.",
 		0,
-		"/app/discom",
+		"",
 	),
 	(
 		"BRANDING",
@@ -64,7 +64,7 @@ TASKS = (
 		"Every generated document - proposals, work orders, completion reports - carries "
 		"your letterhead. Until you upload one they go out plain.",
 		0,
-		"/app/letter-head",
+		"",
 	),
 	(
 		"INVITE_TEAM",
@@ -79,7 +79,7 @@ TASKS = (
 		"Packages at 1, 2, 3 and 5 kW were seeded with representative pricing so you can "
 		"quote immediately. They are a starting point, not your price list.",
 		0,
-		"/app/solar-package",
+		"/a3solaportal/packages",
 	),
 )
 
@@ -201,6 +201,18 @@ def notify_sales(tenant_name):
 
 
 # --------------------------------------------------------------- the surface
+#: Checklist routes stored before the portal stopped linking to the ERPNext desk, and where
+#: each goes now: its portal page, or nowhere (the task is still marked done by hand).
+PORTAL_ROUTES = {"/app/solar-package": "/a3solaportal/packages"}
+
+
+def _portal_route(route):
+	"""A checklist row's link, never into the desk."""
+	if not route or route == "/app" or route.startswith("/app/"):
+		return PORTAL_ROUTES.get(route or "", "")
+	return route
+
+
 @frappe.whitelist()
 def my_checklist():
 	"""What the tenant's own onboarding page reads."""
@@ -216,7 +228,7 @@ def my_checklist():
 			"title": row.task_title,
 			"detail": row.task_detail,
 			"critical": cint(row.is_critical),
-			"route": row.route,
+			"route": _portal_route(row.route),
 			"done": cint(row.is_complete),
 		}
 		for row in tenant.onboarding_tasks

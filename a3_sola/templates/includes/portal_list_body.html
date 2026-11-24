@@ -46,7 +46,7 @@
 					{%- if cell.primary -%}
 						{#- The record's picture when it has one, its initials when it does not, so
 						    the column scans the same way either way. -#}
-						<a class="a3s-table__record" href="{{ cell.route }}">
+						<a class="a3s-table__record"{% if cell.route %} href="{{ cell.route }}"{% endif %}>
 							{%- if cell.image %}
 							<img class="a3s-avatar" src="{{ cell.image | e }}" alt="" loading="lazy">
 							{%- else %}

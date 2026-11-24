@@ -98,6 +98,18 @@ def _is_duplicate(todo):
 	return todo.reference_type == "Lead" and "due for follow-up" in (todo.description or "")
 
 
+def _task_of(todo):
+	"""The job's task a to-do is part of, by its text: the daily chase for the advance
+	(api/payment_followup) belongs to the advance payment task."""
+	if todo.reference_type != "Solar Installation" or not todo.reference_name:
+		return None
+	from a3_sola.api import payment_followup
+
+	if strip_html(todo.description or "").strip().startswith(payment_followup.TODO_TEXT):
+		return payment_followup.TASK
+	return None
+
+
 def assignments(user, team=False):
 	"""Open ToDos: a survey to do, a record handed to the person, an escalation, a snag."""
 	from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE
@@ -111,12 +123,16 @@ def assignments(user, team=False):
 	for r in rows:
 		if _is_duplicate(r):
 			continue
-		if r.reference_type and r.reference_name:
+		task_code = _task_of(r)
+		if task_code:
+			# A job's task to-do opens the task itself, not the job.
+			url = "{0}/tasks/{1}".format(_route("projects", r.reference_name), frappe.utils.quote(task_code))
+		elif r.reference_type and r.reference_name:
 			slug = "leads" if r.reference_type == "Lead" else SLUG_OF_DOCTYPE.get(r.reference_type)
-			url = _route(slug, r.reference_name) if slug else "/app/{0}/{1}".format(
-				frappe.scrub(r.reference_type).replace("_", "-"), frappe.utils.quote(r.reference_name))
+			# A record the portal has no page for is listed without a link: never to the desk.
+			url = _route(slug, r.reference_name) if slug else ""
 		else:
-			url = "/app/todo/{0}".format(r.name)
+			url = ""
 		text = " ".join(strip_html(r.description or "").split())
 		out.append({
 			"kind": ASSIGNMENT, "title": (text[:110] + "…") if len(text) > 110 else (text or r.reference_name or "To do"),

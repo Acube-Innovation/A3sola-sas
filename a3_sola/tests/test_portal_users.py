@@ -112,7 +112,7 @@ class TestPortalUsers(_Base):
 	def test_the_welcome_goes_by_whatsapp_and_says_when_email_cannot(self):
 		_new("Dealer", "pu-dealer@example.com", mobile_no="9000000555")
 		w = pu.welcome("pu-dealer@example.com", "whatsapp")
-		self.assertTrue(w["whatsapp"].startswith("https://wa.me/919000000555?text="))
+		self.assertTrue(w["whatsapp"].startswith("https://api.whatsapp.com/send?phone=919000000555&text="))
 		self.assertIn("set-password", w["text"])
 		from a3_sola.api.portal_share import _outgoing_account
 

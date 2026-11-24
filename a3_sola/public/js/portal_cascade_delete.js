@@ -72,7 +72,7 @@
 		m.body.innerHTML = '<p class="a3s-cascade__text">Checking what goes with it…</p>';
 		call("preview", args).then(function (p) {
 			if (p.blockers.length) {
-				m.body.innerHTML = '<p class="a3s-cascade__text"><b>' + esc(p.title) + "</b> cannot be deleted: these documents are in the accounts. Cancel them in ERPNext first, then delete.</p>" +
+				m.body.innerHTML = '<p class="a3s-cascade__text"><b>' + esc(p.title) + "</b> cannot be deleted: these documents are in the accounts. Ask your office to cancel them first, then delete.</p>" +
 					'<ul class="a3s-cascade__list">' + p.blockers.map(function (b) {
 						return "<li><span>" + esc(b.doctype) + " " + esc(b.name) + "</span><b>" + esc(b.reason) + "</b></li>";
 					}).join("") + "</ul>" +

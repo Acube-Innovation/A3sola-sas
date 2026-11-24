@@ -107,7 +107,7 @@ def review_message(doc):
 
 @frappe.whitelist()
 def request_review(review, via="WhatsApp"):
-	"""The review link, one tap away. Returns the wa.me link (or the mailto) and records the ask."""
+	"""The review link, one tap away. Returns the WhatsApp link (or the mailto) and records the ask."""
 	from a3_sola.api.outreach import whatsapp_link
 
 	doc = _load(review)

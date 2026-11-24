@@ -20,6 +20,5 @@ def get_context(context):
 	context.top_template = "templates/includes/portal_project_overview.html"
 	context.hide_record_body = True
 	# The project is worked from here; amending it is a desk task, not a button on this page.
-	context.hide_desk_amend = True
 	context.main_wide = True
 	return context
