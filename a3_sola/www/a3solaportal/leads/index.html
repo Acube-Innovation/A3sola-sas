@@ -57,13 +57,21 @@
 			{%- endfor %}
 		</select>
 		{%- endif %}
+		{%- if event_options %}
+		<select class="a3s-toolbar__select" name="event" aria-label="Filter by event" onchange="this.form.submit()">
+			<option value="">All events</option>
+			{%- for e in event_options %}
+			<option value="{{ e.value | e }}"{% if e.value == event_filter %} selected{% endif %}>{{ e.label | e }} ({{ e.count }})</option>
+			{%- endfor %}
+		</select>
+		{%- endif %}
 		{#- Search: the first click opens the search box under this row and puts the cursor in it;
 		    with the box open, the button (or Enter in the box) runs the search. -#}
 		<button type="submit" class="a3s-btn a3s-btn--filter" aria-controls="a3s-leads-search" aria-expanded="{{ 'true' if q else 'false' }}"
 		        onclick="var row = document.getElementById('a3s-leads-search'); if (row.hidden) { row.hidden = false; this.setAttribute('aria-expanded', 'true'); row.querySelector('input').focus(); return false; }">
 			<span class="a3s-btn--filter__ic"><svg class="a3s-ic" aria-hidden="true"><use href="#ic-filter"></use></svg></span><span class="a3s-btn--filter__label">Search</span>
 		</button>
-		{%- if q or status_filter or dealer_filter or stage_filter %}
+		{%- if q or status_filter or dealer_filter or stage_filter or event_filter %}
 		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?scope={{ scope }}{% if followup_view %}&followup=1{% endif %}">Clear</a>
 		{%- endif %}
 	</div>

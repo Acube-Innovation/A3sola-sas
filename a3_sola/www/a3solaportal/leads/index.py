@@ -37,6 +37,19 @@ def _dealer_options():
 		key=lambda d: d["label"].lower())
 
 
+def _event_options():
+	"""The events with leads the user may see, newest first, with how many."""
+	rows = frappe.get_list("Lead", fields=["a3s_event", "count(name) as n"], filters={"a3s_event": ["is", "set"]},
+		group_by="a3s_event", limit_page_length=0)
+	if not rows:
+		return []
+	names = {e.name: e for e in frappe.get_all("Solar Event", filters={"name": ["in", [r.a3s_event for r in rows]]},
+		fields=["name", "event_name", "start_date"])}
+	out = [{"value": r.a3s_event, "label": names[r.a3s_event].event_name if r.a3s_event in names else r.a3s_event, "count": r.n,
+		"start": str(names[r.a3s_event].start_date or "") if r.a3s_event in names else ""} for r in rows]
+	return sorted(out, key=lambda e: e["start"], reverse=True)
+
+
 def _count(filters, or_filters):
 	"""How many leads the user may see under these filters."""
 	rows = frappe.get_list("Lead", fields=["count(name) as n"], filters=filters, or_filters=or_filters,
@@ -96,6 +109,13 @@ def get_context(context):
 		if any(d["value"] == dealer for d in context.dealer_options):
 			context.dealer_filter = dealer
 			filters["a3s_dealer"] = dealer
+
+	# One event's registrations (Solar Event): from the event page, or chosen here.
+	context.event_options = _event_options()
+	event = (frappe.form_dict.get("event") or "").strip()
+	context.event_filter = event if any(e["value"] == event for e in context.event_options) else ""
+	if context.event_filter:
+		filters["a3s_event"] = context.event_filter
 
 	# The follow-up view's legend filters by stage: one click shows that stage's leads only.
 	# The counts on the legend are taken before the stage is applied, so each shows how many

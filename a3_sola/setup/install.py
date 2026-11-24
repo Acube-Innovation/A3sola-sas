@@ -104,8 +104,12 @@ def seed_lead_sources():
 	default (setup/custom_fields.PROPERTY_SETTERS) must name a source that exists."""
 	from a3_sola.setup.custom_fields import DEFAULT_LEAD_SOURCE
 
-	if not frappe.db.exists("Lead Source", DEFAULT_LEAD_SOURCE):
-		frappe.get_doc({"doctype": "Lead Source", "source_name": DEFAULT_LEAD_SOURCE}).insert(ignore_permissions=True)
+	from a3_sola.solar_crm.doctype.solar_event.solar_event import EVENT_SOURCE
+
+	# And the source of the leads registered at an event by QR code (Solar Event).
+	for source in (DEFAULT_LEAD_SOURCE, EVENT_SOURCE):
+		if not frappe.db.exists("Lead Source", source):
+			frappe.get_doc({"doctype": "Lead Source", "source_name": source}).insert(ignore_permissions=True)
 
 
 def seed_kseb_section_offices():

@@ -54,6 +54,8 @@ DOCTYPES = [
 	"Additional Cable Item",
 	"Special Discount",
 	"Special Discount Item",
+	"Solar Event",
+	"Solar Event Package",
 ]
 
 #: Doctypes that carry a company field and therefore need tenant isolation hooks.
@@ -78,6 +80,7 @@ PERMISSION_DOCTYPES = [
 	"Additional Structure",
 	"Additional Cable",
 	"Special Discount",
+	"Solar Event",
 ]
 
 DOC_EVENTS = {

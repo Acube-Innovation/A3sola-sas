@@ -4614,3 +4614,378 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 .a3s-support__search input { flex: 1 1 auto; }
 .a3s-support__companies { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .a3s-support__heading { margin: 2rem 0 0.75rem; }
+
+/* ================================================================== Event registration
+ * /register/<key> (www/register): the page an event's QR code opens. Phone first, no menu. */
+.a3s-reg { background: radial-gradient(120% 60% at 50% 0%, rgba(247, 148, 30, 0.14), transparent 60%), var(--color-bg); }
+/* Cards set their own display; `hidden` (the steps, the thank-you) must still win. */
+.a3s-reg [hidden], .a3s-tv [hidden] { display: none !important; }
+.a3s-reg__wrap { max-width: 34rem; margin: 0 auto; padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom)); }
+.a3s-reg__head { text-align: center; margin: 0.5rem 0 1.25rem; }
+.a3s-reg__logo { max-height: 3.25rem; max-width: 12rem; object-fit: contain; }
+.a3s-reg__mark { display: inline-grid; place-items: center; width: 3rem; height: 3rem; border-radius: 0.9rem;
+	background: var(--color-accent-gradient); color: #fff; font-size: 1.6rem; }
+.a3s-reg__company { margin: 0.6rem 0 0; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-hover); }
+.a3s .a3s-reg__title { font-size: 1.6rem; line-height: 1.2; margin: 0.2rem 0 0; }
+.a3s-reg__venue { margin: 0.25rem 0 0; color: var(--color-text-muted); font-size: 0.9rem; }
+.a3s-reg__card { padding: 1.4rem 1.2rem; }
+.a3s-reg__card:hover { transform: none; box-shadow: var(--shadow-soft); }
+.a3s .a3s-reg__h { font-size: 1.2rem; margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.a3s-reg__lead { margin: 0 0 1.1rem; color: var(--color-text-muted); font-size: 0.925rem; }
+.a3s-reg__optional { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: var(--radius-pill);
+	background: var(--color-accent-soft); color: var(--color-accent-hover); }
+.a3s-reg__fields { display: grid; gap: 1rem; }
+.a3s-reg__fields input, .a3s-reg__fields select { font-size: 1rem; }
+.a3s-reg__small { font-size: 0.85rem; margin-top: 0.15rem; }
+.a3s-reg__small input { width: 1rem; height: 1rem; }
+.a3s-reg__group { border: 0; padding: 0; margin: 0; min-width: 0; }
+.a3s-reg__group legend { font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.35rem; padding: 0; }
+.a3s-reg__chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.a3s-reg__chip { position: relative; cursor: pointer; }
+.a3s-reg__chip input { position: absolute; opacity: 0; pointer-events: none; }
+.a3s-reg__chip span { display: inline-block; padding: 0.5rem 0.9rem; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong);
+	background: var(--color-surface); font-size: 0.875rem; font-weight: 600; transition: all var(--duration) var(--ease); }
+.a3s-reg__chip input:checked + span { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent-hover);
+	box-shadow: 0 0 0 2px var(--color-accent-tint); }
+.a3s-reg__chip input:focus-visible + span { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.a3s-reg__bill { display: flex; gap: 0.5rem; align-items: stretch; }
+.a3s-reg__bill input { flex: 1; min-width: 0; }
+.a3s-reg__seg { display: flex; border: 1px solid var(--color-border-strong); border-radius: 0.75rem; overflow: hidden; flex: none; }
+.a3s-reg__seg label { position: relative; cursor: pointer; display: flex; }
+.a3s-reg__seg input { position: absolute; opacity: 0; pointer-events: none; }
+.a3s-reg__seg span { display: grid; place-items: center; padding: 0 0.7rem; font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); white-space: nowrap; }
+.a3s-reg__seg input:checked + span { background: var(--color-accent); color: #fff; }
+.a3s-reg__seg input:focus-visible + span { outline: 3px solid var(--color-accent); outline-offset: -3px; }
+.a3s-reg__consent { align-items: flex-start; font-size: 0.875rem; line-height: 1.45; padding: 0.75rem 0.85rem; border-radius: 0.75rem;
+	background: var(--color-bg); border: 1px solid var(--color-border); }
+.a3s-reg__consent input { margin-top: 0.15rem; flex: none; }
+.a3s-reg__consent.a3s-field--error { border-color: var(--color-danger); }
+.a3s-reg__note { margin-top: -0.6rem; }
+.a3s-reg__submit { width: 100%; margin-top: 1.2rem; padding-top: 0.85rem; padding-bottom: 0.85rem; font-size: 1rem; }
+.a3s-reg__status { margin-top: 0.9rem; }
+.a3s-reg__trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.a3s-reg__captcha { min-height: 1rem; }
+.a3s-reg__docs { display: grid; gap: 0.6rem; margin-bottom: 0.75rem; }
+.a3s-reg__doc { position: relative; display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 0.9rem; cursor: pointer;
+	border: 1.5px dashed var(--color-border-strong); border-radius: var(--radius-tile); background: var(--color-surface);
+	transition: border-color var(--duration) var(--ease), background var(--duration) var(--ease); }
+.a3s-reg__doc input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.a3s-reg__doc:focus-within { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.a3s-reg__doc-ic { flex: none; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border-radius: 0.65rem;
+	background: var(--color-accent-soft); color: var(--color-accent-hover); font-weight: 800; font-size: 1.2rem; }
+.a3s-reg__doc-text { display: grid; min-width: 0; font-size: 0.875rem; }
+.a3s-reg__doc-text span { color: var(--color-text-muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a3s-reg__doc.is-set { border-style: solid; border-color: var(--color-success); background: rgba(40, 200, 64, 0.05); }
+.a3s-reg__doc.is-set .a3s-reg__doc-ic { background: var(--color-success); color: #fff; }
+.a3s-reg__actions { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+.a3s-reg__actions .a3s-reg__submit { margin-top: 0.4rem; }
+.a3s-reg__actions--stack .a3s-btn { width: 100%; justify-content: center; }
+.a3s-reg__back { justify-self: center; }
+.a3s-reg__wa { color: #128c7e; border-color: rgba(18, 140, 126, 0.35); }
+.a3s-reg__wa svg { width: 1.2rem; height: 1.2rem; }
+.a3s-reg__done { text-align: center; outline: none; }
+.a3s-reg__done .a3s-reg__h { justify-content: center; font-size: 1.4rem; }
+.a3s-reg__tick { width: 4.5rem; height: 4.5rem; margin: 0.25rem auto 0.9rem; }
+.a3s-reg__tick svg { width: 100%; height: 100%; }
+.a3s-reg__tick circle { fill: none; stroke: var(--color-success); stroke-width: 3; stroke-dasharray: 151; stroke-dashoffset: 151;
+	animation: a3s-reg-draw 0.6s var(--ease) forwards; }
+.a3s-reg__tick path { fill: none; stroke: var(--color-success); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+	stroke-dasharray: 40; stroke-dashoffset: 40; animation: a3s-reg-draw 0.4s 0.5s var(--ease) forwards; }
+@keyframes a3s-reg-draw { to { stroke-dashoffset: 0; } }
+.a3s-reg__est { text-align: left; margin: 0.25rem 0 1.1rem; padding: 1rem 1.05rem; border-radius: var(--radius-tile);
+	background: linear-gradient(160deg, var(--color-accent-soft), rgba(41, 171, 226, 0.06)); border: 1px solid var(--color-accent-tint); }
+.a3s-reg__est-head { margin: 0 0 0.5rem; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-hover); }
+.a3s-reg__est-rows { margin: 0 0 0.5rem; display: grid; gap: 0.15rem; }
+.a3s-reg__est-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0; border-bottom: 1px dashed var(--color-border);
+	opacity: 0; transform: translateY(6px); animation: a3s-reg-rise 0.35s calc(0.7s + var(--i) * 0.09s) var(--ease) forwards; }
+.a3s-reg__est-row dt { color: var(--color-text-muted); font-size: 0.875rem; }
+.a3s-reg__est-row dd { margin: 0; font-weight: 700; font-size: 0.925rem; text-align: right; }
+.a3s-reg__est-row.is-total dd { color: var(--color-accent-hover); font-size: 1.05rem; }
+@keyframes a3s-reg-rise { to { opacity: 1; transform: none; } }
+.a3s-reg__foot { text-align: center; color: var(--color-text-muted); font-size: 0.78rem; margin: 1.2rem 0 0; }
+@media (prefers-reduced-motion: reduce) {
+	.a3s-reg__tick circle, .a3s-reg__tick path, .a3s-reg__est-row { animation: none; stroke-dashoffset: 0; opacity: 1; transform: none; }
+}
+
+/* ================================================================== Stall screen
+ * /event-screen/<key> (www/event_screen): the TV at the event. Sized in vh/vw so it reads from
+ * across the hall on any screen; one dark stage, the brand's orange for every moment. */
+.a3s-tv { margin: 0; height: 100vh; overflow: hidden; color: #fff; cursor: none;
+	background: radial-gradient(90vw 70vh at 85% 110%, rgba(247, 148, 30, 0.35), transparent 60%),
+		radial-gradient(70vw 60vh at 0% -10%, rgba(41, 171, 226, 0.22), transparent 60%), #121a2b; }
+.a3s-tv:not(.is-started) { cursor: default; }
+.a3s-tv__invalid { display: grid; place-content: center; height: 100vh; text-align: center; padding: 2rem; }
+.a3s-tv__frame { position: relative; height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+.a3s-tv__top { display: flex; justify-content: space-between; align-items: center; padding: 3vh 4vw 0; }
+.a3s-tv__brand { display: flex; align-items: center; gap: 1.4vw; }
+.a3s-tv__brand img { height: 7vh; max-width: 16vw; object-fit: contain; background: #fff; border-radius: 1vh; padding: 0.8vh 1vh; }
+.a3s-tv__company { margin: 0; font-size: 2.4vh; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #fbb040; }
+.a3s-tv__event { margin: 0.2vh 0 0; font-size: 3vh; font-weight: 600; opacity: 0.9; }
+.a3s-tv__clock { font-size: 4vh; font-weight: 700; opacity: 0.85; font-variant-numeric: tabular-nums; }
+
+.a3s-tv__idle { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 5vw; padding: 0 6vw;
+	transition: opacity 0.5s var(--ease), transform 0.5s var(--ease), filter 0.5s var(--ease); }
+.a3s-tv__idle.is-away { opacity: 0.08; transform: scale(0.96); filter: blur(6px); }
+.a3s-tv__qrcard { background: #fff; border-radius: 3vh; padding: 2.4vh; box-shadow: 0 0 0 1vh rgba(247, 148, 30, 0.35), 0 3vh 8vh rgba(0, 0, 0, 0.45);
+	animation: a3s-tv-breathe 3.2s ease-in-out infinite; }
+.a3s-tv__qr { width: 46vh; height: 46vh; }
+.a3s-tv__qr svg { width: 100%; height: 100%; display: block; }
+@keyframes a3s-tv-breathe { 50% { box-shadow: 0 0 0 2.2vh rgba(247, 148, 30, 0.18), 0 3vh 8vh rgba(0, 0, 0, 0.45); } }
+.a3s .a3s-tv__headline { font-size: 7.5vh; line-height: 1.05; margin: 0; color: #fff; letter-spacing: -0.02em; }
+.a3s-tv__cta { font-size: 3.4vh; margin: 2.2vh 0 0; opacity: 0.92; line-height: 1.35; max-width: 60vw; }
+.a3s-tv__scan { display: inline-block; padding: 0.3vh 1.6vh; border-radius: 99px; background: var(--color-accent-gradient); color: #fff; font-weight: 800; }
+.a3s-tv__counters { display: flex; gap: 4vw; margin-top: 6vh; align-items: flex-start; }
+.a3s-tv__counters div { display: grid; }
+.a3s-tv__counters b { font-size: 8vh; line-height: 1; font-weight: 800; color: #fbb040; font-variant-numeric: tabular-nums; }
+.a3s-tv__counters span { font-size: 2.3vh; opacity: 0.8; margin-top: 0.8vh; white-space: nowrap; }
+
+.a3s-tv__ticker { display: flex; align-items: center; height: 8vh; background: rgba(247, 148, 30, 0.95); color: #fff; overflow: hidden; }
+.a3s-tv__ticker-label { flex: none; height: 100%; display: grid; place-items: center; padding: 0 3vw; background: #e07f0c;
+	font-size: 2.6vh; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.a3s-tv__ticker-track { flex: 1; overflow: hidden; }
+.a3s-tv__ticker-run { display: inline-flex; white-space: nowrap; animation: a3s-tv-ticker 30s linear infinite; }
+.a3s-tv__ticker-item { font-size: 3.2vh; font-weight: 700; padding: 0 2.5vw; }
+.a3s-tv__ticker-item::after { content: "\2600"; margin-left: 5vw; opacity: 0.7; }
+@keyframes a3s-tv-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.a3s-tv__moment { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; opacity: 0; transition: opacity 0.45s var(--ease); }
+.a3s-tv__moment.is-on { opacity: 1; }
+.a3s-tv__moment--welcome { background: radial-gradient(circle at 50% 50%, #ffb347 0%, #f7941e 40%, #b45f06 100%); }
+.a3s-tv__moment--sent { background: linear-gradient(135deg, #075e54 0%, #128c7e 55%, #25d366 100%); }
+.a3s-tv__rays { position: absolute; width: 200vmax; height: 200vmax; left: 50%; top: 50%; margin: -100vmax 0 0 -100vmax;
+	background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.16) 0deg 7deg, transparent 7deg 18deg);
+	animation: a3s-tv-spin 40s linear infinite; }
+.a3s-tv__moment--sent .a3s-tv__rays { display: none; }
+@keyframes a3s-tv-spin { to { transform: rotate(360deg); } }
+.a3s-tv__confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.a3s-tv__card { position: relative; min-width: 56vw; max-width: 84vw; padding: 6vh 6vw; border-radius: 4vh; background: #fff; color: #1d2433;
+	text-align: center; box-shadow: 0 4vh 12vh rgba(0, 0, 0, 0.35); transform: scale(0.6) translateY(6vh); opacity: 0;
+	transition: transform 0.7s cubic-bezier(0.2, 1.4, 0.4, 1), opacity 0.4s var(--ease); }
+.a3s-tv__moment.is-on .a3s-tv__card { transform: none; opacity: 1; }
+.a3s-tv__hello { margin: 0; font-size: 5vh; color: #6b7383; font-weight: 600; }
+.a3s-tv__name { margin: 1vh 0 0; font-size: 11vh; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; min-height: 11.5vh; word-break: break-word; }
+.a3s-tv__name.is-typing::after { content: ""; display: inline-block; width: 0.6vh; height: 9vh; margin-left: 0.8vh; vertical-align: -1vh; background: #f7941e;
+	animation: a3s-tv-caret 0.6s steps(1) infinite; }
+@keyframes a3s-tv-caret { 50% { opacity: 0; } }
+.a3s-tv__name--sm { font-size: 6vh; min-height: 0; }
+.a3s-tv__place { margin: 1.5vh 0 0; font-size: 4vh; color: #6b7383; min-height: 4vh; }
+.a3s-tv__est { display: flex; justify-content: center; gap: 5vw; margin-top: 4vh; padding-top: 3.5vh; border-top: 0.3vh dashed #e3e6ec; }
+.a3s-tv__est div { display: grid; opacity: 0; transform: translateY(2vh); transition: all 0.5s var(--ease); }
+.a3s-tv__est div.is-in { opacity: 1; transform: none; }
+.a3s-tv__est b { font-size: 7.5vh; line-height: 1; color: #e07f0c; font-variant-numeric: tabular-nums; }
+.a3s-tv__est span { font-size: 2.6vh; color: #6b7383; margin-top: 0.8vh; }
+.a3s-tv__flight { position: relative; display: flex; align-items: center; justify-content: center; gap: 2vw; margin: 4vh auto 2vh; width: 46vw; height: 14vh; }
+.a3s-tv__plane { position: absolute; left: 0; width: 9vh; height: 9vh; color: #f7941e; animation: a3s-tv-fly 1.6s 0.3s cubic-bezier(0.5, 0, 0.3, 1) forwards; }
+.a3s-tv__path { position: absolute; left: 10vh; right: 14vh; top: 50%; border-top: 0.6vh dashed #c7ccd6; transform-origin: left; transform: scaleX(0);
+	animation: a3s-tv-grow 1.6s 0.3s cubic-bezier(0.5, 0, 0.3, 1) forwards; }
+.a3s-tv__wa { position: absolute; right: 0; width: 13vh; height: 13vh; border-radius: 50%; background: #25d366; display: grid; place-items: center;
+	transform: scale(0.4); opacity: 0.4; animation: a3s-tv-pop 0.5s 1.75s cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
+.a3s-tv__wa svg { width: 70%; height: 70%; }
+.a3s-tv__wa path { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40;
+	animation: a3s-reg-draw 0.45s 2.1s var(--ease) forwards; }
+@keyframes a3s-tv-fly { 0% { left: 0; transform: rotate(-8deg); } 60% { transform: translateY(-3vh) rotate(-14deg); } 100% { left: calc(100% - 22vh); opacity: 0; transform: rotate(0); } }
+@keyframes a3s-tv-grow { to { transform: scaleX(1); } }
+@keyframes a3s-tv-pop { to { transform: scale(1); opacity: 1; } }
+.a3s-tv__sent { margin: 1vh 0 0; font-size: 5.5vh; font-weight: 800; color: #128c7e; opacity: 0; animation: a3s-reg-rise 0.5s 2.3s var(--ease) forwards; }
+
+.a3s-tv__offline { position: absolute; right: 2vw; bottom: 10vh; margin: 0; padding: 0.8vh 1.6vh; border-radius: 99px; background: rgba(0, 0, 0, 0.55);
+	font-size: 2vh; }
+.a3s-tv__start { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 2vh; text-align: center;
+	background: rgba(18, 26, 43, 0.82); backdrop-filter: blur(4px); }
+.a3s-tv__start[hidden] { display: none; }
+.a3s-tv__start .a3s-btn { font-size: 3vh; padding: 2vh 5vh; }
+.a3s-tv__start p { margin: 0; font-size: 2.2vh; opacity: 0.85; }
+.a3s-tv__start label { display: inline-flex; gap: 0.8vh; align-items: center; margin-left: 1vh; }
+@media (prefers-reduced-motion: reduce) {
+	.a3s-tv__rays, .a3s-tv__ticker-run, .a3s-tv__qrcard { animation: none; }
+	.a3s-tv__plane, .a3s-tv__path, .a3s-tv__wa, .a3s-tv__wa path, .a3s-tv__sent { animation-duration: 0.01s; animation-delay: 0s; }
+}
+
+/* ================================================================== Events (portal)
+ * /a3solaportal/events (www/a3solaportal/events): an event's QR and links, its funnel, and its
+ * registrations with the brochure one tap away. */
+.a3s-ev__top { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); margin-bottom: 1.25rem; }
+@media (max-width: 1100px) { .a3s-ev__top { grid-template-columns: 1fr; } }
+.a3s-ev__qrcard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; padding: 1.4rem; align-items: start; }
+@media (max-width: 640px) { .a3s-ev__qrcard { grid-template-columns: 1fr; justify-items: center; } }
+.a3s-ev__qrcard:hover, .a3s-ev__funnelcard:hover, .a3s-ev__regs:hover { transform: none; }
+.a3s-ev__qr { width: 11rem; height: 11rem; padding: 0.4rem; border-radius: var(--radius-tile); border: 1px solid var(--color-border); background: #fff; }
+.a3s-ev__qr svg { width: 100%; height: 100%; display: block; }
+.a3s-ev__links { min-width: 0; width: 100%; }
+.a3s .a3s-ev__h { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted);
+	margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+.a3s-ev__links .a3s-ev__h:not(:first-child) { margin-top: 1rem; }
+.a3s-ev__copy { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.a3s-ev__copy input { flex: 1; min-width: 0; font: inherit; font-size: 0.8125rem; padding: 0.55rem 0.75rem; border-radius: 0.7rem;
+	border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-muted); }
+.a3s-ev__copy .a3s-btn.is-copied { border-color: var(--color-success); color: #1a7a2b; }
+.a3s-ev__facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 1.1rem 0 0; }
+.a3s-ev__facts dt { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+.a3s-ev__facts dd { margin: 0.15rem 0 0; font-size: 0.875rem; font-weight: 600; overflow-wrap: anywhere; }
+.a3s-ev__missing { color: #93370d; font-weight: 600; }
+.a3s-ev__funnelcard { padding: 1.4rem; }
+.a3s-ev__funnel { list-style: none; margin: 0.6rem 0 0.75rem; padding: 0; display: grid; gap: 0.5rem; }
+.a3s-ev__funnel li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+.a3s-ev__funnel b { text-align: right; font-variant-numeric: tabular-nums; }
+.a3s-ev__stage { color: var(--color-text-muted); font-weight: 600; }
+.a3s-ev__barwrap { height: 0.6rem; border-radius: 99px; background: var(--color-bg); overflow: hidden; }
+.a3s-ev__barfill { display: block; height: 100%; border-radius: 99px; background: var(--color-accent-gradient); transition: width 0.6s var(--ease); }
+.a3s-ev__regs { padding: 1.2rem 1.2rem 0.5rem; }
+.a3s-ev__bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 0.8rem; }
+.a3s-ev__bar .a3s-ev__h { margin: 0 auto 0 0; }
+.a3s-ev__bar .a3s-toolbar__search { max-width: 18rem; }
+.a3s-ev__table td { vertical-align: top; }
+.a3s-ev__send { padding: 0.4rem 0.8rem; font-size: 0.8125rem; white-space: nowrap; }
+.a3s-ev__again { display: inline-block; margin-top: 0.25rem; font-size: 0.75rem; font-weight: 600; color: var(--color-accent-hover); }
+.a3s-ev__brochure .a3s-badge { margin-right: 0.35rem; }
+.a3s-ev__screen { font: inherit; font-size: 0.75rem; font-weight: 700; padding: 0.3rem 0.7rem; border-radius: 99px; cursor: pointer;
+	border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text-muted); }
+.a3s-ev__screen.is-hidden { background: #fef3f2; border-color: #fecdca; color: #b42318; }
+.a3s-ev__panel { width: min(46rem, 100%); max-height: 92vh; overflow: auto; }
+.a3s-ev__pkgs { border: 0; padding: 0; margin: 0; min-width: 0; }
+.a3s-ev__pkglist { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.35rem 1rem; max-height: 12rem; overflow: auto;
+	padding: 0.6rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-tile); background: var(--color-bg); }
+.a3s-ev__pkglist .a3s-check { font-size: 0.8125rem; align-items: flex-start; }
+.a3s-ev__checks { gap: 0.5rem; align-content: start; padding-top: 1.3rem; }
+.a3s-ev__panel .a3s-form__grid > .a3s-field { align-content: start; }
+.a3s-ev__checks .a3s-check { font-size: 0.875rem; }
+
+/* The A4 poster (www/a3solaportal/events/poster): screen preview, then exactly one page printed. */
+.a3s-poster-page { background: #e9ecf1; margin: 0; }
+.a3s-poster__tools { display: flex; gap: 1rem; align-items: center; justify-content: center; padding: 1rem; font-size: 0.875rem; color: var(--color-text-muted); }
+.a3s-poster { width: 210mm; height: 297mm; margin: 0 auto 2rem; padding: 18mm 16mm 14mm; box-sizing: border-box; background: #fff; text-align: center;
+	display: flex; flex-direction: column; align-items: center; box-shadow: var(--shadow-raised);
+	background-image: radial-gradient(120% 40% at 50% 0%, rgba(247, 148, 30, 0.16), transparent 70%); }
+.a3s-poster__head img { max-height: 24mm; max-width: 90mm; object-fit: contain; }
+.a3s-poster__company { margin: 0; font-size: 16pt; font-weight: 800; color: var(--color-accent-hover); letter-spacing: 0.08em; text-transform: uppercase; }
+.a3s-poster__kicker { margin: 6mm 0 0; font-size: 13pt; font-weight: 700; color: var(--color-text-muted); }
+.a3s .a3s-poster__title { margin: 3mm 0 0; font-size: 36pt; line-height: 1.05; letter-spacing: -0.02em; color: #1d2433; }
+.a3s-poster__sub { margin: 5mm 0 0; font-size: 14pt; color: var(--color-text-muted); max-width: 150mm; }
+.a3s-poster__qr { width: 92mm; height: 92mm; margin-top: 8mm; padding: 4mm; border-radius: 8mm; border: 2mm solid var(--color-accent); background: #fff; }
+.a3s-poster__qr svg { width: 100%; height: 100%; display: block; }
+.a3s-poster__scan { margin: 5mm 0 0; font-size: 15pt; font-weight: 800; color: var(--color-accent-hover); }
+.a3s-poster__points { list-style: none; padding: 0; margin: 6mm 0 0; display: grid; gap: 2.5mm; font-size: 12.5pt; }
+.a3s-poster__points li::before { content: "\2713"; color: var(--color-success); font-weight: 800; margin-right: 3mm; }
+.a3s-poster__foot { margin-top: auto; padding-top: 6mm; font-size: 11pt; color: var(--color-text-muted); }
+/* A named page, so only the poster prints edge to edge - not every page using this stylesheet. */
+.a3s-poster { page: a3s-poster; }
+@page a3s-poster { size: A4 portrait; margin: 0; }
+@media print {
+	.a3s-poster-page { background: #fff; }
+	.a3s-poster__tools { display: none; }
+	.a3s-poster { margin: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ------------------------------------------------------------------ Stall screen: the idle "attract" look
+ * A sun rising behind the QR, light drifting across the hall, the headlines in turn and the
+ * counters as glowing cards - movement that draws the eye from across an exhibition hall. */
+.a3s-tv__frame > * { position: relative; z-index: 1; }
+.a3s-tv__frame > .a3s-tv__aurora, .a3s-tv__frame > .a3s-tv__sparkles { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.a3s-tv__frame > .a3s-tv__moment { position: absolute; z-index: 5; }
+.a3s-tv__frame > .a3s-tv__start { position: absolute; z-index: 10; }
+.a3s-tv__frame > .a3s-tv__offline { position: absolute; z-index: 6; }
+.a3s-tv__sparkles { width: 100%; height: 100%; }
+.a3s-tv__aurora { overflow: hidden; }
+.a3s-tv__aurora span { position: absolute; width: 70vw; height: 70vw; border-radius: 50%; filter: blur(9vw); opacity: 0.55; }
+.a3s-tv__aurora span:nth-child(1) { background: #f7941e; left: -20vw; top: 20vh; animation: a3s-tv-drift1 22s ease-in-out infinite alternate; }
+.a3s-tv__aurora span:nth-child(2) { background: #1b8dc0; right: -25vw; top: -30vh; opacity: 0.35; animation: a3s-tv-drift2 26s ease-in-out infinite alternate; }
+.a3s-tv__aurora span:nth-child(3) { background: #e0560c; right: 10vw; bottom: -45vw; opacity: 0.35; animation: a3s-tv-drift1 30s ease-in-out infinite alternate-reverse; }
+@keyframes a3s-tv-drift1 { to { transform: translate(18vw, -12vh) scale(1.15); } }
+@keyframes a3s-tv-drift2 { to { transform: translate(-14vw, 16vh) scale(0.9); } }
+
+.a3s-tv__idle { grid-template-columns: auto minmax(0, 1fr); gap: 6vw; }
+.a3s-tv__scanzone { position: relative; display: grid; justify-items: center; gap: 3vh; }
+.a3s-tv__sun { position: absolute; left: 50%; top: 42%; width: 78vh; height: 78vh; transform: translate(-50%, -50%); pointer-events: none; }
+.a3s-tv__sunrays { position: absolute; inset: 0; border-radius: 50%;
+	background: repeating-conic-gradient(from 0deg, rgba(251, 176, 64, 0.22) 0deg 6deg, transparent 6deg 15deg);
+	-webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%);
+	animation: a3s-tv-spin 60s linear infinite; }
+.a3s-tv__sunglow { position: absolute; inset: 18%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 179, 71, 0.75), rgba(247, 148, 30, 0.25) 45%, transparent 70%);
+	animation: a3s-tv-glow 4s ease-in-out infinite; }
+@keyframes a3s-tv-glow { 50% { transform: scale(1.12); opacity: 0.75; } }
+.a3s-tv__qrcard { position: relative; overflow: visible; box-shadow: 0 3vh 9vh rgba(0, 0, 0, 0.5); animation: none; padding: 2.6vh; border-radius: 3vh; }
+.a3s-tv__qr { position: relative; z-index: 1; width: 44vh; height: 44vh; }
+.a3s-tv__scanline { position: absolute; left: 1.5vh; right: 1.5vh; top: 2vh; height: 0.7vh; z-index: 2; border-radius: 1vh;
+	background: linear-gradient(90deg, transparent, #f7941e 20%, #fbb040 50%, #f7941e 80%, transparent);
+	box-shadow: 0 0 2.5vh 0.6vh rgba(247, 148, 30, 0.55); animation: a3s-tv-scan 2.8s ease-in-out infinite; }
+@keyframes a3s-tv-scan { 0% { top: 2vh; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: calc(100% - 2.7vh); opacity: 0; } }
+.a3s-tv__corner { position: absolute; width: 7vh; height: 7vh; border: 0.9vh solid #f7941e; z-index: 2; animation: a3s-tv-aim 2.8s ease-in-out infinite; }
+.a3s-tv__corner--tl { top: -2.4vh; left: -2.4vh; border-right: 0; border-bottom: 0; border-top-left-radius: 2.4vh; }
+.a3s-tv__corner--tr { top: -2.4vh; right: -2.4vh; border-left: 0; border-bottom: 0; border-top-right-radius: 2.4vh; --dx: 1; }
+.a3s-tv__corner--bl { bottom: -2.4vh; left: -2.4vh; border-right: 0; border-top: 0; border-bottom-left-radius: 2.4vh; }
+.a3s-tv__corner--br { bottom: -2.4vh; right: -2.4vh; border-left: 0; border-top: 0; border-bottom-right-radius: 2.4vh; }
+@keyframes a3s-tv-aim { 50% { transform: scale(1.08); border-color: #fbb040; } }
+.a3s-tv__point { margin: 1vh 0 0; font-size: 2.8vh; font-weight: 700; color: #fff; padding: 1vh 2.4vh; border-radius: 99px;
+	background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(6px); }
+.a3s-tv__arrow { display: inline-block; color: #fbb040; animation: a3s-tv-bob 1.2s ease-in-out infinite; }
+@keyframes a3s-tv-bob { 50% { transform: translateY(-0.9vh); } }
+
+.a3s-tv__slides { display: grid; min-height: 31vh; align-items: end; }
+.a3s-tv__slide { grid-area: 1 / 1; opacity: 0; transform: translateY(4vh); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); pointer-events: none; }
+.a3s-tv__slide.is-on { opacity: 1; transform: none; }
+.a3s-tv__slide.is-off { opacity: 0; transform: translateY(-4vh); }
+.a3s-tv__kicker { margin: 0 0 1.2vh; font-size: 2.4vh; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #5bc2ec; }
+.a3s .a3s-tv__headline { font-size: 8vh; line-height: 1.04; }
+.a3s-tv__hot { background: linear-gradient(100deg, #fbb040, #f7941e 45%, #ffd27a); -webkit-background-clip: text; background-clip: text; color: transparent;
+	background-size: 200% 100%; animation: a3s-tv-shine 4s linear infinite; }
+.a3s-tv__hot--wa { background-image: linear-gradient(100deg, #25d366, #5ef08f 50%, #25d366); }
+@keyframes a3s-tv-shine { to { background-position: -200% 0; } }
+.a3s-tv__scan { box-shadow: 0 0 0 0 rgba(247, 148, 30, 0.6); animation: a3s-tv-ping 2s ease-out infinite; }
+@keyframes a3s-tv-ping { 0% { box-shadow: 0 0 0 0 rgba(247, 148, 30, 0.6); } 100% { box-shadow: 0 0 0 2vh rgba(247, 148, 30, 0); } }
+.a3s-tv__dots { display: flex; gap: 1vh; margin-top: 2.6vh; height: 1vh; }
+.a3s-tv__dots i { width: 1vh; height: 1vh; border-radius: 99px; background: rgba(255, 255, 255, 0.25); transition: all 0.5s var(--ease); }
+.a3s-tv__dots i.is-on { width: 4vh; background: #f7941e; }
+
+.a3s-tv__counters { gap: 1.8vw; margin-top: 4.5vh; }
+.a3s-tv__stat { position: relative; display: grid; grid-template-columns: auto 1fr; column-gap: 1.4vw; align-items: center; padding: 2.2vh 2vw;
+	border-radius: 2.4vh; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.a3s-tv__stat-ic { grid-row: span 2; width: 7vh; height: 7vh; border-radius: 1.8vh; display: grid; place-items: center;
+	background: linear-gradient(135deg, rgba(247, 148, 30, 0.3), rgba(247, 148, 30, 0.08)); }
+.a3s-tv__stat-ic svg { width: 4vh; height: 4vh; fill: none; stroke: #fbb040; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a3s-tv__counters .a3s-tv__stat b { font-size: 6.4vh; }
+.a3s-tv__counters .a3s-tv__stat > span:last-child { grid-column: 2; margin-top: 0.4vh; font-size: 2vh; }
+.a3s-tv__stat.is-bump { animation: a3s-tv-bump 0.9s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes a3s-tv-bump { 0% { transform: scale(1); } 35% { transform: scale(1.08); box-shadow: 0 0 4vh rgba(247, 148, 30, 0.55); } 100% { transform: scale(1); } }
+.a3s-tv__plus { position: absolute; right: 1.6vw; top: -1vh; font-size: 3vh; font-weight: 800; color: #5ef08f; text-shadow: 0 0 2vh rgba(37, 211, 102, 0.6);
+	animation: a3s-tv-float 1.8s ease-out forwards; }
+@keyframes a3s-tv-float { 0% { opacity: 0; transform: translateY(1vh); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6vh); } }
+
+.a3s-tv__ticker { background: linear-gradient(90deg, #f7941e, #fbb040 60%, #f7941e); }
+.a3s-tv__ticker-label { gap: 1.2vh; display: flex; align-items: center; background: #1d2433; color: #fbb040; }
+.a3s-tv__ticker-label i { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: #28c840; box-shadow: 0 0 0 0 rgba(40, 200, 64, 0.7);
+	animation: a3s-tv-live 1.6s ease-out infinite; }
+@keyframes a3s-tv-live { 100% { box-shadow: 0 0 0 1.4vh rgba(40, 200, 64, 0); } }
+.a3s-tv__ticker-item { color: #1d2433; }
+.a3s-tv__ticker-item::after { color: #fff; opacity: 0.9; }
+@media (prefers-reduced-motion: reduce) {
+	.a3s-tv__aurora span, .a3s-tv__sunrays, .a3s-tv__sunglow, .a3s-tv__scanline, .a3s-tv__corner, .a3s-tv__arrow, .a3s-tv__hot,
+	.a3s-tv__scan, .a3s-tv__ticker-label i { animation: none; }
+	.a3s-tv__slide { transition: none; }
+}
+/* Three equal cards that always fit beside the QR; the labels wrap rather than push the row out. */
+.a3s-tv__counters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4vw; max-width: 100%; }
+.a3s-tv__stat { padding: 2vh 1.4vw; column-gap: 1vw; min-width: 0; }
+.a3s-tv__stat-ic { width: 6vh; height: 6vh; }
+.a3s-tv__stat-ic svg { width: 3.4vh; height: 3.4vh; }
+.a3s-tv__counters .a3s-tv__stat b { font-size: 5.6vh; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.a3s-tv__counters .a3s-tv__stat > span:last-child { white-space: normal; line-height: 1.25; }
+.a3s-tv__counters .a3s-tv__stat b { font-size: 5vh; overflow: visible; text-overflow: clip; white-space: nowrap; }
+.a3s-tv__counters .a3s-tv__stat > .a3s-tv__stat-label { grid-column: 2; margin-top: 0.4vh; font-size: 2vh; white-space: normal; line-height: 1.25; opacity: 0.8; }
+.a3s-tv__counters .a3s-tv__stat b { font-size: 4.6vh; }
+/* "Powered by Acube Innovations · A3 Sola": a white pill, so the navy wordmark reads on the dark
+ * stage and on the orange and green moments alike; above the moments, never covered. */
+.a3s-tv__frame > .a3s-tv__powered { position: absolute; z-index: 7; right: 2vw; bottom: 10.2vh; display: flex; align-items: center; gap: 1vh;
+	padding: 1vh 1.8vh 1vh 2vh; border-radius: 99px; background: rgba(255, 255, 255, 0.94); box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.3); }
+.a3s-tv__powered-by { font-size: 1.6vh; font-weight: 600; color: #6b7383; letter-spacing: 0.02em; }
+.a3s-tv__powered img { height: 2.6vh; width: auto; display: block; }
+.a3s-tv__powered-sep { width: 1px; height: 2.4vh; background: rgba(42, 51, 66, 0.2); }
+.a3s-tv__powered-product { font-size: 1.8vh; font-weight: 800; color: #e07f0c; }
+.a3s-tv__frame > .a3s-tv__offline { right: auto; left: 2vw; }
+/* The exhibitor's logo, large enough to read from across the hall. */
+.a3s-tv__brand { gap: 1.8vw; }
+.a3s-tv__brand img { height: 13vh; max-width: 26vw; padding: 1.2vh 1.6vh; border-radius: 1.8vh; box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.3); }
+.a3s-tv__top { padding-top: 2.6vh; }
+/* The exhibitor's name, sized to sit with the larger logo. */
+.a3s-tv__company { font-size: 4.4vh; letter-spacing: 0.08em; line-height: 1.1; }
+.a3s-tv__event { font-size: 3.4vh; margin-top: 0.6vh; }

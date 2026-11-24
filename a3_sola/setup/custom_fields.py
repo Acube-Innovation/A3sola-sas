@@ -19,6 +19,10 @@ DOCUMENT_TYPES = (
 	"Income Tax Return\nLand Tax Receipt\nBuilding Tax Receipt\nPre-Installation Photo\nPhoto\nDigital Approval Letter\n"
 	"PM Surya Ghar Acknowledgement\nOther"
 )
+#: What a visitor registering at an event says about the place and the system (Lead).
+INTEREST = "Home\nShop or Office\nIndustry\nInstitution"
+SYSTEM_TYPE = "On-grid\nOff-grid\nHybrid\nNot sure"
+CALL_TIME = "Morning\nAfternoon\nEvening\nAny time"
 LEAD_STATUS = (
 	"New\nContacted\nIn Discussion\nSite Visit Scheduled\nConverted / Won\n"
 	"Closed / Unresponsive\nNot Interested"
@@ -171,8 +175,39 @@ CUSTOM_FIELDS = {
 		 "description": "The latest site survey of this lead's consumer."},
 		{"fieldname": "solar_proposal", "fieldtype": "Link", "options": "Solar Proposal", "label": "Solar Proposal", "insert_after": "site_survey", "read_only": 1},
 
+		# Registered at an event by QR code (Solar Event, api/event_registration): what the
+		# visitor told us, and what the stall screen and the event page read.
+		{"fieldname": "a3s_event_sb", "fieldtype": "Section Break", "label": "Event Registration", "insert_after": "solar_proposal",
+		 "collapsible": 1, "depends_on": "eval:doc.a3s_event"},
+		{"fieldname": "a3s_event", "fieldtype": "Link", "options": "Solar Event", "label": "Event", "insert_after": "a3s_event_sb",
+		 "read_only": 1, "in_standard_filter": 1, "search_index": 1,
+		 "description": "The event the lead last registered at."},
+		{"fieldname": "a3s_registered_on", "fieldtype": "Datetime", "label": "Registered On", "insert_after": "a3s_event", "read_only": 1,
+		 "no_copy": 1},
+		{"fieldname": "a3s_interest", "fieldtype": "Select", "options": "\n" + INTEREST, "label": "Property Type",
+		 "insert_after": "a3s_registered_on"},
+		{"fieldname": "a3s_system_type", "fieldtype": "Select", "options": "\n" + SYSTEM_TYPE, "label": "System Type Wanted",
+		 "insert_after": "a3s_interest"},
+		{"fieldname": "a3s_call_time", "fieldtype": "Select", "options": "\n" + CALL_TIME, "label": "Best Time to Call",
+		 "insert_after": "a3s_system_type"},
+		{"fieldname": "a3s_event_cb", "fieldtype": "Column Break", "insert_after": "a3s_call_time"},
+		{"fieldname": "a3s_whatsapp_consent", "fieldtype": "Check", "label": "Agreed to WhatsApp Messages", "insert_after": "a3s_event_cb",
+		 "read_only": 1, "no_copy": 1},
+		{"fieldname": "a3s_hide_on_screen", "fieldtype": "Check", "label": "Hide from the Stall Screen", "insert_after": "a3s_whatsapp_consent",
+		 "no_copy": 1},
+		{"fieldname": "a3s_brochure_sent_on", "fieldtype": "Datetime", "label": "Brochure Sent On", "insert_after": "a3s_hide_on_screen",
+		 "read_only": 1, "no_copy": 1},
+		{"fieldname": "a3s_brochure_sent_via", "fieldtype": "Data", "label": "Brochure Sent Via", "insert_after": "a3s_brochure_sent_on",
+		 "read_only": 1, "no_copy": 1},
+		{"fieldname": "a3s_estimate", "fieldtype": "Small Text", "label": "Instant Estimate", "insert_after": "a3s_brochure_sent_via",
+		 "read_only": 1, "hidden": 1, "no_copy": 1,
+		 "description": "The indicative estimate the visitor was shown, as JSON (api/instant_estimate)."},
+		{"fieldname": "a3s_registered_from", "fieldtype": "Small Text", "label": "Registered From", "insert_after": "a3s_estimate",
+		 "read_only": 1, "hidden": 1, "no_copy": 1,
+		 "description": "IP address and browser of the registration, kept as the record of the WhatsApp consent."},
+
 		# Outreach and Outreach Log live in their own "Outreach" tab, right after the Solar tab.
-		{"fieldname": "a3s_outreach_tab", "fieldtype": "Tab Break", "label": "Outreach", "insert_after": "solar_proposal"},
+		{"fieldname": "a3s_outreach_tab", "fieldtype": "Tab Break", "label": "Outreach", "insert_after": "a3s_registered_from"},
 		{
 			"fieldname": "a3s_outreach_sb",
 			"fieldtype": "Section Break",

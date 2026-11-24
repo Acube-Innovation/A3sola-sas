@@ -68,6 +68,14 @@
   "outreach_escalation_role",
   "sb_lead_import",
   "lead_sheets",
+  "sb_event_registration",
+  "event_registration_rate_per_ip",
+  "event_registration_per_mobile_per_day",
+  "cb_event_registration",
+  "registration_max_file_mb",
+  "estimate_rate_per_unit",
+  "event_brochure_rate_per_ip",
+  "event_screen_polls_per_hour",
   "sb_17",
   "outreach_cadence",
   "sb_18",
@@ -827,6 +835,56 @@
    "label": "Lead Sheets",
    "options": "Lead Import Sheet",
    "description": "The Google Sheets leads come in on, each shared \"Anyone with the link\" as Viewer. Import from Google Sheet on the leads list reads any of them with one click."
+  },
+  {
+   "fieldname": "sb_event_registration",
+   "fieldtype": "Section Break",
+   "label": "Event Registration",
+   "collapsible": 1,
+   "description": "Registering at an event by QR code (Solar Event): the limits that keep the public form from being abused."
+  },
+  {
+   "fieldname": "event_registration_rate_per_ip",
+   "fieldtype": "Int",
+   "label": "Registrations per Device per Hour",
+   "default": "30",
+   "description": "From one internet connection. An exhibition hall's Wi-Fi is shared, so keep it generous."
+  },
+  {
+   "fieldname": "event_registration_per_mobile_per_day",
+   "fieldtype": "Int",
+   "label": "Registrations per Mobile Number per Day",
+   "default": "5"
+  },
+  {
+   "fieldname": "cb_event_registration",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "registration_max_file_mb",
+   "fieldtype": "Int",
+   "label": "Largest Document Upload (MB)",
+   "default": "5"
+  },
+  {
+   "fieldname": "estimate_rate_per_unit",
+   "fieldtype": "Float",
+   "label": "Estimate Rate per Unit (₹)",
+   "default": "7",
+   "description": "Used for the instant estimate only when no Default Tariff is set."
+  },
+  {
+   "fieldname": "event_brochure_rate_per_ip",
+   "fieldtype": "Int",
+   "label": "Brochure Downloads per Device per Hour",
+   "default": "120"
+  },
+  {
+   "fieldname": "event_screen_polls_per_hour",
+   "fieldtype": "Int",
+   "label": "Stall Screen Polls per Hour",
+   "default": "4000",
+   "description": "A stall screen asks every 2 seconds: 1,800 an hour."
   },
   {
    "fieldname": "sb_17",
@@ -3084,7 +3142,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-18 17:17:39.000000",
+ "modified": "2026-11-24 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "A3 Sola Settings",
