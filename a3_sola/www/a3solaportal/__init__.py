@@ -25,6 +25,8 @@ NAV_GROUPS = [
 		# the chain in `a3_sola.api.portal_chain` creates them in exactly this sequence.
 		"items": [
 			{"title": "Lead", "sub": "Prospects and enquiries", "ic": "lead", "route": "/a3solaportal/leads"},
+			# Exhibitions and campaigns: each a QR code that turns visitors into leads (api/events).
+			{"title": "Events", "sub": "QR registration and leads", "ic": "calendar", "route": "/a3solaportal/events"},
 			{"title": "Customer", "sub": "Homes and businesses", "ic": "user", "route": "/a3solaportal/consumers"},
 			{"title": "Site Survey", "sub": "Roof and load", "ic": "pin", "route": "/a3solaportal/site-surveys"},
 			{"title": "Subsidy Eligibility Check", "sub": "PM Surya Ghar", "ic": "check", "route": "/a3solaportal/subsidy-eligibility"},

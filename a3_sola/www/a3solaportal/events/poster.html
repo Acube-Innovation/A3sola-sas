@@ -1,0 +1,31 @@
+{#- The event's A4 poster (www/a3solaportal/events/poster.py): print it, stand it at the stall. -#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Poster · {{ doc.event_name | e }}</title>
+	<meta name="robots" content="noindex, nofollow">
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/assets/a3_sola/css/platform.css?v={{ a3s_asset_version('css/platform.css') }}">
+</head>
+<body class="a3s a3s-poster-page">
+<div class="a3s-poster__tools"><button type="button" class="a3s-btn a3s-btn--primary" onclick="window.print()"><span>Print</span></button>
+	<span>A4, portrait. Turn off "Headers and footers" in the print dialog.</span></div>
+<main class="a3s-poster">
+	<header class="a3s-poster__head">
+		{%- if logo %}<img src="{{ logo }}" alt="{{ company | e }}">{% else %}<p class="a3s-poster__company">{{ company | e }}</p>{% endif %}
+	</header>
+	<p class="a3s-poster__kicker">{{ doc.event_name | e }}{% if dates %} &middot; {{ dates }}{% endif %}</p>
+	<h1 class="a3s-poster__title">Get your free<br>solar estimate</h1>
+	<p class="a3s-poster__sub">Scan, register in a minute, and our brochure comes to your WhatsApp.</p>
+	<div class="a3s-poster__qr">{{ qr_svg | safe }}</div>
+	<p class="a3s-poster__scan">Scan with your phone camera</p>
+	<ul class="a3s-poster__points">
+		<li>Your system size and savings, instantly</li>
+		<li>Up to ₹78,000 government subsidy for homes</li>
+		<li>A call from our engineer at a time you choose</li>
+	</ul>
+	<footer class="a3s-poster__foot">{{ company | e }}{% if whatsapp %} &middot; WhatsApp {{ whatsapp | e }}{% endif %}</footer>
+</main>
+</body>
+</html>

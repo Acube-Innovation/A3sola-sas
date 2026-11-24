@@ -199,6 +199,12 @@ WEBSITE_ROUTE_RULES = [
 	# Portal pages stay at the root: they are logged-in app surfaces reached from Frappe's
 	# portal menu, not part of the public site.
 	{"from_route": "/account-mapping", "to_route": "account_mapping"},
+	# An event's QR code and its stall screen (Solar Event): public pages named by a key.
+	{"from_route": "/register/<key>", "to_route": "register"},
+	{"from_route": "/event-screen/<key>", "to_route": "event_screen"},
+	# The portal's Events pages: one event, and its printable QR poster.
+	{"from_route": "/a3solaportal/events/<name>", "to_route": "a3solaportal/events/view"},
+	{"from_route": "/a3solaportal/events/<name>/poster", "to_route": "a3solaportal/events/poster"},
 	# The portal's per-lead pages. `<name>` is one path segment, and Werkzeug prefers a
 	# static rule over a dynamic one, so `/leads/new` is listed explicitly or the create
 	# page would be read as a lead called "new".

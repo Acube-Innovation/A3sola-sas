@@ -1,0 +1,48 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Events</h2>
+		<p class="a3s-main__sub">Exhibitions and campaigns where visitors register by scanning a QR code.</p>
+	</div>
+	{%- if can_create %}
+	<button type="button" class="a3s-btn a3s-btn--primary" data-new-event>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-calendar"></use></svg>
+		<span>New event</span>
+	</button>
+	{%- endif %}
+</div>
+
+<p class="a3s-attach__status" data-page-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-card a3s-tablewrap">
+	{%- if events %}
+	<table class="a3s-table">
+		<thead><tr><th>Event</th><th>Dates</th><th>Lead owner</th><th class="a3s-table__num">Registered</th><th>Status</th></tr></thead>
+		<tbody>
+			{%- for e in events %}
+			<tr>
+				<td><a class="a3s-table__link" href="/a3solaportal/events/{{ e.name | urlencode }}">{{ e.event_name | e }}</a>
+					<span class="a3s-table__meta">{{ e.name | e }}{% if e.venue %} &middot; {{ e.venue | e }}{% endif %}</span></td>
+				<td>{{ e.dates or "—" }}</td>
+				<td>{{ e.owner_name | e }}</td>
+				<td class="a3s-table__num"><b>{{ e.registrations }}</b></td>
+				<td class="a3s-table__status"><span class="a3s-badge {{ 'a3s-badge--converted' if e.state == 'Open' else 'a3s-badge--lost-quotation' }}">{{ e.state }}</span></td>
+			</tr>
+			{%- endfor %}
+		</tbody>
+	</table>
+	{%- else %}
+	<div class="a3s-empty">
+		<span class="a3s-empty__icon"><svg class="a3s-ic a3s-ic--lg" aria-hidden="true"><use href="#ic-calendar"></use></svg></span>
+		<h3 class="a3s-empty__title">No events yet</h3>
+		<p class="a3s-empty__text">Create the first one: it gets its own QR code for the stall, and every visitor who scans it becomes a lead.</p>
+	</div>
+	{%- endif %}
+</div>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_events.js?v={{ a3s_asset_version('js/portal_events.js') }}"></script>
+{% endblock %}

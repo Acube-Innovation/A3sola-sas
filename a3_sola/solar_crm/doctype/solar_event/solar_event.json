@@ -1,0 +1,274 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-11-24 15:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "event_name",
+  "venue",
+  "company",
+  "cb_1",
+  "start_date",
+  "end_date",
+  "is_active",
+  "sb_leads",
+  "lead_owner",
+  "lead_source",
+  "cb_2",
+  "campaign",
+  "sb_visitor",
+  "brochure",
+  "whatsapp_number",
+  "ask_documents",
+  "cb_3",
+  "welcome_message",
+  "estimate_packages",
+  "sb_screen",
+  "screen_headline",
+  "show_estimate_on_screen",
+  "cb_4",
+  "public_key",
+  "display_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "EVT-.YYYY.-.###",
+   "default": "EVT-.YYYY.-.###",
+   "reqd": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "event_name",
+   "fieldtype": "Data",
+   "label": "Event Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "venue",
+   "fieldtype": "Data",
+   "label": "Venue"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "options": "Company",
+   "label": "Company",
+   "reqd": 1,
+   "remember_last_selected_value": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Taking Registrations",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Off: the QR code shows \"This registration has closed\"."
+  },
+  {
+   "fieldname": "sb_leads",
+   "fieldtype": "Section Break",
+   "label": "Leads"
+  },
+  {
+   "fieldname": "lead_owner",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Lead Owner",
+   "reqd": 1,
+   "description": "Every lead registered at the event is this person's."
+  },
+  {
+   "fieldname": "lead_source",
+   "fieldtype": "Link",
+   "options": "Lead Source",
+   "label": "Lead Source"
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "options": "Campaign",
+   "label": "Campaign",
+   "read_only": 1,
+   "description": "Made with the event, so campaign reports count its leads."
+  },
+  {
+   "fieldname": "sb_visitor",
+   "fieldtype": "Section Break",
+   "label": "What the Visitor Gets"
+  },
+  {
+   "fieldname": "brochure",
+   "fieldtype": "Attach",
+   "label": "Brochure (PDF)",
+   "description": "Offered on the thank-you page and linked in the WhatsApp message."
+  },
+  {
+   "fieldname": "whatsapp_number",
+   "fieldtype": "Data",
+   "label": "Our WhatsApp Number",
+   "options": "Phone",
+   "description": "The number \"Chat with us on WhatsApp\" opens."
+  },
+  {
+   "fieldname": "ask_documents",
+   "fieldtype": "Check",
+   "label": "Ask for Documents",
+   "default": "1",
+   "description": "Offer the optional step for the KSEB bill, Aadhaar, PAN and bank proof."
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "welcome_message",
+   "fieldtype": "Small Text",
+   "label": "WhatsApp Welcome Message",
+   "description": "Sent by staff from the event page. {name}, {event}, {company}, {brochure}, {estimate} and {call_time} are filled in."
+  },
+  {
+   "fieldname": "estimate_packages",
+   "fieldtype": "Table MultiSelect",
+   "options": "Solar Event Package",
+   "label": "Packages for the Estimate",
+   "description": "The packages the instant estimate may offer. Empty: every active subsidy package of the company."
+  },
+  {
+   "fieldname": "sb_screen",
+   "fieldtype": "Section Break",
+   "label": "Stall Screen"
+  },
+  {
+   "fieldname": "screen_headline",
+   "fieldtype": "Data",
+   "label": "Screen Headline",
+   "description": "Shown on the stall screen. Empty: \"Welcome to\" the company."
+  },
+  {
+   "fieldname": "show_estimate_on_screen",
+   "fieldtype": "Check",
+   "label": "Show the Estimate on the Screen",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "public_key",
+   "fieldtype": "Data",
+   "label": "Registration Key",
+   "read_only": 1,
+   "no_copy": 1,
+   "unique": 1,
+   "description": "In the QR code's link."
+  },
+  {
+   "fieldname": "display_key",
+   "fieldtype": "Data",
+   "label": "Screen Key",
+   "read_only": 1,
+   "no_copy": 1,
+   "unique": 1,
+   "description": "In the stall screen's link. Kept apart from the QR's, so scanning it never opens the screen."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-24 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Solar Event",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Executive",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "search_fields": "event_name,venue",
+ "show_title_field_in_link": 1,
+ "sort_field": "start_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "event_name",
+ "track_changes": 1
+}

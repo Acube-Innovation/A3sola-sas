@@ -39,6 +39,17 @@ REVIEWED_GUEST_ENDPOINTS = {
 	"a3_sola.api.signup.update_plan_selection",
 	"a3_sola.api.signup.verify_email",
 	"a3_sola.api.webhooks.receive",
+	# Reviewed with QR event registration: the public form an event's QR code opens. Rate
+	# limited per IP and per mobile number, honeypot and site captcha, every field checked,
+	# uploads sniffed by their bytes; the company, owner and source come from the event, never
+	# the form. Only creates or updates that company's lead.
+	"a3_sola.api.event_registration.submit",
+	# The event's brochure - the company's own marketing paper - by the registration link's
+	# key. Rate limited per IP; a visitor's HMAC ref only stamps "brochure received" on their lead.
+	"a3_sola.api.event_registration.brochure",
+	# The stall screen's feed, by the event's display key (never the QR's). Rate limited per key;
+	# returns names, districts and indicative estimates only - no number, address or document.
+	"a3_sola.api.event_screen.feed",
 }
 
 #: Markers that a function applies its own rate limiting.

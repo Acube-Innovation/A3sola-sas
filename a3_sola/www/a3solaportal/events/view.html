@@ -1,0 +1,82 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+<div class="a3s-page__head a3s-detail__head">
+	<p class="a3s-detail__eyebrow">{{ doc.name | e }}{% if doc.venue %} &middot; {{ doc.venue | e }}{% endif %}{% if dates %} &middot; {{ dates }}{% endif %}</p>
+	<h2 class="a3s-main__title a3s-detail__title">
+		<span>{{ doc.event_name | e }}</span>
+		<span class="a3s-badge {{ 'a3s-badge--converted' if doc.is_active else 'a3s-badge--lost-quotation' }}">{{ "Open" if doc.is_active else "Closed" }}</span>
+	</h2>
+	<div class="a3s-detail__actions">
+		<a class="a3s-btn a3s-btn--primary" href="{{ screen_url }}" target="_blank" rel="noopener">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-eye"></use></svg><span>Open stall screen</span>
+		</a>
+		<a class="a3s-btn a3s-btn--secondary" href="/a3solaportal/events/{{ doc.name | urlencode }}/poster" target="_blank" rel="noopener">
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>Print poster</span>
+		</a>
+		<a class="a3s-btn a3s-btn--secondary" href="/api/method/a3_sola.api.events.qr_png?event={{ doc.name | urlencode }}" download>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>QR code</span>
+		</a>
+		{%- if can_write %}
+		<button type="button" class="a3s-btn a3s-btn--secondary" data-edit-event>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg><span>Edit</span>
+		</button>
+		{%- endif %}
+	</div>
+</div>
+
+<p class="a3s-attach__status" data-page-status role="status" aria-live="polite" hidden></p>
+
+<div class="a3s-ev__top">
+	<section class="a3s-card a3s-ev__qrcard">
+		<div class="a3s-ev__qr">{{ qr_svg | safe }}</div>
+		<div class="a3s-ev__links">
+			<h3 class="a3s-ev__h">Registration link</h3>
+			<p class="a3s-field__hint">The QR code opens it. Share it on social media or in a message too.</p>
+			<div class="a3s-ev__copy"><input readonly value="{{ register_url }}" aria-label="Registration link"><button type="button" class="a3s-btn a3s-btn--secondary" data-copy="{{ register_url }}">Copy</button></div>
+			<h3 class="a3s-ev__h">Stall screen</h3>
+			<p class="a3s-field__hint">Open it on the TV at the stall. Keep this link to staff: it shows visitors' names.</p>
+			<div class="a3s-ev__copy"><input readonly value="{{ screen_url }}" aria-label="Stall screen link"><button type="button" class="a3s-btn a3s-btn--secondary" data-copy="{{ screen_url }}">Copy</button></div>
+			<dl class="a3s-ev__facts">
+				<div><dt>Lead owner</dt><dd>{{ owner_name | e }}</dd></div>
+				<div><dt>Brochure</dt><dd>{{ (brochure_name | e) if brochure_name else '<span class="a3s-ev__missing">None yet: add one under Edit</span>' }}</dd></div>
+				<div><dt>Our WhatsApp</dt><dd>{{ (doc.whatsapp_number | e) if doc.whatsapp_number else "—" }}</dd></div>
+			</dl>
+		</div>
+	</section>
+	<section class="a3s-card a3s-ev__funnelcard">
+		<h3 class="a3s-ev__h">From registration to order</h3>
+		<ol class="a3s-ev__funnel" data-funnel></ol>
+		<p class="a3s-field__hint" data-today></p>
+	</section>
+</div>
+
+<section class="a3s-card a3s-ev__regs">
+	<div class="a3s-ev__bar">
+		<h3 class="a3s-ev__h">Registrations <span class="a3s-ce-tabs__n" data-reg-count></span></h3>
+		<div class="a3s-ce-tabs" role="tablist" aria-label="Show" data-reg-tabs>
+			<button type="button" role="tab" data-filter="" aria-selected="true"><span>All</span></button>
+			<button type="button" role="tab" data-filter="unsent" aria-selected="false"><span>Brochure not sent</span><span class="a3s-ce-tabs__n" data-unsent-count></span></button>
+		</div>
+		<input class="a3s-toolbar__search" type="search" placeholder="Search name, mobile or district" aria-label="Search registrations" data-reg-search>
+		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?event={{ doc.name | urlencode }}">Open in Leads</a>
+	</div>
+	<div class="a3s-tablewrap">
+		<table class="a3s-table a3s-ev__table">
+			<thead><tr><th>Visitor</th><th>Registered</th><th>Estimate</th><th>Papers</th><th>Brochure</th><th>Screen</th><th>Status</th></tr></thead>
+			<tbody data-reg-rows></tbody>
+		</table>
+		<div class="a3s-empty" data-reg-empty hidden>
+			<span class="a3s-empty__icon"><svg class="a3s-ic a3s-ic--lg" aria-hidden="true"><use href="#ic-lead"></use></svg></span>
+			<h3 class="a3s-empty__title">No registrations yet</h3>
+			<p class="a3s-empty__text">When visitors scan the QR code they appear here at once.</p>
+		</div>
+	</div>
+</section>
+
+<script type="application/json" id="a3s-event-data">{{ {"name": doc.name, "form": form, "data": data} | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_events.js?v={{ a3s_asset_version('js/portal_events.js') }}"></script>
+{% endblock %}
