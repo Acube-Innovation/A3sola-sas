@@ -98,7 +98,7 @@ def render(inst):
 	if isinstance(inst, str):
 		inst = frappe.get_doc("Solar Installation", inst)
 	html = frappe.render_template("a3_sola/templates/print/kseb_form_3.html", {"f": context(inst), "img": _images()})
-	return file_name(inst), documents.plain_pdf(html, margins="8mm")
+	return file_name(inst), documents.plain_pdf(documents.edited_body(inst, CODE, html), margins="8mm")
 
 
 @frappe.whitelist()

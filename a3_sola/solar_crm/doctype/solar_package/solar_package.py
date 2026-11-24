@@ -622,6 +622,36 @@ def battery_name(row):
 		"{0:g} Ah".format(flt(row.get("battery_capacity_ah"))) if flt(row.get("battery_capacity_ah")) else "") if part)
 
 
+def pricing_combinations(package, phase=None):
+	"""The package's Pricing Options as the combinations a design estimate offers, one option
+	each - the default first, then in the table's order: each with its panel row, its inverter
+	row and its cost. A row whose panel or inverter the package no longer has is left out, and
+	with `phase` only the rows whose inverter is for that connection."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	modules = {panel_name(m): m for m in options(doc, "modules")}
+	inverters = {inverter_name(i): i for i in options(doc, "inverters") if i.get("inverter_make")}
+	out = []
+	for row in doc.get("pricing_options") or []:
+		module, inverter = modules.get(_name(row.panel)), inverters.get(_name(row.inverter))
+		if not (module and inverter):
+			continue
+		if phase and inverter_phase(doc, inverter) != phase:
+			continue
+		out.append(frappe._dict(name=row.name, default=bool(cint(row.is_default)), module=module, inverter=inverter,
+			battery=row.get("battery") or "", cost=flt(row.cost)))
+	out.sort(key=lambda c: not c.default)
+	return out
+
+
+def combination(package, name):
+	"""One of the package's pricing combinations, by its row name, or None."""
+	return next((c for c in pricing_combinations(package) if c.name == name), None) if name else None
+
+
 def pricing_option(package, inverter=None, panel=None, battery=None):
 	"""The pricing row for the package built with this inverter option (the default when None),
 	on this panel and with this battery - each a row or its name. A panel or battery without a
@@ -780,6 +810,12 @@ def package_components(package, phase=None):
 		# option shows the panel row itself the Pricing Options pair this inverter with.
 		paired_label[row.inverter_specification] = panel_label(panel)
 
+	def inverter_label(row):
+		return label(makes.get(row.inverter_make) or row.inverter_make, row.get("inverter_model") and
+			frappe.db.get_value("Inverter Model", row.inverter_model, "model_name"), number(row.inverter_capacity_kw, "kW"),
+			"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else "",
+			_("with optimizer") if row.get("with_optimizer") else "")
+
 	inverters = []
 	matching = [r for r in inverters_for_phase(doc, phase) if r.inverter_make]
 	inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
@@ -791,10 +827,7 @@ def package_components(package, phase=None):
 			# Its own panels, when the price list builds it on other panels than the default.
 			"panel": panel_of.get(row.inverter_specification, ""),
 			"panel_label": paired_label.get(row.inverter_specification, ""),
-			"label": label(makes.get(row.inverter_make) or row.inverter_make, row.get("inverter_model") and
-				frappe.db.get_value("Inverter Model", row.inverter_model, "model_name"), number(row.inverter_capacity_kw, "kW"),
-				"\u00d7 {0}".format(cint(row.inverter_count)) if cint(row.inverter_count) > 1 else "",
-				_("with optimizer") if row.get("with_optimizer") else ""),
+			"label": inverter_label(row),
 		})
 
 	batteries = []
@@ -811,7 +844,18 @@ def package_components(package, phase=None):
 					number(row.battery_capacity_ah, "Ah"), "\u00d7 {0}".format(cint(row.nos)) if cint(row.nos) > 1 else ""),
 			})
 
-	return {"package_cost": package_cost(doc), "panels": panels, "inverters": inverters, "batteries": batteries}
+	# Each Pricing Options row: one option of a design estimate (pricing_combinations).
+	pricing = []
+	for combo in pricing_combinations(doc):
+		pricing.append({
+			"value": combo.name, "default": combo.default, "phase": inverter_phase(doc, combo.inverter),
+			"inverter": combo.inverter.inverter_make, "panel": combo.module.module_make, "cost": combo.cost,
+			"inverter_label": inverter_label(combo.inverter),
+			"panel_label": panel_label(combo.module),
+		})
+
+	return {"package_cost": package_cost(doc), "panels": panels, "inverters": inverters, "batteries": batteries,
+		"pricing": pricing}
 
 
 def default_system_items(package):

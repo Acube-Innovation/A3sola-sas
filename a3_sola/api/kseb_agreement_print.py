@@ -97,7 +97,7 @@ def render(inst, name=None):
 	doc, body = context(inst, name)
 	html = frappe.render_template("a3_sola/templates/print/kseb_agreement.html", {"doc": doc, "body": body,
 		"blank": agreement_api.BLANK})
-	return file_name(inst), documents.plain_pdf(html, margins="18mm")
+	return file_name(inst), documents.plain_pdf(documents.edited_body(inst, CODE, html), margins="18mm")
 
 
 @frappe.whitelist()

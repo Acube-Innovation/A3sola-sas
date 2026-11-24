@@ -43,7 +43,8 @@ def render(inst, code, signed=True):
 	if code not in CODES:
 		frappe.throw(_("{0} is not a bank completion letter.").format(code))
 	tpl = _template(inst, code)
-	html = frappe.render_template(tpl.body_template or "", documents.get_document_context(inst, tpl))
+	html = documents.edited_body(inst, code, frappe.render_template(tpl.body_template or "",
+		documents.get_document_context(inst, tpl)))
 	if code == COVERING:
 		content = documents.letterhead_pdf(html, inst.company, signed=signed, letter_head=documents.rim_letter_head())
 	else:

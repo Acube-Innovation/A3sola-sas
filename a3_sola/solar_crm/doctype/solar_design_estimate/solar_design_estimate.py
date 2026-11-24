@@ -27,6 +27,7 @@ from a3_sola.solar_crm.doctype.component_technology.component_technology import 
 from a3_sola.solar_crm.doctype.inverter_model import inverter_model
 from a3_sola.solar_crm.doctype.kseb_tariff_category.kseb_tariff_category import kseb_code
 from a3_sola.solar_crm.doctype.solar_package.solar_package import (
+	combination,
 	default_inverter,
 	default_module,
 	default_price,
@@ -38,6 +39,7 @@ from a3_sola.solar_crm.doctype.solar_package.solar_package import (
 	options,
 	package_components,
 	package_cost,
+	pricing_combinations,
 	pricing_option,
 	package_phases,
 	price_for,
@@ -204,6 +206,15 @@ class SolarDesignEstimate(Document):
 			row.package_cost = 0
 			return
 		choices = package_components(row.solar_package, row.connection_type or self.connection_type)
+		# An option made from one of the package's Pricing Options is that row: its panel, its
+		# inverter, its price. A row its package no longer has (the package changed) is let go.
+		combo = combination(row.solar_package, row.get("pricing_option"))
+		if row.get("pricing_option") and (not combo or (row.connection_type and
+				inverter_phase(frappe.get_cached_doc("Solar Package", row.solar_package), combo.inverter) not in ("", row.connection_type))):
+			row.pricing_option, combo = None, None
+		if combo:
+			row.inverter_make = combo.inverter.inverter_make
+			row.panel_make = combo.module.module_make
 		for table, field in COMPONENT_CHOICES:
 			offered = choices[table]
 			if table == "batteries" and row.system_type not in ("Off-Grid", "Hybrid"):
@@ -212,9 +223,10 @@ class SolarDesignEstimate(Document):
 				row.set(field, None)
 			elif row.get(field) not in {o["value"] for o in offered}:
 				row.set(field, next((o["value"] for o in offered if o["default"]), offered[0]["value"]))
-		# The row's price: the package built with the inverter it chooses.
+		# The row's price: its Pricing Options row's, else the package built with the inverter it chooses.
 		inverter = next((o for o in choices["inverters"] if o["value"] == row.inverter_make), None)
-		row.package_cost = flt(inverter["cost"]) if inverter and flt(inverter["cost"]) else choices["package_cost"]
+		row.package_cost = flt(combo.cost) if combo and flt(combo.cost) else \
+			flt(inverter["cost"]) if inverter and flt(inverter["cost"]) else choices["package_cost"]
 
 	def recommended_sizing_row(self):
 		return next((row for row in self.get("sizing_options") or [] if row.is_recommended), None)
@@ -234,12 +246,14 @@ class SolarDesignEstimate(Document):
 		previous = next((r for r in (before.get("sizing_options") or []) if r.name == row.name), None) if before else None
 		if previous and previous.is_recommended and previous.solar_package == row.solar_package \
 				and before.equipment_package == self.equipment_package \
+				and previous.get("pricing_option") == row.get("pricing_option") \
 				and all(previous.get(field) == row.get(field) for _table, field in COMPONENT_CHOICES):
 			return
 		# An inverter newly chosen brings the panel its package pairs it with (Pricing Options):
 		# the Hoymiles kit its 550 Wp Rayzon, not the default panel of another inverter.
 		paired = None
-		if not previous or previous.inverter_make != row.inverter_make or previous.solar_package != row.solar_package:
+		if not previous or previous.inverter_make != row.inverter_make or previous.solar_package != row.solar_package \
+				or previous.get("pricing_option") != row.get("pricing_option"):
 			paired = self.paired_panel_row(row)
 		for table, field in COMPONENT_CHOICES:
 			make = row.get(field)
@@ -262,10 +276,15 @@ class SolarDesignEstimate(Document):
 		if not (row.solar_package and row.inverter_make):
 			return None
 		package = frappe.get_cached_doc("Solar Package", row.solar_package)
-		matching = [r for r in inverters_for_phase(package, row.connection_type or self.connection_type)
-			if r.inverter_make == row.inverter_make]
-		inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
-		module = inverter_panel(package, inverter) if inverter else None
+		combo = combination(package, row.get("pricing_option"))
+		if combo:
+			# The option is a Pricing Options row: its own panel, whichever wattage of the make.
+			module = combo.module
+		else:
+			matching = [r for r in inverters_for_phase(package, row.connection_type or self.connection_type)
+				if r.inverter_make == row.inverter_make]
+			inverter = next((r for r in matching if r.is_default), matching[0] if matching else None)
+			module = inverter_panel(package, inverter) if inverter else None
 		if not module:
 			return None
 		for r in self.get("panels") or []:
@@ -286,9 +305,26 @@ class SolarDesignEstimate(Document):
 			priced = next((r for r in self.get(table) or [] if not r.is_option), None)
 			if priced and priced.get(field) in {o["value"] for o in choices[table]}:
 				row.set(field, priced.get(field))
+		self.record_pricing_option(row)
 		if row.inverter_make != inverter_before:
 			# The priced options follow the inverter now priced.
 			self.seed_option_from_package()
+
+	def record_pricing_option(self, row):
+		"""The option row names the package's Pricing Options row the estimate now prices - its
+		panel (make and wattage) with its inverter - so a panel or inverter changed on the next
+		step keeps the option's name and price right; none when no row prices that pairing."""
+		combos = pricing_combinations(row.solar_package, row.connection_type or self.connection_type)
+		if not combos:
+			return
+		inverter = next((r for r in self.get("inverters") or [] if not r.is_option and r.get("in_package")), None)
+		panel = next((r for r in self.get("panels") or [] if not r.is_option and r.get("in_package")), None)
+		if not (inverter and panel):
+			return
+		match = next((c for c in combos if c.inverter.inverter_make == inverter.inverter_make
+			and c.module.module_make == panel.panel_make
+			and flt(c.module.module_wattage) == flt(panel.panel_capacity_wp)), None)
+		row.pricing_option = match.name if match else None
 
 	def validate_package_system_type(self):
 		"""An On-Grid estimate is built on an On-Grid package, a Hybrid one on a Hybrid package.

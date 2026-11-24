@@ -38,6 +38,10 @@ class TestSuryaGharPapers(FrappeTestCase):
 		prints = portal_tasks._prints(row, self.installation.name)[loan_print.QUOTATION]
 		self.assertTrue(prints[0]["url"].endswith("installation=" + frappe.utils.quote(self.installation.name)))
 		self.assertTrue(prints[0]["signable"])
+		# View and Download, both of the full project proposal - as the Loan Documents' Quotation.
+		self.assertEqual([p["label"] for p in prints], ["View Bank Quotation", "Download Bank Quotation"])
+		self.assertIn("loan_print.proposal?", prints[0]["url"])
+		self.assertTrue(prints[1]["url"].endswith("&download=1"))
 
 	def test_with_no_quotation_it_is_priced_from_the_design_estimate(self):
 		estimate = frappe.db.get_value("Solar Design Estimate", {"solar_package": ["is", "set"], "docstatus": ["<", 2]}, "name")

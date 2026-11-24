@@ -255,7 +255,8 @@ def loan_defaults(installation):
 		# The DISCOM ID is the section office's code - "Chalakudy - 5661" is 5661.
 		"discom_id": section.section_code or consumer.discom_id or inst.get("discom_id"),
 		"national_portal_application_id": inst.get("national_portal_application_id") or consumer.national_portal_consumer_id,
-		"jan_samarth_id": inst.get("jan_samarth_id"),
+		# The Jan Samarth task's reference, where the job has none of its own yet.
+		"jan_samarth_id": inst.get("jan_samarth_id") or _jan_samarth_reference(inst.name),
 		"loan_sanction_no": inst.get("loan_sanction_no"),
 		"lender": inst.get("lender"),
 		"lender_branch": inst.get("lender_branch"),
@@ -270,6 +271,12 @@ def loan_defaults(installation):
 		"quotation": inst.get("quotation"),
 		"project_cost_all_inclusive": inst.get("gross_contract_value"),
 	}
+
+
+def _jan_samarth_reference(installation):
+	from a3_sola.solar_operations.doctype.installation_task.installation_task import jan_samarth_reference
+
+	return jan_samarth_reference(installation)
 
 
 def _survey_of(inst):

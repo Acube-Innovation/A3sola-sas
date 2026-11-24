@@ -12,7 +12,7 @@ public/images/kseb_form1) beside the customer's answers:
 5. Rooftop or ground mounted
 6. Date by which the plant is to be completed
 
-then place, date and the consumer's signature, and the panel and inverter below. Rendered for
+then place, date and the consumer's signature. Row 3 also lists the panels and inverters. Rendered for
 the Form 1 Generation task (FRM1); nothing is saved. A row 1 detail the customer's record does
 not have yet is left blank, and the task's page says which (missing): the form is made from
 the job each time, so filling it there fills the form.
@@ -162,7 +162,7 @@ def render(inst):
 	if isinstance(inst, str):
 		inst = frappe.get_doc("Solar Installation", inst)
 	html = frappe.render_template("a3_sola/templates/print/kseb_form_1.html", {"f": context(inst), "img": _images()})
-	return file_name(inst), documents.plain_pdf(html, margins="8mm")
+	return file_name(inst), documents.plain_pdf(documents.edited_body(inst, CODE, html), margins="8mm")
 
 
 @frappe.whitelist()

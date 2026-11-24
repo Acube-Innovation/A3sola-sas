@@ -131,7 +131,7 @@ def submit():
 	limit_by_identifier("event_registration_mobile", visitor.mobile, "event_registration_per_mobile_per_day", 5)
 	papers = _papers(event) if cint(event.ask_documents) else []
 	est = instant_estimate.estimate(event.company, visitor.bill_amount, visitor.bill_months, visitor.interest,
-		_event_packages(event.name)) if visitor.bill_amount else None
+		_event_packages(event.name), visitor.system_type) if visitor.bill_amount else None
 
 	user = frappe.session.user
 	frappe.set_user(event.lead_owner)

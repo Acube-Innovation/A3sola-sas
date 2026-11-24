@@ -93,7 +93,8 @@ COLLECTIONS = {
 	# ---------------------------------------------------- Solar Operations
 	"installations": {"doctype": "Solar Installation", "title": "Solar Installation", "singular": "installation", "subtitle": "The project itself", "icon": "wrench"},
 	# The procurement tasks' material lists are a rows grid, each on the task that buys it.
-	"installation-tasks": {"doctype": "Installation Task", "title": "Installation Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist",
+	# Shown as "Task": its doctype keeps its name (ERPNext has a "Task" of its own).
+	"installation-tasks": {"doctype": "Installation Task", "title": "Task", "singular": "task", "subtitle": "The thirty tasks", "icon": "checklist",
 	                       "item_table_by": ("task_code", {"SPROC": "structure_materials", "PROC": "materials"}), "item_total": False},
 	"fee-payments": {"doctype": "Statutory Fee Payment", "title": "Statutory Fee Payment", "singular": "fee payment", "subtitle": "Form 1, Form 2, meter", "icon": "cash"},
 	"portal-applications": {"doctype": "Portal Application", "title": "Portal Application", "singular": "portal application", "subtitle": "PM Surya Ghar, CEIG", "icon": "globe"},
@@ -791,18 +792,15 @@ def task_downloads(installation, task_code, document=None):
 		return [{"label": "View Form 2", "url": form2_print.url(installation), "icon": "eye"},
 			{"label": "Download Form 2", "url": form2_print.url(installation, download=True)}]
 	if task_code == "ACPT":
-		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print), the
-		# consumer-vendor agreement (api/vendor_agreement_print) and, once the job has one, the
-		# quotation in the RIM format (api/loan_print.quotation).
-		from a3_sola.api import loan_print, net_metering_print, vendor_agreement_print
+		# The consumer-vendor agreement (api/vendor_agreement_print) and, once the job has one, the
+		# Bank Quotation - the full project proposal, as in the Loan Documents (api/loan_print.proposal).
+		from a3_sola.api import loan_print, vendor_agreement_print
 
-		links = [{"label": "View Net Metering Agreement", "url": net_metering_print.url(installation), "icon": "eye"},
-			{"label": "Download Net Metering Agreement", "url": net_metering_print.url(installation, download=True)},
-			{"label": "View Vendor Agreement", "url": vendor_agreement_print.url(installation)},
+		links = [{"label": "View Vendor Agreement", "url": vendor_agreement_print.url(installation), "icon": "eye"},
 			{"label": "Download Vendor Agreement", "url": vendor_agreement_print.url(installation, download=True)}]
 		if loan_print.has_quotation(frappe.get_doc("Solar Installation", installation)):
-			links += [{"label": "View Quotation (RIM)", "url": loan_print.quotation_url(installation)},
-				{"label": "Download Quotation (RIM)", "url": loan_print.quotation_url(installation) + "&download=1"}]
+			links += [{"label": "View Bank Quotation", "url": loan_print.proposal_url(installation)},
+				{"label": "Download Bank Quotation", "url": loan_print.proposal_url(installation, download=True)}]
 		return links
 	if task_code == "KFORMS":
 		# Each of the Form 3 papers the job prints, as its task row offers it: view, download.

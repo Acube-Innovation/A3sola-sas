@@ -93,9 +93,11 @@ def _executive_summary(doc, estimate, consumer, survey, package):
 		else None
 	)
 	roof_label = roof.roof_type if roof else None
-	tilt = roof.typical_tilt_degrees if roof else None
+	from a3_sola.api.print_cover import TILT_ORIENTATION
 	# Area Required is no longer asked on the package; a package without it is sized as one without a package.
-	area = (flt(package.area_required_sqft) if package else 0) or flt(estimate.final_capacity_kw) * 80
+	from a3_sola.api.print_cover import roof_area
+
+	area = roof_area(estimate.final_capacity_kw)
 
 	phase = estimate.connection_type or consumer.connection_type or ""
 	capacity = f"{flt(estimate.final_capacity_kw):g} kWp"
@@ -105,7 +107,7 @@ def _executive_summary(doc, estimate, consumer, survey, package):
 	return [
 		("Site Location", f"{building} in {location}" if location else building),
 		("Capacity of the Plant Proposed", capacity),
-		("Tilt & Orientation", f"{flt(tilt or 11):g} degrees, South"),
+		("Tilt & Orientation", TILT_ORIENTATION),
 		("Type of Solar Power Plant", "Grid Connected Rooftop"),
 		("Roof Area Required", f"{flt(area):g} Sq. Ft."),
 		("Type of Roof", roof_label or "-"),

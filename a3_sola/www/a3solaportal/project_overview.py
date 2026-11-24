@@ -320,6 +320,13 @@ def _task_columns(doc):
 	return columns
 
 
+def _full_name(user):
+	"""The person by name, as the board names its people - a dealer as "Dealer"."""
+	from a3_sola.api.partner_scope import shown_name
+
+	return shown_name(user, frappe.db.get_value("User", user, "full_name") or user)
+
+
 def _contractor(row):
 	"""The contractor a work order task is with, once its work order names one - a
 	contractor has no login, so the task itself is the Project Engineer's."""
@@ -347,6 +354,8 @@ def _task(row, installation=None):
 		])),
 		"due": format_date(row.due_date, "dd MMM") if row.due_date and open_ else "",
 		"completed": format_date(row.actual_completion_date, "dd MMM") if row.status == "Completed" and row.actual_completion_date else "",
+		# Who actually completed it - an admin may complete a task assigned to someone else.
+		"completed_by": _full_name(row.completed_by) if row.status == "Completed" and row.completed_by else "",
 		"overdue": bool(row.is_sla_breached),
 		"document": row.task_document or "",
 		"document_route": _route(row.task_doctype, row.task_document) if row.task_document else "",

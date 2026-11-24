@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-24 19:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "solar_installation",
+  "document_code",
+  "document_title",
+  "cb_1",
+  "edited_by",
+  "edited_on",
+  "sb_1",
+  "html"
+ ],
+ "fields": [
+  {
+   "fieldname": "solar_installation",
+   "fieldtype": "Link",
+   "options": "Solar Installation",
+   "label": "Project",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "document_code",
+   "fieldtype": "Data",
+   "label": "Document",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The paper's template code - KSEB-FORM-1, BANK-PROJECT-PROPOSAL..."
+  },
+  {
+   "fieldname": "document_title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "edited_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Edited By",
+   "read_only": 1
+  },
+  {
+   "fieldname": "edited_on",
+   "fieldtype": "Datetime",
+   "label": "Edited On",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_1",
+   "fieldtype": "Section Break",
+   "label": "Edited Text"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "Code",
+   "label": "HTML",
+   "description": "The paper as edited on the portal: printed in place of the generated text until it is reset. Kept as Code, not sanitised by Frappe (its images are data: URLs); api/document_editor.clean takes out anything unsafe.",
+   "options": "HTML"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-24 19:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar Operations",
+ "name": "Edited Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "document_title"
+}

@@ -186,6 +186,17 @@
 		return '<a class="a3s-icon-btn a3s-icon-btn--framed" href="' + esc(href) + '" title="' + esc(label) +
 			'" aria-label="' + esc(label) + '"' + (attrs || "") + ">" + svgIcon(name) + "</a>";
 	}
+	/* Edit: a paper the system prints, opened in the editor (api/document_editor) - and its
+	   badge once it prints as edited rather than as generated. */
+	function editButton(d) {
+		if (!d.edit) return "";
+		return '<button type="button" class="a3s-icon-btn a3s-icon-btn--framed" data-edit-doc="' + esc(d.edit.code) +
+			'" data-edit-name="' + esc(d.name) + '" title="Edit ' + esc(d.name) + '" aria-label="Edit ' + esc(d.name) + '">' +
+			svgIcon("pen") + "</button>";
+	}
+	function editedBadge(d) {
+		return d.edit && d.edit.edited ? ' <span class="a3s-taskdocs__state is-edited" title="Prints as edited, not as generated">Edited</span>' : "";
+	}
 	function uploadButton(label, attrs) {
 		return '<button type="button" class="a3s-icon-btn a3s-icon-btn--primary" title="' + esc(label) +
 			'" aria-label="' + esc(label) + '" ' + attrs + ">" + svgIcon("upload") + "</button>";
@@ -340,10 +351,111 @@
 		return prints.find(function (p) { return !/download=1/.test(p.url); }) || prints[0] || null;
 	}
 
-	/* The tasks done on the national portal - registration, accepting the customer for the
-	   loan, the installation update, the subsidy request - open it from their documents. */
-	var SURYA_GHAR_PORTAL = "https://pmsuryaghar.gov.in/#/";
-	var SURYA_GHAR_TASKS = ["NPA", "ACPT", "PORTUPD", "SUBREQ"];
+	/* The government portals a task is done on, opened from its documents: the PM Surya Ghar
+	   portal for registration, accepting the customer for the loan, the installation update and
+	   the subsidy request; both it and Jan Samarth for the loan's approval (DAL). */
+	var PORTALS = [
+		{ label: "PM Surya Ghar portal", url: "https://pmsuryaghar.gov.in/#/", tasks: ["NPA", "ACPT", "DAL", "PORTUPD", "SUBREQ"] },
+		{ label: "Jan Samarth portal", url: "https://www.jansamarth.in/login", tasks: ["DAL"] }
+	];
+
+	/* ------------------------------------------------------------ edit a printed paper */
+	/* The paper in an editor on the page - its text and tables as they print, without the
+	   letterhead and signature, which are added when it prints. Save keeps it (it prints as
+	   edited from then on); Reset brings back the one generated from the project. */
+	function openEditor(panel, task, code, name) {
+		var back = document.createElement("div");
+		back.className = "a3s-docedit";
+		back.innerHTML =
+			'<div class="a3s-docedit__panel" role="dialog" aria-modal="true" aria-label="Edit ' + esc(name) + '">' +
+			'<div class="a3s-docedit__head"><div><h3 class="a3s-modal__title">Edit ' + esc(name) + "</h3>" +
+			'<p class="a3s-taskpanel__sub" data-ed-state>Loading…</p></div>' +
+			'<div class="a3s-docedit__acts">' +
+			'<button type="button" class="a3s-btn a3s-btn--ghost a3s-btn--sm" data-ed-reset hidden>Reset to generated</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm" data-ed-cancel>Cancel</button>' +
+			'<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-ed-save disabled>' + svgIcon("save") + "<span>Save</span></button></div></div>" +
+			'<div class="a3s-docedit__tools" role="toolbar" aria-label="Formatting">' +
+			[["bold", "B", "Bold"], ["italic", "I", "Italic"], ["underline", "U", "Underline"],
+				["insertUnorderedList", "•", "Bulleted list"], ["undo", "↶", "Undo"], ["redo", "↷", "Redo"]].map(function (t) {
+				return '<button type="button" class="a3s-docedit__tool a3s-docedit__tool--' + t[0] + '" data-ed-cmd="' + t[0] + '" title="' + t[2] +
+					'" aria-label="' + t[2] + '">' + t[1] + "</button>";
+			}).join("") +
+			'<span class="a3s-docedit__hint">Click into the page and type. The letterhead, signature and seal are added when it prints.</span></div>' +
+			'<div class="a3s-docedit__stage"><iframe class="a3s-docedit__page" title="' + esc(name) + '" data-ed-frame></iframe></div>' +
+			'<p class="a3s-form__status" data-ed-status role="status" aria-live="polite"></p></div>';
+		document.body.appendChild(back);
+		var frame = back.querySelector("[data-ed-frame]");
+		var stateEl = back.querySelector("[data-ed-state]");
+		var statusEl = back.querySelector("[data-ed-status]");
+		var saveBtn = back.querySelector("[data-ed-save]");
+		var resetBtn = back.querySelector("[data-ed-reset]");
+		var dirty = false;
+		function say(text, tone) { statusEl.textContent = text || ""; statusEl.className = "a3s-form__status" + (tone ? " is-" + tone : ""); }
+		function describe(d) {
+			stateEl.textContent = d.edited ? "Edited by " + d.edited_by + (d.edited_on ? " on " + d.edited_on : "") +
+				". It prints as edited until you reset it." : "As generated from the project. Saving keeps your changes for this project.";
+			resetBtn.hidden = !d.edited;
+		}
+		function show(d) {
+			describe(d);
+			frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +
+				'html{background:#fff}body{margin:0;padding:16mm 14mm;font-family:"Book Antiqua","Palatino Linotype",Palatino,serif;' +
+				'font-size:10pt;color:#000;outline:none}a{pointer-events:none}</style></head><body>' + d.html + "</body></html>";
+			frame.onload = function () {
+				var doc = frame.contentDocument;
+				doc.designMode = "on";
+				/* The sheet as long as the paper: the stage scrolls, not the frame. */
+				function fit() { frame.style.height = Math.max(doc.documentElement.scrollHeight, 1122) + "px"; }
+				fit();
+				Array.prototype.forEach.call(doc.images, function (img) { if (!img.complete) img.addEventListener("load", fit); });
+				doc.addEventListener("input", function () { dirty = true; saveBtn.disabled = false; fit(); });
+				doc.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+			};
+			dirty = false;
+			saveBtn.disabled = true;
+		}
+		function close() {
+			if (dirty && !window.confirm("Leave without saving your changes?")) return;
+			back.remove();
+			document.removeEventListener("keydown", onKey);
+		}
+		function onKey(e) { if (e.key === "Escape") close(); }
+		document.addEventListener("keydown", onKey);
+		function refreshPanel(message) {
+			call("a3_sola.api.portal_tasks.task_documents", { installation: installation, task_code: task.code })
+				.then(function (data) { renderDocuments(panel, task, data); if (message) panel.status(message, "success"); });
+		}
+		back.querySelector("[data-ed-cancel]").addEventListener("click", close);
+		Array.prototype.forEach.call(back.querySelectorAll("[data-ed-cmd]"), function (b) {
+			b.addEventListener("mousedown", function (e) { e.preventDefault(); });  // keep the selection in the page
+			b.addEventListener("click", function () {
+				frame.contentDocument.execCommand(b.dataset.edCmd, false, null);
+				dirty = true; saveBtn.disabled = false;
+				frame.contentWindow.focus();
+			});
+		});
+		saveBtn.addEventListener("click", function () {
+			saveBtn.disabled = true; say("Saving…");
+			call("a3_sola.api.document_editor.save", { installation: installation, code: code, html: frame.contentDocument.body.innerHTML })
+				.then(function () {
+					dirty = false;
+					back.remove();
+					document.removeEventListener("keydown", onKey);
+					refreshPanel(name + " saved. It now prints as you edited it.");
+				})
+				.catch(function (e) { saveBtn.disabled = false; say(e.message, "error"); });
+		});
+		resetBtn.addEventListener("click", function () {
+			if (!window.confirm("Throw away the edits to " + name + " and print it as generated from the project again?")) return;
+			resetBtn.disabled = true; say("Resetting…");
+			call("a3_sola.api.document_editor.reset", { installation: installation, code: code })
+				.then(function (d) { resetBtn.disabled = false; show(d); say("Reset. It prints as generated again.", "success"); refreshPanel(); })
+				.catch(function (e) { resetBtn.disabled = false; say(e.message, "error"); });
+		});
+		call("a3_sola.api.document_editor.load", { installation: installation, code: code })
+			.then(show)
+			.catch(function (e) { stateEl.textContent = ""; say(e.message, "error"); });
+	}
 
 	function renderDocuments(m, task, data) {
 		var rows = data.documents || [];
@@ -393,12 +505,12 @@
 				var st = d.note && !d.files.length ? "Missing" : (done ? (d.kind === "Generated" ? "Generated" : "Uploaded") : (d.files.length ? "Partly" : "Missing"));
 				html += '<li class="a3s-taskdocs__row"><div class="a3s-taskdocs__info">' +
 					'<p class="a3s-taskdocs__name">' + esc(d.name) + (d.mandatory ? ' <span class="a3s-req" title="Required">*</span>' : "") + "</p>" +
-					'<p class="a3s-taskdocs__meta">' + (d.note ? esc(d.note) : '<span class="a3s-taskdocs__state is-' + st.toLowerCase() + '">' + st + "</span>") + "</p></div>" +
+					'<p class="a3s-taskdocs__meta">' + (d.note ? esc(d.note) : '<span class="a3s-taskdocs__state is-' + st.toLowerCase() + '">' + st + "</span>" + editedBadge(d)) + "</p></div>" +
 					'<div class="a3s-taskdocs__actions">' +
 					d.files.map(function (f) {
 						return iconLink("eye", "Open" + (f.label ? " " + f.label : ""), f.url, ' target="_blank" rel="noopener"');
 					}).join("") +
-					(d.prints || []).map(function (p) { return printLink(p, true); }).join("") +
+					(d.prints || []).map(function (p) { return printLink(p, true); }).join("") + editButton(d) +
 					((d.prints || []).length ? shareButton(d.prints[0].url, d.name, true) :
 						d.files.map(function (f) { return shareButton(f.url, f.label || d.name); }).join("")) +
 					(d.missing || []).map(function (mm) {
@@ -415,13 +527,13 @@
 				'<div class="a3s-taskdocs__info">' +
 				'<p class="a3s-taskdocs__name">' + esc(d.name) + (d.mandatory ? ' <span class="a3s-req" title="Required">*</span>' : "") + "</p>" +
 				'<p class="a3s-taskdocs__meta"><span class="a3s-taskdocs__state is-' + state.toLowerCase() + '">' + state + "</span>" +
-				(d.file_name ? " " + esc(d.file_name) : "") + "</p>" +
+				editedBadge(d) + (d.file_name ? " " + esc(d.file_name) : "") + "</p>" +
 				"</div>" +
 				'<div class="a3s-taskdocs__actions">' +
 				/* A paper printed live has its own View: no second eye for the same PDF. */
 				(d.file_url && !(d.prints || []).some(function (p) { return d.file_url.indexOf(p.url) === 0; })
 					? iconLink("eye", "Open " + (d.file_name || d.name), d.file_url, ' target="_blank" rel="noopener"') : "") +
-				(d.prints || []).map(function (p) { return printLink(p, p.signable); }).join("") +
+				(d.prints || []).map(function (p) { return printLink(p, p.signable); }).join("") + editButton(d) +
 				(sharePrint(d) ? shareButton(sharePrint(d).url, d.name, sharePrint(d).signable) :
 					(d.file_url ? shareButton(d.file_url, d.file_name || d.name) : "")) +
 				(!d.file_url && data.can_upload ? uploadButton("Upload " + d.name, 'data-upload="' + esc(d.row) + '"') : "") +
@@ -455,10 +567,10 @@
 		m.body.innerHTML = html;
 		/* At the top: the PM Surya Ghar portal, for a task done on it, and Share - every
 		   document the panel can share, all ticked to start. */
-		m.head.innerHTML = (SURYA_GHAR_TASKS.indexOf(task.code) !== -1
-			? '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + SURYA_GHAR_PORTAL + '" target="_blank" rel="noopener"' +
-				' title="Open the PM Surya Ghar portal in a new tab">' + svgIcon("globe") + "<span>PM Surya Ghar portal</span></a>"
-			: "") +
+		m.head.innerHTML = PORTALS.filter(function (p) { return p.tasks.indexOf(task.code) !== -1; }).map(function (p) {
+			return '<a class="a3s-btn a3s-btn--secondary a3s-btn--sm" href="' + p.url + '" target="_blank" rel="noopener"' +
+				' title="Open the ' + p.label + ' in a new tab">' + svgIcon("globe") + "<span>" + p.label + "</span></a>";
+		}).join("") +
 			(m.body.querySelector("[data-share-url]")
 				? '<button type="button" class="a3s-btn a3s-btn--primary a3s-btn--sm" data-share-many>' + svgIcon("share") + "<span>Share</span></button>"
 				: "");
@@ -473,6 +585,9 @@
 				});
 			});
 		}
+		Array.prototype.forEach.call(m.body.querySelectorAll("[data-edit-doc]"), function (b) {
+			b.addEventListener("click", function () { openEditor(m, task, b.dataset.editDoc, b.dataset.editName); });
+		});
 		var picker = m.body.querySelector("[data-file]");
 		var pending = null;
 		m.body.addEventListener("click", function (event) {

@@ -404,16 +404,18 @@ def print_summary(doc):
 	rows.append(("Site Location", " in ".join(p for p in (building, place) if p)))
 	# Every option's plant, as the client writes it: "20 kWp/25kWp, Three Phase".
 	sizes = list(dict.fromkeys(_kwp(e) for e in (proposal_estimates(doc, est) if est else []) if _kwp(e))) or ([kwp] if kwp else [])
-	capacity = "/".join("{0:g}kWp".format(k) for k in sizes)
+	# "5.08kWp/3kWp/3.3kWp": a zero-width space after each slash, so several options wrap in the
+	# cell rather than running out of it as one unbreakable word.
+	capacity = "/\u200b".join("{0:g}kWp".format(k) for k in sizes)
 	if capacity and est and est.connection_type:
 		capacity += ", " + est.connection_type
 	rows.append(("Capacity of the Plant Proposed", capacity))
-	rows.append(("Tilt & Orientation", _tilt(survey, roof)))
+	rows.append(("Tilt & Orientation", TILT_ORIENTATION))
 	system = est.system_type if est else None
 	rows.append(("Type of Solar Power Plant", "{0} Rooftop".format(SYSTEM_NAMES.get(system, system)) if system else ""))
-	area = flt(roof.area_per_kw_sqft) * kwp if roof and flt(roof.area_per_kw_sqft) and kwp else \
-		flt(frappe.db.get_value("Solar Package", est.solar_package, "area_required_sqft")) if est and est.solar_package else 0
-	rows.append(("Roof Area Required", "{0:,.0f} Sq. Ft.".format(area) if area else ""))
+	# One area for each option the capacity row lists, in its order: "407/240 Sq. Ft.".
+	areas = [roof_area(k) for k in sizes if flt(k)]
+	rows.append(("Roof Area Required", "/\u200b".join("{0:,}".format(a) for a in areas) + " Sq. Ft." if areas else ""))
 	rows.append(("Type of Roof", roof.roof_type if roof else ""))
 	if system in ("Hybrid", "Off-Grid") or batteries:
 		inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in inverters)
@@ -475,19 +477,18 @@ def base_estimate(doc):
 	return frappe.get_doc("Solar Design Estimate", name) if name else None
 
 
-def _tilt(survey, roof):
-	"""'10 - 12 degrees, South': the usable roof segments' tilt and facing, else the roof type's tilt."""
-	segments = [s for s in (survey.get("roof_segments") if survey else None) or [] if s.get("is_usable") or len(survey.roof_segments) == 1]
-	tilts = sorted({flt(s.tilt_degrees) for s in segments if flt(s.tilt_degrees)})
-	facing = [s.azimuth for s in segments if s.azimuth]
-	facing = max(set(facing), key=facing.count) if facing else ""
-	if tilts:
-		tilt = "{0:g} - {1:g} degrees".format(tilts[0], tilts[-1]) if len(tilts) > 1 else "{0:g} degrees".format(tilts[0])
-	elif roof and flt(roof.typical_tilt_degrees):
-		tilt = "{0:g} degrees".format(flt(roof.typical_tilt_degrees))
-	else:
-		tilt = ""
-	return ", ".join(p for p in (tilt, facing) if p)
+#: The roof a plant needs: 80 sq ft for every kWp of panels, whatever the roof (3 kWp -> 240 sq ft).
+AREA_PER_KWP = 80
+
+
+def roof_area(kwp):
+	"""The roof area a plant of `kwp` needs, in sq ft (AREA_PER_KWP)."""
+	return round(flt(kwp) * AREA_PER_KWP)
+
+
+#: How the panels are set: on a fixed structure at 10-12 degrees, facing south - the same on every
+#: roof, whatever its own slope (a roof segment's tilt is the roof's, not the panels').
+TILT_ORIENTATION = "Fixed @ 10 - 12 degrees, South"
 
 
 # ------------------------------------------------------------------ section 3.2: major components

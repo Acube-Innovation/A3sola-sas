@@ -77,6 +77,8 @@
 	.a3s3 h3.a3s3-top { margin-top: 0; }
 	.a3s3-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 	.a3s3-table th, .a3s3-table td { border: 1px solid #222; padding: 2pt 6pt; vertical-align: middle; text-align: left; }
+	/* A long word (several capacities, a long specification) breaks inside its cell, never past it. */
+	.a3s3-table td { word-wrap: break-word; overflow-wrap: break-word; }
 	.a3s3-table th { font-weight: 700; text-align: center; }
 	.a3s3-table td.c { text-align: center; }
 	.a3s3-components td { font-size: 14pt; }
