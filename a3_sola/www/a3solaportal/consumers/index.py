@@ -106,7 +106,6 @@ def get_context(context):
 		r["route"] = record_route(SLUG, r.name)
 		r["initials"] = initials(r.consumer_name or r.name)
 		r["customer_name"] = customers.get(r.customer) or ""
-		r["customer_route"] = "/app/customer/{0}".format(frappe.utils.quote(r.customer)) if r.customer else ""
 		r["lead_route"] = "/a3solaportal/leads/{0}".format(frappe.utils.quote(r.lead)) if r.lead else ""
 		lead = leads.get(r.lead) or {}
 		r["scheme_name"] = schemes.get(lead.get("subsidy_scheme")) or ""

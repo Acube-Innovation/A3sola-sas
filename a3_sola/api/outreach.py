@@ -92,15 +92,24 @@ def render_message(template, doc=None, context=None):
 	return "\n\n".join([body.strip(), *tail]).strip()
 
 
+#: WhatsApp's click-to-chat, which opens the app on a phone and WhatsApp Web on a desktop.
+WHATSAPP_SEND = "https://api.whatsapp.com/send"
+
+
 @frappe.whitelist()
 def whatsapp_link(mobile_no, message):
-	"""A wa.me deep link prefilled with the rendered text.
+	"""A WhatsApp click-to-chat link prefilled with the rendered text.
+
+	api.whatsapp.com/send, not wa.me: wa.me redirects there and on the way turns every emoji
+	outside the basic plane (the signature's phone and globe) into "\ufffd".
 
 	Deliberately not an API send: the client messages from a personal number and the
 	business-API decision has not been taken. This puts the message one tap away without
 	pretending to send on their behalf.
 	"""
-	return f"https://wa.me/{whatsapp_number(mobile_no)}?text={urllib.parse.quote(message or '')}"
+	number = whatsapp_number(mobile_no)
+	phone = f"phone={number}&" if number else ""
+	return f"{WHATSAPP_SEND}?{phone}text={urllib.parse.quote(message or '')}"
 
 
 def whatsapp_number(mobile_no):

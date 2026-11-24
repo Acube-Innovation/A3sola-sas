@@ -34,13 +34,6 @@
 			<span>{{ submit_label or "Submit" }}</span>
 		</button>
 		{%- endif %}
-		{%- elif submitted and not hide_desk_amend %}
-		{#- Submitted documents are closed to `save`, so the only honest offer is the desk,
-		    where they can be amended or cancelled. -#}
-		<a class="a3s-btn a3s-btn--secondary" href="{{ desk_route }}">
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg>
-			<span>Amend in ERPNext</span>
-		</a>
 		{%- endif %}
 		{%- if can_delete %}
 		{#- Deletes the record and everything made for it (api/cascade_delete); the modal

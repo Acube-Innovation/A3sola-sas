@@ -125,5 +125,5 @@ class TestPaymentFollowUp(FrappeTestCase):
 			state = payment_followup.state(self.inst, "ADV")
 		self.assertIn("SAN/42", message["message"])
 		self.assertIn("₹", message["message"])
-		self.assertTrue(message["whatsapp"].startswith("https://wa.me/919876543210?text="))
+		self.assertTrue(message["whatsapp"].startswith("https://api.whatsapp.com/send?phone=919876543210&text="))
 		self.assertEqual((state["payer"], state["name"], state["person"]), ("Bank", "SBI, Aluva", "Mr Nair"))

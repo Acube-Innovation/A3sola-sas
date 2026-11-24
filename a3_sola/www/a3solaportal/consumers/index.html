@@ -69,7 +69,7 @@
 				<td>
 					<div class="a3s-stack">
 						{%- if r.customer_name %}
-						<a class="a3s-table__link" href="{{ r.customer_route }}">{{ r.customer_name | e }}</a>
+						<span>{{ r.customer_name | e }}</span>
 						{%- else %}
 						<span class="a3s-table__muted">No customer yet</span>
 						{%- endif %}

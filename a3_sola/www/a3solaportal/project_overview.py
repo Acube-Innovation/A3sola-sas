@@ -13,7 +13,7 @@ from frappe.utils import cint, flt, fmt_money, format_date, quote
 
 from a3_sola.api import payment_tasks
 from a3_sola.api.portal_fields import link_title
-from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, desk_route, initials, record_route
+from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, initials, record_route
 
 #: Board columns: (heading, template activity scope, icon), in the order the work starts -
 #: after the order, the first step is registering on the PM Surya Ghar portal, where the
@@ -146,9 +146,8 @@ def _summary(consumer, electricity, solar, proposal):
 def _route(doctype, name):
 	if not name:
 		return ""
-	if doctype in SLUG_OF_DOCTYPE:
-		return record_route(SLUG_OF_DOCTYPE[doctype], name)
-	return desk_route(doctype, name)
+	# A record the portal has no page for is shown, not linked: never to the desk.
+	return record_route(SLUG_OF_DOCTYPE[doctype], name) if doctype in SLUG_OF_DOCTYPE else ""
 
 
 def _date(value):

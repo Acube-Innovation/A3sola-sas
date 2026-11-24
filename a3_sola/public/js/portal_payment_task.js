@@ -199,12 +199,18 @@
 		return html;
 	}
 
+	/* The chat link with the message as edited. api.whatsapp.com, not wa.me: wa.me's
+	   redirect turns emoji into "\ufffd". */
+	function waWithText(link, text) {
+		var base = link || "https://api.whatsapp.com/send?text=";
+		return base.replace(/([?&])text=[^&]*/, "$1text=" + encodeURIComponent(text || ""));
+	}
+
 	function askPanel(f) {
 		if (!ask.message) return '<p class="a3s-field__hint" style="margin-top:0.75rem">Preparing the message…</p>';
 		var mail = "mailto:" + encodeURIComponent(ask.email || "") + "?subject=" + encodeURIComponent(ask.subject || "") +
 			"&body=" + encodeURIComponent(ask.text);
-		var wa = ask.whatsapp ? ask.whatsapp.split("?text=")[0] + "?text=" + encodeURIComponent(ask.text)
-			: "https://wa.me/?text=" + encodeURIComponent(ask.text);
+		var wa = waWithText(ask.whatsapp, ask.text);
 		return '<div class="a3s-field" style="margin-top:0.75rem"><label for="a3s-ask-text">Message</label>' +
 			'<textarea id="a3s-ask-text" rows="9" data-ask="text">' + esc(ask.text) + "</textarea>" +
 			(ask.statement ? "" : '<span class="a3s-field__hint">The payment statement could not be linked; attach it yourself.</span>') + "</div>" +
@@ -314,7 +320,7 @@
 			/* The send links carry the message as edited. */
 			if (e.target.dataset.ask === "text") {
 				var wa = body.querySelector('[data-via="WhatsApp"]'), mail = body.querySelector('[data-via="Email"]');
-				if (wa) wa.href = (ask.whatsapp ? ask.whatsapp.split("?text=")[0] : "https://wa.me/") + "?text=" + encodeURIComponent(ask.text);
+				if (wa) wa.href = waWithText(ask.whatsapp, ask.text);
 				if (mail) mail.href = "mailto:" + encodeURIComponent(ask.email || "") + "?subject=" + encodeURIComponent(ask.subject || "") +
 					"&body=" + encodeURIComponent(ask.text);
 			}

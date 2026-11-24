@@ -2,8 +2,9 @@
  * For license information, please see license.txt
  *
  * The share buttons of a document's page (templates/includes/portal_share.html): the
- * device's share sheet for the PDF itself, and the WhatsApp and email links, whose click
- * also downloads the PDF to drop into the chat or the email - a link carries no file.
+ * device's share sheet for the PDF itself, and the WhatsApp link. A link carries no file,
+ * so on a phone the WhatsApp tap shares the PDF through the share sheet instead; elsewhere
+ * the click opens the chat and downloads the PDF to drop into it.
  */
 (function () {
 	"use strict";
@@ -17,38 +18,91 @@
 	function wire(share) {
 	/* ---- share the PDF itself, through the device's share sheet ---------- */
 	var shareButton = share.querySelector("[data-share-file]");
-	if (shareButton && navigator.canShare && window.File
-			&& navigator.canShare({ files: [new File([""], "x.pdf", { type: "application/pdf" })] })) {
-		shareButton.hidden = false;
-		shareButton.addEventListener("click", function () {
-			shareButton.disabled = true;
-			shareButton.classList.add("is-busy");
-			fetch(share.dataset.pdf, { credentials: "same-origin" })
+	var hint = share.querySelector("[data-share-hint]");
+	var hintTimer = null;
+	var canShareFile = !!(navigator.canShare && window.File
+		&& navigator.canShare({ files: [new File([""], "x.pdf", { type: "application/pdf" })] }));
+	/* A phone: there the share sheet carries the PDF into WhatsApp as a real attachment,
+	   which a chat link never can. A desktop browser that shares files keeps the link,
+	   since its share sheet seldom offers WhatsApp. */
+	var phone = canShareFile && window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
+	function say(text, keep) {
+		if (!hint) return;
+		hint.textContent = text;
+		hint.hidden = false;
+		window.clearTimeout(hintTimer);
+		if (!keep) hintTimer = window.setTimeout(function () { hint.hidden = true; }, 12000);
+	}
+
+	/* The PDF as a file, fetched once and kept: the share sheet must open close to the tap,
+	   so on a phone it is fetched as the page opens, ready before the tap. */
+	var pdfFile = null, pdfPromise = null;
+	function getPdf() {
+		if (!pdfPromise) {
+			pdfPromise = fetch(share.dataset.pdf, { credentials: "same-origin" })
 				.then(function (r) {
 					if (!r.ok) throw new Error("The PDF could not be made.");
 					return r.blob();
 				})
 				.then(function (blob) {
-					var file = new File([blob], share.dataset.file || "proposal.pdf", { type: "application/pdf" });
-					return navigator.share({ files: [file], title: share.dataset.title, text: share.dataset.text });
-				})
-				.catch(function (e) {
-					// Closing the share sheet is not an error worth saying.
-					if (e && e.name !== "AbortError") window.alert(e.message || "Sharing did not work.");
-				})
-				.then(function () {
-					shareButton.disabled = false;
-					shareButton.classList.remove("is-busy");
-				});
+					pdfFile = new File([blob], share.dataset.file || "proposal.pdf", { type: "application/pdf" });
+					return pdfFile;
+				}, function (e) { pdfPromise = null; throw e; });
+		}
+		return pdfPromise;
+	}
+
+	function shareFile(button, text) {
+		button.classList.add("is-busy");
+		button.setAttribute("aria-disabled", "true");
+		// Shared at once when the file is in hand, so the tap still counts for the share sheet.
+		var ready = pdfFile ? Promise.resolve(pdfFile) : getPdf();
+		return ready
+			.then(function (file) {
+				return navigator.share({ files: [file], title: share.dataset.title, text: text });
+			})
+			.catch(function (e) {
+				// Closing the share sheet is not an error worth saying.
+				if (e && e.name === "AbortError") return;
+				// The PDF took too long and the tap lapsed: it is ready now, for the next one.
+				if (e && e.name === "NotAllowedError" && pdfFile) { say("The PDF is ready \u2013 tap again to share it."); return; }
+				window.alert((e && e.message) || "Sharing did not work.");
+			})
+			.then(function () {
+				button.classList.remove("is-busy");
+				button.removeAttribute("aria-disabled");
+			});
+	}
+
+	if (shareButton && canShareFile) {
+		shareButton.hidden = false;
+		shareButton.addEventListener("click", function () {
+			if (shareButton.classList.contains("is-busy")) return;
+			shareFile(shareButton, share.dataset.text);
 		});
 	}
 
 	/* ---- WhatsApp and email: the chat opens by the link, and the PDF downloads to go in it */
-	var hint = share.querySelector("[data-share-hint]");
-	var hintTimer = null;
 	{
 		Array.prototype.forEach.call(share.querySelectorAll("[data-share-download]"), function (link) {
-			link.addEventListener("click", function () {
+			var isWhatsApp = link.classList.contains("a3s-square-btn--whatsapp");
+			if (isWhatsApp && phone) {
+				// The PDF goes in attached, with the message as its caption: choose WhatsApp
+				// and the customer in the share sheet.
+				link.title = "Share the PDF on WhatsApp";
+				getPdf().catch(function () { /* said on the tap */ });
+			}
+			link.addEventListener("click", function (e) {
+				if (isWhatsApp && phone) {
+					e.preventDefault();
+					if (link.classList.contains("is-busy")) return;
+					if (!pdfFile) say("Getting the PDF ready\u2026", true);
+					shareFile(link, share.dataset.text).then(function () {
+						if (hint && hint.textContent === "Getting the PDF ready\u2026") hint.hidden = true;
+					});
+					return;
+				}
 				// Not prevented: the link still opens WhatsApp or the mail app, as a click does.
 				var save = document.createElement("a");
 				save.href = share.dataset.download;
@@ -56,12 +110,7 @@
 				document.body.appendChild(save);
 				save.click();
 				save.remove();
-				if (hint) {
-					hint.textContent = "Downloading " + (share.dataset.file || "the proposal PDF") + " \u2013 " + link.dataset.shareDownload + ".";
-					hint.hidden = false;
-					window.clearTimeout(hintTimer);
-					hintTimer = window.setTimeout(function () { hint.hidden = true; }, 12000);
-				}
+				say("Downloading " + (share.dataset.file || "the proposal PDF") + " \u2013 " + link.dataset.shareDownload + ".");
 			});
 		});
 	}

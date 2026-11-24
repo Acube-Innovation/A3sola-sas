@@ -1472,10 +1472,10 @@ def document_doc(doc):
 
 @frappe.whitelist()
 def whatsapp_link(name):
-	"""A wa.me link to the consumer (else the lead), prefilled with the estimate's summary.
+	"""A WhatsApp chat link to the consumer (else the lead), prefilled with the estimate's summary.
 
 	Opens WhatsApp with the message ready to send, as the proposal's button does; it does
-	not send on anyone's behalf. The PDF is not attached - wa.me cannot carry a file - so
+	not send on anyone's behalf. The PDF is not attached - a chat link cannot carry a file - so
 	it is downloaded beside it and sent in the chat.
 	"""
 	from a3_sola.api import outreach, portal_share

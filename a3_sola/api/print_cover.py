@@ -690,7 +690,8 @@ WAY_FORWARD = (
 	"Please feel free to reach out to us:",
 )
 #: (name, designation, phone) - the company's authorised signatory, if set, takes the first.
-CONTACTS = (("Nevil Jose", "Managing Partner", "+91 8891024312"), ("Shiju N K", "Strategic Partner", "+91 9895778516"))
+#: Only the Managing Partner: the Strategic Partner was taken off the proposal and quotation.
+CONTACTS = (("Nevil Jose", "Managing Partner", "+91 8891024312"),)
 
 
 def registration_fees(estimates):

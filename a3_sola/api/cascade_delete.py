@@ -268,7 +268,7 @@ def delete(doctype, name, confirm=None):
 	doc = _load(doctype, name)
 	plan = collect(doc.doctype, doc.name)
 	if plan["blockers"]:
-		frappe.throw(_("{0} cannot be deleted: {1}. Cancel those in ERPNext first.").format(
+		frappe.throw(_("{0} cannot be deleted: {1}. Ask your office to cancel those first.").format(
 			doc.name, ", ".join(f"{b['doctype']} {b['name']}" for b in plan["blockers"])), title=_("Not deleted"))
 	found = plan["found"]
 	parties = _party_records(found)

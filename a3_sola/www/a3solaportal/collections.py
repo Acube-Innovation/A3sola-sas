@@ -165,11 +165,6 @@ def get_collection(slug):
 	return cfg
 
 
-def desk_route(doctype, name):
-	"""The ERPNext desk URL for one record, for collections without a portal detail page."""
-	return "/app/{0}/{1}".format(doctype.lower().replace(" ", "-"), frappe.utils.quote(name))
-
-
 # ---------------------------------------------------------------- list rendering
 def _list_columns(meta):
 	cols = []
@@ -359,7 +354,7 @@ def list_context(context, slug):
 		) or name
 		cells.append({
 			"text": primary_text, "primary": True, "num": False, "badge": False,
-			"route": record_route(slug, name) if has_detail(slug) else desk_route(doctype, name),
+			"route": record_route(slug, name) if has_detail(slug) else "",  # never to the desk
 			"image": ((rec.get(image_field) or "") if image_field else "")
 				or (images.get(rec.get(person.fieldname)) or "" if person else ""),
 			"initials": initials(primary_text),
@@ -1483,8 +1478,6 @@ def detail_context(context, slug, name):
 	if slug == "design-estimates":
 		context.pdf_route = "/api/method/a3_sola.api.portal_estimate.download_pdf?name=" + frappe.utils.quote(doc.name)
 	context.list_route = f"/a3solaportal/{slug}"
-	# The desk is where a submitted document is amended, so the page still offers a way in.
-	context.desk_route = desk_route(doc.doctype, doc.name)
 	context.submitted = frappe.utils.cint(doc.get("docstatus")) == 1
 	context.can_submit = (
 		slug in SUBMIT_SLUGS

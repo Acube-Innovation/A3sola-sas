@@ -52,5 +52,4 @@ def quotation_aside(context, name):
 	context.record_name = doc.name
 	context.can_write = is_editable(doc)
 	context.submitted = frappe.utils.cint(doc.docstatus) == 1
-	context.desk_route = "/app/quotation/{0}".format(frappe.utils.quote(doc.name))
 	return context

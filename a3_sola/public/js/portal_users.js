@@ -253,7 +253,7 @@
 			'<button type="button" class="a3s-btn a3s-btn--secondary" data-email' + (choices.can_email ? "" : " disabled") + ">" + icon("mail") + "<span>Send e-mail</span></button>" +
 			'<button type="button" class="a3s-btn a3s-btn--ghost" data-copy>' + icon("clipboard") + "<span>Copy message</span></button></div>" +
 			(r.has_mobile ? "" : '<p class="a3s-field__hint">No mobile number on this user: WhatsApp will ask who to send it to.</p>') +
-			(choices.can_email ? "" : '<p class="a3s-field__hint">E-mail needs the company\'s outgoing mailbox set up in ERPNext.</p>');
+			(choices.can_email ? "" : '<p class="a3s-field__hint">E-mail needs the company\'s outgoing mailbox, which your administrator sets up.</p>');
 		box.querySelector("[data-copy]").addEventListener("click", function () {
 			navigator.clipboard.writeText(r.text).then(function () { m.status("Message copied.", "ok"); }, function () { m.status("Select the message above and copy it.", "warn"); });
 		});

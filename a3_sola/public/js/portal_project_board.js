@@ -284,7 +284,7 @@
 				/* Opened now, while the click still counts, so no pop-up blocker stops it. */
 				var win = window.open("", "_blank");
 				links(urls).then(function (r) {
-					var href = "https://wa.me/?text=" + encodeURIComponent(r.message);
+					var href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(r.message);
 					if (win) win.location = href; else window.open(href, "_blank");
 					s.status("");
 				}).catch(function (err) { if (win) win.close(); s.status(err.message, "error"); });

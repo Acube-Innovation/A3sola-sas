@@ -44,7 +44,7 @@
 				<p class="a3s-card__text">{{ task.detail }}</p>
 				{%- if not task.done %}
 				<p style="margin:0.75rem 0 0;display:flex;gap:1rem;align-items:center">
-					<a class="a3s-btn a3s-btn--ghost" href="{{ task.route }}">Do this</a>
+					{%- if task.route %}<a class="a3s-btn a3s-btn--ghost" href="{{ task.route }}">Do this</a>{% endif %}
 					<button class="a3s-link-button" data-done="{{ task.code }}">Mark as done</button>
 				</p>
 				{%- endif %}

@@ -46,7 +46,7 @@ class TestCustomerReview(FrappeTestCase):
 		frappe.db.set_value("Solar Consumer", self.installation.solar_consumer, "mobile_no", "9876543210", update_modified=False)
 		review = make_review(self.installation)
 		result = ctl.request_review(review.name, via="WhatsApp")
-		self.assertTrue(result["link"].startswith("https://wa.me/919876543210?text="))
+		self.assertTrue(result["link"].startswith("https://api.whatsapp.com/send?phone=919876543210&text="))
 		self.assertIn("g.page", result["message"])
 		review.reload()
 		self.assertEqual((review.google_review_status, review.requested_via), ("Requested", "WhatsApp"))

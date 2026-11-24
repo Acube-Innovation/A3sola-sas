@@ -19,7 +19,7 @@ from frappe.utils import cint, flt
 from a3_sola.api import portal_chain, read_from
 from a3_sola.api.portal_fields import NUMERIC_TYPES, is_portal_file
 from a3_sola.www.a3solaportal.collections import (
-	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields, desk_route,
+	COLLECTIONS, DETAIL_SLUGS, SUBMIT_SLUGS, get_collection, form_extra, form_fields,
 	is_editable, load_record, edit_allowlist, item_rows, lead_first_allowlist, needs_prompt_name, record_route,
 	TASK_FORM_CHECKS, task_form_choices, task_form_groups, task_source,
 	reimbursable,
@@ -99,7 +99,7 @@ def create_record(slug=None, source_dt=None, source=None, source_task=None, **va
 	route = record_route(slug, doc.name) if slug in DETAIL_SLUGS else f"/a3solaportal/{slug}"
 	if cfg.get("edit_after_create") and is_editable(doc):
 		route = record_route(slug, doc.name) + "/edit"
-	return {"name": doc.name, "route": route, "desk": desk_route(doctype, doc.name)}
+	return {"name": doc.name, "route": route}
 
 
 def _create_for_task(slug, cfg, installation, task_code, values):
@@ -134,7 +134,7 @@ def _create_for_task(slug, cfg, installation, task_code, values):
 		doc.update(sets)
 	doc.insert()
 	# On to the document's page, where the task is completed (Complete task / Submit).
-	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(cfg["doctype"], doc.name)}
+	return {"name": doc.name, "route": record_route(slug, doc.name)}
 
 
 def _set_posted(doc, allowed, values):
@@ -188,7 +188,7 @@ def create_from_lead(slug=None, tables=None, **values):
 	doc.flags.portal_task_rows = _task_rows(tables)
 
 	doc.insert()
-	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(cfg["doctype"], doc.name)}
+	return {"name": doc.name, "route": record_route(slug, doc.name)}
 
 
 def _design_rows(tables):
@@ -284,7 +284,7 @@ def create_mapped(slug=None, source_dt=None, source=None):
 		frappe.get_attr(step["prepare"])(source_doc)
 		route = "/a3solaportal/{0}/new?source_dt={1}&source={2}".format(
 			slug, frappe.utils.quote(source_dt), frappe.utils.quote(source))
-		return {"name": "", "route": route, "desk": ""}
+		return {"name": "", "route": route}
 	if step.get("make"):
 		# The step's own creator writes the whole record (the project, by the handoff).
 		name = frappe.get_attr(step["make"])(source_doc)
@@ -293,11 +293,11 @@ def create_mapped(slug=None, source_dt=None, source=None):
 				source, _(step.get("kind_label") or step["doctype"]).lower()), frappe.ValidationError)
 		# A record made to be finished (the customer, from its lead) opens in its edit form.
 		route = record_route(slug, name) + ("/edit" if step.get("open") == "edit" else "")
-		return {"name": name, "route": route, "desk": desk_route(step["doctype"], name)}
+		return {"name": name, "route": route}
 
 	doc = frappe.get_attr(step["via"])(source)
 	doc.insert()
-	return {"name": doc.name, "route": record_route(slug, doc.name), "desk": desk_route(step["doctype"], doc.name)}
+	return {"name": doc.name, "route": record_route(slug, doc.name)}
 
 
 #: What a portal image upload will accept. Narrow on purpose: this endpoint exists to put

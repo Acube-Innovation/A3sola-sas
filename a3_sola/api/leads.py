@@ -101,9 +101,6 @@ def lead_route(name):
 	return "/a3solaportal/leads/{0}".format(quote(name))
 
 
-def desk_route(name):
-	"""The ERPNext desk form, offered as a secondary link for system users."""
-	return "/app/lead/{0}".format(quote(name))
 
 
 def display_name(doc):

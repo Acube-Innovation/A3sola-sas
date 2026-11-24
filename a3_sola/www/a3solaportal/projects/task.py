@@ -14,12 +14,13 @@ import frappe
 
 from a3_sola.api import design_freeze, dispatch_task, partner_scope, payment_tasks, serial_entry, serials_task, supplier_bill, tasks
 from a3_sola.www.a3solaportal import fill_shell, require_login
-from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, desk_route, record_route
+from a3_sola.www.a3solaportal.collections import SLUG_OF_DOCTYPE, record_route
 
 no_cache = 1
 
-#: ERPNext forms with item tables the portal's create form cannot fill: created in the desk.
-DESK_CREATE = {"Purchase Order", "Delivery Note"}
+#: ERPNext forms with item tables the portal's create form cannot fill. The portal never
+#: sends anyone to the desk, so the task says where it is made instead.
+NOT_CREATED_HERE = {"Purchase Order", "Delivery Note"}
 
 
 def get_context(context):
@@ -46,26 +47,29 @@ def get_context(context):
 	except frappe.ValidationError as e:
 		return _nowhere(context, name, project, frappe.utils.strip_html(str(e)))
 
-	frappe.local.flags.redirect_location = task_target(name, code, target) or project
+	url = task_target(name, code, target)
+	if not url and target.get("doctype"):
+		return _nowhere(context, name, project, frappe._(
+			"This task's {0} is not made in the portal. Ask your office to make it; the task updates when it is.").format(
+			frappe._(target["doctype"])))
+	frappe.local.flags.redirect_location = url or project
 	raise frappe.Redirect(302)
 
 
 def task_target(installation, code, target):
-	"""The URL a task opens at, from what `open_task` returned, or None for nothing to open."""
+	"""The portal URL a task opens at, from what `open_task` returned, or None for nothing to
+	open in the portal. Never the ERPNext desk."""
 	doctype, docname, options = target.get("doctype"), target.get("name"), target.get("route_options")
 	if target.get("url"):
 		return target["url"]  # a task done on its own page (payment, design freeze, dispatch, serials)
 	if docname:
-		if doctype in SLUG_OF_DOCTYPE:
-			return record_route(SLUG_OF_DOCTYPE[doctype], docname)
-		return desk_route(doctype, docname)
+		return record_route(SLUG_OF_DOCTYPE[doctype], docname) if doctype in SLUG_OF_DOCTYPE else None
 	if not options:
 		return None
-	if doctype in SLUG_OF_DOCTYPE and doctype not in DESK_CREATE:
+	if doctype in SLUG_OF_DOCTYPE and doctype not in NOT_CREATED_HERE:
 		query = {"source_dt": "Solar Installation", "source": installation, "task": code}
 		return f"/a3solaportal/{SLUG_OF_DOCTYPE[doctype]}/new?{urlencode(query)}"
-	options = {k: v for k, v in options.items() if v not in (None, "")}
-	return "/app/{0}/new?{1}".format(frappe.scrub(doctype).replace("_", "-"), urlencode(options))
+	return None
 
 
 def _payment(context, name, code, project):

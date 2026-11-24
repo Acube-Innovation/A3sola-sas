@@ -35,7 +35,7 @@ class TestSerialsTask(FrappeTestCase):
 		self.assertEqual(state["contractor"]["contractor_name"], self.contractor.contractor_name)
 		self.assertEqual((len(state["serials"]["Module"]), len(state["serials"]["Inverter"])), (6, 1))
 		self.assertEqual(state["email"]["to"], "sparks@example.com")
-		self.assertTrue(state["whatsapp"].startswith("https://wa.me/919000022222"))
+		self.assertTrue(state["whatsapp"].startswith("https://api.whatsapp.com/send?phone=919000022222"))
 		self.assertEqual([p["label"] for p in state["prints"]], ["On letterhead", "Without letterhead"])
 		self.assertTrue(state["prints"][1]["download"].endswith("letterhead=0&download=1"))
 

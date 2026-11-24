@@ -148,8 +148,8 @@ def send_email(installation, recipients, subject, message, letterhead=1, cc=None
 	account = portal_share._outgoing_account(INSTALLATION)
 	if not account:
 		frappe.throw(
-			_("No mailbox is set up to send from. In ERPNext, open Email Account, add the company's mailbox "
-			  "with Enable Outgoing and Default Outgoing ticked, then try again."),
+			_("No mailbox is set up to send from. Ask your administrator to set up the company's outgoing "
+			  "mailbox, then try again."),
 			title=_("Email Not Set Up"),
 		)
 	file_name, pdf = completion_print.render(inst, letterhead=letterhead)

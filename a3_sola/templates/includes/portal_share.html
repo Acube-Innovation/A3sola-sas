@@ -36,7 +36,8 @@
 		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg>
 	</a>
 	{%- endif %}
-	{#- A link carries no file: the click also downloads the PDF, to drop into the chat. -#}
+	{#- A link carries no file: on a phone the tap shares the PDF itself through the share sheet
+	    (portal_share.js); elsewhere it opens the chat and downloads the PDF, to drop in. -#}
 	<a class="a3s-square-btn a3s-square-btn--whatsapp" href="{{ share.whatsapp | e }}" target="_blank" rel="noopener"
 	   data-share-download="drag it into the WhatsApp chat, then press Send"
 	   title="Download the PDF and open WhatsApp{% if share.whatsapp_to %} with {{ share.whatsapp_to | e }}{% endif %}" aria-label="Download the PDF and share on WhatsApp">

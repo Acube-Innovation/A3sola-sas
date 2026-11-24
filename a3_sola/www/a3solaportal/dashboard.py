@@ -68,7 +68,7 @@ ACTION_CARDS = [
 		"ic": "wrench",
 		"tone": "sky",
 		"cta": "Open installations",
-		"route": "/app/solar-installation",
+		"route": "/a3solaportal/projects",
 	},
 	{
 		"title": "Subsidy Pipeline",
@@ -76,6 +76,6 @@ ACTION_CARDS = [
 		"ic": "wallet",
 		"tone": "green",
 		"cta": "View claims",
-		"route": "/app/subsidy-claim",
+		"route": "/a3solaportal/subsidy-claims",
 	},
 ]
