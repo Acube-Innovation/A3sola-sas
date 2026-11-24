@@ -307,6 +307,11 @@
 		var phase = field("connection_type") ? field("connection_type").value : "";
 		var system = field("system_type") ? field("system_type").value : "";
 		var picked = {};  // each component's chosen label, for the text below
+		/* An option that is one of the package's Pricing Options takes that row's panel and
+		   inverter; a row the package (or the connection) no longer has is let go. */
+		var pricingInput = tr.querySelector("[data-pricing]");
+		var combo = pricingRow(info, phase, pricingInput ? pricingInput.value : "");
+		if (pricingInput && !combo) pricingInput.value = "";
 		Array.prototype.forEach.call(tr.querySelectorAll("[data-component]"), function (select) {
 			var wrap = select.closest(".a3s-de-sizing__part");
 			var onlyFor = wrap && wrap.dataset.onlyFor ? wrap.dataset.onlyFor.split("|") : null;
@@ -316,6 +321,8 @@
 				list = list.filter(function (o) { return !o.phase || o.phase === phase; });
 			}
 			var keep = select.value || select.dataset.value || "";
+			if (combo && select.dataset.component === "inverters") keep = combo.inverter;
+			if (combo && select.dataset.component === "panels") keep = combo.panel;
 			select.innerHTML = "";
 			if (!list.length) select.appendChild(new Option("", ""));
 			list.forEach(function (o) {
@@ -338,16 +345,26 @@
 		if (shown) {
 			var invSel = tr.querySelector('[data-component="inverters"]');
 			var invRow = info && invSel ? (info.inverters || []).filter(function (o) { return o.value === invSel.value; })[0] : null;
-			var panelText = (invRow && invRow.panel_label) || picked.panels;
-			shown.textContent = [picked.inverters, panelText].filter(Boolean).join("\n") || "\u2014";
+			var panelText = combo ? combo.panel_label : ((invRow && invRow.panel_label) || picked.panels);
+			var inverterText = combo ? combo.inverter_label : picked.inverters;
+			shown.textContent = [inverterText, panelText].filter(Boolean).join("\n") || "\u2014";
 			shown.title = shown.textContent.replace("\n", " / ");
 		}
 		/* The option's price: the package built with the inverter chosen (the price list's MRP). */
 		var cost = tr.querySelector("[data-package-cost]");
 		var inv = tr.querySelector('[data-component="inverters"]');
 		var chosen = info && inv ? (info.inverters || []).filter(function (o) { return o.value === inv.value; })[0] : null;
-		var price = chosen && chosen.cost ? chosen.cost : (info ? info.package_cost : 0);
+		var price = combo && combo.cost ? combo.cost : chosen && chosen.cost ? chosen.cost : (info ? info.package_cost : 0);
 		if (cost) cost.textContent = price ? "System price " + money.format(price) : "";
+	}
+
+	/* The package's Pricing Options for a connection, the default first; one of them by name. */
+	function pricingRows(info, phase) {
+		var list = info ? (info.pricing || []).filter(function (o) { return !phase || !o.phase || o.phase === phase; }) : [];
+		return list.filter(function (o) { return o["default"]; }).concat(list.filter(function (o) { return !o["default"]; }));
+	}
+	function pricingRow(info, phase, name) {
+		return name ? pricingRows(info, phase).filter(function (o) { return o.value === name; })[0] || null : null;
 	}
 
 	function optionRows() {
@@ -545,6 +562,31 @@
 		var pkg = tr.querySelector('[data-field="solar_package"]').value;
 		var phase = (tr.querySelector('[data-field="connection_type"]') || {}).value || "";
 		var info = packages[pkg];
+		var combos = pricingRows(info, phase);
+		if (combos.length) {
+			/* One option per Pricing Options row: its panel, its inverter, its price. */
+			tr.querySelector("[data-pricing]").value = combos[0].value;
+			fillComponents(tr);
+			var last = tr;
+			combos.slice(1).forEach(function (combo) {
+				var row = cloneRow(tr);
+				row.querySelector("[data-pricing]").value = combo.value;
+				row.querySelector('[data-component="inverters"]').dataset.value = combo.inverter;
+				row.querySelector('[data-component="panels"]').dataset.value = combo.panel;
+				row.dataset.addedBy = tr.dataset.uid;
+				row.dataset.expandedKey = key;
+				last.parentNode.insertBefore(row, last.nextSibling);
+				wireRow(row);
+				last = row;
+			});
+			renumber();
+			if (combos.length > 1) {
+				setStatus("This package has " + combos.length + " pricing options, so each is an option of its own. Untick any you do not want.");
+			}
+			return;
+		}
+		var own0 = tr.querySelector("[data-pricing]");
+		if (own0) own0.value = "";
 		var inverters = info ? (info.inverters || []).filter(function (o) { return !phase || !o.phase || o.phase === phase; }) : [];
 		if (inverters.length) {
 			inverters = inverters.filter(function (o) { return o["default"]; }).concat(inverters.filter(function (o) { return !o["default"]; }));

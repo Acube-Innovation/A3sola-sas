@@ -45,7 +45,7 @@ def pdf(name, document=None, download=0, signed=1):
 		tpl = _template(code, inst.company)
 		context = documents.get_document_context(inst, tpl, source=(loan.doctype, loan.name))
 		context.loan = context.task = context.source = loan
-		pages.append(frappe.render_template(tpl.body_template or "", context))
+		pages.append(documents.edited_body(inst, code, frappe.render_template(tpl.body_template or "", context)))
 	signed = frappe.utils.cint(signed)
 	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
 		TITLES.get(document, "Loan Documents") + ("" if signed else " (unsigned)"))
@@ -80,11 +80,59 @@ def quotation(installation, download=0, signed=1):
 	tpl = _template(QUOTATION, inst.company)
 	context = documents.get_document_context(inst, tpl, source=("Solar Installation", inst.name))
 	signed = frappe.utils.cint(signed)
-	page = frappe.render_template(tpl.body_template or "", context)
+	page = documents.edited_body(inst, "BANK-QUOTATION-PAGE", frappe.render_template(tpl.body_template or "", context))
 	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
 		"Quotation" + ("" if signed else " (unsigned)"))
 	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed),
 		letter_head=documents.rim_letter_head())
+	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
+
+
+PROPOSAL = "BANK-PROJECT-PROPOSAL"
+
+
+def proposal_url(installation, download=False):
+	return "/api/method/a3_sola.api.loan_print.proposal?installation=" + frappe.utils.quote(installation) + (
+		"&download=1" if download else "")
+
+
+def proposal_prints(installation):
+	"""The Bank Quotation a task offers - the full project proposal, as the Loan Documents give the
+	bank - to view or to download, signed and sealed or not as the panel's box says."""
+	return [{"label": _("View Bank Quotation"), "url": proposal_url(installation), "signable": True},
+		{"label": _("Download Bank Quotation"), "url": proposal_url(installation, download=True), "signable": True}]
+
+
+@frappe.whitelist()
+def proposal(installation, download=0, signed=1):
+	"""The bank's Quotation for the job: the full project proposal in RIM's format - cover, letter,
+	the system, its cost, terms, payment, warranty and scope - the same as the Loan Documents'
+	Quotation, printed from the job itself, so a task before the loan application (Accept
+	Customer, Jan Samarth) has it too. The job's loan application fills the bank's details where
+	there is one. Read with the caller's own permissions on the job."""
+	from a3_sola.solar_operations.doctype.loan_application.loan_application import loan_defaults
+
+	inst = frappe.get_doc("Solar Installation", installation)
+	inst.check_permission("read")
+	if not has_quotation(inst):
+		frappe.throw(_("{0} has no quotation or design estimate yet.").format(inst.name), frappe.ValidationError)
+	name = frappe.db.get_value("Loan Application", {"solar_installation": inst.name, "docstatus": ["<", 2]}, "name",
+		order_by="docstatus desc, creation desc")
+	loan = frappe.get_doc("Loan Application", name) if name else frappe._dict()
+	# What the application leaves blank - or the whole of it, before there is one - as the job knows it.
+	for field, value in loan_defaults(inst).items():
+		if value not in (None, "") and loan.get(field) in (None, "", 0):
+			setattr(loan, field, value)
+	tpl = _template(PROPOSAL, inst.company)
+	context = documents.get_document_context(inst, tpl, source=("Loan Application", name) if name else
+		("Solar Installation", inst.name))
+	context.loan = context.task = context.source = loan
+	page = documents.edited_body(inst, PROPOSAL, frappe.render_template(tpl.body_template or "", context))
+	signed = frappe.utils.cint(signed)
+	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst),
+		"Quotation" + ("" if signed else " (unsigned)"))
+	frappe.local.response.filecontent = documents.letterhead_flow_pdf(page, inst.company, signed=bool(signed),
+		letter_head=documents.rim_letter_head(), cover=documents.bank_proposal_cover(inst, context))
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
 
 

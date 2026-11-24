@@ -226,21 +226,51 @@
 		return wait(500).then(function () { momentEl.hidden = true; card.innerHTML = ""; });
 	}
 	/* How long each moment stays: shorter while others wait. */
-	function holdMs() { return queue.length > 3 ? 3500 : queue.length ? 5000 : 7000; }
+	function holdMs() { return queue.length > 3 ? 4000 : queue.length ? 6000 : 9000; }
 
+	/* One figure of the estimate, counting up: `to` the number, `kind` money / years / kW. */
+	function stat(to, label, kind, extra) {
+		if (to === null || to === undefined || to === "" || (!Number(to) && kind !== "kw")) return "";
+		return '<div class="a3s-tv__stat2' + (extra ? " " + extra : "") + '"><b data-to="' + Number(to) + '" data-kind="' + kind + '">' +
+			(kind === "money" ? "\u20b90" : "0") + "</b><span>" + label + "</span></div>";
+	}
+	var ICON = {
+		home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>',
+		phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg>',
+		bolt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>'
+	};
 	function playWelcome(item) {
 		show("welcome");
 		ding();
 		var named = !item.hidden && item.name;
 		var est = item.estimate;
+		var facts = [];
+		if (named && (item.interest || item.system_type)) {
+			facts.push(ICON.home + esc([item.interest, item.system_type && item.system_type !== "Not sure" ? item.system_type : ""].filter(Boolean).join(" \u00b7 ")));
+		}
+		if (named && item.mobile) facts.push(ICON.phone + esc(item.mobile));
+		/* Their bill as KSEB sends it - every two months - and what it means in units. */
+		if (named && est && est.monthly_bill) {
+			facts.push(ICON.bolt + "Bill " + esc(money.format(est.monthly_bill * 2)) + " / 2 months" +
+				(est.monthly_units ? " \u00b7 " + esc(est.monthly_units) + " units a month" : ""));
+		}
+		var rows = "";
+		if (est && est.kw) {
+			var first = stat(est.kw, "kW system", "kw") + stat(est.price, "price", "money") +
+				(est.subsidy ? stat(est.subsidy, "subsidy", "money") + stat(est.net, "you pay", "money", "is-key") : "");
+			var second = est.battery ? "" : stat(est.monthly_saving, "saved a month", "money") +
+				stat(est.monthly_saving * 12, "saved a year", "money") + stat(est.payback_years, "years to pay back", "years");
+			rows = '<div class="a3s-tv__est2">' + '<div class="a3s-tv__est2-row">' + first + "</div>" +
+				(second ? '<div class="a3s-tv__est2-row">' + second + "</div>" : "") +
+				(est.battery ? '<p class="a3s-tv__est2-note">Our engineer will design your battery system</p>' : "") + "</div>";
+		}
 		card.innerHTML = '<p class="a3s-tv__hello">Welcome' + (named ? "," : "!") + "</p>" +
 			'<p class="a3s-tv__name" data-name></p>' +
 			'<p class="a3s-tv__place">' + (item.district ? (named ? "" : "A visitor from ") + esc(item.district) : "") + "</p>" +
-			(est && est.kw ? '<div class="a3s-tv__est">' +
-				'<div><b data-to="' + est.kw + '" data-kw>0</b><span>kW system</span></div>' +
-				(est.monthly_saving ? '<div><b data-to="' + est.monthly_saving + '" data-money>₹0</b><span>saved a month</span></div>' : "") +
-				(est.subsidy ? '<div><b data-to="' + est.subsidy + '" data-money>₹0</b><span>subsidy</span></div>' : "") +
-				"</div>" : "");
+			(facts.length ? '<div class="a3s-tv__facts">' + facts.map(function (f, i) {
+				return '<span class="a3s-tv__fact" style="animation-delay:' + (1.1 + i * 0.2) + 's">' + f + "</span>";
+			}).join("") + "</div>" : "") + rows;
+		card.classList.toggle("has-est", !!rows);
 		confetti(2600);
 		var typed = named ? typeIn(card.querySelector("[data-name]"), item.name, 55) : Promise.resolve();
 		return typed.then(function () {
@@ -252,10 +282,11 @@
 						if (start === null) start = ts;
 						var p = reduced ? 1 : Math.min(1, (ts - start) / 900);
 						var v = to * (1 - Math.pow(1 - p, 3));
-						b.textContent = b.hasAttribute("data-money") ? money.format(Math.round(v)) : (to % 1 ? v.toFixed(1) : Math.round(v));
+						var kind = b.dataset.kind || (b.hasAttribute("data-money") ? "money" : "kw");
+						b.textContent = kind === "money" ? money.format(Math.round(v)) : (to % 1 ? v.toFixed(1) : String(Math.round(v)));
 						if (p < 1) requestAnimationFrame(step);
 					})(performance.now());
-				}, i * 220);
+				}, 300 + i * 200);
 			});
 			return wait(holdMs());
 		}).then(hide);

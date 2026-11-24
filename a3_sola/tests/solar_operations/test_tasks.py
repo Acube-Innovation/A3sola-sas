@@ -501,3 +501,39 @@ class TestTasksFromTheBoard(FrappeTestCase):
 		app = frappe.get_doc("Portal Application", made["name"])
 		self.assertEqual((app.application_type, app.application_number), ("National Portal", "PMSG-123"))
 		self.assertFalse(app.get("sanctioned_capacity_kw"))
+
+
+class TestWhoCompletedATask(FrappeTestCase):
+	"""A task records who completed it - which need not be its assignee (an admin finishing it) -
+	keeps it when its document is edited later by someone else, and the board shows it."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.installation = make_installation()
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+		frappe.db.rollback()
+
+	def test_the_first_to_complete_it_stays_its_completer(self):
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		row = doc.stages[0]
+		row.status = "In Progress"
+		rule = {"state": lambda d, c: "Completed"}
+		source = frappe._dict(doctype="Installation Task", name="TEST-TASK-DOC")
+		tasks._apply(row, source, row.stage_code, rule)
+		self.assertEqual(row.completed_by, "Administrator")
+		frappe.set_user("Guest")  # someone else saves the same document again
+		tasks._apply(row, source, row.stage_code, rule)
+		frappe.set_user("Administrator")
+		self.assertEqual(row.completed_by, "Administrator")
+
+	def test_the_board_card_names_who_completed_it_not_the_assignee(self):
+		from a3_sola.www.a3solaportal.project_overview import _task
+
+		doc = frappe.get_doc("Solar Installation", self.installation.name)
+		row = doc.stages[0]
+		row.status, row.actual_completion_date, row.completed_by = "Completed", today(), "Administrator"
+		self.assertEqual(_task(row, doc.name)["completed_by"], "Administrator")
+		row.status = "In Progress"
+		self.assertEqual(_task(row, doc.name)["completed_by"], "")

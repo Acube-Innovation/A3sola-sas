@@ -14,6 +14,15 @@
 		</span>
 		<span class="a3s-proj__task-status">{{ t.status | e }}</span>
 	</p>
+	{#- A completed task: who completed it - not who it was assigned to, which can differ (an admin
+	    finishing someone's task). The assignees stay in the tooltip. -#}
+	{%- if t.status == "Completed" and t.completed_by %}
+	<p class="a3s-proj__task-who a3s-proj__task-who--done"
+	   title="Completed by {{ t.completed_by | e }}{% if t.assignees %} &middot; Assigned to {{ t.assignees | map(attribute='name') | join(', ') | e }}{% endif %}">
+		<span class="a3s-proj__task-avatar" aria-hidden="true"><svg class="a3s-ic"><use href="#ic-check"></use></svg></span>
+		<span>by {{ t.completed_by | e }}</span>
+	</p>
+	{%- else %}
 	{#- Who it is with: the first two people by name, then how many more; the contractor - after
 	    a round person badge in the card's status colours. -#}
 	<p class="a3s-proj__task-who" title="{{ t.assignees | map(attribute='name') | join(', ') | e }}">
@@ -23,4 +32,5 @@
 		{%- if t.contractor %}{% if t.assignees %} · {% endif %}{{ t.contractor | e }}{% endif %}</span>
 		{%- endif %}
 	</p>
+	{%- endif %}
 </div>

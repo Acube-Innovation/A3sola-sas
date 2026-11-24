@@ -140,3 +140,26 @@ class TestBankCompletionPrints(FrappeTestCase):
 			self.assertIn("(unsigned)", name)
 		with self.assertRaises(frappe.ValidationError):
 			bank_completion_print.render(inst, "KSEB-FORM-1")
+
+
+class TestJanSamarthId(FrappeTestCase):
+	"""The Jan Samarth task's reference is the job's Jan Samarth ID: on the job, and filled into
+	its loan applications (api: installation_task.share_jan_samarth_id, loan_defaults)."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		self.installation = make_installation()
+
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def test_the_tasks_reference_reaches_the_job_and_the_loan_defaults(self):
+		from a3_sola.solar_operations.doctype.loan_application.loan_application import loan_defaults
+
+		frappe.db.set_value("Solar Installation", self.installation.name, "jan_samarth_id", None)
+		task = frappe.get_doc({"doctype": "Installation Task", "solar_installation": self.installation.name,
+			"task_code": "DAL", "approval_reference": "JS-TEST-123"})
+		task.flags.ignore_permissions = True
+		task.insert(ignore_permissions=True)
+		self.assertEqual(frappe.db.get_value("Solar Installation", self.installation.name, "jan_samarth_id"), "JS-TEST-123")
+		self.assertEqual(loan_defaults(self.installation.name)["jan_samarth_id"], "JS-TEST-123")

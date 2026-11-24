@@ -485,7 +485,7 @@ def option_rows(doc, fields):
 	A row saved as an estimate of its own (from its tab on step two) says so, and is shown
 	as it was saved: it is changed on that estimate.
 	"""
-	names = [f["fieldname"] for f in fields] + [c["fieldname"] for c in COMPONENT_FIELDS]
+	names = [f["fieldname"] for f in fields] + [c["fieldname"] for c in COMPONENT_FIELDS] + ["pricing_option"]
 	if doc and doc.get("sizing_options"):
 		rows = []
 		# The recommended option first: the first ticked option is the recommended one.
@@ -503,6 +503,7 @@ def option_rows(doc, fields):
 		return rows
 	values = {f["fieldname"]: f["value"] for f in fields}
 	values.update({c["fieldname"]: "" for c in COMPONENT_FIELDS})
+	values["pricing_option"] = ""
 	if not flt(values.get("override_capacity_kw")):
 		values["override_capacity_kw"] = ""
 	return [{"name": "", "recommended": True, "values": values, "package_cost_label": "", "saved_as": "", "saved_route": ""}]
@@ -600,6 +601,7 @@ def save_details(values, name=None, sizing_options=None):
 				continue
 			entry = {fieldname: (row.get(fieldname) or None) for fieldname in sizing_fields}
 			entry.update({c["fieldname"]: row.get(c["fieldname"]) or None for c in COMPONENT_FIELDS})
+			entry["pricing_option"] = row.get("pricing_option") or None
 			entry["override_capacity_kw"] = flt(row.get("override_capacity_kw")) or None
 			entry["is_recommended"] = 1 if row.get("is_recommended") else 0
 			if old:
@@ -1015,6 +1017,16 @@ def option_tabs(root):
 			makes[name] = frappe.db.get_value("Component Make", name, "make_name") or name
 		return makes.get(name) or ""
 
+	def panel_label(row):
+		"""The option's panel with its wattage, when it is one of its package's Pricing Options."""
+		from a3_sola.solar_crm.doctype.solar_package.solar_package import combination
+
+		combo = combination(row.solar_package, row.get("pricing_option")) if row.solar_package else None
+		if not combo:
+			return ""
+		watts = flt(combo.module.module_wattage)
+		return "{0} {1:g} Wp".format(make_name(combo.module.module_make), watts) if watts else make_name(combo.module.module_make)
+
 	tabs = []
 	rows = sorted(root.get("sizing_options") or [], key=lambda r: r.idx)
 	for n, row in enumerate(rows, start=1):
@@ -1031,7 +1043,8 @@ def option_tabs(root):
 			"estimate": estimate or "", "docstatus": docstatus,
 			"package": link_title("Solar Package", source.solar_package) if source.solar_package else _("No package"),
 			"capacity": "{0:g} kW".format(flt(source.override_capacity_kw)) if flt(source.override_capacity_kw) else "",
-			"parts": [p for p in (make_name(source.panel_make), make_name(source.inverter_make), make_name(source.battery_make)) if p],
+			"parts": [p for p in (panel_label(source) or make_name(source.panel_make), make_name(source.inverter_make),
+				make_name(source.battery_make)) if p],
 			"package_cost": flt(source.package_cost),
 		})
 	if not tabs:
@@ -1051,6 +1064,7 @@ def _new_option_estimate(root, row):
 	doc.source_option = row.name
 	values = {field: row.get(field) for field in SIZING_FIELDS}
 	values.update({c["fieldname"]: row.get(c["fieldname"]) for c in COMPONENT_FIELDS})
+	values["pricing_option"] = row.get("pricing_option")
 	doc.set("sizing_options", [])
 	doc.append("sizing_options", {**values, "is_recommended": 1,
 		"option_notes": row.option_notes})

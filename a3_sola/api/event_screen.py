@@ -5,10 +5,10 @@ www/event_screen.
 
 The screen's link carries the event's display key - a different key from the QR's, so a
 visitor holding the registration link can never open it. It returns only what the screen
-shows: a visitor's full name, district and indicative estimate, and that the brochure
-reached them - never a mobile number, an address, a bill or a document. A visitor who asked
-not to be shown, or whom staff hid, is welcomed as "a visitor from <district>" and shows no
-figures.
+shows: a visitor's full name, district, property and system type, their mobile masked
+("98••• ••345"), their indicative estimate, and that the brochure reached them - never the full
+number, an address, a bill or a document. A visitor who asked not to be shown, or whom staff
+hid, is welcomed as "a visitor from <district>" and shows none of it.
 
 Polling rather than realtime: a guest's realtime events reach every website visitor, and a
 poll survives the exhibition hall's Wi-Fi dropping without reconnect logic.
@@ -61,7 +61,8 @@ def feed(key, after=None):
 	show_estimate = cint(event.show_estimate_on_screen)
 
 	fields = ["name", "lead_name", "first_name", "district", "a3s_registered_on", "a3s_brochure_sent_on",
-		"a3s_brochure_sent_via", "a3s_hide_on_screen", "a3s_estimate", "approx_capacity_kw"]
+		"a3s_brochure_sent_via", "a3s_hide_on_screen", "a3s_estimate", "approx_capacity_kw", "a3s_interest",
+		"a3s_system_type", "mobile_no"]
 	recent = frappe.get_all(LEAD, filters={"a3s_event": event.name}, or_filters=[["a3s_registered_on", ">", since],
 		["a3s_brochure_sent_on", ">", since]], fields=fields, order_by="a3s_registered_on asc", limit=200)
 	items = []
@@ -93,8 +94,9 @@ def feed(key, after=None):
 
 
 def _who(lead, show_estimate):
-	"""How the screen names a visitor: their full name and district - or, hidden, only where
-	they are from - and their estimate when the event shows it."""
+	"""How the screen names a visitor: their full name, district, property and system type and
+	their mobile masked ("98••• ••345") - or, hidden, only where they are from - and their
+	estimate when the event shows it. Never the full number."""
 	district = (lead.district or "").split(",")[0].strip()
 	if cint(lead.a3s_hide_on_screen):
 		return {"name": "", "district": district, "estimate": None, "hidden": 1}
@@ -102,10 +104,22 @@ def _who(lead, show_estimate):
 	if show_estimate and lead.a3s_estimate:
 		try:
 			raw = json.loads(lead.a3s_estimate)
-			est = {k: raw.get(k) for k in ("kw", "monthly_saving", "subsidy", "net")}
+			est = {k: raw.get(k) for k in ("kw", "price", "subsidy", "net", "monthly_saving", "payback_years",
+				"monthly_bill", "monthly_units", "battery")}
 		except Exception:
 			est = None
-	return {"name": lead.lead_name or lead.first_name or "", "district": district, "estimate": est, "hidden": 0}
+	return {"name": lead.lead_name or lead.first_name or "", "district": district, "estimate": est, "hidden": 0,
+		"interest": lead.get("a3s_interest") or "", "system_type": lead.get("a3s_system_type") or "",
+		"mobile": mask_mobile(lead.get("mobile_no"))}
+
+
+def mask_mobile(number):
+	"""A mobile number the screen may show: its first two and last three digits - "98••• ••345" -
+	so a visitor knows the welcome is theirs; the rest never leaves the server."""
+	digits = "".join(ch for ch in (number or "") if ch.isdigit())[-10:]
+	if len(digits) < 10:
+		return ""
+	return "{0}\u2022\u2022\u2022 \u2022\u2022{1}".format(digits[:2], digits[-3:])
 
 
 def _saving(lead):

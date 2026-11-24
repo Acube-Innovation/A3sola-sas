@@ -70,7 +70,12 @@ def render(inst, signed=True):
 	if isinstance(inst, str):
 		inst = frappe.get_doc("Solar Installation", inst)
 	# Two pages that flow, as the Word file: a fixed letter sheet would cut it at one.
-	return file_name(inst, signed), documents.plain_pdf(html(inst, signed), margins=MARGINS)
+	# Edited on the portal (documents.edited_body) or as generated - the signed text, its
+	# signature hidden as the unsigned print hides it.
+	page = documents.edited_body(inst, CODE, html(inst, True))
+	if not signed:
+		page += "<style>.a3s-sign { visibility: hidden; }</style>"
+	return file_name(inst, signed), documents.plain_pdf(page, margins=MARGINS)
 
 
 @frappe.whitelist()

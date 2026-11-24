@@ -20,6 +20,9 @@ from a3_sola.api.settings import get_float, get_value
 CYCLE_MONTHS = 2
 #: ₹ per unit, when no tariff is set: roughly the domestic average.
 FALLBACK_RATE = 7.0
+#: Systems with a battery: the PM Surya Ghar subsidy and the grid saving do not apply, and the
+#: engineer designs the battery - the estimate gives the size and the price only.
+BATTERY_SYSTEMS = ("Off-grid", "Hybrid")
 #: Single phase up to this size; above it a three-phase package is offered first.
 SINGLE_PHASE_UPTO_KW = 5
 
@@ -86,7 +89,7 @@ def pick(packages, need_kw):
 	return same[0], larger
 
 
-def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", packages=None):
+def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", packages=None, system_type=None):
 	"""The indicative estimate for an electricity bill of `bill_amount` covering `bill_months`
 	(1 or 2), or None when there is no bill or no package to offer. A dict of plain numbers:
 
@@ -94,7 +97,8 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	payback_years, larger (the need is above the largest package: the engineer sizes it).
 
 	The subsidy (PM Surya Ghar) is for homes; anything else is shown without it, and without
-	a saving worked from the domestic tariff."""
+	a saving worked from the domestic tariff. An off-grid or hybrid system (BATTERY_SYSTEMS) is
+	sized and priced only: `battery` says the engineer designs the rest."""
 	bill = flt(bill_amount)
 	months = 1 if cint(bill_months) == 1 else CYCLE_MONTHS
 	if bill <= 0:
@@ -109,7 +113,8 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	package, larger = pick(candidate_packages(company, packages), need_kw)
 	if not package:
 		return None
-	home = (interest or "Home") == "Home"
+	battery = (system_type or "") in BATTERY_SYSTEMS
+	home = (interest or "Home") == "Home" and not battery
 	subsidy = package.subsidy if home else 0.0
 	net = package.price - subsidy
 
@@ -125,6 +130,7 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 		"price": round(package.price), "subsidy": round(subsidy), "net": round(net),
 		"monthly_units": round(units / CYCLE_MONTHS), "monthly_bill": round(cycle_bill / CYCLE_MONTHS),
 		"monthly_saving": round(monthly_saving / 10) * 10, "payback_years": payback, "larger": bool(larger),
+		"battery": battery,
 	}
 
 
@@ -137,6 +143,8 @@ def summary(est):
 	if est.get("subsidy"):
 		parts.append("₹{0} subsidy, ₹{1} after subsidy".format(inr(est["subsidy"]), inr(est["net"])))
 	line = " · ".join(parts)
+	if est.get("battery"):
+		line += " · battery system designed by our engineer"
 	if est.get("monthly_saving"):
 		line += " · saves about ₹{0} a month".format(inr(est["monthly_saving"]))
 	return line

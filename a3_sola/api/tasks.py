@@ -351,7 +351,9 @@ def _apply(row, doc, code, rule):
 			row.set("_completed_now", True)
 		row.status = "Completed"
 		row.actual_completion_date = getdate(_date(rule, doc, code) or today())
-		row.completed_by = frappe.session.user
+		# Who completed it: whoever's save completed it - not whoever edits its document later.
+		if was != "Completed" or not row.completed_by:
+			row.completed_by = frappe.session.user
 		row.external_reference = _reference(rule, doc, code) or row.external_reference
 		row.blocked_reason = None
 		row.skip_reason = None

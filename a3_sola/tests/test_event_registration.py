@@ -103,7 +103,10 @@ class TestEventRegistration(FrappeTestCase):
 		feed = event_screen.feed(self.event.display_key)
 		self.assertEqual(feed["counters"]["total"], 1)
 		self.assertIn("Test Visitor Name", feed["ticker"])
-		self.assertNotIn(MOBILE, json.dumps(feed))
+		self.assertNotIn(MOBILE, json.dumps(feed, ensure_ascii=False))
+		welcome = next(i for i in feed["items"] if i["kind"] == "welcome")
+		self.assertEqual(welcome["mobile"], "90\u2022\u2022\u2022 \u2022\u2022301")  # first two, last three
+		self.assertEqual((welcome["interest"], welcome["district"]), ("Home", self.district.split(",")[0]))
 		with self.assertRaises(frappe.PermissionError):
 			event_screen.feed(self.event.public_key)  # the QR's key never opens the screen
 
@@ -126,6 +129,8 @@ class TestEventRegistration(FrappeTestCase):
 		feed = event_screen.feed(self.event.display_key)
 		welcome = next(i for i in feed["items"] if i["kind"] == "welcome")
 		self.assertEqual((welcome["name"], welcome["estimate"], welcome["hidden"]), ("", None, 1))
+		self.assertNotIn("mobile", welcome)
+		self.assertNotIn("interest", welcome)
 		self.assertNotIn("Test Visitor Name", feed["ticker"])
 
 	def test_the_brochure_link_names_only_its_own_lead(self):
@@ -157,10 +162,25 @@ class TestInstantEstimate(FrappeTestCase):
 		self.assertEqual((chosen.name, larger), ("c", True))
 		self.assertEqual(instant_estimate.pick([], 3), (None, False))
 
+	def test_a_mobile_is_masked_for_the_screen(self):
+		self.assertEqual(event_screen.mask_mobile("+91 98470 12345"), "98\u2022\u2022\u2022 \u2022\u2022345")
+		self.assertEqual(event_screen.mask_mobile("123"), "")
+		self.assertEqual(event_screen.mask_mobile(None), "")
+
 	def test_rupees_are_grouped_the_indian_way(self):
 		self.assertEqual(instant_estimate.inr(216600), "2,16,600")
 		self.assertEqual(instant_estimate.inr(12345678), "1,23,45,678")
 		self.assertEqual(instant_estimate.inr(950), "950")
+
+	def test_an_off_grid_estimate_has_no_subsidy_or_saving(self):
+		company = frappe.db.get_value("Company", {}, "name")
+		est = instant_estimate.estimate(company, 3500, 2, "Home", None, "Off-grid")
+		if not est:
+			self.skipTest("No package to offer on this site.")
+		self.assertEqual((est["subsidy"], est["monthly_saving"], est["payback_years"], est["battery"]), (0, 0, None, True))
+		self.assertEqual(est["net"], est["price"])
+		on_grid = instant_estimate.estimate(company, 3500, 2, "Home", None, "On-grid")
+		self.assertFalse(on_grid["battery"])
 
 	def test_no_bill_no_estimate(self):
 		self.assertIsNone(instant_estimate.estimate(frappe.db.get_value("Company", {}, "name"), 0))

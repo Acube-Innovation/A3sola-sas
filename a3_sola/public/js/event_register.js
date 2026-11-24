@@ -210,6 +210,7 @@
 					return '<div class="a3s-reg__est-row' + (row[0] === "You pay" ? " is-total" : "") + '" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
 				}).join("") + "</dl>" +
 				(est.larger ? '<p class="a3s-field__hint">Your use is above our standard sizes: our engineer will size your system.</p>' : "") +
+				(est.battery ? '<p class="a3s-field__hint">For an off-grid or hybrid system our engineer designs the battery and confirms the price; the PM Surya Ghar subsidy is for on-grid systems.</p>' : "") +
 				'<p class="a3s-field__hint">Indicative only &ndash; our engineer will confirm it after a site visit.</p>';
 			estBox.hidden = false;
 		}

@@ -131,19 +131,16 @@ TASKS = [
 	                 ("E-Token", 0, None),
 	                 ("Net Meter Agreement", 0, None)],
 	      description="Consumer registered on the national portal; application id recorded."),
-	# The customer accepted on the PM Surya Ghar portal for a loan, with the Net Metering
-	# Agreement the portal asks of them (api/net_metering_print), the quotation in the RIM
-	# format (api/loan_print.quotation) and the consumer-vendor agreement word for word
+	# The customer accepted on the PM Surya Ghar portal for a loan, with the quotation in the
+	# RIM format (api/loan_print.quotation) and the consumer-vendor agreement word for word
 	# (api/vendor_agreement_print). Second in the PM Surya Ghar column, shown only on a job
-	# that takes a loan.
+	# that takes a loan. (No Net Metering Agreement: the team does not use it here.)
 	_task("ACPT", "Accept Customer", "Internal", 1, "Installation Task", role=DOCS, task_type="ACPT",
 	      applicability="Financed Sales Only",
-	      documents=[("Net Metering Agreement", 1, "NET-METERING-AGREEMENT"),
-	                 ("Bank Quotation", 1, "BANK-QUOTATION"),
+	      documents=[("Bank Quotation", 1, "BANK-QUOTATION"),
 	                 ("Consumer-vendor agreement", 1, "MNRE-CONSUMER-VENDOR-AGREEMENT")],
-	      description="The customer accepted on the PM Surya Ghar portal for the loan; the Net Metering "
-	                  "Agreement, the RIM quotation and the consumer-vendor agreement generated for them "
-	                  "to sign."),
+	      description="The customer accepted on the PM Surya Ghar portal for the loan; the RIM quotation "
+	                  "and the consumer-vendor agreement generated for them to sign."),
 	# The loan's approval on the Jan Samarth portal: PM Surya Ghar work, shown only on a job
 	# that takes a loan (the board leaves it out otherwise, as it does the Bank column).
 	_task("DAL", "Jan Samarth", "Bank", 1, "Installation Task", role=DOCS, task_type="DAL",

@@ -21,7 +21,8 @@ class TestAcceptCustomerTask(FrappeTestCase):
 		self.assertEqual(scheme[:3], ["NPA", "ACPT", "DAL"])
 		task = next(t for t in seed_stages.TASKS if t["code"] == "ACPT")
 		self.assertEqual(task["applicability"], "Financed Sales Only")
-		self.assertEqual(task["documents"][0][2], net_metering_print.CODE)
+		# The team does not use the Net Metering Agreement on this task.
+		self.assertNotIn(net_metering_print.CODE, [d[2] for d in task["documents"]])
 		self.assertIn("ACPT", project_overview.FINANCED_ONLY_TASKS)
 
 
@@ -48,12 +49,10 @@ class TestNetMeteringPrint(FrappeTestCase):
 		text = " ".join(" ".join(p.extract_text() for p in reader.pages).split())
 		self.assertIn("automatic agreement to the terms", text)
 
-	def test_the_task_offers_view_and_download(self):
-		links = portal_tasks._prints(frappe._dict(stage_code="ACPT"), self.installation.name)[net_metering_print.CODE]
-		self.assertEqual([p["label"] for p in links], ["View Net Metering Agreement", "Download Net Metering Agreement"])
-		# On the task's own form too, before and after it is created.
-		form = collections.task_downloads(self.installation.name, "ACPT")
-		self.assertEqual([p["label"] for p in form][:2], ["View Net Metering Agreement", "Download Net Metering Agreement"])
+	def test_the_accept_customer_task_no_longer_offers_it(self):
+		self.assertNotIn(net_metering_print.CODE, portal_tasks._prints(frappe._dict(stage_code="ACPT"), self.installation.name))
+		labels = [p["label"] for p in collections.task_downloads(self.installation.name, "ACPT")]
+		self.assertNotIn("View Net Metering Agreement", labels)
 
 	def test_it_is_set_as_the_portal_prints_it(self):
 		inst = frappe.get_doc("Solar Installation", self.installation.name)

@@ -116,7 +116,7 @@ def render(inst, signed=True):
 	"""(file name, PDF) of the statement for the job `inst` - the caller has checked access."""
 	if isinstance(inst, str):
 		inst = frappe.get_doc("Solar Installation", inst)
-	return file_name(inst, signed), documents.letterhead_pdf(html(inst), inst.company, signed=signed, letterhead=False,
+	return file_name(inst, signed), documents.letterhead_pdf(documents.edited_body(inst, CODE, html(inst)), inst.company, signed=signed, letterhead=False,
 		margins=MARGINS)
 
 

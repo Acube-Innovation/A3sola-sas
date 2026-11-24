@@ -12,8 +12,6 @@
 	.f1 .l img { display: block; }
 	.f1 .v { font-weight: normal; }
 	.f1 .sign td { border: 1px solid #000; height: 22mm; vertical-align: bottom; }
-	.f1 .sys { margin: 5mm 0 0; }
-	.f1 .sys p { margin: 0 0 1.5mm; }
 </style>
 <div class="f1">
 	<img class="head" src="{{ img.header }}">
@@ -21,7 +19,10 @@
 		<tr><td class="n">1</td><td class="l"><img src="{{ img.row1 }}" style="width:89.3mm"></td>
 			<td class="v">{% for line in f.details %}{{ line | e }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
 		<tr><td class="n">2</td><td class="l"><img src="{{ img.row2 }}" style="width:80mm"></td><td class="v">{{ f.load | e }}</td></tr>
-		<tr><td class="n">3</td><td class="l"><img src="{{ img.row3 }}" style="width:92mm"></td><td class="v">{{ f.capacity | e }}</td></tr>
+		{#- The capacity, then the panels and inverters that make it up - in the row, not under the table. -#}
+		<tr><td class="n">3</td><td class="l"><img src="{{ img.row3 }}" style="width:92mm"></td><td class="v">{{ f.capacity | e }}
+			{%- for p in f.panels %}<br>Panel &ndash; {{ p | e }}{% endfor %}
+			{%- for i in f.inverters %}<br>Inverter &ndash; {{ i | e }}{% endfor %}</td></tr>
 		<tr><td class="n">4</td><td class="l"><img src="{{ img.row4 }}" style="width:98mm;max-width:92mm"></td>
 			<td class="v">{% for p in f.premises %}{{ p | e }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td></tr>
 		<tr><td class="n">5</td><td class="l"><img src="{{ img.row5 }}" style="width:90.4mm"></td><td class="v">{{ f.mounting | e }}</td></tr>
@@ -33,8 +34,4 @@
 			<td style="text-align:center"><img src="{{ img.signature }}" style="width:40.6mm"></td>
 		</tr>
 	</table>
-	<div class="sys">
-		{%- for p in f.panels %}<p>Panel &ndash; {{ p | e }}</p>{% endfor %}
-		{%- for i in f.inverters %}<p>Inverter &ndash; {{ i | e }}</p>{% endfor %}
-	</div>
 </div>

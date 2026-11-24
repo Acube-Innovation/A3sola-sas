@@ -40,7 +40,8 @@ def pdf(installation):
 	if not name:
 		frappe.throw(_("Document template {0} does not exist.").format(CODE))
 	tpl = frappe.get_cached_doc("Solar Document Template", name)
-	html = frappe.render_template(tpl.body_template or "", documents.get_document_context(inst, tpl))
+	html = documents.edited_body(inst, CODE, frappe.render_template(tpl.body_template or "",
+		documents.get_document_context(inst, tpl)))
 	frappe.local.response.filename = documents.customer_file_name(documents.job_customer(inst), "Refund Request")
 	frappe.local.response.filecontent = documents.letterhead_pdf(html, inst.company, letterhead=False, margins=MARGINS)
 	frappe.local.response.type = "download"

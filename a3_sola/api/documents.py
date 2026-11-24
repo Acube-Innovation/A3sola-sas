@@ -488,6 +488,39 @@ def letterhead_pdf(pages, company, signed=True, letterhead=True, margins=None, l
 	return get_pdf(html)
 
 
+class CapturedDocument(Exception):
+	"""Raised with a paper's generated HTML when the editor asks for it (edited_body)."""
+
+	def __init__(self, html):
+		super().__init__("captured")
+		self.html = html
+
+
+#: A paper and its edited copy share one key where two codes print the same paper: the Bank
+#: Quotation is the project proposal (api/loan_print.proposal).
+EDIT_KEYS = {"BANK-QUOTATION": "BANK-PROJECT-PROPOSAL"}
+
+
+def edit_key(code):
+	return EDIT_KEYS.get(code, code)
+
+
+def edited_body(installation, code, html):
+	"""The HTML a job's paper prints: as someone edited it on the portal (Edited Document), else
+	as generated - the one place every task's printed paper passes before it becomes a PDF.
+
+	The editor (api/document_editor) reads the generated HTML here too: it asks for one paper
+	(frappe.flags.a3s_capture_document) and gets it raised back before any PDF is made."""
+	key = edit_key(code)
+	if frappe.flags.get("a3s_capture_document") == key:
+		raise CapturedDocument(html)
+	name = installation if isinstance(installation, str) else getattr(installation, "name", None)
+	if not name:
+		return html
+	saved = frappe.db.get_value("Edited Document", {"solar_installation": name, "document_code": key}, "html")
+	return saved or html
+
+
 def plain_pdf(html, margins="12mm"):
 	"""`html` as A4 pages that flow - a long list runs on, its table head repeated - in
 	`margins` (CSS), scaled as letterhead_pdf scales for the server's wkhtmltopdf."""
@@ -530,6 +563,7 @@ def _patched_wkhtmltopdf():
 def bank_proposal(inst, survey, section):
 	"""What the bank's project proposal prints about the system, worked out once."""
 	from a3_sola.api.portal_fields import link_title
+	from a3_sola.api.print_cover import TILT_ORIENTATION
 
 	kw = flt(inst.capacity_kw)
 	# The panel and inverter the job is built with - not the alternates kept beside them for
@@ -555,11 +589,13 @@ def bank_proposal(inst, survey, section):
 	from a3_sola.api.microinverter import uses_microinverter
 
 	micro = uses_microinverter(inst)  # no DCDB with a micro inverter
-	area = flt(survey.total_usable_area_sqft) if survey and flt(survey.get("total_usable_area_sqft")) else kw * 50
+	from a3_sola.api.print_cover import roof_area
+
+	area = roof_area(kw)
 	return frappe._dict({
 		"kw": "%g" % kw, "phase": phase,
 		"site": "Residential Building in {0}".format(district.upper()) if district else "Residential Building",
-		"tilt": "10 - 12 degrees, South",
+		"tilt": TILT_ORIENTATION,
 		"plant": "Grid Connected Rooftop" if (inst.get("system_type") or "On-Grid") == "On-Grid" else "{0} Rooftop".format(inst.system_type),
 		"roof_area": "%d Sq. Ft." % round(area), "roof": roof,
 		"generation": "%g - %g units" % (round(kw * 3), round(kw * 4)),

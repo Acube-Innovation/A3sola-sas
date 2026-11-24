@@ -145,6 +145,7 @@ def _panel(inst, task_code):
 			if not p.get("keep_file")), None)
 		rows.append({
 			"row": d.name,
+			"code": templates.get(d.solar_document_template),
 			"name": d.document_name,
 			# Printed live: generated, whatever the register row says.
 			"kind": "Generated" if live else (d.document_kind or "Expected"),
@@ -176,6 +177,7 @@ def _panel(inst, task_code):
 	if task_code == SURYA_GHAR_TASK:
 		# The customer's own papers the portal asks for, fetched from the customer.
 		rows.extend(customer_rows(inst, SURYA_GHAR_CUSTOMER, SURYA_GHAR_ANY_ONE))
+	_mark_editable(inst, rows)
 	return {
 		"task": {
 			"code": row.stage_code, "name": row.stage_name, "status": row.status,
@@ -188,6 +190,21 @@ def _panel(inst, task_code):
 		"can_upload": bool(inst.has_permission("write")),
 		"max_file_mb": get_max_file_size() // (1024 * 1024),
 	}
+
+
+def _mark_editable(inst, rows):
+	"""Each paper the system prints that can be edited on the portal (api/document_editor) - for
+	staff who may change the job - says so, and whether it has been."""
+	from a3_sola.api import document_editor, documents
+	from a3_sola.api.partner_scope import is_partner
+
+	if is_partner() or not inst.has_permission("write"):
+		return
+	edited = document_editor.edited_keys(inst.name)
+	for r in rows:
+		code = r.get("code")
+		if r.get("prints") and document_editor.editable(code):
+			r["edit"] = {"code": code, "edited": documents.edit_key(code) in edited}
 
 
 #: The order task's KYC row, shown live from the customer and its lead, and the prefix of
@@ -252,12 +269,10 @@ def _prints(row, installation):
 		return {m.CODE: m.prints(installation) for m in (form3_print, kseb_agreement_print, kseb_checklist_print,
 			kseb_covering_print, kseb_netmeter_print)}
 	if row.stage_code == "ACPT":
-		# The PM Surya Ghar portal's Net Metering Agreement (api/net_metering_print), the
-		# consumer-vendor agreement (api/vendor_agreement_print) and the RIM quotation.
-		from a3_sola.api import net_metering_print, vendor_agreement_print
+		# The consumer-vendor agreement (api/vendor_agreement_print) and the RIM quotation.
+		from a3_sola.api import vendor_agreement_print
 
-		return {net_metering_print.CODE: net_metering_print.prints(installation),
-			vendor_agreement_print.CODE: vendor_agreement_print.prints(installation), **_rim_quotation(installation)}
+		return {vendor_agreement_print.CODE: vendor_agreement_print.prints(installation), **_rim_quotation(installation)}
 	if row.stage_code == "BCOM":
 		# The bank's completion papers, printed live from the job (no pack to generate first):
 		# the completion report and covering letter (api/bank_completion_print), the consumer-vendor
@@ -290,14 +305,14 @@ def _prints(row, installation):
 
 
 def _rim_quotation(installation):
-	"""The quotation in the RIM format, as the bank gets it (api/loan_print.quotation): from
-	the job's quotation, else priced from its design estimate."""
+	"""The Bank Quotation, as the bank gets it in the Loan Documents: the full project proposal in
+	RIM's format (api/loan_print.proposal), to view or to download - once the job has a quotation
+	or a design estimate to price it from."""
 	from a3_sola.api import loan_print
 
 	if not loan_print.has_quotation(frappe.get_doc("Solar Installation", installation)):
 		return {}
-	return {loan_print.QUOTATION: [{"label": _("Print"), "url": loan_print.quotation_url(installation),
-		"signable": True}]}
+	return {loan_print.QUOTATION: loan_print.proposal_prints(installation)}
 
 
 #: What the bank receives for the loan, in order: printed by us in the RIM format, the
@@ -325,7 +340,9 @@ def loan_pack(inst, row):
 	for label, key in LOAN_PACK_PRINTED:
 		if base:
 			url = f"{base}&document={key}"
-			out.append({"name": label, "kind": "Generated", "files": [{"label": "", "url": url + "&signed=1"}],
+			from a3_sola.api.loan_print import DOCUMENTS
+
+			out.append({"name": label, "kind": "Generated", "code": DOCUMENTS.get(key), "files": [{"label": "", "url": url + "&signed=1"}],
 				"missing": [], "prints": [{"label": _("Print"), "url": url, "signable": True}]})
 		else:
 			out.append({"name": label, "kind": "Expected", "files": [], "missing": [],

@@ -20,10 +20,9 @@ class TestAcceptCustomerDocuments(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.installation = make_installation()
 
-	def test_the_task_lists_all_three(self):
+	def test_the_task_lists_the_quotation_and_the_agreement(self):
 		task = next(t for t in seed_stages.TASKS if t["code"] == "ACPT")
-		self.assertEqual([d[2] for d in task["documents"]],
-			["NET-METERING-AGREEMENT", loan_print.QUOTATION, vendor_agreement_print.CODE])
+		self.assertEqual([d[2] for d in task["documents"]], [loan_print.QUOTATION, vendor_agreement_print.CODE])
 
 	def test_the_agreement_is_the_jobs_word_for_word(self):
 		inst = frappe.get_doc("Solar Installation", self.installation.name)
@@ -51,4 +50,4 @@ class TestAcceptCustomerDocuments(FrappeTestCase):
 		self.assertNotIn(loan_print.QUOTATION, prints)
 		labels = [p["label"] for p in collections.task_downloads(self.installation.name, "ACPT")]
 		self.assertIn("View Vendor Agreement", labels)
-		self.assertNotIn("View Quotation (RIM)", labels)
+		self.assertNotIn("View Bank Quotation", labels)

@@ -38,7 +38,7 @@ REQUIRED_EVIDENCE = {
 }
 
 #: Documents a task can generate for itself, by task code.
-TASK_DOCUMENTS = {"FRM1": ["KSEB-FORM-1"], "ACPT": ["NET-METERING-AGREEMENT"], "DSGN": ["BOM-SUMMARY"]}
+TASK_DOCUMENTS = {"FRM1": ["KSEB-FORM-1"], "DSGN": ["BOM-SUMMARY"]}
 
 LABELS = {
 	"amount": "Amount", "paid_on": "Paid On", "certificate": "Certificate",
@@ -163,9 +163,18 @@ class InstallationTask(Document):
 
 	def on_update(self):
 		self.sync_dispatch()
+		self.share_jan_samarth_id()
 
 	def on_cancel(self):
 		self.sync_dispatch()
+
+	def share_jan_samarth_id(self):
+		"""The Jan Samarth task's reference is the job's Jan Samarth ID: on the job, and on its loan
+		applications that do not have one yet (a value typed there is never replaced)."""
+		reference = (self.get("approval_reference") or "").strip()
+		if self.task_code != "DAL" or not reference or not self.solar_installation:
+			return
+		share_jan_samarth_id(self.solar_installation, reference)
 
 	def sync_dispatch(self):
 		"""Material Dispatch follows the procurement tasks' delivery methods."""
@@ -246,6 +255,22 @@ class InstallationTask(Document):
 
 
 # ------------------------------------------------------------------ form actions
+def share_jan_samarth_id(installation, reference):
+	"""Put the Jan Samarth reference on the job, and on each of its loan applications whose
+	Jan Samarth ID is blank - written directly, so a submitted application takes it too."""
+	if frappe.db.get_value("Solar Installation", installation, "jan_samarth_id") != reference:
+		frappe.db.set_value("Solar Installation", installation, "jan_samarth_id", reference, update_modified=False)
+	for loan in frappe.get_all("Loan Application", filters={"solar_installation": installation, "docstatus": ["<", 2],
+			"jan_samarth_id": ["is", "not set"]}, pluck="name"):
+		frappe.db.set_value("Loan Application", loan, "jan_samarth_id", reference, update_modified=False)
+
+
+def jan_samarth_reference(installation):
+	"""The reference on the job's Jan Samarth task (DAL), if it has one."""
+	return frappe.db.get_value("Installation Task", {"solar_installation": installation, "task_code": "DAL",
+		"docstatus": ["<", 2], "approval_reference": ["is", "set"]}, "approval_reference", order_by="modified desc")
+
+
 def _load(task, action="write"):
 	doc = frappe.get_doc("Installation Task", task)
 	doc.check_permission(action)

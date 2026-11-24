@@ -48,7 +48,7 @@ NAV_GROUPS = [
 		# document a task is executed in.
 		"items": [
 			{"title": "Solar Installation", "sub": "The project itself", "ic": "wrench", "route": "/a3solaportal/installations"},
-			{"title": "Installation Task", "sub": "The thirty tasks", "ic": "checklist", "route": "/a3solaportal/installation-tasks"},
+			{"title": "Task", "sub": "The thirty tasks", "ic": "checklist", "route": "/a3solaportal/installation-tasks"},
 			{"title": "Statutory Fee Payment", "sub": "Form 1, Form 2, meter", "ic": "cash", "route": "/a3solaportal/fee-payments"},
 			{"title": "Portal Application", "sub": "PM Surya Ghar, CEIG", "ic": "globe", "route": "/a3solaportal/portal-applications"},
 			{"title": "Loan Application", "sub": "Financed projects", "ic": "bank", "route": "/a3solaportal/loan-applications"},

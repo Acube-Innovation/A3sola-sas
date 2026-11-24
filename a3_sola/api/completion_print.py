@@ -68,7 +68,8 @@ def render(inst, notice=None, letterhead=1):
 	if not name:
 		frappe.throw(_("Document template {0} does not exist.").format(CODE))
 	tpl = frappe.get_cached_doc("Solar Document Template", name)
-	html = frappe.render_template(tpl.body_template or "", documents.get_document_context(inst, tpl, source=source))
+	html = documents.edited_body(inst, CODE, frappe.render_template(tpl.body_template or "",
+		documents.get_document_context(inst, tpl, source=source)))
 	on_letterhead = frappe.utils.cint(letterhead)
 	return file_name(inst), documents.letterhead_pdf(
 		html, inst.company, letterhead=bool(on_letterhead), margins=None if on_letterhead else MARGINS,

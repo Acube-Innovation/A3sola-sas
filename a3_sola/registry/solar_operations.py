@@ -8,6 +8,7 @@ Phase 2 adds this file and nothing else to hooks.py.
 MODULE_NAME = "Solar Operations"
 
 DOCTYPES = [
+	"Edited Document",
 	"Installation Stage Template",
 	"Installation Stage Template Detail",
 	"Document Checklist Template",

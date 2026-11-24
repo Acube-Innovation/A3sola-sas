@@ -360,3 +360,7 @@ a3_sola.patches.v1_3.task_start_triggers
 a3_sola.patches.v1_3.dealers_off_accept_customer
 # Each user is one kind - Admin, Employee, Dealer or Contractor - with that kind's one role profile: Employees get every staff job's access (Solar Employee).
 a3_sola.patches.v1_3.one_user_type
+# Accept Customer (ACPT) no longer asks for a Net Metering Agreement: each job's register row goes, unless a signed copy is attached.
+a3_sola.patches.v1_3.drop_net_metering_agreement_from_accept_customer
+# Loan applications take the Jan Samarth ID from the job's Jan Samarth task (Jan Samarth Reference), where they have none.
+a3_sola.patches.v1_3.jan_samarth_id_from_task

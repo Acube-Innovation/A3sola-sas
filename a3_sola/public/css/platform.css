@@ -4989,3 +4989,62 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 /* The exhibitor's name, sized to sit with the larger logo. */
 .a3s-tv__company { font-size: 4.4vh; letter-spacing: 0.08em; line-height: 1.1; }
 .a3s-tv__event { font-size: 3.4vh; margin-top: 0.6vh; }
+.a3s-proj__task-who--done > span:not(.a3s-proj__task-avatar) { font-weight: 600; }
+/* The visitor's details under their name on the welcome: property, system, masked mobile. */
+.a3s-tv__facts { display: flex; justify-content: center; flex-wrap: wrap; gap: 1.2vh 1.6vw; margin-top: 2.4vh; }
+.a3s-tv__fact { display: inline-flex; align-items: center; gap: 1vh; padding: 1vh 2.2vh; border-radius: 99px; font-size: 3vh; font-weight: 700;
+	background: #fff6eb; color: #b45f06; border: 1px solid rgba(247, 148, 30, 0.35); font-variant-numeric: tabular-nums;
+	opacity: 0; transform: translateY(1.5vh); animation: a3s-reg-rise 0.45s 1.1s var(--ease) forwards; }
+.a3s-tv__fact + .a3s-tv__fact { animation-delay: 1.3s; }
+.a3s-tv__fact svg { width: 3vh; height: 3vh; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { .a3s-tv__fact { animation: none; opacity: 1; transform: none; } }
+
+/* The welcome with the full estimate: the name a little smaller, then two rows of figures -
+ * kW, price, subsidy, you pay; saved a month, a year, years to pay back. */
+.a3s-tv__card.has-est { padding: 4vh 4vw 4.5vh; max-width: 90vw; }
+.a3s-tv__card.has-est .a3s-tv__hello { font-size: 4vh; }
+.a3s-tv__card.has-est .a3s-tv__name { font-size: 9vh; min-height: 9.5vh; margin-top: 0.5vh; }
+.a3s-tv__card.has-est .a3s-tv__place { font-size: 3.4vh; margin-top: 1vh; }
+.a3s-tv__card.has-est .a3s-tv__facts { margin-top: 1.8vh; }
+.a3s-tv__card.has-est .a3s-tv__fact { font-size: 2.6vh; padding: 0.8vh 1.8vh; }
+.a3s-tv__est2 { margin-top: 3vh; padding-top: 2.8vh; border-top: 0.3vh dashed #e3e6ec; display: grid; gap: 2.4vh; }
+.a3s-tv__est2-row { display: flex; justify-content: center; gap: 1.4vw; }
+.a3s-tv__stat2 { display: grid; justify-items: center; min-width: 15vw; padding: 1.6vh 1.4vw; border-radius: 2vh; background: #f7f9fc;
+	opacity: 0; transform: translateY(2vh); transition: all 0.5s var(--ease); }
+.a3s-tv__stat2.is-in { opacity: 1; transform: none; }
+.a3s-tv__stat2 b { font-size: 6vh; line-height: 1; color: #e07f0c; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.a3s-tv__stat2 span { font-size: 2.2vh; color: #6b7383; margin-top: 0.8vh; }
+.a3s-tv__stat2.is-key { background: linear-gradient(135deg, #f7941e, #fbb040); box-shadow: 0 1vh 3vh rgba(247, 148, 30, 0.35); }
+.a3s-tv__stat2.is-key b, .a3s-tv__stat2.is-key span { color: #fff; }
+.a3s-tv__est2-note { margin: 0; font-size: 2.8vh; font-weight: 700; color: #106d94; }
+/* The task panel's head: the title keeps its line; when the actions (the portals, Share) do not
+ * fit beside it, they wrap under it rather than squeezing it. */
+.a3s-taskpanel__head { flex-wrap: wrap; row-gap: 0.75rem; }
+.a3s-taskpanel__titles { flex: 1 1 12rem; }
+.a3s-taskpanel__headacts { flex: 0 1 auto; }
+.a3s-taskpanel__head:has(.a3s-taskpanel__headacts:not(:empty)) { margin-bottom: 0.6rem; }
+
+/* ================================================================== Editing a printed paper
+ * The task panel's Edit (portal_project_board.js, api/document_editor): the paper on a white A4
+ * sheet over the page, a short toolbar, Save and Reset. */
+.a3s-taskdocs__state.is-edited { background: rgba(122, 90, 248, 0.12); color: #5b3fd1; margin-left: 0.3rem; }
+.a3s-docedit { position: fixed; inset: 0; z-index: 1100; background: rgba(15, 23, 42, 0.55); display: grid; place-items: center; padding: 2vh 2vw; }
+.a3s-docedit__panel { width: min(64rem, 100%); height: 100%; display: grid; grid-template-rows: auto auto 1fr auto; background: var(--color-surface);
+	border-radius: var(--radius-card); box-shadow: var(--shadow-raised); overflow: hidden; }
+.a3s-docedit__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem 1rem; padding: 1.1rem 1.4rem 0.8rem; }
+.a3s-docedit__head .a3s-modal__title { margin: 0; }
+.a3s-docedit__acts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.a3s-docedit__acts [hidden] { display: none; }
+.a3s-docedit__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; padding: 0.5rem 1.4rem; border-top: 1px solid var(--color-border);
+	border-bottom: 1px solid var(--color-border); background: var(--color-bg); }
+.a3s-docedit__tool { min-width: 2.1rem; height: 2.1rem; border: 1px solid var(--color-border-strong); border-radius: 0.55rem; background: var(--color-surface);
+	font: inherit; font-weight: 700; cursor: pointer; color: var(--color-text); }
+.a3s-docedit__tool:hover { border-color: var(--color-accent); color: var(--color-accent-hover); }
+.a3s-docedit__tool--italic { font-style: italic; }
+.a3s-docedit__tool--underline { text-decoration: underline; }
+.a3s-docedit__hint { margin-left: auto; font-size: 0.8rem; color: var(--color-text-muted); }
+.a3s-docedit__stage { overflow: auto; background: #e9ecf1; padding: 1.2rem; }
+.a3s-docedit__page { display: block; width: 210mm; max-width: 100%; height: 297mm; margin: 0 auto; border: 0; background: #fff;
+	box-shadow: 0 6px 24px rgba(15, 23, 42, 0.18); }
+.a3s-docedit .a3s-form__status { margin: 0; padding: 0.5rem 1.4rem 0.8rem; }
+.a3s-docedit .a3s-form__status:empty { display: none; }
