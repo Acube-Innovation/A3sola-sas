@@ -3,9 +3,10 @@
 """Who a project's tasks are assigned to - any number of people per task.
 
 Each task on the template names a default position (`default_assignee`: Project Engineer,
-Project Manager, Sales Co-ordinator, Lead Owner, Accounts, Contractor). On a project that
+Project Manager, Sales Co-ordinator, Lead Owner, Dealer, Accounts, Contractor). On a project that
 position is a person: the job's own Project Manager, Project Engineer (`site_engineer`) and
-Sales Co-ordinator fields, its lead's owner, and everyone in Accounts. A contractor's task
+Sales Co-ordinator fields, its lead's owner, its dealer (the lead's Dealer), and everyone in
+Accounts. A contractor's task
 goes to the electrical contractor's portal login (Solar Contractor's Portal User); a
 contractor with no login leaves it to the Project Engineer, with the contractor named on
 the card.
@@ -25,6 +26,7 @@ PROJECT_ENGINEER = "Project Engineer"
 PROJECT_MANAGER = "Project Manager"
 SALES_COORDINATOR = "Sales Co-ordinator"
 LEAD_OWNER = "Lead Owner"
+DEALER = "Dealer"
 ACCOUNTS = "Accounts"
 CONTRACTOR = "Contractor"
 
@@ -41,14 +43,18 @@ CLOSED = ("Completed", "Skipped")
 
 
 def role_holders(role):
-	"""The enabled people who hold `role` as their job - not Administrator, and not a system
-	manager, who holds every role without doing the work."""
+	"""The enabled people who hold `role` as their job - not Administrator, not a system
+	manager, who holds every role without doing the work, and not a dealer, who works only
+	his own customers."""
 	users = frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent")
 	if not users:
 		return []
 	admins = set(frappe.get_all("Has Role", filters={"role": "System Manager", "parenttype": "User"}, pluck="parent"))
 	enabled = set(frappe.get_all("User", filters={"name": ["in", users], "enabled": 1, "user_type": "System User"}, pluck="name"))
-	return sorted(u for u in users if u in enabled and u not in admins and u not in ("Administrator", "Guest"))
+	from a3_sola.api import partner_scope
+
+	return sorted(u for u in users if u in enabled and u not in admins and u not in ("Administrator", "Guest")
+		and "dealer" not in partner_scope.partner_kinds(u))
 
 
 def prefill_people(inst):
@@ -74,12 +80,41 @@ def resolve(inst, position):
 	field = POSITION_FIELDS.get(position)
 	if field:
 		return [inst.get(field)] if inst.get(field) else []
+	if position == DEALER:
+		# The dealer who brought the customer in. A customer the company found itself - a
+		# social media or walk-in lead - has none: the task goes to the lead's owner, else
+		# the Sales Co-ordinator, never to another dealer.
+		dealer = project_dealer(inst)
+		if dealer:
+			return [dealer]
+		return _staff_fallback(inst)
 	if position == LEAD_OWNER:
 		owner = frappe.db.get_value("Lead", inst.lead, "lead_owner") if inst.get("lead") else None
 		return [owner] if owner else []
 	if position == ACCOUNTS:
 		return role_holders(ACCOUNTS_ROLE)
 	return []
+
+
+def _staff_fallback(inst):
+	"""Who takes a Dealer task on a project with no dealer: the lead's owner, else the Sales
+	Co-ordinator - the company's own people, not Administrator or a dealer."""
+	from a3_sola.api import partner_scope
+
+	owner = frappe.db.get_value("Lead", inst.lead, "lead_owner") if inst.get("lead") else None
+	for user in (owner, inst.get("sales_coordinator")):
+		if user and user not in ("Administrator", "Guest") and frappe.db.get_value("User", user, "enabled") \
+				and "dealer" not in partner_scope.partner_kinds(user):
+			return [user]
+	return []
+
+
+def project_dealer(inst):
+	"""The project's dealer, an enabled user: its lead's Dealer, else its customer's."""
+	dealer = frappe.db.get_value("Lead", inst.lead, "a3s_dealer") if inst.get("lead") else None
+	if not dealer and inst.get("solar_consumer"):
+		dealer = frappe.db.get_value("Solar Consumer", inst.solar_consumer, "dealer")
+	return dealer if dealer and frappe.db.get_value("User", dealer, "enabled") else None
 
 
 def people(inst, code):
