@@ -112,10 +112,10 @@
    "fieldname": "default_assignee",
    "fieldtype": "Select",
    "label": "Default Assignee",
-   "options": "Project Engineer\nProject Manager\nSales Co-ordinator\nLead Owner\nAccounts\nContractor",
+   "options": "Project Engineer\nProject Manager\nSales Co-ordinator\nLead Owner\nDealer\nAccounts\nContractor",
    "in_list_view": 1,
    "columns": 2,
-   "description": "Who the task is first assigned to on a new project: the person in that position on the project."
+   "description": "Who the task is first assigned to on a new project: the person in that position on the project. Dealer: the dealer who brought the customer (the lead's Dealer); a lead with no dealer, such as social media, goes to the lead's owner, else the Sales Co-ordinator."
   },
   {
    "description": "A named person this task goes to on every job, in place of the position above. Leave blank to use the position.",
@@ -203,7 +203,7 @@
   }
  ],
  "links": [],
- "modified": "2026-11-20 16:30:00.000000",
+ "modified": "2026-11-20 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar Operations",
  "name": "Installation Stage Template Detail",

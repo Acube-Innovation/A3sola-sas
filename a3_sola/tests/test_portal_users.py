@@ -1,32 +1,50 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""The portal's Users page: only an admin manages users; each kind gets its access, a
-set-password link that works, and a delete that disables a user the records name
-(api/portal_users)."""
+"""The portal's Users page: only an admin manages users; each user is one kind with that
+kind's one access, staff are on an Employee record, a set-password link works, and a delete
+disables a user the records name (api/portal_users)."""
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from a3_sola.api import portal_users as pu
+from a3_sola.setup import employee_profile
+
+
+def _staff_details():
+	"""What every Admin and Employee is saved with: a designation, a department, and the
+	gender and date of birth their Employee record is made with."""
+	designation = frappe.db.get_value("Designation", {}, "name")
+	department = frappe.db.get_value("Department", {"is_group": 0}, "name")
+	if not (designation and department):
+		return None
+	return {"designation": designation, "department": department, "gender": "Female", "date_of_birth": "1995-04-01"}
 
 
 def _new(kind, email, **extra):
 	data = {"type": kind, "first_name": "Test", "last_name": kind, "email": email, "mobile_no": ""}
+	if kind in pu.STAFF_TYPES:
+		data.update(_staff_details() or {})
 	data.update(extra)
 	return pu.save_user(data)
 
 
-class TestPortalUsers(FrappeTestCase):
+class _Base(FrappeTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
+		if not _staff_details():
+			self.skipTest("No designation or department on this site.")
+		employee_profile.ensure()
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		frappe.db.rollback()
 
+
+class TestPortalUsers(_Base):
 	def test_only_an_admin_manages_users(self):
 		_new("Dealer", "pu-dealer@example.com")
-		_new("Employee", "pu-staff@example.com", profile="Solar Sales")
+		_new("Employee", "pu-staff@example.com")
 		for who in ("pu-dealer@example.com", "pu-staff@example.com"):
 			frappe.set_user(who)
 			self.assertFalse(pu.is_user_admin())
@@ -40,27 +58,41 @@ class TestPortalUsers(FrappeTestCase):
 		self.assertTrue(pu.is_user_admin())
 		self.assertIn("pu-staff@example.com", [u["name"] for u in pu.users()["users"]])
 
-	def test_each_kind_gets_its_access(self):
-		_new("Employee", "pu-staff@example.com", profile="Solar Operations")
+	def test_each_kind_gets_its_one_profile(self):
+		_new("Employee", "pu-staff@example.com")
 		self.assertEqual(frappe.db.get_value("User", "pu-staff@example.com", ["user_type", "role_profile_name"]),
-			("System User", "Solar Operations"))
+			("System User", employee_profile.EMPLOYEE_PROFILE))
 		company = pu._company()
 		if company:
 			self.assertTrue(frappe.db.exists("User Permission", {"user": "pu-staff@example.com", "allow": "Company", "for_value": company}))
 		_new("Dealer", "pu-dealer@example.com")
-		self.assertEqual(frappe.db.get_value("User", "pu-dealer@example.com", "user_type"), "Website User")
+		self.assertEqual(frappe.db.get_value("User", "pu-dealer@example.com", ["user_type", "role_profile_name"]),
+			("Website User", pu.DEALER_PROFILE))
 		made = _new("Contractor", "pu-con@example.com", new_contractor={"contractor_name": "PU Test Contractor", "contractor_type": "Electrical"})
 		self.assertEqual(frappe.db.get_value("Solar Contractor", made["contractor"], "user"), "pu-con@example.com")
 		kinds = {u["name"]: u["type"] for u in pu.users()["users"]}
 		self.assertEqual((kinds["pu-staff@example.com"], kinds["pu-dealer@example.com"], kinds["pu-con@example.com"]),
 			("Employee", "Dealer", "Contractor"))
 
-	def test_a_duplicate_login_and_an_employee_without_access_are_refused(self):
+	def test_an_employee_has_every_staff_job_but_not_the_admins(self):
+		_new("Employee", "pu-staff@example.com")
+		held = set(frappe.get_roles("pu-staff@example.com"))
+		self.assertTrue(set(pu.staff_roles()) - set(employee_profile.ADMIN_ONLY_ROLES) <= held)
+		self.assertFalse(held & set(pu.ADMIN_ROLES))
+		self.assertFalse(pu.is_user_admin("pu-staff@example.com"))
+
+	def test_a_partner_is_one_kind_and_holds_nothing_else(self):
+		_new("Dealer", "pu-dealer@example.com", also=1, roles=["Solar Sales Executive"])
+		self.assertEqual(set(frappe.get_roles("pu-dealer@example.com")) - pu.partner_scope.AUTOMATIC_ROLES, {"Solar Dealer"})
+		pu.save_user({"type": "Contractor", "first_name": "Test", "email": "pu-dealer@example.com",
+			"new_contractor": {"contractor_name": "PU Was Dealer"}}, name="pu-dealer@example.com")
+		self.assertEqual(set(frappe.get_roles("pu-dealer@example.com")) - pu.partner_scope.AUTOMATIC_ROLES,
+			{"Solar Contractor Partner"})
+
+	def test_a_duplicate_login_is_refused(self):
 		_new("Dealer", "pu-dealer@example.com")
 		with self.assertRaises(frappe.ValidationError):
 			_new("Dealer", "pu-dealer@example.com")
-		with self.assertRaises(frappe.ValidationError):
-			_new("Employee", "pu-noaccess@example.com")
 
 	def test_an_admin_cannot_disable_himself(self):
 		_new("Admin", "pu-admin@example.com")
@@ -100,94 +132,46 @@ class TestPortalUsers(FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("User", "pu-used@example.com", "enabled"), 0)
 
 	def test_a_system_manager_is_an_admin_and_keeps_his_roles_when_edited(self):
-		_new("Employee", "pu-sm@example.com", profile="Solar Sales")
+		_new("Employee", "pu-sm@example.com")
 		user = frappe.get_doc("User", "pu-sm@example.com")
 		user.role_profile_name = None
 		user.add_roles("System Manager")
 		self.assertEqual(next(u["type"] for u in pu.users()["users"] if u["name"] == "pu-sm@example.com"), "Admin")
-		pu.save_user({"type": "Admin", "first_name": "Renamed", "email": "pu-sm@example.com", "mobile_no": ""}, name="pu-sm@example.com")
+		pu.save_user(dict(_staff_details(), type="Admin", first_name="Renamed", email="pu-sm@example.com", mobile_no=""),
+			name="pu-sm@example.com")
 		self.assertIn("System Manager", frappe.get_roles("pu-sm@example.com"))
 		self.assertEqual(frappe.db.get_value("User", "pu-sm@example.com", "first_name"), "Renamed")
 
 
-class TestDesignationAndDepartment(FrappeTestCase):
-	"""A staff member's designation and department are on his Employee record."""
-
-	def setUp(self):
-		frappe.set_user("Administrator")
-		self.designation = frappe.db.get_value("Designation", {}, "name")
-		self.department = frappe.db.get_value("Department", {"is_group": 0}, "name")
-		if not (self.designation and self.department):
-			self.skipTest("No designation or department on this site.")
-
-	def tearDown(self):
-		frappe.set_user("Administrator")
-		frappe.db.rollback()
+class TestEmployeeRecord(_Base):
+	"""An Admin or Employee is on an Employee record, with his designation and department."""
 
 	def employee(self, email):
 		return frappe.db.get_value("Employee", {"user_id": email}, ["designation", "department"], as_dict=True)
 
-	def test_a_new_employee_needs_his_details_and_gets_a_record(self):
-		with self.assertRaises(frappe.ValidationError):
-			_new("Employee", "pu-desig@example.com", profile="Solar Sales", designation=self.designation)
-		self.assertFalse(frappe.db.exists("User", "pu-desig@example.com"))
-		_new("Employee", "pu-desig@example.com", profile="Solar Sales", designation=self.designation,
-			department=self.department, gender="Female", date_of_birth="1995-04-01")
-		self.assertEqual(self.employee("pu-desig@example.com"), {"designation": self.designation, "department": self.department})
+	def test_staff_need_their_details_and_get_a_record(self):
+		d = _staff_details()
+		for kind in pu.STAFF_TYPES:
+			for missing in ("designation", "department", "gender", "date_of_birth"):
+				with self.assertRaises(frappe.ValidationError):
+					_new(kind, "pu-desig@example.com", **{missing: ""})
+				self.assertFalse(frappe.db.exists("User", "pu-desig@example.com"))
+		_new("Employee", "pu-desig@example.com")
+		self.assertEqual(self.employee("pu-desig@example.com"), {"designation": d["designation"], "department": d["department"]})
 		row = next(u for u in pu.users()["users"] if u["name"] == "pu-desig@example.com")
-		self.assertEqual((row["designation"], row["department"]), (self.designation, self.department))
+		self.assertEqual((row["designation"], row["department"], row["needs_employee"]), (d["designation"], d["department"], False))
 
-	def test_editing_changes_the_record_and_without_them_none_is_made(self):
-		_new("Admin", "pu-plain@example.com")
-		self.assertIsNone(self.employee("pu-plain@example.com"))
-		_new("Employee", "pu-edit@example.com", profile="Solar Sales", designation=self.designation,
-			gender="Male", date_of_birth="1990-01-01")
-		pu.save_user({"type": "Employee", "first_name": "Test", "last_name": "Employee", "email": "pu-edit@example.com",
-			"department": self.department, "designation": ""}, name="pu-edit@example.com")
-		self.assertEqual(self.employee("pu-edit@example.com"), {"designation": None, "department": self.department})
+	def test_editing_changes_the_record_and_needs_no_birth_date_again(self):
+		_new("Employee", "pu-edit@example.com")
+		other = frappe.db.get_value("Designation", {"name": ["!=", _staff_details()["designation"]]}, "name")
+		pu.save_user({"type": "Employee", "first_name": "Test", "email": "pu-edit@example.com",
+			"designation": other, "department": _staff_details()["department"]}, name="pu-edit@example.com")
+		self.assertEqual(self.employee("pu-edit@example.com").designation, other)
+		with self.assertRaises(frappe.ValidationError):
+			pu.save_user({"type": "Employee", "first_name": "Test", "email": "pu-edit@example.com",
+				"designation": "", "department": _staff_details()["department"]}, name="pu-edit@example.com")
 
 	def test_a_partner_gets_no_employee_record(self):
-		_new("Dealer", "pu-dealer2@example.com", designation=self.designation, gender="Male", date_of_birth="1990-01-01")
+		_new("Dealer", "pu-dealer2@example.com", designation=_staff_details()["designation"], gender="Male",
+			date_of_birth="1990-01-01")
 		self.assertIsNone(self.employee("pu-dealer2@example.com"))
-
-
-class TestSeveralJobs(FrappeTestCase):
-	"""An employee who does several jobs gets each job's roles, and with one login the access
-	of all of them."""
-
-	EMAIL = "pu-multi@example.com"
-
-	def setUp(self):
-		frappe.set_user("Administrator")
-
-	def tearDown(self):
-		frappe.set_user("Administrator")
-		frappe.db.rollback()
-
-	def test_roles_of_several_jobs_are_held_together(self):
-		_new("Employee", self.EMAIL, roles=["Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"])
-		self.assertFalse(frappe.db.get_value("User", self.EMAIL, "role_profile_name"))
-		held = set(frappe.get_roles(self.EMAIL))
-		self.assertTrue({"Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"} <= held)
-		row = next(u for u in pu.users()["users"] if u["name"] == self.EMAIL)
-		self.assertEqual((row["type"], set(row["roles"])),
-			("Employee", {"Solar Survey Engineer", "Solar Operations Executive", "Solar Site Engineer"}))
-
-	def test_one_jobs_roles_are_that_profile(self):
-		_new("Employee", self.EMAIL, roles=["Solar Survey Engineer"])
-		self.assertEqual(frappe.db.get_value("User", self.EMAIL, "role_profile_name"), "Solar Survey")
-
-	def test_roles_given_in_the_desk_stay(self):
-		_new("Employee", self.EMAIL, roles=["Solar Sales Executive", "Solar Survey Engineer"])
-		frappe.get_doc("User", self.EMAIL).add_roles("Accounts User")
-		pu.save_user({"type": "Employee", "first_name": "Test", "email": self.EMAIL,
-			"roles": ["Solar Design Engineer"]}, name=self.EMAIL)
-		held = set(frappe.get_roles(self.EMAIL))
-		self.assertIn("Accounts User", held)
-		self.assertIn("Solar Design Engineer", held)
-		self.assertNotIn("Solar Sales Executive", held)
-
-	def test_no_role_or_a_partner_role_is_refused(self):
-		for roles in ([], ["Solar Dealer"]):
-			with self.assertRaises(frappe.ValidationError):
-				_new("Employee", self.EMAIL, roles=roles)

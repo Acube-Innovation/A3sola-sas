@@ -88,6 +88,9 @@ def setup(packages=True):
 	install_lifecycle.setup()
 	install_partners.setup()
 	install_staff_lookups.setup()
+	from a3_sola.setup import employee_profile
+
+	employee_profile.ensure()  # after every staff profile above: it is all of theirs
 	frappe.db.commit()
 	dashboard.install()
 	dashboard_ops.install()
