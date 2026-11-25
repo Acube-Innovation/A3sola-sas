@@ -17,6 +17,9 @@
 		<a class="a3s-btn a3s-btn--secondary" href="/api/method/a3_sola.api.events.qr_png?event={{ doc.name | urlencode }}" download>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>QR code</span>
 		</a>
+		<a class="a3s-btn a3s-btn--secondary" href="/api/method/a3_sola.api.events.qr_pdf?event={{ doc.name | urlencode }}" download>
+			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>QR PDF</span>
+		</a>
 		{%- if can_write %}
 		<button type="button" class="a3s-btn a3s-btn--secondary" data-edit-event>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg><span>Edit</span>
