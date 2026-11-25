@@ -111,24 +111,121 @@ def page_context(key):
 
 
 # ------------------------------------------------------------------ registering
+#: A visitor's first save (tab 1) and their finished form count as one registration when they
+#: come this close together; a later finish, or one at another event, starts a new one.
+SAME_VISIT_HOURS = 6
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limited("event_registration_ip", "event_registration_rate_per_ip", 30)
+def start():
+	"""The form's first tab: name, mobile and district. Saves the visitor's lead at once - so staff
+	can call even if they stop there - and the stall screen says they have just scanned. Returns a
+	ref that lets the finished form update this lead without a second captcha."""
+	data = frappe._dict(frappe.form_dict)
+	if _clean(data.get("website_url")):
+		frappe.logger("a3_sola").info({"event": "honeypot_tripped", "form": "event_registration_start", "ip": client_ip()})
+		return {"ok": True, "ref": "", "first_name": ""}
+	event = event_by_key(data.get("key"))
+	if not event:
+		frappe.throw(_("This registration has closed."), title=_("Registration Closed"))
+	verify_captcha(data.get("captcha_token"))
+	visitor = _contact(data)
+	limit_by_identifier("event_registration_mobile", visitor.mobile, "event_registration_per_mobile_per_day", 5)
+	user = frappe.session.user
+	frappe.set_user(event.lead_owner)
+	try:
+		lead, created = _save_scan(event, visitor)
+	finally:
+		frappe.set_user(user)
+	return {"ok": True, "ref": visitor_ref(lead.name), "first_name": visitor.first_name, "created": created}
+
+
+def _contact(data):
+	"""Tab 1, cleaned and checked: name, mobile, WhatsApp, district, and whether the screen may name them."""
+	full_name = " ".join(_clean(data.get("full_name"), 140).split())
+	if len(full_name) < 2:
+		frappe.throw(_("Enter your name."))
+	mobile = _mobile(data.get("mobile_no"), _("your mobile"))
+	whatsapp = _mobile(data.get("whatsapp_no"), _("WhatsApp")) if _clean(data.get("whatsapp_no"), 24) else mobile
+	district = _clean(data.get("district"), 140)
+	if not district or not frappe.db.exists("Indian District", {"name": district, "state": STATE}):
+		frappe.throw(_("Choose your district."))
+	first, _sep, rest = full_name.partition(" ")
+	return frappe._dict(full_name=full_name, first_name=first, last_name=rest or None, mobile=mobile, whatsapp=whatsapp,
+		district=district, hide_on_screen=1 if str(data.get("show_on_screen", "1")) == "0" else 0)
+
+
+def _save_scan(event, visitor):
+	"""(lead, made now) after tab 1: the lead their number is on, else a new one, stamped as
+	registered at this event now (the screen's "just scanned"). Run as the event's lead owner."""
+	from a3_sola.api.leads import lead_defaults
+	from a3_sola.api.lead_import import NEW_LEAD
+
+	name = find_lead(event.company, visitor.mobile)
+	created = not name
+	if created:
+		doc = frappe.new_doc(LEAD)
+		for field, value in {**lead_defaults(), **NEW_LEAD}.items():
+			doc.set(field, value)
+		doc.update({"first_name": visitor.first_name, "last_name": visitor.last_name, "company": event.company,
+			"lead_owner": event.lead_owner, "source": event.lead_source or doc.source, "campaign_name": event.campaign,
+			"mobile_no": visitor.mobile, "whatsapp_no": visitor.whatsapp})
+	else:
+		doc = frappe.get_doc(LEAD, name)
+	fill = {"whatsapp_no": visitor.whatsapp, "district": visitor.district,
+		"state": frappe.db.get_value("Indian District", visitor.district, "state")}
+	for field, value in fill.items():
+		if value and (created or not doc.get(field)):
+			doc.set(field, value)
+	doc.update({"a3s_event": event.name, "a3s_registered_on": now_datetime(), "a3s_completed_on": None,
+		"a3s_hide_on_screen": visitor.hide_on_screen,
+		"a3s_registered_from": "{0} | {1}".format(client_ip() or "", (user_agent() or "")[:300])})
+	doc.append("outreach_log", {"contact_datetime": now_datetime(), "channel": "Walk-in",
+		"outreach_step": "Step 1: First Contact", "call_status": "Not Applicable", "logged_by": event.lead_owner,
+		"outcome": _("Scanned the QR code at {0}.").format(event.event_name),
+		"next_action": _("Call {0}.").format(visitor.first_name)})
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_mandatory = True
+	if created:
+		doc.insert(ignore_permissions=True)
+	else:
+		doc.save(ignore_permissions=True)
+	if not doc.next_followup_date or str(doc.next_followup_date) > today():
+		doc.db_set("next_followup_date", today(), update_modified=False)
+	return doc, created
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
 def submit():
 	"""Register a visitor at the event the link names: their lead, made or brought up to date,
 	their papers, and the instant estimate to show them. Multipart: the fields, and a file per
 	paper they chose to upload."""
+	from a3_sola.api.ratelimit import enforce
+
 	data = frappe._dict(frappe.form_dict)
 	if _clean(data.get("website_url")):
 		# The honeypot: a field no person sees. The same answer as a real registration, and nothing saved.
 		frappe.logger("a3_sola").info({"event": "honeypot_tripped", "form": "event_registration", "ip": client_ip()})
 		return {"ok": True, "first_name": "", "estimate": None}
+	# Tab 1 (start) already passed the per-IP and per-mobile limits and the captcha for this visitor.
+	# Its signed ref, for the same number, finishes that registration without counting it twice -
+	# a visit is one registration however many tabs it takes - and without a second challenge (a
+	# captcha token is good for one check only). Without it, this is a whole registration: all checks.
+	started = lead_of_ref(data.get("ref"))
+	ip_checked = False
+	if not started:
+		enforce("event_registration_ip", client_ip(), "event_registration_rate_per_ip", 30, 3600, detail="submit")
+		ip_checked = True
 	event = event_by_key(data.get("key"))
 	if not event:
 		frappe.throw(_("This registration has closed."), title=_("Registration Closed"))
-	verify_captcha(data.get("captcha_token"))
-
 	visitor = _visitor(data)
-	limit_by_identifier("event_registration_mobile", visitor.mobile, "event_registration_per_mobile_per_day", 5)
+	if not (started and find_lead(event.company, visitor.mobile) == started):
+		if not ip_checked:
+			enforce("event_registration_ip", client_ip(), "event_registration_rate_per_ip", 30, 3600, detail="submit")
+		verify_captcha(data.get("captcha_token"))
+		limit_by_identifier("event_registration_mobile", visitor.mobile, "event_registration_per_mobile_per_day", 5)
 	papers = _papers(event) if cint(event.ask_documents) else []
 	est = instant_estimate.estimate(event.company, visitor.bill_amount, visitor.bill_months, visitor.interest,
 		_event_packages(event.name), visitor.system_type) if visitor.bill_amount else None
@@ -257,7 +354,14 @@ def _save_lead(event, visitor, est):
 	for field, value in fill.items():
 		if value and (created or not doc.get(field)):
 			doc.set(field, value)
-	doc.update({"a3s_event": event.name, "a3s_registered_on": now_datetime(), "a3s_whatsapp_consent": 1,
+	# Registered when they first saved their name (tab 1), if that was this visit at this event;
+	# a form finished without that first save (an older page) is registered now.
+	from frappe.utils import add_to_date, get_datetime
+
+	same_visit = doc.a3s_event == event.name and doc.a3s_registered_on and \
+		get_datetime(doc.a3s_registered_on) > add_to_date(now_datetime(), hours=-SAME_VISIT_HOURS)
+	doc.update({"a3s_event": event.name, "a3s_whatsapp_consent": 1, "a3s_completed_on": now_datetime(),
+		"a3s_registered_on": doc.a3s_registered_on if same_visit else now_datetime(),
 		"a3s_hide_on_screen": visitor.hide_on_screen,
 		"a3s_registered_from": "{0} | {1}".format(client_ip() or "", (user_agent() or "")[:300])})
 	if est:

@@ -11,8 +11,10 @@
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var statusEl = form.querySelector("[data-status]");
 	var steps = [].slice.call(form.querySelectorAll("[data-step]"));
+	var tabs = [].slice.call(form.querySelectorAll("[data-tab]"));
 	var step = 1;
-	var skipDocs = false;
+	var ref = "";       // the lead tab 1 saved, signed: Register updates it
+	var savedKey = "";  // what tab 1 last saved, so going back and on again does not save twice
 	var money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 	/* Phone photos are large: anything over this is redrawn smaller before it is sent. */
 	var SHRINK_OVER = 1.5 * 1024 * 1024;
@@ -38,6 +40,11 @@
 	function showStep(n) {
 		step = n;
 		steps.forEach(function (s) { s.hidden = Number(s.dataset.step) !== n; });
+		tabs.forEach(function (t) {
+			var i = Number(t.dataset.tab);
+			t.classList.toggle("is-on", i === n);
+			t.classList.toggle("is-done", i < n);
+		});
 		setStatus("");
 		window.scrollTo({ top: 0, behavior: "smooth" });
 	}
@@ -66,8 +73,17 @@
 		if (!mobileOk(form.mobile_no.value)) return fieldError(form.mobile_no, "Enter your 10-digit mobile number.");
 		if (other.checked && !mobileOk(form.whatsapp_no.value)) return fieldError(form.whatsapp_no, "Enter your 10-digit WhatsApp number.");
 		if (!form.district.value) return fieldError(form.district, "Choose your district.");
+		return true;
+	}
+	function clearErrors() { form.querySelectorAll(".a3s-field--error").forEach(function (f) { f.classList.remove("a3s-field--error"); }); }
+	function checkStep2() {
+		clearErrors();
 		var bill = form.bill_amount.value;
 		if (bill && (Number(bill) < 0 || Number(bill) > 1000000)) return fieldError(form.bill_amount, "Enter the bill amount in rupees.");
+		return true;
+	}
+	function checkStep3() {
+		clearErrors();
 		if (!form.whatsapp_consent.checked) return fieldError(form.whatsapp_consent, "Tick the box to agree to hear from us on WhatsApp.");
 		return true;
 	}
@@ -82,10 +98,9 @@
 			box.querySelector(".a3s-reg__doc-ic").textContent = f ? "✓" : "+";
 		});
 	});
-	var skip = form.querySelector("[data-skip]");
-	if (skip) skip.addEventListener("click", function () { skipDocs = true; send(); });
-	var back = form.querySelector("[data-back]");
-	if (back) back.addEventListener("click", function () { showStep(1); });
+	form.querySelectorAll("[data-back]").forEach(function (b) {
+		b.addEventListener("click", function () { showStep(Math.max(1, step - 1)); });
+	});
 
 	/* A photo redrawn as a JPEG at most MAX_SIDE across - a 5 MB phone photo becomes a few
 	   hundred KB, and still reads. A PDF, or a small photo, goes as it is. */
@@ -130,7 +145,7 @@
 		var btn = form.querySelector('[data-step="' + step + '"] .a3s-reg__submit');
 		if (btn) {
 			btn.classList.toggle("is-busy", on);
-			btn.querySelector("span").textContent = on ? "Registering…" : (step === 1 && boot.ask_documents ? "Continue" : "Register");
+			btn.querySelector("span").textContent = on ? (step === 1 ? "Saving…" : "Registering…") : (step === 3 ? "Register" : "Next");
 		}
 	}
 	function send() {
@@ -147,7 +162,8 @@
 		});
 		data.append("whatsapp_consent", form.whatsapp_consent.checked ? "1" : "0");
 		data.append("show_on_screen", form.show_on_screen.checked ? "1" : "0");
-		var files = skipDocs ? [] : [].slice.call(form.querySelectorAll('[data-doc] input[type="file"]')).filter(function (i) {
+		if (ref) data.append("ref", ref);
+		var files = [].slice.call(form.querySelectorAll('[data-doc] input[type="file"]')).filter(function (i) {
 			return i.files && i.files[0];
 		});
 		Promise.all(files.map(function (i) { return shrink(i.files[0]).then(function (f) { data.append(i.name, f, f.name); }); }))
@@ -175,14 +191,48 @@
 			});
 	}
 
+	/* Tab 1's Next: the lead is saved now (the stall screen says they have just scanned), then tab 2. */
+	function contactKey() {
+		return [form.full_name.value.trim(), digits(form.mobile_no.value), other.checked ? digits(form.whatsapp_no.value) : "",
+			form.district.value, form.show_on_screen.checked ? 1 : 0].join("|");
+	}
+	function saveContact() {
+		if (busy) return;
+		if (ref && savedKey === contactKey()) { showStep(2); return; }
+		setBusy(true);
+		setStatus("");
+		var data = new FormData();
+		["key", "website_url", "full_name", "mobile_no", "whatsapp_no", "district"].forEach(function (k) {
+			if (form[k]) data.append(k, form[k].value);
+		});
+		data.append("show_on_screen", form.show_on_screen.checked ? "1" : "0");
+		captchaToken().then(function (token) {
+			if (token) data.append("captcha_token", token);
+			var headers = { "Accept": "application/json" };
+			if (csrf) headers["X-Frappe-CSRF-Token"] = csrf;
+			return fetch("/api/method/a3_sola.api.event_registration.start", { method: "POST", credentials: "same-origin", headers: headers, body: data });
+		}).then(function (r) {
+			return r.json().catch(function () { return {}; }).then(function (body) {
+				if (!r.ok) throw new Error(serverMessage(body) || (r.status === 429 ? "Too many attempts. Please wait a little and try again." : "That did not go through. Try again."));
+				return body.message || {};
+			});
+		}).then(function (m) {
+			ref = m.ref || "";
+			savedKey = contactKey();
+			setBusy(false);
+			showStep(2);
+		}).catch(function (err) {
+			setBusy(false);
+			setStatus(err && err.message && err.message !== "Failed to fetch" ? err.message
+				: "Could not reach the server. Check your connection and try again.", "error");
+		});
+	}
+
 	form.addEventListener("submit", function (e) {
 		e.preventDefault();
-		if (step === 1) {
-			if (!checkStep1()) return;
-			if (boot.ask_documents) { showStep(2); return; }
-		}
-		skipDocs = false;
-		send();
+		if (step === 1) { if (checkStep1()) saveContact(); return; }
+		if (step === 2) { if (checkStep2()) showStep(3); return; }
+		if (checkStep3()) send();
 	});
 
 	/* ------------------------------------------------------------------ thank you */

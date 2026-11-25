@@ -4711,8 +4711,11 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
  * /event-screen/<key> (www/event_screen): the TV at the event. Sized in vh/vw so it reads from
  * across the hall on any screen; one dark stage, the brand's orange for every moment. */
 .a3s-tv { margin: 0; height: 100vh; overflow: hidden; color: #fff; cursor: none;
-	background: radial-gradient(90vw 70vh at 85% 110%, rgba(247, 148, 30, 0.35), transparent 60%),
-		radial-gradient(70vw 60vh at 0% -10%, rgba(41, 171, 226, 0.22), transparent 60%), #121a2b; }
+	/* The company website's hero: the solar field at sunset under its deep-teal fade (renewcoreinnovations.com). */
+	background: linear-gradient(180deg, rgba(4, 42, 45, 0) 55%, #042a2d 100%),
+		linear-gradient(270deg, rgba(4, 42, 45, 0) 45%, rgba(4, 42, 45, 0.85) 100%),
+		linear-gradient(rgba(4, 42, 45, 0.35), rgba(4, 42, 45, 0.35)),
+		url(/assets/a3_sola/images/stall-screen-bg.jpg) center / cover no-repeat, #042a2d; }
 .a3s-tv:not(.is-started) { cursor: default; }
 .a3s-tv__invalid { display: grid; place-content: center; height: 100vh; text-align: center; padding: 2rem; }
 .a3s-tv__frame { position: relative; height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
@@ -4721,7 +4724,25 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 .a3s-tv__brand img { height: 7vh; max-width: 16vw; object-fit: contain; background: #fff; border-radius: 1vh; padding: 0.8vh 1vh; }
 .a3s-tv__company { margin: 0; font-size: 2.4vh; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #fbb040; }
 .a3s-tv__event { margin: 0.2vh 0 0; font-size: 3vh; font-weight: 600; opacity: 0.9; }
-.a3s-tv__clock { font-size: 4vh; font-weight: 700; opacity: 0.85; font-variant-numeric: tabular-nums; }
+/* The clock: a round badge as tall as the logo cards - a slowly turning sun ring, the event day over the time. */
+.a3s-tv__clock { position: relative; width: 13vh; height: 13vh; border-radius: 50%; display: grid; place-content: center; justify-items: center;
+	gap: 0.4vh; text-align: center; font-variant-numeric: tabular-nums; isolation: isolate;
+	box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.35); }
+/* No CSS mask here: a masked, spinning layer stalled Chrome's on-screen drawing (the ring never showed and
+   the Start overlay stayed painted after it was hidden). The ring is a plain spinning disc; the face covers
+   all of it but the rim. The face is ::after so it paints over the disc (both z-index -1, the face later). */
+.a3s-tv__clock::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+	background: radial-gradient(circle at 50% 30%, #2b4f52, #042a2d 70%); box-shadow: inset 0 0 0 0.25vh rgba(255, 255, 255, 0.12); }
+.a3s-tv__clock-ring { position: absolute; inset: -0.5vh; z-index: -1; border-radius: 50%; pointer-events: none;
+	background: conic-gradient(from 0deg, #fbb040, #f7941e, #e0560c, rgba(247, 148, 30, 0.15), #fbb040);
+	animation: a3s-tv-spin 12s linear infinite; }
+@keyframes a3s-tv-spin { to { transform: rotate(360deg); } }
+.a3s-tv__clock-day { padding: 0.35vh 0.9vh; border-radius: 99px; background: linear-gradient(135deg, #fbb040, #f7941e); color: #042a2d;
+	font-size: 1.3vh; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.2; white-space: nowrap; }
+.a3s-tv__clock-time { display: flex; align-items: baseline; gap: 0.4vh; line-height: 1; }
+.a3s-tv__clock-time b { font-size: 2.9vh; font-weight: 800; color: #fff; }
+.a3s-tv__clock-time small { font-size: 1.2vh; font-weight: 700; color: #fbb040; letter-spacing: 0.04em; }
+@media (prefers-reduced-motion: reduce) { .a3s-tv__clock-ring { animation: none; } }
 
 .a3s-tv__idle { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 5vw; padding: 0 6vw;
 	transition: opacity 0.5s var(--ease), transform 0.5s var(--ease), filter 0.5s var(--ease); }
@@ -4886,6 +4907,8 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 .a3s-tv__frame > .a3s-tv__offline { position: absolute; z-index: 6; }
 .a3s-tv__sparkles { width: 100%; height: 100%; }
 .a3s-tv__aurora { overflow: hidden; }
+/* Over the photo the drifting light stays faint, a glow on the sunset rather than a second sky. */
+.a3s-tv__aurora { opacity: 0.4; }
 .a3s-tv__aurora span { position: absolute; width: 70vw; height: 70vw; border-radius: 50%; filter: blur(9vw); opacity: 0.55; }
 .a3s-tv__aurora span:nth-child(1) { background: #f7941e; left: -20vw; top: 20vh; animation: a3s-tv-drift1 22s ease-in-out infinite alternate; }
 .a3s-tv__aurora span:nth-child(2) { background: #1b8dc0; right: -25vw; top: -30vh; opacity: 0.35; animation: a3s-tv-drift2 26s ease-in-out infinite alternate; }
@@ -4973,6 +4996,12 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 .a3s-tv__counters .a3s-tv__stat b { font-size: 5vh; overflow: visible; text-overflow: clip; white-space: nowrap; }
 .a3s-tv__counters .a3s-tv__stat > .a3s-tv__stat-label { grid-column: 2; margin-top: 0.4vh; font-size: 2vh; white-space: normal; line-height: 1.25; opacity: 0.8; }
 .a3s-tv__counters .a3s-tv__stat b { font-size: 4.6vh; }
+/* The three counters on white cards (90%) over the photo: dark text, the brand orange for the numbers. */
+.a3s-tv__stat { background: rgba(255, 255, 255, 0.9); border-color: rgba(255, 255, 255, 0.6); box-shadow: 0 1.2vh 3vh rgba(0, 0, 0, 0.28); }
+.a3s-tv__stat-ic { background: linear-gradient(135deg, rgba(247, 148, 30, 0.22), rgba(247, 148, 30, 0.08)); }
+.a3s-tv__stat-ic svg { stroke: #e07f0c; }
+.a3s-tv__counters .a3s-tv__stat b { color: #e07f0c; }
+.a3s-tv__counters .a3s-tv__stat > .a3s-tv__stat-label { color: #042a2d; opacity: 0.85; font-weight: 600; }
 /* "Powered by Acube Innovations · A3 Sola": a white pill, so the navy wordmark reads on the dark
  * stage and on the orange and green moments alike; above the moments, never covered. */
 .a3s-tv__frame > .a3s-tv__powered { position: absolute; z-index: 7; right: 2vw; bottom: 10.2vh; display: flex; align-items: center; gap: 1vh;
@@ -4989,6 +5018,15 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 /* The exhibitor's name, sized to sit with the larger logo. */
 .a3s-tv__company { font-size: 4.4vh; letter-spacing: 0.08em; line-height: 1.1; }
 .a3s-tv__event { font-size: 3.4vh; margin-top: 0.6vh; }
+/* The exhibition's dates and venue under its name; its logo on the right, on a white card like ours. */
+/* The three lines beside the logo span the logo card's height: name at its top edge, dates and venue at its foot. */
+.a3s-tv__brand > div { height: 13vh; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+.a3s-tv__brand .a3s-tv__company { font-size: 4vh; line-height: 1; margin: 0; }
+.a3s-tv__brand .a3s-tv__event { font-size: 3.2vh; line-height: 1.1; margin: 0; }
+.a3s-tv__when { margin: 0; font-size: 2.4vh; line-height: 1.1; font-weight: 500; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a3s-tv__host { display: flex; align-items: center; gap: 2vw; }
+.a3s-tv__host img { height: 13vh; width: auto; max-width: 24vw; object-fit: contain; background: #fff; border-radius: 1.8vh; padding: 1.2vh 1.6vh;
+	box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.3); }
 .a3s-proj__task-who--done > span:not(.a3s-proj__task-avatar) { font-weight: 600; }
 /* The visitor's details under their name on the welcome: property, system, masked mobile. */
 .a3s-tv__facts { display: flex; justify-content: center; flex-wrap: wrap; gap: 1.2vh 1.6vw; margin-top: 2.4vh; }
@@ -5048,3 +5086,135 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 	box-shadow: 0 6px 24px rgba(15, 23, 42, 0.18); }
 .a3s-docedit .a3s-form__status { margin: 0; padding: 0.5rem 1.4rem 0.8rem; }
 .a3s-docedit .a3s-form__status:empty { display: none; }
+
+/* ------------------------------------------------------------------ Stall screen: the bottom bar
+ * 15% of the screen, three columns: "Just joined" 15%, the names 60%, "Powered by" 25%. It sits
+ * above the welcomes (they play in the space over it), so the product stays in view throughout. */
+.a3s-tv__frame { grid-template-rows: auto minmax(0, 1fr) 15vh; }
+.a3s-tv__frame > .a3s-tv__ticker { position: relative; z-index: 6; }
+.a3s-tv__ticker { display: grid; grid-template-columns: 15% 60% 25%; height: 15vh; align-items: stretch; }
+.a3s-tv__ticker-label { height: auto; padding: 0 1vw; flex-direction: column; justify-content: center; gap: 1.4vh; font-size: 3.2vh; letter-spacing: 0.08em;
+	line-height: 1.15; text-align: center; white-space: normal; }
+.a3s-tv__ticker-label i { flex: none; width: 2vh; height: 2vh; }
+.a3s-tv__ticker-track { display: flex; align-items: center; min-width: 0; }
+.a3s-tv__ticker-item { font-size: 5.6vh; padding: 0 2.2vw; }
+.a3s-tv__ticker-item::after { margin-left: 4.4vw; }
+.a3s-tv__frame > .a3s-tv__moment { bottom: 15vh; }
+.a3s-tv__frame > .a3s-tv__offline { bottom: 16vh; }
+.a3s-tv__powered { position: static; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4vh;
+	padding: 0 1.5vw; background: #fff; box-shadow: inset 0.4vh 0 0 rgba(4, 42, 45, 0.08); }
+.a3s-tv__powered-by { font-size: 2.2vh; letter-spacing: 0.06em; text-transform: uppercase; }
+.a3s-tv__powered-brand { display: flex; align-items: center; gap: 1.6vh; }
+.a3s-tv__powered img { height: 4.2vh; max-width: 13vw; object-fit: contain; }
+.a3s-tv__powered-sep { flex: none; height: 4.4vh; }
+.a3s-tv__powered-product { font-size: 3.4vh; white-space: nowrap; }
+/* The idle stage is shorter now: the QR shrinks to fit above the bar. */
+.a3s-tv__qr { width: 38vh; height: 38vh; }
+.a3s-tv__sun { width: 64vh; height: 64vh; }
+
+/* "Point your phone camera here" on its side, left of the QR (reading bottom to top, its arrow pointing at
+ * the code), sliding in from the screen's edge, resting, and sliding back out. */
+.a3s-tv__point { position: absolute; left: -3.8vw; top: 50%; margin: 0; white-space: nowrap; transform-origin: center;
+	transform: translate(-50%, -50%) rotate(-90deg); animation: a3s-tv-point-slide 7s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+.a3s-tv__point .a3s-tv__arrow { margin-left: 0.6vh; }
+@keyframes a3s-tv-point-slide {
+	0% { transform: translateX(-14vw) translate(-50%, -50%) rotate(-90deg); opacity: 0; }
+	12%, 72% { transform: translateX(0) translate(-50%, -50%) rotate(-90deg); opacity: 1; }
+	86%, 100% { transform: translateX(-14vw) translate(-50%, -50%) rotate(-90deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .a3s-tv__point { animation: none; } }
+
+/* "Powered by Acube A3 Sola", with the website under it - the column links to it too. */
+.a3s-tv__powered { gap: 1.1vh; text-decoration: none; color: inherit; }
+.a3s-tv__powered-site { font-size: 2.4vh; font-weight: 700; color: #042a2d; letter-spacing: 0.04em; padding: 0.4vh 1.6vh; border-radius: 99px;
+	background: rgba(247, 148, 30, 0.14); }
+
+/* ------------------------------------------------------------------ Registration: the three tabs */
+.a3s-reg__tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin: 0 0 1.2rem; padding: 0; list-style: none; counter-reset: none; }
+.a3s-reg__tabs li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; font-size: 0.78rem;
+	font-weight: 600; color: var(--color-text-muted); text-align: center; }
+.a3s-reg__tabs li::before { content: ""; position: absolute; top: 0.95rem; left: calc(-50% + 1.1rem); right: calc(50% + 1.1rem); height: 2px;
+	background: var(--color-border-strong); }
+.a3s-reg__tabs li:first-child::before { display: none; }
+.a3s-reg__tabs li span { position: relative; z-index: 1; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%;
+	background: var(--color-surface); border: 2px solid var(--color-border-strong); color: var(--color-text-muted); font-weight: 800; font-size: 0.85rem;
+	transition: background 0.25s, border-color 0.25s, color 0.25s; }
+.a3s-reg__tabs li.is-on { color: var(--color-text); }
+.a3s-reg__tabs li.is-on span { background: var(--color-accent-gradient); border-color: transparent; color: #fff; box-shadow: 0 0.3rem 0.8rem var(--color-accent-tint); }
+.a3s-reg__tabs li.is-done { color: var(--color-text); }
+.a3s-reg__tabs li.is-done span { background: var(--color-success); border-color: transparent; color: transparent; }
+.a3s-reg__tabs li.is-done span::after { content: "\2713"; position: absolute; color: #fff; }
+.a3s-reg__tabs li.is-done::before, .a3s-reg__tabs li.is-on::before { background: var(--color-accent); }
+.a3s-reg__step:not([hidden]) { animation: a3s-reg-rise 0.35s var(--ease) both; }
+
+/* ------------------------------------------------------------------ Stall screen: "just scanned"
+ * When a visitor saves tab 1: a card 40% of the screen high slides in from the left, a clap
+ * keeps time, and after four seconds it slides away to the right. The full welcome plays when
+ * they finish the form. */
+.a3s-tv__frame > .a3s-tv__toast { position: absolute; z-index: 5; }
+.a3s-tv__toast { position: absolute; z-index: 5; left: 10vw; right: 10vw; top: 20vh; height: 40vh; display: grid;
+	grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4vw; padding: 0 5vw; border-radius: 4vh; background: #fff; color: #1d2433;
+	box-shadow: 0 3vh 8vh rgba(0, 0, 0, 0.45), inset 1.2vh 0 0 #f7941e; transform: translateX(-120vw);
+	transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.a3s-tv__toast.is-in { transform: translateX(0); }
+.a3s-tv__toast.is-out { transform: translateX(120vw); transition-timing-function: cubic-bezier(0.64, 0, 0.78, 0); }
+.a3s-tv__clap { display: grid; place-items: center; width: 24vh; height: 24vh; border-radius: 50%; font-size: 13vh; line-height: 1;
+	background: radial-gradient(circle, #fff6eb 0%, #ffe2bd 70%); box-shadow: 0 0 0 1.2vh rgba(247, 148, 30, 0.18); }
+.a3s-tv__clap span { display: block; transform-origin: 50% 80%; animation: a3s-tv-clap 0.42s ease-in-out infinite alternate; }
+@keyframes a3s-tv-clap { from { transform: rotate(-14deg) scale(0.9); } to { transform: rotate(10deg) scale(1.12); } }
+.a3s-tv__toast-text { margin: 0; min-width: 0; }
+.a3s-tv__toast-name { display: block; font-size: 7vh; font-weight: 800; line-height: 1.05; color: #e07f0c; overflow: hidden; text-overflow: ellipsis;
+	white-space: nowrap; }
+.a3s-tv__toast-line { display: block; margin-top: 1.4vh; font-size: 4vh; font-weight: 700; line-height: 1.2; }
+.a3s-tv__toast-sub { display: block; margin-top: 1.2vh; font-size: 3.2vh; font-weight: 600; color: #4a5568; }
+.a3s-tv__toast-sub b { color: #128c7e; }
+@media (prefers-reduced-motion: reduce) { .a3s-tv__toast { transition: opacity 0.3s; } .a3s-tv__clap span { animation: none; } }
+
+/* "Just scanned" rests just above the bottom bar, right of the QR, so the code stays clear to scan:
+ * a compact card over the counters, sized to that strip. */
+.a3s-tv__toast { left: 35vw; right: 2vw; top: auto; bottom: 16vh; height: 20.5vh; gap: 2.2vw; padding: 0 2.6vw 0 1.8vw; border-radius: 2.6vh;
+	box-shadow: 0 2vh 5vh rgba(0, 0, 0, 0.4), inset 0.9vh 0 0 #f7941e; }
+.a3s-tv__clap { width: 12vh; height: 12vh; font-size: 6.6vh; box-shadow: 0 0 0 0.8vh rgba(247, 148, 30, 0.18); }
+.a3s-tv__toast-name { font-size: 4.6vh; }
+.a3s-tv__toast-line { display: inline; margin: 0; font-size: 3vh; }
+.a3s-tv__toast-sub { display: inline; margin: 0; font-size: 3vh; font-weight: 700; color: #1d2433; }
+.a3s-tv__toast-text { line-height: 1.25; }
+.a3s-tv__toast-text .a3s-tv__toast-line::after { content: " "; }
+
+/* The bottom bar at 15% of the screen: its type scaled to fit. */
+.a3s-tv__ticker-label { font-size: 2.6vh; gap: 1vh; }
+.a3s-tv__ticker-label i { width: 1.6vh; height: 1.6vh; }
+.a3s-tv__ticker-item { font-size: 4.4vh; }
+.a3s-tv__powered { gap: 0.7vh; }
+.a3s-tv__powered-by { font-size: 1.7vh; }
+.a3s-tv__powered img { height: 3.3vh; }
+.a3s-tv__powered-sep { height: 3.4vh; }
+.a3s-tv__powered-product { font-size: 2.7vh; }
+.a3s-tv__powered-site { font-size: 1.9vh; padding: 0.25vh 1.3vh; }
+
+/* Each visitor in the bottom bar: name, then where from and the system proposed, then the proposal on WhatsApp. */
+.a3s-tv__ticker-run { align-items: center; }
+.a3s-tv__ticker-item { display: inline-flex; flex-direction: column; justify-content: center; gap: 0.5vh; padding: 0 2.6vw; line-height: 1.1;
+	font-size: inherit; }
+.a3s-tv__ticker-item::after { display: none; }
+.a3s-tv__ticker-item + .a3s-tv__ticker-item { border-left: 0.25vh solid rgba(29, 36, 51, 0.18); }
+.a3s-tv__tk-name { font-size: 3.6vh; font-weight: 800; color: #1d2433; }
+.a3s-tv__tk-where { font-size: 2.2vh; font-weight: 700; color: #3b2a12; }
+.a3s-tv__tk-wa { font-size: 1.9vh; font-weight: 700; color: #5b4321; opacity: 0.85; }
+.a3s-tv__tk-wa.is-sent { color: #075e54; opacity: 1; }
+
+/* The QR card as tall as the column beside it (headline slides down to the counters), so the
+ * code is as large as the stage allows. */
+.a3s-tv__qr { width: 51vh; height: 51vh; }
+.a3s-tv__sun { width: 80vh; height: 80vh; }
+.a3s-tv__idle { gap: 4vw; }
+/* The "just scanned" card lines up with the column beside the larger QR, never over the code. */
+.a3s-tv__toast { left: 41.6vw; }
+.a3s-tv__toast-line, .a3s-tv__toast-sub { font-size: 2.6vh; }
+.a3s-tv__toast-sub b { white-space: nowrap; }
+
+/* Slide 1's line on one line: the pill, the offer, and WhatsApp as its icon - sized to the column. */
+.a3s-tv__cta--one { display: flex; align-items: center; gap: 1.1vh; white-space: nowrap; max-width: none; font-size: 3.4vh; }
+.a3s-tv__wa-ic { display: inline-grid; place-items: center; flex: none; width: 5.6vh; height: 5.6vh; border-radius: 50%; background: #25d366; color: #fff;
+	box-shadow: 0 0.6vh 1.6vh rgba(37, 211, 102, 0.45); }
+.a3s-tv__wa-ic svg { width: 3.6vh; height: 3.6vh; display: block; }

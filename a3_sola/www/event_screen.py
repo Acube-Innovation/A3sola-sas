@@ -8,7 +8,7 @@ import frappe
 
 from a3_sola.api import event_registration as reg
 from a3_sola.api import event_screen
-from a3_sola.api.events import qr_svg
+from a3_sola.api.events import _dates, qr_svg
 
 no_cache = 1
 
@@ -22,7 +22,9 @@ def get_context(context):
 		company = reg.company_name(event.company)
 		context.screen = frappe._dict(
 			key=frappe.form_dict.get("key"), event_name=event.event_name, company=company,
-			logo=reg.company_logo(event.company),
+			logo=reg.company_logo(event.company), event_logo=event.event_logo,
+			start=str(event.start_date) if event.start_date else "", end=str(event.end_date) if event.end_date else "",
+			when=" · ".join(x for x in (_dates(event.start_date, event.end_date), (event.venue or "").strip()) if x),
 			headline=(event.screen_headline or "").strip() or "Welcome to {0}".format(company),
 			qr_svg=qr_svg(reg.register_url(event), color="#1d2433"),
 			max_subsidy=max_subsidy(),

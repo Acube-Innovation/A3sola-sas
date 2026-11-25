@@ -20,13 +20,23 @@
 	var after = null;
 	/* The moments already queued, by key: each poll looks back over the last few minutes (a slow
 	   registration is saved after the screen has polled past it), so the same one comes again. */
+	/* Kept in the browser too, per screen link, so a refresh does not play again what this screen
+	   has already shown (the first poll looks back a few minutes). */
+	var SEEN_KEEP = 500;
+	var seenStore = "a3s-tv-seen:" + key;
 	var seen = {}, seenOrder = [];
+	try { seenOrder = JSON.parse(localStorage.getItem(seenStore) || "[]") || []; } catch (e) { seenOrder = []; }
+	seenOrder.forEach(function (k) { seen[k] = true; });
+	function remember() {
+		try { localStorage.setItem(seenStore, JSON.stringify(seenOrder.slice(-SEEN_KEEP))); } catch (e) { /* private mode: memory only */ }
+	}
 	function fresh(item) {
 		var k = item.key || (item.kind + "|" + item.id + "|" + item.at);
 		if (seen[k]) return false;
 		seen[k] = true;
 		seenOrder.push(k);
-		if (seenOrder.length > 2000) delete seen[seenOrder.shift()];
+		if (seenOrder.length > SEEN_KEEP) delete seen[seenOrder.shift()];
+		remember();
 		return true;
 	}
 	var failures = 0;
@@ -47,8 +57,30 @@
 	function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 	/* ------------------------------------------------------------------ clock */
+	/* The round badge: the day of the event over the time. Before the first day it counts down,
+	   after the last (or with no dates) it shows the weekday. */
 	var clock = tv.querySelector("[data-clock]");
-	function tick() { clock.textContent = new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); }
+	var clockDay = clock.querySelector("[data-clock-day]"), clockTime = clock.querySelector("[data-clock-time]"),
+		clockAmpm = clock.querySelector("[data-clock-ampm]");
+	function localDay(iso) { var p = (iso || "").split("-"); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : null; }
+	var eventStart = localDay(clock.dataset.eventStart), eventEnd = localDay(clock.dataset.eventEnd);
+	function dayLabel(now) {
+		var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		var weekday = now.toLocaleDateString("en-IN", { weekday: "long" });
+		if (!eventStart) return weekday;
+		var n = Math.round((today - eventStart) / 86400000);
+		if (n < 0) return n === -1 ? "Tomorrow" : "In " + -n + " days";
+		if (eventEnd && today > eventEnd) return weekday;
+		return "Day " + (n + 1);
+	}
+	function tick() {
+		if (!clockDay || !clockTime || !clockAmpm) return;
+		var now = new Date();
+		var parts = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).split(" ");
+		clockDay.textContent = dayLabel(now);
+		clockTime.textContent = parts[0];
+		clockAmpm.textContent = (parts[1] || "").toUpperCase();
+	}
 	tick();
 	setInterval(tick, 15000);
 
@@ -61,15 +93,29 @@
 	}
 	document.addEventListener("visibilitychange", function () { if (!wakeLock || wakeLock.released) keepAwake(); });
 	var audio = null;
-	tv.querySelector("[data-start-btn]").addEventListener("click", function () {
-		chime = tv.querySelector("[data-chime]").checked;
-		if (chime && (window.AudioContext || window.webkitAudioContext)) audio = new (window.AudioContext || window.webkitAudioContext)();
-		var el = document.documentElement;
-		if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
-		keepAwake();
-		tv.querySelector("[data-start]").hidden = true;
-		document.body.classList.add("is-started");
-	});
+	/* No start overlay: the screen is live the moment it opens, QR and all. Staying awake is asked for
+	   now; full screen and the chime need a gesture, so the first click, tap or key anywhere turns them
+	   on (each one optional - a browser may refuse it and the screen carries on). */
+	document.body.classList.add("is-started");
+	chime = true;
+	try { keepAwake(); } catch (e) { /* no wake lock */ }
+	function engage() {
+		document.removeEventListener("pointerdown", engage, true);
+		document.removeEventListener("keydown", engage, true);
+		try {
+			var Ctx = window.AudioContext || window.webkitAudioContext;
+			if (Ctx && !audio) audio = new Ctx();
+		} catch (e) { audio = null; }
+		try {
+			var el = document.documentElement;
+			var full = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+			var p = !document.fullscreenElement && full && full.call(el);
+			if (p && p.catch) p.catch(function () {});
+		} catch (e) { /* stays in the window */ }
+		try { keepAwake(); } catch (e) { /* no wake lock */ }
+	}
+	document.addEventListener("pointerdown", engage, true);
+	document.addEventListener("keydown", engage, true);
 	/* Two notes rising: a welcome. */
 	function ding() {
 		if (!chime || !audio) return;
@@ -118,15 +164,23 @@
 		});
 	}
 	var tickerKey = "";
-	function setTicker(names) {
-		names = (names || []).filter(Boolean);
-		var k = names.join("|");
+	/* The latest visitors, each a small stack: name; where from and the system proposed; and the
+	   proposal on WhatsApp - "sent" only once staff have sent it. */
+	function setTicker(list) {
+		list = (list || []).filter(function (v) { return v && v.name; });
+		var k = JSON.stringify(list);
 		if (k === tickerKey) return;
 		tickerKey = k;
-		if (!names.length) { ticker.innerHTML = '<span class="a3s-tv__ticker-item">Be the first to register today</span>'; return; }
-		var items = names.map(function (n) { return '<span class="a3s-tv__ticker-item">' + esc(n) + "</span>"; }).join("");
+		if (!list.length) { ticker.innerHTML = '<span class="a3s-tv__ticker-item"><b class="a3s-tv__tk-name">Be the first to register today</b></span>'; return; }
+		var items = list.map(function (v) {
+			var where = [v.place, v.kw ? "Proposed " + v.kw + " kW" : ""].filter(Boolean).join(" \u00b7 ");
+			return '<span class="a3s-tv__ticker-item"><b class="a3s-tv__tk-name">' + esc(v.name) + "</b>" +
+				(where ? '<span class="a3s-tv__tk-where">' + esc(where) + "</span>" : "") +
+				'<span class="a3s-tv__tk-wa' + (v.sent ? " is-sent" : "") + '">' +
+				(v.sent ? "\u2713 Proposal sent to WhatsApp" : "Proposal on its way to WhatsApp") + "</span></span>";
+		}).join("");
 		ticker.innerHTML = items + items;  // twice, so the loop is seamless
-		ticker.style.animationDuration = Math.max(20, names.length * 5) + "s";
+		ticker.style.animationDuration = Math.max(24, list.length * 6) + "s";
 	}
 
 	/* ------------------------------------------------------------------ the headlines, in turn */
@@ -305,11 +359,38 @@
 			'<p class="a3s-tv__sent">' + esc(text) + "</p>";
 		return wait(holdMs() - 1500).then(hide);
 	}
+	/* A visitor saved their name (tab 1): the card slides in from the left, a clap, four seconds,
+	   and it slides out to the right. Their full welcome follows when they finish the form. */
+	var toast = tv.querySelector("[data-toast]");
+	var SCANNED_HOLD_MS = 4000;
+	function playScanned(item) {
+		var named = !item.hidden && item.name;
+		toast.innerHTML = '<div class="a3s-tv__clap" aria-hidden="true"><span>\uD83D\uDC4F</span></div>' +
+			'<p class="a3s-tv__toast-text">' +
+			(named ? '<span class="a3s-tv__toast-name">' + esc(item.name) + "</span>" +
+				'<span class="a3s-tv__toast-line">has just scanned</span>'
+				: '<span class="a3s-tv__toast-name">' + (item.district ? "A visitor from " + esc(item.district) : "A visitor") + "</span>" +
+				'<span class="a3s-tv__toast-line">has just scanned</span>') +
+			'<span class="a3s-tv__toast-sub">and will receive a quotation in <b>3 minutes</b></span></p>';
+		toast.classList.remove("is-in", "is-out");
+		toast.hidden = false;
+		void toast.offsetWidth;  // start from off-screen left
+		toast.classList.add("is-in");
+		ding();
+		return wait(700 + SCANNED_HOLD_MS).then(function () {
+			toast.classList.add("is-out");
+			return wait(750);
+		}).then(function () {
+			toast.hidden = true;
+			toast.classList.remove("is-in", "is-out");
+			toast.innerHTML = "";
+		});
+	}
 	function play() {
 		if (playing || !queue.length) return;
 		playing = true;
 		var item = queue.shift();
-		(item.kind === "sent" ? playSent(item) : playWelcome(item))
+		(item.kind === "sent" ? playSent(item) : item.kind === "scanned" ? playScanned(item) : playWelcome(item))
 			.catch(function () {})
 			.then(function () { playing = false; return wait(400); })
 			.then(play);

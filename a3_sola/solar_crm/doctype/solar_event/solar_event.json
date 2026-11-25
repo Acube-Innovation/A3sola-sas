@@ -30,6 +30,7 @@
   "sb_screen",
   "screen_headline",
   "show_estimate_on_screen",
+  "event_logo",
   "cb_4",
   "public_key",
   "display_key"
@@ -181,6 +182,12 @@
    "default": "1"
   },
   {
+   "fieldname": "event_logo",
+   "fieldtype": "Attach Image",
+   "label": "Exhibition Logo",
+   "description": "The exhibition's own logo, on the right of the stall screen's top bar."
+  },
+  {
    "fieldname": "cb_4",
    "fieldtype": "Column Break"
   },
@@ -205,7 +212,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-24 15:00:00.000000",
+ "modified": "2026-11-25 11:30:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Event",
