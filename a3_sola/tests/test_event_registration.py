@@ -3,7 +3,8 @@
 """Registering at an event by QR code (Solar Event): the public form makes one lead of the
 event's company, owner and source; a repeat visitor updates it; the honeypot, a closed event
 and a missing consent save nothing; papers are sniffed; the stall screen never sees a
-number; the brochure link names only its own lead; and the instant estimate sizes sensibly
+number; the brochure and proposal links name only their own lead; and the instant estimate
+sizes sensibly, at the lowest price of the package
 (api/event_registration, api/event_screen, api/instant_estimate)."""
 
 import json
@@ -149,6 +150,23 @@ class TestEventRegistration(FrappeTestCase):
 		self.assertIn("in the morning", text)
 		self.assertNotIn("{", text)
 
+	def test_no_bill_no_proposal_line(self):
+		"""A visitor who gave no bill has nothing to propose: the message leaves the line out."""
+		self.submit()
+		lead = self.lead()
+		from a3_sola.api import event_proposal
+
+		self.assertFalse(event_proposal.can_make(lead))
+		self.assertNotIn("proposal", reg.welcome_text(self.event, lead).lower())
+
+	def test_the_proposal_link_opens_only_at_its_own_event(self):
+		self.submit()
+		lead = self.lead().name
+		other = frappe.get_doc({"doctype": "Solar Event", "event_name": "Test Event Registration Other",
+			"company": self.event.company, "lead_owner": "Administrator"}).insert()
+		self.assertRaises(frappe.DoesNotExistError, reg.proposal, other.public_key, reg.visitor_ref(lead))
+		self.assertRaises(frappe.DoesNotExistError, reg.proposal, self.event.public_key, lead + ".0000000000")
+
 
 class TestInstantEstimate(FrappeTestCase):
 	def test_the_smallest_size_that_covers_the_need_single_phase_first(self):
@@ -161,6 +179,16 @@ class TestInstantEstimate(FrappeTestCase):
 		chosen, larger = instant_estimate.pick(packages, 9)
 		self.assertEqual((chosen.name, larger), ("c", True))
 		self.assertEqual(instant_estimate.pick([], 3), (None, False))
+
+	def test_the_lowest_pricing_option_is_quoted(self):
+		from a3_sola.solar_crm.doctype.solar_package.solar_package import pricing_combinations
+
+		for name in frappe.get_all("Solar Package", filters={"is_active": 1}, pluck="name", limit=50):
+			costs = [c.cost for c in pricing_combinations(name) if c.cost > 0]
+			if len(costs) > 1:
+				self.assertEqual(instant_estimate.lowest_option(name).cost, min(costs))
+				return
+		self.skipTest("No package with more than one priced option on this site.")
 
 	def test_a_mobile_is_masked_for_the_screen(self):
 		self.assertEqual(event_screen.mask_mobile("+91 98470 12345"), "98\u2022\u2022\u2022 \u2022\u2022345")

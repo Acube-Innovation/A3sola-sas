@@ -220,6 +220,8 @@ def registrations(event):
 	event = reg.event_by_key(doc.public_key, active=False)
 	from a3_sola.api.outreach import whatsapp_link
 
+	proposals = dict(frappe.get_all("Solar Proposal", filters={"lead": ["in", names or [""]], "docstatus": ["<", 2]},
+		fields=["lead", "name"], as_list=True)) if names else {}
 	rows = []
 	for l in leads:
 		number = l.whatsapp_no or l.mobile_no
@@ -232,7 +234,8 @@ def registrations(event):
 			"sent": format_datetime(l.a3s_brochure_sent_on, "d MMM, h:mm a") if l.a3s_brochure_sent_on else "",
 			"sent_via": l.a3s_brochure_sent_via or "", "hidden": cint(l.a3s_hide_on_screen),
 			"papers": papers.get(l.name, 0), "status": l.solar_lead_status or l.status or "",
-			# The welcome, one tap from the visitor's chat: their brochure link and estimate in it.
+			"proposal": proposals.get(l.name) or "",
+			# The welcome, one tap from the visitor's chat: their proposal link and estimate in it.
 			"whatsapp": whatsapp_link(number, reg.welcome_text(event, l)) if number else "",
 		})
 	return {"rows": rows, "funnel": funnel(doc.name, leads), "today": sum(1 for l in leads
@@ -240,7 +243,7 @@ def registrations(event):
 
 
 def funnel(event, leads):
-	"""Registered -> Brochure sent -> Contacted -> Survey -> Proposal -> Accepted -> Quotation ->
+	"""Registered -> Proposal -> Proposal sent -> Contacted -> Survey -> Accepted -> Quotation ->
 	Order, each the number of this event's leads that got that far."""
 	names = [l.name for l in leads]
 	if not names:
@@ -258,7 +261,7 @@ def funnel(event, leads):
 		pluck="solar_consumer")) if consumers and frappe.get_meta("Sales Order").has_field("solar_consumer") else set()
 	counts = {
 		"Registered": len(leads),
-		"Brochure sent": sum(1 for l in leads if l.a3s_brochure_sent_on),
+		"Proposal sent": sum(1 for l in leads if l.a3s_brochure_sent_on),
 		"Contacted": len(contacted),
 		"Survey": sum(1 for l in leads if l.site_survey),
 		"Proposal": len(proposals),
@@ -269,14 +272,14 @@ def funnel(event, leads):
 	return [{"label": label, "count": counts[label]} for label in FUNNEL]
 
 
-FUNNEL = ("Registered", "Brochure sent", "Contacted", "Survey", "Proposal", "Accepted", "Quotation", "Order")
+FUNNEL = ("Registered", "Proposal", "Proposal sent", "Contacted", "Survey", "Accepted", "Quotation", "Order")
 
 
-# ------------------------------------------------------------------ the brochure on WhatsApp
+# ------------------------------------------------------------------ the proposal on WhatsApp
 @frappe.whitelist()
 def brochure_message(lead):
 	"""The WhatsApp welcome for one visitor and the link that opens it to them - the text is the
-	event's, their brochure link and estimate filled in."""
+	event's, their proposal link and estimate filled in."""
 	require_staff()
 	doc = frappe.get_doc(LEAD, lead)
 	doc.check_permission("read")
@@ -291,7 +294,7 @@ def brochure_message(lead):
 
 @frappe.whitelist(methods=["POST"])
 def mark_sent(lead):
-	"""Staff sent the visitor their brochure on WhatsApp: logged on the lead, and the stall
+	"""Staff sent the visitor their proposal on WhatsApp: logged on the lead, and the stall
 	screen shows it."""
 	require_staff()
 	from a3_sola.api.outreach import log_outreach
@@ -299,7 +302,7 @@ def mark_sent(lead):
 	doc = frappe.get_doc(LEAD, lead)
 	doc.check_permission("write")
 	log_outreach(lead, "WhatsApp", outreach_step="Step 1: First Contact", call_status="Not Applicable",
-		outcome=_("Brochure sent on WhatsApp."))
+		outcome=_("Proposal sent on WhatsApp."))
 	reg.note_brochure(lead, "WhatsApp")
 	return {"sent": format_datetime(frappe.db.get_value(LEAD, lead, "a3s_brochure_sent_on"), "d MMM, h:mm a")}
 

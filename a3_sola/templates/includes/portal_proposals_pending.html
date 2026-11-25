@@ -1,11 +1,13 @@
 {#- On the Solar Design Proposal list: the design estimates not yet made into a proposal, each
     opening on its builder, where the Proposal tab makes one (api/portal_proposal.unproposed_estimates). -#}
 {%- if pending %}
-<section class="a3s-card a3s-pending" aria-labelledby="a3s-pending-title">
-	<div class="a3s-pending__head">
-		<h3 class="a3s-edit__card-title" id="a3s-pending-title">Not yet made into a proposal</h3>
+{#- Folded by default: a count to see at a glance, the estimates one click away. -#}
+<details class="a3s-card a3s-pending">
+	<summary class="a3s-pending__head">
+		<h3 class="a3s-edit__card-title" id="a3s-pending-title">Not yet made into a proposal <span class="a3s-pending__count">{{ pending | length }}</span></h3>
 		<p class="a3s-field__hint">Design estimates with no proposal. Open one to finish its options and make the proposal on its Proposal tab.</p>
-	</div>
+		<svg class="a3s-ic a3s-pending__chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+	</summary>
 	<ul class="a3s-pending__list">
 		{%- for e in pending %}
 		<li>
@@ -23,5 +25,5 @@
 		</li>
 		{%- endfor %}
 	</ul>
-</section>
+</details>
 {%- endif %}

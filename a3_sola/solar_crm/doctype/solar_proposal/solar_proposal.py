@@ -248,7 +248,11 @@ class SolarProposal(Document):
 			if option.is_recommended:
 				row = option
 				break
-		self.recommended_option_cost = flt(row.total_option_cost) if row else flt(est.total_project_cost)
+		# What the estimate quotes - its commercials, as the PDF prints them. The option row
+		# carries its inverter's package price, which a Pricing Options row (another panel
+		# with that inverter) does not change.
+		self.recommended_option_cost = flt(est.commercials().get("total")) or (
+			flt(row.total_option_cost) if row else flt(est.total_project_cost))
 
 		package = (row.solar_package if row else None) or est.solar_package
 		if package:
@@ -670,7 +674,9 @@ def auto_generate_due(doc):
 
 def auto_generate(solar_proposal):
 	"""The background render queue_auto_generate asks for, checked again on the saved record."""
-	if not frappe.db.exists("Solar Proposal", solar_proposal):
+	# One render at a time - an event visitor opening their link renders it too (api/event_proposal) -
+	# and the lock first, so what is read after it is current (repeatable read).
+	if not frappe.db.sql("select name from `tabSolar Proposal` where name=%s for update", solar_proposal):
 		return
 	doc = frappe.get_doc("Solar Proposal", solar_proposal)
 	if not auto_generate_due(doc):

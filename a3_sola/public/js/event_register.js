@@ -1,5 +1,5 @@
 /* The page an event's QR code opens (www/register): the visitor's details, their papers if
-   they have them, then the thank-you with their instant estimate, the brochure and our
+   they have them, then the thank-you with their instant estimate, their proposal and our
    WhatsApp (a3_sola.api.event_registration). */
 (function () {
 	"use strict";
@@ -242,9 +242,9 @@
 		box.hidden = false;
 		var first = (r && r.first_name) || form.full_name.value.trim().split(/\s+/)[0];
 		box.querySelector("[data-done-title]").textContent = "Thank you, " + first + "!";
-		box.querySelector("[data-done-lead]").textContent = r && r.brochure_url
-			? "You are registered. Our brochure is ready for you below, and our team will call you soon."
-			: "You are registered. Our team will send you our brochure on WhatsApp and call you soon.";
+		box.querySelector("[data-done-lead]").textContent = r && r.proposal_url
+			? "You are registered. Your solar proposal is ready below, and our team will send it on WhatsApp and call you soon."
+			: "You are registered. Our team will send you our offer on WhatsApp and call you soon.";
 		var est = r && r.estimate;
 		var estBox = box.querySelector("[data-estimate]");
 		if (est) {
@@ -265,8 +265,11 @@
 			estBox.hidden = false;
 		}
 		var actions = [];
+		if (r && r.proposal_url) {
+			actions.push('<a class="a3s-btn a3s-btn--primary" href="' + esc(r.proposal_url) + '" target="_blank" rel="noopener"><span>Download your proposal</span></a>');
+		}
 		if (r && r.brochure_url) {
-			actions.push('<a class="a3s-btn a3s-btn--primary" href="' + esc(r.brochure_url) + '" target="_blank" rel="noopener"><span>Download our brochure</span></a>');
+			actions.push('<a class="a3s-btn ' + (r.proposal_url ? "a3s-btn--secondary" : "a3s-btn--primary") + '" href="' + esc(r.brochure_url) + '" target="_blank" rel="noopener"><span>Download our brochure</span></a>');
 		}
 		if (r && r.chat_url) {
 			actions.push('<a class="a3s-btn a3s-btn--secondary a3s-reg__wa" href="' + esc(r.chat_url) + '" target="_blank" rel="noopener">' +

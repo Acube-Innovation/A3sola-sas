@@ -42,7 +42,7 @@
 			<div class="a3s-ev__copy"><input readonly value="{{ screen_url }}" aria-label="Stall screen link"><button type="button" class="a3s-btn a3s-btn--secondary" data-copy="{{ screen_url }}">Copy</button></div>
 			<dl class="a3s-ev__facts">
 				<div><dt>Lead owner</dt><dd>{{ owner_name | e }}</dd></div>
-				<div><dt>Brochure</dt><dd>{{ (brochure_name | e) if brochure_name else '<span class="a3s-ev__missing">None yet: add one under Edit</span>' }}</dd></div>
+				<div><dt>Brochure</dt><dd>{{ (brochure_name | e) if brochure_name else '<span class="a3s-ev__missing">None (optional): each visitor gets their own proposal</span>' }}</dd></div>
 				<div><dt>Our WhatsApp</dt><dd>{{ (doc.whatsapp_number | e) if doc.whatsapp_number else "—" }}</dd></div>
 			</dl>
 		</div>
@@ -59,14 +59,14 @@
 		<h3 class="a3s-ev__h">Registrations <span class="a3s-ce-tabs__n" data-reg-count></span></h3>
 		<div class="a3s-ce-tabs" role="tablist" aria-label="Show" data-reg-tabs>
 			<button type="button" role="tab" data-filter="" aria-selected="true"><span>All</span></button>
-			<button type="button" role="tab" data-filter="unsent" aria-selected="false"><span>Brochure not sent</span><span class="a3s-ce-tabs__n" data-unsent-count></span></button>
+			<button type="button" role="tab" data-filter="unsent" aria-selected="false"><span>Proposal not sent</span><span class="a3s-ce-tabs__n" data-unsent-count></span></button>
 		</div>
 		<input class="a3s-toolbar__search" type="search" placeholder="Search name, mobile or district" aria-label="Search registrations" data-reg-search>
 		<a class="a3s-btn a3s-btn--ghost" href="/a3solaportal/leads?event={{ doc.name | urlencode }}">Open in Leads</a>
 	</div>
 	<div class="a3s-tablewrap">
 		<table class="a3s-table a3s-ev__table">
-			<thead><tr><th>Visitor</th><th>Registered</th><th>Estimate</th><th>Papers</th><th>Brochure</th><th>Screen</th><th>Status</th></tr></thead>
+			<thead><tr><th>Visitor</th><th>Registered</th><th>Estimate</th><th>Papers</th><th>Proposal</th><th>Screen</th><th>Status</th></tr></thead>
 			<tbody data-reg-rows></tbody>
 		</table>
 		<div class="a3s-empty" data-reg-empty hidden>
