@@ -93,10 +93,8 @@
 				field("Lead source", '<select id="ev-src" name="lead_source">' + options(o.sources, v.lead_source, "Choose…") + "</select>", { id: "ev-src" }) +
 				field("Our WhatsApp number", '<input id="ev-wa" name="whatsapp_number" inputmode="tel" value="' + esc(v.whatsapp_number) + '">',
 					{ id: "ev-wa", hint: "\"Chat with us on WhatsApp\" on the thank-you page opens it." }) +
-				field("Brochure (PDF)", '<input id="ev-br" type="file" name="brochure" accept="application/pdf">',
-					{ id: "ev-br", hint: v.brochure_name ? "Now: " + esc(v.brochure_name) + ". Choose a file to replace it." : "Optional, up to 10 MB. Each visitor gets their own proposal; a brochure goes too where the message names {brochure}." }) +
 				field("WhatsApp welcome message", '<textarea id="ev-msg" name="welcome_message" rows="6">' + esc(v.welcome_message || o.default_welcome) + "</textarea>",
-					{ id: "ev-msg", wide: 1, hint: "{name}, {event}, {company}, {proposal} (their proposal link), {brochure}, {estimate} and {call_time} are filled in for each visitor. *Bold* stays bold in WhatsApp." }) +
+					{ id: "ev-msg", wide: 1, hint: "{name}, {event}, {company}, {proposal} (their proposal link), {estimate} and {call_time} are filled in for each visitor. *Bold* stays bold in WhatsApp." }) +
 				'<fieldset class="a3s-field a3s-field--wide a3s-ev__pkgs"><legend class="a3s-users__legend">Packages for the instant estimate</legend>' +
 				'<p class="a3s-field__hint">Tick the packages the estimate may offer. None ticked: every active subsidy package.</p>' +
 				'<div class="a3s-ev__pkglist">' + (packages.length ? packages.map(function (p) {
@@ -118,8 +116,6 @@
 				e.preventDefault();
 				if (!form.event_name.value.trim()) { m.status("Enter the event's name.", "error"); form.event_name.focus(); return; }
 				if (!form.lead_owner.value) { m.status("Choose who owns the leads.", "error"); form.lead_owner.focus(); return; }
-				var file = form.brochure.files && form.brochure.files[0];
-				if (file && !/\.pdf$/i.test(file.name)) { m.status("The brochure must be a PDF.", "error"); return; }
 				var logo = form.event_logo.files && form.event_logo.files[0];
 				if (logo && !/\.(png|jpe?g|webp)$/i.test(logo.name)) { m.status("The logo must be a PNG, JPG or WebP image.", "error"); return; }
 				var data = {};
@@ -131,13 +127,6 @@
 				var btn = form.querySelector('[type="submit"]');
 				btn.disabled = true; btn.classList.add("is-busy"); m.status("Saving…");
 				call("save_event", { data: data, name: editing ? values.name : null }).then(function (r) {
-					if (!file) return r;
-					var fd = new FormData();
-					fd.append("name", r.name);
-					fd.append("file", file, file.name);
-					m.status("Uploading the brochure…");
-					return call("upload_brochure", null, fd).then(function () { return r; });
-				}).then(function (r) {
 					if (!logo) return r;
 					var fd = new FormData();
 					fd.append("name", r.name);
@@ -218,7 +207,7 @@
 		rowsEl.innerHTML = list.map(function (r) {
 			var est = r.kw ? esc(r.kw) + " kW" + (r.bill ? '<span class="a3s-table__meta">Bill ' + money.format(r.bill) + " a month</span>" : "")
 				: (r.bill ? money.format(r.bill) + " a month" : '<span class="a3s-table__muted">—</span>');
-			var brochure = r.sent
+			var sent = r.sent
 				? '<span class="a3s-badge a3s-badge--converted">Sent</span><span class="a3s-table__meta">' + esc(r.sent) + (r.sent_via ? " · " + esc(r.sent_via) : "") + "</span>"
 					+ (r.whatsapp ? '<a class="a3s-ev__again" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener" data-send="' + esc(r.name) + '">Send again</a>' : "")
 				: (r.whatsapp ? '<a class="a3s-btn a3s-btn--primary a3s-ev__send" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener" data-send="' + esc(r.name) + '">' +
@@ -229,7 +218,7 @@
 				"<td>" + esc(r.registered) + (r.call_time ? '<span class="a3s-table__meta">Call: ' + esc(r.call_time) + "</span>" : "") + "</td>" +
 				"<td>" + est + (r.proposal ? '<a class="a3s-table__meta a3s-table__link" href="/a3solaportal/proposals/' + encodeURIComponent(r.proposal) + '">' + esc(r.proposal) + "</a>" : "") + "</td>" +
 				"<td>" + (r.papers ? '<span class="a3s-badge a3s-badge--open">' + r.papers + (r.papers === 1 ? " paper" : " papers") + "</span>" : '<span class="a3s-table__muted">—</span>') + "</td>" +
-				'<td class="a3s-ev__brochure">' + brochure + "</td>" +
+				'<td class="a3s-ev__brochure">' + sent + "</td>" +
 				'<td><button type="button" class="a3s-ev__screen' + (r.hidden ? " is-hidden" : "") + '" data-hide="' + esc(r.name) + '" aria-pressed="' + (r.hidden ? "true" : "false") + '">' +
 				(r.hidden ? "Hidden" : "Shown") + "</button></td>" +
 				'<td class="a3s-table__status"><span class="a3s-badge a3s-badge--open">' + esc(r.status || "New") + "</span></td></tr>";

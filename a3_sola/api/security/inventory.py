@@ -44,9 +44,12 @@ REVIEWED_GUEST_ENDPOINTS = {
 	# uploads sniffed by their bytes; the company, owner and source come from the event, never
 	# the form. Only creates or updates that company's lead.
 	"a3_sola.api.event_registration.submit",
-	# The event's brochure - the company's own marketing paper - by the registration link's
-	# key. Rate limited per IP; a visitor's HMAC ref only stamps "brochure received" on their lead.
-	"a3_sola.api.event_registration.brochure",
+	# The form's first tab (name, mobile, district): the same defences as submit - rate limited
+	# per IP and per mobile, honeypot, captcha - and it only creates or updates that lead.
+	"a3_sola.api.event_registration.start",
+	# The visitor's own proposal, by the registration link's key and their HMAC ref, which names
+	# one lead and cannot be made for another. Rate limited per IP; prints that lead's proposal only.
+	"a3_sola.api.event_registration.proposal",
 	# The stall screen's feed, by the event's display key (never the QR's). Rate limited per key;
 	# returns names, districts and indicative estimates only - no number, address or document.
 	"a3_sola.api.event_screen.feed",

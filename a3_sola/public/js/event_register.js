@@ -268,9 +268,6 @@
 		if (r && r.proposal_url) {
 			actions.push('<a class="a3s-btn a3s-btn--primary" href="' + esc(r.proposal_url) + '" target="_blank" rel="noopener"><span>Download your proposal</span></a>');
 		}
-		if (r && r.brochure_url) {
-			actions.push('<a class="a3s-btn ' + (r.proposal_url ? "a3s-btn--secondary" : "a3s-btn--primary") + '" href="' + esc(r.brochure_url) + '" target="_blank" rel="noopener"><span>Download our brochure</span></a>');
-		}
 		if (r && r.chat_url) {
 			actions.push('<a class="a3s-btn a3s-btn--secondary a3s-reg__wa" href="' + esc(r.chat_url) + '" target="_blank" rel="noopener">' +
 				'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3c-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>' +

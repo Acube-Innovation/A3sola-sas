@@ -14,9 +14,6 @@
 		<a class="a3s-btn a3s-btn--secondary" href="/a3solaportal/events/{{ doc.name | urlencode }}/poster" target="_blank" rel="noopener">
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-doc"></use></svg><span>Print poster</span>
 		</a>
-		<a class="a3s-btn a3s-btn--secondary" href="/api/method/a3_sola.api.events.qr_png?event={{ doc.name | urlencode }}" download>
-			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>QR code</span>
-		</a>
 		<a class="a3s-btn a3s-btn--secondary" href="/api/method/a3_sola.api.events.qr_pdf?event={{ doc.name | urlencode }}" download>
 			<svg class="a3s-ic" aria-hidden="true"><use href="#ic-download"></use></svg><span>QR PDF</span>
 		</a>
@@ -42,7 +39,6 @@
 			<div class="a3s-ev__copy"><input readonly value="{{ screen_url }}" aria-label="Stall screen link"><button type="button" class="a3s-btn a3s-btn--secondary" data-copy="{{ screen_url }}">Copy</button></div>
 			<dl class="a3s-ev__facts">
 				<div><dt>Lead owner</dt><dd>{{ owner_name | e }}</dd></div>
-				<div><dt>Brochure</dt><dd>{{ (brochure_name | e) if brochure_name else '<span class="a3s-ev__missing">None (optional): each visitor gets their own proposal</span>' }}</dd></div>
 				<div><dt>Our WhatsApp</dt><dd>{{ (doc.whatsapp_number | e) if doc.whatsapp_number else "—" }}</dd></div>
 			</dl>
 		</div>

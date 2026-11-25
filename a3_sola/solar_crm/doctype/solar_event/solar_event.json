@@ -21,7 +21,6 @@
   "cb_2",
   "campaign",
   "sb_visitor",
-  "brochure",
   "whatsapp_number",
   "ask_documents",
   "cb_3",
@@ -128,12 +127,6 @@
    "label": "What the Visitor Gets"
   },
   {
-   "fieldname": "brochure",
-   "fieldtype": "Attach",
-   "label": "Brochure (PDF)",
-   "description": "Offered on the thank-you page and linked in the WhatsApp message."
-  },
-  {
    "fieldname": "whatsapp_number",
    "fieldtype": "Data",
    "label": "Our WhatsApp Number",
@@ -155,7 +148,7 @@
    "fieldname": "welcome_message",
    "fieldtype": "Small Text",
    "label": "WhatsApp Welcome Message",
-   "description": "Sent by staff from the event page. {name}, {event}, {company}, {brochure}, {estimate} and {call_time} are filled in."
+   "description": "Sent by staff from the event page. {name}, {event}, {company}, {proposal}, {estimate} and {call_time} are filled in."
   },
   {
    "fieldname": "estimate_packages",
@@ -212,7 +205,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-25 11:30:00.000000",
+ "modified": "2026-11-25 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Solar CRM",
  "name": "Solar Event",

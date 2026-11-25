@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
 """One event: its QR code and links, the funnel, and everyone who registered - with their
-brochure one tap away on WhatsApp (api/events). Staff only."""
+proposal one tap away on WhatsApp (api/events). Staff only."""
 
 import frappe
 
