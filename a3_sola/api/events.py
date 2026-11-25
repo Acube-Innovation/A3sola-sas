@@ -341,6 +341,81 @@ def qr_png(event):
 	frappe.local.response.type = "download"
 
 
+@frappe.whitelist()
+def qr_pdf(event):
+	"""The event's QR code as an A4 PDF, to print or send to a printer: the code large in the
+	middle, the company's and the exhibition's logos, what scanning gives, and the link to type."""
+	import base64
+
+	from frappe.utils import escape_html
+	from frappe.utils.pdf import get_pdf
+
+	doc = _event(event)
+	url = reg.register_url(reg.event_by_key(doc.public_key, active=False))
+	buf = io.BytesIO()
+	_qr(url).png(buf, scale=20, quiet_zone=2)
+	qr = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+	company = reg.company_name(doc.company)
+	logo, event_logo = _pdf_image(reg.company_logo(doc.company)), _pdf_image(doc.event_logo)
+	where = " · ".join(x for x in (_dates(doc.start_date, doc.end_date), (doc.venue or "").strip()) if x)
+	e = escape_html
+
+	def logo_cell(src, align):
+		return '<td style="width:50%;text-align:{0};vertical-align:middle">{1}</td>'.format(align,
+			'<img src="{0}" style="max-height:20mm;max-width:60mm">'.format(src) if src else "")
+
+	html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+		body {{ margin: 0; font-family: "Plus Jakarta Sans", "DejaVu Sans", Arial, sans-serif; color: #1d2433; text-align: center; }}
+		.page {{ padding: 12mm 16mm 0; }}
+		.event {{ margin: 6mm 0 0; font-size: 19pt; font-weight: 800; }}
+		.where {{ margin: 2mm 0 0; font-size: 11.5pt; color: #6b7383; }}
+		.title {{ margin: 6mm 0 0; font-size: 34pt; font-weight: 800; color: #e07f0c; line-height: 1; }}
+		.sub {{ margin: 3mm 0 0; font-size: 15pt; color: #2a3342; }}
+		.qr {{ display: inline-block; margin-top: 6mm; padding: 4mm; border: 2mm solid #f7941e; border-radius: 8mm; }}
+		.qr img {{ width: 112mm; height: 112mm; display: block; }}
+		.point {{ margin: 5mm 0 0; font-size: 16pt; font-weight: 800; color: #e07f0c; }}
+		.link {{ margin: 2mm 0 0; font-size: 10pt; color: #6b7383; }}
+		.foot {{ margin: 6mm 0 0; font-size: 11pt; color: #6b7383; }}
+	</style></head><body><div class="page">
+		<table style="width:100%;border-collapse:collapse"><tr>{logo_cell(logo, "left")}{logo_cell(event_logo, "right")}</tr></table>
+		<p class="event">{e(doc.event_name)}</p>
+		{f'<p class="where">{e(where)}</p>' if where else ""}
+		<p class="title">Scan to register</p>
+		<p class="sub">Get your free solar estimate on WhatsApp</p>
+		<div class="qr"><img src="{qr}"></div>
+		<p class="point">Point your phone camera at the code</p>
+		<p class="link">or open {e(url)}</p>
+		<p class="foot">{e(company)}{(" · WhatsApp " + e(doc.whatsapp_number)) if doc.whatsapp_number else ""}</p>
+	</div></body></html>"""
+	frappe.local.response.filename = "QR - {0}.pdf".format(doc.event_name)
+	frappe.local.response.filecontent = get_pdf(html, {"page-size": "A4", "margin-top": "0mm", "margin-bottom": "0mm",
+		"margin-left": "0mm", "margin-right": "0mm"})
+	frappe.local.response.type = "download"
+
+
+def _pdf_image(url):
+	"""An image for a PDF as a data URI: an uploaded file, or one of the app's own (/assets/...,
+	as a company logo can be). "" when there is none."""
+	import base64
+	import mimetypes
+	import os
+
+	from a3_sola.api.documents import image_src
+
+	if not url:
+		return ""
+	if url.startswith("/assets/"):
+		# Kept inside sites/assets (no "..") - checked before links are followed, as assets/<app> is one.
+		root = os.path.normpath(os.path.join(frappe.local.sites_path, "assets"))
+		path = os.path.normpath(os.path.join(frappe.local.sites_path, url.split("?")[0].lstrip("/")))
+		if not path.startswith(root + os.sep) or not os.path.isfile(path):
+			return ""
+		with open(path, "rb") as f:
+			data = f.read()
+		return "data:{0};base64,{1}".format(mimetypes.guess_type(path)[0] or "image/png", base64.b64encode(data).decode())
+	return image_src(url)
+
+
 def poster_context(name):
 	doc = _event(name)
 	event = reg.event_by_key(doc.public_key, active=False)
