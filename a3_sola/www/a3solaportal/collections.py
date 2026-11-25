@@ -51,7 +51,10 @@ COLLECTIONS = {
 	# Proposal tab), so New opens step one of a design estimate, and a proposal is edited in that
 	# builder (edit_route). The list adds the estimates not yet made into a proposal (proposals/index).
 	"proposals": {"doctype": "Solar Proposal", "title": "Solar Design Proposal", "singular": "design proposal", "subtitle": "Design and offer", "icon": "doc",
-	              "new_route": "/a3solaportal/design-estimates/new", "search_hint": "Search by customer name, proposal or lead ID"},
+	              "new_route": "/a3solaportal/design-estimates/new", "search_hint": "Search by customer name, proposal or lead ID",
+	              # A WhatsApp button on each row: the proposal page's own message and link to the
+	              # customer (api/portal_share); the value is the record's PDF route, behind the login.
+	              "list_whatsapp": "/api/method/a3_sola.api.portal_proposal.pdf?name="},
 	# An ERPNext Quotation. Its list is metadata-driven like the rest; its create and
 	# detail pages are the pricing builder (www/a3solaportal/quotations).
 	"quotations": {"doctype": "Quotation", "title": "Quotation", "singular": "quotation", "subtitle": "Priced offer", "icon": "calc"},
@@ -326,10 +329,16 @@ def list_context(context, slug):
 	list_edit = bool(cfg.get("list_edit")) and frappe.has_permission(doctype, "write")
 	if list_edit and meta.is_submittable and "docstatus" not in fields:
 		fields.append("docstatus")
+	# A page of LIST_PAGE_SIZE at a time, newest change first; ?page= moves through them.
+	total_count = frappe.get_list(doctype, fields=["count(name) as n"], filters=filters, or_filters=or_filters,
+		order_by=None, as_list=True)[0][0] or 0
+	pages = max(1, -(-total_count // LIST_PAGE_SIZE))
+	page = min(max(frappe.utils.cint(frappe.form_dict.get("page")) or 1, 1), pages)
 	records = frappe.get_list(
 		doctype, fields=fields, filters=filters, or_filters=or_filters,
-		order_by="modified desc", limit_page_length=100,
+		order_by="modified desc", limit_start=(page - 1) * LIST_PAGE_SIZE, limit_page_length=LIST_PAGE_SIZE,
 	)
+	list_whatsapp = cfg.get("list_whatsapp")
 
 	# Every linked record on the page, named: one query per linked doctype, not one per cell.
 	link_columns = [c for c in columns if c.fieldtype == "Link"] + ([person] if person else [])
@@ -379,6 +388,9 @@ def list_context(context, slug):
 			editable = not meta.is_submittable or frappe.utils.cint(rec.get("docstatus")) == 0
 			cells.append({"text": _("Edit") if editable else "—", "edit": editable, "primary": False, "num": False,
 				"status": False, "badge": False, "route": edit_route(slug, name) if editable else None})
+		if list_whatsapp:
+			cells.append({"text": "", **_row_whatsapp(doctype, name, list_whatsapp), "primary": False, "num": False,
+				"status": False, "badge": False, "route": None})
 		rows.append({"cells": cells})
 
 	# headers, matching the cell order above (primary first, then the columns shown)
@@ -387,6 +399,8 @@ def list_context(context, slug):
 		headers.append({"label": c.label, "num": c.fieldtype in NUMERIC, "status": _is_status(c)})
 	if list_edit:
 		headers.append({"label": _("Edit"), "num": False, "status": False})
+	if list_whatsapp:
+		headers.append({"label": _("WhatsApp"), "num": False, "status": False})
 
 	fill_shell(
 		context,
@@ -398,13 +412,65 @@ def list_context(context, slug):
 	context.headers = headers
 	context.rows = rows
 	context.total = len(rows)
-	context.limit = 100
 	context.q = q
 	context.list_filters = list_filters
+	context.pager = _pager(slug, page, pages, total_count, len(rows), q, filters)
 	context.filtered = bool(filters)
 	# A list runs the full width of the page.
 	context.main_wide = True
 	return context
+
+
+#: Records on one page of a list.
+LIST_PAGE_SIZE = 20
+
+
+def _pager(slug, page, pages, total_count, shown, q, filters):
+	"""The list's page links: {first, last, total, prev, next, pages: [{n, href, current} | None]} -
+	the first, the last and two either side of this one, None for a gap. The search and the
+	filter chosen go with every link."""
+	from urllib.parse import urlencode
+
+	keep = {k: v for k, v in (("q", q), *((f, v) for f, v in filters.items() if isinstance(v, str))) if v}
+
+	def href(n):
+		query = urlencode({**keep, **({"page": n} if n > 1 else {})})
+		return "/a3solaportal/{0}{1}".format(slug, "?" + query if query else "")
+
+	numbers = sorted({1, pages, *range(max(1, page - 2), min(pages, page + 2) + 1)})
+	links, last = [], 0
+	for n in numbers:
+		if n - last > 1:
+			links.append(None)
+		links.append({"n": n, "href": href(n), "current": n == page})
+		last = n
+	first = (page - 1) * LIST_PAGE_SIZE + 1 if shown else 0
+	return {"first": first, "last": first + shown - 1 if shown else 0, "total": total_count, "page": page, "pages": pages,
+		"prev": href(page - 1) if page > 1 else None, "next": href(page + 1) if page < pages else None, "links": links}
+
+
+def _row_whatsapp(doctype, name, pdf_route):
+	"""A row's WhatsApp button: {whatsapp, whatsapp_pdf, whatsapp_file} - the chat to the
+	customer prefilled as the record's page prefills it (its greeting and the customer's link to
+	the PDF), and the PDF the click saves to drop into it, named for the customer. `whatsapp` is
+	None while it may not go out, or with no number."""
+	from a3_sola.api.portal_proposal import customer_file_name
+	from a3_sola.api.portal_share import issued, share_links
+
+	none = {"whatsapp": None}
+	try:
+		doc = frappe.get_doc(doctype, name)
+		if not issued(doc):
+			return none
+		route = pdf_route + frappe.utils.quote(name)
+		links = share_links(doc, route)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"a3_sola: list WhatsApp link of {doctype} {name}")
+		return none
+	if not links.get("whatsapp_to"):
+		return none
+	return {"whatsapp": links["whatsapp"], "whatsapp_pdf": route + "&download=1&customer_file=1",
+		"whatsapp_file": customer_file_name(doc)}
 
 
 # ---------------------------------------------------------------- form rendering

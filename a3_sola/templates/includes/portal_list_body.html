@@ -61,6 +61,15 @@
 						<a class="a3s-table__edit" href="{{ cell.route }}" aria-label="Edit {{ row.cells[0].sub or row.cells[0].text }}">
 							<svg class="a3s-ic" aria-hidden="true"><use href="#ic-pen"></use></svg><span>{{ cell.text }}</span>
 						</a>
+					{%- elif cell.whatsapp is defined -%}
+						{%- if cell.whatsapp %}
+						{#- The click opens the chat and saves the PDF, named for the customer, to drop into it (script below). -#}
+						<a class="a3s-icon-btn a3s-icon-btn--whatsapp" href="{{ cell.whatsapp | e }}" target="_blank" rel="noopener"
+						   data-list-whatsapp data-pdf="{{ cell.whatsapp_pdf | e }}" data-file="{{ cell.whatsapp_file | e }}"
+						   title="Download {{ cell.whatsapp_file | e }} and open WhatsApp" aria-label="Download {{ cell.whatsapp_file | e }} and send it on WhatsApp">
+							<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg>
+						</a>
+						{%- else %}<span class="a3s-table__muted" title="No mobile number">&mdash;</span>{% endif -%}
 					{%- elif cell.badge -%}
 						<span class="a3s-badge">{{ cell.text }}</span>
 					{%- elif cell.text == "—" -%}
@@ -75,7 +84,44 @@
 		</tbody>
 	</table>
 </div>
-<p class="a3s-list__note">Showing {{ total }} record{{ "" if total == 1 else "s" }}{% if total == limit %} (first {{ limit }}){% endif %}.</p>
+{%- if collection.list_whatsapp %}
+<p class="a3s-list__note" data-list-whatsapp-note role="status" aria-live="polite" hidden></p>
+<script>
+/* A row's WhatsApp button: the link still opens the chat, and the PDF downloads beside it -
+   named for the customer - to drag into the chat, as the record page's WhatsApp button does. */
+document.addEventListener("click", function (e) {
+	var link = e.target.closest("[data-list-whatsapp]");
+	if (!link || !link.dataset.pdf) return;
+	var save = document.createElement("a");
+	save.href = link.dataset.pdf;
+	save.download = link.dataset.file || "";
+	document.body.appendChild(save);
+	save.click();
+	save.remove();
+	var note = document.querySelector("[data-list-whatsapp-note]");
+	if (note) {
+		note.textContent = "Downloading " + (link.dataset.file || "the PDF") + " \u2013 drag it into the WhatsApp chat, then press Send.";
+		note.hidden = false;
+	}
+});
+</script>
+{%- endif %}
+<div class="a3s-pager">
+	<p class="a3s-list__note">Showing {{ pager.first }}&ndash;{{ pager.last }} of {{ pager.total }} record{{ "" if pager.total == 1 else "s" }}.</p>
+	{%- if pager.pages > 1 %}
+	<nav class="a3s-pager__nav" aria-label="Pages">
+		{%- if pager.prev %}<a class="a3s-pager__step" href="{{ pager.prev | e }}" rel="prev">&lsaquo; Previous</a>
+		{%- else %}<span class="a3s-pager__step is-disabled" aria-disabled="true">&lsaquo; Previous</span>{% endif %}
+		{%- for l in pager.links %}
+		{%- if not l %}<span class="a3s-pager__gap" aria-hidden="true">&hellip;</span>
+		{%- elif l.current %}<span class="a3s-pager__num is-current" aria-current="page">{{ l.n }}</span>
+		{%- else %}<a class="a3s-pager__num" href="{{ l.href | e }}" aria-label="Page {{ l.n }}">{{ l.n }}</a>{% endif %}
+		{%- endfor %}
+		{%- if pager.next %}<a class="a3s-pager__step" href="{{ pager.next | e }}" rel="next">Next &rsaquo;</a>
+		{%- else %}<span class="a3s-pager__step is-disabled" aria-disabled="true">Next &rsaquo;</span>{% endif %}
+	</nav>
+	{%- endif %}
+</div>
 {% else %}
 <div class="a3s-card a3s-empty">
 	<span class="a3s-empty__icon" aria-hidden="true"><svg class="a3s-ic a3s-ic--lg"><use href="#ic-{{ collection.icon }}"></use></svg></span>

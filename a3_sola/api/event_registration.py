@@ -1,6 +1,6 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Registering at an event by QR code: the public form's endpoint, and the brochure.
+"""Registering at an event by QR code: the public form's endpoint, the visitor's proposal and the brochure.
 
 The QR on the stall opens /register/<key> (www/register). What the visitor sends becomes a
 Lead of the event's company, owned by the event's lead owner, with the event's source and
@@ -13,8 +13,11 @@ Defended like the signup form (api/signup): a per-IP and a per-mobile rate limit
 honeypot, the site's captcha when it is on, every field cleaned and checked, and uploads
 sniffed by their bytes rather than trusted by their name.
 
-The brochure goes to the visitor without WhatsApp's API: the thank-you page offers it and
-"Chat with us on WhatsApp", and staff send it from the event page (api/events) in one tap.
+Each visitor who gives their bill gets their own proposal (api/event_proposal): made in the
+background once they finish the form, at the lowest price of the package their bill needs.
+It goes to them without WhatsApp's API: the thank-you page offers it and "Chat with us on
+WhatsApp", and staff send it from the event page (api/events) in one tap. The event's
+brochure, if it has one, can go with it.
 """
 
 import hashlib
@@ -49,7 +52,7 @@ REGISTER_PATH = "/register/{0}"
 SCREEN_PATH = "/event-screen/{0}"
 DEFAULT_WELCOME = (
 	"Hello {name},\n\nThank you for visiting *{company}* at {event}.\n\n"
-	"Here is our brochure: {brochure}\n\n{estimate}"
+	"Here is your solar proposal: {proposal}\n\n{estimate}"
 	"Our team will call you{call_time}. Reply here with any question."
 )
 
@@ -242,13 +245,34 @@ def submit():
 		frappe.enqueue("a3_sola.api.event_registration.read_bill", queue="short", lead=lead.name,
 			enqueue_after_commit=True, job_id=f"event-bill::{lead.name}", deduplicate=True)
 
+	from a3_sola.api import event_proposal
+
 	ref = visitor_ref(lead.name)
+	offers_proposal = event_proposal.has_proposal(lead)
+	if offers_proposal:
+		# The proposal's design estimate made now, so the figures shown are the PDF's own.
+		made = event_proposal.prepare(lead.name)
+		if made and est:
+			est = _as_proposed(est, made["figures"])
+			frappe.db.set_value(LEAD, lead.name, "a3s_estimate", json.dumps(est), update_modified=False)
+		if made and (made["changed"] or not frappe.db.get_value("Solar Proposal", made["proposal"], "proposal_pdf")):
+			event_proposal.queue(made["proposal"])
 	return {
 		"ok": True, "first_name": visitor.first_name, "created": created, "estimate": est,
 		"summary": instant_estimate.summary(est), "ref": ref,
 		"brochure_url": brochure_url(event, ref) if event.brochure else None,
+		"proposal_url": proposal_url(event, ref) if offers_proposal else None,
 		"chat_url": chat_url(event, visitor.full_name) if event.whatsapp_number else None,
 	}
+
+
+def _as_proposed(est, figures):
+	"""The instant estimate with the proposal's own size, price, subsidy and price after it - what
+	its PDF prints - and the payback worked out again from that price."""
+	est = dict(est, kw=figures["kw"], price=figures["price"], subsidy=figures["subsidy"], net=figures["net"])
+	saving = flt(est.get("monthly_saving"))
+	est["payback_years"] = round(est["net"] / (saving * 12), 1) if saving > 0 and est["net"] > 0 else None
+	return est
 
 
 def _clean(value, limit=140):
@@ -508,7 +532,7 @@ def chat_url(event, full_name):
 	"""Our WhatsApp, opened from the visitor's phone with their hello typed in."""
 	from a3_sola.api.outreach import whatsapp_link
 
-	text = _("Hi, I am {0}. I registered at {1}. Please send me the brochure.").format(full_name, event.event_name)
+	text = _("Hi, I am {0}. I registered at {1}. Please send me my solar proposal.").format(full_name, event.event_name)
 	return whatsapp_link(event.whatsapp_number, text)
 
 
@@ -536,6 +560,38 @@ def brochure(key, ref=None):
 	frappe.local.response.display_content_as = "inline"
 
 
+def proposal_url(event, ref):
+	return get_url("/api/method/a3_sola.api.event_registration.proposal?key={0}&ref={1}".format(event.public_key, ref))
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+@rate_limited("event_brochure_ip", "event_brochure_rate_per_ip", 120)
+def proposal(key, ref=None):
+	"""The visitor's own proposal, from the thank-you page or the WhatsApp message: their
+	signed `ref` opens it, and only theirs. Printed as it stands (api/event_proposal.pdf_for);
+	opening it notes on their lead that they have it (and the stall screen says so)."""
+	from a3_sola.api import event_proposal
+
+	event = event_by_key(key, active=False)
+	lead = lead_of_ref(ref) if ref else None
+	if not event or not lead or frappe.db.get_value(LEAD, lead, "a3s_event") != event.name:
+		frappe.throw(_("This proposal link is not valid."), frappe.DoesNotExistError)
+	found = event_proposal.pdf_for(lead)
+	if not found:
+		# A page for the phone, not an error: their own offer comes from our team.
+		frappe.respond_as_web_page(_("Your proposal is on its way"),
+			_("Our team is preparing your solar proposal and will send it to you on WhatsApp. "
+			"Reply there with any question."), indicator_color="orange", http_status_code=200)
+		return
+	note_brochure(lead, "Downloaded")
+	frappe.db.commit()  # a GET request is not committed for us
+	file_name, content = found
+	frappe.local.response.filename = file_name
+	frappe.local.response.filecontent = content
+	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline"
+
+
 def note_brochure(lead, via):
 	"""The brochure reached the visitor: the first time, stamped on the lead for the event page
 	and the stall screen."""
@@ -548,13 +604,19 @@ def note_brochure(lead, via):
 # ------------------------------------------------------------------ the welcome message
 def welcome_text(event, lead):
 	"""The WhatsApp welcome for a visitor, from the event's message (DEFAULT_WELCOME when it has
-	none): their name, the event, the company, the brochure link and their estimate filled in."""
+	none): their name, the event, the company, their proposal link, the brochure link and their
+	estimate filled in. A line whose link is not there (no brochure; no proposal for a battery
+	system or a business) is left out."""
+	from a3_sola.api import event_proposal
+
+	ref = visitor_ref(lead.name)
 	est = json.loads(lead.get("a3s_estimate") or "null") if lead.get("a3s_estimate") else None
 	line = instant_estimate.summary(est)
 	values = {
 		"name": (lead.get("first_name") or lead.get("lead_name") or "").strip(),
 		"event": event.event_name, "company": company_name(event.company),
-		"brochure": brochure_url(event, visitor_ref(lead.name)) if event.brochure else "",
+		"brochure": brochure_url(event, ref) if event.brochure else "",
+		"proposal": proposal_url(event, ref) if event_proposal.has_proposal(lead) else "",
 		"estimate": (_("Your indicative estimate: {0}. Our engineer will confirm it after a site visit.").format(line)
 			+ "\n\n") if line else "",
 		"call_time": (" in the " + lead.a3s_call_time.lower()) if lead.get("a3s_call_time") in ("Morning", "Afternoon", "Evening") else " soon",
@@ -564,5 +626,7 @@ def welcome_text(event, lead):
 	def fill(match):
 		return str(values.get(match.group(1), match.group(0)))
 
-	text = re.sub(r"\{(\w+)\}", fill, template)
+	lines = [line for line in template.split("\n")
+		if not any("{" + link + "}" in line and not values[link] for link in ("proposal", "brochure"))]
+	text = re.sub(r"\{(\w+)\}", fill, "\n".join(lines))
 	return re.sub(r"\n{3,}", "\n\n", text).strip()

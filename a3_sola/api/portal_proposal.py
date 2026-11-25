@@ -321,18 +321,29 @@ def estimate_boms(estimates=None):
 
 
 @frappe.whitelist()
-def pdf(name, download=0):
+def pdf(name, download=0, customer_file=0):
 	"""The proposal as its customer receives it - the Solar Proposal Document print - to read
-	in the browser, or to save with `download=1`. Read with the caller's own permissions."""
+	in the browser, or to save with `download=1`; with `customer_file=1` named for the
+	customer ("Muzzammil Afridi Proposal.pdf", customer_file_name), as the list's WhatsApp
+	button saves it to drop into the chat. Read with the caller's own permissions."""
 	from frappe.utils.pdf import get_pdf
 
 	from a3_sola.solar_crm.doctype.solar_proposal.solar_proposal import proposal_print_format
 
 	doc = load_record(SLUG, name, "read")
 	html = frappe.get_print(doc.doctype, doc.name, print_format=proposal_print_format(), no_letterhead=0)
-	frappe.local.response.filename = "{0}.pdf".format(doc.get("proposal_file_name") or doc.name)
+	frappe.local.response.filename = customer_file_name(doc) if frappe.utils.cint(customer_file) \
+		else "{0}.pdf".format(doc.get("proposal_file_name") or doc.name)
 	frappe.local.response.filecontent = get_pdf(html)
 	frappe.local.response.type = "download" if frappe.utils.cint(download) else "pdf"
+
+
+def customer_file_name(doc):
+	"""The proposal's PDF named for its customer: "Muzzammil Afridi Proposal.pdf"."""
+	import re
+
+	who = re.sub(r"[^\w .-]+", " ", doc.get("customer_name") or "").strip()
+	return "{0} Proposal.pdf".format(" ".join(who.split()) or doc.name)
 
 
 # ---------------------------------------------------- made from the design estimate

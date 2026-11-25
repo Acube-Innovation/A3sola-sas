@@ -1,5 +1,5 @@
 /* The Events pages (a3_sola.api.events): the event form (new or edit), and on an event's page
-   the funnel and the registrations - live, with each visitor's brochure one tap away on
+   the funnel and the registrations - live, with each visitor's proposal one tap away on
    WhatsApp and their name kept off the stall screen when they ask. */
 (function () {
 	"use strict";
@@ -94,9 +94,9 @@
 				field("Our WhatsApp number", '<input id="ev-wa" name="whatsapp_number" inputmode="tel" value="' + esc(v.whatsapp_number) + '">',
 					{ id: "ev-wa", hint: "\"Chat with us on WhatsApp\" on the thank-you page opens it." }) +
 				field("Brochure (PDF)", '<input id="ev-br" type="file" name="brochure" accept="application/pdf">',
-					{ id: "ev-br", hint: v.brochure_name ? "Now: " + esc(v.brochure_name) + ". Choose a file to replace it." : "Up to 10 MB. Visitors download it, and it is linked in the WhatsApp message." }) +
+					{ id: "ev-br", hint: v.brochure_name ? "Now: " + esc(v.brochure_name) + ". Choose a file to replace it." : "Optional, up to 10 MB. Each visitor gets their own proposal; a brochure goes too where the message names {brochure}." }) +
 				field("WhatsApp welcome message", '<textarea id="ev-msg" name="welcome_message" rows="6">' + esc(v.welcome_message || o.default_welcome) + "</textarea>",
-					{ id: "ev-msg", wide: 1, hint: "{name}, {event}, {company}, {brochure}, {estimate} and {call_time} are filled in for each visitor. *Bold* stays bold in WhatsApp." }) +
+					{ id: "ev-msg", wide: 1, hint: "{name}, {event}, {company}, {proposal} (their proposal link), {brochure}, {estimate} and {call_time} are filled in for each visitor. *Bold* stays bold in WhatsApp." }) +
 				'<fieldset class="a3s-field a3s-field--wide a3s-ev__pkgs"><legend class="a3s-users__legend">Packages for the instant estimate</legend>' +
 				'<p class="a3s-field__hint">Tick the packages the estimate may offer. None ticked: every active subsidy package.</p>' +
 				'<div class="a3s-ev__pkglist">' + (packages.length ? packages.map(function (p) {
@@ -222,12 +222,12 @@
 				? '<span class="a3s-badge a3s-badge--converted">Sent</span><span class="a3s-table__meta">' + esc(r.sent) + (r.sent_via ? " · " + esc(r.sent_via) : "") + "</span>"
 					+ (r.whatsapp ? '<a class="a3s-ev__again" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener" data-send="' + esc(r.name) + '">Send again</a>' : "")
 				: (r.whatsapp ? '<a class="a3s-btn a3s-btn--primary a3s-ev__send" href="' + esc(r.whatsapp) + '" target="_blank" rel="noopener" data-send="' + esc(r.name) + '">' +
-					'<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg><span>Send brochure</span></a>' : '<span class="a3s-table__muted">No number</span>');
+					'<svg class="a3s-ic" aria-hidden="true"><use href="#ic-whatsapp"></use></svg><span>Send proposal</span></a>' : '<span class="a3s-table__muted">No number</span>');
 			return "<tr data-lead=\"" + esc(r.name) + "\">" +
 				'<td><a class="a3s-table__link" href="/a3solaportal/leads/' + encodeURIComponent(r.name) + '">' + esc(r.full_name) + "</a>" +
 				'<span class="a3s-table__meta">' + esc(r.mobile) + (r.district ? " · " + esc(r.district) : "") + (r.interest ? " · " + esc(r.interest) : "") + "</span></td>" +
 				"<td>" + esc(r.registered) + (r.call_time ? '<span class="a3s-table__meta">Call: ' + esc(r.call_time) + "</span>" : "") + "</td>" +
-				"<td>" + est + "</td>" +
+				"<td>" + est + (r.proposal ? '<a class="a3s-table__meta a3s-table__link" href="/a3solaportal/proposals/' + encodeURIComponent(r.proposal) + '">' + esc(r.proposal) + "</a>" : "") + "</td>" +
 				"<td>" + (r.papers ? '<span class="a3s-badge a3s-badge--open">' + r.papers + (r.papers === 1 ? " paper" : " papers") + "</span>" : '<span class="a3s-table__muted">—</span>') + "</td>" +
 				'<td class="a3s-ev__brochure">' + brochure + "</td>" +
 				'<td><button type="button" class="a3s-ev__screen' + (r.hidden ? " is-hidden" : "") + '" data-hide="' + esc(r.name) + '" aria-pressed="' + (r.hidden ? "true" : "false") + '">' +
@@ -250,7 +250,7 @@
 	});
 	document.querySelector("[data-reg-search]").addEventListener("input", function (e) { state.q = e.target.value.trim(); render(); });
 
-	/* Send brochure: the link opens WhatsApp (left to the browser, so it is never blocked as a
+	/* Send proposal: the link opens WhatsApp (left to the browser, so it is never blocked as a
 	   pop-up); the send is recorded on the lead at the same moment. */
 	rowsEl.addEventListener("click", function (e) {
 		var send = e.target.closest("[data-send]");

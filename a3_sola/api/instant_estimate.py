@@ -48,9 +48,10 @@ def units_for_bill(tariff, bill_per_cycle):
 
 
 def candidate_packages(company, names=None):
-	"""[{name, package_name, capacity_kw, connection_type, price, subsidy, net}] the estimate may
-	offer: the event's chosen packages, else every active on-grid subsidy package of the
-	company - each priced as the package prices itself (its default inverter)."""
+	"""[{name, package_name, capacity_kw, connection_type, price, subsidy, net, option}] the
+	estimate may offer: the event's chosen packages, else every active on-grid subsidy package
+	of the company - each at its lowest price (`lowest_option`): the visitor's proposal quotes
+	that option."""
 	from a3_sola.solar_crm.doctype.solar_package.solar_package import price_for
 
 	if names:
@@ -67,12 +68,26 @@ def candidate_packages(company, names=None):
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), f"a3_sola: instant estimate price of {row.name}")
 			continue
-		if not flt(price.system_cost):
+		option = lowest_option(row.name, row.connection_type)
+		cost = flt(option.cost) if option else flt(price.system_cost)
+		if not cost:
 			continue
+		subsidy = flt(price.indicative_subsidy)
 		out.append(frappe._dict(name=row.name, package_name=row.package_name, capacity_kw=flt(row.capacity_kw),
-			connection_type=row.connection_type, price=flt(price.system_cost), subsidy=flt(price.indicative_subsidy),
-			net=flt(price.net_rate)))
+			connection_type=row.connection_type, price=cost, subsidy=subsidy, net=cost - subsidy,
+			option=option.name if option else None))
 	return out
+
+
+def lowest_option(package, phase=None):
+	"""The package's cheapest priced Pricing Options row for this connection (any, when it has
+	none for it), or None when no row has a price."""
+	from a3_sola.solar_crm.doctype.solar_package.solar_package import pricing_combinations
+
+	combos = [c for c in pricing_combinations(package, phase) if flt(c.cost) > 0]
+	if not combos and phase:
+		combos = [c for c in pricing_combinations(package) if flt(c.cost) > 0]
+	return min(combos, key=lambda c: (flt(c.cost), not c.default)) if combos else None
 
 
 def pick(packages, need_kw):
@@ -127,6 +142,7 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 
 	return {
 		"kw": package.capacity_kw, "package": package.name, "package_name": package.package_name,
+		"option": package.option, "connection_type": package.connection_type,
 		"price": round(package.price), "subsidy": round(subsidy), "net": round(net),
 		"monthly_units": round(units / CYCLE_MONTHS), "monthly_bill": round(cycle_bill / CYCLE_MONTHS),
 		"monthly_saving": round(monthly_saving / 10) * 10, "payback_years": payback, "larger": bool(larger),
