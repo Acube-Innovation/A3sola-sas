@@ -104,6 +104,8 @@
 						"><span>" + esc(p.package_name) + ' <span class="a3s-table__meta">' + esc(p.capacity_kw) + " kW · " + esc(p.connection_type || "") + "</span></span></label>";
 				}).join("") : '<p class="a3s-field__hint">No active packages.</p>') + "</div></fieldset>" +
 				field("Stall screen headline", '<input id="ev-head" name="screen_headline" maxlength="140" value="' + esc(v.screen_headline) + '" placeholder="Welcome to …">', { id: "ev-head" }) +
+				field("Exhibition logo", '<input id="ev-logo" type="file" name="event_logo" accept="image/png,image/jpeg,image/webp">',
+					{ id: "ev-logo", hint: v.event_logo_name ? "Now: " + esc(v.event_logo_name) + ". Choose a file to replace it." : "The exhibition's logo, on the right of the stall screen. PNG, JPG or WebP." }) +
 				'<div class="a3s-field a3s-ev__checks">' +
 				'<label class="a3s-check"><input type="checkbox" name="ask_documents"' + (v.ask_documents ? " checked" : "") + "><span>Ask for documents (optional for the visitor)</span></label>" +
 				'<label class="a3s-check"><input type="checkbox" name="show_estimate_on_screen"' + (v.show_estimate_on_screen ? " checked" : "") + "><span>Show the estimate on the stall screen</span></label>" +
@@ -118,6 +120,8 @@
 				if (!form.lead_owner.value) { m.status("Choose who owns the leads.", "error"); form.lead_owner.focus(); return; }
 				var file = form.brochure.files && form.brochure.files[0];
 				if (file && !/\.pdf$/i.test(file.name)) { m.status("The brochure must be a PDF.", "error"); return; }
+				var logo = form.event_logo.files && form.event_logo.files[0];
+				if (logo && !/\.(png|jpe?g|webp)$/i.test(logo.name)) { m.status("The logo must be a PNG, JPG or WebP image.", "error"); return; }
 				var data = {};
 				["event_name", "venue", "company", "start_date", "end_date", "lead_owner", "lead_source", "whatsapp_number", "welcome_message", "screen_headline"].forEach(function (k) {
 					if (form[k]) data[k] = form[k].value;
@@ -133,6 +137,13 @@
 					fd.append("file", file, file.name);
 					m.status("Uploading the brochure…");
 					return call("upload_brochure", null, fd).then(function () { return r; });
+				}).then(function (r) {
+					if (!logo) return r;
+					var fd = new FormData();
+					fd.append("name", r.name);
+					fd.append("file", logo, logo.name);
+					m.status("Uploading the logo…");
+					return call("upload_event_logo", null, fd).then(function () { return r; });
 				}).then(function (r) {
 					window.location.assign(r.route);
 				}).catch(function (err) {

@@ -21,9 +21,18 @@
 	<header class="a3s-tv__top">
 		<div class="a3s-tv__brand">
 			{%- if screen.logo %}<img src="{{ screen.logo }}" alt="">{% endif %}
-			<div><p class="a3s-tv__company">{{ screen.company | e }}</p><p class="a3s-tv__event">{{ screen.event_name | e }}</p></div>
+			<div><p class="a3s-tv__company">{{ screen.company | e }}</p><p class="a3s-tv__event">{{ screen.event_name | e }}</p>
+				{%- if screen.when %}<p class="a3s-tv__when">{{ screen.when | e }}</p>{% endif %}</div>
 		</div>
-		<div class="a3s-tv__clock" data-clock></div>
+		{#- The exhibition's own logo on the right, the clock beside it. -#}
+		<div class="a3s-tv__host">
+			<div class="a3s-tv__clock" data-clock data-event-start="{{ screen.start or '' }}" data-event-end="{{ screen.end or '' }}">
+				<span class="a3s-tv__clock-ring" aria-hidden="true"></span>
+				<span class="a3s-tv__clock-day" data-clock-day></span>
+				<span class="a3s-tv__clock-time"><b data-clock-time></b><small data-clock-ampm></small></span>
+			</div>
+			{%- if screen.event_logo %}<img class="a3s-tv__host-logo" src="{{ screen.event_logo | e }}" alt="{{ screen.event_name | e }}">{% endif %}
+		</div>
 	</header>
 
 	{#- The living backdrop: drifting light and rising sparkles, behind everything. -#}
@@ -40,13 +49,14 @@
 				<div class="a3s-tv__qr">{{ screen.qr_svg | safe }}</div>
 				<span class="a3s-tv__scanline" aria-hidden="true"></span>
 			</div>
-			<p class="a3s-tv__point"><span class="a3s-tv__arrow" aria-hidden="true">&#8593;</span> Point your phone camera here</p>
+			{#- Turned on its side on the QR's left, the arrow pointing at the code; it slides in and out. -#}
+			<p class="a3s-tv__point">Point your phone camera here <span class="a3s-tv__arrow" aria-hidden="true">&#8595;</span></p>
 		</div>
 		<div class="a3s-tv__pitch">
 			<div class="a3s-tv__slides" data-slides>
 				<div class="a3s-tv__slide is-on">
 					<h1 class="a3s-tv__headline">{{ screen.headline | e }}</h1>
-					<p class="a3s-tv__cta"><span class="a3s-tv__scan">Scan to register</span> and get your free solar estimate on WhatsApp</p>
+					<p class="a3s-tv__cta a3s-tv__cta--one"><span class="a3s-tv__scan">Scan to register</span> get your free solar estimate on <span class="a3s-tv__wa-ic" role="img" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3c-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg></span></p>
 				</div>
 				{%- if screen.max_subsidy %}
 				<div class="a3s-tv__slide">
@@ -88,23 +98,25 @@
 		<div class="a3s-tv__card" data-card></div>
 	</section>
 
+	{#- "Just scanned": slides in from the left when a visitor saves their name, out to the right. -#}
+	<div class="a3s-tv__toast" data-toast hidden aria-live="polite"></div>
+
 	<footer class="a3s-tv__ticker" data-ticker-wrap>
-		<span class="a3s-tv__ticker-label"><i aria-hidden="true"></i>Just joined</span>
+		<span class="a3s-tv__ticker-label"><i aria-hidden="true"></i>Just scanned</span>
 		<div class="a3s-tv__ticker-track"><div class="a3s-tv__ticker-run" data-ticker></div></div>
+		{#- The product behind the screen: the bar's third column, in view over the welcomes too. -#}
+		<a class="a3s-tv__powered" href="https://acube.co" target="_blank" rel="noopener">
+			<span class="a3s-tv__powered-by">Powered by</span>
+			<span class="a3s-tv__powered-brand">
+				<img src="/assets/a3_sola/images/acube-logo.webp" alt="Acube">
+				<span class="a3s-tv__powered-sep" aria-hidden="true"></span>
+				<span class="a3s-tv__powered-product">A3 Sola</span>
+			</span>
+			<span class="a3s-tv__powered-site">acube.co</span>
+		</a>
 	</footer>
 	<p class="a3s-tv__offline" data-offline hidden>Reconnecting…</p>
-	{#- The product behind the screen: always in view, over the welcomes too. -#}
-	<div class="a3s-tv__powered">
-		<span class="a3s-tv__powered-by">Powered by</span>
-		<img src="/assets/a3_sola/images/acube-logo.webp" alt="Acube Innovations">
-		<span class="a3s-tv__powered-sep" aria-hidden="true"></span>
-		<span class="a3s-tv__powered-product">A3 Sola</span>
-	</div>
 
-	<div class="a3s-tv__start" data-start>
-		<button type="button" class="a3s-btn a3s-btn--primary" data-start-btn><span>Start screen</span></button>
-		<p>Goes full screen and keeps the display awake. <label><input type="checkbox" data-chime checked> Chime on each welcome</label></p>
-	</div>
 </main>
 <script src="/assets/a3_sola/js/event_screen.js?v={{ a3s_asset_version('js/event_screen.js') }}"></script>
 {%- endif %}

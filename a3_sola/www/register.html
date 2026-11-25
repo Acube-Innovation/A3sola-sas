@@ -45,10 +45,17 @@
 			<input id="reg-website" name="website_url" type="text" tabindex="-1" autocomplete="off">
 		</div>
 
+		{#- Three tabs. Tab 1 saves the visitor's lead the moment they tap Next (the stall screen says
+		    they have just scanned); tabs 2 and 3 fill it in, and Register finishes it. -#}
+		<ol class="a3s-reg__tabs" aria-label="Steps">
+			<li class="is-on" data-tab="1"><span>1</span>About you</li>
+			<li data-tab="2"><span>2</span>Your home</li>
+			<li data-tab="3"><span>3</span>Finish</li>
+		</ol>
+
 		<section class="a3s-reg__step" data-step="1">
 			<h2 class="a3s-reg__h">Get your free solar estimate</h2>
-			<p class="a3s-reg__lead">Tell us a little about your home or business. It takes a minute, and our brochure comes to your WhatsApp.</p>
-
+			<p class="a3s-reg__lead">Three quick steps. Our brochure and your estimate come to your WhatsApp.</p>
 			<div class="a3s-reg__fields">
 				<div class="a3s-field">
 					<label for="reg-name">Your name <span class="a3s-req">*</span></label>
@@ -67,9 +74,27 @@
 					<label for="reg-district">District <span class="a3s-req">*</span></label>
 					<select id="reg-district" name="district" required>
 						<option value="">Choose…</option>
-						{%- for d in reg.districts %}<option value="{{ d.name | e }}">{{ d.district_name | e }}</option>{% endfor %}
+						{%- for d in reg.districts %}<option value="{{ d.name | e }}"{% if d.district_name == "Ernakulam" %} selected{% endif %}>{{ d.district_name | e }}</option>{% endfor %}
 					</select>
 				</div>
+				{#- Asked here, not at the end: the stall screen names the visitor as soon as this tab is saved. -#}
+				<label class="a3s-check a3s-reg__small">
+					<input type="checkbox" name="show_on_screen" value="1" checked>
+					<span>Show my name on the stall screen</span>
+				</label>
+				{%- if reg.captcha %}
+				<div class="a3s-reg__captcha" data-captcha data-provider="{{ reg.captcha.provider | e }}" data-site-key="{{ reg.captcha.site_key | e }}">
+					{%- if reg.captcha.provider == "Cloudflare Turnstile" %}<div class="cf-turnstile" data-sitekey="{{ reg.captcha.site_key | e }}"></div>{% endif %}
+				</div>
+				{%- endif %}
+			</div>
+			<button type="submit" class="a3s-btn a3s-btn--primary a3s-reg__submit"><span>Next</span></button>
+		</section>
+
+		<section class="a3s-reg__step" data-step="2" hidden>
+			<h2 class="a3s-reg__h">Your home</h2>
+			<p class="a3s-reg__lead">For your instant estimate: the size of system you need and what it saves.</p>
+			<div class="a3s-reg__fields">
 				<fieldset class="a3s-field a3s-reg__group">
 					<legend>Property <span class="a3s-req">*</span></legend>
 					<div class="a3s-reg__chips">
@@ -87,7 +112,7 @@
 							<label><input type="radio" name="bill_months" value="1"><span>1 month</span></label>
 						</div>
 					</div>
-					<p class="a3s-field__hint">For your instant estimate. KSEB bills usually cover 2 months.</p>
+					<p class="a3s-field__hint">KSEB bills usually cover 2 months.</p>
 				</div>
 				<div class="a3s-field">
 					<label for="reg-system">System you are looking for</label>
@@ -104,30 +129,17 @@
 						{%- endfor %}
 					</div>
 				</fieldset>
-				<label class="a3s-check a3s-reg__consent">
-					<input type="checkbox" name="whatsapp_consent" value="1" required>
-					<span>I agree to hear from {{ reg.company | e }} on WhatsApp about my solar enquiry. <span class="a3s-req">*</span></span>
-				</label>
-				<label class="a3s-check a3s-reg__small">
-					<input type="checkbox" name="show_on_screen" value="1" checked>
-					<span>Show my name on the stall screen</span>
-				</label>
-				<p class="a3s-field__hint a3s-reg__note">Visitors are welcomed by name, with their estimate, on the screen at our stall. Untick to stay off it.</p>
-				{%- if reg.captcha %}
-				<div class="a3s-reg__captcha" data-captcha data-provider="{{ reg.captcha.provider | e }}" data-site-key="{{ reg.captcha.site_key | e }}">
-					{%- if reg.captcha.provider == "Cloudflare Turnstile" %}<div class="cf-turnstile" data-sitekey="{{ reg.captcha.site_key | e }}"></div>{% endif %}
-				</div>
-				{%- endif %}
 			</div>
-			<button type="submit" class="a3s-btn a3s-btn--primary a3s-reg__submit" data-next>
-				<span>{{ "Continue" if reg.ask_documents else "Register" }}</span>
-			</button>
+			<div class="a3s-reg__actions">
+				<button type="submit" class="a3s-btn a3s-btn--primary a3s-reg__submit"><span>Next</span></button>
+				<button type="button" class="a3s-btn a3s-btn--ghost a3s-reg__back" data-back>&larr; Back</button>
+			</div>
 		</section>
 
-		{%- if reg.ask_documents %}
-		<section class="a3s-reg__step" data-step="2" hidden>
-			<h2 class="a3s-reg__h">Your documents <span class="a3s-reg__optional">Optional</span></h2>
-			<p class="a3s-reg__lead">Have them on your phone? Add them now and we can start your subsidy application sooner. Or skip &ndash; we will ask later.</p>
+		<section class="a3s-reg__step" data-step="3" hidden>
+			<h2 class="a3s-reg__h">Almost done</h2>
+			{%- if reg.ask_documents %}
+			<p class="a3s-reg__lead">Have your papers on your phone? Add them and we can start your subsidy application sooner. They are optional &ndash; we can ask later.</p>
 			<div class="a3s-reg__docs">
 				{%- for d in reg.documents %}
 				<label class="a3s-reg__doc" data-doc="{{ d.field }}">
@@ -138,13 +150,18 @@
 				{%- endfor %}
 			</div>
 			<p class="a3s-field__hint">Up to {{ reg.max_mb }} MB each. Your papers are kept private: only our staff can open them, and they are used only for your solar application.</p>
+			{%- else %}
+			<p class="a3s-reg__lead">One last thing, then your estimate is ready.</p>
+			{%- endif %}
+			<label class="a3s-check a3s-reg__consent">
+				<input type="checkbox" name="whatsapp_consent" value="1" required>
+				<span>I agree to hear from {{ reg.company | e }} on WhatsApp about my solar enquiry. <span class="a3s-req">*</span></span>
+			</label>
 			<div class="a3s-reg__actions">
 				<button type="submit" class="a3s-btn a3s-btn--primary a3s-reg__submit"><span>Register</span></button>
-				<button type="button" class="a3s-btn a3s-btn--ghost" data-skip>Skip documents</button>
 				<button type="button" class="a3s-btn a3s-btn--ghost a3s-reg__back" data-back>&larr; Back</button>
 			</div>
 		</section>
-		{%- endif %}
 
 		<p class="a3s-attach__status a3s-reg__status" data-status role="status" aria-live="polite" hidden></p>
 	</form>

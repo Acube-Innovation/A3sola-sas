@@ -24,6 +24,7 @@ EDITABLE = ("event_name", "venue", "company", "start_date", "end_date", "is_acti
 	"whatsapp_number", "ask_documents", "welcome_message", "screen_headline", "show_estimate_on_screen")
 CHECKS = ("is_active", "ask_documents", "show_estimate_on_screen")
 BROCHURE_MAX_MB = 10
+LOGO_MAX_MB = 5
 
 
 def require_staff():
@@ -106,6 +107,7 @@ def form_values(doc):
 	values["name"] = doc.name
 	values["packages"] = [r.package for r in doc.get("estimate_packages") or []]
 	values["brochure_name"] = (doc.brochure or "").rsplit("/", 1)[-1]
+	values["event_logo_name"] = (doc.event_logo or "").rsplit("/", 1)[-1]
 	for f in ("start_date", "end_date"):
 		values[f] = str(values[f]) if values[f] else ""
 	return values
@@ -161,6 +163,32 @@ def upload_brochure(name):
 	doc.db_set("brochure", f.file_url)
 	return {"brochure_name": safe}
 
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_event_logo(name):
+	"""The exhibition's logo for the stall screen's top bar: an image sent with the form, kept public
+	because the screen is opened without a login."""
+	doc = _event(name, "write")
+	upload = frappe.request.files.get("file") if getattr(frappe.request, "files", None) else None
+	if not upload or not upload.filename:
+		frappe.throw(_("Choose the logo image."))
+	limit = LOGO_MAX_MB * 1024 * 1024
+	content = upload.stream.read(limit + 1)
+	if len(content) > limit:
+		frappe.throw(_("The logo is larger than {0} MB. Choose a smaller image.").format(LOGO_MAX_MB))
+	kind = reg.sniff(content)
+	if kind not in ("png", "jpeg", "webp"):
+		frappe.throw(_("The logo must be a PNG, JPG or WebP image."))
+	for old in frappe.get_all("File", filters={"attached_to_doctype": EVENT, "attached_to_name": doc.name,
+			"attached_to_field": "event_logo"}, pluck="name"):
+		frappe.delete_doc("File", old, ignore_permissions=True)
+	stem = "".join(c for c in upload.filename.rsplit(".", 1)[0] if c.isalnum() or c in " _-").strip() or "event-logo"
+	safe = "{0}.{1}".format(stem, "jpg" if kind == "jpeg" else kind)
+	f = frappe.get_doc({"doctype": "File", "file_name": safe, "content": content, "is_private": 0,
+		"attached_to_doctype": EVENT, "attached_to_name": doc.name, "attached_to_field": "event_logo"}).insert(ignore_permissions=True)
+	doc.db_set("event_logo", f.file_url)
+	return {"event_logo_name": safe}
 
 # ------------------------------------------------------------------ one event
 def view_context(name):

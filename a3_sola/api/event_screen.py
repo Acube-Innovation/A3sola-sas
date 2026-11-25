@@ -33,7 +33,8 @@ FIRST_LOOKBACK_MINUTES = 3
 #: it starts but is only seen once it is saved - seconds later with papers on a phone - and by
 #: then the screen has moved on. The screen skips the moments it has already played (their key).
 OVERLAP_SECONDS = 300
-TICKER = 8
+#: The bottom bar scrolls the latest visitors who may be named on the screen.
+TICKER = 10
 
 
 def screen_event(key):
@@ -42,7 +43,8 @@ def screen_event(key):
 	if not key or len(key) > 64 or not re.fullmatch(r"[A-Za-z0-9_-]+", key):
 		return None
 	return frappe.db.get_value(EVENT, {"display_key": key}, ["name", "event_name", "company", "public_key",
-		"screen_headline", "show_estimate_on_screen", "is_active", "brochure"], as_dict=True)
+		"screen_headline", "show_estimate_on_screen", "is_active", "brochure", "venue", "start_date", "end_date",
+		"event_logo"], as_dict=True)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
@@ -62,15 +64,22 @@ def feed(key, after=None):
 
 	fields = ["name", "lead_name", "first_name", "district", "a3s_registered_on", "a3s_brochure_sent_on",
 		"a3s_brochure_sent_via", "a3s_hide_on_screen", "a3s_estimate", "approx_capacity_kw", "a3s_interest",
-		"a3s_system_type", "mobile_no"]
+		"a3s_system_type", "mobile_no", "a3s_completed_on"]
 	recent = frappe.get_all(LEAD, filters={"a3s_event": event.name}, or_filters=[["a3s_registered_on", ">", since],
-		["a3s_brochure_sent_on", ">", since]], fields=fields, order_by="a3s_registered_on asc", limit=200)
+		["a3s_completed_on", ">", since], ["a3s_brochure_sent_on", ">", since]], fields=fields,
+		order_by="a3s_registered_on asc", limit=200)
 	items = []
 	for l in recent:
 		who = _who(l, show_estimate)
+		# Two moments a visit: "just scanned" when they save their name (tab 1), the full welcome
+		# with their estimate when they finish the form.
 		if l.a3s_registered_on and get_datetime(l.a3s_registered_on) > since:
-			items.append({"kind": "welcome", "at": str(l.a3s_registered_on), "id": l.name,
-				"key": "welcome|{0}|{1}".format(l.name, l.a3s_registered_on), **who})
+			items.append({"kind": "scanned", "at": str(l.a3s_registered_on), "id": l.name,
+				"key": "scanned|{0}|{1}".format(l.name, l.a3s_registered_on), "name": who["name"],
+				"district": who["district"], "hidden": who["hidden"]})
+		if l.a3s_completed_on and get_datetime(l.a3s_completed_on) > since:
+			items.append({"kind": "welcome", "at": str(l.a3s_completed_on), "id": l.name,
+				"key": "welcome|{0}|{1}".format(l.name, l.a3s_completed_on), **who})
 		if l.a3s_brochure_sent_on and get_datetime(l.a3s_brochure_sent_on) > since:
 			items.append({"kind": "sent", "at": str(l.a3s_brochure_sent_on), "id": l.name, "via": l.a3s_brochure_sent_via or "",
 				"key": "sent|{0}|{1}".format(l.name, l.a3s_brochure_sent_on), "name": who["name"]})
@@ -80,15 +89,16 @@ def feed(key, after=None):
 			sum(case when date(a3s_registered_on) = %(today)s then 1 else 0 end) as today,
 			sum(ifnull(approx_capacity_kw, 0)) as kw
 		from `tabLead` where a3s_event = %(event)s""", {"event": event.name, "today": today()}, as_dict=True)[0]
-	ticker = frappe.get_all(LEAD, filters={"a3s_event": event.name}, fields=fields, order_by="a3s_registered_on desc",
-		limit=TICKER)
+	# Visitors who asked not to be shown are left out, so read a few more than the bar holds.
+	ticker = [l for l in frappe.get_all(LEAD, filters={"a3s_event": event.name, "a3s_hide_on_screen": 0}, fields=fields,
+		order_by="a3s_registered_on desc", limit=TICKER * 2) if (l.lead_name or l.first_name)][:TICKER]
 	savings = sum(_saving(l) for l in frappe.get_all(LEAD, filters={"a3s_event": event.name, "a3s_estimate": ["is", "set"]},
 		fields=["a3s_estimate"], limit=5000))
 	return {
 		"now": str(now), "items": items,
 		"counters": {"today": cint(stats.today), "total": cint(stats.total), "kw": round(float(stats.kw or 0), 1),
 			"yearly_savings": round(savings * 12)},
-		"ticker": [_who(l, False)["name"] for l in ticker],
+		"ticker": [_ticker_entry(l) for l in ticker],
 		"open": cint(event.is_active),
 	}
 
@@ -111,6 +121,15 @@ def _who(lead, show_estimate):
 	return {"name": lead.lead_name or lead.first_name or "", "district": district, "estimate": est, "hidden": 0,
 		"interest": lead.get("a3s_interest") or "", "system_type": lead.get("a3s_system_type") or "",
 		"mobile": mask_mobile(lead.get("mobile_no"))}
+
+
+def _ticker_entry(lead):
+	"""One visitor in the bottom bar: name, where they are from, the system proposed for them, and
+	whether the proposal has reached their WhatsApp (staff sent it) - never claimed before it has."""
+	kw = float(lead.approx_capacity_kw or 0)
+	return {"name": lead.lead_name or lead.first_name or "", "place": (lead.district or "").split(",")[0].strip(),
+		"kw": (int(kw) if kw == int(kw) else round(kw, 1)) if kw else None,
+		"sent": 1 if lead.a3s_brochure_sent_on and (lead.a3s_brochure_sent_via or "WhatsApp") == "WhatsApp" else 0}
 
 
 def mask_mobile(number):
