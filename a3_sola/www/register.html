@@ -180,7 +180,7 @@
 	<p class="a3s-reg__foot">Your details are used only to contact you about solar. {{ (reg.company if reg else "") | e }}</p>
 </main>
 {%- if reg %}
-<script type="application/json" id="a3s-reg-data">{{ {"has_brochure": reg.has_brochure, "has_chat": reg.has_chat, "company": reg.company, "max_mb": reg.max_mb, "ask_documents": reg.ask_documents} | tojson }}</script>
+<script type="application/json" id="a3s-reg-data">{{ {"has_chat": reg.has_chat, "company": reg.company, "max_mb": reg.max_mb, "ask_documents": reg.ask_documents} | tojson }}</script>
 {%- if reg.captcha %}
 {%- if reg.captcha.provider == "Cloudflare Turnstile" %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

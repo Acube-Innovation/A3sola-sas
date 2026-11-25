@@ -6,7 +6,7 @@ www/event_screen.
 The screen's link carries the event's display key - a different key from the QR's, so a
 visitor holding the registration link can never open it. It returns only what the screen
 shows: a visitor's full name, district, property and system type, their mobile masked
-("98••• ••345"), their indicative estimate, and that the brochure reached them - never the full
+("98••• ••345"), their indicative estimate, and that their proposal reached them - never the full
 number, an address, a bill or a document. A visitor who asked not to be shown, or whom staff
 hid, is welcomed as "a visitor from <district>" and shows none of it.
 
@@ -43,13 +43,13 @@ def screen_event(key):
 	if not key or len(key) > 64 or not re.fullmatch(r"[A-Za-z0-9_-]+", key):
 		return None
 	return frappe.db.get_value(EVENT, {"display_key": key}, ["name", "event_name", "company", "public_key",
-		"screen_headline", "show_estimate_on_screen", "is_active", "brochure", "venue", "start_date", "end_date",
+		"screen_headline", "show_estimate_on_screen", "is_active", "venue", "start_date", "end_date",
 		"event_logo"], as_dict=True)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def feed(key, after=None):
-	"""New moments since `after` (welcomes, brochures sent), the counters and the ticker."""
+	"""New moments since `after` (welcomes, proposals sent), the counters and the ticker."""
 	enforce("event_screen", (key or "")[:64], "event_screen_polls_per_hour", POLLS_PER_HOUR, 3600, detail="feed")
 	event = screen_event(key)
 	if not event:

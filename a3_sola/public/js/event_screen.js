@@ -1,6 +1,6 @@
 /* The stall screen (www/event_screen): asks the feed every 2 seconds (a3_sola.api.event_screen)
    and plays each moment in turn - a welcome when someone registers, a paper plane to WhatsApp
-   when their brochure goes out - then returns to the QR, the counters and the ticker. */
+   when their proposal goes out - then returns to the QR, the counters and the ticker. */
 (function () {
 	"use strict";
 
@@ -348,8 +348,8 @@
 	function playSent(item) {
 		show("sent");
 		var first = (item.name || "").split(" ")[0];
-		var text = item.via === "Downloaded" ? (first ? "Brochure is on " + first + "'s phone" : "Brochure is on the visitor's phone")
-			: "Brochure sent to WhatsApp";
+		var text = item.via === "Downloaded" ? (first ? "Proposal is on " + first + "'s phone" : "Proposal is on the visitor's phone")
+			: "Proposal sent to WhatsApp";
 		card.innerHTML = (item.name ? '<p class="a3s-tv__name a3s-tv__name--sm">' + esc(item.name) + "</p>" : "") +
 			'<div class="a3s-tv__flight">' +
 			'<svg class="a3s-tv__plane" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>' +

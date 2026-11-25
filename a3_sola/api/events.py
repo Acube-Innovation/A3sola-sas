@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
 """The portal's Events pages: an event's set-up, its QR code and poster, the people who
-registered at it, sending each their brochure on WhatsApp, and the funnel from registration
+registered at it, sending each their proposal on WhatsApp, and the funnel from registration
 to order (www/a3solaportal/events).
 
 Staff only - a dealer or contractor is refused. Every read goes through the user's own
@@ -23,7 +23,6 @@ LEAD = "Lead"
 EDITABLE = ("event_name", "venue", "company", "start_date", "end_date", "is_active", "lead_owner", "lead_source",
 	"whatsapp_number", "ask_documents", "welcome_message", "screen_headline", "show_estimate_on_screen")
 CHECKS = ("is_active", "ask_documents", "show_estimate_on_screen")
-BROCHURE_MAX_MB = 10
 LOGO_MAX_MB = 5
 
 
@@ -106,7 +105,6 @@ def form_values(doc):
 	values = {f: doc.get(f) for f in EDITABLE}
 	values["name"] = doc.name
 	values["packages"] = [r.package for r in doc.get("estimate_packages") or []]
-	values["brochure_name"] = (doc.brochure or "").rsplit("/", 1)[-1]
 	values["event_logo_name"] = (doc.event_logo or "").rsplit("/", 1)[-1]
 	for f in ("start_date", "end_date"):
 		values[f] = str(values[f]) if values[f] else ""
@@ -136,33 +134,6 @@ def save_event(data, name=None):
 		doc.set("estimate_packages", [{"package": p} for p in dict.fromkeys(data.get("packages") or []) if p])
 	doc.save() if name else doc.insert()
 	return {"name": doc.name, "route": "/a3solaportal/events/" + doc.name}
-
-
-@frappe.whitelist(methods=["POST"])
-def upload_brochure(name):
-	"""The event's brochure: a PDF sent with the form, kept private on the event (the public gets
-	it through the registration link's key, api/event_registration.brochure)."""
-	doc = _event(name, "write")
-	upload = frappe.request.files.get("file") if getattr(frappe.request, "files", None) else None
-	if not upload or not upload.filename:
-		frappe.throw(_("Choose the brochure PDF."))
-	limit = BROCHURE_MAX_MB * 1024 * 1024
-	content = upload.stream.read(limit + 1)
-	if len(content) > limit:
-		frappe.throw(_("The brochure is larger than {0} MB. Make it smaller so it opens quickly on a phone.").format(BROCHURE_MAX_MB))
-	if reg.sniff(content) != "pdf":
-		frappe.throw(_("The brochure must be a PDF."))
-	for old in frappe.get_all("File", filters={"attached_to_doctype": EVENT, "attached_to_name": doc.name,
-			"attached_to_field": "brochure"}, pluck="name"):
-		frappe.delete_doc("File", old, ignore_permissions=True)
-	safe = "".join(c for c in upload.filename if c.isalnum() or c in " ._-").strip() or "brochure.pdf"
-	if not safe.lower().endswith(".pdf"):
-		safe += ".pdf"
-	f = frappe.get_doc({"doctype": "File", "file_name": safe, "content": content, "is_private": 1,
-		"attached_to_doctype": EVENT, "attached_to_name": doc.name, "attached_to_field": "brochure"}).insert(ignore_permissions=True)
-	doc.db_set("brochure", f.file_url)
-	return {"brochure_name": safe}
-
 
 
 @frappe.whitelist(methods=["POST"])
@@ -199,7 +170,7 @@ def view_context(name):
 		doc=doc, form=form_values(doc), register_url=reg.register_url(event), screen_url=reg.screen_url(event),
 		qr_svg=qr_svg(reg.register_url(event)), owner_name=_names({doc.lead_owner}).get(doc.lead_owner, doc.lead_owner),
 		dates=_dates(doc.start_date, doc.end_date), can_write=bool(doc.has_permission("write")),
-		brochure_name=(doc.brochure or "").rsplit("/", 1)[-1], data=registrations(name),
+		data=registrations(name),
 	)
 
 
@@ -277,7 +248,7 @@ FUNNEL = ("Registered", "Proposal", "Proposal sent", "Contacted", "Survey", "Acc
 
 # ------------------------------------------------------------------ the proposal on WhatsApp
 @frappe.whitelist()
-def brochure_message(lead):
+def proposal_message(lead):
 	"""The WhatsApp welcome for one visitor and the link that opens it to them - the text is the
 	event's, their proposal link and estimate filled in."""
 	require_staff()
@@ -330,18 +301,6 @@ def qr_svg(url, color="#1d2433"):
 	_qr(url).svg(buf, scale=8, module_color=color, background="#ffffff", quiet_zone=2, xmldecl=False, svgns=True,
 		omithw=True, title=None, svgclass="a3s-qr", lineclass="a3s-qr__line")
 	return buf.getvalue().decode()
-
-
-@frappe.whitelist()
-def qr_png(event):
-	"""The event's QR code as a PNG, for designers and printers."""
-	doc = _event(event)
-	url = reg.register_url(reg.event_by_key(doc.public_key, active=False))
-	buf = io.BytesIO()
-	_qr(url).png(buf, scale=16, quiet_zone=4)
-	frappe.local.response.filename = "QR - {0}.png".format(doc.event_name)
-	frappe.local.response.filecontent = buf.getvalue()
-	frappe.local.response.type = "download"
 
 
 @frappe.whitelist()

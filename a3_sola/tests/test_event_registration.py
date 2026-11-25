@@ -3,7 +3,7 @@
 """Registering at an event by QR code (Solar Event): the public form makes one lead of the
 event's company, owner and source; a repeat visitor updates it; the honeypot, a closed event
 and a missing consent save nothing; papers are sniffed; the stall screen never sees a
-number; the brochure and proposal links name only their own lead; and the instant estimate
+number; the proposal link names only its own lead; and the instant estimate
 sizes sensibly, at the lowest price of the package
 (api/event_registration, api/event_screen, api/instant_estimate)."""
 
@@ -134,7 +134,7 @@ class TestEventRegistration(FrappeTestCase):
 		self.assertNotIn("interest", welcome)
 		self.assertNotIn("Test Visitor Name", feed["ticker"])
 
-	def test_the_brochure_link_names_only_its_own_lead(self):
+	def test_the_visitor_link_names_only_its_own_lead(self):
 		self.submit()
 		lead = self.lead().name
 		ref = reg.visitor_ref(lead)

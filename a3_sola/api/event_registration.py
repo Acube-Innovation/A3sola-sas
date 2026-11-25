@@ -1,6 +1,6 @@
 # Copyright (c) 2026, Acube Innovations and contributors
 # For license information, please see license.txt
-"""Registering at an event by QR code: the public form's endpoint, the visitor's proposal and the brochure.
+"""Registering at an event by QR code: the public form's endpoints and the visitor's proposal.
 
 The QR on the stall opens /register/<key> (www/register). What the visitor sends becomes a
 Lead of the event's company, owned by the event's lead owner, with the event's source and
@@ -16,8 +16,7 @@ sniffed by their bytes rather than trusted by their name.
 Each visitor who gives their bill gets their own proposal (api/event_proposal): made in the
 background once they finish the form, at the lowest price of the package their bill needs.
 It goes to them without WhatsApp's API: the thank-you page offers it and "Chat with us on
-WhatsApp", and staff send it from the event page (api/events) in one tap. The event's
-brochure, if it has one, can go with it.
+WhatsApp", and staff send it from the event page (api/events) in one tap.
 """
 
 import hashlib
@@ -64,7 +63,7 @@ def event_by_key(key, active=True):
 	if not key or len(key) > 64 or not re.fullmatch(r"[A-Za-z0-9_-]+", key):
 		return None
 	event = frappe.db.get_value(EVENT, {"public_key": key}, ["name", "event_name", "company", "venue", "is_active",
-		"lead_owner", "lead_source", "campaign", "brochure", "whatsapp_number", "ask_documents", "welcome_message",
+		"lead_owner", "lead_source", "campaign", "whatsapp_number", "ask_documents", "welcome_message",
 		"screen_headline", "show_estimate_on_screen", "public_key", "display_key"], as_dict=True)
 	if not event or (active and not cint(event.is_active)):
 		return None
@@ -106,7 +105,7 @@ def page_context(key):
 		captcha = {"provider": settings.get("captcha_provider") or "Cloudflare Turnstile", "site_key": settings.captcha_site_key}
 	return frappe._dict(
 		key=event.public_key, event_name=event.event_name, venue=event.venue or "", company=company_name(event.company),
-		logo=company_logo(event.company), ask_documents=cint(event.ask_documents), has_brochure=bool(event.brochure),
+		logo=company_logo(event.company), ask_documents=cint(event.ask_documents),
 		has_chat=bool(event.whatsapp_number), districts=districts(), interests=INTEREST.split("\n"),
 		system_types=SYSTEM_TYPE.split("\n"), call_times=CALL_TIME.split("\n"),
 		documents=[{"field": f, "label": t} for f, t in DOCUMENTS.items()], max_mb=_max_mb(), captcha=captcha,
@@ -260,7 +259,6 @@ def submit():
 	return {
 		"ok": True, "first_name": visitor.first_name, "created": created, "estimate": est,
 		"summary": instant_estimate.summary(est), "ref": ref,
-		"brochure_url": brochure_url(event, ref) if event.brochure else None,
 		"proposal_url": proposal_url(event, ref) if offers_proposal else None,
 		"chat_url": chat_url(event, visitor.full_name) if event.whatsapp_number else None,
 	}
@@ -508,9 +506,9 @@ def read_bill(lead):
 		doc.save(ignore_permissions=True)
 
 
-# ------------------------------------------------------------------ the brochure
+# ------------------------------------------------------------------ the visitor's link
 def visitor_ref(lead):
-	"""A key naming this visitor's lead, for their brochure link: an HMAC, so it cannot be made
+	"""A key naming this visitor's lead, for their proposal link: an HMAC, so it cannot be made
 	for another lead."""
 	secret = (get_encryption_key() + ":event-visitor").encode()
 	return lead + "." + hmac.new(secret, lead.encode(), hashlib.sha256).hexdigest()[:20]
@@ -523,41 +521,12 @@ def lead_of_ref(ref):
 	return lead if hmac.compare_digest(visitor_ref(lead), ref) else None
 
 
-def brochure_url(event, ref=None):
-	url = "/api/method/a3_sola.api.event_registration.brochure?key={0}".format(event.public_key)
-	return get_url(url + ("&ref=" + ref if ref else ""))
-
-
 def chat_url(event, full_name):
 	"""Our WhatsApp, opened from the visitor's phone with their hello typed in."""
 	from a3_sola.api.outreach import whatsapp_link
 
 	text = _("Hi, I am {0}. I registered at {1}. Please send me my solar proposal.").format(full_name, event.event_name)
 	return whatsapp_link(event.whatsapp_number, text)
-
-
-@frappe.whitelist(allow_guest=True, methods=["GET"])
-@rate_limited("event_brochure_ip", "event_brochure_rate_per_ip", 120)
-def brochure(key, ref=None):
-	"""The event's brochure, from the thank-you page or the WhatsApp message. It is the company's
-	own marketing paper, so the registration link's key opens it; a visitor's `ref` also notes
-	on their lead that they have it (and the stall screen says so)."""
-	event = event_by_key(key, active=False)
-	if not event or not event.brochure:
-		frappe.throw(_("This brochure is not available."), frappe.DoesNotExistError)
-	file_name = frappe.db.get_value("File", {"file_url": event.brochure, "attached_to_doctype": EVENT,
-		"attached_to_name": event.name}, "name") or frappe.db.get_value("File", {"file_url": event.brochure}, "name")
-	if not file_name:
-		frappe.throw(_("This brochure is not available."), frappe.DoesNotExistError)
-	file_doc = frappe.get_doc("File", file_name)
-	lead = lead_of_ref(ref) if ref else None
-	if lead and frappe.db.get_value(LEAD, lead, "a3s_event") == event.name:
-		note_brochure(lead, "Downloaded")
-		frappe.db.commit()  # a GET request is not committed for us
-	frappe.local.response.filename = "{0} - Brochure.pdf".format(company_name(event.company))
-	frappe.local.response.filecontent = file_doc.get_content()
-	frappe.local.response.type = "download"
-	frappe.local.response.display_content_as = "inline"
 
 
 def proposal_url(event, ref):
@@ -593,7 +562,7 @@ def proposal(key, ref=None):
 
 
 def note_brochure(lead, via):
-	"""The brochure reached the visitor: the first time, stamped on the lead for the event page
+	"""The proposal reached the visitor (the field names are the brochure's, which it replaced): the first time, stamped on the lead for the event page
 	and the stall screen."""
 	if frappe.db.get_value(LEAD, lead, "a3s_brochure_sent_on"):
 		return
@@ -604,9 +573,9 @@ def note_brochure(lead, via):
 # ------------------------------------------------------------------ the welcome message
 def welcome_text(event, lead):
 	"""The WhatsApp welcome for a visitor, from the event's message (DEFAULT_WELCOME when it has
-	none): their name, the event, the company, their proposal link, the brochure link and their
-	estimate filled in. A line whose link is not there (no brochure; no proposal for a battery
-	system or a business) is left out."""
+	none): their name, the event, the company, their proposal link and their estimate filled in.
+	A line whose link is not there (no proposal for a battery system or a business) is left out;
+	so is a {brochure} line of an older message - events send the proposal now."""
 	from a3_sola.api import event_proposal
 
 	ref = visitor_ref(lead.name)
@@ -615,7 +584,7 @@ def welcome_text(event, lead):
 	values = {
 		"name": (lead.get("first_name") or lead.get("lead_name") or "").strip(),
 		"event": event.event_name, "company": company_name(event.company),
-		"brochure": brochure_url(event, ref) if event.brochure else "",
+		"brochure": "",
 		"proposal": proposal_url(event, ref) if event_proposal.has_proposal(lead) else "",
 		"estimate": (_("Your indicative estimate: {0}. Our engineer will confirm it after a site visit.").format(line)
 			+ "\n\n") if line else "",

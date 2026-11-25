@@ -4824,7 +4824,7 @@ a.a3s-work__link:hover { color: var(--color-accent-hover); text-decoration: unde
 
 /* ================================================================== Events (portal)
  * /a3solaportal/events (www/a3solaportal/events): an event's QR and links, its funnel, and its
- * registrations with the brochure one tap away. */
+ * registrations with the proposal one tap away. */
 .a3s-ev__top { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); margin-bottom: 1.25rem; }
 @media (max-width: 1100px) { .a3s-ev__top { grid-template-columns: 1fr; } }
 .a3s-ev__qrcard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; padding: 1.4rem; align-items: start; }
