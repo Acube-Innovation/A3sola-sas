@@ -50,7 +50,7 @@ LEAD_SECTIONS = [
 		"fields": [
 			"subsidy_scheme", "discom", "discom_section", "consumer_number", "consumer_category",
 			"connection_type", "roof_type", "approx_consumption_units", "avg_monthly_bill",
-			"approx_capacity_kw", "loan_required", "solar_consumer", "solar_proposal",
+			"approx_capacity_kw", "loan_required", "solar_consumer", "solar_proposal", "a3s_requirements",
 		],
 	},
 	{

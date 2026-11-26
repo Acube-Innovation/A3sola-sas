@@ -28,6 +28,11 @@ BATTERY_SYSTEMS = ("Off-grid", "Hybrid")
 PACKAGE_SYSTEM = {"On-grid": "On-Grid", "Off-grid": "Off-Grid", "Hybrid": "Hybrid"}
 #: Off the grid there is no PM Surya Ghar subsidy and no bill to save on.
 OFF_GRID = "Off-grid"
+#: The visitor's connection and subsidy answers (the form's), as the Solar Package and the
+#: design estimate name them. Not answered: the package is chosen without them.
+CONNECTION_TYPES = ("Single Phase", "Three Phase")
+WITH_SUBSIDY, WITHOUT_SUBSIDY = "With Subsidy", "Without Subsidy"
+SUBSIDY_OPTIONS = (WITH_SUBSIDY, WITHOUT_SUBSIDY)
 #: Single phase up to this size; above it a three-phase package is offered first.
 SINGLE_PHASE_UPTO_KW = 5
 
@@ -69,33 +74,48 @@ def package_system(system_type):
 	return PACKAGE_SYSTEM.get(system_type or "", "On-Grid")
 
 
-def candidate_packages(company, names=None, system_type=None):
+def candidate_packages(company, names=None, system_type=None, connection_type=None, subsidy_option=None):
 	"""[{name, package_name, capacity_kw, connection_type, price, subsidy, net, option}] the
 	estimate may offer for the visitor's system (`package_system`): the event's chosen packages
-	of that system, else every active package of that system of the company (on-grid ones the
-	subsidy - DCR - packages only) - each at its lowest price (`lowest_option`): the visitor's
-	proposal quotes that option. A hybrid visitor is never priced on an on-grid package."""
+	of that system, else every active package of that system of the company - each at its
+	lowest price (`lowest_option`): the visitor's proposal quotes that option. A hybrid visitor
+	is never priced on an on-grid package.
+
+	The visitor's connection, when given, is the packages' (a single-phase home is never priced
+	on a three-phase package). With subsidy: the subsidy - DCR - packages only, as an on-grid
+	visitor who did not say always is. Without subsidy: the non-DCR packages, else the DCR ones
+	(priced without it)."""
 	system = package_system(system_type)
-	rows = _packages({"name": ["in", list(names)], "system_type": system}) if names else []
+	filters = {"system_type": system}
+	if connection_type in CONNECTION_TYPES:
+		filters["connection_type"] = connection_type
+	if subsidy_option == WITH_SUBSIDY or (system == "On-Grid" and subsidy_option != WITHOUT_SUBSIDY):
+		filters["is_dcr_compliant"] = 1
+
+	def of(where):
+		rows = _packages({**where, **filters, "is_dcr_compliant": 0}) if subsidy_option == WITHOUT_SUBSIDY else []
+		return rows or _packages({**where, **filters})
+
+	rows = of({"name": ["in", list(names)]}) if names else []
 	if not rows:
-		filters = {"company": company, "is_active": 1, "system_type": system}
-		if system == "On-Grid":
-			filters["is_dcr_compliant"] = 1
-		rows = _packages(filters)
+		rows = of({"company": company, "is_active": 1})
 	return _priced(rows)
 
 
 def _packages(filters):
 	return frappe.get_all("Solar Package", filters=filters,
-		fields=["name", "package_name", "capacity_kw", "connection_type", "status"])
+		fields=["name", "package_name", "capacity_kw", "connection_type", "status", "system_type"])
 
 
 def _priced(rows):
-	from a3_sola.solar_crm.doctype.solar_package.solar_package import price_for
+	from a3_sola.solar_crm.doctype.solar_package.solar_package import price_for, system_inverters
 
 	out = []
 	for row in rows:
 		if row.status and row.status != "Active" or not flt(row.capacity_kw):
+			continue
+		# A Hybrid package with no hybrid inverter would be priced as an on-grid plant.
+		if row.system_type == "Hybrid" and not system_inverters(row.name):
 			continue
 		try:
 			price = price_for(row.name)
@@ -159,7 +179,8 @@ def custom_estimate(kw, monthly_bill, monthly_units, battery=False):
 	}
 
 
-def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", packages=None, system_type=None):
+def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", packages=None, system_type=None,
+		connection_type=None, subsidy_option=None):
 	"""The indicative estimate for an electricity bill of `bill_amount` covering `bill_months`
 	(1 or 2), or None when there is no bill. A dict of plain numbers:
 
@@ -173,7 +194,10 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	priced on a hybrid package. The subsidy (PM Surya Ghar) is for homes on the grid - on-grid
 	or hybrid, as the design estimate allows it; anything else (a shop, an off-grid system) is
 	shown without it, and without a saving worked from the domestic tariff. `battery` marks an
-	off-grid or hybrid system (BATTERY_SYSTEMS): our engineer confirms the battery."""
+	off-grid or hybrid system (BATTERY_SYSTEMS): our engineer confirms the battery.
+
+	`connection_type` and `subsidy_option` are the visitor's answers, when given: the package
+	is of that connection, and one without subsidy is shown - and quoted - without it."""
 	bill = flt(bill_amount)
 	months = 1 if cint(bill_months) == 1 else CYCLE_MONTHS
 	if bill <= 0:
@@ -185,13 +209,13 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	specific_yield = get_float("default_specific_yield", 1500.0) or 1500.0
 	need_kw = units * (12 / CYCLE_MONTHS) / specific_yield
 
-	package, larger = pick(candidate_packages(company, packages, system_type), need_kw)
+	package, larger = pick(candidate_packages(company, packages, system_type, connection_type, subsidy_option), need_kw)
 	battery = (system_type or "") in BATTERY_SYSTEMS
 	if not package or larger:
 		monthly_bill = cycle_bill / CYCLE_MONTHS
 		return custom_estimate(max(custom_size(monthly_bill), need_kw), monthly_bill, units / CYCLE_MONTHS, battery)
 	home = (interest or "Home") == "Home" and system_type != OFF_GRID
-	subsidy = package.subsidy if home else 0.0
+	subsidy = package.subsidy if home and subsidy_option != WITHOUT_SUBSIDY else 0.0
 	net = package.price - subsidy
 
 	monthly_saving = 0.0
@@ -208,6 +232,7 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 		"monthly_units": round(units / CYCLE_MONTHS), "monthly_bill": round(cycle_bill / CYCLE_MONTHS),
 		"monthly_saving": round(monthly_saving / 10) * 10, "payback_years": payback, "larger": bool(larger),
 		"battery": battery, "system_type": package_system(system_type),
+		"subsidy_option": WITH_SUBSIDY if subsidy else WITHOUT_SUBSIDY,
 	}
 
 

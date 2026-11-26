@@ -153,7 +153,7 @@
 		setBusy(true);
 		setStatus("");
 		var data = new FormData();
-		["key", "website_url", "full_name", "mobile_no", "whatsapp_no", "district", "bill_amount", "system_type"].forEach(function (k) {
+		["key", "website_url", "full_name", "mobile_no", "whatsapp_no", "district", "bill_amount", "system_type", "connection_type", "subsidy_option", "requirements"].forEach(function (k) {
 			if (form[k]) data.append(k, form[k].value);
 		});
 		["interest", "bill_months", "call_time"].forEach(function (k) {

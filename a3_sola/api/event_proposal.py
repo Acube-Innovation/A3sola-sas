@@ -162,7 +162,9 @@ def _sizing(lead):
 	phase = est.get("connection_type") or package.connection_type or "Single Phase"
 	option = lowest_option(package.name, phase)
 	return {"solar_package": package.name, "connection_type": phase, "override_capacity_kw": flt(package.capacity_kw),
-		"subsidy_option": "With Subsidy" if package.is_dcr_compliant else "Without Subsidy",
+		# The visitor's answer, where the package allows it: only a DCR package has the subsidy.
+		"subsidy_option": "With Subsidy" if package.is_dcr_compliant and est.get("subsidy_option") != "Without Subsidy"
+			else "Without Subsidy",
 		"system_type": package.system_type or "On-Grid", "pricing_option": option.name if option else None}
 
 
