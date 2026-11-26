@@ -46,7 +46,11 @@ def can_make(lead):
 
 
 def has_proposal(lead):
-	"""Whether the visitor has, or can be given, a proposal - what their link and message offer."""
+	"""Whether the visitor has, or can be given, a proposal - what their link and message offer.
+	Never while their estimate is custom (no package covers it): our engineer designs that one,
+	even if an earlier visit left them a proposal."""
+	if (_estimate(lead) or {}).get("custom"):
+		return False
 	return bool(proposal_of(lead.name) or can_make(lead))
 
 

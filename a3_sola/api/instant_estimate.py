@@ -26,6 +26,18 @@ BATTERY_SYSTEMS = ("Off-grid", "Hybrid")
 #: Single phase up to this size; above it a three-phase package is offered first.
 SINGLE_PHASE_UPTO_KW = 5
 
+#: A need no package covers is sized by the sales team's rule of thumb (`custom_size`):
+#: the monthly bill less its fixed charges, at an average rate per unit, over the days of a
+#: month and what a kWp makes a day.
+CUSTOM_ENERGY_SHARE = 0.9  # 10% of a bill is fixed charges
+CUSTOM_RATE_PER_UNIT = 8.0  # ₹ per unit, on average
+CUSTOM_DAYS = 30
+CUSTOM_UNITS_PER_KW_DAY = 4.0
+#: ₹ per kW of a custom system (above 10 kW, on average), quoted on the top of its range.
+CUSTOM_PRICE_PER_KW = 42000
+#: The range a custom size is shown in: 46.9 kW is "45-50 kW".
+CUSTOM_RANGE_KW = 5
+
 
 def units_for_bill(tariff, bill_per_cycle):
 	"""The units a two-month bill of this amount means under the tariff: the tariff's bill
@@ -104,12 +116,36 @@ def pick(packages, need_kw):
 	return same[0], larger
 
 
+def custom_size(monthly_bill):
+	"""The kW a monthly bill calls for when no package covers it: ₹50,000 x 0.9 / ₹8 a unit /
+	30 days / 4 units a kWp a day = 46.9 kW."""
+	return flt(monthly_bill) * CUSTOM_ENERGY_SHARE / CUSTOM_RATE_PER_UNIT / CUSTOM_DAYS / CUSTOM_UNITS_PER_KW_DAY
+
+
+def custom_estimate(kw, monthly_bill, monthly_units, battery=False):
+	"""The estimate for a system no package covers: a size range, a price on its top end, and
+	no package - so no proposal; our engineer designs it after a site survey."""
+	low = int(flt(kw) // CUSTOM_RANGE_KW) * CUSTOM_RANGE_KW
+	high = low + CUSTOM_RANGE_KW
+	price = high * CUSTOM_PRICE_PER_KW
+	return {
+		"kw": high, "kw_min": low, "kw_max": high, "need_kw": round(flt(kw), 1),
+		"package": None, "package_name": None, "option": None, "connection_type": None,
+		"price": price, "subsidy": 0, "net": price,
+		"monthly_units": round(monthly_units), "monthly_bill": round(monthly_bill),
+		"monthly_saving": 0, "payback_years": None, "larger": True, "custom": True, "battery": bool(battery),
+	}
+
+
 def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", packages=None, system_type=None):
 	"""The indicative estimate for an electricity bill of `bill_amount` covering `bill_months`
-	(1 or 2), or None when there is no bill or no package to offer. A dict of plain numbers:
+	(1 or 2), or None when there is no bill. A dict of plain numbers:
 
 	kw, package, package_name, price, subsidy, net, monthly_units, monthly_bill, monthly_saving,
 	payback_years, larger (the need is above the largest package: the engineer sizes it).
+
+	A need no package covers (above the largest, or no package at all) is a `custom_estimate`:
+	`custom`, a kw_min-kw_max range, a price at CUSTOM_PRICE_PER_KW, and no package - no proposal.
 
 	The subsidy (PM Surya Ghar) is for homes; anything else is shown without it, and without
 	a saving worked from the domestic tariff. An off-grid or hybrid system (BATTERY_SYSTEMS) is
@@ -126,9 +162,10 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	need_kw = units * (12 / CYCLE_MONTHS) / specific_yield
 
 	package, larger = pick(candidate_packages(company, packages), need_kw)
-	if not package:
-		return None
 	battery = (system_type or "") in BATTERY_SYSTEMS
+	if not package or larger:
+		monthly_bill = cycle_bill / CYCLE_MONTHS
+		return custom_estimate(max(custom_size(monthly_bill), need_kw), monthly_bill, units / CYCLE_MONTHS, battery)
 	home = (interest or "Home") == "Home" and not battery
 	subsidy = package.subsidy if home else 0.0
 	net = package.price - subsidy
@@ -155,6 +192,9 @@ def summary(est):
 	saves about ₹2,400 a month"."""
 	if not est:
 		return ""
+	if est.get("custom"):
+		return "{0}-{1} kW system · about ₹{2} · custom-designed by our engineer after a site survey".format(
+			_kw(est["kw_min"]), _kw(est["kw_max"]), inr(est["price"]))
 	parts = ["{0} kW system".format(_kw(est["kw"])), "₹{0}".format(inr(est["price"]))]
 	if est.get("subsidy"):
 		parts.append("₹{0} subsidy, ₹{1} after subsidy".format(inr(est["subsidy"]), inr(est["net"])))

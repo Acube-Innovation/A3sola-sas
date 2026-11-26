@@ -111,7 +111,7 @@ def _who(lead, show_estimate):
 		try:
 			raw = json.loads(lead.a3s_estimate)
 			est = {k: raw.get(k) for k in ("kw", "price", "subsidy", "net", "monthly_saving", "payback_years",
-				"monthly_bill", "monthly_units", "battery")}
+				"monthly_bill", "monthly_units", "battery", "custom", "kw_min", "kw_max")}
 		except Exception:
 			est = None
 	return {"name": lead.lead_name or lead.first_name or "", "district": district, "estimate": est, "hidden": 0,
