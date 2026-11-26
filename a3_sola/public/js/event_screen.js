@@ -311,7 +311,7 @@
 		var rows = "";
 		if (est && est.kw) {
 			var first = stat(est.kw, "kW system", "kw") + stat(est.price, "price", "money") +
-				(est.subsidy ? stat(est.subsidy, "subsidy", "money") + stat(est.net, "you pay", "money", "is-key") : "");
+				(est.subsidy ? stat(est.subsidy, "subsidy", "money") + stat(est.net, "Effective Price After Subsidy", "money", "is-key") : "");
 			var second = est.battery ? "" : stat(est.monthly_saving, "saved a month", "money") +
 				stat(est.monthly_saving * 12, "saved a year", "money") + stat(est.payback_years, "years to pay back", "years");
 			rows = '<div class="a3s-tv__est2">' + '<div class="a3s-tv__est2-row">' + first + "</div>" +
