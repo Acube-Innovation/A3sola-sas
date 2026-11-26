@@ -230,7 +230,8 @@ def submit():
 		limit_by_identifier("event_registration_mobile", visitor.mobile, "event_registration_per_mobile_per_day", 5)
 	papers = _papers(event) if cint(event.ask_documents) else []
 	est = instant_estimate.estimate(event.company, visitor.bill_amount, visitor.bill_months, visitor.interest,
-		_event_packages(event.name), visitor.system_type) if visitor.bill_amount else None
+		_event_packages(event.name), visitor.system_type, visitor.connection_type,
+		visitor.subsidy_option) if visitor.bill_amount else None
 
 	user = frappe.session.user
 	frappe.set_user(event.lead_owner)
@@ -323,10 +324,26 @@ def _visitor(data):
 		district=district, bill_amount=bill, bill_months=1 if cint(data.get("bill_months")) == 1 else 2,
 		interest=_choice(data.get("interest"), INTEREST, _("the type of property"), required=True),
 		system_type=_choice(data.get("system_type"), SYSTEM_TYPE, _("the system type")),
+		connection_type=_choice(data.get("connection_type"), "\n".join(instant_estimate.CONNECTION_TYPES), _("the connection")),
+		subsidy_option=_choice(data.get("subsidy_option"), "\n".join(instant_estimate.SUBSIDY_OPTIONS), _("the subsidy")),
 		call_time=_choice(data.get("call_time"), CALL_TIME, _("a time to call")),
+		requirements=_clean(data.get("requirements"), REQUIREMENTS_LIMIT) or None,
 		# Shown on the stall screen unless the visitor unticks it (or an older form asks to hide).
 		hide_on_screen=1 if (str(data.get("show_on_screen", "1")) == "0" or cint(data.get("hide_on_screen"))) else 0,
 	)
+
+
+#: The longest remark the form takes (its textarea's maxlength).
+REQUIREMENTS_LIMIT = 1000
+
+
+def _requirements(doc, text):
+	"""The lead's remarks with the visitor's new one added: a second registration with something
+	new to say adds to what the team already has, never replaces it."""
+	have = (doc.get("a3s_requirements") or "").strip()
+	if not text or text in have:
+		return have or None
+	return "{0}\n{1}".format(have, text) if have else text
 
 
 def _event_packages(event):
@@ -367,7 +384,10 @@ def _save_lead(event, visitor, est):
 	fill = {"whatsapp_no": visitor.whatsapp, "district": visitor.district,
 		"state": frappe.db.get_value("Indian District", visitor.district, "state"),
 		"consumer_category": CATEGORY_OF.get(visitor.interest), "a3s_interest": visitor.interest,
-		"a3s_system_type": visitor.system_type, "a3s_call_time": visitor.call_time}
+		"a3s_system_type": visitor.system_type, "a3s_call_time": visitor.call_time,
+		"connection_type": visitor.connection_type}
+	if visitor.requirements and doc.meta.has_field("a3s_requirements"):
+		doc.a3s_requirements = _requirements(doc, visitor.requirements)
 	if visitor.bill_amount:
 		fill["avg_monthly_bill"] = round(visitor.bill_amount / visitor.bill_months)
 	if est:

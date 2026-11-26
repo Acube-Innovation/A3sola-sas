@@ -121,6 +121,28 @@
 						{%- for o in reg.system_types if o != "Not sure" %}<option>{{ o }}</option>{% endfor %}
 					</select>
 				</div>
+				<div class="a3s-field">
+					<label for="reg-connection">Electricity connection</label>
+					<select id="reg-connection" name="connection_type">
+						<option value="">Not sure</option>
+						<option>Single Phase</option>
+						<option>Three Phase</option>
+					</select>
+					<p class="a3s-field__hint">Shown on your KSEB bill.</p>
+				</div>
+				<div class="a3s-field">
+					<label for="reg-subsidy">PM Surya Ghar subsidy</label>
+					<select id="reg-subsidy" name="subsidy_option">
+						<option value="">Not sure</option>
+						<option value="With Subsidy">With subsidy</option>
+						<option value="Without Subsidy">Without subsidy</option>
+					</select>
+				</div>
+				<div class="a3s-field">
+					<label for="reg-requirements">Remarks or other requirements</label>
+					<textarea id="reg-requirements" name="requirements" rows="3" maxlength="1000" placeholder="e.g. need battery backup, sheet roof, want an EV charger"></textarea>
+					<p class="a3s-field__hint">Only our team sees this.</p>
+				</div>
 				<fieldset class="a3s-field a3s-reg__group">
 					<legend>Best time to call</legend>
 					<div class="a3s-reg__chips">

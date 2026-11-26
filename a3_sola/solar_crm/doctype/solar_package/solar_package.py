@@ -13,6 +13,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt
+from frappe.utils.caching import request_cache
 
 from a3_sola.api import calculations, regulation, statutory
 from a3_sola.api.expenses import fill_expense_tables, price_by_rate
@@ -44,6 +45,7 @@ class SolarPackage(Document):
 		self.fill_from_inverter_models()
 		self.fill_inverter_phases()
 		self.validate_one_default("inverters", _("inverter"))
+		self.validate_hybrid_inverters()
 		self.total_the_inverters()
 		self.topology_from_inverters()
 		from a3_sola.api import package_bom_tables
@@ -117,6 +119,17 @@ class SolarPackage(Document):
 				row.inverter_topology = self.inverter_topology or "String"
 		inverter = default_inverter(self)
 		self.inverter_topology = (inverter.inverter_topology if inverter else None) or self.inverter_topology or "String"
+
+	def validate_hybrid_inverters(self):
+		"""A Hybrid package is quoted on hybrid inverters only: an on-grid inverter on it would
+		put an on-grid plant, and its price, in a hybrid customer's quotation."""
+		if self.system_type != HYBRID:
+			return
+		wrong = [row for row in options(self, "inverters") if not is_hybrid_inverter(row)]
+		if wrong:
+			frappe.throw(_("A Hybrid package takes hybrid inverters only. Remove {0} from the Inverters, or make the package On-Grid.").format(
+				", ".join(frappe.bold(row.inverter_specification or row.inverter_item or _("row {0}").format(row.idx)) for row in wrong)),
+				title=_("On-Grid Inverter on a Hybrid Package"))
 
 	def fill_inverter_phases(self):
 		"""An inverter row without a phase is for the package's own connection type."""
@@ -544,11 +557,50 @@ def _default_row(package, fieldname):
 		if hasattr(package, "get") and hasattr(package, "doctype")
 		else frappe.get_cached_doc("Solar Package", package)
 	)
-	rows = options(doc, fieldname)
+	rows = system_inverters(doc) if fieldname == "inverters" else options(doc, fieldname)
 	for row in rows:
 		if row.is_default:
 			return row
 	return rows[0] if rows else None
+
+
+HYBRID = "Hybrid"
+
+
+def is_hybrid_inverter(row):
+	"""Whether an inverter row is a hybrid inverter: by its Item Group where it is one of the
+	Hybrid Inverters, or another inverter group (On-Grid, Off-Grid); else by its topology or
+	its name."""
+	group = row.get("item_group")
+	if group and group in item_group_subtree("Hybrid Inverters"):
+		return True
+	if group and group != "Inverters" and group in item_group_subtree("Inverters"):
+		return False
+	if row.get("inverter_topology") == HYBRID:
+		return True
+	text = " ".join(str(row.get(f) or "") for f in ("inverter_item", "inverter_specification", "inverter_model"))
+	return "hybrid" in text.lower()
+
+
+@request_cache
+def item_group_subtree(name):
+	"""An Item Group and every group under it, read once a request."""
+	lft, rgt = frappe.db.get_value("Item Group", name, ["lft", "rgt"]) or (None, None)
+	if lft is None:
+		return frozenset()
+	return frozenset(frappe.get_all("Item Group", filters={"lft": [">=", lft], "rgt": ["<=", rgt]}, pluck="name"))
+
+
+def system_inverters(package):
+	"""The package's inverter options that fit its system: on a Hybrid package its hybrid
+	inverters only, an on-grid one there never quoted, priced or offered."""
+	doc = (
+		package
+		if hasattr(package, "get") and hasattr(package, "doctype")
+		else frappe.get_cached_doc("Solar Package", package)
+	)
+	rows = options(doc, "inverters")
+	return [row for row in rows if is_hybrid_inverter(row)] if doc.get("system_type") == HYBRID else rows
 
 
 def inverter_phase(package, row):
@@ -574,7 +626,7 @@ def inverters_for_phase(package, phase):
 		if hasattr(package, "get") and hasattr(package, "doctype")
 		else frappe.get_cached_doc("Solar Package", package)
 	)
-	return [row for row in options(doc, "inverters") if not phase or inverter_phase(doc, row) == phase]
+	return [row for row in system_inverters(doc) if not phase or inverter_phase(doc, row) == phase]
 
 
 def default_module(package):
@@ -633,7 +685,7 @@ def pricing_combinations(package, phase=None):
 		else frappe.get_cached_doc("Solar Package", package)
 	)
 	modules = {panel_name(m): m for m in options(doc, "modules")}
-	inverters = {inverter_name(i): i for i in options(doc, "inverters") if i.get("inverter_make")}
+	inverters = {inverter_name(i): i for i in system_inverters(doc) if i.get("inverter_make")}
 	out = []
 	for row in doc.get("pricing_options") or []:
 		module, inverter = modules.get(_name(row.panel)), inverters.get(_name(row.inverter))
