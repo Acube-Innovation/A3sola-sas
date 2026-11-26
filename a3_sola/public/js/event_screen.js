@@ -313,12 +313,13 @@
 			var first = stat(est.kw, est.custom ? "kW system, estimated" : "kW system", "kw") +
 				stat(est.price, est.custom ? "estimated price" : "price", "money") +
 				(est.subsidy ? stat(est.subsidy, "subsidy", "money") + stat(est.net, "Effective Price After Subsidy", "money", "is-key") : "");
-			var second = est.battery || est.custom ? "" : stat(est.monthly_saving, "saved a month", "money") +
+			var hybrid = item.system_type === "Hybrid";
+			var second = (est.battery && !hybrid) || est.custom ? "" : stat(est.monthly_saving, "saved a month", "money") +
 				stat(est.monthly_saving * 12, "saved a year", "money") + stat(est.payback_years, "years to pay back", "years");
 			rows = '<div class="a3s-tv__est2">' + '<div class="a3s-tv__est2-row">' + first + "</div>" +
 				(second ? '<div class="a3s-tv__est2-row">' + second + "</div>" : "") +
 				(est.custom ? '<p class="a3s-tv__est2-note">' + esc(est.kw_min + "\u2013" + est.kw_max) + " kW \u00b7 our engineer will design your system after a site survey</p>"
-					: est.battery ? '<p class="a3s-tv__est2-note">Our engineer will design your battery system</p>' : "") + "</div>";
+					: est.battery ? '<p class="a3s-tv__est2-note">' + (hybrid ? "Our engineer will confirm your battery at the site visit" : "Our engineer will design your battery system") + "</p>" : "") + "</div>";
 		}
 		card.innerHTML = '<p class="a3s-tv__hello">Welcome' + (named ? "," : "!") + "</p>" +
 			'<p class="a3s-tv__name" data-name></p>' +

@@ -23,4 +23,8 @@ def get_context(context):
 	)
 	context.csrf_token = frappe.sessions.get_csrf_token()
 	context.data = portal_packages.packages()
+	# The filters' choices are the package's own: On-Grid, Off-Grid, Hybrid; Single and Three Phase.
+	meta = frappe.get_meta("Solar Package")
+	context.system_options = [o for o in (meta.get_field("system_type").options or "").split("\n") if o]
+	context.phase_options = [o for o in (meta.get_field("connection_type").options or "").split("\n") if o]
 	return context
