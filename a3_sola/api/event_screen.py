@@ -85,19 +85,15 @@ def feed(key, after=None):
 				"key": "sent|{0}|{1}".format(l.name, l.a3s_brochure_sent_on), "name": who["name"]})
 	items.sort(key=lambda i: i["at"])
 
-	stats = frappe.db.sql("""select count(*) as total,
-			sum(case when date(a3s_registered_on) = %(today)s then 1 else 0 end) as today,
-			sum(ifnull(approx_capacity_kw, 0)) as kw
-		from `tabLead` where a3s_event = %(event)s""", {"event": event.name, "today": today()}, as_dict=True)[0]
+	total = frappe.db.count(LEAD, {"a3s_event": event.name})
+	day = _today_counts(event.name)
 	# Visitors who asked not to be shown are left out, so read a few more than the bar holds.
 	ticker = [l for l in frappe.get_all(LEAD, filters={"a3s_event": event.name, "a3s_hide_on_screen": 0}, fields=fields,
 		order_by="a3s_registered_on desc", limit=TICKER * 2) if (l.lead_name or l.first_name)][:TICKER]
-	savings = sum(_saving(l) for l in frappe.get_all(LEAD, filters={"a3s_event": event.name, "a3s_estimate": ["is", "set"]},
-		fields=["a3s_estimate"], limit=5000))
 	return {
 		"now": str(now), "items": items,
-		"counters": {"today": cint(stats.today), "total": cint(stats.total), "kw": round(float(stats.kw or 0), 1),
-			"yearly_savings": round(savings * 12)},
+		"counters": {"today": day["families"], "total": cint(total), "kw": day["kw"],
+			"yearly_savings": day["yearly_savings"]},
 		"ticker": [_ticker_entry(l) for l in ticker],
 		"open": cint(event.is_active),
 	}
@@ -141,8 +137,18 @@ def mask_mobile(number):
 	return "{0}\u2022\u2022\u2022 \u2022\u2022{1}".format(digits[:2], digits[-3:])
 
 
-def _saving(lead):
-	try:
-		return float((json.loads(lead.a3s_estimate) or {}).get("monthly_saving") or 0)
-	except Exception:
-		return 0.0
+def _today_counts(event):
+	"""The screen's counters, for today at this event: the families who registered (their leads
+	registered today), the kW of solar proposed to them and the yearly savings estimated for them
+	- both summed from each one's proposal, its base design estimate (api/event_proposal); a
+	family without a proposal adds nothing to either."""
+	row = frappe.db.sql("""select count(l.name) as families,
+			sum(ifnull(e.final_capacity_kw, 0)) as kw,
+			sum(ifnull(e.estimated_annual_savings, 0)) as savings
+		from `tabLead` l
+		left join `tabSolar Proposal` p on p.lead = l.name and p.docstatus < 2
+		left join `tabSolar Design Estimate` e on e.name = p.solar_design_estimate
+		where l.a3s_event = %(event)s and date(l.a3s_registered_on) = %(today)s""",
+		{"event": event, "today": today()}, as_dict=True)[0]
+	return {"families": cint(row.families), "kw": round(float(row.kw or 0), 1),
+		"yearly_savings": round(float(row.savings or 0))}

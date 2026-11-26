@@ -251,13 +251,13 @@
 			var rows = [["System size", est.kw + " kW"], ["Price", money.format(est.price)]];
 			if (est.subsidy) {
 				rows.push(["Government subsidy", "− " + money.format(est.subsidy)]);
-				rows.push(["You pay", money.format(est.net)]);
+				rows.push(["Effective Price After Subsidy", money.format(est.net)]);
 			}
 			if (est.monthly_saving) rows.push(["You save", "about " + money.format(est.monthly_saving) + " a month"]);
 			if (est.payback_years) rows.push(["Pays for itself in", "about " + est.payback_years + " years"]);
 			estBox.innerHTML = '<p class="a3s-reg__est-head">Your indicative estimate</p>' +
 				'<dl class="a3s-reg__est-rows">' + rows.map(function (row, i) {
-					return '<div class="a3s-reg__est-row' + (row[0] === "You pay" ? " is-total" : "") + '" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+					return '<div class="a3s-reg__est-row' + (row[0] === "Effective Price After Subsidy" ? " is-total" : "") + '" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
 				}).join("") + "</dl>" +
 				(est.larger ? '<p class="a3s-field__hint">Your use is above our standard sizes: our engineer will size your system.</p>' : "") +
 				(est.battery ? '<p class="a3s-field__hint">For an off-grid or hybrid system our engineer designs the battery and confirms the price; the PM Surya Ghar subsidy is for on-grid systems.</p>' : "") +
