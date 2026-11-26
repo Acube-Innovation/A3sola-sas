@@ -247,7 +247,16 @@
 			: "You are registered. Our team will send you our offer on WhatsApp and call you soon.";
 		var est = r && r.estimate;
 		var estBox = box.querySelector("[data-estimate]");
-		if (est) {
+		if (est && est.custom) {
+			/* No package covers it: a size range and a price, and our engineer designs the rest. */
+			estBox.innerHTML = '<p class="a3s-reg__est-head">Your indicative estimate</p>' +
+				'<dl class="a3s-reg__est-rows">' + [["Estimated capacity", est.kw_min + "\u2013" + est.kw_max + " kW"],
+					["Estimated price", "about " + money.format(est.price)]].map(function (row, i) {
+					return '<div class="a3s-reg__est-row" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+				}).join("") + "</dl>" +
+				'<p class="a3s-field__hint">Your energy needs call for a custom-designed solar system. Our engineer will carry out a site survey and prepare a tailored design and proposal for you. Our team will be in touch shortly to schedule the visit.</p>';
+			estBox.hidden = false;
+		} else if (est) {
 			var rows = [["System size", est.kw + " kW"], ["Price", money.format(est.price)]];
 			if (est.subsidy) {
 				rows.push(["Government subsidy", "− " + money.format(est.subsidy)]);
@@ -259,13 +268,12 @@
 				'<dl class="a3s-reg__est-rows">' + rows.map(function (row, i) {
 					return '<div class="a3s-reg__est-row' + (row[0] === "Effective Price After Subsidy" ? " is-total" : "") + '" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
 				}).join("") + "</dl>" +
-				(est.larger ? '<p class="a3s-field__hint">Your use is above our standard sizes: our engineer will size your system.</p>' : "") +
 				(est.battery ? '<p class="a3s-field__hint">For an off-grid or hybrid system our engineer designs the battery and confirms the price; the PM Surya Ghar subsidy is for on-grid systems.</p>' : "") +
 				'<p class="a3s-field__hint">Indicative only &ndash; our engineer will confirm it after a site visit.</p>';
 			estBox.hidden = false;
 		}
 		var actions = [];
-		if (r && r.proposal_url) {
+		if (r && r.proposal_url && !(est && est.custom)) {
 			actions.push('<a class="a3s-btn a3s-btn--primary" href="' + esc(r.proposal_url) + '" target="_blank" rel="noopener"><span>Download your proposal</span></a>');
 		}
 		if (r && r.chat_url) {
