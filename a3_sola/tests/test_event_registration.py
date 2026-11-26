@@ -210,5 +210,31 @@ class TestInstantEstimate(FrappeTestCase):
 		on_grid = instant_estimate.estimate(company, 3500, 2, "Home", None, "On-grid")
 		self.assertFalse(on_grid["battery"])
 
+	def test_a_hybrid_visitor_is_priced_on_a_hybrid_package(self):
+		company = frappe.db.get_value("Solar Package", {"system_type": "Hybrid", "is_active": 1}, "company")
+		if not company:
+			self.skipTest("No hybrid package on this site.")
+		est = instant_estimate.estimate(company, 3500, 2, "Home", None, "Hybrid")
+		self.assertEqual(est["system_type"], "Hybrid")
+		if est.get("package"):
+			self.assertEqual(frappe.db.get_value("Solar Package", est["package"], "system_type"), "Hybrid")
+		for offered in instant_estimate.candidate_packages(company, None, "Hybrid"):
+			self.assertEqual(frappe.db.get_value("Solar Package", offered.name, "system_type"), "Hybrid")
+
+	def test_a_hybrid_home_gets_a_proposal_an_off_grid_one_does_not(self):
+		from a3_sola.api import event_proposal
+
+		package = frappe.db.get_value("Solar Package", {}, "name")
+		if not package:
+			self.skipTest("No package on this site.")
+		lead = frappe._dict(a3s_interest="Home", a3s_estimate=json.dumps(
+			{"package": package, "battery": True, "system_type": "Hybrid", "larger": False}))
+		self.assertTrue(event_proposal.can_make(lead))
+		lead.a3s_estimate = json.dumps({"package": package, "battery": True, "system_type": "Off-Grid", "larger": False})
+		self.assertFalse(event_proposal.can_make(lead))
+		# An estimate saved before packages were chosen by system was priced on an on-grid one.
+		lead.a3s_estimate = json.dumps({"package": package, "battery": True, "larger": False})
+		self.assertFalse(event_proposal.can_make(lead))
+
 	def test_no_bill_no_estimate(self):
 		self.assertIsNone(instant_estimate.estimate(frappe.db.get_value("Company", {}, "name"), 0))

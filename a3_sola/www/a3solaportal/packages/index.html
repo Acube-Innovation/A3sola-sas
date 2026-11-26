@@ -13,14 +13,28 @@
 </div>
 
 <div class="a3s-users__bar">
+	{#- Active is shown first: the packages estimates offer. All and Draft are a click away. -#}
 	<div class="a3s-ce-tabs" role="tablist" aria-label="Package status" data-status-tabs>
 		{%- for t in ["", "Active", "Draft"] %}
-		<button type="button" role="tab" data-status="{{ t }}" aria-selected="{{ 'true' if not t else 'false' }}">
+		<button type="button" role="tab" data-status="{{ t }}" aria-selected="{{ 'true' if t == 'Active' else 'false' }}">
 			<span>{{ t or "All" }}</span>
 			<span class="a3s-ce-tabs__n" data-count="{{ t }}">{{ data.counts.get(t, 0) if t else data.total }}</span>
 		</button>
 		{%- endfor %}
 	</div>
+	{#- The system and the phase: each filters the list as soon as it is chosen (portal_packages.js). -#}
+	<select class="a3s-toolbar__select" aria-label="Filter by system" data-package-filter="system_type">
+		<option value="">All systems</option>
+		{%- for opt in system_options %}
+		<option value="{{ opt | e }}">{{ opt | e }}</option>
+		{%- endfor %}
+	</select>
+	<select class="a3s-toolbar__select" aria-label="Filter by phase" data-package-filter="connection_type">
+		<option value="">All phases</option>
+		{%- for opt in phase_options %}
+		<option value="{{ opt | e }}">{{ opt | e }}</option>
+		{%- endfor %}
+	</select>
 	<input class="a3s-toolbar__search a3s-users__search" type="search" placeholder="Search name, code or kW"
 	       aria-label="Search packages" data-package-search>
 </div>

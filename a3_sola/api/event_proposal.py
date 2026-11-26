@@ -38,10 +38,15 @@ def proposal_of(lead):
 
 
 def can_make(lead):
-	"""Whether a proposal can be made for this lead from its event estimate: a home on the grid
-	(a battery system, or a shop or a factory, is designed by our engineer after a visit)."""
+	"""Whether a proposal can be made for this lead from its event estimate: a home on the grid,
+	on-grid or hybrid, priced on a package of its system (an off-grid system, or a shop or a
+	factory, is designed by our engineer after a visit). An estimate saved before packages were
+	chosen by system - a battery one without `system_type` - was priced on an on-grid package:
+	no proposal from it."""
 	est = _estimate(lead)
-	return bool(est and est.get("package") and not est.get("battery") and not est.get("larger")
+	if est and est.get("battery") and est.get("system_type") != "Hybrid":
+		return False
+	return bool(est and est.get("package") and not est.get("larger")
 		and (lead.get("a3s_interest") or "Home") == "Home" and frappe.db.exists("Solar Package", est["package"]))
 
 

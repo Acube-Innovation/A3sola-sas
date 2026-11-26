@@ -8,7 +8,7 @@
 	var meta = document.querySelector('meta[name="csrf-token"]');
 	var csrf = meta ? meta.getAttribute("content") : "";
 	var boot = JSON.parse(document.getElementById("a3s-packages-data").textContent);
-	var state = { packages: boot.packages, counts: boot.counts, total: boot.total, status: "", q: "" };
+	var state = { packages: boot.packages, counts: boot.counts, total: boot.total, status: "Active", q: "", system_type: "", connection_type: "" };
 	var rows = document.querySelector("[data-package-rows]");
 	var empty = document.querySelector("[data-package-empty]");
 	var pageStatus = document.querySelector("[data-page-status]");
@@ -51,6 +51,8 @@
 		var q = state.q.toLowerCase();
 		var list = state.packages.filter(function (p) {
 			return (!state.status || p.status === state.status) &&
+				(!state.system_type || p.system_type === state.system_type) &&
+				(!state.connection_type || p.connection_type === state.connection_type) &&
 				(!q || [p.package_name, p.specification_code, p.name, kw(p.capacity_kw), p.system_type, p.tier].join(" ").toLowerCase().indexOf(q) !== -1);
 		});
 		rows.innerHTML = list.map(function (p) {
@@ -72,6 +74,11 @@
 				"</div></td></tr>";
 		}).join("");
 		empty.hidden = list.length > 0;
+		/* A filter that hides every package says so, not "No packages here yet". */
+		var filtered = state.status || state.q || state.system_type || state.connection_type;
+		empty.querySelector(".a3s-empty__title").textContent = filtered && state.packages.length ? "No packages match" : "No packages here yet";
+		empty.querySelector(".a3s-empty__text").textContent = filtered && state.packages.length
+			? "Try another system, phase or status, or clear the search." : "Add the first one and it will appear here.";
 		["Active", "Draft"].forEach(function (t) {
 			var n = document.querySelector('[data-count="' + t + '"]');
 			if (n) n.textContent = state.counts[t] || 0;
@@ -92,6 +99,9 @@
 		state.status = b.dataset.status;
 		document.querySelectorAll("[data-status-tabs] [data-status]").forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
 		render();
+	});
+	document.querySelectorAll("[data-package-filter]").forEach(function (sel) {
+		sel.addEventListener("change", function () { state[sel.dataset.packageFilter] = sel.value; render(); });
 	});
 	document.querySelector("[data-package-search]").addEventListener("input", function (e) { state.q = e.target.value.trim(); render(); });
 

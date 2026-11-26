@@ -268,7 +268,8 @@
 				'<dl class="a3s-reg__est-rows">' + rows.map(function (row, i) {
 					return '<div class="a3s-reg__est-row' + (row[0] === "Effective Price After Subsidy" ? " is-total" : "") + '" style="--i:' + i + '"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
 				}).join("") + "</dl>" +
-				(est.battery ? '<p class="a3s-field__hint">For an off-grid or hybrid system our engineer designs the battery and confirms the price; the PM Surya Ghar subsidy is for on-grid systems.</p>' : "") +
+				(est.battery && est.system_type === "Hybrid" ? '<p class="a3s-field__hint">Priced on our hybrid package with its battery; our engineer confirms the battery size at the site visit.</p>' : "") +
+				(est.battery && est.system_type !== "Hybrid" ? '<p class="a3s-field__hint">For an off-grid system our engineer designs the battery and confirms the price; the PM Surya Ghar subsidy is for grid-connected systems.</p>' : "") +
 				'<p class="a3s-field__hint">Indicative only &ndash; our engineer will confirm it after a site visit.</p>';
 			estBox.hidden = false;
 		}

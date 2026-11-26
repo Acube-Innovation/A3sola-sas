@@ -574,7 +574,7 @@ def note_brochure(lead, via):
 def welcome_text(event, lead):
 	"""The WhatsApp welcome for a visitor, from the event's message (DEFAULT_WELCOME when it has
 	none): their name, the event, the company, their proposal link and their estimate filled in.
-	A line whose link is not there (no proposal for a battery system or a business) is left out;
+	A line whose link is not there (no proposal for an off-grid system or a business) is left out;
 	so is a {brochure} line of an older message - events send the proposal now."""
 	from a3_sola.api import event_proposal
 
