@@ -366,3 +366,5 @@ a3_sola.patches.v1_3.drop_net_metering_agreement_from_accept_customer
 a3_sola.patches.v1_3.jan_samarth_id_from_task
 # The proposal reads "Expected generation per day" (was "generated") and the plant without "Rooftop", in the companies' document templates too.
 a3_sola.patches.v1_3.proposal_summary_wording
+# Leads an event's QR registration made are marked Created at Event: the leads list shows the event as who created them.
+a3_sola.patches.v1_3.lead_created_at_event
