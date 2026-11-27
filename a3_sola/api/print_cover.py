@@ -412,7 +412,7 @@ def print_summary(doc):
 	rows.append(("Capacity of the Plant Proposed", capacity))
 	rows.append(("Tilt & Orientation", TILT_ORIENTATION))
 	system = est.system_type if est else None
-	rows.append(("Type of Solar Power Plant", "{0} Rooftop".format(SYSTEM_NAMES.get(system, system)) if system else ""))
+	rows.append(("Type of Solar Power Plant", SYSTEM_NAMES.get(system, system) if system else ""))
 	# One area for each option the capacity row lists, in its order: "407/240 Sq. Ft.".
 	areas = [roof_area(k) for k in sizes if flt(k)]
 	rows.append(("Roof Area Required", "/\u200b".join("{0:,}".format(a) for a in areas) + " Sq. Ft." if areas else ""))
@@ -422,7 +422,7 @@ def print_summary(doc):
 		three = any((r.inverter_phase or "") == "Three Phase" for r in inverters) or (est and est.connection_type == "Three Phase")
 		rows.append(("Total Backup Load Capacity", "{0:g} kW{1}".format(inv_kw, " ({0:g}kW per phase)".format(round(inv_kw / 3, 1)) if three else "")
 			if inv_kw else ""))
-		kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000 for r in batteries)
+		kwh = _battery_kwh(batteries)
 		# Hours on battery at the estimate's Backup Load, else at the plant's own rating.
 		load = flt(est.get("backup_load_kw")) or kwp
 		hours = round(kwh / load, 1) if kwh and load else 0
@@ -437,7 +437,7 @@ def print_summary(doc):
 		high = flt(estimate_daily_generation_band(max(sizes), section)["high_units_per_day"])
 	else:
 		low, high = (flt(est.expected_daily_units_low), flt(est.expected_daily_units_high)) if est else (0, 0)
-	rows.append(("Expected generated per day",
+	rows.append(("Expected generation per day",
 		"{0:.0f} - {1:.0f} units".format(low, high) if low and high else ("{0:.0f} units".format(low or high) if (low or high) else "")))
 	layout = image_src_of(est.get("tentative_layout")) if est else ""
 	return {"rows": rows, "missing": [p for p, v in rows if not v], "layout": layout, "sections": section_numbers(bool(layout))}
@@ -991,11 +991,34 @@ def payable_row(amount):
 	return {"item": _("Customer Payable Final Project Price"), "amount": flt(amount), "right": True, "bold": True}
 
 
+def _battery_kwh(batteries):
+	"""The batteries' total energy in kWh: each row's stored total, else volts x Ah x nos."""
+	return round(sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * (cint(r.nos) or 1) / 1000
+		for r in batteries), 2)
+
+
+def _battery_makes(batteries):
+	"""'Dyness' or 'Dyness / Pylontech': the batteries' makes, each once, in row order."""
+	names = []
+	for r in batteries:
+		name = frappe.db.get_value("Component Make", r.battery_make, "make_name") if r.battery_make else ""
+		if name and name not in names:
+			names.append(name)
+	return " / ".join(names)
+
+
 def _option_label(est, number):
-	"""'Option 2 – 25kWp with 30kW Inverter': the option as the client heads its cost table."""
+	"""'Option 2 – 25kWp with 30kW Inverter', and for a hybrid or off-grid plant
+	'Option 1 – 3kWp with 5kW Inverter and 5.12kWh Battery by Dyness': the option as the
+	client heads its cost table."""
 	kwp = _kwp(est)
 	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in est.get("inverters") or [] if not r.get("is_option"))
 	label = " with ".join(p for p in ("{0:g}kWp".format(kwp) if kwp else "", "{0:g}kW Inverter".format(inv_kw) if inv_kw else "") if p)
+	batteries = [r for r in est.get("batteries") or [] if not r.get("is_option")]
+	kwh = _battery_kwh(batteries)
+	if kwh:
+		makes = _battery_makes(batteries)
+		label += " and {0:g}kWh Battery{1}".format(kwh, " by " + makes if makes else "")
 	return "Option {0}{1}".format(number, " – " + label if label else "")
 
 
@@ -1195,7 +1218,7 @@ def add_on_rows(estimates):
 
 def plant_description(est):
 	"""'Design, Supply, Installation, Testing and Commissioning of 20kWp Non-DCR Grid Connected
-	Rooftop Solar Power Plant with 25 kW Inverter including AC Cabling and earthing from roof to
+	Solar Power Plant with 25 kW Inverter including AC Cabling and earthing from roof to
 	the electrical room' - the plant as the client's cost table prices it, with the battery
 	(10.24kWh LiFePO4 battery (51.2V, 100Ah X 2)) of a hybrid or off-grid plant."""
 	from a3_sola.solar_crm.doctype.component_technology.component_technology import technology_name
@@ -1204,17 +1227,18 @@ def plant_description(est):
 	panels, inverters, batteries = priced("panels"), priced("inverters"), priced("batteries")
 	kwp = _kwp(est)
 	inv_kw = sum(flt(r.inverter_capacity_kw) * (cint(r.nos) or 1) for r in inverters)
-	kwh = sum(flt(r.total_energy_kwh) or flt(r.battery_voltage) * flt(r.battery_capacity_ah) * cint(r.nos) / 1000 for r in batteries)
+	kwh = _battery_kwh(batteries)
 	kinds = {r.panel_type for r in panels if r.panel_type}
 	dcr = ("DCR " if kinds == {"DCR"} else "Non-DCR ") if len(kinds) == 1 else ""
 	system = SYSTEM_NAMES.get(est.system_type or "", est.system_type or "")
 	battery_text = ""
 	if batteries:
 		b = batteries[0]
-		battery_text = ", {0:g}kWh {1} battery ({2})".format(round(kwh, 2),
-			technology_name(b.battery_variant) if b.battery_variant else "",
+		makes = _battery_makes(batteries)
+		battery_text = ", {0:g}kWh {1} battery{2} ({3})".format(kwh,
+			technology_name(b.battery_variant) if b.battery_variant else "", " by " + makes if makes else "",
 			", ".join("{0:g}V, {1:g}Ah X {2}".format(flt(r.battery_voltage), flt(r.battery_capacity_ah), cint(r.nos)) for r in batteries)
 		).replace("  ", " ")
-	return ("Design, Supply, Installation, Testing and Commissioning of {0:g}kWp {1}{2}Rooftop Solar Power Plant with "
+	return ("Design, Supply, Installation, Testing and Commissioning of {0:g}kWp {1}{2}Solar Power Plant with "
 		"{3:g} kW Inverter{4} including AC Cabling and earthing from roof to the electrical room").format(
 		kwp, dcr, (system + " ") if system else "", inv_kw, battery_text)

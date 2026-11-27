@@ -137,7 +137,7 @@ _BANK_PROJECT_PROPOSAL = """{% set bp = bank_proposal %}{% set cost = (loan.proj
 	<tr><td class="c">4</td><td>Type of Solar Power Plant</td><td>{{ bp.plant }}</td></tr>
 	<tr><td class="c">5</td><td>Roof Area Required</td><td>{{ bp.roof_area }}</td></tr>
 	<tr><td class="c">6</td><td>Type of Roof</td><td>{{ bp.roof }}</td></tr>
-	<tr><td class="c">7</td><td>Expected generated per day</td><td>{{ bp.generation }}</td></tr>
+	<tr><td class="c">7</td><td>Expected generation per day</td><td>{{ bp.generation }}</td></tr>
 </table>
 <h3>Specifications &amp; Quantity of Major Components</h3>
 <table class="grid">
@@ -149,7 +149,7 @@ _BANK_PROJECT_PROPOSAL = """{% set bp = bank_proposal %}{% set cost = (loan.proj
 <h3>Project Cost</h3>
 <table class="grid">
 	<thead><tr><th class="c" style="width:10%">Sl. No.</th><th>Item</th><th class="c" style="width:22%">Amount (Rs.)</th></tr></thead>
-	<tr><td class="c">1</td><td>Design, Supply, Installation, Testing and Commissioning of {{ bp.kw }}kWp {{ bp.phase }} Grid Connected Rooftop Solar Power Plant</td><td class="c">{{ cost | int }}</td></tr>
+	<tr><td class="c">1</td><td>Design, Supply, Installation, Testing and Commissioning of {{ bp.kw }}kWp {{ bp.phase }} Grid Connected Solar Power Plant</td><td class="c">{{ cost | int }}</td></tr>
 </table>
 <h3>KSEBL Expenses</h3>
 <p>Amount to be paid to KSEBL shall be paid as follows:</p>
