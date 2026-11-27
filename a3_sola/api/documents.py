@@ -596,7 +596,7 @@ def bank_proposal(inst, survey, section):
 		"kw": "%g" % kw, "phase": phase,
 		"site": "Residential Building in {0}".format(district.upper()) if district else "Residential Building",
 		"tilt": TILT_ORIENTATION,
-		"plant": "Grid Connected Rooftop" if (inst.get("system_type") or "On-Grid") == "On-Grid" else "{0} Rooftop".format(inst.system_type),
+		"plant": "Grid Connected" if (inst.get("system_type") or "On-Grid") == "On-Grid" else inst.system_type,
 		"roof_area": "%d Sq. Ft." % round(area), "roof": roof,
 		"generation": "%g - %g units" % (round(kw * 3), round(kw * 4)),
 		"components": [

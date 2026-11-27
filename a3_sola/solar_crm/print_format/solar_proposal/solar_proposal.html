@@ -67,7 +67,7 @@
         <td>1</td>
         <td>Design, Supply, Installation, Testing and Commissioning of
             {{ "%g"|format(estimate.final_capacity_kw) }} kWp
-            {{ estimate.connection_type or consumer.connection_type }} Grid Connected Rooftop Solar Power Plant
+            {{ estimate.connection_type or consumer.connection_type }} Grid Connected Solar Power Plant
             {% if ctx.primary_package and not ctx.primary_package.is_dcr_compliant %}with Non-DCR panels{% endif %}
             {% if option.inverter_topology != "String" %}and {{ option.inverter_topology }}{% endif %}
             including GST</td>

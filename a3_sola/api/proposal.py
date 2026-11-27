@@ -108,7 +108,7 @@ def _executive_summary(doc, estimate, consumer, survey, package):
 		("Site Location", f"{building} in {location}" if location else building),
 		("Capacity of the Plant Proposed", capacity),
 		("Tilt & Orientation", TILT_ORIENTATION),
-		("Type of Solar Power Plant", "Grid Connected Rooftop"),
+		("Type of Solar Power Plant", "Grid Connected"),
 		("Roof Area Required", f"{flt(area):g} Sq. Ft."),
 		("Type of Roof", roof_label or "-"),
 		(
