@@ -172,7 +172,7 @@ def _save_scan(event, visitor):
 			doc.set(field, value)
 		doc.update({"first_name": visitor.first_name, "last_name": visitor.last_name, "company": event.company,
 			"lead_owner": event.lead_owner, "source": event.lead_source or doc.source, "campaign_name": event.campaign,
-			"mobile_no": visitor.mobile, "whatsapp_no": visitor.whatsapp})
+			"mobile_no": visitor.mobile, "whatsapp_no": visitor.whatsapp, "a3s_created_at_event": event.name})
 	else:
 		doc = frappe.get_doc(LEAD, name)
 	fill = {"whatsapp_no": visitor.whatsapp, "district": visitor.district,
@@ -377,7 +377,7 @@ def _save_lead(event, visitor, est):
 			doc.set(field, value)
 		doc.update({"first_name": visitor.first_name, "last_name": visitor.last_name, "company": event.company,
 			"lead_owner": event.lead_owner, "source": event.lead_source or doc.source, "campaign_name": event.campaign,
-			"mobile_no": visitor.mobile, "whatsapp_no": visitor.whatsapp})
+			"mobile_no": visitor.mobile, "whatsapp_no": visitor.whatsapp, "a3s_created_at_event": event.name})
 	else:
 		doc = frappe.get_doc(LEAD, name)
 	# What the lead lacks, from what the visitor said; what it has stays (it may be newer).

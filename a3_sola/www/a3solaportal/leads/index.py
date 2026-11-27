@@ -176,7 +176,7 @@ def lead_rows(filters=None, or_filters=None, limit=LIMIT):
 		"Lead",
 		fields=[
 			"name", "lead_name", "company_name", "image",
-			"email_id", "mobile_no", "status", "creation", "owner",
+			"email_id", "mobile_no", "status", "creation", "owner", "a3s_created_at_event",
 		] + extra,
 		filters=filters,
 		or_filters=or_filters,
@@ -257,9 +257,16 @@ def _add_assignment(leads):
 			               fields=["name", "full_name"], as_list=True)
 		))
 
+	# A lead an event's QR registration made was created by the event, not its lead owner.
+	events = {l.get("a3s_created_at_event") for l in leads if l.get("a3s_created_at_event")}
+	event_names = dict(frappe.get_all("Solar Event", filters={"name": ("in", list(events))},
+		fields=["name", "event_name"], as_list=True)) if events else {}
+
 	today = frappe.utils.today()
 	for lead in leads:
-		lead["created_by"] = names.get(lead.get("owner")) or lead.get("owner") or "—"
+		event = lead.get("a3s_created_at_event")
+		lead["created_by"] = (event_names.get(event) or event) if event else \
+			names.get(lead.get("owner")) or lead.get("owner") or "—"
 		days = frappe.utils.date_diff(today, lead.get("creation"))
 		lead["age_days"] = max(frappe.utils.cint(days), 0)
 		row = latest.get(lead["name"])
