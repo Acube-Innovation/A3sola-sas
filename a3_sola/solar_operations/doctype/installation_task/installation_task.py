@@ -220,8 +220,6 @@ class InstallationTask(Document):
 			for field in REQUIRED_EVIDENCE.get(self.task_code, ())
 			if not self.get(field)
 		]
-		if self.task_code == "FRM1" and not (self.generated or self.uploads):
-			missing.append(_("Form 1 (generated or uploaded)"))
 		if self.task_code == "DAL" and not approval_letters(self):
 			missing.append(_("the digital approval letter (attach it under Attachments as Digital Approval Letter)"))
 		if missing:
