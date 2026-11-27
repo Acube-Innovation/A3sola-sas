@@ -63,6 +63,13 @@ class TestInstallationTask(FrappeTestCase):
 		row, _doc = task_row(self.installation, "MTR")
 		self.assertEqual(row.status, "Completed")
 
+	def test_form1_completes_without_a_form1_file(self):
+		# Form 1 is often filed outside the app: the task completes on its own word.
+		task = make_task(self.installation, "FRM1")
+		ctl.complete(task.name)
+		row, _doc = task_row(self.installation, "FRM1")
+		self.assertEqual(row.status, "Completed")
+
 	def test_generating_a_document_attaches_it_here_and_registers_it_on_the_job(self):
 		task = make_task(self.installation, "FRM1")
 		result = ctl.generate(task.name, "KSEB-FORM-1")
