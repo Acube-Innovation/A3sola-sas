@@ -197,7 +197,10 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	off-grid or hybrid system (BATTERY_SYSTEMS): our engineer confirms the battery.
 
 	`connection_type` and `subsidy_option` are the visitor's answers, when given: the package
-	is of that connection, and one without subsidy is shown - and quoted - without it."""
+	is of that connection, and one without subsidy is shown - and quoted - without it.
+
+	An Event Package Rule of the company that matches the bill and answers (`ruled_package`)
+	gives the package instead, `rule` naming it; the event's own packages do not limit it."""
 	bill = flt(bill_amount)
 	months = 1 if cint(bill_months) == 1 else CYCLE_MONTHS
 	if bill <= 0:
@@ -209,7 +212,12 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 	specific_yield = get_float("default_specific_yield", 1500.0) or 1500.0
 	need_kw = units * (12 / CYCLE_MONTHS) / specific_yield
 
-	package, larger = pick(candidate_packages(company, packages, system_type, connection_type, subsidy_option), need_kw)
+	package, larger, rule = None, False, ruled_package(company, cycle_bill, interest, system_type, connection_type,
+		subsidy_option)
+	if rule:
+		package, rule = rule
+	else:
+		package, larger = pick(candidate_packages(company, packages, system_type, connection_type, subsidy_option), need_kw)
 	battery = (system_type or "") in BATTERY_SYSTEMS
 	if not package or larger:
 		monthly_bill = cycle_bill / CYCLE_MONTHS
@@ -233,7 +241,24 @@ def estimate(company, bill_amount, bill_months=CYCLE_MONTHS, interest="Home", pa
 		"monthly_saving": round(monthly_saving / 10) * 10, "payback_years": payback, "larger": bool(larger),
 		"battery": battery, "system_type": package_system(system_type),
 		"subsidy_option": WITH_SUBSIDY if subsidy else WITHOUT_SUBSIDY,
+		"rule": rule,
 	}
+
+
+def ruled_package(company, cycle_bill, interest=None, system_type=None, connection_type=None, subsidy_option=None):
+	"""(package, rule name) when an Event Package Rule of the company (Administration > Event
+	Packages) matches the two-month bill and the answers and its package can be priced; else None,
+	and the package is chosen automatically."""
+	from a3_sola.api.event_package_rules import match
+
+	rule = match(company, cycle_bill, interest, system_type, connection_type, subsidy_option)
+	if not rule:
+		return None
+	priced = _priced(_packages({"name": rule.package}))
+	if not priced:
+		frappe.log_error(f"Event Package Rule {rule.name}: package {rule.package} has no price", "a3_sola: event package rule")
+		return None
+	return priced[0], rule.name
 
 
 def summary(est):

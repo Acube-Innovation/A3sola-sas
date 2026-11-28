@@ -1,0 +1,128 @@
+{% extends "templates/portal_shell.html" %}
+
+{% block portal_content %}
+{#- Administration > Event Packages (api/event_package_rules): which package an event visitor
+    gets by their bill and answers, checked top to bottom. Built and saved by
+    portal_event_package_rules.js from the JSON below. -#}
+<style>
+	.a3s-evpkg__bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin: 0 0 1rem; }
+	.a3s-evpkg__bar .a3s-field { flex: 0 1 20rem; }
+	.a3s-evpkg__count { font-size: 0.8125rem; color: var(--color-text-muted); margin-left: auto; }
+	.a3s-evpkg .a3s-table th, .a3s-evpkg .a3s-table td { padding: 0.5rem 0.6rem; vertical-align: middle; }
+	.a3s-evpkg .a3s-field select, .a3s-evpkg .a3s-field input { padding: 0.45rem 0.6rem; font-size: 0.8125rem; }
+	.a3s-evpkg__money { width: 7.5rem; }
+	.a3s-evpkg__money input { text-align: right; }
+	.a3s-evpkg__ans { min-width: 8.5rem; }
+	.a3s-evpkg__pkg { min-width: 17rem; }
+	.a3s-evpkg__no { font-weight: 800; color: var(--color-text-muted); white-space: nowrap; }
+	.a3s-evpkg__move { display: inline-flex; flex-direction: column; gap: 0.1rem; margin-left: 0.35rem; vertical-align: middle; }
+	.a3s-evpkg__move button { border: 0; background: none; padding: 0 0.2rem; line-height: 1; font-size: 0.75rem; color: var(--color-text-muted); cursor: pointer; border-radius: 0.35rem; }
+	.a3s-evpkg__move button:hover:not(:disabled) { color: var(--color-accent); background: var(--color-accent-soft); }
+	.a3s-evpkg__move button:disabled { opacity: 0.3; cursor: default; }
+	.a3s-evpkg__del { border: 0; background: none; padding: 0.35rem; border-radius: 999px; color: var(--color-text-muted); cursor: pointer; }
+	.a3s-evpkg__del:hover { color: #c0392b; background: rgba(255, 95, 87, 0.1); }
+	.a3s-evpkg tr.is-changed td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+	.a3s-evpkg tr.is-off td:not(:last-child):not(:first-child) { opacity: 0.55; }
+	.a3s-evpkg__empty { padding: 2rem 1rem; text-align: center; color: var(--color-text-muted); }
+	.a3s-evpkg__add { margin: 0.75rem 0 0; }
+	.a3s-evpkg__rules { margin: 0 0 1rem; padding-left: 1.1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+	.a3s-evpkg__rules li { margin: 0.15rem 0; }
+	.a3s-evpkg__try { margin-top: 1.5rem; padding: 1.25rem; }
+	.a3s-evpkg__try h3 { margin: 0 0 0.25rem; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+	.a3s-evpkg__try p.a3s-evpkg__hint { margin: 0 0 1rem; font-size: 0.8125rem; color: var(--color-text-muted); }
+	.a3s-evpkg__tryform { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.75rem; align-items: end; }
+	.a3s-evpkg__result { margin-top: 1rem; }
+	.a3s-evpkg__result dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem; margin: 0.75rem 0 0; }
+	.a3s-evpkg__result dt { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+	.a3s-evpkg__result dd { margin: 0.15rem 0 0; font-weight: 700; }
+	@media (max-width: 767px) { .a3s-evpkg__money, .a3s-evpkg__ans, .a3s-evpkg__pkg { width: auto; min-width: 0; } }
+</style>
+
+<div class="a3s-page__head">
+	<div>
+		<h2 class="a3s-main__title">Event Packages</h2>
+		<p class="a3s-main__sub">Which package a visitor who registers at an event is offered, by their electricity bill and the answers they give on the form. The first rule that matches gives the package.</p>
+	</div>
+	<button type="button" class="a3s-btn a3s-btn--primary" data-evpkg-save disabled>
+		<svg class="a3s-ic" aria-hidden="true"><use href="#ic-save"></use></svg>
+		<span>Save</span>
+	</button>
+</div>
+
+<p class="a3s-attach__status" data-evpkg-status role="status" aria-live="polite" hidden></p>
+
+<ul class="a3s-evpkg__rules">
+	<li>Rules are checked from the top. Use the arrows to change the order: put the narrow rules above the wide ones.</li>
+	<li><b>Bill from and to</b> are for a <b>2-month bill</b>. A visitor who enters a 1-month bill has it doubled first. Leave <b>Bill to</b> empty for no upper limit.</li>
+	<li><b>Any</b> matches every answer. <b>Not sure</b> matches a visitor who left the question blank.</li>
+	<li>When no rule matches, the package is chosen automatically from the size the bill needs, as before. A rule's package is used even if the event lists other packages.</li>
+</ul>
+
+<div class="a3s-evpkg__bar">
+	<div class="a3s-field" data-evpkg-company-wrap{% if rules_data.companies | length < 2 %} hidden{% endif %}>
+		<label for="a3s-evpkg-company">Company</label>
+		<select id="a3s-evpkg-company" data-evpkg-company>
+			{%- for c in rules_data.companies %}<option value="{{ c | e }}"{% if c == rules_data.company %} selected{% endif %}>{{ c | e }}</option>{% endfor %}
+		</select>
+	</div>
+	<span class="a3s-evpkg__count" data-evpkg-count></span>
+</div>
+
+<div class="a3s-card a3s-tablewrap a3s-evpkg">
+	<table class="a3s-table">
+		<thead>
+			<tr>
+				<th>#</th>
+				<th class="a3s-evpkg__money">Bill from (₹)</th>
+				<th class="a3s-evpkg__money">Bill to (₹)</th>
+				{%- for q in rules_data.questions %}<th class="a3s-evpkg__ans">{{ q.label | e }}</th>{% endfor %}
+				<th class="a3s-evpkg__pkg">Package</th>
+				<th>Active</th>
+				<th><span class="a3s-sr-only">Remove</span></th>
+			</tr>
+		</thead>
+		<tbody data-evpkg-rows></tbody>
+	</table>
+</div>
+<button type="button" class="a3s-btn a3s-btn--secondary a3s-btn--sm a3s-evpkg__add" data-evpkg-add>
+	<span>+ Add rule</span>
+</button>
+
+<section class="a3s-card a3s-evpkg__try" aria-labelledby="a3s-evpkg-try-title">
+	<h3 id="a3s-evpkg-try-title">Check a visitor</h3>
+	<p class="a3s-evpkg__hint">Enter what a visitor would put on the form to see the package and price the event would show them. Save your changes first: this checks the saved rules.</p>
+	<form class="a3s-evpkg__tryform" data-evpkg-try>
+		<div class="a3s-field">
+			<label for="a3s-evpkg-bill">Your electricity bill (₹)</label>
+			<input type="number" id="a3s-evpkg-bill" name="bill_amount" min="1" max="1000000" step="1" inputmode="numeric" placeholder="e.g. 2500" required>
+		</div>
+		<div class="a3s-field">
+			<label for="a3s-evpkg-months">Bill for</label>
+			<select id="a3s-evpkg-months" name="bill_months"><option value="2">2 months</option><option value="1">1 month</option></select>
+		</div>
+		{%- for q in rules_data.questions %}
+		<div class="a3s-field">
+			<label for="a3s-evpkg-try-{{ q.field }}">{{ q.label | e }}</label>
+			<select id="a3s-evpkg-try-{{ q.field }}" name="{{ q.field }}">
+				{%- for o in rules_data.choices[q.field] if o != "Any" %}
+				<option value="{{ '' if o == 'Not sure' else o | e }}"{% if (q.field == 'interest' and loop.first) or (q.field != 'interest' and o == 'Not sure') %} selected{% endif %}>{{ o | e }}</option>
+				{%- endfor %}
+			</select>
+		</div>
+		{%- endfor %}
+		<div>
+			<button type="submit" class="a3s-btn a3s-btn--primary">
+				<svg class="a3s-ic" aria-hidden="true"><use href="#ic-check"></use></svg>
+				<span>Check</span>
+			</button>
+		</div>
+	</form>
+	<div class="a3s-evpkg__result" data-evpkg-result role="status" aria-live="polite" hidden></div>
+</section>
+
+<script type="application/json" id="a3s-evpkg-data">{{ rules_data | tojson }}</script>
+{% endblock %}
+
+{% block portal_scripts %}
+<script src="/assets/a3_sola/js/portal_event_package_rules.js?v={{ a3s_asset_version('js/portal_event_package_rules.js') }}"></script>
+{% endblock %}

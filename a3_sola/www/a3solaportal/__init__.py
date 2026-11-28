@@ -105,6 +105,7 @@ NAV_GROUPS = [
 			{"title": "Users", "sub": "Admins, staff and partners", "ic": "user", "route": "/a3solaportal/users"},
 			{"title": "Packages", "sub": "Systems, prices and BOMs", "ic": "package", "route": "/a3solaportal/packages"},
 			{"title": "Task Assignees", "sub": "Who, when, SLA days", "ic": "clipboard", "route": "/a3solaportal/task-assignees"},
+			{"title": "Event Packages", "sub": "Bill and answers to package", "ic": "ticket", "route": "/a3solaportal/event-packages"},
 			{"title": "Menu", "sub": "What the menu shows", "ic": "checklist", "route": "/a3solaportal/menu"},
 			{"title": "Page Layout", "sub": "Hide fields and sections", "ic": "sheet", "route": "/a3solaportal/page-layout"},
 			{"title": "Support", "sub": "Log in as any user", "ic": "eye", "route": "/a3solaportal/support"},
@@ -113,7 +114,7 @@ NAV_GROUPS = [
 ]
 
 #: Menu items for admins alone: the page refuses anyone else too.
-ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/task-assignees", "/a3solaportal/menu", "/a3solaportal/page-layout"}
+ADMIN_NAV = {"/a3solaportal/users", "/a3solaportal/packages", "/a3solaportal/task-assignees", "/a3solaportal/event-packages", "/a3solaportal/menu", "/a3solaportal/page-layout"}
 #: Menu items for our own platform staff alone ("Log in as" across every company).
 PLATFORM_NAV = {"/a3solaportal/support"}
 
