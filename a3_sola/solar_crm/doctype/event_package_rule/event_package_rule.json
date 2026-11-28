@@ -1,0 +1,174 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-28 12:00:00.000000",
+ "doctype": "DocType",
+ "description": "Event registration: which package a visitor's bill and answers get. The first matching rule wins; with none, the package is chosen automatically.",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "rule_order",
+  "is_active",
+  "cb_1",
+  "package",
+  "sb_bill",
+  "bill_from",
+  "cb_2",
+  "bill_to",
+  "sb_answers",
+  "interest",
+  "system_type",
+  "cb_3",
+  "connection_type",
+  "subsidy_option"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rule_order",
+   "fieldtype": "Int",
+   "label": "Order",
+   "description": "Rules are checked from the lowest order up; the first that matches gives the package.",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "package",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "Solar Package",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_bill",
+   "fieldtype": "Section Break",
+   "label": "Electricity Bill (2 months)",
+   "description": "A visitor's 1-month bill is doubled before it is compared."
+  },
+  {
+   "fieldname": "bill_from",
+   "fieldtype": "Currency",
+   "label": "Bill From",
+   "non_negative": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bill_to",
+   "fieldtype": "Currency",
+   "label": "Bill To",
+   "non_negative": 1,
+   "description": "Empty: no upper limit.",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_answers",
+   "fieldtype": "Section Break",
+   "label": "Visitor's Answers"
+  },
+  {
+   "fieldname": "interest",
+   "fieldtype": "Select",
+   "label": "Property",
+   "options": "Any\nHome\nShop or Office\nIndustry\nInstitution",
+   "default": "Any"
+  },
+  {
+   "fieldname": "system_type",
+   "fieldtype": "Select",
+   "label": "System",
+   "options": "Any\nOn-grid\nOff-grid\nHybrid\nNot sure",
+   "default": "Any"
+  },
+  {
+   "fieldname": "cb_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "connection_type",
+   "fieldtype": "Select",
+   "label": "Electricity Connection",
+   "options": "Any\nSingle Phase\nThree Phase\nNot sure",
+   "default": "Any"
+  },
+  {
+   "fieldname": "subsidy_option",
+   "fieldtype": "Select",
+   "label": "PM Surya Ghar Subsidy",
+   "options": "Any\nWith Subsidy\nWithout Subsidy\nNot sure",
+   "default": "Any"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Solar CRM",
+ "name": "Event Package Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar CRM Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Solar Sales Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "report": 1,
+   "export": 1,
+   "permlevel": 0
+  }
+ ],
+ "sort_field": "rule_order",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "package",
+ "track_changes": 1
+}
